@@ -10,6 +10,9 @@ export default function CreerAnnonce() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Gérer la soumission
+    console.log('Description:', description);
+    console.log('Images:', images);
+    console.log('Taches:', taches);
   };
 
   return (
