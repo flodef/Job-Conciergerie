@@ -1,0 +1,40 @@
+{
+  "name": "job-board",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "latest",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest",
+    "@eslint/eslintrc": "latest"
+  },
+  "prettier": {
+    "useTabs": false,
+    "tabWidth": 2,
+    "singleQuote": true,
+    "arrowParens": "avoid",
+    "printWidth": 120,
+    "trailingComma": "all",
+    "semi": true
+  },
+  "lint-staged": {
+    "*.ts*": "eslint"
+  }
+}
