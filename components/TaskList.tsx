@@ -1,5 +1,6 @@
 'use client';
 
+import clsx from 'clsx';
 import { useEffect, useRef } from 'react';
 
 export default function TaskList({
@@ -75,6 +76,9 @@ export default function TaskList({
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 addTask();
+              } else if (e.key === 'Backspace' && task === '') {
+                deleteTask(index);
+                e.preventDefault();
               }
             }}
             // className="flex-1 px-3 py-2 border rounded-lg bg-background text-foreground border-foreground/20 focus:ring-2 focus:ring-foreground/50"
@@ -82,11 +86,12 @@ export default function TaskList({
             ref={el => {
               if (el) inputRefs.current[index] = el;
             }}
-            className={`flex-1 px-3 py-2 border rounded-lg bg-background text-foreground focus:ring-2 ${
-              index === tasks.length - 1 && !task ? 'border-yellow-500' : 'border-foreground/20'
-            } focus:ring-foreground/50 transition-all`}
+            className={clsx(
+              'flex-1 px-3 py-2 border rounded-lg bg-background text-foreground',
+              'border-foreground/20 focus-visible:outline-primary',
+            )}
           />
-          {(tasks.length > 1 || task.trim() !== '') && (
+          {(tasks.length > 1 || task !== '') && (
             <button
               type="button"
               onClick={() => deleteTask(index)}
