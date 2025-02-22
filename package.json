@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "latest",
+    "clsx": "latest",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest"
