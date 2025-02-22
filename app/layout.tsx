@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Job Concierge',
+  title: 'Job Conciergerie',
   description: 'Postez votre annonce de maniere simple',
 };
 
