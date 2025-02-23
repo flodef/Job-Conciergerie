@@ -1,8 +1,8 @@
 'use client';
-import TaskList from '@/components/TaskList';
-import { ToastMessage, ToastType } from '@/components/ToastMessage';
-import FullScreenImageModal from '@/components/FullScreenImageModal';
-import ConfirmationModal from '@/components/ConfirmationModal';
+import ConfirmationModal from '@/app/components/ConfirmationModal';
+import FullScreenImageModal from '@/app/components/FullScreenImageModal';
+import TaskList from '@/app/components/TaskList';
+import { ToastMessage, ToastType } from '@/app/components/ToastMessage';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -73,17 +73,17 @@ export default function AddHome() {
     setImages(prev => [...prev, ...newFiles]);
   };
 
-  const hasUnsavedData = () => {
-    return description.trim() !== '' || tasks.some(t => t.trim() !== '') || images.length > 0 || title.trim() !== '';
-  };
+  // const hasUnsavedData = () => {
+  //   return description.trim() !== '' || tasks.some(t => t.trim() !== '') || images.length > 0 || title.trim() !== '';
+  // };
 
-  const handleClose = () => {
-    if (hasUnsavedData()) {
-      setShowConfirmClose(true);
-    } else {
-      router.push('/');
-    }
-  };
+  // const handleClose = () => {
+  //   if (hasUnsavedData()) {
+  //     setShowConfirmClose(true);
+  //   } else {
+  //     router.push('/');
+  //   }
+  // };
 
   const confirmNavigation = (confirm: boolean) => {
     setShowConfirmClose(false);
@@ -108,9 +108,9 @@ export default function AddHome() {
 
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-foreground">Nouveau bien</h1>
-        <button className="text-foreground text-4xl hover:scale-110 transition-transform" onClick={handleClose}>
+        {/* <button className="text-foreground text-4xl hover:scale-110 transition-transform" onClick={handleClose}>
           &times;
-        </button>
+        </button> */}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
