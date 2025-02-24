@@ -1,23 +1,22 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 export enum Page {
-  MissionsList = 'Liste des missions',
-  MissionsHandling = 'Gestion des missions',
-  HomesHandling = 'Gestion des biens',
+  Missions = 'Missions',
+  Homes = 'Biens',
   Settings = 'Paramètres',
   // GDPR = 'GDPR',
 }
-const defaultPage = Page.MissionsList;
+const defaultPage = Page.Missions;
 export const pages = Object.values(Page);
 
 // Map page enum to route paths
 const routeMap: Record<Page, string> = {
-  [Page.MissionsList]: '/',
-  [Page.MissionsHandling]: '/missions',
-  [Page.HomesHandling]: '/homes',
+  [Page.Missions]: '/',
+  [Page.Homes]: '/homes',
   [Page.Settings]: '/settings',
   // [Page.GDPR]: '/gdpr',
 };
@@ -27,6 +26,8 @@ type MenuContext = {
   isMenuOpen: boolean;
   setIsMenuOpen: (isMenuOpen: boolean) => void;
   currentPage: Page;
+  setHasUnsavedChanges: (hasUnsavedChanges: boolean) => void;
+  confirmationModal: ReactNode;
 };
 
 type MenuProviderProps = {
@@ -39,6 +40,9 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(defaultPage);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [shouldShowConfirmClose, setShouldShowConfirmClose] = useState(false);
+  const [pendingPage, setPendingPage] = useState<Page>();
 
   useEffect(() => {
     const handlePopState = () => {
@@ -59,11 +63,48 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const onMenuChange = (page = defaultPage) => {
-    setCurrentPage(page);
-    setIsMenuOpen(false);
-    router.push(routeMap[page]);
+  const onMenuChange = useCallback(
+    (page = defaultPage) => {
+      if (page === currentPage) return;
+
+      setIsMenuOpen(false);
+      if (!hasUnsavedChanges) {
+        setCurrentPage(page);
+        setPendingPage(undefined);
+        router.push(routeMap[page]);
+      } else {
+        setShouldShowConfirmClose(true);
+        setPendingPage(page);
+      }
+    },
+    [currentPage, hasUnsavedChanges, router, setPendingPage],
+  );
+
+  useEffect(() => {
+    if (!hasUnsavedChanges && pendingPage) onMenuChange(pendingPage);
+  }, [hasUnsavedChanges, pendingPage, onMenuChange]);
+
+  const confirmNavigation = (confirm: boolean) => {
+    setShouldShowConfirmClose(false);
+
+    if (confirm) {
+      setHasUnsavedChanges(false);
+    } else {
+      setPendingPage(undefined);
+    }
   };
+
+  const confirmationModal = (
+    <ConfirmationModal
+      isOpen={shouldShowConfirmClose}
+      onConfirm={() => confirmNavigation(true)}
+      onCancel={() => confirmNavigation(false)}
+      title="Modifications non enregistrées"
+      message="Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter ?"
+      confirmText="Quitter"
+      cancelText="Annuler"
+    />
+  );
 
   return (
     <MenuContext.Provider
@@ -72,6 +113,8 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
         isMenuOpen,
         setIsMenuOpen,
         currentPage,
+        setHasUnsavedChanges,
+        confirmationModal,
       }}
     >
       {children}

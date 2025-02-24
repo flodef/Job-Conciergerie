@@ -1,15 +1,15 @@
 'use client';
-import ConfirmationModal from '@/app/components/ConfirmationModal';
 import FullScreenImageModal from '@/app/components/FullScreenImageModal';
 import TaskList from '@/app/components/TaskList';
 import { ToastMessage, ToastType } from '@/app/components/ToastMessage';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useMenuContext } from '../contexts/menuProvider';
 
 export default function AddHome() {
-  const router = useRouter();
+  const { setHasUnsavedChanges, confirmationModal } = useMenuContext();
+
   const [description, setDescription] = useState('');
   const [images, setImages] = useState<File[]>([]);
   const [tasks, setTasks] = useState<string[]>(['']);
@@ -18,14 +18,17 @@ export default function AddHome() {
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [toastMessage, setToastMessage] = useState<{ type: ToastType; message: string }>();
-  const [showConfirmClose, setShowConfirmClose] = useState(false);
 
   const isFormValid =
     images.length > 0 && description.trim() !== '' && tasks.some(task => task.trim() !== '') && title.trim() !== '';
 
   useEffect(() => {
     if (isFormValid) setIsFormSubmitted(false);
-  }, [images, description, tasks, title, isFormValid]);
+
+    setHasUnsavedChanges(
+      description.trim() !== '' || tasks.some(t => t.trim() !== '') || images.length > 0 || title.trim() !== '',
+    );
+  }, [images, description, tasks, title, isFormValid, setHasUnsavedChanges]);
 
   useEffect(() => {
     const urls = images.map(image => URL.createObjectURL(image));
@@ -73,45 +76,15 @@ export default function AddHome() {
     setImages(prev => [...prev, ...newFiles]);
   };
 
-  // const hasUnsavedData = () => {
-  //   return description.trim() !== '' || tasks.some(t => t.trim() !== '') || images.length > 0 || title.trim() !== '';
-  // };
-
-  // const handleClose = () => {
-  //   if (hasUnsavedData()) {
-  //     setShowConfirmClose(true);
-  //   } else {
-  //     router.push('/');
-  //   }
-  // };
-
-  const confirmNavigation = (confirm: boolean) => {
-    setShowConfirmClose(false);
-    if (confirm) router.push('/');
-  };
-
   return (
     <div className="max-w-md mx-auto p-4">
       {selectedImageIndex !== undefined && (
         <FullScreenImageModal url={previewUrls[selectedImageIndex]} onClose={() => setSelectedImageIndex(undefined)} />
       )}
       {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
-      <ConfirmationModal
-        isOpen={showConfirmClose}
-        onConfirm={() => confirmNavigation(true)}
-        onCancel={() => confirmNavigation(false)}
-        title="Modifications non enregistrées"
-        message="Vous avez des modifications non sauvegardées. Voulez-vous vraiment quitter ?"
-        confirmText="Quitter"
-        cancelText="Annuler"
-      />
+      {confirmationModal}
 
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold text-foreground">Nouveau bien</h1>
-        {/* <button className="text-foreground text-4xl hover:scale-110 transition-transform" onClick={handleClose}>
-          &times;
-        </button> */}
-      </div>
+      <h1 className="text-2xl font-bold text-foreground mb-4">Nouveau bien</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
