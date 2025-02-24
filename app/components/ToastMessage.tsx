@@ -21,10 +21,8 @@ export const ToastMessage = ({ type, message }: ToastProps) => {
     [ToastType.Warning]: '⚠️ ',
   };
 
-  const position = type === ToastType.Success ? 'bottom-4' : 'top-4';
-
   return (
-    <div className={`fixed ${position} inset-x-2 text-white text-center py-2 rounded-lg ${typeStyles[type]}`}>
+    <div className={`fixed top-4 inset-x-2 text-white text-center py-2 rounded-lg ${typeStyles[type]}`}>
       {typeIcon[type]}
       {message}
     </div>
