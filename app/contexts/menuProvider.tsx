@@ -5,17 +5,19 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 import ConfirmationModal from '../components/ConfirmationModal';
 
 export enum Page {
+  Welcome = '',
   Missions = 'Missions',
   Homes = 'Biens',
   Settings = 'Paramètres',
   // GDPR = 'GDPR',
 }
-const defaultPage = Page.Missions;
+const defaultPage = Page.Welcome;
 export const pages = Object.values(Page);
 
 // Map page enum to route paths
-const routeMap: Record<Page, string> = {
-  [Page.Missions]: '/',
+export const routeMap: Record<Page, string> = {
+  [Page.Welcome]: '/',
+  [Page.Missions]: '/missions',
   [Page.Homes]: '/homes',
   [Page.Settings]: '/settings',
   // [Page.GDPR]: '/gdpr',
