@@ -46,25 +46,6 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
   const [shouldShowConfirmClose, setShouldShowConfirmClose] = useState(false);
   const [pendingPage, setPendingPage] = useState<Page>();
 
-  useEffect(() => {
-    const handlePopState = () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tab = urlParams.get('tab') as Page;
-
-      setCurrentPage(tab && pages.includes(tab) ? tab : defaultPage);
-    };
-
-    // Initialize from URL on first load
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialTab = urlParams.get('tab') as Page;
-    if (initialTab && pages.includes(initialTab)) {
-      setCurrentPage(initialTab);
-    }
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
   const onMenuChange = useCallback(
     (page = defaultPage) => {
       if (page === currentPage) return;
@@ -81,6 +62,17 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
     },
     [currentPage, hasUnsavedChanges, router, setPendingPage],
   );
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      const page = pages.find(p => routeMap[p] === path);
+      if (page !== undefined) onMenuChange(page);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [onMenuChange]);
 
   useEffect(() => {
     if (!hasUnsavedChanges && pendingPage) onMenuChange(pendingPage);

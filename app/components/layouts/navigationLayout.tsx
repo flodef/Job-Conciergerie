@@ -58,22 +58,24 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
             >
               <nav>
                 <ul className="space-y-2 py-4">
-                  {pages.map(page => (
-                    <li key={page}>
-                      <button
-                        onClick={() => onMenuChange(page)}
-                        className={clsx(
-                          'w-full px-4 py-2 text-left flex items-center',
-                          'hover:bg-accent transition-colors',
-                          page === currentPage
-                            ? 'border-l-4 border-primary font-medium'
-                            : 'border-l-4 border-transparent',
-                        )}
-                      >
-                        {page}
-                      </button>
-                    </li>
-                  ))}
+                  {pages
+                    .filter(page => page.toString())
+                    .map(page => (
+                      <li key={page}>
+                        <button
+                          onClick={() => onMenuChange(page)}
+                          className={clsx(
+                            'w-full px-4 py-2 text-left flex items-center',
+                            'hover:bg-accent transition-colors',
+                            page === currentPage
+                              ? 'border-l-4 border-primary font-medium'
+                              : 'border-l-4 border-transparent',
+                          )}
+                        >
+                          {page}
+                        </button>
+                      </li>
+                    ))}
                 </ul>
               </nav>
             </div>
