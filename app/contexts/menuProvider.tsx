@@ -8,6 +8,7 @@ export enum Page {
   Welcome = '',
   Missions = 'Missions',
   Homes = 'Biens',
+  Employees = 'Prestataires',
   Settings = 'Paramètres',
   // GDPR = 'GDPR',
 }
@@ -19,6 +20,7 @@ export const routeMap: Record<Page, string> = {
   [Page.Welcome]: '/',
   [Page.Missions]: '/missions',
   [Page.Homes]: '/homes',
+  [Page.Employees]: '/employees',
   [Page.Settings]: '/settings',
   // [Page.GDPR]: '/gdpr',
 };
