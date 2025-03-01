@@ -1,0 +1,20 @@
+[
+  {
+    "name": "CMD Breizh",
+    "email": "contact@cmd.bzh",
+    "tel": "+33662815964",
+    "color": "blue-300"
+  },
+  {
+    "name": "Menthe Réglisse",
+    "email": "contact@menthereglisse-conciergerie.com",
+    "tel": "+33771597340",
+    "color": "amber-400"
+  },
+  {
+    "name": "Calluna",
+    "email": "contact@calluna-conciergerie.fr",
+    "tel": "+33788998990",
+    "color": "emerald-700"
+  }
+]
