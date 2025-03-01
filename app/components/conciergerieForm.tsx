@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { ToastMessage, ToastType } from './toastMessage';
 import { useLocalStorage } from '@/app/utils/localStorage';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { defaultPrimaryColor, useTheme } from '../contexts/themeProvider';
 import conciergeriesData from '../data/conciergeries.json';
-import { useTheme } from '../contexts/themeProvider';
+import { ToastMessage, ToastType } from './toastMessage';
 
 type ConciergerieFormProps = {
   companies: string[];
@@ -15,17 +14,17 @@ type ConciergerieFormProps = {
 export type ConciergerieData = {
   name: string;
   color: string;
-  colorName?: string;
+  colorName: string;
   email: string;
   tel?: string;
 };
 
 export default function ConciergerieForm({ companies, onClose }: ConciergerieFormProps) {
-  const router = useRouter();
   const { setPrimaryColor } = useTheme();
   const [conciergerieData, setConciergerieData] = useLocalStorage<ConciergerieData>('conciergerie_data', {
     name: companies[0] || '',
-    color: '#a4bcde', // Default to primary color
+    color: defaultPrimaryColor,
+    colorName: '',
     email: '',
   });
   const [toastMessage, setToastMessage] = useState<{ type: ToastType; message: string }>();
@@ -36,18 +35,16 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
     if (conciergerieData.name) {
       const selectedConciergerie = conciergeriesData.find(c => c.name === conciergerieData.name);
       if (selectedConciergerie) {
-        // Convert color name (like 'blue-300') to a hex value
-        const colorValue = getColorFromName(selectedConciergerie.color);
         setConciergerieData(prev => ({
           ...prev,
           email: selectedConciergerie.email,
-          color: colorValue,
-          colorName: selectedConciergerie.color,
-          tel: selectedConciergerie.tel
+          color: selectedConciergerie.colorvalue,
+          colorName: selectedConciergerie.colorname,
+          tel: selectedConciergerie.tel,
         }));
-        
+
         // Set the primary color theme
-        setPrimaryColor(colorValue);
+        setPrimaryColor(selectedConciergerie.colorvalue);
       }
     }
   }, [conciergerieData.name, setConciergerieData, setPrimaryColor]);
@@ -57,28 +54,9 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
     localStorage.removeItem('employee_data');
   }, []);
 
-  // Helper function to convert color names to hex values
-  const getColorFromName = (colorName: string): string => {
-    const colorMap: Record<string, string> = {
-      'blue-300': '#93c5fd',
-      'amber-400': '#fbbf24',
-      'emerald-700': '#047857',
-      // Add more colors as needed
-    };
-    
-    return colorMap[colorName] || '#a4bcde'; // Default to primary color if not found
-  };
-
-  // Helper function to format color name for display
-  const formatColorName = (colorName?: string): string => {
-    if (!colorName) return '';
-    
-    // Split by hyphen (e.g., 'blue-300' becomes ['blue', '300'])
-    const parts = colorName.split('-');
-    if (parts.length !== 2) return colorName;
-    
-    // Capitalize the color name and add the number
-    return `${parts[0].charAt(0).toUpperCase() + parts[0].slice(1)} ${parts[1]}`;
+  const handleClose = () => {
+    setPrimaryColor(defaultPrimaryColor);
+    onClose();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -118,17 +96,16 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
 
       {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="company" className="block text-sm font-medium text-foreground mb-1">
-            Sélectionnez votre conciergerie:
+          <label htmlFor="conciergerie" className="block text-sm font-medium text-foreground mb-1">
+            Conciergerie
           </label>
           <select
-            id="company"
-            className="w-full p-2 border border-secondary rounded-md focus:ring-primary focus:border-primary"
+            id="conciergerie"
             value={conciergerieData.name}
-            onChange={e => setConciergerieData(prev => ({ ...prev, name: e.target.value }))}
-            required
+            onChange={e => setConciergerieData({ ...conciergerieData, name: e.target.value })}
+            className="w-full p-2 border border-secondary rounded-md bg-background text-foreground"
           >
             {companies.map(company => (
               <option key={company} value={company}>
@@ -139,61 +116,66 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
         </div>
 
         <div>
-          <label htmlFor="color" className="block text-sm font-medium text-foreground mb-1">
-            Couleur (non modifiable):
-          </label>
-          <div className="flex items-center space-x-2">
-            <div 
-              className="w-8 h-8 rounded-full border border-secondary"
-              style={{ backgroundColor: conciergerieData.color }}
-            />
-            <span className="text-foreground/70">
-              {formatColorName(conciergerieData.colorName) || conciergerieData.color}
-            </span>
-          </div>
-        </div>
-
-        <div>
           <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
-            Email (non modifiable):
+            Email (non modifiable)
           </label>
-          <div className="w-full p-2 border border-secondary rounded-md bg-secondary/20 text-foreground/70">
-            {conciergerieData.email || `contact@${conciergerieData.name.toLowerCase().replace(/\s+/g, '-')}.fr`}
-          </div>
+          <input
+            type="email"
+            id="email"
+            value={conciergerieData.email}
+            readOnly
+            className="w-full p-2 border border-secondary rounded-md bg-background/50 text-foreground/70 cursor-not-allowed"
+          />
         </div>
 
         {conciergerieData.tel && (
           <div>
             <label htmlFor="tel" className="block text-sm font-medium text-foreground mb-1">
-              Téléphone (non modifiable):
+              Téléphone (non modifiable)
             </label>
-            <div className="w-full p-2 border border-secondary rounded-md bg-secondary/20 text-foreground/70">
-              {conciergerieData.tel}
-            </div>
+            <input
+              type="tel"
+              id="tel"
+              value={conciergerieData.tel}
+              readOnly
+              className="w-full p-2 border border-secondary rounded-md bg-background/50 text-foreground/70 cursor-not-allowed"
+            />
           </div>
         )}
+
+        <div>
+          <label htmlFor="color" className="block text-sm font-medium text-foreground mb-1">
+            Couleur (non modifiable)
+          </label>
+          <div className="flex items-center space-x-2">
+            <div
+              className="w-8 h-8 rounded-full border border-secondary"
+              style={{ backgroundColor: conciergerieData.color }}
+            />
+            <span className="text-foreground/70">{conciergerieData.colorName}</span>
+          </div>
+        </div>
 
         <div className="flex justify-end space-x-2 pt-4">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="px-4 py-2 bg-secondary text-foreground rounded-md hover:bg-secondary/80"
-            disabled={isSubmitting}
           >
             Annuler
           </button>
-          <button 
-            type="submit" 
-            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 flex items-center justify-center"
+          <button
+            type="submit"
+            className="px-4 py-2 bg-primary text-foreground rounded-md hover:bg-primary/80 flex items-center justify-center"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                <span className="w-4 h-4 border-2 border-foreground border-t-transparent rounded-full animate-spin mr-2"></span>
                 Traitement...
               </>
             ) : (
-              'Continuer'
+              'Valider'
             )}
           </button>
         </div>

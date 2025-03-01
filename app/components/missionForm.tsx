@@ -132,7 +132,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
                 className={clsx(
                   'p-2 border rounded-lg text-sm',
                   objectivesState.includes(objective)
-                    ? 'bg-primary text-white border-primary'
+                    ? 'bg-primary text-foreground border-primary'
                     : 'bg-background text-foreground border-secondary',
                 )}
               >
@@ -163,14 +163,10 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         </div>
 
         <div className="flex justify-end gap-4 pt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 border border-secondary rounded-lg hover:bg-gray-100"
-          >
+          <button type="button" onClick={onClose} className="px-4 py-2 bg-secondary rounded-lg hover:bg-gray-100">
             Annuler
           </button>
-          <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+          <button type="submit" className="px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-primary/90">
             {mode === 'add' ? 'Ajouter' : 'Enregistrer'}
           </button>
         </div>

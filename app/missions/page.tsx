@@ -24,8 +24,14 @@ export default function Missions() {
     }
   }, [setPrimaryColor]);
 
-  // Filter out deleted missions
-  const activeMissions = missions.filter(mission => !mission.deleted);
+  // Get current date at midnight for comparison
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Filter out deleted missions and past missions, then sort by date (closest to today first)
+  const activeMissions = missions
+    .filter(mission => !mission.deleted && new Date(mission.date) >= today)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const handleMissionClick = (missionId: string) => {
     setSelectedMission(missionId);
@@ -76,18 +82,9 @@ export default function Missions() {
           <div className="flex justify-end mb-4">
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="w-full px-4 py-2 flex items-center justify-center gap-2 border-2 border-dashed border-foreground/30 rounded-lg hover:border-foreground/50 cursor-pointer transition-colors"
+              className="w-full px-4 py-2 flex items-center justify-center text-foreground/50 gap-2 border-2 border-dashed border-foreground/30 rounded-lg hover:border-foreground/50 cursor-pointer transition-colors"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-5 h-5"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
+              <span className="text-3xl">+</span>
               Ajouter une mission
             </button>
           </div>

@@ -23,30 +23,30 @@ export default function Home() {
   useEffect(() => {
     const initializeFromLocalStorage = async () => {
       setIsLoading(true);
-      
+
       // Add a small delay to ensure localStorage is properly loaded
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       // Check if user has completed the welcome flow
       if (hasCompletedWelcomeFlow()) {
         window.location.href = '/missions';
         return;
       }
-      
+
       // Get user type from localStorage
       const { userType: storedUserType } = getWelcomeParams();
       setUserType(storedUserType);
-      
+
       // Show appropriate form based on user type
       if (storedUserType === 'prestataire') {
         setShowEmployeeForm(true);
       } else if (storedUserType === 'conciergerie') {
         setShowConciergerieForm(true);
       }
-      
+
       setIsLoading(false);
     };
-    
+
     initializeFromLocalStorage();
   }, [router]);
 
@@ -54,7 +54,7 @@ export default function Home() {
     // Save user type to localStorage
     localStorage.setItem('user_type', JSON.stringify(type));
     setUserType(type);
-    
+
     // Show appropriate form based on user type
     if (type === 'prestataire') {
       setShowEmployeeForm(true);
@@ -66,7 +66,7 @@ export default function Home() {
   const handleCloseForm = () => {
     // Clear user type from localStorage
     localStorage.removeItem('user_type');
-    
+
     // Reset state to show selection screen
     setUserType(null);
     setShowEmployeeForm(false);
@@ -76,14 +76,14 @@ export default function Home() {
   // Show loading spinner while checking localStorage
   if (isLoading) {
     return (
-      <div className="min-h-[calc(100dvh-4rem)] flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingSpinner size="large" text="Chargement..." />
       </div>
     );
   }
 
   return (
-    <main className="min-h-[calc(100dvh-4rem)] flex items-center justify-center bg-background p-4">
+    <main className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md bg-background shadow-lg rounded-lg overflow-hidden">
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
           <UserTypeSelection onSelect={handleUserTypeSelect} />

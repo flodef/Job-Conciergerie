@@ -1,10 +1,9 @@
 'use client';
 
-import { clsx } from 'clsx/lite';
-import { useState, useEffect } from 'react';
-import { ToastMessage, ToastType } from './toastMessage';
 import { useLocalStorage } from '@/app/utils/localStorage';
-import { useRouter } from 'next/navigation';
+import { clsx } from 'clsx/lite';
+import { useEffect, useState } from 'react';
+import { ToastMessage, ToastType } from './toastMessage';
 
 type EmployeeFormProps = {
   companies: string[];
@@ -21,7 +20,6 @@ export type EmployeeData = {
 };
 
 export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) {
-  const router = useRouter();
   const [formData, setFormData] = useLocalStorage<EmployeeData>('employee_data', {
     nom: '',
     prenom: '',
@@ -236,12 +234,12 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/80 flex items-center justify-center"
+            className="px-4 py-2 bg-default text-foreground rounded-md hover:bg-default/80 flex items-center justify-center"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
+                <span className="w-4 h-4 border-2 border-foreground border-t-transparent rounded-full animate-spin mr-2"></span>
                 Traitement...
               </>
             ) : (

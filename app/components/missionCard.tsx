@@ -25,7 +25,7 @@ export default function MissionCard({ mission, onClick }: MissionCardProps) {
 
       <div className="flex flex-wrap gap-1 mt-2">
         {mission.objectives.map(objective => (
-          <span key={objective} className="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-xs">
+          <span key={objective} className="px-2 py-0.5 bg-default/10 text-foreground rounded-full text-xs">
             {objective}
           </span>
         ))}

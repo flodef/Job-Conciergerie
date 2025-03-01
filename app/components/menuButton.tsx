@@ -7,12 +7,12 @@ export const MenuButton = ({ className }: { className?: string }) => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const genericHamburgerLine = `h-1 w-6 my-[3px] rounded-full bg-black dark:bg-white transition ease transform`;
+  const genericHamburgerLine = `h-1 w-6 my-[3px] rounded-full bg-black dark:bg-foreground transition ease transform`;
 
   return (
     <button
       className={clsx(
-        'flex flex-col h-12 w-12 border-0 border-black dark:border-white rounded justify-center items-center group ml-0',
+        'flex flex-col h-12 w-12 border-0 border-black dark:border-foreground rounded justify-center items-center group ml-0',
         className,
       )}
       onClick={handleClick}

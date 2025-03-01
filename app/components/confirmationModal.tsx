@@ -25,10 +25,10 @@ export default function ConfirmationModal({
         <h3 className="text-lg font-semibold mb-4">{title}</h3>
         <p className="mb-6">{message}</p>
         <div className="flex gap-4 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 text-foreground hover:bg-gray-100 rounded-lg">
+          <button onClick={onCancel} className="px-4 py-2 bg-secondary text-foreground hover:bg-gray-100 rounded-lg">
             {cancelText}
           </button>
-          <button onClick={onConfirm} className="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded-lg">
+          <button onClick={onConfirm} className="px-4 py-2 bg-primary text-foreground hover:bg-primary/90 rounded-lg">
             {confirmText}
           </button>
         </div>

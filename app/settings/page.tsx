@@ -38,35 +38,18 @@ export default function Settings() {
     loadUserInfo();
   }, [setPrimaryColor]);
 
-  // Helper function to format color name for display
-  const formatColorName = (colorName?: string): string => {
-    if (!colorName) return '';
-
-    // Split by hyphen (e.g., 'blue-300' becomes ['blue', '300'])
-    const parts = colorName.split('-');
-    if (parts.length !== 2) return colorName;
-
-    // Capitalize the color name and add the number
-    return `${parts[0].charAt(0).toUpperCase() + parts[0].slice(1)} ${parts[1]}`;
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-[calc(100dvh-4rem)] flex items-center justify-center bg-background">
-        <LoadingSpinner size="large" text="Chargement des paramètres..." />
+        <LoadingSpinner size="large" text="Chargement..." />
       </div>
     );
   }
 
-  if (!userInfo || !userInfo.userType) {
+  if (!userInfo) {
     return (
-      <div className="min-h-[calc(100dvh-4rem)] flex items-center justify-center bg-background p-4">
-        <div className="bg-background shadow-lg rounded-lg p-8 max-w-md w-full">
-          <h1 className="text-2xl font-bold text-center mb-4">Paramètres</h1>
-          <p className="text-center text-foreground/70">
-            Aucune information utilisateur disponible. Veuillez compléter le formulaire d&apos;accueil.
-          </p>
-        </div>
+      <div className="min-h-[calc(100dvh-4rem)] flex items-center justify-center bg-background">
+        <p className="text-foreground/70">Aucune information utilisateur disponible.</p>
       </div>
     );
   }
@@ -78,7 +61,7 @@ export default function Settings() {
           {userInfo.userType === 'conciergerie' && userInfo.conciergerieData && (
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-foreground/70 mb-1">Nom de la conciergerie</p>
+                <p className="text-sm text-foreground/70 mb-1">Nom</p>
                 <p className="font-medium">{userInfo.conciergerieData.name}</p>
               </div>
 
@@ -89,16 +72,13 @@ export default function Settings() {
                     className="w-6 h-6 rounded-full border border-secondary"
                     style={{ backgroundColor: userInfo.conciergerieData.color }}
                   />
-                  <span>{formatColorName(userInfo.conciergerieData.colorName) || userInfo.conciergerieData.color}</span>
+                  <span>{userInfo.conciergerieData.colorName}</span>
                 </div>
               </div>
 
               <div>
                 <p className="text-sm text-foreground/70 mb-1">Email</p>
-                <p className="font-medium">
-                  {userInfo.conciergerieData.email ||
-                    `contact@${userInfo.conciergerieData.name.toLowerCase().replace(/\s+/g, '-')}.fr`}
-                </p>
+                <p className="font-medium">{userInfo.conciergerieData.email}</p>
               </div>
 
               {userInfo.conciergerieData.tel && (
@@ -137,12 +117,12 @@ export default function Settings() {
                 <p className="font-medium">{userInfo.employeeData.conciergerie}</p>
               </div>
 
-              {userInfo.employeeData.message && (
-                <div>
-                  <p className="text-sm text-foreground/70 mb-1">Message</p>
-                  <p className="font-medium">{userInfo.employeeData.message}</p>
-                </div>
-              )}
+              <div>
+                <p className="text-sm text-foreground/70 mb-1">Message</p>
+                <p className="font-medium whitespace-pre-wrap">
+                  {userInfo.employeeData.message || 'Aucun message'}
+                </p>
+              </div>
             </div>
           )}
         </div>
