@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
-import ConfirmationModal from '../components/ConfirmationModal';
+import ConfirmationModal from '../components/confirmationModal';
 
 export enum Page {
   Welcome = '',

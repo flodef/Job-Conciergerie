@@ -1,7 +1,7 @@
 'use client';
-import FullScreenImageModal from '@/app/components/FullScreenImageModal';
-import TaskList from '@/app/components/TaskList';
-import { ToastMessage, ToastType } from '@/app/components/ToastMessage';
+import FullScreenImageModal from '@/app/components/fullScreenImageModal';
+import TaskList from '@/app/components/taskList';
+import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
