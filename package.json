@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tabler/icons-react": "latest",
     "@tailwindcss/postcss": "latest",
     "clsx": "latest",
     "next": "latest",
