@@ -1,7 +1,9 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, ReactNode, useContext, useEffect } from 'react';
 import { getWelcomeParams } from '../utils/welcomeParams';
+
+export const defaultPrimaryColor = '#a4bcde';
 
 type ThemeContextType = {
   setPrimaryColor: (color: string) => void;
@@ -10,7 +12,6 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Function to set the primary color
   const setPrimaryColor = (color: string) => {
     if (typeof document !== 'undefined') {
       document.documentElement.style.setProperty('--color-primary', color);
@@ -22,23 +23,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const initializeTheme = async () => {
       // Add a small delay to ensure localStorage is properly loaded
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       const { conciergerieData } = getWelcomeParams();
-      
+
       // If conciergerie data exists and has a color, set it as primary
       if (conciergerieData && conciergerieData.color) {
         setPrimaryColor(conciergerieData.color);
       }
     };
-    
+
     initializeTheme();
   }, []);
 
-  return (
-    <ThemeContext.Provider value={{ setPrimaryColor }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ setPrimaryColor }}>{children}</ThemeContext.Provider>;
 }
 
 // Hook to use the theme context

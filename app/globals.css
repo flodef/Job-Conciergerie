@@ -2,6 +2,7 @@
 
 @theme {
   --color-primary: #a4bcde;
+  --color-default: #a4bcde;
   --color-secondary: var(--secondary);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
