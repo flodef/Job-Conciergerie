@@ -32,7 +32,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
     dateInputs.forEach(input => {
       input.setAttribute('lang', 'fr');
     });
-    
+
     // Set document language to French
     document.documentElement.lang = 'fr';
   }, []);
@@ -108,7 +108,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
             onChange={e => setHomeId(e.target.value)}
             className={clsx(
               'w-full p-2 border rounded-lg bg-background',
-              isFormSubmitted && !homeId ? 'border-red-500' : 'border-gray-300',
+              isFormSubmitted && !homeId ? 'border-red-500' : 'border-secondary',
             )}
           >
             <option value="">Sélectionnez un bien</option>
@@ -133,7 +133,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
                   'p-2 border rounded-lg text-sm',
                   objectivesState.includes(objective)
                     ? 'bg-primary text-white border-primary'
-                    : 'bg-background text-foreground border-gray-300',
+                    : 'bg-background text-foreground border-secondary',
                 )}
               >
                 {objective}
@@ -155,12 +155,10 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
             onChange={e => setDate(e.target.value)}
             className={clsx(
               'w-full p-2 border rounded-lg bg-background',
-              isFormSubmitted && !date ? 'border-red-500' : 'border-gray-300',
+              isFormSubmitted && !date ? 'border-red-500' : 'border-secondary',
             )}
           />
-          <div className="text-xs text-gray-500 mt-1">
-            Date sélectionnée: {date ? formatDateFr(date) : ''}
-          </div>
+          <div className="text-xs text-gray-500 mt-1">Date sélectionnée: {date ? formatDateFr(date) : ''}</div>
           {isFormSubmitted && !date && <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une date</p>}
         </div>
 
@@ -168,7 +166,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+            className="px-4 py-2 border border-secondary rounded-lg hover:bg-gray-100"
           >
             Annuler
           </button>

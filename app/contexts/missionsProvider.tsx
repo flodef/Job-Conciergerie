@@ -20,6 +20,7 @@ type MissionsContextType = {
   missions: Mission[];
   homes: Home[];
   employees: Employee[];
+  isLoading: boolean;
   addMission: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'deleted'>) => void;
   updateMission: (mission: Mission) => void;
   deleteMission: (id: string) => void;
@@ -32,24 +33,37 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [homes] = useState<Home[]>(mockHomes);
   const [employees] = useState<Employee[]>(mockEmployees);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load missions from localStorage on initial render
   useEffect(() => {
-    const savedMissions = localStorage.getItem('missions');
-    if (savedMissions) {
-      try {
-        const parsedMissions = JSON.parse(savedMissions);
-        // Convert string dates back to Date objects
-        const missionsWithDates = parsedMissions.map((mission: Mission) => ({
-          ...mission,
-          date: new Date(mission.date),
-          modifiedDate: new Date(mission.modifiedDate),
-        }));
-        setMissions(missionsWithDates);
-      } catch (error) {
-        console.error('Failed to parse missions from localStorage', error);
+    const loadMissions = async () => {
+      setIsLoading(true);
+      
+      // Simulate a small delay to ensure localStorage is properly loaded
+      // and to show the loading state for a better user experience
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const savedMissions = localStorage.getItem('missions');
+      if (savedMissions) {
+        try {
+          const parsedMissions = JSON.parse(savedMissions);
+          // Convert string dates back to Date objects
+          const missionsWithDates = parsedMissions.map((mission: Mission) => ({
+            ...mission,
+            date: new Date(mission.date),
+            modifiedDate: new Date(mission.modifiedDate),
+          }));
+          setMissions(missionsWithDates);
+        } catch (error) {
+          console.error('Failed to parse missions from localStorage', error);
+        }
       }
-    }
+      
+      setIsLoading(false);
+    };
+    
+    loadMissions();
   }, []);
 
   // Save missions to localStorage whenever they change
@@ -100,6 +114,7 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
         missions,
         homes,
         employees,
+        isLoading,
         addMission,
         updateMission,
         deleteMission,

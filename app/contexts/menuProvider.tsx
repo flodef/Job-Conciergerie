@@ -48,6 +48,15 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
   const [shouldShowConfirmClose, setShouldShowConfirmClose] = useState(false);
   const [pendingPage, setPendingPage] = useState<Page>();
 
+  // Initialize currentPage based on URL path when component mounts
+  useEffect(() => {
+    const path = window.location.pathname;
+    const page = Object.entries(routeMap).find(([key, route]) => key && route === path)?.[0] as Page | undefined;
+    if (page) {
+      setCurrentPage(page);
+    }
+  }, []);
+
   const onMenuChange = useCallback(
     (page = defaultPage) => {
       if (page === currentPage) return;
