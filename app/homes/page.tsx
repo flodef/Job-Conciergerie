@@ -7,6 +7,7 @@ import FullScreenModal from '../components/fullScreenModal';
 import HomeCard from '../components/homeCard';
 import HomeDetails from '../components/homeDetails';
 import HomeForm from '../components/homeForm';
+import LoadingSpinner from '../components/loadingSpinner';
 import { useHomes } from '../contexts/homesProvider';
 import { useMenuContext } from '../contexts/menuProvider';
 import { HomeData } from '../types/mission';
@@ -16,6 +17,7 @@ export default function HomesPage() {
   const { setHasUnsavedChanges } = useMenuContext();
   const [selectedHome, setSelectedHome] = useState<HomeData | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Reset unsaved changes when navigating to this page
@@ -43,6 +45,11 @@ export default function HomesPage() {
     setSelectedHome(home);
   };
 
+  const handleHomeEdit = (home: HomeData) => {
+    setSelectedHome(home);
+    setIsEditModalOpen(true);
+  };
+
   const handleCloseDetails = () => {
     setSelectedHome(null);
   };
@@ -53,6 +60,11 @@ export default function HomesPage() {
 
   const handleCloseAddModal = () => {
     setIsAddModalOpen(false);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedHome(null);
   };
 
   return (
@@ -78,8 +90,8 @@ export default function HomesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="min-h-[calc(100dvh-4rem)] flex items-center justify-center bg-background">
+          <LoadingSpinner size="large" text="Chargement des biens..." />
         </div>
       ) : filteredHomes.length === 0 && searchTerm === '' ? (
         <div
@@ -101,7 +113,12 @@ export default function HomesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredHomes.map(home => (
-            <HomeCard key={home.id} home={home} onClick={() => handleHomeClick(home)} />
+            <HomeCard 
+              key={home.id} 
+              home={home} 
+              onClick={() => handleHomeClick(home)} 
+              onEdit={() => handleHomeEdit(home)}
+            />
           ))}
         </div>
       )}
@@ -115,7 +132,15 @@ export default function HomesPage() {
         </FullScreenModal>
       )}
 
-      {selectedHome && <HomeDetails home={selectedHome} onClose={handleCloseDetails} />}
+      {selectedHome && !isEditModalOpen && (
+        <HomeDetails home={selectedHome} onClose={handleCloseDetails} />
+      )}
+
+      {selectedHome && isEditModalOpen && (
+        <FullScreenModal onClose={handleCloseEditModal}>
+          <HomeForm home={selectedHome} onClose={handleCloseEditModal} mode="edit" />
+        </FullScreenModal>
+      )}
     </div>
   );
 }

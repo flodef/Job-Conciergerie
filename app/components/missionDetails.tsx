@@ -68,7 +68,7 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
 
   return (
     <FullScreenModal onClose={onClose}>
-      <div className="p-6">
+      <div className="p-6" data-mission-details>
         <h2 className="text-xl font-bold mb-4">Détails de la mission</h2>
 
         <div className="space-y-4">
@@ -126,6 +126,7 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
             <button
               onClick={() => setIsEditMode(true)}
               className="flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80"
+              data-edit-button
             >
               <IconPencil />
               Modifier

@@ -11,10 +11,12 @@ import MissionForm from '../components/missionForm';
 import { useMissions } from '../contexts/missionsProvider';
 import { useTheme } from '../contexts/themeProvider';
 import { getWelcomeParams } from '../utils/welcomeParams';
+import { Mission } from '../types/mission';
 
 export default function Missions() {
   const { missions, isLoading, getCurrentConciergerie } = useMissions();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
   const { setPrimaryColor } = useTheme();
 
@@ -46,8 +48,18 @@ export default function Missions() {
     setSelectedMission(missionId);
   };
 
+  const handleMissionEdit = (missionId: string) => {
+    setSelectedMission(missionId);
+    setIsEditModalOpen(true);
+  };
+
   const handleCloseModal = () => {
     setIsAddModalOpen(false);
+    setSelectedMission(null);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
     setSelectedMission(null);
   };
 
@@ -84,7 +96,12 @@ export default function Missions() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {activeMissions.map(mission => (
-            <MissionCard key={mission.id} mission={mission} onClick={() => handleMissionClick(mission.id)} />
+            <MissionCard 
+              key={mission.id} 
+              mission={mission} 
+              onClick={() => handleMissionClick(mission.id)} 
+              onEdit={() => handleMissionEdit(mission.id)}
+            />
           ))}
         </div>
       )}
@@ -98,7 +115,19 @@ export default function Missions() {
         </FullScreenModal>
       )}
 
-      {selectedMissionData && <MissionDetails mission={selectedMissionData} onClose={handleCloseModal} />}
+      {selectedMissionData && !isEditModalOpen && (
+        <MissionDetails mission={selectedMissionData} onClose={() => setSelectedMission(null)} />
+      )}
+
+      {selectedMissionData && isEditModalOpen && (
+        <FullScreenModal onClose={handleCloseEditModal}>
+          <MissionForm 
+            mission={selectedMissionData} 
+            onClose={handleCloseEditModal} 
+            mode="edit" 
+          />
+        </FullScreenModal>
+      )}
     </div>
   );
 }

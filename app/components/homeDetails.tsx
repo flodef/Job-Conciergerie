@@ -73,7 +73,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
         />
       )}
 
-      <div className="p-6">
+      <div className="p-6" data-home-details>
         <h2 className="text-xl font-bold mb-4">Détails du bien</h2>
 
         <div className="space-y-4">
@@ -143,6 +143,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
             <button
               onClick={() => setIsEditMode(true)}
               className="flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80"
+              data-edit-button
             >
               <IconPencil />
               Modifier

@@ -6,9 +6,10 @@ import { HomeData } from '../types/mission';
 type HomeCardProps = {
   home: HomeData;
   onClick: () => void;
+  onEdit?: () => void;
 };
 
-export default function HomeCard({ home, onClick }: HomeCardProps) {
+export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('fr-FR', {
       day: '2-digit',
@@ -20,10 +21,18 @@ export default function HomeCard({ home, onClick }: HomeCardProps) {
   // Get the conciergerie color from the home data
   const conciergerieColor = home.conciergerie?.color || 'var(--color-primary)';
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent the default context menu
+    if (onEdit) {
+      onEdit();
+    }
+  };
+
   return (
     <div
       className="bg-background p-4 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
       onClick={onClick}
+      onContextMenu={handleContextMenu}
       style={{ borderLeft: `6px solid ${conciergerieColor}` }}
     >
       <div className="flex justify-between items-center mb-2">

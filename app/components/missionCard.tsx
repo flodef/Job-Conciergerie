@@ -5,9 +5,10 @@ import { Mission } from '../types/mission';
 type MissionCardProps = {
   mission: Mission;
   onClick: () => void;
+  onEdit?: () => void;
 };
 
-export default function MissionCard({ mission, onClick }: MissionCardProps) {
+export default function MissionCard({ mission, onClick, onEdit }: MissionCardProps) {
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('fr-FR', {
       day: '2-digit',
@@ -19,10 +20,18 @@ export default function MissionCard({ mission, onClick }: MissionCardProps) {
   // Get the conciergerie color from the mission data
   const conciergerieColor = mission.conciergerie?.color || 'var(--color-default)';
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent the default context menu
+    if (onEdit) {
+      onEdit();
+    }
+  };
+
   return (
     <div
       className="bg-background p-4 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
       onClick={onClick}
+      onContextMenu={handleContextMenu}
       style={{ borderLeft: `6px solid ${conciergerieColor}` }}
     >
       <h3 className="font-medium text-foreground">{mission.home.title}</h3>
