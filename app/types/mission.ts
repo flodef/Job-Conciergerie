@@ -17,6 +17,14 @@ export interface Employee {
   name: string;
 }
 
+export interface Conciergerie {
+  name: string;
+  color: string;
+  colorName: string;
+  email: string;
+  tel?: string;
+}
+
 export interface Mission {
   id: string;
   homeId: string;
@@ -27,4 +35,5 @@ export interface Mission {
   employee?: Employee;
   modifiedDate: Date;
   deleted: boolean;
+  conciergerie: Conciergerie; // The conciergerie that created the mission
 }

@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Employee, Home, Mission } from '../types/mission';
+import { Conciergerie, Employee, Home, Mission } from '../types/mission';
+import { getWelcomeParams } from '../utils/welcomeParams';
 
 // Mock data for homes and employees
 const mockHomes: Home[] = [
@@ -21,10 +22,11 @@ type MissionsContextType = {
   homes: Home[];
   employees: Employee[];
   isLoading: boolean;
-  addMission: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'deleted'>) => void;
+  addMission: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'deleted' | 'conciergerie'>) => void;
   updateMission: (mission: Mission) => void;
   deleteMission: (id: string) => void;
   removeEmployee: (id: string) => void;
+  getCurrentConciergerie: () => Conciergerie | null;
 };
 
 const MissionsContext = createContext<MissionsContextType | undefined>(undefined);
@@ -34,6 +36,12 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
   const [homes] = useState<Home[]>(mockHomes);
   const [employees] = useState<Employee[]>(mockEmployees);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Get current conciergerie from localStorage
+  const getCurrentConciergerie = (): Conciergerie | null => {
+    const { conciergerieData } = getWelcomeParams();
+    return conciergerieData as Conciergerie | null;
+  };
 
   // Load missions from localStorage on initial render
   useEffect(() => {
@@ -73,53 +81,75 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
     }
   }, [missions]);
 
-  const addMission = (missionData: Omit<Mission, 'id' | 'modifiedDate' | 'deleted'>) => {
+  const addMission = (missionData: Omit<Mission, 'id' | 'modifiedDate' | 'deleted' | 'conciergerie'>) => {
+    const currentConciergerie = getCurrentConciergerie();
+    
+    if (!currentConciergerie) {
+      console.error('No conciergerie found in localStorage');
+      return;
+    }
+    
     const newMission: Mission = {
       ...missionData,
       id: Date.now().toString(),
       modifiedDate: new Date(),
       deleted: false,
+      conciergerie: currentConciergerie,
     };
 
     setMissions(prev => [...prev, newMission]);
   };
 
   const updateMission = (updatedMission: Mission) => {
-    setMissions(prev =>
-      prev.map(mission =>
-        mission.id === updatedMission.id ? { ...updatedMission, modifiedDate: new Date() } : mission,
-      ),
-    );
+    const currentConciergerie = getCurrentConciergerie();
+    
+    // Only allow updates if the mission was created by the current conciergerie
+    if (currentConciergerie && updatedMission.conciergerie.name === currentConciergerie.name) {
+      setMissions(prev =>
+        prev.map(mission =>
+          mission.id === updatedMission.id ? { ...updatedMission, modifiedDate: new Date() } : mission,
+        ),
+      );
+    } else {
+      console.error('Cannot update mission: not created by current conciergerie');
+    }
   };
 
   const deleteMission = (id: string) => {
-    setMissions(prev =>
-      prev.map(mission => (mission.id === id ? { ...mission, deleted: true, modifiedDate: new Date() } : mission)),
-    );
+    const missionToDelete = missions.find(m => m.id === id);
+    const currentConciergerie = getCurrentConciergerie();
+    
+    // Only allow deletion if the mission was created by the current conciergerie
+    if (missionToDelete && currentConciergerie && missionToDelete.conciergerie.name === currentConciergerie.name) {
+      setMissions(prev =>
+        prev.map(mission => (mission.id === id ? { ...mission, deleted: true, modifiedDate: new Date() } : mission)),
+      );
+    } else {
+      console.error('Cannot delete mission: not created by current conciergerie');
+    }
   };
 
   const removeEmployee = (id: string) => {
-    setMissions(prev =>
-      prev.map(mission =>
-        mission.id === id
-          ? { ...mission, employeeId: undefined, employee: undefined, modifiedDate: new Date() }
-          : mission,
-      ),
-    );
+    const missionToUpdate = missions.find(m => m.id === id);
+    const currentConciergerie = getCurrentConciergerie();
+    
+    // Only allow employee removal if the mission was created by the current conciergerie
+    if (missionToUpdate && currentConciergerie && missionToUpdate.conciergerie.name === currentConciergerie.name) {
+      setMissions(prev =>
+        prev.map(mission =>
+          mission.id === id
+            ? { ...mission, employeeId: undefined, employee: undefined, modifiedDate: new Date() }
+            : mission,
+        ),
+      );
+    } else {
+      console.error('Cannot remove employee: mission not created by current conciergerie');
+    }
   };
 
   return (
     <MissionsContext.Provider
-      value={{
-        missions,
-        homes,
-        employees,
-        isLoading,
-        addMission,
-        updateMission,
-        deleteMission,
-        removeEmployee,
-      }}
+      value={{ missions, homes, employees, isLoading, addMission, updateMission, deleteMission, removeEmployee, getCurrentConciergerie }}
     >
       {children}
     </MissionsContext.Provider>
