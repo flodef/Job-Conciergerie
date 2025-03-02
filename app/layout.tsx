@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import NavigationLayout from './components/layouts/navigationLayout';
+import { HomesProvider } from './contexts/homesProvider';
 import { MenuProvider } from './contexts/menuProvider';
-import { MissionsProvider } from './contexts/missionsProvider';
+import { MissionsProviderWrapper } from './contexts/missionsProvider';
 import { ThemeProvider } from './contexts/themeProvider';
 import './globals.css';
 
@@ -31,9 +32,11 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
           <MenuProvider>
-            <MissionsProvider>
-              <NavigationLayout>{children}</NavigationLayout>
-            </MissionsProvider>
+            <HomesProvider>
+              <MissionsProviderWrapper>
+                <NavigationLayout>{children}</NavigationLayout>
+              </MissionsProviderWrapper>
+            </HomesProvider>
           </MenuProvider>
         </ThemeProvider>
       </body>

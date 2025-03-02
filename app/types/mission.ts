@@ -10,6 +10,15 @@ export const objectives = Object.values(Objective);
 export interface Home {
   id: string;
   title: string;
+  description: string;
+  tasks: string[];
+  images?: string[]; // URLs to images
+}
+
+export interface HomeData extends Home {
+  modifiedDate: Date;
+  deleted: boolean;
+  conciergerie: Conciergerie; // The conciergerie that created the home
 }
 
 export interface Employee {
@@ -28,7 +37,7 @@ export interface Conciergerie {
 export interface Mission {
   id: string;
   homeId: string;
-  home: Home;
+  home: HomeData;
   objectives: Objective[];
   date: Date;
   employeeId?: string;

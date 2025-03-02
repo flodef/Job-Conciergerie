@@ -13,7 +13,7 @@ type MissionFormProps = {
 };
 
 export default function MissionForm({ mission, onClose, mode }: MissionFormProps) {
-  const { homes, addMission, updateMission } = useMissions();
+  const { homes, addMission, updateMission, getCurrentConciergerie } = useMissions();
 
   const [homeId, setHomeId] = useState<string>(mission?.homeId || '');
   const [objectivesState, setObjectives] = useState<Objective[]>(mission?.objectives || []);
@@ -39,12 +39,16 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
   const isFormValid = homeId !== '' && objectivesState.length > 0 && date !== '';
 
+  // Filter homes by the current conciergerie
+  const currentConciergerie = getCurrentConciergerie();
+  const filteredHomes = homes.filter(home => !home.deleted && home.conciergerie?.name === currentConciergerie?.name);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsFormSubmitted(true);
 
     if (isFormValid) {
-      const selectedHome = homes.find(h => h.id === homeId);
+      const selectedHome = filteredHomes.find(h => h.id === homeId);
 
       if (!selectedHome) {
         setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner un bien valide' });
@@ -88,12 +92,6 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
   const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
-  // Format date in French format for display
-  const formatDateFr = (dateStr: string) => {
-    const [year, month, day] = dateStr.split('-');
-    return `${day}/${month}/${year}`;
-  };
-
   return (
     <div className="bg-background p-6 rounded-lg w-full max-w-md">
       {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
@@ -112,13 +110,24 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
             )}
           >
             <option value="">Sélectionnez un bien</option>
-            {homes.map(home => (
-              <option key={home.id} value={home.id}>
-                {home.title}
+            {filteredHomes.length > 0 ? (
+              filteredHomes.map(home => (
+                <option key={home.id} value={home.id}>
+                  {home.title}
+                </option>
+              ))
+            ) : (
+              <option value="" disabled>
+                Aucun bien disponible. Veuillez d&apos;abord ajouter un bien.
               </option>
-            ))}
+            )}
           </select>
           {isFormSubmitted && !homeId && <p className="text-red-500 text-sm mt-1">Veuillez sélectionner un bien</p>}
+          {filteredHomes.length === 0 && (
+            <p className="text-yellow-500 text-sm mt-1">
+              Aucun bien disponible. Veuillez d&apos;abord ajouter un bien dans la section &quot;Biens&quot;.
+            </p>
+          )}
         </div>
 
         <div>
@@ -158,7 +167,6 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
               isFormSubmitted && !date ? 'border-red-500' : 'border-secondary',
             )}
           />
-          <div className="text-xs text-gray-500 mt-1">Date sélectionnée: {date ? formatDateFr(date) : ''}</div>
           {isFormSubmitted && !date && <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une date</p>}
         </div>
 

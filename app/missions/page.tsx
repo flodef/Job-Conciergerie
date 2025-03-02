@@ -11,7 +11,7 @@ import { getWelcomeParams } from '../utils/welcomeParams';
 import { useTheme } from '../contexts/themeProvider';
 
 export default function Missions() {
-  const { missions, isLoading } = useMissions();
+  const { missions, isLoading, getCurrentConciergerie } = useMissions();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
   const { setPrimaryColor } = useTheme();
@@ -28,9 +28,18 @@ export default function Missions() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Filter out deleted missions and past missions, then sort by date (closest to today first)
+  // Get current conciergerie
+  const currentConciergerie = getCurrentConciergerie();
+
+  // Filter out deleted missions, past missions, and missions not created by the current conciergerie
+  // Then sort by date (closest to today first)
   const activeMissions = missions
-    .filter(mission => !mission.deleted && new Date(mission.date) >= today)
+    .filter(
+      mission => 
+        !mission.deleted && 
+        new Date(mission.date) >= today && 
+        mission.conciergerie.name === currentConciergerie?.name
+    )
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const handleMissionClick = (missionId: string) => {

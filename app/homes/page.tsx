@@ -1,194 +1,128 @@
 'use client';
-import FullScreenImageModal from '@/app/components/fullScreenImageModal';
-import TaskList from '@/app/components/taskList';
-import { ToastMessage, ToastType } from '@/app/components/toastMessage';
-import { clsx } from 'clsx/lite';
-import Image from 'next/image';
+
 import { useEffect, useState } from 'react';
 import { useMenuContext } from '../contexts/menuProvider';
+import { useHomes } from '../contexts/homesProvider';
+import { HomeData } from '../types/mission';
+import HomeCard from '../components/homeCard';
+import HomeDetails from '../components/homeDetails';
+import HomeForm from '../components/homeForm';
+import FullScreenModal from '../components/fullScreenModal';
+import { IconPlus } from '@tabler/icons-react';
+import { clsx } from 'clsx/lite';
 
-export default function AddHome() {
-  const { setHasUnsavedChanges, confirmationModal } = useMenuContext();
+export default function HomesPage() {
+  const { homes, isLoading, getCurrentConciergerie } = useHomes();
+  const { setHasUnsavedChanges } = useMenuContext();
+  const [selectedHome, setSelectedHome] = useState<HomeData | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const [description, setDescription] = useState('');
-  const [images, setImages] = useState<File[]>([]);
-  const [tasks, setTasks] = useState<string[]>(['']);
-  const [title, setTitle] = useState('');
-  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
-  const [toastMessage, setToastMessage] = useState<{ type: ToastType; message: string }>();
-
-  const isFormValid =
-    images.length > 0 && description.trim() !== '' && tasks.some(task => task.trim() !== '') && title.trim() !== '';
-
+  // Reset unsaved changes when navigating to this page
   useEffect(() => {
-    if (isFormValid) setIsFormSubmitted(false);
+    setHasUnsavedChanges(false);
+  }, [setHasUnsavedChanges]);
 
-    setHasUnsavedChanges(
-      description.trim() !== '' || tasks.some(t => t.trim() !== '') || images.length > 0 || title.trim() !== '',
-    );
-  }, [images, description, tasks, title, isFormValid, setHasUnsavedChanges]);
+  // Get current conciergerie
+  const currentConciergerie = getCurrentConciergerie();
 
-  useEffect(() => {
-    const urls = images.map(image => URL.createObjectURL(image));
-    setPreviewUrls(urls);
+  // Filter homes by the current conciergerie and not deleted
+  const filteredHomes = homes
+    .filter(home => !home.deleted && home.conciergerie.name === currentConciergerie?.name)
+    .filter(home => {
+      if (searchTerm.trim() === '') return true;
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        home.title.toLowerCase().includes(searchLower) ||
+        home.description.toLowerCase().includes(searchLower) ||
+        home.tasks.some(task => task.toLowerCase().includes(searchLower))
+      );
+    });
 
-    return () => {
-      urls.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [images]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsFormSubmitted(true);
-
-    if (isFormValid) {
-      console.log('published', { description, images, tasks, title });
-      setToastMessage({ type: ToastType.Success, message: 'Annonce publiée avec succès !' });
-      setTimeout(() => setToastMessage(undefined), 3000);
-
-      // TODO: Store the values somewhere
-
-      // Reset form
-      setDescription('');
-      setImages([]);
-      setTasks(['']);
-      setTitle('');
-      setIsFormSubmitted(false);
-    }
+  const handleHomeClick = (home: HomeData) => {
+    setSelectedHome(home);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFiles = Array.from(e.target.files || []);
-    e.target.value = ''; // Reset obligatoire pour permettre la re-sélection
+  const handleCloseDetails = () => {
+    setSelectedHome(null);
+  };
 
-    const duplicates = newFiles.some(newFile =>
-      images.some(existingFile => existingFile.name === newFile.name && existingFile.size === newFile.size),
-    );
+  const handleAddHome = () => {
+    setIsAddModalOpen(true);
+  };
 
-    if (duplicates) {
-      setToastMessage({ type: ToastType.Error, message: 'Cette photo existe déjà dans la sélection !' });
-      setTimeout(() => setToastMessage(undefined), 3000);
-      return;
-    }
-
-    setImages(prev => [...prev, ...newFiles]);
+  const handleCloseAddModal = () => {
+    setIsAddModalOpen(false);
   };
 
   return (
-    <div className="max-w-md mx-auto p-4">
-      {selectedImageIndex !== undefined && (
-        <FullScreenImageModal url={previewUrls[selectedImageIndex]} onClose={() => setSelectedImageIndex(undefined)} />
-      )}
-      {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
-      {confirmationModal}
-
-      <h1 className="text-2xl font-bold text-foreground mb-4">Nouveau bien</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="text-base font-medium text-foreground">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-base font-medium text-foreground">Ajouter des photos</h2>
-              {previewUrls.length > 1 && (
-                <button type="button" onClick={() => setImages([])} className="text-sm text-red-500 hover:text-red-600">
-                  Tout supprimer
-                </button>
-              )}
-            </div>
-          </label>
-          <div className="grid grid-cols-3 gap-4">
-            {previewUrls.map((url, index) => (
-              <div key={index} className="relative aspect-square">
-                <Image
-                  src={url}
-                  alt={`Prévisualisation ${index + 1}`}
-                  width={100}
-                  height={100}
-                  className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setSelectedImageIndex(index)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setImages(images.filter((_, i) => i !== index))}
-                  className="absolute p-3 -top-2 -right-2 bg-red-500 text-lg text-background rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-            <input
-              type="file"
-              multiple
-              onChange={handleImageUpload}
-              className="hidden"
-              accept="image/*"
-              id="image-upload"
-            />
-            <label
-              htmlFor="image-upload"
-              className="aspect-square flex items-center justify-center border-2 border-dashed border-foreground/30 rounded-lg hover:border-foreground/50 cursor-pointer transition-colors"
-            >
-              <span className="text-3xl text-foreground/50">+</span>
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-base font-medium text-foreground">
-            <h2 className="mb-2">Titre</h2>
-          </label>
+    <div className="min-h-[calc(100dvh-4rem)] bg-background p-4">
+      <div className="mb-4">
+        <div className="relative">
           <input
             type="text"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            className={clsx(
-              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-              'border-foreground/20 focus-visible:outline-primary',
-            )}
-            placeholder="Entrez le titre du bien..."
+            placeholder="Rechercher un bien..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full p-2 pl-3 border border-secondary rounded-lg bg-background"
           />
-        </div>
-
-        <div className="mb-2">
-          <label className="text-base font-medium text-foreground">
-            <h2 className="mb-2">Description</h2>
-          </label>
-          <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            className={clsx(
-              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-              'border-foreground/20 focus-visible:outline-primary',
-            )}
-            rows={4}
-            placeholder="Décrivez les caractéristiques du bien..."
-          />
-        </div>
-        <TaskList tasks={tasks} setTasks={setTasks} />
-        {isFormSubmitted && (
-          <div className="space-y-2 text-sm text-red-500 bg-background animate-pulse">
-            {images.length === 0 && <p>• Ajoutez au moins une photo</p>}
-            {title.trim() === '' && <p>• Entrez un titre</p>}
-            {description.trim() === '' && <p>• Remplissez la description</p>}
-            {!tasks.some(t => t.trim() !== '') && <p>• Ajoutez au moins une tâche</p>}
-          </div>
-        )}
-        <button
-          type="submit"
-          disabled={isFormSubmitted}
-          className={clsx(
-            'w-full px-4 py-2 rounded-lg font-medium transition-colors',
-            !isFormSubmitted || isFormValid
-              ? 'bg-primary text-foreground hover:bg-primary/90'
-              : 'bg-primary/20 text-foreground/50',
-            'disabled:opacity-75 disabled:cursor-not-allowed',
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-foreground/50"
+            >
+              ✕
+            </button>
           )}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      ) : filteredHomes.length === 0 && searchTerm === '' ? (
+        <div
+          className="flex flex-col items-center justify-center h-[calc(100vh-12rem)] border-2 border-dashed border-secondary rounded-lg p-8 cursor-pointer"
+          onClick={handleAddHome}
         >
-          Publier le bien
-        </button>
-      </form>
+          <div className="text-center">
+            <h3 className="text-lg font-medium mb-2">Aucun bien</h3>
+            <p className="text-gray-500 mb-4">Ajoutez votre premier bien</p>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
+              <IconPlus size={32} />
+            </div>
+          </div>
+        </div>
+      ) : filteredHomes.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-foreground/60">Aucun bien ne correspond à votre recherche</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredHomes.map(home => (
+            <HomeCard key={home.id} home={home} onClick={() => handleHomeClick(home)} />
+          ))}
+        </div>
+      )}
+
+      <button
+        onClick={handleAddHome}
+        className={clsx(
+          'fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-foreground flex items-center justify-center shadow-lg',
+          'hover:bg-primary/90 transition-colors',
+        )}
+      >
+        <IconPlus size={24} />
+      </button>
+
+      {isAddModalOpen && (
+        <FullScreenModal onClose={handleCloseAddModal}>
+          <HomeForm onClose={handleCloseAddModal} mode="add" />
+        </FullScreenModal>
+      )}
+
+      {selectedHome && <HomeDetails home={selectedHome} onClose={handleCloseDetails} />}
     </div>
   );
 }

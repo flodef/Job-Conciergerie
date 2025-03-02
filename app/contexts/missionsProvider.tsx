@@ -1,16 +1,11 @@
 'use client';
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Conciergerie, Employee, Home, Mission } from '../types/mission';
+import { Conciergerie, Employee, HomeData, Mission } from '../types/mission';
 import { getWelcomeParams } from '../utils/welcomeParams';
+import { useHomes } from './homesProvider';
 
-// Mock data for homes and employees
-const mockHomes: Home[] = [
-  { id: '1', title: 'Appartement Paris 11e' },
-  { id: '2', title: 'Maison Bordeaux' },
-  { id: '3', title: 'Studio Lyon' },
-];
-
+// Mock data for employees
 const mockEmployees: Employee[] = [
   { id: '1', name: 'Jean Dupont' },
   { id: '2', name: 'Marie Martin' },
@@ -19,7 +14,7 @@ const mockEmployees: Employee[] = [
 
 type MissionsContextType = {
   missions: Mission[];
-  homes: Home[];
+  homes: HomeData[];
   employees: Employee[];
   isLoading: boolean;
   addMission: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'deleted' | 'conciergerie'>) => void;
@@ -31,9 +26,13 @@ type MissionsContextType = {
 
 const MissionsContext = createContext<MissionsContextType | undefined>(undefined);
 
-export function MissionsProvider({ children }: { children: ReactNode }) {
+export function MissionsProviderWrapper({ children }: { children: ReactNode }) {
+  return <MissionsProvider>{children}</MissionsProvider>;
+}
+
+function MissionsProvider({ children }: { children: ReactNode }) {
+  const { homes } = useHomes();
   const [missions, setMissions] = useState<Mission[]>([]);
-  const [homes] = useState<Home[]>(mockHomes);
   const [employees] = useState<Employee[]>(mockEmployees);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -47,11 +46,11 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadMissions = async () => {
       setIsLoading(true);
-      
+
       // Simulate a small delay to ensure localStorage is properly loaded
       // and to show the loading state for a better user experience
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       const savedMissions = localStorage.getItem('missions');
       if (savedMissions) {
         try {
@@ -67,10 +66,10 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
           console.error('Failed to parse missions from localStorage', error);
         }
       }
-      
+
       setIsLoading(false);
     };
-    
+
     loadMissions();
   }, []);
 
@@ -83,12 +82,12 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
 
   const addMission = (missionData: Omit<Mission, 'id' | 'modifiedDate' | 'deleted' | 'conciergerie'>) => {
     const currentConciergerie = getCurrentConciergerie();
-    
+
     if (!currentConciergerie) {
       console.error('No conciergerie found in localStorage');
       return;
     }
-    
+
     const newMission: Mission = {
       ...missionData,
       id: Date.now().toString(),
@@ -102,7 +101,7 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
 
   const updateMission = (updatedMission: Mission) => {
     const currentConciergerie = getCurrentConciergerie();
-    
+
     // Only allow updates if the mission was created by the current conciergerie
     if (currentConciergerie && updatedMission.conciergerie.name === currentConciergerie.name) {
       setMissions(prev =>
@@ -118,7 +117,7 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
   const deleteMission = (id: string) => {
     const missionToDelete = missions.find(m => m.id === id);
     const currentConciergerie = getCurrentConciergerie();
-    
+
     // Only allow deletion if the mission was created by the current conciergerie
     if (missionToDelete && currentConciergerie && missionToDelete.conciergerie.name === currentConciergerie.name) {
       setMissions(prev =>
@@ -132,7 +131,7 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
   const removeEmployee = (id: string) => {
     const missionToUpdate = missions.find(m => m.id === id);
     const currentConciergerie = getCurrentConciergerie();
-    
+
     // Only allow employee removal if the mission was created by the current conciergerie
     if (missionToUpdate && currentConciergerie && missionToUpdate.conciergerie.name === currentConciergerie.name) {
       setMissions(prev =>
@@ -149,7 +148,17 @@ export function MissionsProvider({ children }: { children: ReactNode }) {
 
   return (
     <MissionsContext.Provider
-      value={{ missions, homes, employees, isLoading, addMission, updateMission, deleteMission, removeEmployee, getCurrentConciergerie }}
+      value={{
+        missions,
+        homes,
+        employees,
+        isLoading,
+        addMission,
+        updateMission,
+        deleteMission,
+        removeEmployee,
+        getCurrentConciergerie,
+      }}
     >
       {children}
     </MissionsContext.Provider>
