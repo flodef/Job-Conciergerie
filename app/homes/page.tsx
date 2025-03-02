@@ -1,15 +1,15 @@
 'use client';
 
+import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import { useMenuContext } from '../contexts/menuProvider';
-import { useHomes } from '../contexts/homesProvider';
-import { HomeData } from '../types/mission';
+import FloatingActionButton from '../components/floatingActionButton';
+import FullScreenModal from '../components/fullScreenModal';
 import HomeCard from '../components/homeCard';
 import HomeDetails from '../components/homeDetails';
 import HomeForm from '../components/homeForm';
-import FullScreenModal from '../components/fullScreenModal';
-import { IconPlus } from '@tabler/icons-react';
-import { clsx } from 'clsx/lite';
+import { useHomes } from '../contexts/homesProvider';
+import { useMenuContext } from '../contexts/menuProvider';
+import { HomeData } from '../types/mission';
 
 export default function HomesPage() {
   const { homes, isLoading, getCurrentConciergerie } = useHomes();
@@ -83,7 +83,7 @@ export default function HomesPage() {
         </div>
       ) : filteredHomes.length === 0 && searchTerm === '' ? (
         <div
-          className="flex flex-col items-center justify-center h-[calc(100vh-12rem)] border-2 border-dashed border-secondary rounded-lg p-8 cursor-pointer"
+          className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8 cursor-pointer"
           onClick={handleAddHome}
         >
           <div className="text-center">
@@ -106,15 +106,8 @@ export default function HomesPage() {
         </div>
       )}
 
-      <button
-        onClick={handleAddHome}
-        className={clsx(
-          'fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary text-foreground flex items-center justify-center shadow-lg',
-          'hover:bg-primary/90 transition-colors',
-        )}
-      >
-        <IconPlus size={24} />
-      </button>
+      {/* Only show the floating action button if there are homes and we're not in search mode with no results */}
+      {filteredHomes.length > 0 && <FloatingActionButton onClick={handleAddHome} />}
 
       {isAddModalOpen && (
         <FullScreenModal onClose={handleCloseAddModal}>

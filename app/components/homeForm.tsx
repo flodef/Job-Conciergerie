@@ -132,7 +132,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
   };
 
   return (
-    <div className="max-w-md mx-auto p-4">
+    <div className="max-w-md mx-auto p-6">
       {selectedImageIndex !== undefined && (
         <FullScreenImageModal
           url={
@@ -146,9 +146,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
 
       {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
 
-      <h1 className="text-2xl font-bold text-foreground mb-4">
-        {mode === 'add' ? 'Nouveau bien' : 'Modifier le bien'}
-      </h1>
+      <h2 className="text-xl font-bold text-foreground mb-4">{mode === 'add' ? 'Nouveau bien' : 'Modifier le bien'}</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -275,19 +273,24 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={isFormSubmitted && !isFormValid}
-          className={clsx(
-            'w-full px-4 py-2 rounded-lg font-medium transition-colors',
-            !isFormSubmitted || isFormValid
-              ? 'bg-primary text-foreground hover:bg-primary/90'
-              : 'bg-primary/20 text-foreground/50',
-            'disabled:opacity-75 disabled:cursor-not-allowed',
-          )}
-        >
-          {mode === 'add' ? 'Ajouter le bien' : 'Mettre à jour le bien'}
-        </button>
+        <div className="flex justify-end gap-4">
+          <button type="button" onClick={onClose} className="px-4 py-2 bg-secondary rounded-lg hover:bg-gray-100">
+            Annuler
+          </button>
+          <button
+            type="submit"
+            disabled={isFormSubmitted && !isFormValid}
+            className={clsx(
+              'px-4 py-2 rounded-lg transition-colors',
+              !isFormSubmitted || isFormValid
+                ? 'bg-primary text-foreground hover:bg-primary/90'
+                : 'bg-primary/20 text-foreground/50',
+              'disabled:opacity-75 disabled:cursor-not-allowed',
+            )}
+          >
+            {mode === 'add' ? 'Ajouter' : 'Enregistrer'}
+          </button>
+        </div>
       </form>
     </div>
   );

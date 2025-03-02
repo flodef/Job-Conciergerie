@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useMissions } from '../contexts/missionsProvider';
-import MissionCard from '../components/missionCard';
-import MissionForm from '../components/missionForm';
-import MissionDetails from '../components/missionDetails';
+import { IconPlus } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
+import FloatingActionButton from '../components/floatingActionButton';
 import FullScreenModal from '../components/fullScreenModal';
 import LoadingSpinner from '../components/loadingSpinner';
-import { getWelcomeParams } from '../utils/welcomeParams';
+import MissionCard from '../components/missionCard';
+import MissionDetails from '../components/missionDetails';
+import MissionForm from '../components/missionForm';
+import { useMissions } from '../contexts/missionsProvider';
 import { useTheme } from '../contexts/themeProvider';
+import { getWelcomeParams } from '../utils/welcomeParams';
 
 export default function Missions() {
   const { missions, isLoading, getCurrentConciergerie } = useMissions();
@@ -35,10 +37,8 @@ export default function Missions() {
   // Then sort by date (closest to today first)
   const activeMissions = missions
     .filter(
-      mission => 
-        !mission.deleted && 
-        new Date(mission.date) >= today && 
-        mission.conciergerie.name === currentConciergerie?.name
+      mission =>
+        !mission.deleted && new Date(mission.date) >= today && mission.conciergerie.name === currentConciergerie?.name,
     )
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -49,6 +49,10 @@ export default function Missions() {
   const handleCloseModal = () => {
     setIsAddModalOpen(false);
     setSelectedMission(null);
+  };
+
+  const handleAddMission = () => {
+    setIsAddModalOpen(true);
   };
 
   const selectedMissionData = selectedMission ? missions.find(mission => mission.id === selectedMission) : null;
@@ -66,36 +70,27 @@ export default function Missions() {
     <div className="min-h-[calc(100dvh-4rem)] bg-background p-4">
       {activeMissions.length === 0 ? (
         <div
-          className="flex flex-col items-center justify-center h-[calc(100vh-6rem)] border-2 border-dashed border-secondary rounded-lg p-8"
-          onClick={() => setIsAddModalOpen(true)}
+          className="flex flex-col items-center justify-center h-[calc(100vh-6rem)] border-2 border-dashed border-secondary rounded-lg p-8 cursor-pointer"
+          onClick={handleAddMission}
         >
           <div className="text-center">
             <h3 className="text-lg font-medium mb-2">Aucune mission</h3>
             <p className="text-gray-500 mb-4">Ajoutez votre première mission</p>
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
-              <span className="text-5xl">+</span>
+              <IconPlus size={32} />
             </div>
           </div>
         </div>
       ) : (
-        <div>
-          <div className="flex justify-end mb-4">
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="w-full px-4 py-2 flex items-center justify-center text-foreground/50 gap-2 border-2 border-dashed border-foreground/30 rounded-lg hover:border-foreground/50 cursor-pointer transition-colors"
-            >
-              <span className="text-3xl">+</span>
-              Ajouter une mission
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {activeMissions.map(mission => (
-              <MissionCard key={mission.id} mission={mission} onClick={() => handleMissionClick(mission.id)} />
-            ))}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {activeMissions.map(mission => (
+            <MissionCard key={mission.id} mission={mission} onClick={() => handleMissionClick(mission.id)} />
+          ))}
         </div>
       )}
+
+      {/* Only show the floating action button if there are missions */}
+      {activeMissions.length > 0 && <FloatingActionButton onClick={handleAddMission} />}
 
       {isAddModalOpen && (
         <FullScreenModal onClose={handleCloseModal}>
