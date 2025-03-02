@@ -22,7 +22,7 @@ export const ToastMessage = ({ type, message }: ToastProps) => {
   };
 
   return (
-    <div className={`fixed top-4 inset-x-2 text-foreground text-center py-2 rounded-lg ${typeStyles[type]}`}>
+    <div className={`fixed z-50 top-4 inset-x-2 text-foreground text-center py-2 rounded-lg ${typeStyles[type]}`}>
       {typeIcon[type]}
       {message}
     </div>
