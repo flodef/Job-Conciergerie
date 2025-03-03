@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, ReactNode, useContext, useEffect } from 'react';
-import { getWelcomeParams } from '../utils/welcomeParams';
+import { getWelcomeParams, getColorValueByName } from '../utils/welcomeParams';
 
 export const defaultPrimaryColor = '#a4bcde';
 
@@ -29,6 +29,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       // If conciergerie data exists and has a color, set it as primary
       if (conciergerieData && conciergerieData.color) {
         setPrimaryColor(conciergerieData.color);
+      } 
+      // If no color but has colorName, get the color from colors.json
+      else if (conciergerieData && conciergerieData.colorName) {
+        const colorValue = getColorValueByName(conciergerieData.colorName);
+        if (colorValue) {
+          setPrimaryColor(colorValue);
+        }
       }
     };
 

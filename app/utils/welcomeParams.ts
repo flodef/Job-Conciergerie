@@ -1,6 +1,15 @@
 /**
  * Get all welcome page parameters from localStorage
  */
+import { ConciergerieData } from '../components/conciergerieForm';
+import colorOptions from '../data/colors.json';
+
+// Get the color value from colors.json based on colorName
+export const getColorValueByName = (colorName: string): string | undefined => {
+  const colorOption = colorOptions.find(color => color.name === colorName);
+  return colorOption?.value;
+};
+
 export function getWelcomeParams() {
   if (typeof window === 'undefined') {
     return {
@@ -22,6 +31,14 @@ export function getWelcomeParams() {
     // Get conciergerie data if available
     const conciergerieDataStr = localStorage.getItem('conciergerie_data');
     const conciergerieData = conciergerieDataStr ? JSON.parse(conciergerieDataStr) : null;
+
+    // If we have conciergerie data, get the color value from colors.json
+    if (conciergerieData && conciergerieData.colorName) {
+      const colorValue = getColorValueByName(conciergerieData.colorName);
+      if (colorValue) {
+        conciergerieData.color = colorValue;
+      }
+    }
 
     return {
       userType,
@@ -68,6 +85,28 @@ export function hasCompletedWelcomeFlow(): boolean {
   } catch (error) {
     console.error('Error checking welcome flow completion:', error);
     return false;
+  }
+}
+
+/**
+ * Update conciergerie data in localStorage
+ */
+export function updateConciergerieData(data: ConciergerieData): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    // Get the color value from colors.json if colorName is provided
+    const updatedData = { ...data };
+    if (updatedData.colorName) {
+      const colorValue = getColorValueByName(updatedData.colorName);
+      if (colorValue) {
+        updatedData.color = colorValue;
+      }
+    }
+
+    localStorage.setItem('conciergerie_data', JSON.stringify(updatedData));
+  } catch (error) {
+    console.error('Error updating conciergerie data in localStorage:', error);
   }
 }
 

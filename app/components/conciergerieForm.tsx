@@ -4,6 +4,7 @@ import { useLocalStorage } from '@/app/utils/localStorage';
 import { useEffect, useState } from 'react';
 import { defaultPrimaryColor, useTheme } from '../contexts/themeProvider';
 import conciergeriesData from '../data/conciergeries.json';
+import { getColorValueByName } from '../utils/welcomeParams';
 import { ToastMessage, ToastType } from './toastMessage';
 
 type ConciergerieFormProps = {
@@ -35,16 +36,21 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
     if (conciergerieData.name) {
       const selectedConciergerie = conciergeriesData.find(c => c.name === conciergerieData.name);
       if (selectedConciergerie) {
+        // Get color value from colors.json based on colorName
+        const colorValue = getColorValueByName(selectedConciergerie.colorname);
+        
         setConciergerieData(prev => ({
           ...prev,
           email: selectedConciergerie.email,
-          color: selectedConciergerie.colorvalue,
           colorName: selectedConciergerie.colorname,
+          color: colorValue || defaultPrimaryColor,
           tel: selectedConciergerie.tel,
         }));
 
         // Set the primary color theme
-        setPrimaryColor(selectedConciergerie.colorvalue);
+        if (colorValue) {
+          setPrimaryColor(colorValue);
+        }
       }
     }
   }, [conciergerieData.name, setConciergerieData, setPrimaryColor]);
