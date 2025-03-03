@@ -22,7 +22,7 @@ export type ConciergerieData = {
 export default function ConciergerieForm({ companies, onClose }: ConciergerieFormProps) {
   const { setPrimaryColor } = useTheme();
   const [conciergerieData, setConciergerieData] = useLocalStorage<ConciergerieData>('conciergerie_data', {
-    name: companies[0] || '',
+    name: '',
     color: defaultPrimaryColor,
     colorName: '',
     email: '',
@@ -105,8 +105,10 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
             id="conciergerie"
             value={conciergerieData.name}
             onChange={e => setConciergerieData({ ...conciergerieData, name: e.target.value })}
-            className="w-full p-2 border border-secondary rounded-md bg-background text-foreground"
+            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            required
           >
+            <option value="" disabled>Sélectionnez une conciergerie</option>
             {companies.map(company => (
               <option key={company} value={company}>
                 {company}
@@ -115,70 +117,74 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
           </select>
         </div>
 
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
-            Email (non modifiable)
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={conciergerieData.email}
-            readOnly
-            className="w-full p-2 border border-secondary rounded-md bg-background/50 text-foreground/70 cursor-not-allowed"
-          />
-        </div>
+        {conciergerieData.name && (
+          <>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
+                Email (non modifiable)
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={conciergerieData.email}
+                readOnly
+                className="w-full p-2 border border-secondary rounded-md bg-background/50 text-foreground/70 cursor-not-allowed"
+              />
+            </div>
 
-        {conciergerieData.tel && (
-          <div>
-            <label htmlFor="tel" className="block text-sm font-medium text-foreground mb-1">
-              Téléphone (non modifiable)
-            </label>
-            <input
-              type="tel"
-              id="tel"
-              value={conciergerieData.tel}
-              readOnly
-              className="w-full p-2 border border-secondary rounded-md bg-background/50 text-foreground/70 cursor-not-allowed"
-            />
-          </div>
-        )}
-
-        <div>
-          <label htmlFor="color" className="block text-sm font-medium text-foreground mb-1">
-            Couleur (non modifiable)
-          </label>
-          <div className="flex items-center space-x-2">
-            <div
-              className="w-8 h-8 rounded-full border border-secondary"
-              style={{ backgroundColor: conciergerieData.color }}
-            />
-            <span className="text-foreground/70">{conciergerieData.colorName}</span>
-          </div>
-        </div>
-
-        <div className="flex justify-end space-x-2 pt-4">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="px-4 py-2 bg-secondary text-foreground rounded-md hover:bg-secondary/80"
-          >
-            Annuler
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-primary text-foreground rounded-md hover:bg-primary/80 flex items-center justify-center"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <span className="w-4 h-4 border-2 border-foreground border-t-transparent rounded-full animate-spin mr-2"></span>
-                Traitement...
-              </>
-            ) : (
-              'Valider'
+            {conciergerieData.tel && (
+              <div>
+                <label htmlFor="tel" className="block text-sm font-medium text-foreground mb-1">
+                  Téléphone (non modifiable)
+                </label>
+                <input
+                  type="tel"
+                  id="tel"
+                  value={conciergerieData.tel}
+                  readOnly
+                  className="w-full p-2 border border-secondary rounded-md bg-background/50 text-foreground/70 cursor-not-allowed"
+                />
+              </div>
             )}
-          </button>
-        </div>
+
+            <div>
+              <label htmlFor="color" className="block text-sm font-medium text-foreground mb-1">
+                Couleur (non modifiable)
+              </label>
+              <div className="flex items-center space-x-2">
+                <div
+                  className="w-8 h-8 rounded-full border border-secondary"
+                  style={{ backgroundColor: conciergerieData.color }}
+                />
+                <span className="text-foreground/70">{conciergerieData.colorName}</span>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-4 py-2 bg-secondary text-foreground rounded-md hover:bg-secondary/80"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-primary text-foreground rounded-md hover:bg-primary/80 flex items-center justify-center"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-foreground border-t-transparent rounded-full animate-spin mr-2"></span>
+                    Traitement...
+                  </>
+                ) : (
+                  'Valider'
+                )}
+              </button>
+            </div>
+          </>
+        )}
       </form>
     </div>
   );

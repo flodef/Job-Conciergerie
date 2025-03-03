@@ -223,7 +223,7 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
           />
         </div>
 
-        <div className="flex justify-end space-x-2 pt-4">
+        <div className="flex justify-end space-x-2">
           <button
             type="button"
             onClick={onClose}

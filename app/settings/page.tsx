@@ -6,6 +6,7 @@ import { EmployeeData } from '../components/employeeForm';
 import LoadingSpinner from '../components/loadingSpinner';
 import { getWelcomeParams } from '../utils/welcomeParams';
 import { useTheme } from '../contexts/themeProvider';
+import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
 
 type UserInfo = {
   userType: 'conciergerie' | 'prestataire' | null;
@@ -17,6 +18,9 @@ export default function Settings() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { setPrimaryColor } = useTheme();
+
+  // Redirect if not registered
+  useRedirectIfNotRegistered();
 
   useEffect(() => {
     const loadUserInfo = async () => {

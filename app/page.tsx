@@ -40,8 +40,10 @@ export default function Home() {
       // Show appropriate form based on user type
       if (storedUserType === 'prestataire') {
         setShowEmployeeForm(true);
+        setShowConciergerieForm(false);
       } else if (storedUserType === 'conciergerie') {
         setShowConciergerieForm(true);
+        setShowEmployeeForm(false);
       }
 
       setIsLoading(false);

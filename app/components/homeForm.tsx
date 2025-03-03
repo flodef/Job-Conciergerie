@@ -216,7 +216,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
             </label>
           </div>
           <p className="text-xs text-light mt-2 text-center">
-            Note: Les images sont remplacées par une image par défaut lors de l'enregistrement
+            Note: Les images sont remplacées par une image par défaut lors de l&apos;enregistrement
           </p>
         </div>
 

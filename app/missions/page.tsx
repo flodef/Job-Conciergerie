@@ -14,6 +14,7 @@ import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 import { useTheme } from '../contexts/themeProvider';
 import { getWelcomeParams } from '../utils/welcomeParams';
+import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
 
 export default function Missions() {
   const { missions, isLoading, getCurrentConciergerie } = useMissions();
@@ -24,6 +25,9 @@ export default function Missions() {
   const [isNoHomesModalOpen, setIsNoHomesModalOpen] = useState(false);
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
   const { setPrimaryColor } = useTheme();
+
+  // Redirect if not registered
+  useRedirectIfNotRegistered();
 
   // Apply theme color on component mount
   useEffect(() => {

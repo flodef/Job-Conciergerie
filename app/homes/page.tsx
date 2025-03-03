@@ -11,6 +11,7 @@ import LoadingSpinner from '../components/loadingSpinner';
 import { useHomes } from '../contexts/homesProvider';
 import { useMenuContext } from '../contexts/menuProvider';
 import { HomeData } from '../types/mission';
+import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
 
 export default function HomesPage() {
   const { homes, isLoading, getCurrentConciergerie } = useHomes();
@@ -19,6 +20,9 @@ export default function HomesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Redirect if not registered
+  useRedirectIfNotRegistered();
 
   // Reset unsaved changes when navigating to this page
   useEffect(() => {
