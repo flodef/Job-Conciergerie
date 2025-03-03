@@ -109,25 +109,13 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
               isFormSubmitted && !homeId ? 'border-red-500' : 'border-secondary',
             )}
           >
-            <option value="">Sélectionnez un bien</option>
-            {filteredHomes.length > 0 ? (
-              filteredHomes.map(home => (
-                <option key={home.id} value={home.id}>
-                  {home.title}
-                </option>
-              ))
-            ) : (
-              <option value="" disabled>
-                Aucun bien disponible. Veuillez d&apos;abord ajouter un bien.
+            {filteredHomes.map(home => (
+              <option key={home.id} value={home.id}>
+                {home.title}
               </option>
-            )}
+            ))}
           </select>
           {isFormSubmitted && !homeId && <p className="text-red-500 text-sm mt-1">Veuillez sélectionner un bien</p>}
-          {filteredHomes.length === 0 && (
-            <p className="text-yellow-500 text-sm mt-1">
-              Aucun bien disponible. Veuillez d&apos;abord ajouter un bien dans la section &quot;Biens&quot;.
-            </p>
-          )}
         </div>
 
         <div>
