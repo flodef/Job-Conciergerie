@@ -5,6 +5,7 @@ import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import { ToastMessage, ToastType } from './toastMessage';
 import Tooltip from './tooltip';
+import { addEmployee } from '../utils/employeeUtils';
 
 type EmployeeFormProps = {
   companies: string[];
@@ -30,7 +31,9 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
     message: '',
   });
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
-  const [toastMessage, setToastMessage] = useState<{ type: ToastType; message: string }>();
+  const [toastMessage, setToastMessage] = useState<string>();
+  const [toastType, setToastType] = useState<ToastType>();
+  const [showToast, setShowToast] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update conciergerie if companies change and current selection is not in the list
@@ -53,81 +56,53 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsFormSubmitted(true);
+
+    // Check if all required fields are filled
+    if (!formData.nom || !formData.prenom || !formData.tel || !formData.email || !formData.conciergerie) {
+      setToastMessage('Veuillez remplir tous les champs obligatoires');
+      setToastType(ToastType.Error);
+      setShowToast(true);
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Validation - check if required fields are filled
-    if (!formData.nom || !formData.prenom || !formData.tel || !formData.email || !formData.conciergerie) {
-      setToastMessage({
-        type: ToastType.Error,
-        message: 'Veuillez remplir tous les champs obligatoires',
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setToastMessage({
-        type: ToastType.Error,
-        message: 'Veuillez entrer une adresse email valide',
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Phone validation (simple format check)
-    const phoneRegex = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/;
-    if (!phoneRegex.test(formData.tel)) {
-      setToastMessage({
-        type: ToastType.Error,
-        message: 'Veuillez entrer un numéro de téléphone valide',
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Here you would typically send the data to an API
-    console.log('Form submitted:', formData);
-
-    // Show success message
-    setToastMessage({
-      type: ToastType.Success,
-      message: 'Votre demande a été envoyée avec succès!',
-    });
-
-    // Redirect to missions page after a delay
+    // Simulate form submission
     setTimeout(() => {
-      window.location.href = '/missions';
-    }, 2000);
+      setIsSubmitting(false);
+      setToastMessage('Votre candidature a bien été envoyée');
+      setToastType(ToastType.Success);
+      setShowToast(true);
+
+      // Add the employee to the employees list
+      addEmployee(formData);
+
+      onClose();
+    }, 1000);
   };
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Inscription Prestataire</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Inscription Prestataire</h2>
+        <button
+          className="text-foreground text-4xl hover:scale-110 transition-transform"
+          onClick={onClose}
+          aria-label="Fermer"
+        >
+          &times;
+        </button>
+      </div>
 
-      {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
+      {showToast && toastMessage && toastType && (
+        <ToastMessage 
+          type={toastType} 
+          message={toastMessage} 
+          onClose={() => setShowToast(false)}
+        />
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="nom" className="block text-sm font-medium text-foreground mb-1">
-            Nom*
-          </label>
-          <input
-            type="text"
-            id="nom"
-            name="nom"
-            value={formData.nom}
-            onChange={handleChange}
-            className={clsx(
-              'w-full p-2 border border-secondary rounded-md focus:ring-primary focus:border-primary',
-              isFormSubmitted && !formData.nom && 'border-red-500',
-            )}
-            required
-            disabled={isSubmitting}
-          />
-        </div>
-
         <div>
           <label htmlFor="prenom" className="block text-sm font-medium text-foreground mb-1">
             Prénom*
@@ -141,6 +116,25 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
             className={clsx(
               'w-full p-2 border border-secondary rounded-md focus:ring-primary focus:border-primary',
               isFormSubmitted && !formData.prenom && 'border-red-500',
+            )}
+            required
+            disabled={isSubmitting}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="nom" className="block text-sm font-medium text-foreground mb-1">
+            Nom*
+          </label>
+          <input
+            type="text"
+            id="nom"
+            name="nom"
+            value={formData.nom}
+            onChange={handleChange}
+            className={clsx(
+              'w-full p-2 border border-secondary rounded-md focus:ring-primary focus:border-primary',
+              isFormSubmitted && !formData.nom && 'border-red-500',
             )}
             required
             disabled={isSubmitting}

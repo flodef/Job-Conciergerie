@@ -92,7 +92,16 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Conciergerie</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Conciergerie</h2>
+        <button
+          className="text-foreground text-4xl hover:scale-110 transition-transform"
+          onClick={onClose}
+          aria-label="Fermer"
+        >
+          &times;
+        </button>
+      </div>
 
       {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
 

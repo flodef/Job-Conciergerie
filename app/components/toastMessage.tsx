@@ -7,9 +7,10 @@ export enum ToastType {
 interface ToastProps {
   type: ToastType;
   message: string;
+  onClose?: () => void;
 }
 
-export const ToastMessage = ({ type, message }: ToastProps) => {
+export const ToastMessage = ({ type, message, onClose }: ToastProps) => {
   const typeStyles = {
     [ToastType.Success]: 'bg-green-500 animate-fade-in-up',
     [ToastType.Error]: 'bg-[#fb8c8c] animate-shake',
@@ -20,6 +21,11 @@ export const ToastMessage = ({ type, message }: ToastProps) => {
     [ToastType.Error]: '❌ ',
     [ToastType.Warning]: '⚠️ ',
   };
+
+  // Auto-close the toast after 3 seconds if onClose is provided
+  if (onClose) {
+    setTimeout(onClose, 3000);
+  }
 
   return (
     <div className={`fixed z-50 top-4 inset-x-2 text-foreground text-center py-2 rounded-lg ${typeStyles[type]}`}>
