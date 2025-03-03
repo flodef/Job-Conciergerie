@@ -48,7 +48,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         ))}
       </div>
 
-      <div className="mt-3 text-sm text-gray-500">
+      <div className="mt-3 text-sm text-light">
         <div className="flex justify-between items-center">
           <span>Date: {formatDate(mission.date)}</span>
           {mission.employee && <span style={{ color: conciergerieColor }}>{mission.employee.name}</span>}

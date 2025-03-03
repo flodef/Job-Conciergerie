@@ -1,11 +1,14 @@
 'use client';
 
-import { IconCancel, IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconCancel, IconPencil, IconTrash, IconZoomScan } from '@tabler/icons-react';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
 import { Mission } from '../types/mission';
 import ConfirmationModal from './confirmationModal';
+import FullScreenImageModal from './fullScreenImageModal';
 import FullScreenModal from './fullScreenModal';
+import HomeDetails from './homeDetails';
 import MissionForm from './missionForm';
 
 type MissionDetailsProps = {
@@ -18,6 +21,8 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showHomeDetails, setShowHomeDetails] = useState(false);
 
   // Get the conciergerie color from the mission data
   const conciergerieColor = mission.conciergerie?.color || 'var(--color-primary)';
@@ -66,19 +71,47 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
     );
   }
 
+  if (showHomeDetails) {
+    return <HomeDetails home={mission.home} onClose={() => setShowHomeDetails(false)} />;
+  }
+
+  const firstHomeImage = mission.home.images?.length ? mission.home.images[0] : '';
+
   return (
     <FullScreenModal onClose={onClose}>
+      {selectedImage && <FullScreenImageModal url={selectedImage} onClose={() => setSelectedImage(null)} />}
+
       <div className="p-6" data-mission-details>
         <h2 className="text-xl font-bold mb-4">Détails de la mission</h2>
 
         <div className="space-y-4">
-          <div>
-            <h3 className="text-sm font-medium text-gray-500">Bien</h3>
-            <p className="text-foreground">{mission.home.title}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-light">Bien</h3>
+              <p className="text-foreground">{mission.home.title}</p>
+            </div>
+            <button onClick={() => setShowHomeDetails(true)} title="Voir les détails du bien">
+              <IconZoomScan size={40} />
+            </button>
           </div>
 
+          {mission.home.images?.length ? (
+            <div>
+              <h3 className="text-sm font-medium text-light mb-2">Photo du bien</h3>
+              <div className="relative aspect-video w-full max-h-32 overflow-hidden rounded-lg">
+                <Image
+                  src={firstHomeImage}
+                  alt={`Photo de ${mission.home.title}`}
+                  fill
+                  className="object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setSelectedImage(firstHomeImage)}
+                />
+              </div>
+            </div>
+          ) : null}
+
           <div>
-            <h3 className="text-sm font-medium text-gray-500">Objectifs</h3>
+            <h3 className="text-sm font-medium text-light">Objectifs</h3>
             <div className="flex flex-wrap gap-2 mt-1">
               {mission.objectives.map(objective => (
                 <span
@@ -95,12 +128,12 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
           </div>
 
           <div>
-            <h3 className="text-sm font-medium text-gray-500">Date</h3>
+            <h3 className="text-sm font-medium text-light">Date</h3>
             <p className="text-foreground">{formatDate(mission.date)}</p>
           </div>
 
           <div>
-            <h3 className="text-sm font-medium text-gray-500">Conciergerie</h3>
+            <h3 className="text-sm font-medium text-light">Conciergerie</h3>
             <p className="font-bold" style={{ color: conciergerieColor }}>
               {mission.conciergerie.name}
             </p>
@@ -108,15 +141,10 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
 
           {mission.employee && (
             <div>
-              <h3 className="text-sm font-medium text-gray-500">Prestataire</h3>
+              <h3 className="text-sm font-medium text-light">Prestataire</h3>
               <p style={{ color: conciergerieColor }}>{mission.employee.name}</p>
             </div>
           )}
-
-          <div>
-            <h3 className="text-sm font-medium text-gray-500">Dernière modification</h3>
-            <p className="text-foreground">{formatDate(mission.modifiedDate)}</p>
-          </div>
         </div>
       </div>
 

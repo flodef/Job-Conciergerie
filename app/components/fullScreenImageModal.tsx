@@ -14,7 +14,7 @@ export default function FullScreenImageModal({ url, onClose }: FullScreenImageMo
       onClick={onClose}
     >
       <button
-        className="absolute top-4 right-4 text-foreground text-4xl hover:scale-110 transition-transform"
+        className="absolute top-4 right-4 text-white text-4xl hover:scale-110 transition-transform"
         onClick={e => {
           e.stopPropagation();
           onClose();

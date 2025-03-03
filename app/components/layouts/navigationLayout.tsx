@@ -44,7 +44,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
             {/* Title with exit animation */}
             <h1
               className={clsx(
-                'text-2xl font-semibold transition-all duration-300 text-foreground flex-1 text-center',
+                'ml-4 text-2xl font-semibold transition-all duration-300 text-foreground flex-1 text-center',
                 isMenuOpen ? 'opacity-0 -translate-y-4' : 'opacity-100 translate-y-0',
               )}
             >
@@ -96,9 +96,9 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {/* Main content - adjust padding based on whether we're on home page */}
       <main
         className={clsx(
-          'transition-opacity duration-300 h-screen', 
+          'transition-opacity duration-300 h-screen',
           !isHomePage && 'pt-16',
-          isMenuOpen ? 'opacity-50' : 'opacity-100'
+          isMenuOpen ? 'opacity-50' : 'opacity-100',
         )}
       >
         {children}

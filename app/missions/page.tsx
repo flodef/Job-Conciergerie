@@ -2,20 +2,26 @@
 
 import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
+import ConfirmationModal from '../components/confirmationModal';
 import FloatingActionButton from '../components/floatingActionButton';
 import FullScreenModal from '../components/fullScreenModal';
+import HomeForm from '../components/homeForm';
 import LoadingSpinner from '../components/loadingSpinner';
 import MissionCard from '../components/missionCard';
 import MissionDetails from '../components/missionDetails';
 import MissionForm from '../components/missionForm';
+import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 import { useTheme } from '../contexts/themeProvider';
 import { getWelcomeParams } from '../utils/welcomeParams';
 
 export default function Missions() {
   const { missions, isLoading, getCurrentConciergerie } = useMissions();
+  const { homes } = useHomes();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddHomeModalOpen, setIsAddHomeModalOpen] = useState(false);
+  const [isNoHomesModalOpen, setIsNoHomesModalOpen] = useState(false);
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
   const { setPrimaryColor } = useTheme();
 
@@ -43,6 +49,9 @@ export default function Missions() {
     )
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+  // Filter homes by the current conciergerie
+  const filteredHomes = homes.filter(home => !home.deleted && home.conciergerie?.name === currentConciergerie?.name);
+
   const handleMissionClick = (missionId: string) => {
     setSelectedMission(missionId);
   };
@@ -62,8 +71,28 @@ export default function Missions() {
     setSelectedMission(null);
   };
 
+  const handleCloseHomeModal = () => {
+    setIsAddHomeModalOpen(false);
+  };
+
   const handleAddMission = () => {
-    setIsAddModalOpen(true);
+    // Check if there are any homes available
+    if (filteredHomes.length === 0) {
+      // Show confirmation modal if no homes are available
+      setIsNoHomesModalOpen(true);
+    } else {
+      // Open mission form if homes are available
+      setIsAddModalOpen(true);
+    }
+  };
+
+  const handleAddHomeConfirm = () => {
+    setIsNoHomesModalOpen(false);
+    setIsAddHomeModalOpen(true);
+  };
+
+  const handleAddHomeCancel = () => {
+    setIsNoHomesModalOpen(false);
   };
 
   const selectedMissionData = selectedMission ? missions.find(mission => mission.id === selectedMission) : null;
@@ -86,7 +115,7 @@ export default function Missions() {
         >
           <div className="text-center">
             <h3 className="text-lg font-medium mb-2">Aucune mission</h3>
-            <p className="text-gray-500 mb-4">Ajoutez votre première mission</p>
+            <p className="text-light mb-4">Ajoutez votre première mission</p>
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
               <IconPlus size={32} />
             </div>
@@ -123,6 +152,31 @@ export default function Missions() {
           <MissionForm mission={selectedMissionData} onClose={handleCloseEditModal} mode="edit" />
         </FullScreenModal>
       )}
+
+      {isAddHomeModalOpen && (
+        <FullScreenModal onClose={handleCloseHomeModal}>
+          <HomeForm
+            onClose={() => {
+              handleCloseHomeModal();
+              // If at least one home was added, open the mission form
+              if (filteredHomes.length > 0) {
+                setIsAddModalOpen(true);
+              }
+            }}
+            mode="add"
+          />
+        </FullScreenModal>
+      )}
+
+      <ConfirmationModal
+        isOpen={isNoHomesModalOpen}
+        onConfirm={handleAddHomeConfirm}
+        onCancel={handleAddHomeCancel}
+        title="Aucun bien disponible"
+        message="Vous devez d'abord ajouter un bien avant de créer une mission. Voulez-vous ajouter un bien maintenant ?"
+        confirmText="Ajouter un bien"
+        cancelText="Annuler"
+      />
     </div>
   );
 }

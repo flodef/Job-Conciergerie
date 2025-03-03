@@ -69,25 +69,27 @@ export default function HomesPage() {
 
   return (
     <div className="min-h-[calc(100dvh-4rem)] bg-background p-4">
-      <div className="mb-4">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Rechercher un bien..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full p-2 pl-3 border border-secondary rounded-lg bg-background"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-foreground/50"
-            >
-              ✕
-            </button>
-          )}
+      {homes.filter(home => !home.deleted).length > 1 && (
+        <div className="mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Rechercher un bien..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full p-2 pl-3 border border-secondary rounded-lg bg-background"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-foreground/50"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {isLoading ? (
         <div className="min-h-[calc(100dvh-4rem)] flex items-center justify-center bg-background">
@@ -100,7 +102,7 @@ export default function HomesPage() {
         >
           <div className="text-center">
             <h3 className="text-lg font-medium mb-2">Aucun bien</h3>
-            <p className="text-gray-500 mb-4">Ajoutez votre premier bien</p>
+            <p className="text-light mb-4">Ajoutez votre premier bien</p>
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
               <IconPlus size={32} />
             </div>
@@ -113,10 +115,10 @@ export default function HomesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredHomes.map(home => (
-            <HomeCard 
-              key={home.id} 
-              home={home} 
-              onClick={() => handleHomeClick(home)} 
+            <HomeCard
+              key={home.id}
+              home={home}
+              onClick={() => handleHomeClick(home)}
               onEdit={() => handleHomeEdit(home)}
             />
           ))}
@@ -132,9 +134,7 @@ export default function HomesPage() {
         </FullScreenModal>
       )}
 
-      {selectedHome && !isEditModalOpen && (
-        <HomeDetails home={selectedHome} onClose={handleCloseDetails} />
-      )}
+      {selectedHome && !isEditModalOpen && <HomeDetails home={selectedHome} onClose={handleCloseDetails} />}
 
       {selectedHome && isEditModalOpen && (
         <FullScreenModal onClose={handleCloseEditModal}>

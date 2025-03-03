@@ -41,16 +41,11 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
 
       {home.images && home.images.length > 0 && (
         <div className="relative h-32 w-full mb-2 rounded-lg overflow-hidden">
-          <Image
-            src={home.images[0]}
-            alt={home.title}
-            fill
-            className="object-cover"
-          />
+          <Image src={home.images[0]} alt={home.title} fill className="object-cover" />
         </div>
       )}
 
-      <p className="text-sm text-gray-500 line-clamp-2 mb-2">{home.description}</p>
+      <p className="text-sm text-light line-clamp-2 mb-2">{home.description}</p>
 
       <div className="flex flex-wrap gap-1 mt-2">
         {home.tasks.slice(0, 3).map((task, index) => (
@@ -69,7 +64,7 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
         )}
       </div>
 
-      <div className="mt-3 text-sm text-gray-500">
+      <div className="mt-3 text-sm text-light">
         <div className="flex justify-between items-center">
           <span>Modifié: {formatDate(home.modifiedDate)}</span>
           <span style={{ color: conciergerieColor }}>{home.conciergerie.name}</span>

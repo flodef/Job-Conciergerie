@@ -67,10 +67,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   return (
     <FullScreenModal onClose={onClose}>
       {selectedImageIndex !== null && home.images && (
-        <FullScreenImageModal
-          url={home.images[selectedImageIndex]}
-          onClose={() => setSelectedImageIndex(null)}
-        />
+        <FullScreenImageModal url={home.images[selectedImageIndex]} onClose={() => setSelectedImageIndex(null)} />
       )}
 
       <div className="p-6" data-home-details>
@@ -78,13 +75,13 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
 
         <div className="space-y-4">
           <div>
-            <h3 className="text-sm font-medium text-gray-500">Titre</h3>
+            <h3 className="text-sm font-medium text-light">Titre</h3>
             <p className="text-foreground font-bold">{home.title}</p>
           </div>
 
           {home.images && home.images.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Photos</h3>
+              <h3 className="text-sm font-medium text-light mb-2">Photos</h3>
               <div className="grid grid-cols-3 gap-2">
                 {home.images.map((image, index) => (
                   <div key={index} className="relative aspect-square">
@@ -102,12 +99,12 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
           )}
 
           <div>
-            <h3 className="text-sm font-medium text-gray-500">Description</h3>
+            <h3 className="text-sm font-medium text-light">Description</h3>
             <p className="text-foreground whitespace-pre-wrap">{home.description}</p>
           </div>
 
           <div>
-            <h3 className="text-sm font-medium text-gray-500">Tâches</h3>
+            <h3 className="text-sm font-medium text-light">Tâches</h3>
             <div className="flex flex-wrap gap-2 mt-1">
               {home.tasks.map((task, index) => (
                 <span
@@ -124,14 +121,14 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
           </div>
 
           <div>
-            <h3 className="text-sm font-medium text-gray-500">Conciergerie</h3>
+            <h3 className="text-sm font-medium text-light">Conciergerie</h3>
             <p className="font-bold" style={{ color: conciergerieColor }}>
               {home.conciergerie.name}
             </p>
           </div>
 
           <div>
-            <h3 className="text-sm font-medium text-gray-500">Dernière modification</h3>
+            <h3 className="text-sm font-medium text-light">Dernière modification</h3>
             <p className="text-foreground">{formatDate(home.modifiedDate)}</p>
           </div>
         </div>
