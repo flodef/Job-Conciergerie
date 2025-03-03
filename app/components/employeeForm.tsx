@@ -4,6 +4,7 @@ import { useLocalStorage } from '@/app/utils/localStorage';
 import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import { ToastMessage, ToastType } from './toastMessage';
+import Tooltip from './tooltip';
 
 type EmployeeFormProps = {
   companies: string[];
@@ -185,8 +186,9 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
         </div>
 
         <div>
-          <label htmlFor="conciergerie" className="block text-sm font-medium text-foreground mb-1">
-            Conciergerie*
+          <label htmlFor="conciergerie" className="flex items-center text-sm font-medium text-foreground mb-1">
+            <span>Conciergerie*</span>
+            <Tooltip text="C'est la conciergerie par laquelle vous avez connu ce site, qui recevra votre candidature et qui validera votre inscription." />
           </label>
           <select
             id="conciergerie"
