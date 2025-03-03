@@ -57,7 +57,8 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
 
   // Clear employee data if it exists when this form is shown
   useEffect(() => {
-    localStorage.removeItem('employee_data');
+    //TODO: restore when in prod
+    // localStorage.removeItem('employee_data');
   }, []);
 
   const handleClose = () => {

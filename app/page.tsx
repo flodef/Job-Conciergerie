@@ -38,7 +38,7 @@ export default function Home() {
       setUserType(storedUserType);
 
       // Show appropriate form based on user type
-      if (storedUserType === 'prestataire') {
+      if (storedUserType === 'employee') {
         setShowEmployeeForm(true);
         setShowConciergerieForm(false);
       } else if (storedUserType === 'conciergerie') {
@@ -58,7 +58,7 @@ export default function Home() {
     setUserType(type);
 
     // Show appropriate form based on user type
-    if (type === 'prestataire') {
+    if (type === 'employee') {
       setShowEmployeeForm(true);
     } else if (type === 'conciergerie') {
       setShowConciergerieForm(true);

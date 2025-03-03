@@ -45,7 +45,8 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
 
   // Clear conciergerie data if it exists when this form is shown
   useEffect(() => {
-    localStorage.removeItem('conciergerie_data');
+    //TODO: restore when in prod
+    // localStorage.removeItem('conciergerie_data');
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -59,7 +60,7 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
 
     // Check if all required fields are filled
     if (!formData.nom || !formData.prenom || !formData.tel || !formData.email || !formData.conciergerie) {
-      setToastMessage('Veuillez remplir tous les champs obligatoires');
+      setToastMessage("Veuillez remplir tous les champs obligatoires");
       setToastType(ToastType.Error);
       setShowToast(true);
       return;
@@ -70,14 +71,15 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
     // Simulate form submission
     setTimeout(() => {
       setIsSubmitting(false);
-      setToastMessage('Votre candidature a bien été envoyée');
+      setToastMessage("Votre candidature a bien été envoyée");
       setToastType(ToastType.Success);
       setShowToast(true);
 
       // Add the employee to the employees list
       addEmployee(formData);
 
-      onClose();
+      // Redirect to waiting page
+      window.location.href = '/waiting';
     }, 1000);
   };
 

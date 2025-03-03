@@ -30,7 +30,7 @@ export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) 
 
           {/* Prestataire Option */}
           <button
-            onClick={() => onSelect('prestataire')}
+            onClick={() => onSelect('employee')}
             className={clsx(
               'flex flex-col items-center justify-center p-6 gap-4 border-2 rounded-lg transition-all',
               'border-secondary hover:border-primary/50 hover:bg-primary/5'

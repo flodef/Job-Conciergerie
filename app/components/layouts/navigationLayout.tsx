@@ -11,8 +11,9 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const [isHomePage, setIsHomePage] = useState(false);
 
   useEffect(() => {
-    // Check if we're on the homepage
-    setIsHomePage(window.location.pathname === '/');
+    // Check if we're on the homepage or waiting page
+    const path = window.location.pathname;
+    setIsHomePage(path === '/' || path === '/waiting');
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 0);
