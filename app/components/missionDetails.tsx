@@ -4,6 +4,7 @@ import { IconCancel, IconPencil, IconTrash, IconZoomScan } from '@tabler/icons-r
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
+import { useHomes } from '../contexts/homesProvider';
 import { Mission } from '../types/mission';
 import ConfirmationModal from './confirmationModal';
 import FullScreenImageModal from './fullScreenImageModal';
@@ -18,6 +19,7 @@ type MissionDetailsProps = {
 
 export default function MissionDetails({ mission, onClose }: MissionDetailsProps) {
   const { deleteMission, removeEmployee, getCurrentConciergerie } = useMissions();
+  const { homes } = useHomes();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
@@ -72,7 +74,9 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
   }
 
   if (showHomeDetails) {
-    return <HomeDetails home={mission.home} onClose={() => setShowHomeDetails(false)} />;
+    // Get the original home from the homes context to ensure we have all images
+    const originalHome = homes.find(h => h.id === mission.home.id) || mission.home;
+    return <HomeDetails home={originalHome} onClose={() => setShowHomeDetails(false)} />;
   }
 
   const firstHomeImage = mission.home.images?.length ? mission.home.images[0] : '';
@@ -85,20 +89,19 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
         <h2 className="text-xl font-bold mb-4">Détails de la mission</h2>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-light">Bien</h3>
-              <p className="text-foreground">{mission.home.title}</p>
+          <div>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-light">Bien</h3>
+                <p className="text-foreground">{mission.home.title}</p>
+              </div>
+              <button onClick={() => setShowHomeDetails(true)} title="Voir les détails du bien">
+                <IconZoomScan size={40} />
+              </button>
             </div>
-            <button onClick={() => setShowHomeDetails(true)} title="Voir les détails du bien">
-              <IconZoomScan size={40} />
-            </button>
-          </div>
 
-          {mission.home.images?.length ? (
-            <div>
-              <h3 className="text-sm font-medium text-light mb-2">Photo du bien</h3>
-              <div className="relative aspect-video w-full max-h-32 overflow-hidden rounded-lg">
+            {mission.home.images?.length ? (
+              <div className="relative aspect-video w-full max-h-32 mt-1 overflow-hidden rounded-lg">
                 <Image
                   src={firstHomeImage}
                   alt={`Photo de ${mission.home.title}`}
@@ -107,8 +110,8 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
                   onClick={() => setSelectedImage(firstHomeImage)}
                 />
               </div>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
 
           <div>
             <h3 className="text-sm font-medium text-light">Objectifs</h3>

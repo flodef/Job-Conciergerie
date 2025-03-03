@@ -97,7 +97,7 @@ export default function HomesPage() {
         </div>
       ) : filteredHomes.length === 0 && searchTerm === '' ? (
         <div
-          className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8 cursor-pointer"
+          className="flex flex-col items-center justify-center h-[calc(100vh-6rem)] border-2 border-dashed border-secondary rounded-lg p-8 cursor-pointer"
           onClick={handleAddHome}
         >
           <div className="text-center">

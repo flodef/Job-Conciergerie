@@ -47,22 +47,22 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
 
       <p className="text-sm text-light line-clamp-2 mb-2">{home.description}</p>
 
-      <div className="flex flex-wrap gap-1 mt-2">
+      <ul className="list-none pl-0 space-y-1 mb-2">
         {home.tasks.slice(0, 3).map((task, index) => (
-          <span
-            key={index}
-            className="px-2 py-0.5 text-foreground rounded-full text-xs"
-            style={{ backgroundColor: conciergerieColor }}
-          >
-            {task}
-          </span>
+          <li key={index} className="flex items-start">
+            <span 
+              className="inline-block w-2 h-2 mt-1 mr-2 flex-shrink-0 border border-foreground"
+              style={{ borderColor: 'var(--color-foreground)' }}
+            />
+            <span className="text-xs text-foreground truncate">{task}</span>
+          </li>
         ))}
         {home.tasks.length > 3 && (
-          <span className="px-2 py-0.5 bg-default/10 text-foreground rounded-full text-xs">
-            +{home.tasks.length - 3}
-          </span>
+          <li className="text-xs text-light ml-4">
+            +{home.tasks.length - 3} autres tâches
+          </li>
         )}
-      </div>
+      </ul>
 
       <div className="mt-3 text-sm text-light">
         <div className="flex justify-between items-center">

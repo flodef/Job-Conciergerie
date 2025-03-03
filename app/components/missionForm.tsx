@@ -15,7 +15,14 @@ type MissionFormProps = {
 export default function MissionForm({ mission, onClose, mode }: MissionFormProps) {
   const { homes, addMission, updateMission, getCurrentConciergerie } = useMissions();
 
-  const [homeId, setHomeId] = useState<string>(mission?.homeId || '');
+  // Default mockup image path
+  const mockupImagePath = '/home.webp';
+
+  // Filter homes by the current conciergerie
+  const currentConciergerie = getCurrentConciergerie();
+  const filteredHomes = homes.filter(home => !home.deleted && home.conciergerie?.name === currentConciergerie?.name);
+
+  const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
   const [objectivesState, setObjectives] = useState<Objective[]>(mission?.objectives || []);
   const [date, setDate] = useState<string>(
     mission?.date
@@ -39,10 +46,6 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
   const isFormValid = homeId !== '' && objectivesState.length > 0 && date !== '';
 
-  // Filter homes by the current conciergerie
-  const currentConciergerie = getCurrentConciergerie();
-  const filteredHomes = homes.filter(home => !home.deleted && home.conciergerie?.name === currentConciergerie?.name);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsFormSubmitted(true);
@@ -56,10 +59,16 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         return;
       }
 
+      // Create a copy of the selected home but replace images with mockup
+      const homeWithMockupImage = {
+        ...selectedHome,
+        images: [mockupImagePath],
+      };
+
       if (mode === 'add') {
         addMission({
           homeId,
-          home: selectedHome,
+          home: homeWithMockupImage,
           objectives: objectivesState,
           date: new Date(date),
         });
@@ -68,7 +77,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         updateMission({
           ...mission,
           homeId,
-          home: selectedHome,
+          home: homeWithMockupImage,
           objectives: objectivesState,
           date: new Date(date),
         });

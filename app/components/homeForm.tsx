@@ -18,6 +18,9 @@ type HomeFormProps = {
 export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps) {
   const { addHome, updateHome } = useHomes();
 
+  // Default mockup image path
+  const mockupImagePath = '/home.webp';
+
   const [title, setTitle] = useState(home?.title || '');
   const [description, setDescription] = useState(home?.description || '');
   const [tasks, setTasks] = useState<string[]>(home?.tasks || ['']);
@@ -53,16 +56,11 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
 
     if (isFormValid) {
       try {
-        // In a real app, you would upload images to a server and get URLs back
-        // For this example, we'll just use the File objects directly
-        const imageUrls: string[] = [...existingImages];
-
-        // Convert new File objects to data URLs for demo purposes
-        // In a real app, you would upload these to a server
-        for (const file of images) {
-          const dataUrl = await readFileAsDataURL(file);
-          imageUrls.push(dataUrl);
-        }
+        // Always use the mockup image regardless of what was uploaded
+        // Count how many images the user wanted to add
+        const imageCount = existingImages.length + images.length;
+        // Create an array with the mockup image repeated for each image the user wanted to add
+        const imageUrls = Array(Math.max(1, imageCount)).fill(mockupImagePath);
 
         if (mode === 'add') {
           addHome({
@@ -90,20 +88,11 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
           onClose();
         }, 1500);
       } catch (error) {
-        console.error('Error handling images:', error);
-        setToastMessage({ type: ToastType.Error, message: 'Une erreur est survenue lors du traitement des images' });
+        console.error('Error:', error);
+        setToastMessage({ type: ToastType.Error, message: 'Une erreur est survenue' });
         setTimeout(() => setToastMessage(undefined), 3000);
       }
     }
-  };
-
-  const readFileAsDataURL = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,8 +126,8 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
         <FullScreenImageModal
           url={
             selectedImageIndex < existingImages.length
-              ? existingImages[selectedImageIndex]
-              : previewUrls[selectedImageIndex - existingImages.length]
+              ? mockupImagePath // Use mockup for existing images
+              : previewUrls[selectedImageIndex - existingImages.length] // Use preview for new images (UI only)
           }
           onClose={() => setSelectedImageIndex(undefined)}
         />
@@ -172,7 +161,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
             {existingImages.map((url, index) => (
               <div key={`existing-${index}`} className="relative aspect-square">
                 <Image
-                  src={url}
+                  src={mockupImagePath} // Always use mockup for display
                   alt={`Prévisualisation ${index + 1}`}
                   width={100}
                   height={100}
@@ -193,7 +182,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
             {previewUrls.map((url, index) => (
               <div key={`new-${index}`} className="relative aspect-square">
                 <Image
-                  src={url}
+                  src={url} // Use preview URL for UI only
                   alt={`Prévisualisation ${existingImages.length + index + 1}`}
                   width={100}
                   height={100}
@@ -226,6 +215,9 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
               <span className="text-3xl text-foreground/50">+</span>
             </label>
           </div>
+          <p className="text-xs text-light mt-2 text-center">
+            Note: Les images sont remplacées par une image par défaut lors de l'enregistrement
+          </p>
         </div>
 
         <div>
