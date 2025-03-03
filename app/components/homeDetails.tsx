@@ -4,6 +4,7 @@ import { IconPencil, IconTrash } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useHomes } from '../contexts/homesProvider';
+import { useMissions } from '../contexts/missionsProvider';
 import { HomeData } from '../types/mission';
 import ConfirmationModal from './confirmationModal';
 import FullScreenImageModal from './fullScreenImageModal';
@@ -17,10 +18,13 @@ type HomeDetailsProps = {
 
 export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   const { deleteHome, getCurrentConciergerie } = useHomes();
+  const { missions, deleteMission } = useMissions();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleteWithMissionsModalOpen, setIsDeleteWithMissionsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [associatedMissions, setAssociatedMissions] = useState<string[]>([]);
 
   // Get the conciergerie color from the home data
   const conciergerieColor = home.conciergerie?.color || 'var(--color-primary)';
@@ -35,9 +39,42 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
     }
   }, [home, getCurrentConciergerie]);
 
+  // Find missions associated with this home
+  useEffect(() => {
+    const missionTitles = missions
+      .filter(mission => !mission.deleted && mission.home.id === home.id)
+      .map(mission => mission.home.title);
+    
+    setAssociatedMissions(missionTitles);
+  }, [missions, home.id]);
+
+  const handleDeleteClick = () => {
+    if (associatedMissions.length > 0) {
+      // If there are associated missions, show special confirmation
+      setIsDeleteWithMissionsModalOpen(true);
+    } else {
+      // If no associated missions, show regular confirmation
+      setIsDeleteModalOpen(true);
+    }
+  };
+
   const handleDelete = () => {
     deleteHome(home.id);
     setIsDeleteModalOpen(false);
+    onClose();
+  };
+
+  const handleDeleteWithMissions = () => {
+    // Delete all associated missions first
+    missions
+      .filter(mission => !mission.deleted && mission.home.id === home.id)
+      .forEach(mission => {
+        deleteMission(mission.id);
+      });
+    
+    // Then delete the home
+    deleteHome(home.id);
+    setIsDeleteWithMissionsModalOpen(false);
     onClose();
   };
 
@@ -110,9 +147,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
                 <span
                   key={index}
                   className="px-2 py-1 rounded-lg text-sm"
-                  style={{
-                    backgroundColor: conciergerieColor,
-                  }}
+                  style={{ backgroundColor: conciergerieColor }}
                 >
                   {task}
                 </span>
@@ -140,13 +175,12 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
             <button
               onClick={() => setIsEditMode(true)}
               className="flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80"
-              data-edit-button
             >
               <IconPencil />
               Modifier
             </button>
             <button
-              onClick={() => setIsDeleteModalOpen(true)}
+              onClick={handleDeleteClick}
               className="flex flex-col items-center p-2 w-20 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
             >
               <IconTrash />
@@ -156,6 +190,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
         </div>
       )}
 
+      {/* Regular confirmation modal for deletion */}
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
         onConfirm={handleDelete}
@@ -163,6 +198,19 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
         title="Supprimer le bien"
         message="Êtes-vous sûr de vouloir supprimer ce bien ?"
         confirmText="Supprimer"
+        cancelText="Annuler"
+      />
+
+      {/* Special confirmation modal for deletion with associated missions */}
+      <ConfirmationModal
+        isOpen={isDeleteWithMissionsModalOpen}
+        onConfirm={handleDeleteWithMissions}
+        onCancel={() => setIsDeleteWithMissionsModalOpen(false)}
+        title="Supprimer le bien et ses missions"
+        message={`Ce bien est associé à ${associatedMissions.length} mission${
+          associatedMissions.length > 1 ? 's' : ''
+        }. En supprimant ce bien, toutes les missions associées seront également supprimées. Êtes-vous sûr de vouloir continuer ?`}
+        confirmText="Supprimer tout"
         cancelText="Annuler"
       />
     </FullScreenModal>
