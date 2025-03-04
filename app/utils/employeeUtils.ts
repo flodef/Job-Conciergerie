@@ -71,39 +71,54 @@ export function addEmployee(employee: EmployeeData): void {
 
 // Update an employee's status
 export function updateEmployeeStatus(id: string, status: EmployeeStatus): void {
-  const employees = getEmployees();
-  const index = employees.findIndex(emp => emp.id === id);
-  
-  if (index !== -1) {
-    employees[index].status = status;
-    saveEmployees(employees);
-    
-    // If the employee is accepted or rejected, remove their message from localStorage
-    if (status === 'accepted' || status === 'rejected') {
-      // Get the employee data
-      const employeeData = employees[index];
-      
-      // Check if the employee data in localStorage matches this employee
-      const storedEmployeeDataStr = localStorage.getItem('employee_data');
-      if (storedEmployeeDataStr) {
-        try {
-          const storedEmployeeData = JSON.parse(storedEmployeeDataStr);
-          
-          // Check if the stored employee data matches this employee
-          if (
-            (storedEmployeeData.email === employeeData.email) ||
-            (storedEmployeeData.tel === employeeData.tel) ||
-            (storedEmployeeData.nom === employeeData.nom && storedEmployeeData.prenom === employeeData.prenom)
-          ) {
-            // Remove the message from localStorage
-            storedEmployeeData.message = '';
-            localStorage.setItem('employee_data', JSON.stringify(storedEmployeeData));
-          }
-        } catch (error) {
-          console.error('Error parsing employee data from localStorage:', error);
+  try {
+    const employees = getEmployees();
+    const updatedEmployees = employees.map(emp => {
+      if (emp.id === id) {
+        // If status is changing from pending to accepted/rejected, remove the message
+        if (emp.status === 'pending' && (status === 'accepted' || status === 'rejected')) {
+          const { message, ...employeeWithoutMessage } = emp;
+          return { ...employeeWithoutMessage, status };
         }
+        // Otherwise just update the status
+        return { ...emp, status };
+      }
+      return emp;
+    });
+    
+    saveEmployees(updatedEmployees);
+    console.log(`Employee ${id} status updated to ${status}`);
+    
+    // Update mission assignments if status changed to rejected
+    if (status === 'rejected') {
+      try {
+        // Get missions from localStorage
+        const missionsData = localStorage.getItem('missions');
+        if (missionsData) {
+          const missions = JSON.parse(missionsData);
+          
+          // Check if any missions are assigned to this employee
+          let missionsUpdated = false;
+          const updatedMissions = missions.map((mission: any) => {
+            if (mission.assignedTo === id) {
+              missionsUpdated = true;
+              return { ...mission, assignedTo: null };
+            }
+            return mission;
+          });
+          
+          // Save updated missions if any were changed
+          if (missionsUpdated) {
+            localStorage.setItem('missions', JSON.stringify(updatedMissions));
+            console.log(`Unassigned missions from rejected employee ${id}`);
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing employee data from localStorage:', error);
       }
     }
+  } catch (error) {
+    console.error('Error updating employee status:', error);
   }
 }
 

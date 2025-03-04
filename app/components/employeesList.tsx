@@ -240,9 +240,7 @@ function EmployeeRow({
     <tr className="hover:bg-secondary/5 cursor-pointer transition-colors" onClick={onClick}>
       <td className="px-1 py-1 whitespace-nowrap">
         <div className="flex flex-col text-sm font-medium text-foreground truncate max-w-28">
-          <div>
-            {employee.prenom} {employee.nom}
-          </div>
+          <div>{employee.prenom}</div>
           <div>{employee.nom}</div>
         </div>
       </td>
