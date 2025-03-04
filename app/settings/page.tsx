@@ -456,10 +456,13 @@ export default function Settings() {
         isOpen={showConfirmation}
         onClose={() => setShowConfirmation(false)}
         onConfirm={() => {
-          // Only remove user_type from localStorage
+          // Clear all user data from localStorage
           localStorage.removeItem('user_type');
-          // Redirect to home page
-          router.push('/');
+          localStorage.removeItem('employee_data');
+          localStorage.removeItem('conciergerie_data');
+          
+          // Force a full page reload to reset the app state
+          window.location.href = '/';
         }}
         title="Réinitialiser mes données"
         confirmText="Réinitialiser"

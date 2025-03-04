@@ -29,7 +29,21 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     // Get user type from localStorage
     const { userType } = getWelcomeParams();
     setUserType(userType);
+    
+    // Listen for storage events to detect when user data changes
+    const handleStorageChange = () => {
+      const { userType: newUserType } = getWelcomeParams();
+      setUserType(newUserType);
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  // Don't show navigation if user is not logged in
+  if (!userType) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col relative">
