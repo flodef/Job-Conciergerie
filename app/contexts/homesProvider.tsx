@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Conciergerie, HomeData } from '../types/mission';
+import { Conciergerie, HomeData } from '../types/types';
 import { getWelcomeParams } from '../utils/welcomeParams';
 
 type HomesContextType = {
@@ -29,11 +29,11 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const loadHomes = async () => {
       setIsLoading(true);
-      
+
       // Simulate a small delay to ensure localStorage is properly loaded
       // and to show the loading state for a better user experience
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       const savedHomes = localStorage.getItem('homes');
       if (savedHomes) {
         try {
@@ -48,10 +48,10 @@ export function HomesProvider({ children }: { children: ReactNode }) {
           console.error('Failed to parse homes from localStorage', error);
         }
       }
-      
+
       setIsLoading(false);
     };
-    
+
     loadHomes();
   }, []);
 
@@ -64,12 +64,12 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
   const addHome = (homeData: Omit<HomeData, 'id' | 'modifiedDate' | 'deleted' | 'conciergerie'>) => {
     const currentConciergerie = getCurrentConciergerie();
-    
+
     if (!currentConciergerie) {
       console.error('No conciergerie found in localStorage');
       return;
     }
-    
+
     const newHome: HomeData = {
       ...homeData,
       id: Date.now().toString(),
@@ -83,13 +83,11 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
   const updateHome = (updatedHome: HomeData) => {
     const currentConciergerie = getCurrentConciergerie();
-    
+
     // Only allow updates if the home was created by the current conciergerie
     if (currentConciergerie && updatedHome.conciergerie.name === currentConciergerie.name) {
       setHomes(prev =>
-        prev.map(home =>
-          home.id === updatedHome.id ? { ...updatedHome, modifiedDate: new Date() } : home,
-        ),
+        prev.map(home => (home.id === updatedHome.id ? { ...updatedHome, modifiedDate: new Date() } : home)),
       );
     } else {
       console.error('Cannot update home: not created by current conciergerie');
@@ -99,7 +97,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   const deleteHome = (id: string) => {
     const homeToDelete = homes.find(h => h.id === id);
     const currentConciergerie = getCurrentConciergerie();
-    
+
     // Only allow deletion if the home was created by the current conciergerie
     if (homeToDelete && currentConciergerie && homeToDelete.conciergerie.name === currentConciergerie.name) {
       setHomes(prev =>
@@ -111,9 +109,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <HomesContext.Provider
-      value={{ homes, isLoading, addHome, updateHome, deleteHome, getCurrentConciergerie }}
-    >
+    <HomesContext.Provider value={{ homes, isLoading, addHome, updateHome, deleteHome, getCurrentConciergerie }}>
       {children}
     </HomesContext.Provider>
   );

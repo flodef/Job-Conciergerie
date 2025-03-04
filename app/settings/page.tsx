@@ -1,7 +1,6 @@
 'use client';
 
 import { clsx } from 'clsx/lite';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ConciergerieData } from '../components/conciergerieForm';
 import ConfirmationModal from '../components/confirmationModal';
@@ -35,7 +34,6 @@ export default function Settings() {
   });
   const { setPrimaryColor } = useTheme();
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const router = useRouter();
 
   // Form state for editable fields
   const [email, setEmail] = useState('');
@@ -460,7 +458,7 @@ export default function Settings() {
           localStorage.removeItem('user_type');
           localStorage.removeItem('employee_data');
           localStorage.removeItem('conciergerie_data');
-          
+
           // Force a full page reload to reset the app state
           window.location.href = '/';
         }}

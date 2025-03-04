@@ -36,11 +36,9 @@ export interface Conciergerie {
 
 export interface Mission {
   id: string;
-  homeId: string;
   home: HomeData;
   objectives: Objective[];
   date: Date;
-  employeeId?: string;
   employee?: Employee;
   modifiedDate: Date;
   deleted: boolean;

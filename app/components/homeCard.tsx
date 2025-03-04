@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { HomeData } from '../types/mission';
+import { HomeData } from '../types/types';
 
 type HomeCardProps = {
   home: HomeData;
@@ -50,18 +50,14 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
       <ul className="list-none pl-0 space-y-1 mb-2">
         {home.tasks.slice(0, 3).map((task, index) => (
           <li key={index} className="flex items-start">
-            <span 
+            <span
               className="inline-block w-2 h-2 mt-1 mr-2 flex-shrink-0 border border-foreground"
               style={{ borderColor: 'var(--color-foreground)' }}
             />
             <span className="text-xs text-foreground truncate">{task}</span>
           </li>
         ))}
-        {home.tasks.length > 3 && (
-          <li className="text-xs text-light ml-4">
-            +{home.tasks.length - 3} autres tâches
-          </li>
-        )}
+        {home.tasks.length > 3 && <li className="text-xs text-light ml-4">+{home.tasks.length - 3} autres tâches</li>}
       </ul>
 
       <div className="mt-3 text-sm text-light">

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
 import { useHomes } from '../contexts/homesProvider';
-import { Mission } from '../types/mission';
+import { Mission } from '../types/types';
 import ConfirmationModal from './confirmationModal';
 import FullScreenImageModal from './fullScreenImageModal';
 import FullScreenModal from './fullScreenModal';
@@ -258,7 +258,7 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
         onConfirm={handleAcceptWithWarning}
         onCancel={() => setIsAcceptModalOpen(false)}
         title="Accepter la mission"
-        message="En acceptant cette mission, vous vous engagez à l&apos;honorer. La seule façon d&apos;annuler est de contacter directement la conciergerie."
+        message="En acceptant cette mission, vous vous engagez à l'honorer. La seule façon d'annuler est de contacter directement la conciergerie."
         confirmText="Accepter"
         cancelText="Annuler"
       >

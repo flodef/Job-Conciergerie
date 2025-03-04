@@ -80,8 +80,8 @@ export default function Missions() {
         if (!mission.employee) return true;
 
         // Show if mission is taken by the current employee
-        if (mission.employeeId === currentEmployeeId) {
-          console.log('Mission taken by current employee:', mission.id, mission.employeeId, currentEmployeeId);
+        if (mission.employee.id === currentEmployeeId) {
+          console.log('Mission taken by current employee:', mission.id, mission.employee.id, currentEmployeeId);
           return true;
         }
 
@@ -95,7 +95,7 @@ export default function Missions() {
           return true;
         }
 
-        console.log('Mission taken by another employee:', mission.id, mission.employeeId, currentEmployeeId);
+        console.log('Mission taken by another employee:', mission.id, mission.employee.id, currentEmployeeId);
         // Otherwise, don't show
         return false;
       }

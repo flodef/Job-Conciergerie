@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Conciergerie, Employee, HomeData, Mission } from '../types/mission';
+import { Conciergerie, Employee, HomeData, Mission } from '../types/types';
 import { getWelcomeParams } from '../utils/welcomeParams';
 import { useHomes } from './homesProvider';
 import { EmployeeData } from '../components/employeeForm';

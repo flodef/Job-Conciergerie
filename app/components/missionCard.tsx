@@ -1,6 +1,6 @@
 'use client';
 
-import { Mission } from '../types/mission';
+import { Mission } from '../types/types';
 
 type MissionCardProps = {
   mission: Mission;

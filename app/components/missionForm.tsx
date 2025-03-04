@@ -3,7 +3,7 @@
 import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
-import { Mission, Objective, objectives } from '../types/mission';
+import { Mission, Objective, objectives } from '../types/types';
 import { ToastMessage, ToastType } from './toastMessage';
 
 type MissionFormProps = {
@@ -22,7 +22,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   const currentConciergerie = getCurrentConciergerie();
   const filteredHomes = homes.filter(home => !home.deleted && home.conciergerie?.name === currentConciergerie?.name);
 
-  const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
+  const [homeId, setHomeId] = useState<string>(mission?.home.id || filteredHomes[0]?.id || '');
   const [objectivesState, setObjectives] = useState<Objective[]>(mission?.objectives || []);
   const [date, setDate] = useState<string>(
     mission?.date
@@ -67,7 +67,6 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
       if (mode === 'add') {
         addMission({
-          homeId,
           home: homeWithMockupImage,
           objectives: objectivesState,
           date: new Date(date),
@@ -76,7 +75,6 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
       } else if (mission) {
         updateMission({
           ...mission,
-          homeId,
           home: homeWithMockupImage,
           objectives: objectivesState,
           date: new Date(date),

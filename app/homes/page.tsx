@@ -10,7 +10,7 @@ import HomeForm from '../components/homeForm';
 import LoadingSpinner from '../components/loadingSpinner';
 import { useHomes } from '../contexts/homesProvider';
 import { useMenuContext } from '../contexts/menuProvider';
-import { HomeData } from '../types/mission';
+import { HomeData } from '../types/types';
 import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
 
 export default function HomesPage() {

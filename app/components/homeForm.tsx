@@ -4,7 +4,7 @@ import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useHomes } from '../contexts/homesProvider';
-import { HomeData } from '../types/mission';
+import { HomeData } from '../types/types';
 import { ToastMessage, ToastType } from './toastMessage';
 import FullScreenImageModal from './fullScreenImageModal';
 import TaskList from './taskList';

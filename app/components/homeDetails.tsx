@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
-import { HomeData } from '../types/mission';
+import { HomeData } from '../types/types';
 import ConfirmationModal from './confirmationModal';
 import FullScreenImageModal from './fullScreenImageModal';
 import FullScreenModal from './fullScreenModal';
@@ -44,7 +44,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
     const missionTitles = missions
       .filter(mission => !mission.deleted && mission.home.id === home.id)
       .map(mission => mission.home.title);
-    
+
     setAssociatedMissions(missionTitles);
   }, [missions, home.id]);
 
@@ -71,7 +71,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
       .forEach(mission => {
         deleteMission(mission.id);
       });
-    
+
     // Then delete the home
     deleteHome(home.id);
     setIsDeleteWithMissionsModalOpen(false);
@@ -145,7 +145,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
             <ul className="list-none pl-0 mt-2 space-y-1">
               {home.tasks.map((task, index) => (
                 <li key={index} className="flex items-start">
-                  <span 
+                  <span
                     className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 flex-shrink-0 border border-foreground"
                     style={{ borderColor: 'var(--color-foreground)' }}
                   />
