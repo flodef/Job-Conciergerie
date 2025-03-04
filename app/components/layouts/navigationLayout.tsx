@@ -1,7 +1,8 @@
 'use client';
 
 import { MenuButton } from '@/app/components/menuButton';
-import { pages, useMenuContext } from '@/app/contexts/menuProvider';
+import { Page, pages, useMenuContext } from '@/app/contexts/menuProvider';
+import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import clsx from 'clsx';
 import { ReactNode, useEffect, useState } from 'react';
 
@@ -9,6 +10,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const { currentPage, isMenuOpen, setIsMenuOpen, onMenuChange } = useMenuContext();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHomePage, setIsHomePage] = useState(false);
+  const [userType, setUserType] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if we're on the homepage or waiting page
@@ -21,6 +23,12 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    // Get user type from localStorage
+    const { userType } = getWelcomeParams();
+    setUserType(userType);
   }, []);
 
   return (
@@ -65,7 +73,14 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
                 <nav>
                   <ul className="space-y-2 py-4">
                     {pages
-                      .filter(page => page.toString())
+                      .filter(page => {
+                        // Filter pages based on user type
+                        if (userType === 'employee') {
+                          // Employees can only see Missions and Settings
+                          return page === Page.Missions || page === Page.Settings;
+                        }
+                        return page.toString();
+                      })
                       .map(page => (
                         <li key={page}>
                           <button
