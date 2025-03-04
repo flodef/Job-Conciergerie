@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prepare": "husky"
   },
   "dependencies": {
     "@tabler/icons-react": "latest",
@@ -17,15 +18,16 @@
     "react-dom": "latest"
   },
   "devDependencies": {
-    "typescript": "latest",
+    "@eslint/eslintrc": "latest",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "postcss": "latest",
-    "tailwindcss": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
-    "@eslint/eslintrc": "latest"
+    "husky": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
   },
   "prettier": {
     "useTabs": false,
