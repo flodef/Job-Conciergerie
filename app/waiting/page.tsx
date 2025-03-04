@@ -63,15 +63,28 @@ export default function WaitingPage() {
         // Calculate the difference in milliseconds
         const diffTime = Math.abs(today.getTime() - createdDate.getTime());
 
-        // Calculate the difference in hours first
+        // Calculate the difference in minutes, hours, and days
+        const diffMinutes = Math.floor(diffTime / (1000 * 60));
         const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-        if (diffHours < 24) {
-          // If less than 24 hours, show hours
-          setDaysWaiting(`${diffHours} heure${diffHours > 1 ? 's' : ''}`);
+        if (diffMinutes < 60) {
+          // If less than 60 minutes, show minutes
+          setDaysWaiting(`${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`);
+        } else if (diffHours < 24) {
+          // If less than 24 hours but more than 60 minutes, show hours and minutes
+          const remainingMinutes = diffMinutes % 60;
+          if (remainingMinutes > 0) {
+            setDaysWaiting(
+              `${diffHours} heure${diffHours > 1 ? 's' : ''} et ${remainingMinutes} minute${
+                remainingMinutes > 1 ? 's' : ''
+              }`,
+            );
+          } else {
+            setDaysWaiting(`${diffHours} heure${diffHours > 1 ? 's' : ''}`);
+          }
         } else {
           // If 24 hours or more, calculate days
-          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
           setDaysWaiting(`${diffDays} jour${diffDays > 1 ? 's' : ''}`);
         }
       }
@@ -114,16 +127,16 @@ export default function WaitingPage() {
             <div className="bg-secondary/10 p-4 rounded-lg mb-4">
               <div className="flex items-center mb-2">
                 {employee.status === 'pending' ? (
-                  <IconClock size={20} className="text-yellow-500 mr-2" />
+                  <IconClock size={25} className="text-yellow-500 mr-2" />
                 ) : employee.status === 'accepted' ? (
-                  <IconCircleCheck size={20} className="text-green-500 mr-2" />
+                  <IconCircleCheck size={25} className="text-green-500 mr-2" />
                 ) : (
-                  <IconAlertCircle size={20} className="text-red-500 mr-2" />
+                  <IconAlertCircle size={25} className="text-red-500 mr-2" />
                 )}
                 <p className="text-sm text-foreground font-medium">
                   Statut actuel :{' '}
                   <span
-                    className={`${
+                    className={`font-bold ${
                       employee.status === 'pending'
                         ? 'text-yellow-500'
                         : employee.status === 'accepted'
@@ -131,16 +144,17 @@ export default function WaitingPage() {
                         : 'text-red-500'
                     }`}
                   >
-                    {employee.status === 'pending'
-                      ? 'En attente de validation'
-                      : employee.status === 'accepted'
-                      ? 'Acceptée'
-                      : 'Rejetée'}
+                    {
+                      { pending: 'En attente de validation', accepted: 'Acceptée', rejected: 'Rejetée' }[
+                        employee.status
+                      ]
+                    }
                   </span>
                 </p>
               </div>
               <p className="text-sm text-foreground ml-7">
-                <span className="font-medium">Demande soumise il y a :</span> {daysWaiting}
+                <span className="font-medium">Demande soumise il y a : </span>
+                <span className="font-bold">{daysWaiting}</span>
               </p>
             </div>
 
@@ -164,7 +178,7 @@ export default function WaitingPage() {
         )}
 
         {/* //TODO : remove this when in Prod */}
-        <div className="mt-6">
+        <div className="mt-4 justify-self-center">
           <button
             onClick={() => {
               // Clear user type from localStorage for testing purposes
