@@ -75,7 +75,7 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
     if (existingEmployee) {
       // Get the employee's status
       const status = getEmployeeStatus(formData);
-      
+
       // Redirect based on status
       if (status === 'accepted') {
         // If accepted, go to missions page
@@ -89,13 +89,13 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
 
     // Add the employee to the employees list
     addEmployee(formData);
-    
+
     // Redirect to waiting page
     window.location.href = '/waiting';
   };
 
   return (
-    <div className="p-6">
+    <div className="px-4">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Inscription Prestataire</h2>
         <button
@@ -223,7 +223,7 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
             value={formData.message}
             onChange={handleChange}
             className="w-full p-2 border border-secondary rounded-md focus:ring-primary focus:border-primary"
-            rows={4}
+            rows={3}
             disabled={isSubmitting}
           />
         </div>

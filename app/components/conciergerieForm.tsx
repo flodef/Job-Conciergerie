@@ -38,7 +38,7 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
       if (selectedConciergerie) {
         // Get color value from colors.json based on colorName
         const colorValue = getColorValueByName(selectedConciergerie.colorname);
-        
+
         setConciergerieData(prev => ({
           ...prev,
           email: selectedConciergerie.email,
@@ -98,7 +98,7 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
   };
 
   return (
-    <div className="p-6">
+    <div className="px-4">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Conciergerie</h2>
         <button
@@ -124,7 +124,9 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             required
           >
-            <option value="" disabled>Sélectionnez une conciergerie</option>
+            <option value="" disabled>
+              Sélectionnez une conciergerie
+            </option>
             {companies.map(company => (
               <option key={company} value={company}>
                 {company}

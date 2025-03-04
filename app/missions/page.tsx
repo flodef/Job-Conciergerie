@@ -67,11 +67,6 @@ export default function Missions() {
 
       if (!isActive) return false;
 
-      // For conciergerie users, only show their missions
-      if (userType === 'conciergerie') {
-        return mission.conciergerie.name === currentConciergerie?.name;
-      }
-
       // For employee users, show only:
       // 1. Available missions (not taken by anyone)
       // 2. Missions taken by the current employee
@@ -167,7 +162,7 @@ export default function Missions() {
       {activeMissions.length === 0 ? (
         <div
           className={clsx(
-            'flex flex-col items-center justify-center h-[calc(100dvh-12rem)] border-2 border-dashed border-secondary rounded-lg p-8',
+            'flex flex-col items-center justify-center h-[calc(100dvh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8',
             userType === 'conciergerie' ? 'cursor-pointer' : '',
           )}
           onClick={userType === 'conciergerie' ? handleAddMission : undefined}

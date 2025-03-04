@@ -12,7 +12,7 @@ type FloatingActionButtonProps = {
 
 export default function FloatingActionButton({
   onClick,
-  icon = <IconPlus size={24} />,
+  icon = <IconPlus size={30} />,
   className,
 }: FloatingActionButtonProps) {
   return (
