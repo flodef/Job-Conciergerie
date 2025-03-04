@@ -5,7 +5,7 @@ import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import { ToastMessage, ToastType } from './toastMessage';
 import Tooltip from './tooltip';
-import { addEmployee } from '../utils/employeeUtils';
+import { addEmployee, employeeExists, getEmployeeStatus, getEmployees } from '../utils/employeeUtils';
 
 type EmployeeFormProps = {
   companies: string[];
@@ -60,7 +60,7 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
 
     // Check if all required fields are filled
     if (!formData.nom || !formData.prenom || !formData.tel || !formData.email || !formData.conciergerie) {
-      setToastMessage("Veuillez remplir tous les champs obligatoires");
+      setToastMessage('Veuillez remplir tous les champs obligatoires');
       setToastType(ToastType.Error);
       setShowToast(true);
       return;
@@ -68,19 +68,30 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
 
     setIsSubmitting(true);
 
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setToastMessage("Votre candidature a bien été envoyée");
-      setToastType(ToastType.Success);
-      setShowToast(true);
+    // Check if employee already exists
+    const employees = getEmployees();
+    const existingEmployee = employeeExists(formData, employees);
 
-      // Add the employee to the employees list
-      addEmployee(formData);
+    if (existingEmployee) {
+      // Get the employee's status
+      const status = getEmployeeStatus(formData);
+      
+      // Redirect based on status
+      if (status === 'accepted') {
+        // If accepted, go to missions page
+        window.location.href = '/missions';
+      } else {
+        // If pending or rejected, go to waiting page
+        window.location.href = '/waiting';
+      }
+      return;
+    }
 
-      // Redirect to waiting page
-      window.location.href = '/waiting';
-    }, 1000);
+    // Add the employee to the employees list
+    addEmployee(formData);
+    
+    // Redirect to waiting page
+    window.location.href = '/waiting';
   };
 
   return (
@@ -97,11 +108,7 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
       </div>
 
       {showToast && toastMessage && toastType && (
-        <ToastMessage 
-          type={toastType} 
-          message={toastMessage} 
-          onClose={() => setShowToast(false)}
-        />
+        <ToastMessage type={toastType} message={toastMessage} onClose={() => setShowToast(false)} />
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">

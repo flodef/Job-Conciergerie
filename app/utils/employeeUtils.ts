@@ -30,9 +30,9 @@ export function saveEmployees(employees: EmployeeWithStatus[]): void {
   }
 }
 
-// Add a new employee
-export function addEmployee(employee: EmployeeData): void {
-  const employees = getEmployees();
+// Check if employee already exists
+export function employeeExists(employee: EmployeeData, existingEmployees?: EmployeeWithStatus[]): boolean {
+  const employees = existingEmployees || getEmployees();
   
   // Check if employee already exists with the same name, email, or phone
   const existingEmployee = employees.find(
@@ -43,8 +43,16 @@ export function addEmployee(employee: EmployeeData): void {
       (emp.tel && employee.tel && emp.tel === employee.tel)
   );
   
-  // If employee exists and is already accepted or rejected, don't add them again
-  if (existingEmployee && (existingEmployee.status === 'accepted' || existingEmployee.status === 'rejected')) {
+  return !!existingEmployee;
+}
+
+// Add a new employee
+export function addEmployee(employee: EmployeeData): void {
+  const employees = getEmployees();
+  
+  // Check if employee already exists
+  if (employeeExists(employee, employees)) {
+    console.log('Employee already exists, not adding again');
     return;
   }
   
@@ -58,6 +66,7 @@ export function addEmployee(employee: EmployeeData): void {
   
   employees.push(newEmployee);
   saveEmployees(employees);
+  console.log('New employee added:', newEmployee);
 }
 
 // Update an employee's status
@@ -189,4 +198,20 @@ export function updateEmployeeData(employeeData: EmployeeData): void {
   } catch (error) {
     console.error('Error updating employee data:', error);
   }
+}
+
+// Get employee status by matching name, email, or phone
+export function getEmployeeStatus(employee: EmployeeData): EmployeeStatus | null {
+  const employees = getEmployees();
+  
+  // Find the employee
+  const existingEmployee = employees.find(
+    emp => 
+      ((emp.nom.toLowerCase() === employee.nom.toLowerCase()) && 
+       (emp.prenom.toLowerCase() === employee.prenom.toLowerCase())) ||
+      (emp.email.toLowerCase() === employee.email.toLowerCase()) ||
+      (emp.tel && employee.tel && emp.tel === employee.tel)
+  );
+  
+  return existingEmployee ? existingEmployee.status : null;
 }
