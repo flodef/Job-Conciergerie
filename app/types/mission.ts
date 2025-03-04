@@ -1,7 +1,7 @@
 export enum Objective {
   Entry = 'Entrée',
   Exit = 'Sortie',
-  Cleaning = 'Nettoyage',
+  Cleaning = 'Ménage',
   Gardening = 'Jardinage',
 }
 
