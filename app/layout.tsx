@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
-import NavigationLayout from './components/layouts/navigationLayout';
+import NavigationLayout from './components/navigationLayout';
 import { HomesProvider } from './contexts/homesProvider';
 import { MenuProvider } from './contexts/menuProvider';
 import { MissionsProviderWrapper } from './contexts/missionsProvider';

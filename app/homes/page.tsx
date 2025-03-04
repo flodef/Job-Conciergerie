@@ -72,7 +72,7 @@ export default function HomesPage() {
   };
 
   return (
-    <div className="min-h-[calc(100dvh-4rem)] bg-background p-4">
+    <div>
       {homes.filter(home => !home.deleted).length > 1 && (
         <div className="mb-4">
           <div className="relative">
@@ -96,12 +96,12 @@ export default function HomesPage() {
       )}
 
       {isLoading ? (
-        <div className="min-h-[calc(100dvh-4rem)] flex items-center justify-center bg-background">
+        <div className="min-h-[calc(100dvh-9rem)] flex items-center justify-center bg-background">
           <LoadingSpinner size="large" text="Chargement des biens..." />
         </div>
       ) : filteredHomes.length === 0 && searchTerm === '' ? (
         <div
-          className="flex flex-col items-center justify-center h-[calc(100vh-6rem)] border-2 border-dashed border-secondary rounded-lg p-8 cursor-pointer"
+          className="flex flex-col items-center justify-center h-[calc(100vh-12rem)] border-2 border-dashed border-secondary rounded-lg p-8 cursor-pointer"
           onClick={handleAddHome}
         >
           <div className="text-center">

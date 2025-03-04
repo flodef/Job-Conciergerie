@@ -211,7 +211,7 @@ export default function Settings() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[calc(100dvh-4rem)] flex items-center justify-center bg-background">
+      <div className="min-h-[calc(100dvh-9rem)] flex items-center justify-center bg-background">
         <LoadingSpinner size="large" text="Chargement..." />
       </div>
     );
@@ -219,14 +219,14 @@ export default function Settings() {
 
   if (!userInfo) {
     return (
-      <div className="min-h-[calc(100dvh-4rem)] flex items-center justify-center bg-background">
+      <div className="min-h-[calc(100dvh-9rem)] flex items-center justify-center bg-background">
         <p className="text-foreground/70">Aucune information utilisateur disponible.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[calc(100dvh-4rem)] bg-background p-4">
+    <div>
       <div className="max-w-2xl mx-auto">
         {userInfo.userType === 'conciergerie' && userInfo.conciergerieData && (
           <div>
@@ -454,10 +454,8 @@ export default function Settings() {
         isOpen={showConfirmation}
         onClose={() => setShowConfirmation(false)}
         onConfirm={() => {
-          // Clear all user data from localStorage
+          // Clear only the user type from localStorage (keep other data)
           localStorage.removeItem('user_type');
-          localStorage.removeItem('employee_data');
-          localStorage.removeItem('conciergerie_data');
 
           // Force a full page reload to reset the app state
           window.location.href = '/';

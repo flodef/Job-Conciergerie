@@ -156,18 +156,18 @@ export default function Missions() {
   // Show loading spinner while loading missions
   if (isLoading) {
     return (
-      <div className="min-h-[calc(100dvh-4rem)] flex items-center justify-center bg-background">
+      <div className="min-h-[calc(100dvh-9rem)] flex items-center justify-center bg-background">
         <LoadingSpinner size="large" text="Chargement des missions..." />
       </div>
     );
   }
 
   return (
-    <div className="min-h-[calc(100dvh-4rem)] bg-background p-4">
+    <div>
       {activeMissions.length === 0 ? (
         <div
           className={clsx(
-            'flex flex-col items-center justify-center h-[calc(100vh-6rem)] border-2 border-dashed border-secondary rounded-lg p-8',
+            'flex flex-col items-center justify-center h-[calc(100dvh-12rem)] border-2 border-dashed border-secondary rounded-lg p-8',
             userType === 'conciergerie' ? 'cursor-pointer' : '',
           )}
           onClick={userType === 'conciergerie' ? handleAddMission : undefined}
