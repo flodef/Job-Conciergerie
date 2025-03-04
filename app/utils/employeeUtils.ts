@@ -169,3 +169,24 @@ export function filterEmployeesByConciergerie(
     employee.conciergerie.toLowerCase() === conciergerie.toLowerCase()
   );
 }
+
+// Update employee data in localStorage
+export function updateEmployeeData(employeeData: EmployeeData): void {
+  try {
+    // Get the current employee data
+    const currentDataStr = localStorage.getItem('employee_data');
+    const currentData = currentDataStr ? JSON.parse(currentDataStr) : null;
+    
+    // If there's existing data, merge it with the new data
+    const updatedData = currentData 
+      ? { ...currentData, ...employeeData }
+      : employeeData;
+    
+    // Save the updated data
+    localStorage.setItem('employee_data', JSON.stringify(updatedData));
+    
+    console.log('Updated employee data in localStorage:', updatedData);
+  } catch (error) {
+    console.error('Error updating employee data:', error);
+  }
+}

@@ -11,6 +11,7 @@ import { ToastMessage, ToastType } from '../components/toastMessage';
 import { useTheme } from '../contexts/themeProvider';
 import colorOptions from '../data/colors.json';
 import conciergeriesData from '../data/conciergeries.json';
+import { updateEmployeeData } from '../utils/employeeUtils';
 import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
 import { getWelcomeParams, updateConciergerieData } from '../utils/welcomeParams';
 
@@ -67,8 +68,8 @@ export default function Settings() {
         conciergerieData: params.conciergerieData,
       });
 
-      if (params.conciergerieData) {
-        // Set current form values
+      if (params.userType === 'conciergerie' && params.conciergerieData) {
+        // Set current form values for conciergerie
         setEmail(params.conciergerieData.email || '');
         setTel(params.conciergerieData.tel || '');
 
@@ -85,7 +86,7 @@ export default function Settings() {
         if (params.conciergerieData.color) {
           setPrimaryColor(params.conciergerieData.color);
         }
-      } else if (params.employeeData) {
+      } else if (params.userType === 'employee' && params.employeeData) {
         // Set employee data for form
         setEmail(params.employeeData.email || '');
         setTel(params.employeeData.tel || '');
@@ -93,6 +94,9 @@ export default function Settings() {
         // Store original values for comparison
         setOriginalEmail(params.employeeData.email || '');
         setOriginalTel(params.employeeData.tel || '');
+
+        // Log for debugging
+        console.log('Loaded employee data:', params.employeeData);
       }
 
       setIsLoading(false);
@@ -114,13 +118,22 @@ export default function Settings() {
 
   // Check if form has been modified
   const hasChanges = () => {
-    if (!userInfo.conciergerieData) return false;
-
-    const emailChanged = email !== originalEmail;
-    const telChanged = tel !== originalTel;
-    const colorChanged = selectedColor?.name !== originalColorName;
-
-    return emailChanged || telChanged || colorChanged;
+    if (userInfo.userType === 'conciergerie' && userInfo.conciergerieData) {
+      const emailChanged = email !== originalEmail;
+      const telChanged = tel !== originalTel;
+      const colorChanged = selectedColor?.name !== originalColorName;
+      return emailChanged || telChanged || colorChanged;
+    } else if (userInfo.userType === 'employee' && userInfo.employeeData) {
+      const emailChanged = email !== originalEmail;
+      const telChanged = tel !== originalTel;
+      console.log('Employee changes:', {
+        current: { email, tel },
+        original: { email: originalEmail, tel: originalTel },
+        changed: { email: emailChanged, tel: telChanged },
+      });
+      return emailChanged || telChanged;
+    }
+    return false;
   };
 
   // Handle form submission
@@ -163,14 +176,24 @@ export default function Settings() {
           tel,
         };
 
+        console.log('Updating employee data:', updatedData);
+
         // Save to localStorage
-        localStorage.setItem('employee_data', JSON.stringify(updatedData));
+        updateEmployeeData(updatedData);
+
+        // Update local state
+        setUserInfo({
+          ...userInfo,
+          employeeData: updatedData,
+        });
+
+        console.log('Updated employee data in state');
       }
 
       // Update original values to match current values after save
       setOriginalEmail(email);
       setOriginalTel(tel);
-      if (selectedColor) {
+      if (selectedColor && userInfo.userType === 'conciergerie') {
         setOriginalColorName(selectedColor.name);
       }
 
@@ -339,7 +362,7 @@ export default function Settings() {
             <div>
               <p className="text-sm text-foreground/70 mb-1">Nom</p>
               <p className="font-medium">
-                {userInfo.employeeData.nom} {userInfo.employeeData.prenom}
+                {userInfo.employeeData.prenom} {userInfo.employeeData.nom}
               </p>
             </div>
 
@@ -408,7 +431,7 @@ export default function Settings() {
           </div>
         )}
 
-        <div className="mt-8 border-t pt-4">
+        <div className="mt-6 border-t pt-4">
           <h3 className="text-lg font-medium mb-4">Options avancées</h3>
           <div className="flex flex-col space-y-4 text-center">
             <div>
