@@ -4,13 +4,7 @@ import { createContext, ReactNode, useContext, useEffect, useState } from 'react
 import { Conciergerie, Employee, HomeData, Mission } from '../types/mission';
 import { getWelcomeParams } from '../utils/welcomeParams';
 import { useHomes } from './homesProvider';
-
-// Mock data for employees
-const mockEmployees: Employee[] = [
-  { id: '1', name: 'Jean Dupont' },
-  { id: '2', name: 'Marie Martin' },
-  { id: '3', name: 'Pierre Durand' },
-];
+import { EmployeeData } from '../components/employeeForm';
 
 type MissionsContextType = {
   missions: Mission[];
@@ -21,7 +15,10 @@ type MissionsContextType = {
   updateMission: (mission: Mission) => void;
   deleteMission: (id: string) => void;
   removeEmployee: (id: string) => void;
+  acceptMission: (id: string) => void;
   getCurrentConciergerie: () => Conciergerie | null;
+  shouldShowAcceptWarning: boolean;
+  setShouldShowAcceptWarning: (show: boolean) => void;
 };
 
 const MissionsContext = createContext<MissionsContextType | undefined>(undefined);
@@ -33,8 +30,9 @@ export function MissionsProviderWrapper({ children }: { children: ReactNode }) {
 function MissionsProvider({ children }: { children: ReactNode }) {
   const { homes } = useHomes();
   const [missions, setMissions] = useState<Mission[]>([]);
-  const [employees] = useState<Employee[]>(mockEmployees);
+  const [employees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [shouldShowAcceptWarning, setShouldShowAcceptWarning] = useState<boolean>(true);
 
   // Get current conciergerie from localStorage
   const getCurrentConciergerie = (): Conciergerie | null => {
@@ -67,6 +65,12 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // Load warning preference from localStorage
+      const warningPref = localStorage.getItem('show_accept_mission_warning');
+      if (warningPref !== null) {
+        setShouldShowAcceptWarning(JSON.parse(warningPref));
+      }
+
       setIsLoading(false);
     };
 
@@ -79,6 +83,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('missions', JSON.stringify(missions));
     }
   }, [missions]);
+
+  // Save warning preference to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('show_accept_mission_warning', JSON.stringify(shouldShowAcceptWarning));
+  }, [shouldShowAcceptWarning]);
 
   const addMission = (missionData: Omit<Mission, 'id' | 'modifiedDate' | 'deleted' | 'conciergerie'>) => {
     const currentConciergerie = getCurrentConciergerie();
@@ -129,21 +138,71 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   };
 
   const removeEmployee = (id: string) => {
-    const missionToUpdate = missions.find(m => m.id === id);
-    const currentConciergerie = getCurrentConciergerie();
+    setMissions(prev =>
+      prev.map(mission =>
+        mission.id === id
+          ? {
+              ...mission,
+              employeeId: undefined,
+              employee: undefined,
+              modifiedDate: new Date(),
+            }
+          : mission,
+      ),
+    );
+  };
 
-    // Only allow employee removal if the mission was created by the current conciergerie
-    if (missionToUpdate && currentConciergerie && missionToUpdate.conciergerie.name === currentConciergerie.name) {
-      setMissions(prev =>
-        prev.map(mission =>
-          mission.id === id
-            ? { ...mission, employeeId: undefined, employee: undefined, modifiedDate: new Date() }
-            : mission,
-        ),
-      );
-    } else {
-      console.error('Cannot remove employee: mission not created by current conciergerie');
+  const generateEmployeeId = (employee: EmployeeData): string => {
+    return `emp_${employee.prenom.toLowerCase()}_${employee.nom.toLowerCase()}_${Date.now()}`;
+  };
+
+  const acceptMission = (id: string) => {
+    const missionToAccept = missions.find(m => m.id === id);
+    const { employeeData } = getWelcomeParams();
+
+    if (!missionToAccept) {
+      console.error('Mission not found');
+      return;
     }
+
+    if (!employeeData) {
+      console.error('No employee data found in localStorage');
+      return;
+    }
+
+    console.log('Employee data from localStorage:', employeeData);
+
+    // Create an employee object from the employee data in localStorage
+    const employee: Employee = {
+      id: employeeData.id || generateEmployeeId(employeeData),
+      name: `${employeeData.prenom} ${employeeData.nom}`,
+    };
+
+    console.log('Created employee object:', employee);
+
+    if (!employee.id) {
+      console.error('Employee ID is missing');
+      return;
+    }
+
+    setMissions(prev => {
+      const updatedMissions = prev.map(mission =>
+        mission.id === id
+          ? {
+              ...mission,
+              employeeId: employee.id,
+              employee: employee,
+              modifiedDate: new Date(),
+            }
+          : mission,
+      );
+
+      console.log(
+        'Updated mission:',
+        updatedMissions.find(m => m.id === id),
+      );
+      return updatedMissions;
+    });
   };
 
   return (
@@ -157,7 +216,10 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         updateMission,
         deleteMission,
         removeEmployee,
+        acceptMission,
         getCurrentConciergerie,
+        shouldShowAcceptWarning,
+        setShouldShowAcceptWarning,
       }}
     >
       {children}

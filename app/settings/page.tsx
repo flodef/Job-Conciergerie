@@ -1,5 +1,6 @@
 'use client';
 
+import { clsx } from 'clsx/lite';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ConciergerieData } from '../components/conciergerieForm';
@@ -8,14 +9,13 @@ import { EmployeeData } from '../components/employeeForm';
 import LoadingSpinner from '../components/loadingSpinner';
 import { ToastMessage, ToastType } from '../components/toastMessage';
 import { useTheme } from '../contexts/themeProvider';
-import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
-import { getWelcomeParams, updateConciergerieData, getColorValueByName } from '../utils/welcomeParams';
 import colorOptions from '../data/colors.json';
 import conciergeriesData from '../data/conciergeries.json';
-import { clsx } from 'clsx/lite';
+import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
+import { getWelcomeParams, updateConciergerieData } from '../utils/welcomeParams';
 
 type UserInfo = {
-  userType: 'conciergerie' | 'prestataire' | null;
+  userType: 'conciergerie' | 'employee' | null;
   employeeData: EmployeeData | null;
   conciergerieData: ConciergerieData | null;
 };
@@ -44,7 +44,7 @@ export default function Settings() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<ToastType>(ToastType.Success);
-  
+
   // Track original values for comparison
   const [originalEmail, setOriginalEmail] = useState('');
   const [originalTel, setOriginalTel] = useState('');
@@ -85,6 +85,14 @@ export default function Settings() {
         if (params.conciergerieData.color) {
           setPrimaryColor(params.conciergerieData.color);
         }
+      } else if (params.employeeData) {
+        // Set employee data for form
+        setEmail(params.employeeData.email || '');
+        setTel(params.employeeData.tel || '');
+
+        // Store original values for comparison
+        setOriginalEmail(params.employeeData.email || '');
+        setOriginalTel(params.employeeData.tel || '');
       }
 
       setIsLoading(false);
@@ -96,12 +104,10 @@ export default function Settings() {
   // Check if a color is already used by another conciergerie
   const isColorUsed = (colorName: string) => {
     if (!userInfo?.conciergerieData) return false;
-    
+
     // Find conciergeries that are not the current one
-    const otherConciergeries = conciergeriesData.filter(
-      c => c.name !== userInfo.conciergerieData?.name
-    );
-    
+    const otherConciergeries = conciergeriesData.filter(c => c.name !== userInfo.conciergerieData?.name);
+
     // Check if any other conciergerie uses this color
     return otherConciergeries.some(c => c.colorname === colorName);
   };
@@ -109,50 +115,64 @@ export default function Settings() {
   // Check if form has been modified
   const hasChanges = () => {
     if (!userInfo.conciergerieData) return false;
-    
+
     const emailChanged = email !== originalEmail;
     const telChanged = tel !== originalTel;
     const colorChanged = selectedColor?.name !== originalColorName;
-    
+
     return emailChanged || telChanged || colorChanged;
   };
 
   // Handle form submission
   const handleSave = () => {
-    if (!userInfo?.conciergerieData) return;
+    if (!userInfo?.conciergerieData && !userInfo?.employeeData) return;
 
     setIsSaving(true);
 
     try {
-      // Create updated conciergerie data
-      const updatedData = {
-        ...userInfo.conciergerieData,
-        email,
-        tel,
-        colorName: selectedColor?.name || userInfo.conciergerieData.colorName,
-      };
+      if (userInfo.userType === 'conciergerie' && userInfo.conciergerieData) {
+        // Create updated conciergerie data
+        const updatedData = {
+          ...userInfo.conciergerieData,
+          email,
+          tel,
+          colorName: selectedColor?.name || userInfo.conciergerieData.colorName,
+        };
 
-      // Update in localStorage
-      updateConciergerieData(updatedData);
+        // Update in localStorage
+        updateConciergerieData(updatedData);
 
-      // Update theme
-      if (selectedColor) {
-        setPrimaryColor(selectedColor.value);
+        // Update theme
+        if (selectedColor) {
+          setPrimaryColor(selectedColor.value);
+        }
+
+        // Update local state
+        setUserInfo({
+          ...userInfo,
+          conciergerieData: {
+            ...updatedData,
+            color: selectedColor?.value || userInfo.conciergerieData.color,
+          },
+        });
+      } else if (userInfo.userType === 'employee' && userInfo.employeeData) {
+        // Update employee data
+        const updatedData = {
+          ...userInfo.employeeData,
+          email,
+          tel,
+        };
+
+        // Save to localStorage
+        localStorage.setItem('employee_data', JSON.stringify(updatedData));
       }
-
-      // Update local state
-      setUserInfo({
-        ...userInfo,
-        conciergerieData: {
-          ...updatedData,
-          color: selectedColor?.value || getColorValueByName(updatedData.colorName) || '',
-        },
-      });
 
       // Update original values to match current values after save
       setOriginalEmail(email);
       setOriginalTel(tel);
-      setOriginalColorName(selectedColor?.name || userInfo.conciergerieData.colorName);
+      if (selectedColor) {
+        setOriginalColorName(selectedColor.name);
+      }
 
       // Show success toast
       setToastMessage('Modifications enregistrées avec succès');
@@ -160,7 +180,7 @@ export default function Settings() {
       setShowToast(true);
     } catch (error) {
       console.error('Error saving settings:', error);
-      setToastMessage("Erreur lors de l'enregistrement");
+      setToastMessage('Erreur lors de l&apos;enregistrement');
       setToastType(ToastType.Error);
       setShowToast(true);
     } finally {
@@ -188,152 +208,139 @@ export default function Settings() {
     <div className="min-h-[calc(100dvh-4rem)] bg-background p-4">
       <div className="max-w-2xl mx-auto">
         {userInfo.userType === 'conciergerie' && userInfo.conciergerieData && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Informations de la conciergerie</h2>
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Informations de la conciergerie</h2>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground/70 mb-1">Nom</label>
-                  <p className="font-medium">{userInfo.conciergerieData.name}</p>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground/70 mb-1">Nom</label>
+                <p className="font-medium">{userInfo.conciergerieData.name}</p>
+              </div>
 
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-foreground/70 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    className={clsx(
-                      'w-full p-2 border rounded-md',
-                      'border-foreground/20',
-                      'focus:outline-none focus:ring-2'
-                    )}
-                    style={{ 
-                      '--tw-ring-color': selectedColor?.value || userInfo.conciergerieData.color
-                    } as React.CSSProperties}
-                  />
-                </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-foreground/70 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className={clsx(
+                    'w-full p-2 border rounded-md',
+                    'border-foreground/20',
+                    'focus:outline-none focus:ring-2',
+                  )}
+                  style={
+                    {
+                      '--tw-ring-color': selectedColor?.value || userInfo.conciergerieData.color,
+                    } as React.CSSProperties
+                  }
+                />
+              </div>
 
-                <div>
-                  <label htmlFor="tel" className="block text-sm font-medium text-foreground/70 mb-1">
-                    Téléphone
-                  </label>
-                  <input
-                    type="tel"
-                    id="tel"
-                    value={tel}
-                    onChange={e => setTel(e.target.value)}
-                    className={clsx(
-                      'w-full p-2 border rounded-md',
-                      'border-foreground/20',
-                      'focus:outline-none focus:ring-2'
-                    )}
-                    style={{ 
-                      '--tw-ring-color': selectedColor?.value || userInfo.conciergerieData.color
-                    } as React.CSSProperties}
-                  />
-                </div>
+              <div>
+                <label htmlFor="tel" className="block text-sm font-medium text-foreground/70 mb-1">
+                  Téléphone
+                </label>
+                <input
+                  type="tel"
+                  id="tel"
+                  value={tel}
+                  onChange={e => setTel(e.target.value)}
+                  className={clsx(
+                    'w-full p-2 border rounded-md',
+                    'border-foreground/20',
+                    'focus:outline-none focus:ring-2',
+                  )}
+                  style={
+                    {
+                      '--tw-ring-color': selectedColor?.value || userInfo.conciergerieData.color,
+                    } as React.CSSProperties
+                  }
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-foreground/70 mb-2">Couleur</label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {colorOptions.map(color => {
-                      const isUsed = isColorUsed(color.name);
-                      const isSelected = selectedColor?.name === color.name;
+              <div>
+                <label className="block text-sm font-medium text-foreground/70 mb-2">Couleur</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {colorOptions.map(color => {
+                    const isUsed = isColorUsed(color.name);
+                    const isSelected = selectedColor?.name === color.name;
 
-                      return (
-                        <button
-                          key={color.name}
-                          type="button"
-                          onClick={() => {
-                            if (!isUsed || isSelected) {
-                              setSelectedColor(color);
-                            }
-                          }}
-                          disabled={isUsed && !isSelected}
-                          className={`
-                            relative flex flex-col items-center space-y-1 p-2 border rounded-md transition-all
-                            ${isSelected ? 'ring-2 ring-primary border-primary' : 'border-secondary'}
-                            ${isUsed && !isSelected ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary/10'}
-                          `}
-                          title={
-                            isUsed && !isSelected
-                              ? 'Cette couleur est déjà utilisée par une autre conciergerie'
-                              : color.name
+                    return (
+                      <button
+                        key={color.name}
+                        type="button"
+                        onClick={() => {
+                          if (!isUsed || isSelected) {
+                            setSelectedColor(color);
                           }
-                        >
-                          <div className="w-6 h-6 rounded-full" style={{ backgroundColor: color.value }} />
-                          <span>{color.name}</span>
-                          
-                          {/* Diagonal "utilisée" label for used colors */}
-                          {isUsed && !isSelected && (
-                            <div 
-                              className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center"
-                              aria-hidden="true"
-                            >
-                              <div 
-                                className="absolute text-sm font-bold text-foreground/80 bg-background/70 px-1 py-0.5 uppercase tracking-wider whitespace-nowrap"
-                                style={{
-                                  transform: 'rotate(45deg) scale(0.9)',
-                                  transformOrigin: 'center',
-                                  width: '140%',
-                                  textAlign: 'center'
-                                }}
-                              >
-                                UTILISÉE
-                              </div>
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                        }}
+                        disabled={isUsed && !isSelected}
+                        className={`
+                          relative flex flex-col items-center space-y-1 p-2 border rounded-md transition-all
+                          ${isSelected ? 'ring-2 ring-primary border-primary' : 'border-secondary'}
+                          ${isUsed && !isSelected ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary/10'}
+                        `}
+                        title={
+                          isUsed && !isSelected
+                            ? 'Cette couleur est déjà utilisée par une autre conciergerie'
+                            : color.name
+                        }
+                      >
+                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: color.value }} />
+                        <span>{color.name}</span>
 
-                <div className="flex justify-center">
-                  <button
-                    onClick={handleSave}
-                    disabled={isSaving || !hasChanges()}
-                    className={`px-4 py-2 text-white rounded-md transition-colors ${
-                      hasChanges() 
-                        ? 'bg-primary hover:bg-primary/80' 
-                        : 'bg-primary/50 cursor-not-allowed'
-                    }`}
-                  >
-                    {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
-                  </button>
+                        {/* Diagonal "utilisée" label for used colors */}
+                        {isUsed && !isSelected && (
+                          <div
+                            className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center"
+                            aria-hidden="true"
+                          >
+                            <div
+                              className="absolute text-sm font-bold text-foreground/80 bg-background/70 px-1 py-0.5 uppercase tracking-wider whitespace-nowrap"
+                              style={{
+                                transform: 'rotate(45deg) scale(0.9)',
+                                transformOrigin: 'center',
+                                width: '140%',
+                                textAlign: 'center',
+                              }}
+                            >
+                              UTILISÉE
+                            </div>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+
+              <div className="flex justify-center">
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving || !hasChanges()}
+                  className={`px-4 py-2 text-white rounded-md transition-colors ${
+                    hasChanges() ? 'bg-primary hover:bg-primary/80' : 'bg-primary/50 cursor-not-allowed'
+                  }`}
+                >
+                  {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+                </button>
               </div>
             </div>
           </div>
         )}
 
-        {userInfo.userType === 'prestataire' && userInfo.employeeData && (
+        {userInfo.userType === 'employee' && userInfo.employeeData && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold mb-4">Informations du prestataire</h2>
 
             <div>
               <p className="text-sm text-foreground/70 mb-1">Nom</p>
-              <p className="font-medium">{userInfo.employeeData.nom}</p>
-            </div>
-
-            <div>
-              <p className="text-sm text-foreground/70 mb-1">Prénom</p>
-              <p className="font-medium">{userInfo.employeeData.prenom}</p>
-            </div>
-
-            <div>
-              <p className="text-sm text-foreground/70 mb-1">Email</p>
-              <p className="font-medium">{userInfo.employeeData.email}</p>
-            </div>
-
-            <div>
-              <p className="text-sm text-foreground/70 mb-1">Téléphone</p>
-              <p className="font-medium">{userInfo.employeeData.tel}</p>
+              <p className="font-medium">
+                {userInfo.employeeData.nom} {userInfo.employeeData.prenom}
+              </p>
             </div>
 
             <div>
@@ -342,15 +349,68 @@ export default function Settings() {
             </div>
 
             <div>
-              <p className="text-sm text-foreground/70 mb-1">Message</p>
-              <p className="font-medium whitespace-pre-wrap">{userInfo.employeeData.message || 'Aucun message'}</p>
+              <label htmlFor="email" className="block text-sm font-medium text-foreground/70 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className={clsx(
+                  'w-full p-2 border rounded-md',
+                  'border-foreground/20',
+                  'focus:outline-none focus:ring-2',
+                )}
+                style={
+                  {
+                    '--tw-ring-color': 'var(--color-primary)',
+                  } as React.CSSProperties
+                }
+              />
+            </div>
+
+            <div>
+              <label htmlFor="tel" className="block text-sm font-medium text-foreground/70 mb-1">
+                Téléphone
+              </label>
+              <input
+                type="tel"
+                id="tel"
+                value={tel}
+                onChange={e => setTel(e.target.value)}
+                className={clsx(
+                  'w-full p-2 border rounded-md',
+                  'border-foreground/20',
+                  'focus:outline-none focus:ring-2',
+                )}
+                style={
+                  {
+                    '--tw-ring-color': 'var(--color-primary)',
+                  } as React.CSSProperties
+                }
+              />
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                onClick={handleSave}
+                disabled={isSaving || (email === originalEmail && tel === originalTel)}
+                className={`px-4 py-2 text-white rounded-md transition-colors ${
+                  email !== originalEmail || tel !== originalTel
+                    ? 'bg-primary hover:bg-primary/80'
+                    : 'bg-primary/50 cursor-not-allowed'
+                }`}
+              >
+                {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+              </button>
             </div>
           </div>
         )}
 
-        <div className="mt-4 border-t pt-4">
+        <div className="mt-8 border-t pt-4">
           <h3 className="text-lg font-medium mb-4">Options avancées</h3>
-          <div className="flex space-y-4 text-center">
+          <div className="flex flex-col space-y-4 text-center">
             <div>
               <button
                 onClick={() => setShowConfirmation(true)}

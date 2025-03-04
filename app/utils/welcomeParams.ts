@@ -16,6 +16,7 @@ export function getWelcomeParams() {
       userType: null,
       employeeData: null,
       conciergerieData: null,
+      userData: null,
     };
   }
 
@@ -40,10 +41,14 @@ export function getWelcomeParams() {
       }
     }
 
+    // Use employee data as user data if it exists
+    const userData = employeeData;
+
     return {
       userType,
       employeeData,
       conciergerieData,
+      userData,
     };
   } catch (error) {
     console.error('Error retrieving welcome params from localStorage:', error);
@@ -51,6 +56,7 @@ export function getWelcomeParams() {
       userType: null,
       employeeData: null,
       conciergerieData: null,
+      userData: null,
     };
   }
 }

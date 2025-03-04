@@ -34,6 +34,20 @@ export function saveEmployees(employees: EmployeeWithStatus[]): void {
 export function addEmployee(employee: EmployeeData): void {
   const employees = getEmployees();
   
+  // Check if employee already exists with the same name, email, or phone
+  const existingEmployee = employees.find(
+    emp => 
+      ((emp.nom.toLowerCase() === employee.nom.toLowerCase()) && 
+       (emp.prenom.toLowerCase() === employee.prenom.toLowerCase())) ||
+      (emp.email.toLowerCase() === employee.email.toLowerCase()) ||
+      (emp.tel && employee.tel && emp.tel === employee.tel)
+  );
+  
+  // If employee exists and is already accepted or rejected, don't add them again
+  if (existingEmployee && (existingEmployee.status === 'accepted' || existingEmployee.status === 'rejected')) {
+    return;
+  }
+  
   // Create a new employee with status
   const newEmployee: EmployeeWithStatus = {
     ...employee,
@@ -54,6 +68,33 @@ export function updateEmployeeStatus(id: string, status: EmployeeStatus): void {
   if (index !== -1) {
     employees[index].status = status;
     saveEmployees(employees);
+    
+    // If the employee is accepted or rejected, remove their message from localStorage
+    if (status === 'accepted' || status === 'rejected') {
+      // Get the employee data
+      const employeeData = employees[index];
+      
+      // Check if the employee data in localStorage matches this employee
+      const storedEmployeeDataStr = localStorage.getItem('employee_data');
+      if (storedEmployeeDataStr) {
+        try {
+          const storedEmployeeData = JSON.parse(storedEmployeeDataStr);
+          
+          // Check if the stored employee data matches this employee
+          if (
+            (storedEmployeeData.email === employeeData.email) ||
+            (storedEmployeeData.tel === employeeData.tel) ||
+            (storedEmployeeData.nom === employeeData.nom && storedEmployeeData.prenom === employeeData.prenom)
+          ) {
+            // Remove the message from localStorage
+            storedEmployeeData.message = '';
+            localStorage.setItem('employee_data', JSON.stringify(storedEmployeeData));
+          }
+        } catch (error) {
+          console.error('Error parsing employee data from localStorage:', error);
+        }
+      }
+    }
   }
 }
 
