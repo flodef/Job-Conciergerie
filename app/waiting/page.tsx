@@ -105,9 +105,9 @@ export default function WaitingPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md bg-background shadow-lg rounded-lg overflow-hidden p-6">
-        <h1 className="text-2xl font-bold mb-4">Demande en cours d&apos;examen</h1>
+    <main className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-md bg-background overflow-hidden p-6">
+        <h1 className="text-2xl font-bold mb-4 text-center">Demande en cours d&apos;examen</h1>
 
         {employee && (
           <>
@@ -185,7 +185,7 @@ export default function WaitingPage() {
               localStorage.removeItem('user_type');
               window.location.href = '/';
             }}
-            className="px-4 py-2 bg-primary text-foreground rounded-md hover:bg-primary/80"
+            className="px-4 py-2 bg-primary text-background rounded-md hover:bg-primary/80"
           >
             Retour à l&apos;accueil
           </button>
