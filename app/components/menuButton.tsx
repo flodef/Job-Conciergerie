@@ -1,5 +1,5 @@
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { clsx } from 'clsx';
+import { clsx } from 'clsx/lite';
 
 export const MenuButton = ({ className }: { className?: string }) => {
   const { isMenuOpen, setIsMenuOpen } = useMenuContext();

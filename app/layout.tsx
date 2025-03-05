@@ -5,6 +5,7 @@ import { HomesProvider } from './contexts/homesProvider';
 import { MenuProvider } from './contexts/menuProvider';
 import { MissionsProviderWrapper } from './contexts/missionsProvider';
 import { ThemeProvider } from './contexts/themeProvider';
+import { BadgeProvider } from './contexts/badgeProvider';
 import './globals.css';
 
 const geistSans = localFont({
@@ -35,7 +36,9 @@ export default function RootLayout({
           <MenuProvider>
             <HomesProvider>
               <MissionsProviderWrapper>
-                <NavigationLayout>{children}</NavigationLayout>
+                <BadgeProvider>
+                  <NavigationLayout>{children}</NavigationLayout>
+                </BadgeProvider>
               </MissionsProviderWrapper>
             </HomesProvider>
           </MenuProvider>

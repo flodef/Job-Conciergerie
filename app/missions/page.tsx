@@ -1,6 +1,7 @@
 'use client';
 
 import { IconPlus } from '@tabler/icons-react';
+import clsx from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import ConfirmationModal from '../components/confirmationModal';
 import FloatingActionButton from '../components/floatingActionButton';
@@ -13,9 +14,8 @@ import MissionForm from '../components/missionForm';
 import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 import { useTheme } from '../contexts/themeProvider';
-import { getWelcomeParams } from '../utils/welcomeParams';
 import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
-import clsx from 'clsx';
+import { getWelcomeParams } from '../utils/welcomeParams';
 
 export default function Missions() {
   const { missions, isLoading, getCurrentConciergerie } = useMissions();
