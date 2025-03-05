@@ -12,7 +12,7 @@ type EmployeeDetailsProps = {
 
 export default function EmployeeDetails({ employee }: EmployeeDetailsProps) {
   return (
-    <div className="p-6">
+    <div className="p-4">
       <h2 className="text-xl font-bold mb-6">Détails du Prestataire</h2>
 
       <div className="space-y-4">

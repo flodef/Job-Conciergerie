@@ -7,7 +7,6 @@ import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 import { HomeData } from '../types/types';
 import ConfirmationModal from './confirmationModal';
-import FullScreenImageModal from './fullScreenImageModal';
 import FullScreenModal from './fullScreenModal';
 import HomeForm from './homeForm';
 
@@ -93,10 +92,14 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   return (
     <FullScreenModal onClose={onClose}>
       {selectedImageIndex !== null && home.images && (
-        <FullScreenImageModal url={home.images[selectedImageIndex]} onClose={() => setSelectedImageIndex(null)} />
+        <FullScreenModal
+          imageUrl={home.images[selectedImageIndex]}
+          onClose={() => setSelectedImageIndex(null)}
+          imageAlt={`Photo de ${home.title}`}
+        />
       )}
 
-      <div className="p-6" data-home-details>
+      <div className="p-4" data-home-details>
         <h2 className="text-xl font-bold mb-4">Détails du bien</h2>
 
         <div className="space-y-4">

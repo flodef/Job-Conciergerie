@@ -5,10 +5,10 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useHomes } from '../contexts/homesProvider';
 import { HomeData } from '../types/types';
-import { ToastMessage, ToastType } from './toastMessage';
-import FullScreenImageModal from './fullScreenImageModal';
-import TaskList from './taskList';
 import FormActions from './formActions';
+import FullScreenModal from './fullScreenModal';
+import TaskList from './taskList';
+import { ToastMessage, ToastType } from './toastMessage';
 
 type HomeFormProps = {
   onClose: () => void;
@@ -122,23 +122,24 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
   };
 
   return (
-    <div className="max-w-md mx-auto p-6">
+    <div className="max-w-md mx-auto p-4">
       {selectedImageIndex !== undefined && (
-        <FullScreenImageModal
-          url={
+        <FullScreenModal
+          imageUrl={
             selectedImageIndex < existingImages.length
               ? mockupImagePath // Use mockup for existing images
               : previewUrls[selectedImageIndex - existingImages.length] // Use preview for new images (UI only)
           }
+          imageAlt={`Prévisualisation ${selectedImageIndex + 1}`}
           onClose={() => setSelectedImageIndex(undefined)}
         />
       )}
 
       {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
 
-      <h2 className="text-xl font-bold text-foreground mb-4">{mode === 'add' ? 'Nouveau bien' : 'Modifier le bien'}</h2>
+      <h2 className="text-xl font-bold text-foreground mb-2">{mode === 'add' ? 'Nouveau bien' : 'Modifier le bien'}</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-2">
         <div>
           <label className="text-base font-medium text-foreground">
             <div className="flex justify-between items-center mb-2">
@@ -238,7 +239,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
           />
         </div>
 
-        <div className="mb-2">
+        <div>
           <label className="text-base font-medium text-foreground">
             <h2 className="mb-2">Description</h2>
           </label>
@@ -266,9 +267,9 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
           </div>
         )}
 
-        <FormActions 
-          onCancel={onClose} 
-          submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'} 
+        <FormActions
+          onCancel={onClose}
+          submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
           submitType="submit"
           isSubmitting={isFormSubmitted && !isFormValid}
         />

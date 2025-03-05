@@ -1,6 +1,7 @@
 'use client';
 
 import { useLocalStorage } from '@/app/utils/localStorage';
+import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/themeProvider';
 import conciergeriesData from '../data/conciergeries.json';
@@ -97,16 +98,7 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Conciergerie</h2>
-        <button
-          className="text-foreground text-4xl hover:scale-110 transition-transform"
-          onClick={onClose}
-          aria-label="Fermer"
-        >
-          &times;
-        </button>
-      </div>
+      <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
 
       {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
 
@@ -119,7 +111,10 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
             id="conciergerie"
             value={conciergerieData.name}
             onChange={e => setConciergerieData({ ...conciergerieData, name: e.target.value })}
-            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className={clsx(
+              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
+              'border-foreground/20 focus-visible:outline-primary',
+            )}
             required
           >
             <option value="" disabled>
@@ -144,7 +139,10 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
                 id="email"
                 value={conciergerieData.email}
                 readOnly
-                className="w-full p-2 border border-secondary rounded-md bg-background/50 text-foreground/70 cursor-not-allowed"
+                className={clsx(
+                  'w-full px-3 py-2 border rounded-lg bg-background text-foreground/50',
+                  'border-foreground/20 focus-visible:outline-primary cursor-not-allowed',
+                )}
               />
             </div>
 
@@ -158,7 +156,10 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
                   id="tel"
                   value={conciergerieData.tel}
                   readOnly
-                  className="w-full p-2 border border-secondary rounded-md bg-background/50 text-foreground/70 cursor-not-allowed"
+                  className={clsx(
+                    'w-full px-3 py-2 border rounded-lg bg-background text-foreground/50',
+                    'border-foreground/20 focus-visible:outline-primary cursor-not-allowed',
+                  )}
                 />
               </div>
             )}

@@ -4,8 +4,8 @@ import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
 import { Mission, Objective, objectives } from '../types/types';
-import { ToastMessage, ToastType } from './toastMessage';
 import FormActions from './formActions';
+import { ToastMessage, ToastType } from './toastMessage';
 
 type MissionFormProps = {
   mission?: Mission;
@@ -140,10 +140,10 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   };
 
   return (
-    <div className="bg-background p-6 rounded-lg w-full max-w-md">
+    <div className="bg-background p-4 rounded-lg w-full max-w-md">
       {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
 
-      <h2 className="text-xl font-bold mb-6">{mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}</h2>
+      <h2 className="text-xl font-bold mb-2">{mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>

@@ -5,9 +5,9 @@ import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/themeProvider';
 import { addEmployee, employeeExists, getEmployeeStatus, getEmployees } from '../utils/employeeUtils';
+import FormActions from './formActions';
 import { ToastMessage, ToastType } from './toastMessage';
 import Tooltip from './tooltip';
-import FormActions from './formActions';
 
 type EmployeeFormProps = {
   companies: string[];
@@ -101,16 +101,7 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Inscription Prestataire</h2>
-        <button
-          className="text-foreground text-4xl hover:scale-110 transition-transform"
-          onClick={onClose}
-          aria-label="Fermer"
-        >
-          &times;
-        </button>
-      </div>
+      <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>
 
       {showToast && toastMessage && toastType && (
         <ToastMessage type={toastType} message={toastMessage} onClose={() => setShowToast(false)} />
@@ -128,7 +119,8 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
             value={formData.prenom}
             onChange={handleChange}
             className={clsx(
-              'w-full p-2 border border-secondary rounded-md focus:ring-primary focus:border-primary',
+              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
+              'border-foreground/20 focus-visible:outline-primary',
               isFormSubmitted && !formData.prenom && 'border-red-500',
             )}
             required
@@ -147,7 +139,8 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
             value={formData.nom}
             onChange={handleChange}
             className={clsx(
-              'w-full p-2 border border-secondary rounded-md focus:ring-primary focus:border-primary',
+              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
+              'border-foreground/20 focus-visible:outline-primary',
               isFormSubmitted && !formData.nom && 'border-red-500',
             )}
             required
@@ -166,7 +159,8 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
             value={formData.tel}
             onChange={handleChange}
             className={clsx(
-              'w-full p-2 border border-secondary rounded-md focus:ring-primary focus:border-primary',
+              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
+              'border-foreground/20 focus-visible:outline-primary',
               isFormSubmitted && !formData.tel && 'border-red-500',
             )}
             required
@@ -185,7 +179,8 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
             value={formData.email}
             onChange={handleChange}
             className={clsx(
-              'w-full p-2 border border-secondary rounded-md focus:ring-primary focus:border-primary',
+              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
+              'border-foreground/20 focus-visible:outline-primary',
               isFormSubmitted && !formData.email && 'border-red-500',
             )}
             required
@@ -204,7 +199,8 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
             value={formData.conciergerie}
             onChange={handleChange}
             className={clsx(
-              'w-full p-2 border border-secondary rounded-md focus:ring-primary focus:border-primary',
+              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
+              'border-foreground/20 focus-visible:outline-primary',
               isFormSubmitted && !formData.conciergerie && 'border-red-500',
             )}
             required
@@ -227,7 +223,10 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
             name="message"
             value={formData.message}
             onChange={handleChange}
-            className="w-full p-2 border border-secondary rounded-md focus:ring-primary focus:border-primary"
+            className={clsx(
+              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
+              'border-foreground/20 focus-visible:outline-primary',
+            )}
             rows={3}
             disabled={isSubmitting}
           />

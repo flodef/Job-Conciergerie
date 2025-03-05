@@ -8,7 +8,6 @@ import { useHomes } from '../contexts/homesProvider';
 import { Mission } from '../types/types';
 import { formatDateTime } from '../utils/dateUtils';
 import ConfirmationModal from './confirmationModal';
-import FullScreenImageModal from './fullScreenImageModal';
 import FullScreenModal from './fullScreenModal';
 import HomeDetails from './homeDetails';
 import MissionForm from './missionForm';
@@ -125,9 +124,15 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
 
   return (
     <FullScreenModal onClose={onClose}>
-      {selectedImage && <FullScreenImageModal url={selectedImage} onClose={() => setSelectedImage(null)} />}
+      {selectedImage && (
+        <FullScreenModal
+          imageUrl={selectedImage}
+          onClose={() => setSelectedImage(null)}
+          imageAlt={`Photo de ${mission.home.title}`}
+        />
+      )}
 
-      <div className="p-6" data-mission-details>
+      <div className="p-4" data-mission-details>
         <h2 className="text-xl font-bold mb-4">Détails de la mission</h2>
 
         <div className="space-y-4">

@@ -49,7 +49,7 @@ export default function TaskList({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 mb-4">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-foreground">Tâches</h2>
         {(tasks.length === 0 || tasks[tasks.length - 1]?.trim() !== '') && (
