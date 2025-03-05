@@ -110,14 +110,14 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
                     {/* Badge for pending employees */}
                     {page === Page.Employees && pendingEmployeesCount > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                         {pendingEmployeesCount > 9 ? '9+' : pendingEmployeesCount}
                       </div>
                     )}
 
                     {/* Badge for new missions */}
                     {page === Page.Missions && newMissionsCount > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                         {newMissionsCount > 9 ? '9+' : newMissionsCount}
                       </div>
                     )}
