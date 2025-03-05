@@ -1,20 +1,29 @@
 'use client';
 
-import { createContext, ReactNode, useContext, useEffect } from 'react';
-import { getWelcomeParams, getColorValueByName } from '../utils/welcomeParams';
-
-export const defaultPrimaryColor = '#a4bcde';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { getCssVariable, getDefaultPrimaryColor } from '../utils/cssVariables';
+import { getColorValueByName, getWelcomeParams } from '../utils/welcomeParams';
 
 type ThemeContextType = {
   setPrimaryColor: (color: string) => void;
+  resetPrimaryColor: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  // Get the default color from our utility function
+  const [defaultPrimaryColor, setDefaultPrimaryColor] = useState(getDefaultPrimaryColor());
+
   const setPrimaryColor = (color: string) => {
     if (typeof document !== 'undefined') {
       document.documentElement.style.setProperty('--color-primary', color);
+    }
+  };
+
+  const resetPrimaryColor = () => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.setProperty('--color-primary', defaultPrimaryColor);
     }
   };
 
@@ -44,9 +53,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     };
 
     initializeTheme();
-  }, []);
 
-  return <ThemeContext.Provider value={{ setPrimaryColor }}>{children}</ThemeContext.Provider>;
+    // Also try to get the CSS variable value at runtime
+    if (typeof window !== 'undefined') {
+      const cssDefaultColor = getCssVariable('--color-default', defaultPrimaryColor);
+      setDefaultPrimaryColor(cssDefaultColor);
+    }
+  }, [defaultPrimaryColor]);
+
+  return <ThemeContext.Provider value={{ setPrimaryColor, resetPrimaryColor }}>{children}</ThemeContext.Provider>;
 }
 
 // Hook to use the theme context

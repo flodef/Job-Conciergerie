@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react';
 import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 import { HomeData } from '../types/types';
-import { formatDate } from '../utils/dateUtils';
 import ConfirmationModal from './confirmationModal';
 import FullScreenImageModal from './fullScreenImageModal';
 import FullScreenModal from './fullScreenModal';
@@ -26,9 +25,6 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   const [isReadOnly, setIsReadOnly] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [associatedMissions, setAssociatedMissions] = useState<string[]>([]);
-
-  // Get the conciergerie color from the home data
-  const conciergerieColor = home.conciergerie?.color || 'var(--color-primary)';
 
   useEffect(() => {
     // Check if the current conciergerie is the one that created the home
@@ -147,18 +143,6 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
                 </li>
               ))}
             </ul>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium text-light">Conciergerie</h3>
-            <p className="font-bold" style={{ color: conciergerieColor }}>
-              {home.conciergerie.name}
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium text-light">Dernière modification</h3>
-            <p className="text-foreground">{formatDate(home.modifiedDate)}</p>
           </div>
         </div>
       </div>

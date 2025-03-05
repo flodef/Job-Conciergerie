@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { HomeData } from '../types/types';
-import { formatDate } from '../utils/dateUtils';
+import { formatDateTime } from '../utils/dateUtils';
 
 type HomeCardProps = {
   home: HomeData;
@@ -34,7 +34,13 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
 
       {home.images && home.images.length > 0 && (
         <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-          <Image src={home.images[0]} alt={home.title} fill sizes="(max-width: 768px) 100vw, 300px" className="object-cover" />
+          <Image
+            src={home.images[0]}
+            alt={home.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 300px"
+            className="object-cover"
+          />
         </div>
       )}
 
@@ -55,8 +61,7 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
 
       <div className="mt-3 text-sm text-light">
         <div className="flex justify-between items-center">
-          <span>Modifié: {formatDate(home.modifiedDate)}</span>
-          <span style={{ color: conciergerieColor }}>{home.conciergerie.name}</span>
+          <span>Modifié le {formatDateTime(home.modifiedDate)}</span>
         </div>
       </div>
     </div>

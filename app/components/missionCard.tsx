@@ -56,7 +56,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         {mission.objectives.map(objective => (
           <span
             key={objective}
-            className="px-2 py-0.5 bg-default/10 text-foreground rounded-full text-xs"
+            className="px-2 py-0.5 text-background rounded-full text-xs"
             style={{ backgroundColor: conciergerieColor }}
           >
             {objective}

@@ -1,12 +1,14 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-primary: #a4bcde;
-  --color-default: #a4bcde;
+  --color-default: oklch(0.704 0.14 182.503);
+  --color-primary: var(--color-default);
   --color-secondary: var(--secondary);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-light: var(--light);
+  --text-shadow: 1px 0 0 var(--foreground), -1px 0 0 var(--foreground), 0 1px 0 var(--foreground),
+    0 -1px 0 var(--foreground);
 
   --animate-fade-in-up: fadeInUp 0.3s ease-out;
   --animate-shake: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
@@ -66,4 +68,8 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.text-shadow {
+  text-shadow: var(--text-shadow);
 }
