@@ -122,9 +122,19 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
     const newStartDate = e.target.value;
     setStartDateTime(newStartDate);
 
-    // If end date is before start date or empty, set it to the same as start date
-    if (endDateTime < newStartDate || !endDateTime) {
-      setEndDateTime(newStartDate);
+    // Create a new Date object from the selected start date
+    const startDate = new Date(newStartDate);
+    
+    // Add 1 hour to the start date for the minimum end date
+    const minEndDate = new Date(startDate);
+    minEndDate.setHours(minEndDate.getHours() + 1);
+    
+    // Format the minimum end date as an ISO string for the input
+    const minEndDateString = localISOString(minEndDate);
+    
+    // If end date is before the minimum end date or empty, set it to the minimum end date
+    if (endDateTime < minEndDateString || !endDateTime) {
+      setEndDateTime(minEndDateString);
     }
   };
 
@@ -202,7 +212,13 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
             type="datetime-local"
             lang="fr"
             value={endDateTime}
-            min={startDateTime}
+            min={(() => {
+              // Calculate minimum end date (start date + 1 hour)
+              const startDate = new Date(startDateTime);
+              const minEndDate = new Date(startDate);
+              minEndDate.setHours(minEndDate.getHours() + 1);
+              return localISOString(minEndDate);
+            })()}
             onChange={e => setEndDateTime(e.target.value)}
             className={clsx(
               'w-full p-2 border rounded-lg bg-background',
