@@ -13,20 +13,21 @@ import MissionDetails from '../components/missionDetails';
 import MissionForm from '../components/missionForm';
 import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
-import { defaultPrimaryColor, useTheme } from '../contexts/themeProvider';
+import { useTheme } from '../contexts/themeProvider';
 import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
 import { getWelcomeParams } from '../utils/welcomeParams';
 
 export default function Missions() {
   const { missions, isLoading, getCurrentConciergerie } = useMissions();
   const { homes } = useHomes();
+  const { setPrimaryColor, resetPrimaryColor } = useTheme();
+  const { employeeData } = getWelcomeParams();
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddHomeModalOpen, setIsAddHomeModalOpen] = useState(false);
   const [isNoHomesModalOpen, setIsNoHomesModalOpen] = useState(false);
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
-  const { setPrimaryColor } = useTheme();
-  const { employeeData } = getWelcomeParams();
   const [userType, setUserType] = useState<string | null>(null);
 
   // Redirect if not registered
@@ -39,12 +40,12 @@ export default function Missions() {
       if (conciergerieData && conciergerieData.color) {
         setPrimaryColor(conciergerieData.color);
       } else {
-        setPrimaryColor(defaultPrimaryColor);
+        resetPrimaryColor();
       }
     }
 
     setUserType(userType);
-  }, [setPrimaryColor]);
+  }, [setPrimaryColor, resetPrimaryColor]);
 
   // Get current conciergerie
   const currentConciergerie = getCurrentConciergerie();
@@ -80,8 +81,8 @@ export default function Missions() {
         return false;
       }
 
-      // For conciergerie users, show only missions created by the current conciergerie
-      return mission.conciergerie.name === currentConciergerie?.name;
+      // For conciergerie users, show all the missions
+      return true;
     })
     .sort((a, b) => {
       // Sort by date (closest to today first)
