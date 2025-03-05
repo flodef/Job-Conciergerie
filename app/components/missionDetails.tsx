@@ -1,6 +1,6 @@
 'use client';
 
-import { IconCancel, IconCheck, IconPencil, IconTrash, IconZoomScan } from '@tabler/icons-react';
+import { IconCancel, IconCheck, IconMail, IconPencil, IconPhone, IconTrash, IconZoomScan } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
@@ -162,7 +162,7 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
               {mission.objectives.map(objective => (
                 <span
                   key={objective}
-                  className="px-2 py-1 rounded-lg text-sm"
+                  className="px-2 py-1 rounded-lg text-sm text-background"
                   style={{
                     backgroundColor: `${conciergerieColor}`,
                   }}
@@ -185,9 +185,34 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
 
           <div>
             <h3 className="text-sm font-medium text-light">Conciergerie</h3>
-            <p className="font-bold" style={{ color: conciergerieColor }}>
-              {mission.conciergerie.name}
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-lg font-bold" style={{ color: conciergerieColor }}>
+                {mission.conciergerie.name}
+              </p>
+
+              {/* Contact buttons */}
+              <div className="flex gap-3">
+                {mission.conciergerie.tel && (
+                  <a
+                    href={`tel:${mission.conciergerie.tel}`}
+                    className="p-1 rounded-full hover:bg-gray-100"
+                    title={`Appeler ${mission.conciergerie.name}`}
+                  >
+                    <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
+                  </a>
+                )}
+
+                {mission.conciergerie.email && (
+                  <a
+                    href={`mailto:${mission.conciergerie.email}`}
+                    className="p-1 rounded-full hover:bg-gray-100"
+                    title={`Envoyer un email à ${mission.conciergerie.name}`}
+                  >
+                    <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />
+                  </a>
+                )}
+              </div>
+            </div>
           </div>
 
           {mission.employee && (
