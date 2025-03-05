@@ -74,9 +74,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {/* Main content */}
       <main className="flex-1 relative">
         {/* Content wrapper with padding to prevent content from being hidden under the navigation */}
-        <div
-          className={clsx('bg-background px-4', !isHomePage ? 'min-h-[calc(100dvh-9rem)] pb-24' : 'min-h-screen py-4')}
-        >
+        <div className={clsx('bg-background px-4', !isHomePage ? 'min-h-[calc(100dvh-9rem)] pb-24' : 'min-h-screen')}>
           {children}
         </div>
       </main>

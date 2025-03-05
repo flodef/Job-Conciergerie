@@ -38,7 +38,8 @@ export interface Mission {
   id: string;
   home: HomeData;
   objectives: Objective[];
-  date: Date;
+  startDateTime: Date;
+  endDateTime: Date;
   employee?: Employee;
   modifiedDate: Date;
   deleted: boolean;

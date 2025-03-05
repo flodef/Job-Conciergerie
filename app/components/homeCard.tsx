@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { HomeData } from '../types/types';
+import { formatDate } from '../utils/dateUtils';
 
 type HomeCardProps = {
   home: HomeData;
@@ -10,14 +11,6 @@ type HomeCardProps = {
 };
 
 export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
-
   // Get the conciergerie color from the home data
   const conciergerieColor = home.conciergerie?.color || 'var(--color-primary)';
 

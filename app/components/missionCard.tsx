@@ -1,6 +1,7 @@
 'use client';
 
 import { Mission } from '../types/types';
+import { formatDateRange } from '../utils/dateUtils';
 
 type MissionCardProps = {
   mission: Mission;
@@ -9,14 +10,6 @@ type MissionCardProps = {
 };
 
 export default function MissionCard({ mission, onClick, onEdit }: MissionCardProps) {
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
-
   // Get the conciergerie color from the mission data
   const conciergerieColor = mission.conciergerie?.color || 'var(--color-default)';
   const isTaken = !!mission.employee;
@@ -73,7 +66,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
 
       <div className="mt-3 text-sm text-light">
         <div className="flex justify-between items-center">
-          <span>Date: {formatDate(mission.date)}</span>
+          <span>{formatDateRange(new Date(mission.startDateTime), new Date(mission.endDateTime))}</span>
         </div>
       </div>
     </div>

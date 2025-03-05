@@ -86,7 +86,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md bg-background shadow-lg rounded-lg overflow-hidden">
+      <div className="w-full max-w-md bg-background overflow-hidden">
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
           <UserTypeSelection onSelect={handleUserTypeSelect} />
         ) : showEmployeeForm ? (

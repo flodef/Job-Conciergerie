@@ -13,7 +13,7 @@ import MissionDetails from '../components/missionDetails';
 import MissionForm from '../components/missionForm';
 import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
-import { useTheme } from '../contexts/themeProvider';
+import { defaultPrimaryColor, useTheme } from '../contexts/themeProvider';
 import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
 import { getWelcomeParams } from '../utils/welcomeParams';
 
@@ -35,35 +35,32 @@ export default function Missions() {
   // Apply theme color on component mount and get user type
   useEffect(() => {
     const { conciergerieData, userType } = getWelcomeParams();
-    if (conciergerieData && conciergerieData.color) {
-      setPrimaryColor(conciergerieData.color);
+    if (userType === 'conciergerie') {
+      if (conciergerieData && conciergerieData.color) {
+        setPrimaryColor(conciergerieData.color);
+      } else {
+        setPrimaryColor(defaultPrimaryColor);
+      }
     }
+
     setUserType(userType);
   }, [setPrimaryColor]);
-
-  // Get current date at midnight for comparison
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
 
   // Get current conciergerie
   const currentConciergerie = getCurrentConciergerie();
 
-  // Get current user data
+  // Get current employee ID
   const currentEmployeeId = employeeData?.id;
 
-  // For debugging
-  console.log('Current employee data:', employeeData);
-
-  // Filter out deleted missions and past missions
-  // For conciergerie users, only show their missions
-  // For employee users, show missions that are either:
-  // 1. Not taken by anyone (available missions)
+  // Filter missions:
+  // 1. Not deleted
   // 2. Taken by the current employee
   // Then sort by date (closest to today first)
   const activeMissions = missions
     .filter(mission => {
       // Filter out deleted missions and past missions
-      const isActive = !mission.deleted && new Date(mission.date) >= today;
+      const now = new Date();
+      const isActive = !mission.deleted && new Date(mission.endDateTime) >= now;
 
       if (!isActive) return false;
 
@@ -80,25 +77,16 @@ export default function Missions() {
           return true;
         }
 
-        // Also check by name as a fallback
-        if (
-          mission.employee &&
-          employeeData &&
-          mission.employee.name.toLowerCase() === `${employeeData.prenom} ${employeeData.nom}`.toLowerCase()
-        ) {
-          console.log('Mission taken by current employee (name match):', mission.id, mission.employee.name);
-          return true;
-        }
-
-        console.log('Mission taken by another employee:', mission.id, mission.employee.id, currentEmployeeId);
-        // Otherwise, don't show
         return false;
       }
 
-      // Default case
-      return true;
+      // For conciergerie users, show only missions created by the current conciergerie
+      return mission.conciergerie.name === currentConciergerie?.name;
     })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .sort((a, b) => {
+      // Sort by date (closest to today first)
+      return new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime();
+    });
 
   // Filter homes by the current conciergerie
   const filteredHomes = homes.filter(home => !home.deleted && home.conciergerie?.name === currentConciergerie?.name);

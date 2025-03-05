@@ -3,6 +3,7 @@
 import { clsx } from 'clsx/lite';
 import { EmployeeWithStatus } from '../utils/employeeUtils';
 import { IconMail, IconPhone } from '@tabler/icons-react';
+import { formatDate } from '../utils/dateUtils';
 
 type EmployeeDetailsProps = {
   employee: EmployeeWithStatus;
@@ -10,17 +11,6 @@ type EmployeeDetailsProps = {
 };
 
 export default function EmployeeDetails({ employee }: EmployeeDetailsProps) {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
   return (
     <div className="p-6">
       <h2 className="text-xl font-bold mb-6">Détails du Prestataire</h2>
@@ -76,7 +66,7 @@ export default function EmployeeDetails({ employee }: EmployeeDetailsProps) {
 
         <div>
           <h4 className="text-sm font-medium text-foreground/70 mb-1">Date d&apos;inscription</h4>
-          <div className="text-foreground/70 text-sm">{formatDate(employee.createdAt)}</div>
+          <div className="text-foreground/70 text-sm">{formatDate(new Date(employee.createdAt))}</div>
         </div>
       </div>
     </div>

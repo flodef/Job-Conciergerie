@@ -24,18 +24,29 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
   const [homeId, setHomeId] = useState<string>(mission?.home.id || filteredHomes[0]?.id || '');
   const [objectivesState, setObjectives] = useState<Objective[]>(mission?.objectives || []);
-  const [date, setDate] = useState<string>(
-    mission?.date
-      ? new Date(mission.date.getTime() - mission.date.getTimezoneOffset() * 60000).toISOString().split('T')[0]
-      : new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0],
+
+  // Get current date and time in local timezone
+  const now = new Date();
+  const localISOString = (date: Date) => {
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+  };
+
+  // Initialize start and end date/time
+  const [startDateTime, setStartDateTime] = useState<string>(
+    mission?.startDateTime ? localISOString(mission.startDateTime) : localISOString(now),
   );
+  const [endDateTime, setEndDateTime] = useState<string>(
+    mission?.endDateTime ? localISOString(mission.endDateTime) : localISOString(now),
+  );
+
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ type: ToastType; message: string }>();
 
   // Set up French locale for date inputs
   useEffect(() => {
     // Try to set the locale for date inputs
-    const dateInputs = document.querySelectorAll('input[type="date"]');
+    const dateInputs = document.querySelectorAll('input[type="datetime-local"]');
     dateInputs.forEach(input => {
       input.setAttribute('lang', 'fr');
     });
@@ -44,7 +55,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
     document.documentElement.lang = 'fr';
   }, []);
 
-  const isFormValid = homeId !== '' && objectivesState.length > 0 && date !== '';
+  const isFormValid = homeId !== '' && objectivesState.length > 0 && startDateTime !== '' && endDateTime !== '';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,11 +76,16 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         images: [mockupImagePath],
       };
 
+      // Convert string dates to Date objects
+      const startDate = new Date(startDateTime);
+      const endDate = new Date(endDateTime);
+
       if (mode === 'add') {
         addMission({
           home: homeWithMockupImage,
           objectives: objectivesState,
-          date: new Date(date),
+          startDateTime: startDate,
+          endDateTime: endDate,
         });
         setToastMessage({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
       } else if (mission) {
@@ -77,7 +93,8 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           ...mission,
           home: homeWithMockupImage,
           objectives: objectivesState,
-          date: new Date(date),
+          startDateTime: startDate,
+          endDateTime: endDate,
         });
         setToastMessage({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });
       }
@@ -97,7 +114,19 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
     }
   };
 
-  const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+  // Get current date/time for min attribute
+  const nowString = localISOString(now);
+
+  // Handle start date change and update end date if needed
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartDate = e.target.value;
+    setStartDateTime(newStartDate);
+
+    // If end date is before start date or empty, set it to the same as start date
+    if (endDateTime < newStartDate || !endDateTime) {
+      setEndDateTime(newStartDate);
+    }
+  };
 
   return (
     <div className="bg-background p-6 rounded-lg w-full max-w-md">
@@ -150,19 +179,39 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Date</label>
+          <label className="block text-sm font-medium mb-2">Date et heure de début</label>
           <input
-            type="date"
+            type="datetime-local"
             lang="fr"
-            value={date}
-            min={today}
-            onChange={e => setDate(e.target.value)}
+            value={startDateTime}
+            min={nowString}
+            onChange={handleStartDateChange}
             className={clsx(
               'w-full p-2 border rounded-lg bg-background',
-              isFormSubmitted && !date ? 'border-red-500' : 'border-secondary',
+              isFormSubmitted && !startDateTime ? 'border-red-500' : 'border-secondary',
             )}
           />
-          {isFormSubmitted && !date && <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une date</p>}
+          {isFormSubmitted && !startDateTime && (
+            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une date et heure de début</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Date et heure de fin</label>
+          <input
+            type="datetime-local"
+            lang="fr"
+            value={endDateTime}
+            min={startDateTime}
+            onChange={e => setEndDateTime(e.target.value)}
+            className={clsx(
+              'w-full p-2 border rounded-lg bg-background',
+              isFormSubmitted && !endDateTime ? 'border-red-500' : 'border-secondary',
+            )}
+          />
+          {isFormSubmitted && !endDateTime && (
+            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une date et heure de fin</p>
+          )}
         </div>
 
         <div className="flex justify-end gap-4 pt-4">

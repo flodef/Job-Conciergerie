@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 import { HomeData } from '../types/types';
+import { formatDate } from '../utils/dateUtils';
 import ConfirmationModal from './confirmationModal';
 import FullScreenImageModal from './fullScreenImageModal';
 import FullScreenModal from './fullScreenModal';
@@ -76,14 +77,6 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
     deleteHome(home.id);
     setIsDeleteWithMissionsModalOpen(false);
     onClose();
-  };
-
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
   };
 
   if (isEditMode) {

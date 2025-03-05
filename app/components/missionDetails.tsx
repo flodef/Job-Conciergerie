@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
 import { useHomes } from '../contexts/homesProvider';
 import { Mission } from '../types/types';
+import { formatDateTime } from '../utils/dateUtils';
 import ConfirmationModal from './confirmationModal';
 import FullScreenImageModal from './fullScreenImageModal';
 import FullScreenModal from './fullScreenModal';
@@ -97,14 +98,6 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
     onClose();
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
-
   if (isEditMode) {
     return (
       <FullScreenModal onClose={() => setIsEditMode(false)}>
@@ -180,8 +173,13 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
           </div>
 
           <div>
-            <h3 className="text-sm font-medium text-light">Date</h3>
-            <p className="text-foreground">{formatDate(mission.date)}</p>
+            <h3 className="text-sm font-medium text-light">Date de début</h3>
+            <p className="text-foreground">{formatDateTime(mission.startDateTime)}</p>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium text-light">Date de fin</h3>
+            <p className="text-foreground">{formatDateTime(mission.endDateTime)}</p>
           </div>
 
           <div>

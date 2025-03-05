@@ -56,7 +56,8 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           // Convert string dates back to Date objects
           const missionsWithDates = parsedMissions.map((mission: Mission) => ({
             ...mission,
-            date: new Date(mission.date),
+            startDateTime: new Date(mission.startDateTime),
+            endDateTime: new Date(mission.endDateTime),
             modifiedDate: new Date(mission.modifiedDate),
           }));
           setMissions(missionsWithDates);
@@ -201,6 +202,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         'Updated mission:',
         updatedMissions.find(m => m.id === id),
       );
+
       return updatedMissions;
     });
   };

@@ -81,7 +81,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
           : (mission: Mission) =>
               !mission.employee && // Not assigned to anyone
               new Date(mission.modifiedDate) > lastCheckedDate &&
-              new Date(mission.date).getTime() + 24 * 60 * 60 * 1000 >= new Date().getTime() &&
+              new Date(mission.endDateTime).getTime() >= new Date().getTime() && // Not expired
               !mission.deleted;
 
       const newMissions = missions.filter(missionFilter);
