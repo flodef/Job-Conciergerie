@@ -3,9 +3,10 @@
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
+import { defaultPrimaryColor, useTheme } from '../contexts/themeProvider';
+import { addEmployee, employeeExists, getEmployeeStatus, getEmployees } from '../utils/employeeUtils';
 import { ToastMessage, ToastType } from './toastMessage';
 import Tooltip from './tooltip';
-import { addEmployee, employeeExists, getEmployeeStatus, getEmployees } from '../utils/employeeUtils';
 
 type EmployeeFormProps = {
   companies: string[];
@@ -22,6 +23,7 @@ export type EmployeeData = {
 };
 
 export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) {
+  const { setPrimaryColor } = useTheme();
   const [formData, setFormData] = useLocalStorage<EmployeeData>('employee_data', {
     nom: '',
     prenom: '',
@@ -45,9 +47,11 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
 
   // Clear conciergerie data if it exists when this form is shown
   useEffect(() => {
+    setPrimaryColor(defaultPrimaryColor);
+
     //TODO: restore when in prod
     // localStorage.removeItem('conciergerie_data');
-  }, []);
+  }, [setPrimaryColor]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -95,7 +99,7 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
   };
 
   return (
-    <div className="px-4">
+    <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Inscription Prestataire</h2>
         <button
@@ -228,7 +232,7 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
           />
         </div>
 
-        <div className="flex justify-end space-x-2">
+        <div className="flex justify-end space-x-3">
           <button
             type="button"
             onClick={onClose}
@@ -239,7 +243,7 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-default text-foreground rounded-md hover:bg-default/80 flex items-center justify-center"
+            className="px-4 py-2 bg-primary text-foreground rounded-md hover:bg-default/80 flex items-center justify-center"
             disabled={isSubmitting}
           >
             {isSubmitting ? (

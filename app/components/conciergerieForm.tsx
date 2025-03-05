@@ -98,7 +98,7 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
   };
 
   return (
-    <div className="px-4">
+    <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Conciergerie</h2>
         <button
@@ -178,7 +178,7 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
+            <div className="flex justify-end space-x-3">
               <button
                 type="button"
                 onClick={handleClose}

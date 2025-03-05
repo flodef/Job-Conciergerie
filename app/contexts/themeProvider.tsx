@@ -24,18 +24,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       // Add a small delay to ensure localStorage is properly loaded
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      const { conciergerieData } = getWelcomeParams();
+      const { conciergerieData, userType } = getWelcomeParams();
 
-      // If conciergerie data exists and has a color, set it as primary
-      if (conciergerieData && conciergerieData.color) {
-        setPrimaryColor(conciergerieData.color);
-      } 
-      // If no color but has colorName, get the color from colors.json
-      else if (conciergerieData && conciergerieData.colorName) {
-        const colorValue = getColorValueByName(conciergerieData.colorName);
-        if (colorValue) {
-          setPrimaryColor(colorValue);
+      if (userType === 'conciergerie') {
+        // If conciergerie data exists and has a color, set it as primary
+        if (conciergerieData && conciergerieData.color) {
+          setPrimaryColor(conciergerieData.color);
         }
+        // If no color but has colorName, get the color from colors.json
+        else if (conciergerieData && conciergerieData.colorName) {
+          const colorValue = getColorValueByName(conciergerieData.colorName);
+          if (colorValue) {
+            setPrimaryColor(colorValue);
+          }
+        }
+      } else {
+        setPrimaryColor(defaultPrimaryColor);
       }
     };
 
