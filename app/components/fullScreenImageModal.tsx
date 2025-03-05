@@ -22,7 +22,9 @@ export default function FullScreenImageModal({ url, onClose }: FullScreenImageMo
       >
         &times;
       </button>
-      <Image src={url} alt="Prévisualisation plein écran" fill className="object-contain p-4" />
+      <div className="relative w-full h-full">
+        <Image src={url} alt="Prévisualisation plein écran" fill sizes="100vw" className="object-contain p-4" />
+      </div>
     </div>
   );
 }

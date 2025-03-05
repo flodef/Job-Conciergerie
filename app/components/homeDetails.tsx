@@ -119,6 +119,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
                       src={image}
                       alt={`Photo ${index + 1}`}
                       fill
+                      sizes="(max-width: 768px) 33vw, 150px"
                       className="object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                       onClick={() => setSelectedImageIndex(index)}
                     />

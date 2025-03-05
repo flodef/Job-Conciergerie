@@ -148,6 +148,7 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
                   src={firstHomeImage}
                   alt={`Photo de ${mission.home.title}`}
                   fill
+                  sizes="(max-width: 768px) 100vw, 300px"
                   className="object-cover cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => setSelectedImage(firstHomeImage)}
                 />

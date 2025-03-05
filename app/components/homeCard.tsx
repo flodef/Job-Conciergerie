@@ -33,8 +33,8 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
       </div>
 
       {home.images && home.images.length > 0 && (
-        <div className="relative h-32 w-full mb-2 rounded-lg overflow-hidden">
-          <Image src={home.images[0]} alt={home.title} fill className="object-cover" />
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+          <Image src={home.images[0]} alt={home.title} fill sizes="(max-width: 768px) 100vw, 300px" className="object-cover" />
         </div>
       )}
 
