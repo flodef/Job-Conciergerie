@@ -65,33 +65,31 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Function to count new missions
     const countNewMissions = () => {
+      if (!missions.length) return;
+
       // Get the last checked timestamp from localStorage
-      const lastChecked = localStorage.getItem(missionsCheckKey);
+      const lastChecked = localStorage.getItem(missionsCheckKey) ?? 0;
+      const lastCheckedDate = new Date(lastChecked);
 
-      if (lastChecked && missions.length > 0) {
-        const lastCheckedDate = new Date(lastChecked);
+      const missionFilter =
+        userType === 'conciergerie'
+          ? (mission: Mission) =>
+              mission.conciergerie.name === conciergerieName &&
+              mission.employee && // Has an employee (accepted)
+              new Date(mission.modifiedDate) > lastCheckedDate &&
+              !mission.deleted
+          : (mission: Mission) =>
+              !mission.employee && // Not assigned to anyone
+              new Date(mission.modifiedDate) > lastCheckedDate &&
+              new Date(mission.date).getTime() + 24 * 60 * 60 * 1000 >= new Date().getTime() &&
+              !mission.deleted;
 
-        const missionFilter =
-          userType === 'conciergerie'
-            ? (mission: Mission) =>
-                mission.conciergerie.name === conciergerieName &&
-                mission.employee && // Has an employee (accepted)
-                new Date(mission.modifiedDate) > lastCheckedDate &&
-                !mission.deleted
-            : (mission: Mission) =>
-                !mission.employee && // Not assigned to anyone
-                new Date(mission.modifiedDate) > lastCheckedDate &&
-                !mission.deleted;
-
-        const newMissions = missions.filter(missionFilter);
-        setNewMissionsCount(newMissions.length);
-      }
+      const newMissions = missions.filter(missionFilter);
+      setNewMissionsCount(newMissions.length);
     };
 
     // Count new missions on mount and when missions change
-    if (missions.length > 0) {
-      countNewMissions();
-    }
+    countNewMissions();
 
     // Set up interval to check periodically
     const interval = setInterval(countNewMissions, checkingInterval * 1000);
