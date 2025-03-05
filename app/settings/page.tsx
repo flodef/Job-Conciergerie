@@ -93,9 +93,6 @@ export default function Settings() {
         // Store original values for comparison
         setOriginalEmail(params.employeeData.email || '');
         setOriginalTel(params.employeeData.tel || '');
-
-        // Log for debugging
-        console.log('Loaded employee data:', params.employeeData);
       }
 
       setIsLoading(false);
@@ -125,11 +122,6 @@ export default function Settings() {
     } else if (userInfo.userType === 'employee' && userInfo.employeeData) {
       const emailChanged = email !== originalEmail;
       const telChanged = tel !== originalTel;
-      console.log('Employee changes:', {
-        current: { email, tel },
-        original: { email: originalEmail, tel: originalTel },
-        changed: { email: emailChanged, tel: telChanged },
-      });
       return emailChanged || telChanged;
     }
     return false;
@@ -175,8 +167,6 @@ export default function Settings() {
           tel,
         };
 
-        console.log('Updating employee data:', updatedData);
-
         // Save to localStorage
         updateEmployeeData(updatedData);
 
@@ -185,8 +175,6 @@ export default function Settings() {
           ...userInfo,
           employeeData: updatedData,
         });
-
-        console.log('Updated employee data in state');
       }
 
       // Update original values to match current values after save
@@ -455,7 +443,8 @@ export default function Settings() {
                   Supprimer toutes les données
                 </button>
                 <p className="text-sm text-foreground/70 mt-2">
-                  Cette action supprimera toutes les données de l&apos;application, y compris les missions, les prestataires et les logements.
+                  Cette action supprimera toutes les données de l&apos;application, y compris les missions, les
+                  prestataires et les logements.
                 </p>
               </div>
             )}
@@ -505,7 +494,10 @@ export default function Settings() {
         cancelText="Annuler"
         isDangerous={true}
       >
-        <p>Êtes-vous sûr de vouloir supprimer toutes les données de l&apos;application ? Cette action est irréversible et :</p>
+        <p>
+          Êtes-vous sûr de vouloir supprimer toutes les données de l&apos;application ? Cette action est irréversible et
+          :
+        </p>
         <ul className="list-disc pl-5 mt-2 space-y-1">
           <li>Supprimera toutes les missions, prestataires et logements</li>
           <li>Déconnectera tous les utilisateurs</li>

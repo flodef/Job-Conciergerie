@@ -69,16 +69,8 @@ export default function Missions() {
       // 1. Available missions (not taken by anyone)
       // 2. Missions taken by the current employee
       if (userType === 'employee') {
-        // Show if mission is not taken by anyone
-        if (!mission.employee) return true;
-
-        // Show if mission is taken by the current employee
-        if (mission.employee.id === currentEmployeeId) {
-          console.log('Mission taken by current employee:', mission.id, mission.employee.id, currentEmployeeId);
-          return true;
-        }
-
-        return false;
+        // Show if mission is not taken by anyone or taken by the current employee
+        return !mission.employee || mission.employee.id === currentEmployeeId;
       }
 
       // For conciergerie users, show all the missions

@@ -52,10 +52,7 @@ export function addEmployee(employee: EmployeeData): void {
   const employees = getEmployees();
 
   // Check if employee already exists
-  if (employeeExists(employee, employees)) {
-    console.log('Employee already exists, not adding again');
-    return;
-  }
+  if (employeeExists(employee, employees)) return;
 
   // Create a new employee with status
   const newEmployee: EmployeeWithStatus = {
@@ -67,7 +64,6 @@ export function addEmployee(employee: EmployeeData): void {
 
   employees.push(newEmployee);
   saveEmployees(employees);
-  console.log('New employee added:', newEmployee);
 }
 
 // Update an employee's status
@@ -88,7 +84,6 @@ export function updateEmployeeStatus(id: string, status: EmployeeStatus): void {
     }) as EmployeeWithStatus[];
 
     saveEmployees(updatedEmployees);
-    console.log(`Employee ${id} status updated to ${status}`);
 
     // Update mission assignments if status changed to rejected
     if (status === 'rejected') {
@@ -111,7 +106,6 @@ export function updateEmployeeStatus(id: string, status: EmployeeStatus): void {
           // Save updated missions if any were changed
           if (missionsUpdated) {
             localStorage.setItem('missions', JSON.stringify(updatedMissions));
-            console.log(`Unassigned missions from rejected employee ${id}`);
           }
         }
       } catch (error) {
@@ -202,8 +196,6 @@ export function updateEmployeeData(employeeData: EmployeeData): void {
 
     // Save the updated data
     localStorage.setItem('employee_data', JSON.stringify(updatedData));
-
-    console.log('Updated employee data in localStorage:', updatedData);
   } catch (error) {
     console.error('Error updating employee data:', error);
   }

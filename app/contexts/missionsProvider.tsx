@@ -171,15 +171,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    console.log('Employee data from localStorage:', employeeData);
-
     // Create an employee object from the employee data in localStorage
     const employee: Employee = {
       id: employeeData.id || generateEmployeeId(employeeData),
       name: `${employeeData.prenom} ${employeeData.nom}`,
     };
-
-    console.log('Created employee object:', employee);
 
     if (!employee.id) {
       console.error('Employee ID is missing');
@@ -196,11 +192,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
               modifiedDate: new Date(),
             }
           : mission,
-      );
-
-      console.log(
-        'Updated mission:',
-        updatedMissions.find(m => m.id === id),
       );
 
       return updatedMissions;

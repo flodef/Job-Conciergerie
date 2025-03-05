@@ -80,9 +80,6 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
       return;
     }
 
-    // Here you would handle the conciergerie selection
-    console.log('Conciergerie data:', conciergerieData);
-
     // Apply the color theme
     setPrimaryColor(conciergerieData.color);
 
