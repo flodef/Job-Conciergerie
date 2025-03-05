@@ -8,6 +8,7 @@ import HomeCard from '../components/homeCard';
 import HomeDetails from '../components/homeDetails';
 import HomeForm from '../components/homeForm';
 import LoadingSpinner from '../components/loadingSpinner';
+import SearchInput from '../components/searchInput';
 import { useHomes } from '../contexts/homesProvider';
 import { useMenuContext } from '../contexts/menuProvider';
 import { HomeData } from '../types/types';
@@ -74,25 +75,12 @@ export default function HomesPage() {
   return (
     <div>
       {homes.filter(home => !home.deleted).length > 1 && (
-        <div className="mb-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Rechercher un bien..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full p-2 pl-3 border border-secondary rounded-lg bg-background"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-foreground/50"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
+        <SearchInput
+          placeholder="Rechercher un bien..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          onClear={() => setSearchTerm('')}
+        />
       )}
 
       {isLoading ? (

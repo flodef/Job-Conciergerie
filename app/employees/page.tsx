@@ -1,19 +1,20 @@
 'use client';
 
-import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
-import { useState, useEffect } from 'react';
+import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
+import EmployeeDetails from '../components/employeeDetails';
+import FullScreenModal from '../components/fullScreenModal';
+import SearchInput from '../components/searchInput';
+import { ToastMessage, ToastType } from '../components/toastMessage';
 import {
   EmployeeWithStatus,
+  filterEmployees,
+  filterEmployeesByConciergerie,
   getEmployees,
   sortEmployees,
   updateEmployeeStatus,
-  filterEmployees,
-  filterEmployeesByConciergerie,
 } from '../utils/employeeUtils';
-import { IconSearch, IconCheck, IconX, IconUserCheck, IconUserX, IconUser } from '@tabler/icons-react';
-import { ToastMessage, ToastType } from '../components/toastMessage';
-import FullScreenModal from '../components/fullScreenModal';
-import EmployeeDetails from '../components/employeeDetails';
+import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
 import { getWelcomeParams } from '../utils/welcomeParams';
 
 export default function EmployeesList() {
@@ -82,18 +83,11 @@ export default function EmployeesList() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <div className="relative w-full max-w-md">
-          <input
-            type="text"
-            placeholder="Rechercher un prestataire..."
-            className="w-full p-2 pl-10 border border-secondary rounded-md focus:ring-primary focus:border-primary"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-          <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/50" size={18} />
-        </div>
-      </div>
+      <SearchInput
+        placeholder="Rechercher un prestataire..."
+        value={searchTerm}
+        onChange={e => setSearchTerm(e.target.value)}
+      />
 
       <div className="space-y-8 w-full">
         {/* Pending employees */}
