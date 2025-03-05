@@ -72,10 +72,10 @@ export function updateEmployeeStatus(id: string, status: EmployeeStatus): void {
     const employees = getEmployees();
     const updatedEmployees = employees.map(emp => {
       if (emp.id === id) {
-        // If status is changing from pending to accepted/rejected, remove the message
+        // If status is changing from pending to accepted/rejected, remove the message and conciergerie
         if (emp.status === 'pending' && (status === 'accepted' || status === 'rejected')) {
-          const { message, ...employeeWithoutMessage } = emp; // eslint-disable-line @typescript-eslint/no-unused-vars
-          return { ...employeeWithoutMessage, status };
+          const { message, conciergerie, ...acceptedEmployee } = emp; // eslint-disable-line @typescript-eslint/no-unused-vars
+          return { ...acceptedEmployee, status };
         }
         // Otherwise just update the status
         return { ...emp, status };
@@ -181,7 +181,9 @@ export function filterEmployeesByConciergerie(
 ): EmployeeWithStatus[] {
   if (!conciergerie) return [];
 
-  return employees.filter(employee => employee.conciergerie.toLowerCase() === conciergerie.toLowerCase());
+  return employees.filter(
+    employee => !employee.conciergerie || employee.conciergerie.toLowerCase() === conciergerie.toLowerCase(),
+  );
 }
 
 // Update employee data in localStorage
