@@ -2,9 +2,10 @@
 
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { useEffect, useState } from 'react';
-import { defaultPrimaryColor, useTheme } from '../contexts/themeProvider';
+import { useTheme } from '../contexts/themeProvider';
 import conciergeriesData from '../data/conciergeries.json';
 import { getColorValueByName } from '../utils/welcomeParams';
+import FormActions from './formActions';
 import { ToastMessage, ToastType } from './toastMessage';
 
 type ConciergerieFormProps = {
@@ -21,10 +22,10 @@ export type ConciergerieData = {
 };
 
 export default function ConciergerieForm({ companies, onClose }: ConciergerieFormProps) {
-  const { setPrimaryColor } = useTheme();
+  const { setPrimaryColor, resetPrimaryColor } = useTheme();
   const [conciergerieData, setConciergerieData] = useLocalStorage<ConciergerieData>('conciergerie_data', {
     name: '',
-    color: defaultPrimaryColor,
+    color: '',
     colorName: '',
     email: '',
   });
@@ -43,7 +44,7 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
           ...prev,
           email: selectedConciergerie.email,
           colorName: selectedConciergerie.colorname,
-          color: colorValue || defaultPrimaryColor,
+          color: colorValue || '',
           tel: selectedConciergerie.tel,
         }));
 
@@ -62,7 +63,7 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
   }, []);
 
   const handleClose = () => {
-    setPrimaryColor(defaultPrimaryColor);
+    resetPrimaryColor();
     onClose();
   };
 
@@ -136,7 +137,7 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
         </div>
 
         {conciergerieData.name && (
-          <>
+          <div className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
                 Email (non modifiable)
@@ -166,9 +167,7 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
             )}
 
             <div>
-              <label htmlFor="color" className="block text-sm font-medium text-foreground mb-1">
-                Couleur (non modifiable)
-              </label>
+              <label className="block text-sm font-medium text-foreground mb-1">Couleur (non modifiable)</label>
               <div className="flex items-center space-x-2">
                 <div
                   className="w-8 h-8 rounded-full border border-secondary"
@@ -178,30 +177,8 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
               </div>
             </div>
 
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="px-4 py-2 bg-secondary text-foreground rounded-md hover:bg-secondary/80"
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-primary text-foreground rounded-md hover:bg-primary/80 flex items-center justify-center"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-foreground border-t-transparent rounded-full animate-spin mr-2"></span>
-                    Traitement...
-                  </>
-                ) : (
-                  'Valider'
-                )}
-              </button>
-            </div>
-          </>
+            <FormActions onCancel={handleClose} submitText="Valider" submitType="submit" isSubmitting={isSubmitting} />
+          </div>
         )}
       </form>
     </div>

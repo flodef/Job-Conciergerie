@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import FormActions from './formActions';
 
 type ConfirmationModalProps = {
   isOpen: boolean;
@@ -51,24 +52,15 @@ export default function ConfirmationModal({
           {children}
         </div>
         
-        <div className="flex justify-end space-x-3">
-          <button
-            onClick={handleCancel}
-            className="px-4 py-2 rounded-md bg-secondary/20 hover:bg-secondary/30 transition-colors"
-          >
-            {cancelText}
-          </button>
-          <button
-            onClick={handleConfirm}
-            className={`px-4 py-2 rounded-md text-white transition-colors ${
-              isDangerous
-                ? 'bg-red-500 hover:bg-red-600'
-                : 'bg-primary hover:bg-primary/80'
-            }`}
-          >
-            {confirmText}
-          </button>
-        </div>
+        <FormActions 
+          onCancel={handleCancel}
+          onSubmit={handleConfirm}
+          submitType="button"
+          submitText={confirmText}
+          cancelText={cancelText}
+          isDangerous={isDangerous}
+          className="pt-0"
+        />
       </div>
     </div>
   );

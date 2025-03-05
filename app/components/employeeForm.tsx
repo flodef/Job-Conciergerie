@@ -3,10 +3,11 @@
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
-import { defaultPrimaryColor, useTheme } from '../contexts/themeProvider';
+import { useTheme } from '../contexts/themeProvider';
 import { addEmployee, employeeExists, getEmployeeStatus, getEmployees } from '../utils/employeeUtils';
 import { ToastMessage, ToastType } from './toastMessage';
 import Tooltip from './tooltip';
+import FormActions from './formActions';
 
 type EmployeeFormProps = {
   companies: string[];
@@ -23,7 +24,7 @@ export type EmployeeData = {
 };
 
 export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) {
-  const { setPrimaryColor } = useTheme();
+  const { resetPrimaryColor } = useTheme();
   const [formData, setFormData] = useLocalStorage<EmployeeData>('employee_data', {
     nom: '',
     prenom: '',
@@ -47,11 +48,11 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
 
   // Clear conciergerie data if it exists when this form is shown
   useEffect(() => {
-    setPrimaryColor(defaultPrimaryColor);
+    resetPrimaryColor();
 
     //TODO: restore when in prod
     // localStorage.removeItem('conciergerie_data');
-  }, [setPrimaryColor]);
+  }, [resetPrimaryColor]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -232,30 +233,7 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
           />
         </div>
 
-        <div className="flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-secondary text-foreground rounded-md hover:bg-secondary/80"
-            disabled={isSubmitting}
-          >
-            Annuler
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-primary text-foreground rounded-md hover:bg-default/80 flex items-center justify-center"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <span className="w-4 h-4 border-2 border-foreground border-t-transparent rounded-full animate-spin mr-2"></span>
-                Traitement...
-              </>
-            ) : (
-              'Envoyer'
-            )}
-          </button>
-        </div>
+        <FormActions onCancel={onClose} submitText="Valider" submitType="submit" isSubmitting={isSubmitting} />
       </form>
     </div>
   );

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
 import { Mission, Objective, objectives } from '../types/types';
 import { ToastMessage, ToastType } from './toastMessage';
+import FormActions from './formActions';
 
 type MissionFormProps = {
   mission?: Mission;
@@ -124,14 +125,14 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
     // Create a new Date object from the selected start date
     const startDate = new Date(newStartDate);
-    
+
     // Add 1 hour to the start date for the minimum end date
     const minEndDate = new Date(startDate);
     minEndDate.setHours(minEndDate.getHours() + 1);
-    
+
     // Format the minimum end date as an ISO string for the input
     const minEndDateString = localISOString(minEndDate);
-    
+
     // If end date is before the minimum end date or empty, set it to the minimum end date
     if (endDateTime < minEndDateString || !endDateTime) {
       setEndDateTime(minEndDateString);
@@ -152,6 +153,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
             onChange={e => setHomeId(e.target.value)}
             className={clsx(
               'w-full p-2 border rounded-lg bg-background',
+              'border-foreground/20 focus-visible:outline-primary',
               isFormSubmitted && !homeId ? 'border-red-500' : 'border-secondary',
             )}
           >
@@ -174,8 +176,9 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
                 onClick={() => toggleObjective(objective)}
                 className={clsx(
                   'p-2 border rounded-lg text-sm',
+                  'border-foreground/20 focus-visible:outline-primary',
                   objectivesState.includes(objective)
-                    ? 'bg-primary text-foreground border-primary'
+                    ? 'bg-primary text-background border-primary'
                     : 'bg-background text-foreground border-secondary',
                 )}
               >
@@ -198,6 +201,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
             onChange={handleStartDateChange}
             className={clsx(
               'w-full p-2 border rounded-lg bg-background',
+              'border-foreground/20 focus-visible:outline-primary',
               isFormSubmitted && !startDateTime ? 'border-red-500' : 'border-secondary',
             )}
           />
@@ -222,6 +226,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
             onChange={e => setEndDateTime(e.target.value)}
             className={clsx(
               'w-full p-2 border rounded-lg bg-background',
+              'border-foreground/20 focus-visible:outline-primary',
               isFormSubmitted && !endDateTime ? 'border-red-500' : 'border-secondary',
             )}
           />
@@ -230,14 +235,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           )}
         </div>
 
-        <div className="flex justify-end gap-4 pt-4">
-          <button type="button" onClick={onClose} className="px-4 py-2 bg-secondary rounded-lg hover:bg-gray-100">
-            Annuler
-          </button>
-          <button type="submit" className="px-4 py-2 bg-primary text-foreground rounded-lg hover:bg-primary/90">
-            {mode === 'add' ? 'Ajouter' : 'Enregistrer'}
-          </button>
-        </div>
+        <FormActions onCancel={onClose} submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'} submitType="submit" />
       </form>
     </div>
   );

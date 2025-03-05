@@ -8,6 +8,7 @@ import { HomeData } from '../types/types';
 import { ToastMessage, ToastType } from './toastMessage';
 import FullScreenImageModal from './fullScreenImageModal';
 import TaskList from './taskList';
+import FormActions from './formActions';
 
 type HomeFormProps = {
   onClose: () => void;
@@ -265,24 +266,12 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
           </div>
         )}
 
-        <div className="flex justify-end gap-4">
-          <button type="button" onClick={onClose} className="px-4 py-2 bg-secondary rounded-lg hover:bg-gray-100">
-            Annuler
-          </button>
-          <button
-            type="submit"
-            disabled={isFormSubmitted && !isFormValid}
-            className={clsx(
-              'px-4 py-2 rounded-lg transition-colors',
-              !isFormSubmitted || isFormValid
-                ? 'bg-primary text-foreground hover:bg-primary/90'
-                : 'bg-primary/20 text-foreground/50',
-              'disabled:opacity-75 disabled:cursor-not-allowed',
-            )}
-          >
-            {mode === 'add' ? 'Ajouter' : 'Enregistrer'}
-          </button>
-        </div>
+        <FormActions 
+          onCancel={onClose} 
+          submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'} 
+          submitType="submit"
+          isSubmitting={isFormSubmitted && !isFormValid}
+        />
       </form>
     </div>
   );
