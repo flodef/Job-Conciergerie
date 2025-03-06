@@ -16,7 +16,7 @@ type HomeDetailsProps = {
 };
 
 export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
-  const { deleteHome, getCurrentConciergerie } = useHomes();
+  const { deleteHome, getCurrentConciergerie, homes: allHomes } = useHomes();
   const { missions, deleteMission } = useMissions();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteWithMissionsModalOpen, setIsDeleteWithMissionsModalOpen] = useState(false);
@@ -28,7 +28,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   useEffect(() => {
     // Check if the current conciergerie is the one that created the home
     const currentConciergerie = getCurrentConciergerie();
-    if (currentConciergerie && home.conciergerie.name === currentConciergerie.name) {
+    if (currentConciergerie && home.conciergerieName === currentConciergerie.name) {
       setIsReadOnly(false);
     } else {
       setIsReadOnly(true);
@@ -38,11 +38,15 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   // Find missions associated with this home
   useEffect(() => {
     const missionTitles = missions
-      .filter(mission => !mission.deleted && mission.home.id === home.id)
-      .map(mission => mission.home.title);
+      .filter(mission => !mission.deleted && mission.homeId === home.id)
+      .map(mission => {
+        // Find the home by ID to get its title
+        const homeData = allHomes.find(h => h.id === mission.homeId);
+        return homeData?.title || 'Bien inconnu';
+      });
 
     setAssociatedMissions(missionTitles);
-  }, [missions, home.id]);
+  }, [missions, home.id, allHomes]);
 
   const handleDeleteClick = () => {
     if (associatedMissions.length > 0) {
@@ -63,7 +67,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   const handleDeleteWithMissions = () => {
     // Delete all associated missions first
     missions
-      .filter(mission => !mission.deleted && mission.home.id === home.id)
+      .filter(mission => !mission.deleted && mission.homeId === home.id)
       .forEach(mission => {
         deleteMission(mission.id);
       });

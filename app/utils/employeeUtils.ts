@@ -1,13 +1,4 @@
-import { EmployeeData } from '../components/employeeForm';
-import { Mission } from '../types/types';
-
-export type EmployeeStatus = 'pending' | 'accepted' | 'rejected';
-
-export interface EmployeeWithStatus extends EmployeeData {
-  id: string;
-  status: EmployeeStatus;
-  createdAt: string;
-}
+import { Employee, EmployeeStatus, EmployeeWithStatus, Mission } from '../types/types';
 
 // Get all employees from localStorage
 export function getEmployees(): EmployeeWithStatus[] {
@@ -32,14 +23,14 @@ export function saveEmployees(employees: EmployeeWithStatus[]): void {
 }
 
 // Check if employee already exists
-export function employeeExists(employee: EmployeeData, existingEmployees?: EmployeeWithStatus[]): boolean {
+export function employeeExists(employee: Employee, existingEmployees?: EmployeeWithStatus[]): boolean {
   const employees = existingEmployees || getEmployees();
 
   // Check if employee already exists with the same name, email, or phone
   const existingEmployee = employees.find(
     emp =>
-      (emp.nom.toLowerCase() === employee.nom.toLowerCase() &&
-        emp.prenom.toLowerCase() === employee.prenom.toLowerCase()) ||
+      (emp.firstName.toLowerCase() === employee.firstName.toLowerCase() &&
+        emp.familyName.toLowerCase() === employee.familyName.toLowerCase()) ||
       emp.email.toLowerCase() === employee.email.toLowerCase() ||
       (emp.tel && employee.tel && emp.tel === employee.tel),
   );
@@ -48,7 +39,7 @@ export function employeeExists(employee: EmployeeData, existingEmployees?: Emplo
 }
 
 // Add a new employee
-export function addEmployee(employee: EmployeeData): void {
+export function addEmployee(employee: Employee): void {
   const employees = getEmployees();
 
   // Check if employee already exists
@@ -57,7 +48,6 @@ export function addEmployee(employee: EmployeeData): void {
   // Create a new employee with status
   const newEmployee: EmployeeWithStatus = {
     ...employee,
-    id: generateId(),
     status: 'pending',
     createdAt: new Date().toISOString(),
   };
@@ -74,7 +64,7 @@ export function updateEmployeeStatus(id: string, status: EmployeeStatus): void {
       if (emp.id === id) {
         // If status is changing from pending to accepted/rejected, remove the message and conciergerie
         if (emp.status === 'pending' && (status === 'accepted' || status === 'rejected')) {
-          const { message, conciergerie, ...acceptedEmployee } = emp; // eslint-disable-line @typescript-eslint/no-unused-vars
+          const { message, conciergerieName, ...acceptedEmployee } = emp; // eslint-disable-line @typescript-eslint/no-unused-vars
           return { ...acceptedEmployee, status };
         }
         // Otherwise just update the status
@@ -96,7 +86,7 @@ export function updateEmployeeStatus(id: string, status: EmployeeStatus): void {
           // Check if any missions are assigned to this employee
           let missionsUpdated = false;
           const updatedMissions = missions.map((mission: Mission) => {
-            if (mission.employee?.id === id) {
+            if (mission.employeeId === id) {
               missionsUpdated = true;
               return { ...mission, assignedTo: null };
             }
@@ -124,11 +114,6 @@ export function deleteEmployee(id: string): void {
   saveEmployees(filteredEmployees);
 }
 
-// Generate a unique ID
-function generateId(): string {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}
-
 // Sort employees by status (pending first, then accepted, then rejected)
 // and then alphabetically by name
 export function sortEmployees(employees: EmployeeWithStatus[]): EmployeeWithStatus[] {
@@ -145,15 +130,15 @@ export function sortEmployees(employees: EmployeeWithStatus[]): EmployeeWithStat
     }
 
     // Then sort alphabetically by last name
-    const lastNameA = a.nom.toLowerCase();
-    const lastNameB = b.nom.toLowerCase();
+    const lastNameA = a.familyName.toLowerCase();
+    const lastNameB = b.familyName.toLowerCase();
 
     if (lastNameA !== lastNameB) {
       return lastNameA.localeCompare(lastNameB);
     }
 
     // If last names are the same, sort by first name
-    return a.prenom.toLowerCase().localeCompare(b.prenom.toLowerCase());
+    return a.firstName.toLowerCase().localeCompare(b.firstName.toLowerCase());
   });
 }
 
@@ -167,51 +152,34 @@ export function filterEmployees(employees: EmployeeWithStatus[], searchTerm: str
 
   return employees.filter(
     emp =>
-      emp.nom.toLowerCase().includes(term) ||
-      emp.prenom.toLowerCase().includes(term) ||
-      emp.email.toLowerCase().includes(term) ||
-      emp.conciergerie.toLowerCase().includes(term),
+      emp.firstName.toLowerCase().includes(term) ||
+      emp.familyName.toLowerCase().includes(term) ||
+      emp.email.toLowerCase().includes(term),
   );
 }
 
 // Filter employees by conciergerie
 export function filterEmployeesByConciergerie(
   employees: EmployeeWithStatus[],
-  conciergerie: string | null,
+  conciergerieName: string | null,
 ): EmployeeWithStatus[] {
-  if (!conciergerie) return [];
+  if (!conciergerieName) return [];
 
   return employees.filter(
-    employee => !employee.conciergerie || employee.conciergerie.toLowerCase() === conciergerie.toLowerCase(),
+    employee =>
+      !employee.conciergerieName || employee.conciergerieName.toLowerCase() === conciergerieName.toLowerCase(),
   );
 }
 
-// Update employee data in localStorage
-export function updateEmployeeData(employeeData: EmployeeData): void {
-  try {
-    // Get the current employee data
-    const currentDataStr = localStorage.getItem('employee_data');
-    const currentData = currentDataStr ? JSON.parse(currentDataStr) : null;
-
-    // If there's existing data, merge it with the new data
-    const updatedData = currentData ? { ...currentData, ...employeeData } : employeeData;
-
-    // Save the updated data
-    localStorage.setItem('employee_data', JSON.stringify(updatedData));
-  } catch (error) {
-    console.error('Error updating employee data:', error);
-  }
-}
-
 // Get employee status by matching name, email, or phone
-export function getEmployeeStatus(employee: EmployeeData): EmployeeStatus | null {
+export function getEmployeeStatus(employee: Employee): EmployeeStatus | null {
   const employees = getEmployees();
 
   // Find the employee
   const existingEmployee = employees.find(
     emp =>
-      (emp.nom.toLowerCase() === employee.nom.toLowerCase() &&
-        emp.prenom.toLowerCase() === employee.prenom.toLowerCase()) ||
+      (emp.firstName.toLowerCase() === employee.firstName.toLowerCase() &&
+        emp.familyName.toLowerCase() === employee.familyName.toLowerCase()) ||
       emp.email.toLowerCase() === employee.email.toLowerCase() ||
       (emp.tel && employee.tel && emp.tel === employee.tel),
   );

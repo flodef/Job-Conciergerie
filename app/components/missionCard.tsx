@@ -1,7 +1,9 @@
 'use client';
 
+import { useMissions } from '../contexts/missionsProvider';
 import { Mission } from '../types/types';
 import { formatDateRange } from '../utils/dateUtils';
+import { getColorValueByName } from '../utils/welcomeParams';
 
 type MissionCardProps = {
   mission: Mission;
@@ -10,9 +12,12 @@ type MissionCardProps = {
 };
 
 export default function MissionCard({ mission, onClick, onEdit }: MissionCardProps) {
-  // Get the conciergerie color from the mission data
-  const conciergerieColor = mission.conciergerie?.color || 'var(--color-default)';
-  const isTaken = !!mission.employee;
+  const { getConciergerieByName, getHomeById, getEmployeeById } = useMissions();
+
+  const homeTitle = getHomeById(mission.homeId)?.title || 'Bien inconnu';
+  const conciergerie = getConciergerieByName(mission.conciergerieName);
+  const conciergerieColor = getColorValueByName(conciergerie?.colorName);
+  const employee = getEmployeeById(mission.employeeId);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent the default context menu
@@ -24,14 +29,14 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
   return (
     <div
       className={`relative bg-background p-4 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 ${
-        isTaken ? 'opacity-50' : ''
+        employee ? 'opacity-50' : ''
       }`}
       onClick={onClick}
       onContextMenu={handleContextMenu}
       style={{ borderLeft: `6px solid ${conciergerieColor}` }}
     >
       {/* Diagonal label for taken missions */}
-      {isTaken && (
+      {employee && (
         <div
           className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center"
           aria-hidden="true"
@@ -45,12 +50,12 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
               textAlign: 'center',
             }}
           >
-            {mission.employee?.name}
+            {employee.firstName} {employee.familyName}
           </div>
         </div>
       )}
 
-      <h3 className="font-medium text-foreground">{mission.home.title}</h3>
+      <h3 className="font-medium text-foreground">{homeTitle}</h3>
 
       <div className="flex flex-wrap gap-1 mt-2">
         {mission.objectives.map(objective => (

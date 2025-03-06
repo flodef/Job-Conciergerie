@@ -6,8 +6,8 @@ import EmployeeDetails from '../components/employeeDetails';
 import FullScreenModal from '../components/fullScreenModal';
 import SearchInput from '../components/searchInput';
 import { ToastMessage, ToastType } from '../components/toastMessage';
+import { EmployeeWithStatus } from '../types/types';
 import {
-  EmployeeWithStatus,
   filterEmployees,
   filterEmployeesByConciergerie,
   getEmployees,
@@ -65,7 +65,9 @@ export default function EmployeesList() {
     // Show toast
     const employee = employees.find(emp => emp.id === id);
     if (employee) {
-      setToastMessage(`${employee.prenom} ${employee.nom} a été ${newStatus === 'accepted' ? 'accepté' : 'rejeté'}`);
+      setToastMessage(
+        `${employee.firstName} ${employee.familyName} a été ${newStatus === 'accepted' ? 'accepté' : 'rejeté'}`,
+      );
       setToastType(newStatus === 'accepted' ? ToastType.Success : ToastType.Error);
       setShowToast(true);
     }
@@ -239,7 +241,7 @@ function EmployeeRow({
       <td className="px-1 py-1 justify-items-center">
         <div className="flex flex-col text-sm font-medium text-foreground text-wrap max-w-28">
           <div>
-            {employee.prenom} {employee.nom}
+            {employee.firstName} {employee.familyName}
           </div>
         </div>
       </td>

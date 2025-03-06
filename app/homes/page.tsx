@@ -35,7 +35,7 @@ export default function HomesPage() {
 
   // Filter homes by the current conciergerie and not deleted
   const filteredHomes = homes
-    .filter(home => !home.deleted && home.conciergerie.name === currentConciergerie?.name)
+    .filter(home => !home.deleted && home.conciergerieName === currentConciergerie?.name)
     .filter(home => {
       if (searchTerm.trim() === '') return true;
       const searchLower = searchTerm.toLowerCase();

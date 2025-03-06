@@ -1,13 +1,14 @@
 /**
  * Get all welcome page parameters from localStorage
  */
-import { ConciergerieData } from '../components/conciergerieForm';
 import colorOptions from '../data/colors.json';
+import { Conciergerie, Employee } from '../types/types';
+import { generateSimpleId } from './id';
 
 // Get the color value from colors.json based on colorName
-export const getColorValueByName = (colorName: string): string | undefined => {
+export const getColorValueByName = (colorName: string | undefined): string => {
   const colorOption = colorOptions.find(color => color.name === colorName);
-  return colorOption?.value;
+  return colorOption?.value || 'var(--color-default)';
 };
 
 export function getWelcomeParams() {
@@ -97,7 +98,7 @@ export function hasCompletedWelcomeFlow(): boolean {
 /**
  * Update conciergerie data in localStorage
  */
-export function updateConciergerieData(data: ConciergerieData): void {
+export function updateConciergerieData(data: Conciergerie): void {
   if (typeof window === 'undefined') return;
 
   try {
@@ -113,6 +114,26 @@ export function updateConciergerieData(data: ConciergerieData): void {
     localStorage.setItem('conciergerie_data', JSON.stringify(updatedData));
   } catch (error) {
     console.error('Error updating conciergerie data in localStorage:', error);
+  }
+}
+
+/**
+ * Update employed data in localStorage
+ */
+export function updateEmployeeData(employee: Employee): void {
+  try {
+    // Get the current employee data
+    const currentDataStr = localStorage.getItem('employee_data');
+    const currentData = currentDataStr ? JSON.parse(currentDataStr) : null;
+    employee.id ||= generateSimpleId(); // Generate employee id if it does not exist
+
+    // If there's existing data, merge it with the new data
+    const updatedData = currentData ? { ...currentData, ...employee } : employee;
+
+    // Save the updated data
+    localStorage.setItem('employee_data', JSON.stringify(updatedData));
+  } catch (error) {
+    console.error('Error updating employee data:', error);
   }
 }
 

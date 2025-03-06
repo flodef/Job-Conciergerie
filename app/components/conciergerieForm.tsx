@@ -8,27 +8,21 @@ import conciergeriesData from '../data/conciergeries.json';
 import { getColorValueByName } from '../utils/welcomeParams';
 import FormActions from './formActions';
 import { ToastMessage, ToastType } from './toastMessage';
+import { Conciergerie } from '../types/types';
 
 type ConciergerieFormProps = {
   companies: string[];
   onClose: () => void;
 };
 
-export type ConciergerieData = {
-  name: string;
-  color: string;
-  colorName: string;
-  email: string;
-  tel?: string;
-};
-
 export default function ConciergerieForm({ companies, onClose }: ConciergerieFormProps) {
   const { setPrimaryColor, resetPrimaryColor } = useTheme();
-  const [conciergerieData, setConciergerieData] = useLocalStorage<ConciergerieData>('conciergerie_data', {
+  const [conciergerieData, setConciergerieData] = useLocalStorage<Conciergerie>('conciergerie_data', {
     name: '',
-    color: '',
-    colorName: '',
     email: '',
+    tel: '',
+    colorName: '',
+    color: '',
   });
   const [toastMessage, setToastMessage] = useState<{ type: ToastType; message: string }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,12 +33,12 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
       const selectedConciergerie = conciergeriesData.find(c => c.name === conciergerieData.name);
       if (selectedConciergerie) {
         // Get color value from colors.json based on colorName
-        const colorValue = getColorValueByName(selectedConciergerie.colorname);
+        const colorValue = getColorValueByName(selectedConciergerie.colorName);
 
         setConciergerieData(prev => ({
           ...prev,
           email: selectedConciergerie.email,
-          colorName: selectedConciergerie.colorname,
+          colorName: selectedConciergerie.colorName,
           color: colorValue || '',
           tel: selectedConciergerie.tel,
         }));

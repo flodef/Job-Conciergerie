@@ -1,8 +1,8 @@
 'use client';
 
-import { clsx } from 'clsx/lite';
-import { EmployeeWithStatus } from '../utils/employeeUtils';
 import { IconMail, IconPhone } from '@tabler/icons-react';
+import { clsx } from 'clsx/lite';
+import { EmployeeWithStatus } from '../types/types';
 import { formatDate } from '../utils/dateUtils';
 
 type EmployeeDetailsProps = {
@@ -15,7 +15,7 @@ export default function EmployeeDetails({ employee }: EmployeeDetailsProps) {
     <div className="space-y-2">
       <div>
         <h3 className="text-md font-semibold mb-2">
-          {employee.prenom} {employee.nom}
+          {employee.firstName} {employee.familyName}
         </h3>
         <div className="text-sm text-foreground/70">
           Statut:{' '}

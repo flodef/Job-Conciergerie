@@ -4,14 +4,13 @@ import { IconCancel, IconCheck, IconMail, IconPencil, IconPhone, IconTrash, Icon
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
-import { useHomes } from '../contexts/homesProvider';
 import { Mission } from '../types/types';
 import { formatDateTime } from '../utils/dateUtils';
+import { getColorValueByName, getWelcomeParams } from '../utils/welcomeParams';
 import ConfirmationModal from './confirmationModal';
 import FullScreenModal from './fullScreenModal';
 import HomeDetails from './homeDetails';
 import MissionForm from './missionForm';
-import { getWelcomeParams } from '../utils/welcomeParams';
 
 type MissionDetailsProps = {
   mission: Mission;
@@ -27,7 +26,8 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
     acceptMission,
     setShouldShowAcceptWarning,
   } = useMissions();
-  const { homes } = useHomes();
+  const { getConciergerieByName, getHomeById, getEmployeeById } = useMissions();
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
@@ -38,8 +38,12 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
   const [userType, setUserType] = useState<string | null>(null);
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
-  // Get the conciergerie color from the mission data
-  const conciergerieColor = mission.conciergerie?.color || 'var(--color-primary)';
+  // Get the conciergerie from the mission data
+  const conciergerie = getConciergerieByName(mission.conciergerieName);
+  const conciergerieColor = getColorValueByName(conciergerie?.colorName);
+
+  // Get the home data
+  const home = getHomeById(mission.homeId);
 
   useEffect(() => {
     // Get the user type
@@ -51,7 +55,7 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
     if (userType === 'employee') {
       // Employees can never edit missions
       setIsReadOnly(true);
-    } else if (currentConciergerie && mission.conciergerie.name === currentConciergerie.name) {
+    } else if (currentConciergerie && mission.conciergerieName === currentConciergerie.name) {
       // Conciergerie can edit their own missions
       setIsReadOnly(false);
     } else {
@@ -112,15 +116,16 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
     );
   }
 
-  if (showHomeDetails) {
+  if (showHomeDetails && home) {
     // Get the original home from the homes context to ensure we have all images
-    const originalHome = homes.find(h => h.id === mission.home.id) || mission.home;
+    const originalHome = getHomeById(mission.homeId) || home;
     return <HomeDetails home={originalHome} onClose={() => setShowHomeDetails(false)} />;
   }
 
-  const firstHomeImage = mission.home.images?.length ? mission.home.images[0] : '';
+  const firstHomeImage = home?.images?.length ? home.images[0] : '';
   const isEmployee = userType === 'employee';
-  const canAcceptMission = isEmployee && !mission.employee;
+  const employee = getEmployeeById(mission.employeeId);
+  const canAcceptMission = isEmployee && !employee;
 
   return (
     <FullScreenModal onClose={onClose} title="Détails de la mission">
@@ -128,7 +133,7 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
         <FullScreenModal
           imageUrl={selectedImage}
           onClose={() => setSelectedImage(null)}
-          title={`Photo de ${mission.home.title}`}
+          title={`Photo de ${home?.title || 'la mission'}`}
         />
       )}
 
@@ -137,18 +142,18 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium text-light">Bien</h3>
-              <p className="text-foreground">{mission.home.title}</p>
+              <p className="text-foreground">{home?.title || 'Bien non trouvé'}</p>
             </div>
             <button onClick={() => setShowHomeDetails(true)} title="Voir les détails du bien">
               <IconZoomScan size={40} />
             </button>
           </div>
 
-          {mission.home.images?.length ? (
+          {home?.images?.length ? (
             <div className="relative aspect-video w-full max-h-32 mt-1 overflow-hidden rounded-lg">
               <Image
                 src={firstHomeImage}
-                alt={`Photo de ${mission.home.title}`}
+                alt={`Photo de ${home?.title || 'la mission'}`}
                 fill
                 sizes="(max-width: 768px) 100vw, 300px"
                 className="object-cover cursor-pointer hover:opacity-80 transition-opacity"
@@ -189,26 +194,26 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
           <h3 className="text-sm font-medium text-light">Conciergerie</h3>
           <div className="flex items-center gap-3">
             <p className="text-lg font-bold" style={{ color: conciergerieColor }}>
-              {mission.conciergerie.name}
+              {conciergerie?.name || mission.conciergerieName}
             </p>
 
             {/* Contact buttons */}
             <div className="flex gap-3">
-              {mission.conciergerie.tel && (
+              {conciergerie?.tel && (
                 <a
-                  href={`tel:${mission.conciergerie.tel}`}
+                  href={`tel:${conciergerie.tel}`}
                   className="p-1 rounded-full hover:bg-gray-100"
-                  title={`Appeler ${mission.conciergerie.name}`}
+                  title={`Appeler ${conciergerie.name}`}
                 >
                   <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
                 </a>
               )}
 
-              {mission.conciergerie.email && (
+              {conciergerie?.email && (
                 <a
-                  href={`mailto:${mission.conciergerie.email}`}
+                  href={`mailto:${conciergerie.email}`}
                   className="p-1 rounded-full hover:bg-gray-100"
-                  title={`Envoyer un email à ${mission.conciergerie.name}`}
+                  title={`Envoyer un email à ${conciergerie.name}`}
                 >
                   <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />
                 </a>
@@ -217,10 +222,12 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
           </div>
         </div>
 
-        {mission.employee && (
+        {employee && (
           <div>
             <h3 className="text-sm font-medium text-light">Prestataire</h3>
-            <p>{mission.employee.name}</p>
+            <p>
+              {employee.firstName} {employee.familyName}
+            </p>
           </div>
         )}
       </div>
@@ -243,7 +250,7 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
               <IconTrash />
               Supprimer
             </button>
-            {mission.employee && (
+            {mission.employeeId && (
               <button
                 onClick={handleRemoveEmployee}
                 className="flex flex-col items-center p-2 w-20 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200"

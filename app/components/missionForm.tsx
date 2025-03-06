@@ -16,14 +16,11 @@ type MissionFormProps = {
 export default function MissionForm({ mission, onClose, mode }: MissionFormProps) {
   const { homes, addMission, updateMission, getCurrentConciergerie } = useMissions();
 
-  // Default mockup image path
-  const mockupImagePath = '/home.webp';
-
   // Filter homes by the current conciergerie
   const currentConciergerie = getCurrentConciergerie();
-  const filteredHomes = homes.filter(home => !home.deleted && home.conciergerie?.name === currentConciergerie?.name);
+  const filteredHomes = homes.filter(home => !home.deleted && home.conciergerieName === currentConciergerie?.name);
 
-  const [homeId, setHomeId] = useState<string>(mission?.home.id || filteredHomes[0]?.id || '');
+  const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
   const [objectivesState, setObjectives] = useState<Objective[]>(mission?.objectives || []);
 
   // Get current date and time in local timezone
@@ -37,8 +34,11 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   const [startDateTime, setStartDateTime] = useState<string>(
     mission?.startDateTime ? localISOString(mission.startDateTime) : localISOString(now),
   );
+
   const [endDateTime, setEndDateTime] = useState<string>(
-    mission?.endDateTime ? localISOString(mission.endDateTime) : localISOString(now),
+    mission?.endDateTime
+      ? localISOString(mission.endDateTime)
+      : localISOString(new Date(now.getTime() + 60 * 60 * 1000)), // For end date/time, add 1 hour to now when adding a new mission
   );
 
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
@@ -71,11 +71,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         return;
       }
 
-      // Create a copy of the selected home but replace images with mockup
-      const homeWithMockupImage = {
-        ...selectedHome,
-        images: [mockupImagePath],
-      };
+      // We'll just use the homeId now instead of embedding the full home object
 
       // Convert string dates to Date objects
       const startDate = new Date(startDateTime);
@@ -83,7 +79,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
       if (mode === 'add') {
         addMission({
-          home: homeWithMockupImage,
+          homeId: selectedHome.id,
           objectives: objectivesState,
           startDateTime: startDate,
           endDateTime: endDate,
@@ -92,7 +88,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
       } else if (mission) {
         updateMission({
           ...mission,
-          home: homeWithMockupImage,
+          homeId: selectedHome.id,
           objectives: objectivesState,
           startDateTime: startDate,
           endDateTime: endDate,

@@ -3,18 +3,18 @@
     "name": "CMD Breizh",
     "email": "contact@cmd.bzh",
     "tel": "+33662815964",
-    "colorname": "Bleu"
+    "colorName": "Bleu"
   },
   {
     "name": "MENTHEREGLISSE",
     "email": "contact@menthereglisse-conciergerie.com",
     "tel": "+33771597340",
-    "colorname": "Orange"
+    "colorName": "Orange"
   },
   {
     "name": "Calluna",
     "email": "contact@calluna-conciergerie.fr",
     "tel": "+33788998990",
-    "colorname": "Vert"
+    "colorName": "Vert"
   }
 ]

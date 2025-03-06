@@ -1,8 +1,10 @@
 'use client';
 
 import Image from 'next/image';
+import { useMissions } from '../contexts/missionsProvider';
 import { HomeData } from '../types/types';
 import { formatDateTime } from '../utils/dateUtils';
+import { getColorValueByName } from '../utils/welcomeParams';
 
 type HomeCardProps = {
   home: HomeData;
@@ -12,7 +14,9 @@ type HomeCardProps = {
 
 export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
   // Get the conciergerie color from the home data
-  const conciergerieColor = home.conciergerie?.color || 'var(--color-primary)';
+  const { getConciergerieByName } = useMissions();
+  const conciergerie = getConciergerieByName(home.conciergerieName);
+  const conciergerieColor = getColorValueByName(conciergerie?.colorName);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent the default context menu

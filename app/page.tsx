@@ -90,7 +90,7 @@ export default function Home() {
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
           <UserTypeSelection onSelect={handleUserTypeSelect} />
         ) : showEmployeeForm ? (
-          <EmployeeForm companies={conciergerieNames} onClose={handleCloseForm} />
+          <EmployeeForm conciergerieNames={conciergerieNames} onClose={handleCloseForm} />
         ) : showConciergerieForm ? (
           <ConciergerieForm companies={conciergerieNames} onClose={handleCloseForm} />
         ) : null}

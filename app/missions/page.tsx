@@ -70,7 +70,7 @@ export default function Missions() {
       // 2. Missions taken by the current employee
       if (userType === 'employee') {
         // Show if mission is not taken by anyone or taken by the current employee
-        return !mission.employee || mission.employee.id === currentEmployeeId;
+        return !mission.employeeId || mission.employeeId === currentEmployeeId;
       }
 
       // For conciergerie users, show all the missions
@@ -82,7 +82,7 @@ export default function Missions() {
     });
 
   // Filter homes by the current conciergerie
-  const filteredHomes = homes.filter(home => !home.deleted && home.conciergerie?.name === currentConciergerie?.name);
+  const filteredHomes = homes.filter(home => !home.deleted && home.conciergerieName === currentConciergerie?.name);
 
   const handleMissionClick = (missionId: string) => {
     setSelectedMission(missionId);

@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import LoadingSpinner from '../components/loadingSpinner';
-import { EmployeeWithStatus, getEmployees } from '../utils/employeeUtils';
+import { getEmployees } from '../utils/employeeUtils';
 import { getWelcomeParams } from '../utils/welcomeParams';
 import { IconClock, IconAlertCircle, IconCircleCheck } from '@tabler/icons-react';
+import { EmployeeWithStatus } from '../types/types';
 
 export default function WaitingPage() {
   const router = useRouter();
@@ -114,14 +115,14 @@ export default function WaitingPage() {
             <p className="mb-4">
               Bonjour{' '}
               <span className="font-semibold">
-                {employee.prenom} {employee.nom}
+                {employee.firstName} {employee.familyName}
               </span>
               ,
             </p>
 
             <p className="mb-4">
               Votre demande d&apos;accès a bien été reçue et est actuellement en cours d&apos;examen par la conciergerie{' '}
-              <span className="font-semibold">{employee.conciergerie}</span>.
+              <span className="font-semibold">{employee.conciergerieName}</span>.
             </p>
 
             <div className="bg-secondary/10 p-4 rounded-lg mb-4">

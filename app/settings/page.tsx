@@ -2,22 +2,20 @@
 
 import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
-import { ConciergerieData } from '../components/conciergerieForm';
 import ConfirmationModal from '../components/confirmationModal';
-import { EmployeeData } from '../components/employeeForm';
 import LoadingSpinner from '../components/loadingSpinner';
 import { ToastMessage, ToastType } from '../components/toastMessage';
 import { useTheme } from '../contexts/themeProvider';
 import colorOptions from '../data/colors.json';
 import conciergeriesData from '../data/conciergeries.json';
-import { updateEmployeeData } from '../utils/employeeUtils';
+import { Conciergerie, Employee } from '../types/types';
 import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
-import { getWelcomeParams, updateConciergerieData } from '../utils/welcomeParams';
+import { getWelcomeParams, updateConciergerieData, updateEmployeeData } from '../utils/welcomeParams';
 
 type UserInfo = {
   userType: 'conciergerie' | 'employee' | null;
-  employeeData: EmployeeData | null;
-  conciergerieData: ConciergerieData | null;
+  employeeData: Employee | null;
+  conciergerieData: Conciergerie | null;
 };
 
 type ColorOption = {
@@ -109,7 +107,7 @@ export default function Settings() {
     const otherConciergeries = conciergeriesData.filter(c => c.name !== userInfo.conciergerieData?.name);
 
     // Check if any other conciergerie uses this color
-    return otherConciergeries.some(c => c.colorname === colorName);
+    return otherConciergeries.some(c => c.colorName === colorName);
   };
 
   // Check if form has been modified
@@ -221,7 +219,7 @@ export default function Settings() {
           <div>
             <h2 className="text-xl font-semibold mb-4">Informations de la conciergerie</h2>
 
-            <div className="space-y-4">
+            <div className="space-y-2">
               <div>
                 <label className="block text-sm font-medium text-foreground/70 mb-1">Nom</label>
                 <p className="font-medium">{userInfo.conciergerieData.name}</p>
@@ -327,7 +325,7 @@ export default function Settings() {
                 </div>
               </div>
 
-              <div className="flex justify-center">
+              <div className="flex justify-center pt-2">
                 <button
                   onClick={handleSave}
                   disabled={isSaving || !hasChanges()}
@@ -349,13 +347,13 @@ export default function Settings() {
             <div>
               <p className="text-sm text-foreground/70 mb-1">Nom</p>
               <p className="font-medium">
-                {userInfo.employeeData.prenom} {userInfo.employeeData.nom}
+                {userInfo.employeeData.firstName} {userInfo.employeeData.familyName}
               </p>
             </div>
 
             <div>
               <p className="text-sm text-foreground/70 mb-1">Conciergerie</p>
-              <p className="font-medium">{userInfo.employeeData.conciergerie}</p>
+              <p className="font-medium">{userInfo.employeeData.conciergerieName}</p>
             </div>
 
             <div>

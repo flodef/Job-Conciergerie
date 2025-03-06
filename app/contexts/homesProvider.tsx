@@ -2,15 +2,17 @@
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Conciergerie, HomeData } from '../types/types';
+import { generateSimpleId } from '../utils/id';
 import { getWelcomeParams } from '../utils/welcomeParams';
 
 type HomesContextType = {
   homes: HomeData[];
   isLoading: boolean;
-  addHome: (home: Omit<HomeData, 'id' | 'modifiedDate' | 'deleted' | 'conciergerie'>) => void;
+  addHome: (home: Omit<HomeData, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => void;
   updateHome: (home: HomeData) => void;
   deleteHome: (id: string) => void;
   getCurrentConciergerie: () => Conciergerie | null;
+  getConciergerieByName: (name: string) => Conciergerie | null;
 };
 
 const HomesContext = createContext<HomesContextType | undefined>(undefined);
@@ -62,7 +64,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     }
   }, [homes]);
 
-  const addHome = (homeData: Omit<HomeData, 'id' | 'modifiedDate' | 'deleted' | 'conciergerie'>) => {
+  const addHome = (homeData: Omit<HomeData, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => {
     const currentConciergerie = getCurrentConciergerie();
 
     if (!currentConciergerie) {
@@ -72,10 +74,10 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
     const newHome: HomeData = {
       ...homeData,
-      id: Date.now().toString(),
+      id: generateSimpleId(),
       modifiedDate: new Date(),
       deleted: false,
-      conciergerie: currentConciergerie,
+      conciergerieName: currentConciergerie.name,
     };
 
     setHomes(prev => [...prev, newHome]);
@@ -85,7 +87,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     const currentConciergerie = getCurrentConciergerie();
 
     // Only allow updates if the home was created by the current conciergerie
-    if (currentConciergerie && updatedHome.conciergerie.name === currentConciergerie.name) {
+    if (currentConciergerie && updatedHome.conciergerieName === currentConciergerie.name) {
       setHomes(prev =>
         prev.map(home => (home.id === updatedHome.id ? { ...updatedHome, modifiedDate: new Date() } : home)),
       );
@@ -99,7 +101,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     const currentConciergerie = getCurrentConciergerie();
 
     // Only allow deletion if the home was created by the current conciergerie
-    if (homeToDelete && currentConciergerie && homeToDelete.conciergerie.name === currentConciergerie.name) {
+    if (homeToDelete && currentConciergerie && homeToDelete.conciergerieName === currentConciergerie.name) {
       setHomes(prev =>
         prev.map(home => (home.id === id ? { ...home, deleted: true, modifiedDate: new Date() } : home)),
       );
@@ -108,8 +110,31 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Helper function to get a conciergerie by name
+  const getConciergerieByName = (name: string): Conciergerie | null => {
+    // If the name matches the current conciergerie, return it
+    const currentConciergerie = getCurrentConciergerie();
+    if (currentConciergerie && currentConciergerie.name === name) {
+      return currentConciergerie;
+    }
+
+    // Otherwise, we would need to fetch from a list of conciergeries
+    // For now, return null if it's not the current conciergerie
+    return null;
+  };
+
   return (
-    <HomesContext.Provider value={{ homes, isLoading, addHome, updateHome, deleteHome, getCurrentConciergerie }}>
+    <HomesContext.Provider
+      value={{
+        homes,
+        isLoading,
+        addHome,
+        updateHome,
+        deleteHome,
+        getCurrentConciergerie,
+        getConciergerieByName,
+      }}
+    >
       {children}
     </HomesContext.Provider>
   );

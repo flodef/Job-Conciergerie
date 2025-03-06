@@ -24,3 +24,7 @@ export const generateUniqueId = async (): Promise<string> => {
     return '';
   }
 };
+
+export const generateSimpleId = () => {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+};

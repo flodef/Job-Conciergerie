@@ -19,12 +19,13 @@ const missionsCheckKey = 'last_checked_missions';
 const BadgeContext = createContext<BadgeContextType | undefined>(undefined);
 
 export function BadgeProvider({ children }: { children: ReactNode }) {
-  const [pendingEmployeesCount, setPendingEmployeesCount] = useState(0);
-  const [newMissionsCount, setNewMissionsCount] = useState(0);
+  const { userType, conciergerieData } = getWelcomeParams();
   const { missions } = useMissions();
 
+  const [pendingEmployeesCount, setPendingEmployeesCount] = useState(0);
+  const [newMissionsCount, setNewMissionsCount] = useState(0);
+
   // Get user type and conciergerie data
-  const { userType, conciergerieData } = getWelcomeParams();
   const conciergerieName = conciergerieData?.name || null;
 
   // Load and update pending employees count for conciergerie
@@ -36,7 +37,8 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
 
         // Filter employees by conciergerie and pending status
         const pendingEmployees = allEmployees.filter(
-          emp => emp.status === 'pending' && emp.conciergerie.toLowerCase() === (conciergerieName?.toLowerCase() || ''),
+          emp =>
+            emp.status === 'pending' && emp.conciergerieName?.toLowerCase() === (conciergerieName?.toLowerCase() || ''),
         );
 
         // Get the last checked timestamp from localStorage
@@ -74,12 +76,12 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
       const missionFilter =
         userType === 'conciergerie'
           ? (mission: Mission) =>
-              mission.conciergerie.name === conciergerieName &&
-              mission.employee && // Has an employee (accepted)
+              mission.conciergerieName === conciergerieName &&
+              mission.employeeId && // Has an employee (accepted)
               new Date(mission.modifiedDate) > lastCheckedDate &&
               !mission.deleted
           : (mission: Mission) =>
-              !mission.employee && // Not assigned to anyone
+              !mission.employeeId && // Not assigned to anyone
               new Date(mission.modifiedDate) > lastCheckedDate &&
               new Date(mission.endDateTime).getTime() >= new Date().getTime() && // Not expired
               !mission.deleted;

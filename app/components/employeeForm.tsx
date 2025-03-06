@@ -8,29 +8,23 @@ import { addEmployee, employeeExists, getEmployeeStatus, getEmployees } from '..
 import FormActions from './formActions';
 import { ToastMessage, ToastType } from './toastMessage';
 import Tooltip from './tooltip';
+import { Employee } from '../types/types';
+import { generateSimpleId } from '../utils/id';
 
 type EmployeeFormProps = {
-  companies: string[];
+  conciergerieNames: string[];
   onClose: () => void;
 };
 
-export type EmployeeData = {
-  nom: string;
-  prenom: string;
-  tel: string;
-  email: string;
-  conciergerie: string;
-  message: string;
-};
-
-export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) {
+export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFormProps) {
   const { resetPrimaryColor } = useTheme();
-  const [formData, setFormData] = useLocalStorage<EmployeeData>('employee_data', {
-    nom: '',
-    prenom: '',
+  const [formData, setFormData] = useLocalStorage<Employee>('employee_data', {
+    id: '',
+    firstName: '',
+    familyName: '',
     tel: '',
     email: '',
-    conciergerie: companies[0] || '',
+    conciergerieName: conciergerieNames[0] || '',
     message: '',
   });
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
@@ -41,10 +35,10 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
 
   // Update conciergerie if companies change and current selection is not in the list
   useEffect(() => {
-    if (companies.length > 0 && !companies.includes(formData.conciergerie)) {
-      setFormData(prev => ({ ...prev, conciergerie: companies[0] }));
+    if (conciergerieNames.length > 0 && !conciergerieNames.includes(formData.conciergerieName ?? '')) {
+      setFormData(prev => ({ ...prev, conciergerie: conciergerieNames[0] }));
     }
-  }, [companies, formData.conciergerie, setFormData]);
+  }, [conciergerieNames, formData.conciergerieName, setFormData]);
 
   // Clear conciergerie data if it exists when this form is shown
   useEffect(() => {
@@ -64,7 +58,7 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
     setIsFormSubmitted(true);
 
     // Check if all required fields are filled
-    if (!formData.nom || !formData.prenom || !formData.tel || !formData.email || !formData.conciergerie) {
+    if (!formData.firstName || !formData.familyName || !formData.tel || !formData.email || !formData.conciergerieName) {
       setToastMessage('Veuillez remplir tous les champs obligatoires');
       setToastType(ToastType.Error);
       setShowToast(true);
@@ -93,6 +87,8 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
     }
 
     // Add the employee to the employees list
+    formData.id = generateSimpleId();
+    setFormData(prev => ({ ...prev, id: formData.id }));
     addEmployee(formData);
 
     // Redirect to waiting page
@@ -109,19 +105,19 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="prenom" className="block text-sm font-medium text-foreground mb-1">
+          <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-1">
             Prénom*
           </label>
           <input
             type="text"
-            id="prenom"
-            name="prenom"
-            value={formData.prenom}
+            id="firstName"
+            name="firstName"
+            value={formData.firstName}
             onChange={handleChange}
             className={clsx(
               'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
               'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && !formData.prenom && 'border-red-500',
+              isFormSubmitted && !formData.firstName && 'border-red-500',
             )}
             required
             disabled={isSubmitting}
@@ -129,19 +125,19 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
         </div>
 
         <div>
-          <label htmlFor="nom" className="block text-sm font-medium text-foreground mb-1">
+          <label htmlFor="familyName" className="block text-sm font-medium text-foreground mb-1">
             Nom*
           </label>
           <input
             type="text"
-            id="nom"
-            name="nom"
-            value={formData.nom}
+            id="familyName"
+            name="familyName"
+            value={formData.familyName}
             onChange={handleChange}
             className={clsx(
               'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
               'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && !formData.nom && 'border-red-500',
+              isFormSubmitted && !formData.familyName && 'border-red-500',
             )}
             required
             disabled={isSubmitting}
@@ -196,17 +192,17 @@ export default function EmployeeForm({ companies, onClose }: EmployeeFormProps) 
           <select
             id="conciergerie"
             name="conciergerie"
-            value={formData.conciergerie}
+            value={formData.conciergerieName}
             onChange={handleChange}
             className={clsx(
               'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
               'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && !formData.conciergerie && 'border-red-500',
+              isFormSubmitted && !formData.conciergerieName && 'border-red-500',
             )}
             required
             disabled={isSubmitting}
           >
-            {companies.map(company => (
+            {conciergerieNames.map(company => (
               <option key={company} value={company}>
                 {company}
               </option>
