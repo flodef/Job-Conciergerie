@@ -99,7 +99,7 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
 
   if (isEditMode) {
     return (
-      <FullScreenModal onClose={() => setIsEditMode(false)}>
+      <FullScreenModal onClose={() => setIsEditMode(false)} title="Modification de la mission">
         <MissionForm
           mission={mission}
           onClose={() => {
@@ -123,115 +123,111 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
   const canAcceptMission = isEmployee && !mission.employee;
 
   return (
-    <FullScreenModal onClose={onClose}>
+    <FullScreenModal onClose={onClose} title="Détails de la mission">
       {selectedImage && (
         <FullScreenModal
           imageUrl={selectedImage}
           onClose={() => setSelectedImage(null)}
-          imageAlt={`Photo de ${mission.home.title}`}
+          title={`Photo de ${mission.home.title}`}
         />
       )}
 
-      <div className="p-4" data-mission-details>
-        <h2 className="text-xl font-bold mb-4">Détails de la mission</h2>
-
-        <div className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-medium text-light">Bien</h3>
-                <p className="text-foreground">{mission.home.title}</p>
-              </div>
-              <button onClick={() => setShowHomeDetails(true)} title="Voir les détails du bien">
-                <IconZoomScan size={40} />
-              </button>
-            </div>
-
-            {mission.home.images?.length ? (
-              <div className="relative aspect-video w-full max-h-32 mt-1 overflow-hidden rounded-lg">
-                <Image
-                  src={firstHomeImage}
-                  alt={`Photo de ${mission.home.title}`}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 300px"
-                  className="object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setSelectedImage(firstHomeImage)}
-                />
-              </div>
-            ) : null}
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium text-light">Objectifs</h3>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {mission.objectives.map(objective => (
-                <span
-                  key={objective}
-                  className="px-2 py-1 rounded-lg text-sm text-background"
-                  style={{
-                    backgroundColor: `${conciergerieColor}`,
-                  }}
-                >
-                  {objective}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium text-light">Date de début</h3>
-            <p className="text-foreground">{formatDateTime(mission.startDateTime)}</p>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium text-light">Date de fin</h3>
-            <p className="text-foreground">{formatDateTime(mission.endDateTime)}</p>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium text-light">Conciergerie</h3>
-            <div className="flex items-center gap-3">
-              <p className="text-lg font-bold" style={{ color: conciergerieColor }}>
-                {mission.conciergerie.name}
-              </p>
-
-              {/* Contact buttons */}
-              <div className="flex gap-3">
-                {mission.conciergerie.tel && (
-                  <a
-                    href={`tel:${mission.conciergerie.tel}`}
-                    className="p-1 rounded-full hover:bg-gray-100"
-                    title={`Appeler ${mission.conciergerie.name}`}
-                  >
-                    <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
-                  </a>
-                )}
-
-                {mission.conciergerie.email && (
-                  <a
-                    href={`mailto:${mission.conciergerie.email}`}
-                    className="p-1 rounded-full hover:bg-gray-100"
-                    title={`Envoyer un email à ${mission.conciergerie.name}`}
-                  >
-                    <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {mission.employee && (
+      <div className="space-y-2" data-mission-details>
+        <div>
+          <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-light">Prestataire</h3>
-              <p>{mission.employee.name}</p>
+              <h3 className="text-sm font-medium text-light">Bien</h3>
+              <p className="text-foreground">{mission.home.title}</p>
             </div>
-          )}
+            <button onClick={() => setShowHomeDetails(true)} title="Voir les détails du bien">
+              <IconZoomScan size={40} />
+            </button>
+          </div>
+
+          {mission.home.images?.length ? (
+            <div className="relative aspect-video w-full max-h-32 mt-1 overflow-hidden rounded-lg">
+              <Image
+                src={firstHomeImage}
+                alt={`Photo de ${mission.home.title}`}
+                fill
+                sizes="(max-width: 768px) 100vw, 300px"
+                className="object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => setSelectedImage(firstHomeImage)}
+              />
+            </div>
+          ) : null}
         </div>
+
+        <div>
+          <h3 className="text-sm font-medium text-light">Objectifs</h3>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {mission.objectives.map(objective => (
+              <span
+                key={objective}
+                className="px-2 py-1 rounded-lg text-sm text-background"
+                style={{
+                  backgroundColor: `${conciergerieColor}`,
+                }}
+              >
+                {objective}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium text-light">Date de début</h3>
+          <p className="text-foreground">{formatDateTime(mission.startDateTime)}</p>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium text-light">Date de fin</h3>
+          <p className="text-foreground">{formatDateTime(mission.endDateTime)}</p>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium text-light">Conciergerie</h3>
+          <div className="flex items-center gap-3">
+            <p className="text-lg font-bold" style={{ color: conciergerieColor }}>
+              {mission.conciergerie.name}
+            </p>
+
+            {/* Contact buttons */}
+            <div className="flex gap-3">
+              {mission.conciergerie.tel && (
+                <a
+                  href={`tel:${mission.conciergerie.tel}`}
+                  className="p-1 rounded-full hover:bg-gray-100"
+                  title={`Appeler ${mission.conciergerie.name}`}
+                >
+                  <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
+                </a>
+              )}
+
+              {mission.conciergerie.email && (
+                <a
+                  href={`mailto:${mission.conciergerie.email}`}
+                  className="p-1 rounded-full hover:bg-gray-100"
+                  title={`Envoyer un email à ${mission.conciergerie.name}`}
+                >
+                  <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {mission.employee && (
+          <div>
+            <h3 className="text-sm font-medium text-light">Prestataire</h3>
+            <p>{mission.employee.name}</p>
+          </div>
+        )}
       </div>
 
       {!isReadOnly && !isEmployee && (
-        <div className="flex justify-end items-center px-4 pb-4">
-          <div className="flex gap-2">
+        <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
+          <div className="flex justify-end gap-2">
             <button
               onClick={() => setIsEditMode(true)}
               className="flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80"
@@ -259,16 +255,17 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
           </div>
         </div>
       )}
-
       {canAcceptMission && (
-        <div className="flex justify-end items-center px-4 pb-4">
-          <button
-            onClick={handleAcceptClick}
-            className="flex flex-col items-center p-2 w-20 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
-          >
-            <IconCheck />
-            Accepter
-          </button>
+        <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={handleAcceptClick}
+              className="flex flex-col items-center p-2 w-20 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+            >
+              <IconCheck />
+              Accepter
+            </button>
+          </div>
         </div>
       )}
 

@@ -76,7 +76,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
 
   if (isEditMode) {
     return (
-      <FullScreenModal onClose={() => setIsEditMode(false)}>
+      <FullScreenModal onClose={() => setIsEditMode(false)} title="Modification du bien">
         <HomeForm
           home={home}
           onClose={() => {
@@ -90,69 +90,65 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   }
 
   return (
-    <FullScreenModal onClose={onClose}>
+    <FullScreenModal onClose={onClose} title="Détails du bien">
       {selectedImageIndex !== null && home.images && (
         <FullScreenModal
+          title={`Photo de ${home.title}`}
           imageUrl={home.images[selectedImageIndex]}
           onClose={() => setSelectedImageIndex(null)}
-          imageAlt={`Photo de ${home.title}`}
         />
       )}
 
-      <div className="p-4" data-home-details>
-        <h2 className="text-xl font-bold mb-4">Détails du bien</h2>
+      <div className="space-y-2" data-home-details>
+        <div>
+          <h3 className="text-sm font-medium text-light">Titre</h3>
+          <p className="text-foreground font-bold">{home.title}</p>
+        </div>
 
-        <div className="space-y-4">
+        {home.images && home.images.length > 0 && (
           <div>
-            <h3 className="text-sm font-medium text-light">Titre</h3>
-            <p className="text-foreground font-bold">{home.title}</p>
-          </div>
-
-          {home.images && home.images.length > 0 && (
-            <div>
-              <h3 className="text-sm font-medium text-light mb-2">Photos</h3>
-              <div className="grid grid-cols-3 gap-2">
-                {home.images.map((image, index) => (
-                  <div key={index} className="relative aspect-square">
-                    <Image
-                      src={image}
-                      alt={`Photo ${index + 1}`}
-                      fill
-                      sizes="(max-width: 768px) 33vw, 150px"
-                      className="object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => setSelectedImageIndex(index)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div>
-            <h3 className="text-sm font-medium text-light">Description</h3>
-            <p className="text-foreground whitespace-pre-wrap">{home.description}</p>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium text-light">Tâches</h3>
-            <ul className="list-none pl-0 mt-2 space-y-1">
-              {home.tasks.map((task, index) => (
-                <li key={index} className="flex items-start">
-                  <span
-                    className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 flex-shrink-0 border border-foreground"
-                    style={{ borderColor: 'var(--color-foreground)' }}
+            <h3 className="text-sm font-medium text-light mb-2">Photos</h3>
+            <div className="grid grid-cols-3 gap-2">
+              {home.images.map((image, index) => (
+                <div key={index} className="relative aspect-square">
+                  <Image
+                    src={image}
+                    alt={`Photo ${index + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 33vw, 150px"
+                    className="object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => setSelectedImageIndex(index)}
                   />
-                  <span className="text-foreground">{task}</span>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
+        )}
+
+        <div>
+          <h3 className="text-sm font-medium text-light">Description</h3>
+          <p className="text-foreground whitespace-pre-wrap">{home.description}</p>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium text-light">Tâches</h3>
+          <ul className="list-none pl-0 mt-2 space-y-1">
+            {home.tasks.map((task, index) => (
+              <li key={index} className="flex items-start">
+                <span
+                  className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 flex-shrink-0 border border-foreground"
+                  style={{ borderColor: 'var(--color-foreground)' }}
+                />
+                <span className="text-foreground">{task}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 
       {!isReadOnly && (
-        <div className="flex justify-end items-center px-4 pb-4">
-          <div className="flex gap-2">
+        <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
+          <div className="flex justify-end gap-2">
             <button
               onClick={() => setIsEditMode(true)}
               className="flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80"

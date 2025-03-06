@@ -23,7 +23,13 @@ export default function FormActions({
   submitType = 'submit',
 }: FormActionsProps) {
   return (
-    <div className={clsx('flex justify-end gap-4', className)}>
+    <div
+      className={clsx(
+        'flex justify-end gap-4 pt-4 pb-2',
+        'sticky bottom-0 bg-background border-t border-secondary mt-4 px-4 -mx-4 rounded-b-lg',
+        className,
+      )}
+    >
       <button
         type="button"
         onClick={onCancel}

@@ -216,7 +216,7 @@ export default function EmployeesList() {
 
       {/* Employee details modal */}
       {selectedEmployee && (
-        <FullScreenModal onClose={closeEmployeeDetails}>
+        <FullScreenModal onClose={closeEmployeeDetails} title="Détails du prestataire">
           <EmployeeDetails employee={selectedEmployee} onClose={closeEmployeeDetails} />
         </FullScreenModal>
       )}

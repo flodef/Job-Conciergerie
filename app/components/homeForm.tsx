@@ -122,22 +122,20 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
   };
 
   return (
-    <div className="max-w-md mx-auto p-4">
+    <div className="max-w-md mx-auto">
       {selectedImageIndex !== undefined && (
         <FullScreenModal
+          title={`Photo de ${title}`}
           imageUrl={
             selectedImageIndex < existingImages.length
               ? mockupImagePath // Use mockup for existing images
               : previewUrls[selectedImageIndex - existingImages.length] // Use preview for new images (UI only)
           }
-          imageAlt={`Prévisualisation ${selectedImageIndex + 1}`}
           onClose={() => setSelectedImageIndex(undefined)}
         />
       )}
 
       {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
-
-      <h2 className="text-xl font-bold text-foreground mb-2">{mode === 'add' ? 'Nouveau bien' : 'Modifier le bien'}</h2>
 
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>

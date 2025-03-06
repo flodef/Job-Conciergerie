@@ -121,7 +121,7 @@ export default function HomesPage() {
       {filteredHomes.length > 0 && <FloatingActionButton onClick={handleAddHome} />}
 
       {isAddModalOpen && (
-        <FullScreenModal onClose={handleCloseAddModal}>
+        <FullScreenModal onClose={handleCloseAddModal} title="Nouveau bien">
           <HomeForm onClose={handleCloseAddModal} mode="add" />
         </FullScreenModal>
       )}
@@ -129,7 +129,7 @@ export default function HomesPage() {
       {selectedHome && !isEditModalOpen && <HomeDetails home={selectedHome} onClose={handleCloseDetails} />}
 
       {selectedHome && isEditModalOpen && (
-        <FullScreenModal onClose={handleCloseEditModal}>
+        <FullScreenModal onClose={handleCloseEditModal} title="Modification du bien">
           <HomeForm home={selectedHome} onClose={handleCloseEditModal} mode="edit" />
         </FullScreenModal>
       )}

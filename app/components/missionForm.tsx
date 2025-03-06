@@ -140,10 +140,8 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   };
 
   return (
-    <div className="bg-background p-4 rounded-lg w-full max-w-md">
+    <div className="w-full">
       {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
-
-      <h2 className="text-xl font-bold mb-2">{mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
