@@ -5,13 +5,23 @@ import colorOptions from '../data/colors.json';
 import { Conciergerie, Employee } from '../types/types';
 import { generateSimpleId } from './id';
 
+/**
+ * Type definition for the object returned by getWelcomeParams
+ */
+export interface WelcomeParams {
+  userType: 'employee' | 'conciergerie' | null;
+  employeeData: (Employee & { id: string }) | null;
+  conciergerieData: (Conciergerie & { color?: string }) | null;
+  userData: (Employee & { id: string }) | null;
+}
+
 // Get the color value from colors.json based on colorName
 export const getColorValueByName = (colorName: string | undefined): string => {
   const colorOption = colorOptions.find(color => color.name === colorName);
   return colorOption?.value || 'var(--color-default)';
 };
 
-export function getWelcomeParams() {
+export function getWelcomeParams(): WelcomeParams {
   if (typeof window === 'undefined') {
     return {
       userType: null,
@@ -78,9 +88,9 @@ export function hasCompletedWelcomeFlow(): boolean {
 
     if (!userType) return false;
 
-    if (userType === 'prestataire') {
+    if (userType === 'employee') {
       return (
-        !!employeeData && !!employeeData.nom && !!employeeData.prenom && !!employeeData.email && !!employeeData.tel
+        !!employeeData && !!employeeData.firstName && !!employeeData.familyName && !!employeeData.email && !!employeeData.tel
       );
     }
 
