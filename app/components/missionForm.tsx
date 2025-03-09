@@ -105,9 +105,14 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   };
 
   const toggleObjective = (objective: Objective) => {
-    if (objectivesState.includes(objective)) {
-      setObjectives(objectivesState.filter(o => o !== objective));
+    // Check if the objective is already in the array by comparing labels
+    const objectiveExists = objectivesState.some(o => o.label === objective.label);
+    
+    if (objectiveExists) {
+      // Remove the objective if it exists
+      setObjectives(objectivesState.filter(o => o.label !== objective.label));
     } else {
+      // Add the objective if it doesn't exist
       setObjectives([...objectivesState, objective]);
     }
   };
@@ -172,7 +177,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
                 className={clsx(
                   'p-2 border rounded-lg text-sm flex justify-between items-center',
                   'border-foreground/20 focus-visible:outline-primary',
-                  objectivesState.includes(objective)
+                  objectivesState.some(o => o.label === objective.label)
                     ? 'bg-primary text-background border-primary'
                     : 'bg-background text-foreground border-secondary',
                 )}
@@ -181,7 +186,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
                 <span
                   className={clsx(
                     'px-1.5 py-0.5 rounded-full text-xs',
-                    objectivesState.includes(objective)
+                    objectivesState.some(o => o.label === objective.label)
                       ? 'bg-background/20 text-background'
                       : 'bg-primary/10 text-primary',
                   )}

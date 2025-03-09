@@ -2,6 +2,7 @@
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Conciergerie, Employee, HomeData, Mission } from '../types/types';
+import conciergeriesData from '../data/conciergeries.json';
 import { generateSimpleId } from '../utils/id';
 import { getWelcomeParams } from '../utils/welcomeParams';
 import { useHomes } from './homesProvider';
@@ -208,8 +209,18 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       return currentConciergerie;
     }
 
-    // Otherwise, we would need to fetch from a list of conciergeries
-    // For now, return null if it's not the current conciergerie
+    // If not the current conciergerie, look it up in the conciergeries.json data
+    const foundConciergerie = conciergeriesData.find((c) => c.name === name);
+    if (foundConciergerie) {
+      // The data from JSON doesn't have the 'color' property that Conciergerie interface requires
+      // but we can add it using the colorName and getColorValueByName function
+      return {
+        ...foundConciergerie,
+        color: '' // This will be set by getColorValueByName using the colorName
+      } as Conciergerie;
+    }
+    
+    // Return null if conciergerie not found
     return null;
   };
 

@@ -157,11 +157,11 @@ export default function CalendarView() {
 
                       <div className="flex flex-col justify-between text-sm">
                         <div className="flex items-center">
-                          <span className="text-light">Points :&nbsp;</span>
+                          <span className="text-light text-nowrap">Points :&nbsp;</span>
                           <span className="font-medium">{totalPoints.toFixed(1)}</span>
                         </div>
                         <div className="flex items-center">
-                          <span className="text-light">Durée :&nbsp;</span>
+                          <span className="text-light text-nowrap">Durée :&nbsp;</span>
                           <span className="font-medium">
                             {formatDateRange(new Date(mission.startDateTime), new Date(mission.endDateTime))}
                           </span>

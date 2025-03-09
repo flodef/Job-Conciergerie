@@ -115,7 +115,8 @@ export const calculateEmployeePointsForDay = (
 
   // Calculate the total points for the day
   return employeeMissions.reduce((total, mission) => {
-    const { pointsPerDay } = calculateMissionPoints(mission);
-    return total + pointsPerDay; // Add the points per day for each mission
+    // Get the mission objectives' total points
+    const { totalPoints } = calculateMissionPoints(mission);
+    return total + totalPoints; // Add the total points for each mission
   }, 0);
 };
