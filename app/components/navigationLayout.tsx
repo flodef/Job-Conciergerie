@@ -21,7 +21,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const { currentPage, onMenuChange } = useMenuContext();
   const [isHomePage, setIsHomePage] = useState(false);
   const [userType, setUserType] = useState<string | null>(null);
-  const { pendingEmployeesCount, newMissionsCount, resetPendingEmployeesCount, resetNewMissionsCount } = useBadge();
+  const { pendingEmployeesCount, newMissionsCount, todayMissionsCount, resetPendingEmployeesCount, resetNewMissionsCount } = useBadge();
 
   useEffect(() => {
     // Check if we're on the homepage or waiting page
@@ -120,6 +120,13 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
                     {page === Page.Missions && newMissionsCount > 0 && (
                       <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                         {newMissionsCount > 9 ? '9+' : newMissionsCount}
+                      </div>
+                    )}
+                    
+                    {/* Badge for today's missions */}
+                    {page === Page.Calendar && todayMissionsCount > 0 && (
+                      <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {todayMissionsCount > 9 ? '9+' : todayMissionsCount}
                       </div>
                     )}
                   </div>

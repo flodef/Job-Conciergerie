@@ -28,9 +28,19 @@ export default function CalendarView() {
   const [sortedDates, setSortedDates] = useState<string[]>([]);
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
 
-  const currentEmployeeId = employeeData?.id;
+  const [currentEmployeeId, setCurrentEmployeeId] = useState<string | undefined>(undefined);
+  const [isClient, setIsClient] = useState(false);
 
+  // First useEffect to handle client-side initialization
   useEffect(() => {
+    setIsClient(true);
+    setCurrentEmployeeId(employeeData?.id);
+  }, [employeeData]);
+
+  // Second useEffect to handle mission filtering after we have the employee ID
+  useEffect(() => {
+    if (!currentEmployeeId) return;
+    
     // Filter missions that are accepted by the current employee and not deleted
     const employeeMissions = missions.filter(mission => mission.employeeId === currentEmployeeId && !mission.deleted);
 
@@ -53,7 +63,12 @@ export default function CalendarView() {
     setSelectedMission(null);
   };
 
-  if (!currentEmployeeId) return;
+  // Don't render anything until client-side hydration is complete
+  if (!isClient) {
+    return null;
+  }
+
+  if (!currentEmployeeId) return null;
 
   if (isLoading) {
     return (
