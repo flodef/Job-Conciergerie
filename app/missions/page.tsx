@@ -1,6 +1,6 @@
 'use client';
 
-import { IconPlus } from '@tabler/icons-react';
+import { IconBriefcase, IconPlus } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import ConfirmationModal from '../components/confirmationModal';
@@ -158,7 +158,12 @@ export default function Missions() {
                 </div>
               </>
             ) : (
-              <p className="text-light mb-4">Aucune mission n&apos;est disponible pour le moment</p>
+              <>
+                <p className="text-light mb-4">Aucune mission n&apos;est disponible pour le moment</p>
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
+                  <IconBriefcase size={32} />
+                </div>
+              </>
             )}
           </div>
         </div>

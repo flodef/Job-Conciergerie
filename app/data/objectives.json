@@ -1,0 +1,18 @@
+[
+  {
+    "label": "Entrée",
+    "points": 0.5
+  },
+  {
+    "label": "Sortie",
+    "points": 0.5
+  },
+  {
+    "label": "Ménage",
+    "points": 1
+  },
+  {
+    "label": "Jardinage",
+    "points": 1
+  }
+]

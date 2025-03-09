@@ -60,11 +60,11 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
       <div className="flex flex-wrap gap-1 mt-2">
         {mission.objectives.map(objective => (
           <span
-            key={objective}
+            key={objective.label}
             className="px-2 py-0.5 text-background rounded-full text-xs"
             style={{ backgroundColor: conciergerieColor }}
           >
-            {objective}
+            {objective.label}
           </span>
         ))}
       </div>

@@ -1,11 +1,7 @@
-export enum Objective {
-  Entry = 'Entrée',
-  Exit = 'Sortie',
-  Cleaning = 'Ménage',
-  Gardening = 'Jardinage',
+export interface Objective {
+  label: string;
+  points: number;
 }
-
-export const objectives = Object.values(Objective);
 
 export interface Home {
   id: string;
@@ -55,4 +51,9 @@ export interface Mission {
   modifiedDate: Date;
   deleted: boolean;
   conciergerieName: string; // Reference to the conciergerie by name
+}
+
+export interface MissionPoints {
+  totalPoints: number;
+  pointsPerDay: number;
 }

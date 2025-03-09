@@ -1,11 +1,28 @@
 'use client';
 
-import { IconCancel, IconCheck, IconMail, IconPencil, IconPhone, IconTrash, IconZoomScan } from '@tabler/icons-react';
+import {
+  IconAlertTriangle,
+  IconCalculator,
+  IconCancel,
+  IconCheck,
+  IconInfoCircle,
+  IconMail,
+  IconPencil,
+  IconPhone,
+  IconTrash,
+  IconZoomScan,
+} from '@tabler/icons-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
 import { Mission } from '../types/types';
-import { formatDateTime } from '../utils/dateUtils';
+import { formatDateTime, getTimeDifference } from '../utils/dateUtils';
+import {
+  calculateEmployeePointsForDay,
+  calculateMissionPoints,
+  calculateRemainingPointsPerDay,
+  getObjectiveWithPoints,
+} from '../utils/objectiveUtils';
 import { getColorValueByName, getWelcomeParams } from '../utils/welcomeParams';
 import ConfirmationModal from './confirmationModal';
 import FullScreenModal from './fullScreenModal';
@@ -25,8 +42,11 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
     shouldShowAcceptWarning,
     acceptMission,
     setShouldShowAcceptWarning,
+    missions,
+    getConciergerieByName,
+    getHomeById,
+    getEmployeeById,
   } = useMissions();
-  const { getConciergerieByName, getHomeById, getEmployeeById } = useMissions();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -125,7 +145,52 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
   const firstHomeImage = home?.images?.length ? home.images[0] : '';
   const isEmployee = userType === 'employee';
   const employee = getEmployeeById(mission.employeeId);
+
+  // Get the employee data from localStorage
+  const { employeeData } = getWelcomeParams();
+  const currentEmployeeId = employeeData?.id;
+
+  // Check if the employee can accept the mission
   const canAcceptMission = isEmployee && !employee;
+
+  // Calculate the total points the employee has for each day of the mission
+  const [hasExceededPoints] = (() => {
+    if (!canAcceptMission || !currentEmployeeId) return [false, 0];
+
+    // Get the mission points
+    const { pointsPerDay } = calculateMissionPoints(mission);
+
+    // Check each day of the mission to see if accepting would exceed 3 points per day
+    const startDate = new Date(mission.startDateTime);
+    const endDate = new Date(mission.endDateTime);
+
+    // Create dates for the range
+    const currentDate = new Date(startDate);
+    currentDate.setHours(0, 0, 0, 0);
+
+    const lastDate = new Date(endDate);
+    lastDate.setHours(0, 0, 0, 0);
+
+    let maxPointsForAnyDay = 0;
+
+    // Check each day in the range
+    while (currentDate <= lastDate) {
+      const pointsForDay = calculateEmployeePointsForDay(currentEmployeeId, new Date(currentDate), missions);
+
+      // Keep track of the maximum points for any day
+      maxPointsForAnyDay = Math.max(maxPointsForAnyDay, pointsForDay);
+
+      // If adding this mission would exceed 3 points for this day, return true
+      if (pointsForDay + pointsPerDay > 3) {
+        return [true];
+      }
+
+      // Move to the next day
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return [false];
+  })();
 
   return (
     <FullScreenModal onClose={onClose} title="Détails de la mission">
@@ -166,28 +231,119 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
         <div>
           <h3 className="text-sm font-medium text-light">Objectifs</h3>
           <div className="flex flex-wrap gap-2 mt-1">
-            {mission.objectives.map(objective => (
-              <span
-                key={objective}
-                className="px-2 py-1 rounded-lg text-sm text-background"
-                style={{
-                  backgroundColor: `${conciergerieColor}`,
-                }}
-              >
-                {objective}
-              </span>
-            ))}
+            {mission.objectives.map(objective => {
+              const objectiveWithPoints = getObjectiveWithPoints(objective.label);
+              return (
+                <span
+                  key={objective.label}
+                  className="px-2 py-1 rounded-lg text-sm text-background flex items-center gap-1"
+                  style={{
+                    backgroundColor: `${conciergerieColor}`,
+                  }}
+                >
+                  <span>{objective.label}</span>
+                  {objectiveWithPoints && (
+                    <span className="ml-1 px-1.5 py-0.5 bg-background/20 rounded-full text-xs">
+                      {objectiveWithPoints.points} pt{objectiveWithPoints.points !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </span>
+              );
+            })}
           </div>
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-light">Date de début</h3>
-          <p className="text-foreground">{formatDateTime(mission.startDateTime)}</p>
+          <h3 className="text-sm font-medium text-light flex items-center gap-1">
+            <IconCalculator size={16} />
+            Points de mission
+            <div className="relative inline-block">
+              <IconInfoCircle
+                size={16}
+                className="text-light cursor-help ml-1"
+                onMouseOver={() => document.getElementById('points-tooltip')?.classList.remove('hidden')}
+                onMouseOut={() => document.getElementById('points-tooltip')?.classList.add('hidden')}
+              />
+              <div
+                id="points-tooltip"
+                className="hidden absolute z-10 w-64 p-2 bg-background border border-secondary rounded-md shadow-lg text-xs -left-28 top-6"
+              >
+                <p>
+                  <strong>Règle des 3 points par jour :</strong> Pour ne pas dépasser la capacité de travail d&apos;un
+                  prestataire, il est recommandé de ne pas attribuer plus de 3 points de mission par jour.
+                </p>
+              </div>
+            </div>
+          </h3>
+          <div className="mt-1 space-y-1">
+            {(() => {
+              const { totalPoints, pointsPerDay } = calculateMissionPoints(mission);
+              const remainingPointsPerDay = calculateRemainingPointsPerDay(mission);
+
+              return (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Total des points:</span>
+                    <span className="font-medium">{totalPoints.toFixed(1)} pts</span>
+                  </div>
+                  {/* Only show points per day if mission spans more than 1 day */}
+                  {new Date(mission.endDateTime).getTime() - new Date(mission.startDateTime).getTime() >
+                    24 * 60 * 60 * 1000 && (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">
+                          Points par jour {remainingPointsPerDay !== pointsPerDay && 'restant'} :{' '}
+                        </span>
+                        <span className="font-medium">
+                          {remainingPointsPerDay !== pointsPerDay
+                            ? remainingPointsPerDay.toFixed(1)
+                            : pointsPerDay.toFixed(1)}
+                          pts/jour
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </>
+              );
+            })()}
+          </div>
         </div>
 
-        <div>
-          <h3 className="text-sm font-medium text-light">Date de fin</h3>
-          <p className="text-foreground">{formatDateTime(mission.endDateTime)}</p>
+        <div className="flex items-center space-x-4">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium text-light">Date de début</h3>
+              <p className="text-foreground">{formatDateTime(mission.startDateTime)}</p>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium text-light">Date de fin</h3>
+              <p className="text-foreground">{formatDateTime(mission.endDateTime)}</p>
+            </div>
+          </div>
+
+          <div className="relative h-24 flex items-center">
+            <div className="h-full w-0.5 bg-secondary mx-2"></div>
+            <div className="absolute top-0 left-0 w-4 h-0.5 bg-secondary -ml-1.5"></div>
+            <div className="absolute bottom-0 left-0 w-4 h-0.5 bg-secondary -ml-1.5"></div>
+
+            <div className="absolute top-1/2 -translate-y-1/2 left-4">
+              <div className="flex items-center">
+                <div className="w-4 h-0.5 bg-secondary -ml-1.5"></div>
+                <div className="ml-0 bg-secondary px-3 py-1 rounded-full text-sm font-medium text-nowrap">
+                  {(() => {
+                    const today = new Date();
+                    const startDate = new Date(mission.startDateTime);
+                    const endDate = new Date(mission.endDateTime);
+                    const hasStarted = today >= startDate;
+
+                    // Otherwise show total duration
+                    return getTimeDifference(hasStarted ? today : startDate, endDate) + (hasStarted ? ' restant' : '');
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div>
@@ -265,9 +421,20 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
       {canAcceptMission && (
         <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
           <div className="flex justify-end gap-2">
+            {hasExceededPoints && (
+              <div className="flex items-center text-center p-2 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+                <IconAlertTriangle size={16} className="mr-2 w-8 h-8" />
+                Le maximum de 3 points/jour est déjà atteint !
+              </div>
+            )}
             <button
               onClick={handleAcceptClick}
-              className="flex flex-col items-center p-2 w-20 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+              disabled={hasExceededPoints}
+              className={`flex flex-col items-center p-2 w-20 rounded-lg ${
+                hasExceededPoints
+                  ? 'bg-gray-100 text-gray-400/50 cursor-not-allowed'
+                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+              }`}
             >
               <IconCheck />
               Accepter

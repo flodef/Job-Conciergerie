@@ -3,7 +3,8 @@
 import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
-import { Mission, Objective, objectives } from '../types/types';
+import { Mission, Objective } from '../types/types';
+import { getObjectivesWithPoints } from '../utils/objectiveUtils';
 import FormActions from './formActions';
 import { ToastMessage, ToastType } from './toastMessage';
 
@@ -163,20 +164,30 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         <div>
           <label className="block text-sm font-medium mb-2">Objectifs</label>
           <div className="grid grid-cols-2 gap-2">
-            {objectives.map(objective => (
+            {getObjectivesWithPoints().map(objective => (
               <button
                 type="button"
-                key={objective}
+                key={objective.label}
                 onClick={() => toggleObjective(objective)}
                 className={clsx(
-                  'p-2 border rounded-lg text-sm',
+                  'p-2 border rounded-lg text-sm flex justify-between items-center',
                   'border-foreground/20 focus-visible:outline-primary',
                   objectivesState.includes(objective)
                     ? 'bg-primary text-background border-primary'
                     : 'bg-background text-foreground border-secondary',
                 )}
               >
-                {objective}
+                <span>{objective.label}</span>
+                <span
+                  className={clsx(
+                    'px-1.5 py-0.5 rounded-full text-xs',
+                    objectivesState.includes(objective)
+                      ? 'bg-background/20 text-background'
+                      : 'bg-primary/10 text-primary',
+                  )}
+                >
+                  {objective.points} pt{objective.points !== 1 ? 's' : ''}
+                </span>
               </button>
             ))}
           </div>
