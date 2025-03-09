@@ -310,7 +310,7 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
         </div>
 
         <div className="flex items-center space-x-4">
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div>
               <h3 className="text-sm font-medium text-light">Date de début</h3>
               <p className="text-foreground">{formatDateTime(mission.startDateTime)}</p>
@@ -332,13 +332,16 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
                 <div className="w-4 h-0.5 bg-secondary -ml-1.5"></div>
                 <div className="ml-0 bg-secondary px-3 py-1 rounded-full text-sm font-medium text-nowrap">
                   {(() => {
-                    const today = new Date();
+                    const now = new Date();
                     const startDate = new Date(mission.startDateTime);
                     const endDate = new Date(mission.endDateTime);
-                    const hasStarted = today >= startDate;
+                    const hasStarted = now >= startDate;
+                    const hasEnded = now >= endDate;
 
                     // Otherwise show total duration
-                    return getTimeDifference(hasStarted ? today : startDate, endDate) + (hasStarted ? ' restant' : '');
+                    return hasEnded
+                      ? 'Mission terminée'
+                      : getTimeDifference(hasStarted ? now : startDate, endDate) + (hasStarted ? ' restant' : '');
                   })()}
                 </div>
               </div>
