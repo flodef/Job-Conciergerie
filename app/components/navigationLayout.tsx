@@ -2,18 +2,19 @@
 
 import { Page, pages, useMenuContext } from '@/app/contexts/menuProvider';
 import { getWelcomeParams } from '@/app/utils/welcomeParams';
-import { IconBriefcase, IconHome, IconSettings, IconUser } from '@tabler/icons-react';
+import { IconBriefcase, IconCalendar, IconHome, IconSettings, IconUser } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { ReactNode, useEffect, useState } from 'react';
 import { useBadge } from '../contexts/badgeProvider';
 
 // Map pages to their respective icons
-const pageIcons: Record<Page, ReactNode> = {
-  [Page.Welcome]: null,
-  [Page.Missions]: <IconBriefcase size={30} />,
-  [Page.Homes]: <IconHome size={30} />,
-  [Page.Employees]: <IconUser size={30} />,
-  [Page.Settings]: <IconSettings size={30} />,
+const pageSettings: Record<Page, { icon: ReactNode; userType: ('conciergerie' | 'employee' | 'both') }> = {
+  [Page.Welcome]: { icon: null, userType: 'both' },
+  [Page.Missions]: { icon: <IconBriefcase size={30} />, userType: 'both' },
+  [Page.Calendar]: { icon: <IconCalendar size={30} />, userType: 'employee' },
+  [Page.Homes]: { icon: <IconHome size={30} />, userType: 'conciergerie' },
+  [Page.Employees]: { icon: <IconUser size={30} />, userType: 'conciergerie' },
+  [Page.Settings]: { icon: <IconSettings size={30} />, userType: 'both' },
 };
 
 export default function NavigationLayout({ children }: { children: ReactNode }) {
@@ -85,13 +86,15 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
           <div className="max-w-7xl mx-auto flex justify-around h-full">
             {pages
               .filter(page => {
-                // Filter pages based on user type
-                if (userType === 'employee') {
-                  // Employees can only see Missions and Settings
-                  return page === Page.Missions || page === Page.Settings;
-                }
                 // Skip Welcome page in navigation
-                return page !== Page.Welcome;
+                if (page === Page.Welcome) return false;
+                
+                // Filter pages based on user type defined in pageSettings
+                const pageConfig = pageSettings[page];
+                return (
+                  userType && 
+                  (pageConfig.userType === userType || pageConfig.userType === 'both')
+                );
               })
               .map(page => (
                 <button
@@ -104,7 +107,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
                   )}
                 >
                   <div className="mb-1 relative">
-                    {pageIcons[page]}
+                    {pageSettings[page].icon}
 
                     {/* Badge for pending employees */}
                     {page === Page.Employees && pendingEmployeesCount > 0 && (
