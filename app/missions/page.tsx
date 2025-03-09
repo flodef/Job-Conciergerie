@@ -21,7 +21,6 @@ export default function Missions() {
   const { missions, isLoading, getCurrentConciergerie } = useMissions();
   const { homes } = useHomes();
   const { setPrimaryColor, resetPrimaryColor } = useTheme();
-  const { employeeData } = getWelcomeParams();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -50,9 +49,6 @@ export default function Missions() {
   // Get current conciergerie
   const currentConciergerie = getCurrentConciergerie();
 
-  // Get current employee ID
-  const currentEmployeeId = employeeData?.id;
-
   // Filter missions:
   // 1. Not deleted
   // 2. Taken by the current employee
@@ -60,18 +56,10 @@ export default function Missions() {
   const activeMissions = missions
     .filter(mission => {
       // Filter out deleted missions and past missions
-      const now = new Date();
-      const isActive = !mission.deleted && new Date(mission.endDateTime) >= now;
+      if (mission.deleted || new Date(mission.endDateTime) < new Date()) return false;
 
-      if (!isActive) return false;
-
-      // For employee users, show only:
-      // 1. Available missions (not taken by anyone)
-      // 2. Missions taken by the current employee
-      if (userType === 'employee') {
-        // Show if mission is not taken by anyone or taken by the current employee
-        return !mission.employeeId || mission.employeeId === currentEmployeeId;
-      }
+      // For employee users, show only Available missions (not taken by anyone)
+      if (userType === 'employee') return !mission.employeeId;
 
       // For conciergerie users, show all the missions
       return true;
