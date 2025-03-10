@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Conciergerie, Employee, HomeData, Mission, MissionStatus } from '../types/types';
+import { Conciergerie, Employee, HomeData, Mission, MissionStatus, Objective } from '../types/types';
 import conciergeriesData from '../data/conciergeries.json';
 import { generateSimpleId } from '../utils/id';
 import { getWelcomeParams } from '../utils/welcomeParams';
@@ -12,8 +12,8 @@ type MissionsContextType = {
   missions: Mission[];
   homes: HomeData[];
   isLoading: boolean;
-  addMission: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => void;
-  updateMission: (mission: Mission) => void;
+  addMission: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => boolean | void;
+  updateMission: (mission: Mission) => boolean | void;
   deleteMission: (id: string) => void;
   removeEmployee: (id: string) => void;
   acceptMission: (id: string) => void;
@@ -25,6 +25,13 @@ type MissionsContextType = {
   getEmployeeById: (id: string | undefined) => Employee | undefined;
   shouldShowAcceptWarning: boolean;
   setShouldShowAcceptWarning: (show: boolean) => void;
+  missionExists: (
+    homeId: string,
+    objectives: Objective[],
+    startDateTime: Date,
+    endDateTime: Date,
+    excludeMissionId?: string,
+  ) => boolean;
 };
 
 const MissionsContext = createContext<MissionsContextType | undefined>(undefined);
@@ -95,12 +102,92 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('show_accept_mission_warning', JSON.stringify(shouldShowAcceptWarning));
   }, [shouldShowAcceptWarning]);
 
+  // Check if a mission with the same home, objectives, start date, and end date already exists
+  const missionExists = (
+    homeId: string,
+    objectives: Objective[],
+    startDateTime: Date,
+    endDateTime: Date,
+    excludeMissionId?: string,
+  ): boolean => {
+    const currentConciergerie = getCurrentConciergerie();
+    if (!currentConciergerie) return false;
+
+    // Sort objectives to ensure consistent comparison
+    const sortedObjectives = [...objectives].sort((a, b) => a.label.localeCompare(b.label));
+
+    return missions.some(mission => {
+      // Skip deleted missions and the mission being edited (if excludeMissionId is provided)
+      if (mission.deleted || (excludeMissionId && mission.id === excludeMissionId)) {
+        return false;
+      }
+
+      // Check if mission belongs to current conciergerie
+      if (mission.conciergerieName !== currentConciergerie.name) {
+        return false;
+      }
+
+      // Check if home ID matches
+      if (mission.homeId !== homeId) {
+        return false;
+      }
+
+      // Check if start and end dates match (comparing only date and time, not milliseconds)
+      const missionStart = new Date(mission.startDateTime);
+      const missionEnd = new Date(mission.endDateTime);
+      const newStart = new Date(startDateTime);
+      const newEnd = new Date(endDateTime);
+
+      const startMatches =
+        missionStart.getFullYear() === newStart.getFullYear() &&
+        missionStart.getMonth() === newStart.getMonth() &&
+        missionStart.getDate() === newStart.getDate() &&
+        missionStart.getHours() === newStart.getHours() &&
+        missionStart.getMinutes() === newStart.getMinutes();
+
+      const endMatches =
+        missionEnd.getFullYear() === newEnd.getFullYear() &&
+        missionEnd.getMonth() === newEnd.getMonth() &&
+        missionEnd.getDate() === newEnd.getDate() &&
+        missionEnd.getHours() === newEnd.getHours() &&
+        missionEnd.getMinutes() === newEnd.getMinutes();
+
+      if (!startMatches || !endMatches) {
+        return false;
+      }
+
+      // Check if objectives match (same number and same labels)
+      if (mission.objectives.length !== sortedObjectives.length) {
+        return false;
+      }
+
+      // Sort mission objectives for consistent comparison
+      const missionSortedObjectives = [...mission.objectives].sort((a, b) => a.label.localeCompare(b.label));
+
+      // Check if all objectives match
+      for (let i = 0; i < sortedObjectives.length; i++) {
+        if (sortedObjectives[i].label !== missionSortedObjectives[i].label) {
+          return false;
+        }
+      }
+
+      // If we got here, all criteria match - this is a duplicate
+      return true;
+    });
+  };
+
   const addMission = (missionData: Omit<Mission, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => {
     const currentConciergerie = getCurrentConciergerie();
 
     if (!currentConciergerie) {
       console.error('No conciergerie found in localStorage');
       return;
+    }
+
+    // Check if a mission with the same criteria already exists
+    if (missionExists(missionData.homeId, missionData.objectives, missionData.startDateTime, missionData.endDateTime)) {
+      // Return false to indicate that the mission wasn't added due to duplication
+      return false;
     }
 
     const newMission: Mission = {
@@ -112,6 +199,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     };
 
     setMissions(prev => [...prev, newMission]);
+    return true; // Return true to indicate successful addition
   };
 
   const updateMission = (updatedMission: Mission) => {
@@ -119,6 +207,20 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     // Only allow updates if the mission was created by the current conciergerie
     if (currentConciergerie && updatedMission.conciergerieName === currentConciergerie.name) {
+      // Check if this would create a duplicate mission (excluding the current mission being updated)
+      if (
+        missionExists(
+          updatedMission.homeId,
+          updatedMission.objectives,
+          updatedMission.startDateTime,
+          updatedMission.endDateTime,
+          updatedMission.id, // Exclude the current mission from the duplicate check
+        )
+      ) {
+        // Return false to indicate that the mission wasn't updated due to duplication
+        return false;
+      }
+
       // When editing a mission, remove the employee assignment
       // This returns the mission to the pool of available missions
       setMissions(prev =>
@@ -133,8 +235,10 @@ function MissionsProvider({ children }: { children: ReactNode }) {
             : mission,
         ),
       );
+      return true; // Return true to indicate successful update
     } else {
       console.error('Cannot update mission: not created by current conciergerie');
+      return false;
     }
   };
 
@@ -339,6 +443,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         getEmployeeById,
         shouldShowAcceptWarning,
         setShouldShowAcceptWarning,
+        missionExists,
       }}
     >
       {children}

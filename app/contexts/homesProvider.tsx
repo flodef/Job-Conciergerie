@@ -8,11 +8,12 @@ import { getWelcomeParams } from '../utils/welcomeParams';
 type HomesContextType = {
   homes: HomeData[];
   isLoading: boolean;
-  addHome: (home: Omit<HomeData, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => void;
+  addHome: (home: Omit<HomeData, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => boolean | void;
   updateHome: (home: HomeData) => void;
   deleteHome: (id: string) => void;
   getCurrentConciergerie: () => Conciergerie | null;
   getConciergerieByName: (name: string) => Conciergerie | null;
+  homeExists: (title: string) => boolean;
 };
 
 const HomesContext = createContext<HomesContextType | undefined>(undefined);
@@ -64,12 +65,31 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     }
   }, [homes]);
 
+  // Check if a home with the same title already exists for the current conciergerie
+  const homeExists = (title: string): boolean => {
+    const currentConciergerie = getCurrentConciergerie();
+    if (!currentConciergerie) return false;
+    
+    return homes.some(
+      home => 
+        !home.deleted && 
+        home.conciergerieName === currentConciergerie.name && 
+        home.title.trim().toLowerCase() === title.trim().toLowerCase()
+    );
+  };
+
   const addHome = (homeData: Omit<HomeData, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => {
     const currentConciergerie = getCurrentConciergerie();
 
     if (!currentConciergerie) {
       console.error('No conciergerie found in localStorage');
       return;
+    }
+    
+    // Check if a home with the same title already exists
+    if (homeExists(homeData.title)) {
+      // Return false to indicate that the home wasn't added due to duplication
+      return false;
     }
 
     const newHome: HomeData = {
@@ -81,6 +101,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     };
 
     setHomes(prev => [...prev, newHome]);
+    return true; // Return true to indicate successful addition
   };
 
   const updateHome = (updatedHome: HomeData) => {
@@ -133,6 +154,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
         deleteHome,
         getCurrentConciergerie,
         getConciergerieByName,
+        homeExists,
       }}
     >
       {children}

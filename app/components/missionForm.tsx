@@ -15,7 +15,7 @@ type MissionFormProps = {
 };
 
 export default function MissionForm({ mission, onClose, mode }: MissionFormProps) {
-  const { homes, addMission, updateMission, getCurrentConciergerie } = useMissions();
+  const { homes, addMission, updateMission, getCurrentConciergerie, missionExists } = useMissions();
 
   // Filter homes by the current conciergerie
   const currentConciergerie = getCurrentConciergerie();
@@ -97,13 +97,35 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
       const startDate = new Date(startDateTime);
       const endDate = new Date(endDateTime);
 
+      // Check for duplicate missions
+      
       if (mode === 'add') {
-        addMission({
+        // Check if a mission with the same criteria already exists
+        if (missionExists(selectedHome.id, objectivesState, startDate, endDate)) {
+          setToastMessage({ 
+            type: ToastType.Warning, 
+            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà' 
+          });
+          setTimeout(() => setToastMessage(undefined), 3000);
+          return;
+        }
+        
+        const result = addMission({
           homeId: selectedHome.id,
           objectives: objectivesState,
           startDateTime: startDate,
           endDateTime: endDate,
         });
+        
+        if (result === false) {
+          setToastMessage({ 
+            type: ToastType.Warning, 
+            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà' 
+          });
+          setTimeout(() => setToastMessage(undefined), 3000);
+          return;
+        }
+        
         setToastMessage({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
       } else if (mission) {
         // Create a new mission object with only the necessary fields
@@ -119,7 +141,27 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           deleted: mission.deleted || false,
         };
 
-        updateMission(updatedMission);
+        // Check if update would create a duplicate (excluding the current mission)
+        if (missionExists(selectedHome.id, objectivesState, startDate, endDate, mission.id)) {
+          setToastMessage({ 
+            type: ToastType.Warning, 
+            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà' 
+          });
+          setTimeout(() => setToastMessage(undefined), 3000);
+          return;
+        }
+        
+        const result = updateMission(updatedMission);
+        
+        if (result === false) {
+          setToastMessage({ 
+            type: ToastType.Warning, 
+            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà' 
+          });
+          setTimeout(() => setToastMessage(undefined), 3000);
+          return;
+        }
+        
         setToastMessage({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });
       }
 

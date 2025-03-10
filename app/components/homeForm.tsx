@@ -17,7 +17,7 @@ type HomeFormProps = {
 };
 
 export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps) {
-  const { addHome, updateHome } = useHomes();
+  const { addHome, updateHome, homeExists } = useHomes();
 
   // Default mockup image path
   const mockupImagePath = '/home.webp';
@@ -83,15 +83,38 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
         const imageUrls = Array(Math.max(1, imageCount)).fill(mockupImagePath);
 
         if (mode === 'add') {
-          addHome({
+          // Check for duplicate homes by title before adding
+          if (homeExists(title)) {
+            setToastMessage({ type: ToastType.Warning, message: 'Un bien avec ce titre existe déjà' });
+            setTimeout(() => setToastMessage(undefined), 3000);
+            return;
+          }
+
+          const result = addHome({
             title,
             description,
             tasks: tasks.filter(task => task.trim() !== ''),
             images: imageUrls,
           });
+
+          if (result === false) {
+            setToastMessage({ type: ToastType.Warning, message: 'Un bien avec ce titre existe déjà' });
+            setTimeout(() => setToastMessage(undefined), 3000);
+            return;
+          }
+
           setToastMessage({ type: ToastType.Success, message: 'Bien ajouté avec succès !' });
         } else {
           if (home) {
+            // For edit mode, only check for duplicates if the title has changed
+            if (title !== home.title) {
+              if (homeExists(title)) {
+                setToastMessage({ type: ToastType.Warning, message: 'Un bien avec ce titre existe déjà' });
+                setTimeout(() => setToastMessage(undefined), 3000);
+                return;
+              }
+            }
+
             updateHome({
               ...home,
               title,
