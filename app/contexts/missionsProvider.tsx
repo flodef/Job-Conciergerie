@@ -119,9 +119,16 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     // Only allow updates if the mission was created by the current conciergerie
     if (currentConciergerie && updatedMission.conciergerieName === currentConciergerie.name) {
+      // When editing a mission, remove the employee assignment
+      // This returns the mission to the pool of available missions
       setMissions(prev =>
         prev.map(mission =>
-          mission.id === updatedMission.id ? { ...updatedMission, modifiedDate: new Date() } : mission,
+          mission.id === updatedMission.id ? { 
+            ...updatedMission, 
+            employeeId: undefined,
+            status: undefined,
+            modifiedDate: new Date() 
+          } : mission,
         ),
       );
     } else {
@@ -136,7 +143,13 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     // Only allow deletion if the mission was created by the current conciergerie
     if (missionToDelete && currentConciergerie && missionToDelete.conciergerieName === currentConciergerie.name) {
       setMissions(prev =>
-        prev.map(mission => (mission.id === id ? { ...mission, deleted: true, modifiedDate: new Date() } : mission)),
+        prev.map(mission => (mission.id === id ? { 
+          ...mission, 
+          deleted: true, 
+          employeeId: undefined,
+          status: undefined,
+          modifiedDate: new Date() 
+        } : mission)),
       );
     } else {
       console.error('Cannot delete mission: not created by current conciergerie');

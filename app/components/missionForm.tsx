@@ -87,13 +87,20 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         });
         setToastMessage({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
       } else if (mission) {
-        updateMission({
-          ...mission,
+        // Create a new mission object with only the necessary fields
+        // This ensures we don't preserve any fields that should be reset by updateMission
+        const updatedMission: Mission = {
+          id: mission.id,
           homeId: selectedHome.id,
           objectives: objectivesState,
           startDateTime: startDate,
           endDateTime: endDate,
-        });
+          conciergerieName: mission.conciergerieName,
+          modifiedDate: new Date(),
+          deleted: mission.deleted || false,
+        };
+        
+        updateMission(updatedMission);
         setToastMessage({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });
       }
 

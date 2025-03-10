@@ -59,6 +59,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const [isEditWarningModalOpen, setIsEditWarningModalOpen] = useState(false);
+  const [isDeleteWarningModalOpen, setIsDeleteWarningModalOpen] = useState(false);
 
   // Get the conciergerie from the mission data
   const conciergerie = getConciergerieByName(mission.conciergerieName);
@@ -402,8 +404,20 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           isFromCalendar={isFromCalendar}
           currentEmployeeId={currentEmployeeId || ''}
           userType={userType || 'employee'}
-          onEdit={() => setIsEditMode(true)}
-          onDelete={() => setIsDeleteModalOpen(true)}
+          onEdit={() => {
+            if (mission.employeeId) {
+              setIsEditWarningModalOpen(true);
+            } else {
+              setIsEditMode(true);
+            }
+          }}
+          onDelete={() => {
+            if (mission.employeeId) {
+              setIsDeleteWarningModalOpen(true);
+            } else {
+              setIsDeleteModalOpen(true);
+            }
+          }}
           onRemoveEmployee={handleRemoveEmployee}
           onStartMission={startMission}
           onCompleteMission={completeMission}
@@ -444,8 +458,20 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           isFromCalendar={isFromCalendar}
           currentEmployeeId={currentEmployeeId || ''}
           userType={userType || 'employee'}
-          onEdit={() => setIsEditMode(true)}
-          onDelete={() => setIsDeleteModalOpen(true)}
+          onEdit={() => {
+            if (mission.employeeId) {
+              setIsEditWarningModalOpen(true);
+            } else {
+              setIsEditMode(true);
+            }
+          }}
+          onDelete={() => {
+            if (mission.employeeId) {
+              setIsDeleteWarningModalOpen(true);
+            } else {
+              setIsDeleteModalOpen(true);
+            }
+          }}
           onRemoveEmployee={handleRemoveEmployee}
           onStartMission={startMission}
           onCompleteMission={completeMission}
@@ -494,6 +520,36 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         message="Êtes-vous sûr de vouloir accepter cette mission ?"
         confirmText="Accepter"
         cancelText="Annuler"
+      />
+
+      {/* Warning modal when editing a mission that has already been accepted */}
+      <ConfirmationModal
+        isOpen={isEditWarningModalOpen}
+        onConfirm={() => {
+          setIsEditWarningModalOpen(false);
+          setIsEditMode(true);
+        }}
+        onCancel={() => setIsEditWarningModalOpen(false)}
+        title="Mission déjà acceptée"
+        message="Cette mission a déjà été acceptée par un prestataire. En modifiant cette mission, elle sera retirée du planning du prestataire et retournera dans la liste des missions disponibles."
+        confirmText="Continuer"
+        cancelText="Annuler"
+        isDangerous
+      />
+
+      {/* Warning modal when deleting a mission that has already been accepted */}
+      <ConfirmationModal
+        isOpen={isDeleteWarningModalOpen}
+        onConfirm={() => {
+          setIsDeleteWarningModalOpen(false);
+          setIsDeleteModalOpen(true);
+        }}
+        onCancel={() => setIsDeleteWarningModalOpen(false)}
+        title="Mission déjà acceptée"
+        message="Cette mission a déjà été acceptée par un prestataire. En supprimant cette mission, elle sera retirée du planning du prestataire."
+        confirmText="Continuer"
+        cancelText="Annuler"
+        isDangerous
       />
     </FullScreenModal>
   );
