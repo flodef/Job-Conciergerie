@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import EmployeeDetails from '../components/employeeDetails';
 import FullScreenModal from '../components/fullScreenModal';
 import SearchInput from '../components/searchInput';
-import { ToastMessage, ToastType } from '../components/toastMessage';
+import { ToastMessage, ToastProps, ToastType } from '../components/toastMessage';
 import { EmployeeWithStatus } from '../types/types';
 import {
   filterEmployees,
@@ -20,9 +20,7 @@ import { getWelcomeParams } from '../utils/welcomeParams';
 export default function EmployeesList() {
   const [employees, setEmployees] = useState<EmployeeWithStatus[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState<ToastType>(ToastType.Success);
+  const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeWithStatus | null>(null);
 
   // Redirect if not registered
@@ -65,11 +63,12 @@ export default function EmployeesList() {
     // Show toast
     const employee = employees.find(emp => emp.id === id);
     if (employee) {
-      setToastMessage(
-        `${employee.firstName} ${employee.familyName} a été ${newStatus === 'accepted' ? 'accepté' : 'rejeté'}`,
-      );
-      setToastType(newStatus === 'accepted' ? ToastType.Success : ToastType.Error);
-      setShowToast(true);
+      setToastMessage({
+        type: newStatus === 'accepted' ? ToastType.Success : ToastType.Error,
+        message: `${employee.firstName} ${employee.familyName} a été ${
+          newStatus === 'accepted' ? 'accepté' : 'rejeté'
+        }`,
+      });
     }
   };
 
@@ -213,8 +212,13 @@ export default function EmployeesList() {
         </div>
       </div>
 
-      {/* Toast message */}
-      {showToast && <ToastMessage message={toastMessage} type={toastType} onClose={() => setShowToast(false)} />}
+      {toastMessage && (
+        <ToastMessage
+          message={toastMessage.message}
+          type={toastMessage.type}
+          onClose={() => setToastMessage(undefined)}
+        />
+      )}
 
       {/* Employee details modal */}
       {selectedEmployee && (

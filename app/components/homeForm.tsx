@@ -2,13 +2,13 @@
 
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useMemo } from 'react';
 import { useHomes } from '../contexts/homesProvider';
 import { HomeData } from '../types/types';
 import FormActions from './formActions';
 import FullScreenModal from './fullScreenModal';
 import TaskList from './taskList';
-import { ToastMessage, ToastType } from './toastMessage';
+import { ToastMessage, ToastProps, ToastType } from './toastMessage';
 
 type HomeFormProps = {
   onClose: () => void;
@@ -30,18 +30,21 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
-  const [toastMessage, setToastMessage] = useState<{ type: ToastType; message: string }>();
+  const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isFormChanged, setIsFormChanged] = useState(false);
 
-  const isFormValid =
-    (images.length > 0 || existingImages.length > 0) &&
-    description.trim() !== '' &&
-    tasks.some(task => task.trim() !== '') &&
-    title.trim() !== '';
+  const isFormValid = useMemo(
+    () =>
+      (images.length > 0 || existingImages.length > 0) &&
+      description.trim() !== '' &&
+      tasks.some(task => task.trim() !== '') &&
+      title.trim() !== '',
+    [images, existingImages, description, tasks, title],
+  );
 
   useEffect(() => {
     if (isFormValid) setIsFormSubmitted(false);
-  }, [images, existingImages, description, tasks, title, isFormValid]);
+  }, [isFormValid]);
 
   // Check if form has been modified
   const checkFormChanged = useCallback(() => {
@@ -85,8 +88,10 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
         if (mode === 'add') {
           // Check for duplicate homes by title before adding
           if (homeExists(title)) {
-            setToastMessage({ type: ToastType.Warning, message: 'Un bien avec ce titre existe déjà' });
-            setTimeout(() => setToastMessage(undefined), 3000);
+            setToastMessage({
+              type: ToastType.Warning,
+              message: 'Un bien avec ce titre existe déjà',
+            });
             return;
           }
 
@@ -99,7 +104,6 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
 
           if (result === false) {
             setToastMessage({ type: ToastType.Warning, message: 'Un bien avec ce titre existe déjà' });
-            setTimeout(() => setToastMessage(undefined), 3000);
             return;
           }
 
@@ -110,7 +114,6 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
             if (title !== home.title) {
               if (homeExists(title)) {
                 setToastMessage({ type: ToastType.Warning, message: 'Un bien avec ce titre existe déjà' });
-                setTimeout(() => setToastMessage(undefined), 3000);
                 return;
               }
             }
@@ -125,15 +128,9 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
             setToastMessage({ type: ToastType.Success, message: 'Bien mis à jour avec succès !' });
           }
         }
-
-        setTimeout(() => {
-          setToastMessage(undefined);
-          onClose();
-        }, 1500);
       } catch (error) {
         console.error('Error:', error);
         setToastMessage({ type: ToastType.Error, message: 'Une erreur est survenue' });
-        setTimeout(() => setToastMessage(undefined), 3000);
       }
     }
   };
@@ -148,7 +145,6 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
 
     if (duplicates) {
       setToastMessage({ type: ToastType.Error, message: 'Cette photo existe déjà dans la sélection !' });
-      setTimeout(() => setToastMessage(undefined), 3000);
       return;
     }
 
@@ -177,7 +173,13 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
         />
       )}
 
-      {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
+      {toastMessage && (
+        <ToastMessage
+          type={toastMessage.type}
+          message={toastMessage.message}
+          onClose={() => setToastMessage(undefined)}
+        />
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>

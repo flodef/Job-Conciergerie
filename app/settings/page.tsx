@@ -4,7 +4,7 @@ import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import ConfirmationModal from '../components/confirmationModal';
 import LoadingSpinner from '../components/loadingSpinner';
-import { ToastMessage, ToastType } from '../components/toastMessage';
+import { ToastMessage, ToastProps, ToastType } from '../components/toastMessage';
 import { useTheme } from '../contexts/themeProvider';
 import colorOptions from '../data/colors.json';
 import conciergeriesData from '../data/conciergeries.json';
@@ -39,9 +39,7 @@ export default function Settings() {
   const [tel, setTel] = useState('');
   const [selectedColor, setSelectedColor] = useState<ColorOption | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState<ToastType>(ToastType.Success);
+  const [toastMessage, setToastMessage] = useState<ToastProps>();
 
   // Track original values for comparison
   const [originalEmail, setOriginalEmail] = useState('');
@@ -183,14 +181,16 @@ export default function Settings() {
       }
 
       // Show success toast
-      setToastMessage('Modifications enregistrées avec succès');
-      setToastType(ToastType.Success);
-      setShowToast(true);
+      setToastMessage({
+        type: ToastType.Success,
+        message: 'Modifications enregistrées avec succès',
+      });
     } catch (error) {
       console.error('Error saving settings:', error);
-      setToastMessage('Erreur lors de l&apos;enregistrement');
-      setToastType(ToastType.Error);
-      setShowToast(true);
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Erreur lors de l&apos;enregistrement',
+      });
     } finally {
       setIsSaving(false);
     }
@@ -451,7 +451,13 @@ export default function Settings() {
       </div>
 
       {/* Toast message */}
-      {showToast && <ToastMessage message={toastMessage} type={toastType} onClose={() => setShowToast(false)} />}
+      {toastMessage && (
+        <ToastMessage
+          message={toastMessage.message}
+          type={toastMessage.type}
+          onClose={() => setToastMessage(undefined)}
+        />
+      )}
 
       <ConfirmationModal
         isOpen={showConfirmation}

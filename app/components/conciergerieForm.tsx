@@ -7,7 +7,7 @@ import { useTheme } from '../contexts/themeProvider';
 import conciergeriesData from '../data/conciergeries.json';
 import { getColorValueByName } from '../utils/welcomeParams';
 import FormActions from './formActions';
-import { ToastMessage, ToastType } from './toastMessage';
+import { ToastMessage, ToastProps, ToastType } from './toastMessage';
 import { Conciergerie } from '../types/types';
 
 type ConciergerieFormProps = {
@@ -24,7 +24,7 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
     colorName: '',
     color: '',
   });
-  const [toastMessage, setToastMessage] = useState<{ type: ToastType; message: string }>();
+  const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update selected company data when name changes
@@ -78,23 +78,21 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
     // Apply the color theme
     setPrimaryColor(conciergerieData.color);
 
-    // Show success message
-    setToastMessage({
-      type: ToastType.Success,
-      message: 'Sélection enregistrée!',
-    });
-
-    // Redirect to missions page after a delay
-    setTimeout(() => {
-      window.location.href = '/missions';
-    }, 1500);
+    // Redirect to missions page
+    window.location.href = '/missions';
   };
 
   return (
     <div>
       <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
 
-      {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
+      {toastMessage && (
+        <ToastMessage
+          type={toastMessage.type}
+          message={toastMessage.message}
+          onClose={() => setToastMessage(undefined)}
+        />
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>

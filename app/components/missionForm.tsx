@@ -6,7 +6,7 @@ import { useMissions } from '../contexts/missionsProvider';
 import { Mission, Objective } from '../types/types';
 import { getObjectivesWithPoints } from '../utils/objectiveUtils';
 import FormActions from './formActions';
-import { ToastMessage, ToastType } from './toastMessage';
+import { ToastMessage, ToastProps, ToastType } from './toastMessage';
 
 type MissionFormProps = {
   mission?: Mission;
@@ -44,7 +44,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   );
 
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
-  const [toastMessage, setToastMessage] = useState<{ type: ToastType; message: string }>();
+  const [toastMessage, setToastMessage] = useState<ToastProps>();
 
   // Set up French locale for date inputs
   useEffect(() => {
@@ -87,7 +87,6 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
       if (!selectedHome) {
         setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner un bien valide' });
-        setTimeout(() => setToastMessage(undefined), 3000);
         return;
       }
 
@@ -98,34 +97,32 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
       const endDate = new Date(endDateTime);
 
       // Check for duplicate missions
-      
+
       if (mode === 'add') {
         // Check if a mission with the same criteria already exists
         if (missionExists(selectedHome.id, objectivesState, startDate, endDate)) {
-          setToastMessage({ 
-            type: ToastType.Warning, 
-            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà' 
+          setToastMessage({
+            type: ToastType.Warning,
+            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà',
           });
-          setTimeout(() => setToastMessage(undefined), 3000);
           return;
         }
-        
+
         const result = addMission({
           homeId: selectedHome.id,
           objectives: objectivesState,
           startDateTime: startDate,
           endDateTime: endDate,
         });
-        
+
         if (result === false) {
-          setToastMessage({ 
-            type: ToastType.Warning, 
-            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà' 
+          setToastMessage({
+            type: ToastType.Warning,
+            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà',
           });
-          setTimeout(() => setToastMessage(undefined), 3000);
           return;
         }
-        
+
         setToastMessage({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
       } else if (mission) {
         // Create a new mission object with only the necessary fields
@@ -143,32 +140,25 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
         // Check if update would create a duplicate (excluding the current mission)
         if (missionExists(selectedHome.id, objectivesState, startDate, endDate, mission.id)) {
-          setToastMessage({ 
-            type: ToastType.Warning, 
-            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà' 
+          setToastMessage({
+            type: ToastType.Warning,
+            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà',
           });
-          setTimeout(() => setToastMessage(undefined), 3000);
           return;
         }
-        
+
         const result = updateMission(updatedMission);
-        
+
         if (result === false) {
-          setToastMessage({ 
-            type: ToastType.Warning, 
-            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà' 
+          setToastMessage({
+            type: ToastType.Warning,
+            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà',
           });
-          setTimeout(() => setToastMessage(undefined), 3000);
           return;
         }
-        
+
         setToastMessage({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });
       }
-
-      setTimeout(() => {
-        setToastMessage(undefined);
-        onClose();
-      }, 1500);
     }
   };
 
@@ -211,7 +201,13 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
   return (
     <div className="w-full">
-      {toastMessage && <ToastMessage type={toastMessage.type} message={toastMessage.message} />}
+      {toastMessage && (
+        <ToastMessage
+          type={toastMessage.type}
+          message={toastMessage.message}
+          onClose={() => setToastMessage(undefined)}
+        />
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>

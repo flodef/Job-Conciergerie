@@ -4,7 +4,7 @@ export enum ToastType {
   Warning,
 }
 
-interface ToastProps {
+export interface ToastProps {
   type: ToastType;
   message: string;
   onClose?: () => void;

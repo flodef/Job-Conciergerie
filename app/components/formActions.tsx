@@ -50,7 +50,7 @@ export default function FormActions({
         )}
         disabled={isSubmitting || disabled}
       >
-        {isSubmitting ? (
+        {isSubmitting && !disabled ? (
           <>
             <span className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin mr-2"></span>
             Traitement...

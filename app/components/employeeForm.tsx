@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/themeProvider';
 import { addEmployee, employeeExists, getEmployeeStatus, getEmployees } from '../utils/employeeUtils';
 import FormActions from './formActions';
-import { ToastMessage, ToastType } from './toastMessage';
+import { ToastMessage, ToastProps, ToastType } from './toastMessage';
 import Tooltip from './tooltip';
 import { Employee } from '../types/types';
 import { generateSimpleId } from '../utils/id';
@@ -28,9 +28,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
     message: '',
   });
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string>();
-  const [toastType, setToastType] = useState<ToastType>();
-  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update conciergerie if companies change and current selection is not in the list
@@ -59,9 +57,10 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
 
     // Check if all required fields are filled
     if (!formData.firstName || !formData.familyName || !formData.tel || !formData.email || !formData.conciergerieName) {
-      setToastMessage('Veuillez remplir tous les champs obligatoires');
-      setToastType(ToastType.Error);
-      setShowToast(true);
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez remplir tous les champs obligatoires',
+      });
       return;
     }
 
@@ -99,8 +98,12 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
     <div>
       <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>
 
-      {showToast && toastMessage && toastType && (
-        <ToastMessage type={toastType} message={toastMessage} onClose={() => setShowToast(false)} />
+      {toastMessage && (
+        <ToastMessage
+          type={toastMessage.type}
+          message={toastMessage.message}
+          onClose={() => setToastMessage(undefined)}
+        />
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
