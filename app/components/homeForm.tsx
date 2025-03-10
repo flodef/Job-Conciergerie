@@ -2,7 +2,7 @@
 
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
-import { useEffect, useCallback, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHomes } from '../contexts/homesProvider';
 import { HomeData } from '../types/types';
 import FormActions from './formActions';
@@ -33,18 +33,11 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isFormChanged, setIsFormChanged] = useState(false);
 
-  const isFormValid = useMemo(
-    () =>
-      (images.length > 0 || existingImages.length > 0) &&
-      description.trim() !== '' &&
-      tasks.some(task => task.trim() !== '') &&
-      title.trim() !== '',
-    [images, existingImages, description, tasks, title],
-  );
-
-  useEffect(() => {
-    if (isFormValid) setIsFormSubmitted(false);
-  }, [isFormValid]);
+  const isFormValid =
+    (images.length > 0 || existingImages.length > 0) &&
+    description.trim() !== '' &&
+    tasks.some(task => task.trim() !== '') &&
+    title.trim() !== '';
 
   // Check if form has been modified
   const checkFormChanged = useCallback(() => {
@@ -326,7 +319,6 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
           onCancel={onClose}
           submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
           submitType="submit"
-          isSubmitting={isFormSubmitted && !isFormValid}
           disabled={mode === 'edit' && !isFormChanged}
         />
       </form>
