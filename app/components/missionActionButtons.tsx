@@ -46,7 +46,7 @@ export default function MissionActionButtons({
     // For employees in calendar view
     if (isEmployee && isCurrentEmployee) {
       return (
-        <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
+        <div className="sticky bottom-0 bg-background border-t border-secondary py-2">
           <div className="flex justify-end gap-2">
             {/* Start button - only visible if mission has not started yet and start time has passed */}
             {(!mission.status || mission.status === 'pending') && hasStartTimePassed && (
@@ -85,7 +85,7 @@ export default function MissionActionButtons({
       // If mission is started, only show complete button
       if (isStarted) {
         return (
-          <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
+          <div className="sticky bottom-0 bg-background border-t border-secondary py-2">
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => {
@@ -107,7 +107,7 @@ export default function MissionActionButtons({
         const showCompleteButton = hasStartTimePassed;
 
         return (
-          <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
+          <div className="sticky bottom-0 bg-background border-t border-secondary py-2">
             <div className="flex justify-end gap-2">
               <button
                 onClick={onEdit}
@@ -158,7 +158,7 @@ export default function MissionActionButtons({
   // Conciergerie actions for their own missions
   if (!isEmployee && isOwnMission) {
     return (
-      <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
+      <div className="sticky bottom-0 bg-background border-t border-secondary py-2">
         <div className="flex justify-end gap-2">
           <button
             onClick={onEdit}

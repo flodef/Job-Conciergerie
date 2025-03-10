@@ -44,10 +44,10 @@ export default function ConfirmationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/20 backdrop-blur-sm">
-      <div className="bg-background rounded-lg shadow-xl max-w-md w-full px-6 pt-4 pb-2 animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-background rounded-lg shadow-xl max-w-md w-full px-6 pt-4 animate-in fade-in zoom-in-95 duration-200">
         <h2 className="text-lg font-semibold mb-2">{title}</h2>
 
-        <div className="text-foreground/80">
+        <div className="text-foreground/80 pb-2">
           {message && <p>{message}</p>}
           {children}
         </div>
@@ -59,7 +59,6 @@ export default function ConfirmationModal({
           submitText={confirmText}
           cancelText={cancelText}
           isDangerous={isDangerous}
-          className="pt-0"
         />
       </div>
     </div>

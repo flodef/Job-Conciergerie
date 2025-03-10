@@ -156,7 +156,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
       </div>
 
       {!isReadOnly && !isEmployee && (
-        <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
+        <div className="sticky bottom-0 bg-background border-t border-secondary py-2">
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setIsEditMode(true)}
