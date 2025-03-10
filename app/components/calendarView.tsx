@@ -1,6 +1,6 @@
 'use client';
 
-import { IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
+import { IconCalendarEvent, IconClock, IconPlayerPlay, IconAlertTriangle } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
@@ -33,6 +33,7 @@ export default function CalendarView() {
   const [currentConciergerieName, setCurrentConciergerieName] = useState<string | undefined>(undefined);
   const [isClient, setIsClient] = useState(false);
   const [startedMissionsCount, setStartedMissionsCount] = useState(0);
+  const [lateMissionsCount, setLateMissionsCount] = useState(0);
 
   const isEmployee = userType === 'employee';
   const isConciergerie = userType === 'conciergerie';
@@ -68,6 +69,14 @@ export default function CalendarView() {
     // Count started missions
     const startedCount = filteredMissions.filter(mission => mission.status === 'started').length;
     setStartedMissionsCount(startedCount);
+    
+    // Count late missions (ended without being started)
+    const lateCount = filteredMissions.filter(mission => 
+      mission.employeeId && 
+      (!mission.status || mission.status === 'pending') && 
+      new Date(mission.endDateTime) < new Date()
+    ).length;
+    setLateMissionsCount(lateCount);
 
     setAcceptedMissions(filteredMissions);
 
@@ -88,7 +97,17 @@ export default function CalendarView() {
     setSelectedMission(null);
   };
 
- 
+  // Check if a mission is ended without being started
+  const isEndedWithoutStarting = (mission: Mission) => {
+    // Mission is accepted (has employeeId)
+    // Mission is not started (status is not 'started' or 'completed')
+    // Mission end date is in the past
+    return (
+      mission.employeeId &&
+      (!mission.status || mission.status === 'pending') &&
+      new Date(mission.endDateTime) < new Date()
+    );
+  };
 
   // Don't render anything until client-side hydration is complete
   if (!isClient) {
@@ -129,17 +148,31 @@ export default function CalendarView() {
   return (
     <div className="pb-20">
       {/* Badge for started missions */}
-      {startedMissionsCount > 0 && (
-        <div className="sticky top-0 z-10 bg-background p-2 mb-4 border border-blue-200 rounded-lg flex items-center justify-between">
-          <div className="flex items-center">
-            <IconPlayerPlay className="text-blue-500 mr-2" />
-            <span>
-              <span className="font-medium">{startedMissionsCount}</span> mission{startedMissionsCount > 1 ? 's' : ''}{' '}
-              en cours
-            </span>
+      <div className="sticky top-0 z-20 bg-background space-y-2 mb-4">
+        {startedMissionsCount > 0 && (
+          <div className="p-2 border border-blue-200 rounded-lg flex items-center justify-between">
+            <div className="flex items-center">
+              <IconPlayerPlay className="text-blue-500 mr-2" />
+              <span>
+                <span className="font-medium">{startedMissionsCount}</span> mission{startedMissionsCount > 1 ? 's' : ''}{' '}
+                en cours
+              </span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+        
+        {lateMissionsCount > 0 && (
+          <div className="p-2 border border-red-200 bg-red-50 dark:bg-red-950/10 rounded-lg flex items-center justify-between">
+            <div className="flex items-center">
+              <IconAlertTriangle className="text-red-500 mr-2" />
+              <span>
+                <span className="font-medium">{lateMissionsCount}</span> mission{lateMissionsCount > 1 ? 's' : ''}{' '}
+                en retard non terminée{lateMissionsCount > 1 ? 's' : ''}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
       {selectedMission && (
         <MissionDetails mission={selectedMission} onClose={handleCloseDetails} isFromCalendar={true} />
       )}
@@ -189,11 +222,28 @@ export default function CalendarView() {
                     <div
                       key={mission.id}
                       className={clsx(
-                        'p-3 hover:bg-secondary/10 cursor-pointer transition-colors',
+                        'p-3 hover:bg-secondary/10 cursor-pointer transition-colors relative',
                         mission.status === 'started' ? 'animate-pulse' : '',
                       )}
                       onClick={() => handleMissionClick(mission)}
                     >
+                      {isEndedWithoutStarting(mission) && (
+                        <div
+                          className="absolute text-sm font-bold text-white bg-red-500/80 px-1 py-0.5 uppercase tracking-wider whitespace-nowrap z-10"
+                          style={{
+                            transform: 'rotate(15deg) scale(0.9)',
+                            transformOrigin: 'center',
+                            width: '140%',
+                            textAlign: 'center',
+                            top: '50%',
+                            left: '50%',
+                            marginLeft: '-70%',
+                            marginTop: '-10px',
+                          }}
+                        >
+                          ⚠️ MISSION EN RETARD NON TERMINÉE ⚠️
+                        </div>
+                      )}
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center">
                           <div
