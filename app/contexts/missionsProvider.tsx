@@ -123,12 +123,14 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       // This returns the mission to the pool of available missions
       setMissions(prev =>
         prev.map(mission =>
-          mission.id === updatedMission.id ? { 
-            ...updatedMission, 
-            employeeId: undefined,
-            status: undefined,
-            modifiedDate: new Date() 
-          } : mission,
+          mission.id === updatedMission.id
+            ? {
+                ...updatedMission,
+                employeeId: undefined,
+                status: undefined,
+                modifiedDate: new Date(),
+              }
+            : mission,
         ),
       );
     } else {
@@ -143,13 +145,17 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     // Only allow deletion if the mission was created by the current conciergerie
     if (missionToDelete && currentConciergerie && missionToDelete.conciergerieName === currentConciergerie.name) {
       setMissions(prev =>
-        prev.map(mission => (mission.id === id ? { 
-          ...mission, 
-          deleted: true, 
-          employeeId: undefined,
-          status: undefined,
-          modifiedDate: new Date() 
-        } : mission)),
+        prev.map(mission =>
+          mission.id === id
+            ? {
+                ...mission,
+                deleted: true,
+                employeeId: undefined,
+                status: undefined,
+                modifiedDate: new Date(),
+              }
+            : mission,
+        ),
       );
     } else {
       console.error('Cannot delete mission: not created by current conciergerie');
@@ -216,7 +222,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       return updatedMissions;
     });
   };
-  
+
   // Start a mission - changes status from pending to started
   const startMission = (id: string) => {
     const missionToStart = missions.find(m => m.id === id);
@@ -235,7 +241,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     // Only allow starting if the mission is pending and the start time has passed
     const now = new Date();
     const startDate = new Date(missionToStart.startDateTime);
-    
+
     if (now < startDate) {
       console.error('Cannot start a mission before its start time');
       return;
@@ -253,7 +259,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       );
     });
   };
-  
+
   // Complete a mission - changes status from started to completed
   const completeMission = (id: string) => {
     const missionToComplete = missions.find(m => m.id === id);
@@ -266,12 +272,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     if (!employeeData || missionToComplete.employeeId !== employeeData.id) {
       console.error('Not authorized to complete this mission');
-      return;
-    }
-
-    // Only allow completing if the mission is started
-    if (missionToComplete.status !== 'started') {
-      console.error('Cannot complete a mission that has not been started');
       return;
     }
 
@@ -297,16 +297,16 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     }
 
     // If not the current conciergerie, look it up in the conciergeries.json data
-    const foundConciergerie = conciergeriesData.find((c) => c.name === name);
+    const foundConciergerie = conciergeriesData.find(c => c.name === name);
     if (foundConciergerie) {
       // The data from JSON doesn't have the 'color' property that Conciergerie interface requires
       // but we can add it using the colorName and getColorValueByName function
       return {
         ...foundConciergerie,
-        color: '' // This will be set by getColorValueByName using the colorName
+        color: '', // This will be set by getColorValueByName using the colorName
       } as Conciergerie;
     }
-    
+
     // Return null if conciergerie not found
     return null;
   };
