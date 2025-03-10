@@ -2,7 +2,7 @@
 
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useHomes } from '../contexts/homesProvider';
 import { HomeData } from '../types/types';
 import FormActions from './formActions';
@@ -31,6 +31,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [toastMessage, setToastMessage] = useState<{ type: ToastType; message: string }>();
+  const [isFormChanged, setIsFormChanged] = useState(false);
 
   const isFormValid =
     (images.length > 0 || existingImages.length > 0) &&
@@ -41,6 +42,24 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
   useEffect(() => {
     if (isFormValid) setIsFormSubmitted(false);
   }, [images, existingImages, description, tasks, title, isFormValid]);
+
+  // Check if form has been modified
+  const checkFormChanged = useCallback(() => {
+    if (mode === 'add' || !home) return true; // Always enable save button for new homes
+
+    // For edit mode, check if any field has changed
+    const titleChanged = title !== home.title;
+    const descriptionChanged = description !== home.description;
+    const tasksChanged = JSON.stringify(tasks) !== JSON.stringify(home.tasks);
+    const imagesChanged = images.length > 0 || JSON.stringify(existingImages) !== JSON.stringify(home.images);
+
+    return titleChanged || descriptionChanged || tasksChanged || imagesChanged;
+  }, [title, description, tasks, images, existingImages, mode, home]);
+
+  // Update isFormChanged whenever form fields change
+  useEffect(() => {
+    setIsFormChanged(checkFormChanged());
+  }, [checkFormChanged]);
 
   useEffect(() => {
     const urls = images.map(image => URL.createObjectURL(image));
@@ -270,6 +289,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
           submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
           submitType="submit"
           isSubmitting={isFormSubmitted && !isFormValid}
+          disabled={mode === 'edit' && !isFormChanged}
         />
       </form>
     </div>

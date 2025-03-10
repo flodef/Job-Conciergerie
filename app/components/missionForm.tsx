@@ -1,7 +1,7 @@
 'use client';
 
 import { clsx } from 'clsx/lite';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
 import { Mission, Objective } from '../types/types';
 import { getObjectivesWithPoints } from '../utils/objectiveUtils';
@@ -23,6 +23,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
   const [objectivesState, setObjectives] = useState<Objective[]>(mission?.objectives || []);
+  const [isFormChanged, setIsFormChanged] = useState(false);
 
   // Get current date and time in local timezone
   const now = new Date();
@@ -58,6 +59,24 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   }, []);
 
   const isFormValid = homeId !== '' && objectivesState.length > 0 && startDateTime !== '' && endDateTime !== '';
+
+  // Check if form has been modified
+  const checkFormChanged = useCallback(() => {
+    if (mode === 'add' || !mission) return true; // Always enable save button for new missions
+
+    // For edit mode, check if any field has changed
+    const objectivesChanged = JSON.stringify(objectivesState) !== JSON.stringify(mission.objectives);
+    const homeIdChanged = homeId !== mission.homeId;
+    const startDateChanged = startDateTime !== localISOString(mission.startDateTime);
+    const endDateChanged = endDateTime !== localISOString(mission.endDateTime);
+
+    return objectivesChanged || homeIdChanged || startDateChanged || endDateChanged;
+  }, [homeId, objectivesState, startDateTime, endDateTime, mode, mission]);
+
+  // Update isFormChanged whenever form fields change
+  useEffect(() => {
+    setIsFormChanged(checkFormChanged());
+  }, [checkFormChanged]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +118,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           modifiedDate: new Date(),
           deleted: mission.deleted || false,
         };
-        
+
         updateMission(updatedMission);
         setToastMessage({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });
       }
@@ -114,7 +133,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   const toggleObjective = (objective: Objective) => {
     // Check if the objective is already in the array by comparing labels
     const objectiveExists = objectivesState.some(o => o.label === objective.label);
-    
+
     if (objectiveExists) {
       // Remove the objective if it exists
       setObjectives(objectivesState.filter(o => o.label !== objective.label));
@@ -157,7 +176,9 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           <label className="block text-sm font-medium mb-2">Bien</label>
           <select
             value={homeId}
-            onChange={e => setHomeId(e.target.value)}
+            onChange={e => {
+              setHomeId(e.target.value);
+            }}
             className={clsx(
               'w-full p-2 border rounded-lg bg-background',
               'border-foreground/20 focus-visible:outline-primary',
@@ -252,7 +273,12 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           )}
         </div>
 
-        <FormActions onCancel={onClose} submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'} submitType="submit" />
+        <FormActions
+          onCancel={onClose}
+          submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
+          submitType="submit"
+          disabled={mode === 'edit' && !isFormChanged}
+        />
       </form>
     </div>
   );

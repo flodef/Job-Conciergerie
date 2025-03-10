@@ -10,6 +10,7 @@ type FormActionsProps = {
   className?: string;
   isDangerous?: boolean;
   submitType?: 'submit' | 'button';
+  disabled?: boolean;
 };
 
 export default function FormActions({
@@ -21,6 +22,7 @@ export default function FormActions({
   className = '',
   isDangerous = false,
   submitType = 'submit',
+  disabled = false,
 }: FormActionsProps) {
   return (
     <div
@@ -44,8 +46,9 @@ export default function FormActions({
         className={clsx(
           'px-4 py-2 rounded-lg flex items-center justify-center',
           isDangerous ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-primary hover:bg-primary/90 text-background',
+          (isSubmitting || disabled) && 'opacity-50 cursor-not-allowed',
         )}
-        disabled={isSubmitting}
+        disabled={isSubmitting || disabled}
       >
         {isSubmitting ? (
           <>
