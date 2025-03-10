@@ -11,7 +11,7 @@ import { useBadge } from '../contexts/badgeProvider';
 const pageSettings: Record<Page, { icon: ReactNode; userType: ('conciergerie' | 'employee' | 'both') }> = {
   [Page.Welcome]: { icon: null, userType: 'both' },
   [Page.Missions]: { icon: <IconBriefcase size={30} />, userType: 'both' },
-  [Page.Calendar]: { icon: <IconCalendar size={30} />, userType: 'employee' },
+  [Page.Calendar]: { icon: <IconCalendar size={30} />, userType: 'both' },
   [Page.Homes]: { icon: <IconHome size={30} />, userType: 'conciergerie' },
   [Page.Employees]: { icon: <IconUser size={30} />, userType: 'conciergerie' },
   [Page.Settings]: { icon: <IconSettings size={30} />, userType: 'both' },
@@ -21,7 +21,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const { currentPage, onMenuChange } = useMenuContext();
   const [isHomePage, setIsHomePage] = useState(false);
   const [userType, setUserType] = useState<string | null>(null);
-  const { pendingEmployeesCount, newMissionsCount, todayMissionsCount, resetPendingEmployeesCount, resetNewMissionsCount } = useBadge();
+  const { pendingEmployeesCount, newMissionsCount, todayMissionsCount, startedMissionsCount, resetPendingEmployeesCount, resetNewMissionsCount } = useBadge();
 
   useEffect(() => {
     // Check if we're on the homepage or waiting page
@@ -123,11 +123,17 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
                       </div>
                     )}
                     
-                    {/* Badge for today's missions */}
-                    {page === Page.Calendar && todayMissionsCount > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                        {todayMissionsCount > 9 ? '9+' : todayMissionsCount}
-                      </div>
+                    {/* Badge for today's missions (employee) or started missions (conciergerie) */}
+                    {page === Page.Calendar && (
+                      (userType === 'employee' && todayMissionsCount > 0) ? (
+                        <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          {todayMissionsCount > 9 ? '9+' : todayMissionsCount}
+                        </div>
+                      ) : (userType === 'conciergerie' && startedMissionsCount > 0) ? (
+                        <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          {startedMissionsCount > 9 ? '9+' : startedMissionsCount}
+                        </div>
+                      ) : null
                     )}
                   </div>
                   <span className="text-xs font-medium">{page}</span>

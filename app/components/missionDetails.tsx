@@ -349,37 +349,40 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           </div>
         </div>
 
-        <div>
-          <h3 className="text-sm font-medium text-light">Conciergerie</h3>
-          <div className="flex items-center gap-3">
-            <p className="text-lg font-bold" style={{ color: conciergerieColor }}>
-              {conciergerie?.name || mission.conciergerieName}
-            </p>
+        {/* Only show conciergerie name if not viewed from calendar by a conciergerie */}
+        {!(isFromCalendar && userType === 'conciergerie') && (
+          <div>
+            <h3 className="text-sm font-medium text-light">Conciergerie</h3>
+            <div className="flex items-center gap-3">
+              <p className="text-lg font-bold" style={{ color: conciergerieColor }}>
+                {conciergerie?.name || mission.conciergerieName}
+              </p>
 
-            {/* Contact buttons */}
-            <div className="flex gap-3">
-              {conciergerie?.tel && (
-                <a
-                  href={`tel:${conciergerie.tel}`}
-                  className="p-1 rounded-full hover:bg-gray-100"
-                  title={`Appeler ${conciergerie.name}`}
-                >
-                  <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
-                </a>
-              )}
+              {/* Contact buttons */}
+              <div className="flex gap-3">
+                {conciergerie?.tel && (
+                  <a
+                    href={`tel:${conciergerie.tel}`}
+                    className="p-1 rounded-full hover:bg-gray-100"
+                    title={`Appeler ${conciergerie.name}`}
+                  >
+                    <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
+                  </a>
+                )}
 
-              {conciergerie?.email && (
-                <a
-                  href={`mailto:${conciergerie.email}`}
-                  className="p-1 rounded-full hover:bg-gray-100"
-                  title={`Envoyer un email à ${conciergerie.name}`}
-                >
-                  <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />
-                </a>
-              )}
+                {conciergerie?.email && (
+                  <a
+                    href={`mailto:${conciergerie.email}`}
+                    className="p-1 rounded-full hover:bg-gray-100"
+                    title={`Envoyer un email à ${conciergerie.name}`}
+                  >
+                    <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />
+                  </a>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {employee && !isFromCalendar && (
           <div>

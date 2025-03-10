@@ -10,6 +10,7 @@ type BadgeContextType = {
   pendingEmployeesCount: number;
   newMissionsCount: number;
   todayMissionsCount: number;
+  startedMissionsCount: number;
   resetPendingEmployeesCount: () => void;
   resetNewMissionsCount: () => void;
 };
@@ -26,6 +27,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
   const [pendingEmployeesCount, setPendingEmployeesCount] = useState(0);
   const [newMissionsCount, setNewMissionsCount] = useState(0);
   const [todayMissionsCount, setTodayMissionsCount] = useState(0);
+  const [startedMissionsCount, setStartedMissionsCount] = useState(0);
 
   // Get user type and conciergerie data
   const conciergerieName = conciergerieData?.name || null;
@@ -115,12 +117,31 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
       // Set the count of missions for today
       setTodayMissionsCount(todayMissions.length);
     };
+    
+    // Count started missions for conciergeries
+    const countStartedMissions = () => {
+      if (!missions.length || userType !== 'conciergerie') return;
+      
+      // Filter missions that are from this conciergerie, have an employee assigned, and are in started status
+      const startedMissions = missions.filter(mission => 
+        mission.conciergerieName === conciergerieName &&
+        mission.employeeId && 
+        mission.status === 'started' &&
+        !mission.deleted
+      );
+      
+      setStartedMissionsCount(startedMissions.length);
+    };
 
-    // Count today's missions on mount and when missions change
+    // Count today's missions and started missions on mount and when missions change
     countTodayMissions();
+    countStartedMissions();
 
     // Set up interval to check periodically
-    const interval = setInterval(countTodayMissions, checkingInterval * 1000);
+    const interval = setInterval(() => {
+      countTodayMissions();
+      countStartedMissions();
+    }, checkingInterval * 1000);
 
     return () => clearInterval(interval);
   }, [missions, userType, conciergerieName]);
@@ -142,6 +163,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
         pendingEmployeesCount,
         newMissionsCount,
         todayMissionsCount,
+        startedMissionsCount,
         resetPendingEmployeesCount,
         resetNewMissionsCount,
       }}
