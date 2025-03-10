@@ -40,9 +40,11 @@ export default function CalendarView() {
   // Second useEffect to handle mission filtering after we have the employee ID
   useEffect(() => {
     if (!currentEmployeeId) return;
-    
-    // Filter missions that are accepted by the current employee and not deleted
-    const employeeMissions = missions.filter(mission => mission.employeeId === currentEmployeeId && !mission.deleted);
+
+    // Filter missions that are accepted by the current employee, not deleted, and not completed
+    const employeeMissions = missions.filter(
+      mission => mission.employeeId === currentEmployeeId && !mission.deleted && mission.status !== 'completed',
+    );
 
     setAcceptedMissions(employeeMissions);
 
@@ -94,7 +96,9 @@ export default function CalendarView() {
 
   return (
     <div className="pb-20">
-      {selectedMission && <MissionDetails mission={selectedMission} onClose={handleCloseDetails} />}
+      {selectedMission && (
+        <MissionDetails mission={selectedMission} onClose={handleCloseDetails} isFromCalendar={true} />
+      )}
 
       <div className="space-y-6">
         {sortedDates.map(dateStr => {
@@ -138,7 +142,10 @@ export default function CalendarView() {
                   return (
                     <div
                       key={mission.id}
-                      className="p-3 hover:bg-secondary/10 cursor-pointer transition-colors"
+                      className={clsx(
+                        'p-3 hover:bg-secondary/10 cursor-pointer transition-colors',
+                        mission.status === 'started' ? 'animate-pulse' : '',
+                      )}
                       onClick={() => handleMissionClick(mission)}
                     >
                       <div className="flex justify-between items-start mb-2">

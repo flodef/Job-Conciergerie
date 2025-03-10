@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 import { HomeData } from '../types/types';
+import { getWelcomeParams } from '../utils/welcomeParams';
 import ConfirmationModal from './confirmationModal';
 import FullScreenModal from './fullScreenModal';
 import HomeForm from './homeForm';
@@ -18,12 +19,16 @@ type HomeDetailsProps = {
 export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   const { deleteHome, getCurrentConciergerie, homes: allHomes } = useHomes();
   const { missions, deleteMission } = useMissions();
+  const { userType } = getWelcomeParams();
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteWithMissionsModalOpen, setIsDeleteWithMissionsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [associatedMissions, setAssociatedMissions] = useState<string[]>([]);
+
+  const isEmployee = userType === 'employee';
 
   useEffect(() => {
     // Check if the current conciergerie is the one that created the home
@@ -150,7 +155,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
         </div>
       </div>
 
-      {!isReadOnly && (
+      {!isReadOnly && !isEmployee && (
         <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
           <div className="flex justify-end gap-2">
             <button

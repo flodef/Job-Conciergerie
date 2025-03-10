@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Conciergerie, Employee, HomeData, Mission } from '../types/types';
+import { Conciergerie, Employee, HomeData, Mission, MissionStatus } from '../types/types';
 import conciergeriesData from '../data/conciergeries.json';
 import { generateSimpleId } from '../utils/id';
 import { getWelcomeParams } from '../utils/welcomeParams';
@@ -17,6 +17,8 @@ type MissionsContextType = {
   deleteMission: (id: string) => void;
   removeEmployee: (id: string) => void;
   acceptMission: (id: string) => void;
+  startMission: (id: string) => void;
+  completeMission: (id: string) => void;
   getCurrentConciergerie: () => Conciergerie | null;
   getConciergerieByName: (name: string) => Conciergerie | null;
   getHomeById: (id: string) => HomeData | undefined;
@@ -192,12 +194,84 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           ? {
               ...mission,
               employeeId: employee.id,
+              status: 'pending' as MissionStatus,
               modifiedDate: new Date(),
             }
           : mission,
       );
 
       return updatedMissions;
+    });
+  };
+  
+  // Start a mission - changes status from pending to started
+  const startMission = (id: string) => {
+    const missionToStart = missions.find(m => m.id === id);
+    const { employeeData } = getWelcomeParams();
+
+    if (!missionToStart) {
+      console.error('Mission not found');
+      return;
+    }
+
+    if (!employeeData || missionToStart.employeeId !== employeeData.id) {
+      console.error('Not authorized to start this mission');
+      return;
+    }
+
+    // Only allow starting if the mission is pending and the start time has passed
+    const now = new Date();
+    const startDate = new Date(missionToStart.startDateTime);
+    
+    if (now < startDate) {
+      console.error('Cannot start a mission before its start time');
+      return;
+    }
+
+    setMissions(prev => {
+      return prev.map(mission =>
+        mission.id === id
+          ? {
+              ...mission,
+              status: 'started' as MissionStatus,
+              modifiedDate: new Date(),
+            }
+          : mission,
+      );
+    });
+  };
+  
+  // Complete a mission - changes status from started to completed
+  const completeMission = (id: string) => {
+    const missionToComplete = missions.find(m => m.id === id);
+    const { employeeData } = getWelcomeParams();
+
+    if (!missionToComplete) {
+      console.error('Mission not found');
+      return;
+    }
+
+    if (!employeeData || missionToComplete.employeeId !== employeeData.id) {
+      console.error('Not authorized to complete this mission');
+      return;
+    }
+
+    // Only allow completing if the mission is started
+    if (missionToComplete.status !== 'started') {
+      console.error('Cannot complete a mission that has not been started');
+      return;
+    }
+
+    setMissions(prev => {
+      return prev.map(mission =>
+        mission.id === id
+          ? {
+              ...mission,
+              status: 'completed' as MissionStatus,
+              modifiedDate: new Date(),
+            }
+          : mission,
+      );
     });
   };
 
@@ -244,6 +318,8 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         deleteMission,
         removeEmployee,
         acceptMission,
+        startMission,
+        completeMission,
         getCurrentConciergerie,
         getConciergerieByName,
         getHomeById,

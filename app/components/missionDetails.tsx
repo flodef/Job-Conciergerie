@@ -9,6 +9,7 @@ import {
   IconMail,
   IconPencil,
   IconPhone,
+  IconPlayerPlay,
   IconTrash,
   IconZoomScan,
 } from '@tabler/icons-react';
@@ -32,21 +33,25 @@ import MissionForm from './missionForm';
 type MissionDetailsProps = {
   mission: Mission;
   onClose: () => void;
+  isFromCalendar?: boolean;
 };
 
-export default function MissionDetails({ mission, onClose }: MissionDetailsProps) {
+export default function MissionDetails({ mission, onClose, isFromCalendar = false }: MissionDetailsProps) {
   const {
     deleteMission,
     removeEmployee,
     getCurrentConciergerie,
     shouldShowAcceptWarning,
     acceptMission,
+    startMission,
+    completeMission,
     setShouldShowAcceptWarning,
     missions,
     getConciergerieByName,
     getHomeById,
     getEmployeeById,
   } = useMissions();
+  const { userType, employeeData } = getWelcomeParams();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -55,7 +60,6 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
   const [showHomeDetails, setShowHomeDetails] = useState(false);
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
-  const [userType, setUserType] = useState<string | null>(null);
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   // Get the conciergerie from the mission data
@@ -65,14 +69,12 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
   // Get the home data
   const home = getHomeById(mission.homeId);
 
-  useEffect(() => {
-    // Get the user type
-    const { userType } = getWelcomeParams();
-    setUserType(userType);
+  const isEmployee = userType === 'employee';
 
+  useEffect(() => {
     // Check if the current conciergerie is the one that created the mission
     const currentConciergerie = getCurrentConciergerie();
-    if (userType === 'employee') {
+    if (isEmployee) {
       // Employees can never edit missions
       setIsReadOnly(true);
     } else if (currentConciergerie && mission.conciergerieName === currentConciergerie.name) {
@@ -82,7 +84,7 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
       // Default to read-only
       setIsReadOnly(true);
     }
-  }, [mission, getCurrentConciergerie]);
+  }, [mission, getCurrentConciergerie, isEmployee]);
 
   const handleDelete = () => {
     deleteMission(mission.id);
@@ -143,11 +145,9 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
   }
 
   const firstHomeImage = home?.images?.length ? home.images[0] : '';
-  const isEmployee = userType === 'employee';
   const employee = getEmployeeById(mission.employeeId);
 
   // Get the employee data from localStorage
-  const { employeeData } = getWelcomeParams();
   const currentEmployeeId = employeeData?.id;
 
   // Check if the employee can accept the mission
@@ -381,7 +381,7 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
           </div>
         </div>
 
-        {employee && (
+        {employee && !isFromCalendar && (
           <div>
             <h3 className="text-sm font-medium text-light">Prestataire</h3>
             <p>
@@ -442,6 +442,49 @@ export default function MissionDetails({ mission, onClose }: MissionDetailsProps
               <IconCheck />
               Accepter
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mission status management buttons for employees who have accepted the mission */}
+      {isEmployee && mission.employeeId === currentEmployeeId && isFromCalendar && (
+        <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
+          <div className="flex justify-end gap-2">
+            {/* Start button - only visible if mission has not started yet and start time has passed */}
+            {(!mission.status || mission.status === 'pending') &&
+              (() => {
+                // Check if mission has started (now >= startDate)
+                const now = new Date();
+                const startDate = new Date(mission.startDateTime);
+                const hasStarted = now >= startDate;
+
+                return hasStarted ? (
+                  <button
+                    onClick={() => {
+                      startMission(mission.id);
+                      onClose();
+                    }}
+                    className="flex flex-col items-center p-2 w-20 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                  >
+                    <IconPlayerPlay />
+                    Démarrer
+                  </button>
+                ) : null;
+              })()}
+
+            {/* Finish button - only visible if mission is started */}
+            {mission.status === 'started' && (
+              <button
+                onClick={() => {
+                  completeMission(mission.id);
+                  onClose();
+                }}
+                className="flex flex-col items-center p-2 w-20 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+              >
+                <IconCheck />
+                Terminer
+              </button>
+            )}
           </div>
         </div>
       )}

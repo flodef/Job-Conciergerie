@@ -41,6 +41,8 @@ export interface Conciergerie {
   tel: string;
 }
 
+export type MissionStatus = 'pending' | 'started' | 'completed';
+
 export interface Mission {
   id: string;
   homeId: string; // Reference to the home by ID
@@ -51,6 +53,7 @@ export interface Mission {
   modifiedDate: Date;
   deleted: boolean;
   conciergerieName: string; // Reference to the conciergerie by name
+  status?: MissionStatus; // Default is 'pending' if not specified
 }
 
 export interface MissionPoints {
