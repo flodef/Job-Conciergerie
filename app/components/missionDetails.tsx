@@ -3,14 +3,10 @@
 import {
   IconAlertTriangle,
   IconCalculator,
-  IconCancel,
   IconCheck,
   IconInfoCircle,
   IconMail,
-  IconPencil,
   IconPhone,
-  IconPlayerPlay,
-  IconTrash,
   IconZoomScan,
 } from '@tabler/icons-react';
 import Image from 'next/image';
@@ -18,6 +14,7 @@ import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
 import { Mission } from '../types/types';
 import { formatDateTime, getTimeDifference } from '../utils/dateUtils';
+import { formatPoints } from '../utils/formatUtils';
 import {
   calculateEmployeePointsForDay,
   calculateMissionPoints,
@@ -28,6 +25,7 @@ import { getColorValueByName, getWelcomeParams } from '../utils/welcomeParams';
 import ConfirmationModal from './confirmationModal';
 import FullScreenModal from './fullScreenModal';
 import HomeDetails from './homeDetails';
+import MissionActionButtons from './missionActionButtons';
 import MissionForm from './missionForm';
 
 type MissionDetailsProps = {
@@ -79,6 +77,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
       setIsReadOnly(true);
     } else if (currentConciergerie && mission.conciergerieName === currentConciergerie.name) {
       // Conciergerie can edit their own missions
+      // Always allow editing if mission hasn't been started
       setIsReadOnly(false);
     } else {
       // Default to read-only
@@ -284,7 +283,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                 <>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Total des points:</span>
-                    <span className="font-medium">{totalPoints.toFixed(1)} pts</span>
+                    <span className="font-medium">{formatPoints(totalPoints)} pts</span>
                   </div>
                   {/* Only show points per day if mission spans more than 1 day */}
                   {new Date(mission.endDateTime).getTime() - new Date(mission.startDateTime).getTime() >
@@ -296,8 +295,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         </span>
                         <span className="font-medium">
                           {remainingPointsPerDay !== pointsPerDay
-                            ? remainingPointsPerDay.toFixed(1)
-                            : pointsPerDay.toFixed(1)}
+                            ? formatPoints(remainingPointsPerDay)
+                            : formatPoints(pointsPerDay)}
                           pts/jour
                         </span>
                       </div>
@@ -394,35 +393,22 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         )}
       </div>
 
-      {!isReadOnly && !isEmployee && (
-        <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => setIsEditMode(true)}
-              className="flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80"
-              data-edit-button
-            >
-              <IconPencil />
-              Modifier
-            </button>
-            <button
-              onClick={() => setIsDeleteModalOpen(true)}
-              className="flex flex-col items-center p-2 w-20 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
-            >
-              <IconTrash />
-              Supprimer
-            </button>
-            {mission.employeeId && (
-              <button
-                onClick={handleRemoveEmployee}
-                className="flex flex-col items-center p-2 w-20 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200"
-              >
-                <IconCancel />
-                Annuler
-              </button>
-            )}
-          </div>
-        </div>
+      {/* Display action buttons for non-calendar view */}
+      {!isFromCalendar && (
+        <MissionActionButtons
+          mission={mission}
+          isEmployee={isEmployee}
+          isReadOnly={isReadOnly}
+          isFromCalendar={isFromCalendar}
+          currentEmployeeId={currentEmployeeId || ''}
+          userType={userType || 'employee'}
+          onEdit={() => setIsEditMode(true)}
+          onDelete={() => setIsDeleteModalOpen(true)}
+          onRemoveEmployee={handleRemoveEmployee}
+          onStartMission={startMission}
+          onCompleteMission={completeMission}
+          onClose={onClose}
+        />
       )}
       {canAcceptMission && (
         <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
@@ -449,47 +435,22 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         </div>
       )}
 
-      {/* Mission status management buttons for employees who have accepted the mission */}
-      {isEmployee && mission.employeeId === currentEmployeeId && isFromCalendar && (
-        <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
-          <div className="flex justify-end gap-2">
-            {/* Start button - only visible if mission has not started yet and start time has passed */}
-            {(!mission.status || mission.status === 'pending') &&
-              (() => {
-                // Check if mission has started (now >= startDate)
-                const now = new Date();
-                const startDate = new Date(mission.startDateTime);
-                const hasStarted = now >= startDate;
-
-                return hasStarted ? (
-                  <button
-                    onClick={() => {
-                      startMission(mission.id);
-                      onClose();
-                    }}
-                    className="flex flex-col items-center p-2 w-20 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
-                  >
-                    <IconPlayerPlay />
-                    Démarrer
-                  </button>
-                ) : null;
-              })()}
-
-            {/* Finish button - only visible if mission is started */}
-            {mission.status === 'started' && (
-              <button
-                onClick={() => {
-                  completeMission(mission.id);
-                  onClose();
-                }}
-                className="flex flex-col items-center p-2 w-20 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
-              >
-                <IconCheck />
-                Terminer
-              </button>
-            )}
-          </div>
-        </div>
+      {/* Display action buttons for calendar view */}
+      {isFromCalendar && (
+        <MissionActionButtons
+          mission={mission}
+          isEmployee={isEmployee}
+          isReadOnly={isReadOnly}
+          isFromCalendar={isFromCalendar}
+          currentEmployeeId={currentEmployeeId || ''}
+          userType={userType || 'employee'}
+          onEdit={() => setIsEditMode(true)}
+          onDelete={() => setIsDeleteModalOpen(true)}
+          onRemoveEmployee={handleRemoveEmployee}
+          onStartMission={startMission}
+          onCompleteMission={completeMission}
+          onClose={onClose}
+        />
       )}
 
       <ConfirmationModal
