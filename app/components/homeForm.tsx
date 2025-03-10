@@ -200,7 +200,15 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
               )}
             </div>
           </label>
-          <div className="grid grid-cols-3 gap-4">
+          <div
+            className={clsx(
+              'grid grid-cols-3 gap-4',
+              isFormSubmitted &&
+                existingImages.length === 0 &&
+                images.length === 0 &&
+                'border border-red-500 rounded-lg p-2',
+            )}
+          >
             {/* Existing images */}
             {existingImages.map((url, index) => (
               <div key={`existing-${index}`} className="relative aspect-square">
@@ -259,6 +267,9 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
               <span className="text-3xl text-foreground/50">+</span>
             </label>
           </div>
+          {isFormSubmitted && existingImages.length === 0 && images.length === 0 && (
+            <p className="text-red-500 text-sm mt-1">Veuillez ajouter au moins une photo</p>
+          )}
           <p className="text-xs text-light mt-2 text-center">
             Note: Les images sont remplacées par une image par défaut lors de l&apos;enregistrement
           </p>
@@ -279,6 +290,9 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
             )}
             placeholder="Entrez le titre du bien..."
           />
+          {isFormSubmitted && title.trim() === '' && (
+            <p className="text-red-500 text-sm mt-1">Veuillez entrer un titre</p>
+          )}
         </div>
 
         <div>
@@ -296,18 +310,17 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
             rows={4}
             placeholder="Décrivez les caractéristiques du bien..."
           />
+          {isFormSubmitted && description.trim() === '' && (
+            <p className="text-red-500 text-sm">Veuillez remplir la description</p>
+          )}
         </div>
 
-        <TaskList tasks={tasks} setTasks={setTasks} />
-
-        {isFormSubmitted && (
-          <div className="space-y-2 text-sm text-red-500 bg-background animate-pulse">
-            {existingImages.length === 0 && images.length === 0 && <p>• Ajoutez au moins une photo</p>}
-            {title.trim() === '' && <p>• Entrez un titre</p>}
-            {description.trim() === '' && <p>• Remplissez la description</p>}
-            {!tasks.some(t => t.trim() !== '') && <p>• Ajoutez au moins une tâche</p>}
-          </div>
-        )}
+        <div>
+          <TaskList tasks={tasks} setTasks={setTasks} />
+          {isFormSubmitted && !tasks.some(t => t.trim() !== '') && (
+            <p className="text-red-500 text-sm mt-1">Veuillez ajouter au moins une tâche</p>
+          )}
+        </div>
 
         <FormActions
           onCancel={onClose}
