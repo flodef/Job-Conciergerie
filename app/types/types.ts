@@ -13,7 +13,6 @@ export interface Home {
 
 export interface HomeData extends Home {
   modifiedDate: Date;
-  deleted: boolean;
   conciergerieName: string; // Reference to the conciergerie by name
 }
 

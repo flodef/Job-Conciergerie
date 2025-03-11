@@ -70,7 +70,7 @@ export default function Missions() {
     });
 
   // Filter homes by the current conciergerie
-  const filteredHomes = homes.filter(home => !home.deleted && home.conciergerieName === currentConciergerie?.name);
+  const filteredHomes = homes.filter(home => home.conciergerieName === currentConciergerie?.name);
 
   const handleMissionClick = (missionId: string) => {
     setSelectedMission(missionId);

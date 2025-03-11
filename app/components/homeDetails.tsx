@@ -43,7 +43,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   // Find missions associated with this home
   useEffect(() => {
     const missionTitles = missions
-      .filter(mission => !mission.deleted && mission.homeId === home.id)
+      .filter(mission => mission.homeId === home.id)
       .map(mission => {
         // Find the home by ID to get its title
         const homeData = allHomes.find(h => h.id === mission.homeId);
@@ -72,7 +72,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   const handleDeleteWithMissions = () => {
     // Delete all associated missions first
     missions
-      .filter(mission => !mission.deleted && mission.homeId === home.id)
+      .filter(mission => mission.homeId === home.id)
       .forEach(mission => {
         deleteMission(mission.id);
       });

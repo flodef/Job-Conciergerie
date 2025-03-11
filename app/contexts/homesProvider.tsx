@@ -8,7 +8,7 @@ import { getWelcomeParams } from '../utils/welcomeParams';
 type HomesContextType = {
   homes: HomeData[];
   isLoading: boolean;
-  addHome: (home: Omit<HomeData, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => boolean | void;
+  addHome: (home: Omit<HomeData, 'id' | 'modifiedDate' | 'conciergerieName'>) => boolean | void;
   updateHome: (home: HomeData) => void;
   deleteHome: (id: string) => void;
   getCurrentConciergerie: () => Conciergerie | null;
@@ -72,13 +72,12 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     
     return homes.some(
       home => 
-        !home.deleted && 
         home.conciergerieName === currentConciergerie.name && 
         home.title.trim().toLowerCase() === title.trim().toLowerCase()
     );
   };
 
-  const addHome = (homeData: Omit<HomeData, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => {
+  const addHome = (homeData: Omit<HomeData, 'id' | 'modifiedDate' | 'conciergerieName'>) => {
     const currentConciergerie = getCurrentConciergerie();
 
     if (!currentConciergerie) {
@@ -96,7 +95,6 @@ export function HomesProvider({ children }: { children: ReactNode }) {
       ...homeData,
       id: generateSimpleId(),
       modifiedDate: new Date(),
-      deleted: false,
       conciergerieName: currentConciergerie.name,
     };
 
@@ -123,9 +121,12 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
     // Only allow deletion if the home was created by the current conciergerie
     if (homeToDelete && currentConciergerie && homeToDelete.conciergerieName === currentConciergerie.name) {
-      setHomes(prev =>
-        prev.map(home => (home.id === id ? { ...home, deleted: true, modifiedDate: new Date() } : home)),
-      );
+      // Remove the home from the array
+      setHomes(prev => prev.filter(home => home.id !== id));
+      
+      // Update localStorage immediately to ensure the deletion is persisted
+      const updatedHomes = homes.filter(home => home.id !== id);
+      localStorage.setItem('homes', JSON.stringify(updatedHomes));
     } else {
       console.error('Cannot delete home: not created by current conciergerie');
     }

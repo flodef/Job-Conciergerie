@@ -19,7 +19,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
   // Filter homes by the current conciergerie
   const currentConciergerie = getCurrentConciergerie();
-  const filteredHomes = homes.filter(home => !home.deleted && home.conciergerieName === currentConciergerie?.name);
+  const filteredHomes = homes.filter(home => home.conciergerieName === currentConciergerie?.name);
 
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
   const [objectivesState, setObjectives] = useState<Objective[]>(mission?.objectives || []);

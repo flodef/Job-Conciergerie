@@ -417,7 +417,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   // Helper function to get a home by ID
   const getHomeById = (id: string): HomeData | undefined => {
-    return homes.find(home => home.id === id && !home.deleted);
+    return homes.find(home => home.id === id);
   };
 
   // Helper function to get an employee by ID
