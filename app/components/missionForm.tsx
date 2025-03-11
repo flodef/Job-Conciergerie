@@ -107,7 +107,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         if (missionExists(selectedHome.id, objectivesState, startDate, endDate)) {
           setToastMessage({
             type: ToastType.Warning,
-            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà',
+            message: 'Une mission identique existe déjà',
           });
           return;
         }
@@ -122,7 +122,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         if (result === false) {
           setToastMessage({
             type: ToastType.Warning,
-            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà',
+            message: 'Une mission identique existe déjà',
           });
           return;
         }
@@ -146,7 +146,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         if (missionExists(selectedHome.id, objectivesState, startDate, endDate, mission.id)) {
           setToastMessage({
             type: ToastType.Warning,
-            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà',
+            message: 'Une mission identique existe déjà',
           });
           return;
         }
@@ -156,7 +156,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         if (result === false) {
           setToastMessage({
             type: ToastType.Warning,
-            message: 'Une mission avec ce bien, ces objectifs et ces dates existe déjà',
+            message: 'Une mission identique existe déjà',
           });
           return;
         }
