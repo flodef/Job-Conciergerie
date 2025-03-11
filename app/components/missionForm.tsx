@@ -205,7 +205,10 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         <ToastMessage
           type={toastMessage.type}
           message={toastMessage.message}
-          onClose={() => setToastMessage(undefined)}
+          onClose={() => {
+            setToastMessage(undefined);
+            if (toastMessage.type === ToastType.Success) onClose();
+          }}
         />
       )}
 

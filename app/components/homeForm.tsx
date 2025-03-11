@@ -170,7 +170,10 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
         <ToastMessage
           type={toastMessage.type}
           message={toastMessage.message}
-          onClose={() => setToastMessage(undefined)}
+          onClose={() => {
+            setToastMessage(undefined);
+            if (toastMessage?.type === ToastType.Success) onClose();
+          }}
         />
       )}
 

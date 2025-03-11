@@ -27,6 +27,7 @@ import FullScreenModal from './fullScreenModal';
 import HomeDetails from './homeDetails';
 import MissionActionButtons from './missionActionButtons';
 import MissionForm from './missionForm';
+import { ToastMessage, ToastProps, ToastType } from './toastMessage';
 
 type MissionDetailsProps = {
   mission: Mission;
@@ -49,6 +50,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     getHomeById,
     getEmployeeById,
   } = useMissions();
+
+  const [toastMessage, setToastMessage] = useState<ToastProps>();
   const { userType, employeeData } = getWelcomeParams();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -108,8 +111,15 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const handleConfirmAccept = () => {
     acceptMission(mission.id);
-    setIsConfirmationModalOpen(false);
-    onClose();
+    setToastMessage({
+      type: ToastType.Success,
+      message: 'Mission acceptée ! Retrouvez-la dans votre calendrier.',
+      onClose: () => {
+        setToastMessage(undefined);
+        setIsConfirmationModalOpen(false);
+        onClose();
+      },
+    });
   };
 
   const handleAcceptWithWarning = () => {
@@ -120,8 +130,15 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
     // Accept the mission
     acceptMission(mission.id);
-    setIsAcceptModalOpen(false);
-    onClose();
+    setToastMessage({
+      type: ToastType.Success,
+      message: 'Mission acceptée ! Retrouvez-la dans votre calendrier.',
+      onClose: () => {
+        setToastMessage(undefined);
+        setIsAcceptModalOpen(false);
+        onClose();
+      },
+    });
   };
 
   if (isEditMode) {
@@ -195,6 +212,9 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   return (
     <FullScreenModal onClose={onClose} title="Détails de la mission">
+      {toastMessage && (
+        <ToastMessage type={toastMessage.type} message={toastMessage.message} onClose={toastMessage.onClose} />
+      )}
       {selectedImage && (
         <FullScreenModal
           imageUrl={selectedImage}
@@ -425,7 +445,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         />
       )}
       {canAcceptMission && (
-        <div className="sticky bottom-0 bg-background border-t border-secondary pt-2">
+        <div className="sticky bottom-0 bg-background border-t border-secondary py-2">
           <div className="flex justify-end gap-2">
             {hasExceededPoints && (
               <div className="flex items-center text-center p-2 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
