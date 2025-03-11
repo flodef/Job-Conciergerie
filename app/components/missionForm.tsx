@@ -28,8 +28,12 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   // Get current date and time in local timezone
   const now = new Date();
   const localISOString = (date: Date) => {
-    const offset = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+    try {
+      const offset = date.getTimezoneOffset() * 60000;
+      return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+    } catch {
+      return '';
+    }
   };
 
   // Initialize start and end date/time
