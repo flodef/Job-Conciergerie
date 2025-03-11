@@ -111,14 +111,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const handleConfirmAccept = () => {
     acceptMission(mission.id);
+    setIsConfirmationModalOpen(false);
     setToastMessage({
       type: ToastType.Success,
       message: 'Mission acceptée ! Retrouvez-la dans votre calendrier.',
-      onClose: () => {
-        setToastMessage(undefined);
-        setIsConfirmationModalOpen(false);
-        onClose();
-      },
     });
   };
 
@@ -130,14 +126,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
     // Accept the mission
     acceptMission(mission.id);
+    setIsAcceptModalOpen(false);
     setToastMessage({
       type: ToastType.Success,
       message: 'Mission acceptée ! Retrouvez-la dans votre calendrier.',
-      onClose: () => {
-        setToastMessage(undefined);
-        setIsAcceptModalOpen(false);
-        onClose();
-      },
     });
   };
 
@@ -213,7 +205,14 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   return (
     <FullScreenModal onClose={onClose} title="Détails de la mission">
       {toastMessage && (
-        <ToastMessage type={toastMessage.type} message={toastMessage.message} onClose={toastMessage.onClose} />
+        <ToastMessage
+          type={toastMessage.type}
+          message={toastMessage.message}
+          onClose={() => {
+            setToastMessage(undefined);
+            if (toastMessage.type === ToastType.Success) onClose();
+          }}
+        />
       )}
       {selectedImage && (
         <FullScreenModal
