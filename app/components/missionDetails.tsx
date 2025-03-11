@@ -165,11 +165,11 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const firstHomeImage = home?.images?.length ? home.images[0] : '';
   const employee = getEmployeeById(mission.employeeId);
 
-  // Get the employee data from localStorage
-  const currentEmployeeId = employeeData?.id;
-
   // Check if the employee can accept the mission
   const canAcceptMission = isEmployee && !employee;
+
+  // Get the employee data from localStorage
+  const currentEmployeeId = employeeData?.id;
 
   // Calculate the total points the employee has for each day of the mission
   const [hasExceededPoints] = (() => {

@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Conciergerie, Employee, HomeData, Mission, MissionStatus, Objective } from '../types/types';
 import conciergeriesData from '../data/conciergeries.json';
+import { Conciergerie, Employee, HomeData, Mission, MissionStatus, Objective } from '../types/types';
 import { generateSimpleId } from '../utils/id';
 import { getWelcomeParams } from '../utils/welcomeParams';
 import { useHomes } from './homesProvider';
@@ -420,8 +420,9 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     return homes.find(home => home.id === id && !home.deleted);
   };
 
+  // Helper function to get an employee by ID
   const getEmployeeById = (id: string | undefined): Employee | undefined => {
-    return getEmployees().find(employee => employee.id === id);
+    return id ? getEmployees().find(emp => emp.id === id) : undefined;
   };
 
   return (

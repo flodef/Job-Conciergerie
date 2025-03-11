@@ -22,20 +22,26 @@ export function saveEmployees(employees: EmployeeWithStatus[]): void {
   }
 }
 
-// Check if employee already exists
-export function employeeExists(employee: Employee, existingEmployees?: EmployeeWithStatus[]): boolean {
+// Find an employee by matching name, email, or phone
+export function findEmployee(
+  employee: Employee,
+  existingEmployees?: EmployeeWithStatus[],
+): EmployeeWithStatus | undefined {
   const employees = existingEmployees || getEmployees();
 
-  // Check if employee already exists with the same name, email, or phone
-  const existingEmployee = employees.find(
+  // Check if employee exists with the same name, email, or phone
+  return employees.find(
     emp =>
       (emp.firstName.toLowerCase() === employee.firstName.toLowerCase() &&
         emp.familyName.toLowerCase() === employee.familyName.toLowerCase()) ||
       emp.email.toLowerCase() === employee.email.toLowerCase() ||
       (emp.tel && employee.tel && emp.tel === employee.tel),
   );
+}
 
-  return !!existingEmployee;
+// Check if employee already exists
+export function employeeExists(employee: Employee, existingEmployees?: EmployeeWithStatus[]): boolean {
+  return !!findEmployee(employee, existingEmployees);
 }
 
 // Add a new employee
@@ -173,16 +179,6 @@ export function filterEmployeesByConciergerie(
 
 // Get employee status by matching name, email, or phone
 export function getEmployeeStatus(employee: Employee): EmployeeStatus | null {
-  const employees = getEmployees();
-
-  // Find the employee
-  const existingEmployee = employees.find(
-    emp =>
-      (emp.firstName.toLowerCase() === employee.firstName.toLowerCase() &&
-        emp.familyName.toLowerCase() === employee.familyName.toLowerCase()) ||
-      emp.email.toLowerCase() === employee.email.toLowerCase() ||
-      (emp.tel && employee.tel && emp.tel === employee.tel),
-  );
-
+  const existingEmployee = findEmployee(employee);
   return existingEmployee ? existingEmployee.status : null;
 }

@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { IconAlertCircle, IconCircleCheck, IconClock } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import LoadingSpinner from '../components/loadingSpinner';
-import { getEmployees } from '../utils/employeeUtils';
-import { getWelcomeParams } from '../utils/welcomeParams';
-import { IconClock, IconAlertCircle, IconCircleCheck } from '@tabler/icons-react';
 import { EmployeeWithStatus } from '../types/types';
+import { findEmployee } from '../utils/employeeUtils';
+import { getWelcomeParams } from '../utils/welcomeParams';
 
 export default function WaitingPage() {
   const router = useRouter();
@@ -42,12 +42,7 @@ export default function WaitingPage() {
         return;
       }
 
-      // Get all employees
-      const allEmployees = getEmployees();
-
-      // Find employee with matching email
-      const foundEmployee = allEmployees.find(emp => emp.email.toLowerCase() === employeeData.email.toLowerCase());
-
+      const foundEmployee = findEmployee(employeeData);
       if (foundEmployee) {
         setEmployee(foundEmployee);
 

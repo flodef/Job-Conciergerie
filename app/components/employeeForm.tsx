@@ -4,12 +4,12 @@ import { useLocalStorage } from '@/app/utils/localStorage';
 import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/themeProvider';
-import { addEmployee, employeeExists, getEmployeeStatus, getEmployees } from '../utils/employeeUtils';
+import { Employee } from '../types/types';
+import { addEmployee, getEmployeeStatus } from '../utils/employeeUtils';
+import { generateSimpleId } from '../utils/id';
 import FormActions from './formActions';
 import { ToastMessage, ToastProps, ToastType } from './toastMessage';
 import Tooltip from './tooltip';
-import { Employee } from '../types/types';
-import { generateSimpleId } from '../utils/id';
 
 type EmployeeFormProps = {
   conciergerieNames: string[];
@@ -66,32 +66,23 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
 
     setIsSubmitting(true);
 
-    // Check if employee already exists
-    const employees = getEmployees();
-    const existingEmployee = employeeExists(formData, employees);
+    // Redirect based on status
+    const status = getEmployeeStatus(formData);
+    if (status === 'accepted') {
+      // If accepted, go to missions page
+      window.location.href = '/missions';
+    } else if (status === 'pending' || status === 'rejected') {
+      // If pending or rejected, go to waiting page
+      window.location.href = '/waiting';
+    } else {
+      // Add the employee to the employees list
+      formData.id = generateSimpleId();
+      setFormData(prev => ({ ...prev, id: formData.id }));
+      addEmployee(formData);
 
-    if (existingEmployee) {
-      // Get the employee's status
-      const status = getEmployeeStatus(formData);
-
-      // Redirect based on status
-      if (status === 'accepted') {
-        // If accepted, go to missions page
-        window.location.href = '/missions';
-      } else {
-        // If pending or rejected, go to waiting page
-        window.location.href = '/waiting';
-      }
-      return;
+      // Redirect to waiting page
+      window.location.href = '/waiting';
     }
-
-    // Add the employee to the employees list
-    formData.id = generateSimpleId();
-    setFormData(prev => ({ ...prev, id: formData.id }));
-    addEmployee(formData);
-
-    // Redirect to waiting page
-    window.location.href = '/waiting';
   };
 
   return (

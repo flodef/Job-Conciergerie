@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { hasCompletedWelcomeFlow, getWelcomeParams } from './welcomeParams';
-import { getEmployees } from './employeeUtils';
+import { findEmployee } from './employeeUtils';
+import { getWelcomeParams, hasCompletedWelcomeFlow } from './welcomeParams';
 
 /**
  * Hook to redirect users to the landing page if they haven't completed registration
@@ -15,38 +15,33 @@ export function useRedirectIfNotRegistered() {
   useEffect(() => {
     // Get the current path
     const currentPath = window.location.pathname;
-    
+
     // Don't redirect if already on the waiting page
     if (currentPath === '/waiting') {
       return;
     }
-    
+
     // Get user type from localStorage
     const { userType, employeeData } = getWelcomeParams();
-    
+
     // If user type is conciergerie, allow access (don't redirect)
     if (userType === 'conciergerie') {
       return;
     }
-    
+
     // Check if employee data exists in localStorage
     if (employeeData && userType === 'employee') {
       try {
-        // Get all employees
-        const allEmployees = getEmployees();
-        
         // Find employee with matching email
-        const foundEmployee = allEmployees.find(
-          emp => emp.email.toLowerCase() === employeeData.email.toLowerCase()
-        );
-        
+        const foundEmployee = findEmployee(employeeData);
+
         if (foundEmployee) {
           // If employee is pending or rejected, redirect to waiting page
           if (foundEmployee.status === 'pending' || foundEmployee.status === 'rejected') {
             window.location.href = '/waiting';
             return;
           }
-          
+
           // If employee is accepted, allow access
           if (foundEmployee.status === 'accepted') {
             return;
@@ -56,7 +51,7 @@ export function useRedirectIfNotRegistered() {
         console.error('Error checking employee status:', error);
       }
     }
-    
+
     // Check if the user has completed the welcome flow
     // Only redirect to home if not on the waiting page and no valid employee data
     if (!hasCompletedWelcomeFlow()) {
