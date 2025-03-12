@@ -1,7 +1,7 @@
 'use client';
 
 import { clsx } from 'clsx/lite';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ConfirmationModal from '../components/confirmationModal';
 import LoadingSpinner from '../components/loadingSpinner';
 import { ToastMessage, ToastProps, ToastType } from '../components/toastMessage';
@@ -30,6 +30,19 @@ export default function Settings() {
     employeeData: null,
     conciergerieData: null,
   });
+  
+  // Validation states
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
+  
+  // References for form fields
+  const emailRef = React.useRef<HTMLInputElement>(null);
+  const phoneRef = React.useRef<HTMLInputElement>(null);
+  
+  // Regular expressions for validation
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const frenchPhoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/;
   const { setPrimaryColor } = useTheme();
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showNukeConfirmation, setShowNukeConfirmation] = useState(false);
@@ -126,6 +139,55 @@ export default function Settings() {
   // Handle form submission
   const handleSave = () => {
     if (!userInfo?.conciergerieData && !userInfo?.employeeData) return;
+
+    setIsFormSubmitted(true);
+
+    // Validate required fields
+    if (!email) {
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez remplir tous les champs obligatoires',
+      });
+      // Focus on email field
+      emailRef.current?.focus();
+      return;
+    }
+    
+    // Validate required phone number
+    if (!tel) {
+      setPhoneError('Veuillez entrer un numéro de téléphone');
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez remplir tous les champs obligatoires',
+      });
+      // Focus on phone field
+      phoneRef.current?.focus();
+      return;
+    }
+    
+    // Validate email format
+    if (!emailRegex.test(email)) {
+      setEmailError("Format d'email invalide");
+      setToastMessage({
+        type: ToastType.Error,
+        message: "Veuillez corriger le format de l'email",
+      });
+      // Focus on email field
+      emailRef.current?.focus();
+      return;
+    }
+    
+    // Validate phone format
+    if (!frenchPhoneRegex.test(tel)) {
+      setPhoneError('Format de numéro de téléphone invalide');
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez corriger le format du numéro de téléphone',
+      });
+      // Focus on phone field
+      phoneRef.current?.focus();
+      return;
+    }
 
     setIsSaving(true);
 
@@ -227,17 +289,27 @@ export default function Settings() {
 
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-foreground/70 mb-1">
-                  Email
+                  Email*
                 </label>
                 <input
                   type="email"
                   id="email"
+                  ref={emailRef}
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={e => {
+                    const newValue = e.target.value;
+                    setEmail(newValue);
+                    if (newValue && !emailRegex.test(newValue)) {
+                      setEmailError('Format d\'email invalide');
+                    } else {
+                      setEmailError(null);
+                    }
+                  }}
                   className={clsx(
                     'w-full p-2 border rounded-md',
                     'border-foreground/20',
                     'focus:outline-none focus:ring-2',
+                    (isFormSubmitted && !email) || emailError ? 'border-red-500' : '',
                   )}
                   style={
                     {
@@ -245,28 +317,49 @@ export default function Settings() {
                     } as React.CSSProperties
                   }
                 />
+                {isFormSubmitted && !email ? (
+                  <p className="text-red-500 text-sm mt-1">Veuillez entrer une adresse email</p>
+                ) : emailError ? (
+                  <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                ) : null}
               </div>
 
               <div>
                 <label htmlFor="tel" className="block text-sm font-medium text-foreground/70 mb-1">
-                  Téléphone
+                  Téléphone*
                 </label>
                 <input
                   type="tel"
                   id="tel"
+                  ref={phoneRef}
                   value={tel}
-                  onChange={e => setTel(e.target.value)}
+                  onChange={e => {
+                    const newValue = e.target.value;
+                    setTel(newValue);
+                    if (newValue && !frenchPhoneRegex.test(newValue)) {
+                      setPhoneError('Format de numéro de téléphone invalide');
+                    } else {
+                      setPhoneError(null);
+                    }
+                  }}
                   className={clsx(
                     'w-full p-2 border rounded-md',
                     'border-foreground/20',
                     'focus:outline-none focus:ring-2',
+                    (isFormSubmitted && !tel) || phoneError ? 'border-red-500' : '',
                   )}
+                  placeholder="Ex: 06 12 34 56 78"
                   style={
                     {
                       '--tw-ring-color': selectedColor?.value || userInfo.conciergerieData.color,
                     } as React.CSSProperties
                   }
                 />
+                {isFormSubmitted && !tel ? (
+                  <p className="text-red-500 text-sm mt-1">Veuillez entrer un numéro de téléphone</p>
+                ) : phoneError ? (
+                  <p className="text-red-500 text-sm mt-1">{phoneError}</p>
+                ) : null}
               </div>
 
               <div>
@@ -352,23 +445,28 @@ export default function Settings() {
             </div>
 
             <div>
-              <p className="text-sm text-foreground/70 mb-1">Conciergerie</p>
-              <p className="font-medium">{userInfo.employeeData.conciergerieName}</p>
-            </div>
-
-            <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground/70 mb-1">
                 Email
               </label>
               <input
                 type="email"
                 id="email"
+                ref={emailRef}
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => {
+                  const newValue = e.target.value;
+                  setEmail(newValue);
+                  if (newValue && !emailRegex.test(newValue)) {
+                    setEmailError('Format d\'email invalide');
+                  } else {
+                    setEmailError(null);
+                  }
+                }}
                 className={clsx(
                   'w-full p-2 border rounded-md',
                   'border-foreground/20',
                   'focus:outline-none focus:ring-2',
+                  (isFormSubmitted && !email) || emailError ? 'border-red-500' : '',
                 )}
                 style={
                   {
@@ -376,28 +474,49 @@ export default function Settings() {
                   } as React.CSSProperties
                 }
               />
+              {isFormSubmitted && !email ? (
+                <p className="text-red-500 text-sm mt-1">Veuillez entrer une adresse email</p>
+              ) : emailError ? (
+                <p className="text-red-500 text-sm mt-1">{emailError}</p>
+              ) : null}
             </div>
 
             <div>
               <label htmlFor="tel" className="block text-sm font-medium text-foreground/70 mb-1">
-                Téléphone
+                Téléphone*
               </label>
               <input
                 type="tel"
                 id="tel"
+                ref={phoneRef}
                 value={tel}
-                onChange={e => setTel(e.target.value)}
+                onChange={e => {
+                  const newValue = e.target.value;
+                  setTel(newValue);
+                  if (newValue && !frenchPhoneRegex.test(newValue)) {
+                    setPhoneError('Format de numéro de téléphone invalide');
+                  } else {
+                    setPhoneError(null);
+                  }
+                }}
                 className={clsx(
                   'w-full p-2 border rounded-md',
                   'border-foreground/20',
                   'focus:outline-none focus:ring-2',
+                  (isFormSubmitted && !tel) || phoneError ? 'border-red-500' : '',
                 )}
+                placeholder="Ex: 06 12 34 56 78"
                 style={
                   {
                     '--tw-ring-color': 'var(--color-primary)',
                   } as React.CSSProperties
                 }
               />
+              {isFormSubmitted && !tel ? (
+                <p className="text-red-500 text-sm mt-1">Veuillez entrer un numéro de téléphone</p>
+              ) : phoneError ? (
+                <p className="text-red-500 text-sm mt-1">{phoneError}</p>
+              ) : null}
             </div>
 
             <div className="flex justify-center">

@@ -1,21 +1,21 @@
 'use client';
 
 import { useLocalStorage } from '@/app/utils/localStorage';
-import { clsx } from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/themeProvider';
 import conciergeriesData from '../data/conciergeries.json';
+import { Conciergerie } from '../types/types';
 import { getColorValueByName } from '../utils/welcomeParams';
 import FormActions from './formActions';
+import Select from './select';
 import { ToastMessage, ToastProps, ToastType } from './toastMessage';
-import { Conciergerie } from '../types/types';
 
 type ConciergerieFormProps = {
-  companies: string[];
+  conciergerieNames: string[];
   onClose: () => void;
 };
 
-export default function ConciergerieForm({ companies, onClose }: ConciergerieFormProps) {
+export default function ConciergerieForm({ conciergerieNames, onClose }: ConciergerieFormProps) {
   const { setPrimaryColor, resetPrimaryColor } = useTheme();
   const [conciergerieData, setConciergerieData] = useLocalStorage<Conciergerie>('conciergerie_data', {
     name: '',
@@ -62,18 +62,21 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
     onClose();
   };
 
+  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setIsFormSubmitted(true);
 
     if (!conciergerieData.name) {
       setToastMessage({
         type: ToastType.Error,
         message: 'Veuillez sélectionner une conciergerie',
       });
-      setIsSubmitting(false);
       return;
     }
+
+    setIsSubmitting(true);
 
     // Apply the color theme
     setPrimaryColor(conciergerieData.color);
@@ -94,76 +97,66 @@ export default function ConciergerieForm({ companies, onClose }: ConciergerieFor
         />
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="conciergerie" className="block text-sm font-medium text-foreground mb-1">
             Conciergerie
           </label>
-          <select
+          <Select
             id="conciergerie"
             value={conciergerieData.name}
-            onChange={e => setConciergerieData({ ...conciergerieData, name: e.target.value })}
-            className={clsx(
-              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-              'border-foreground/20 focus-visible:outline-primary',
-            )}
-            required
-          >
-            <option value="" disabled>
-              Sélectionnez une conciergerie
-            </option>
-            {companies.map(company => (
-              <option key={company} value={company}>
-                {company}
-              </option>
-            ))}
-          </select>
+            onChange={(value: string) => {
+              // Update conciergerie data when selection changes
+              if (value) {
+                const selectedConciergerie = conciergeriesData.find(c => c.name === value);
+                if (selectedConciergerie) {
+                  // Get color value from colors.json based on colorName
+                  const colorValue = getColorValueByName(selectedConciergerie.colorName);
+                  setConciergerieData(prev => ({
+                    ...prev,
+                    name: value,
+                    email: selectedConciergerie.email,
+                    colorName: selectedConciergerie.colorName,
+                    color: colorValue || '',
+                    tel: selectedConciergerie.tel,
+                  }));
+                }
+              } else {
+                setConciergerieData(prev => ({ ...prev, name: '' }));
+              }
+            }}
+            options={conciergerieNames}
+            placeholder="Sélectionner une conciergerie"
+            error={isFormSubmitted && !conciergerieData.name}
+            borderColor={conciergerieData.name && conciergerieData.color ? conciergerieData.color : undefined}
+          />
+          {isFormSubmitted && !conciergerieData.name && (
+            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une conciergerie</p>
+          )}
         </div>
 
         {conciergerieData.name && (
-          <div className="space-y-6">
+          <div className="space-y-4 mt-2">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
-                Email (non modifiable)
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={conciergerieData.email}
-                readOnly
-                className={clsx(
-                  'w-full px-3 py-2 border rounded-lg bg-background text-foreground/50',
-                  'border-foreground/20 focus-visible:outline-primary cursor-not-allowed',
-                )}
-              />
+              <h3 className="text-sm font-medium text-light">Email</h3>
+              <p className="text-foreground">{conciergerieData.email}</p>
             </div>
 
             {conciergerieData.tel && (
               <div>
-                <label htmlFor="tel" className="block text-sm font-medium text-foreground mb-1">
-                  Téléphone (non modifiable)
-                </label>
-                <input
-                  type="tel"
-                  id="tel"
-                  value={conciergerieData.tel}
-                  readOnly
-                  className={clsx(
-                    'w-full px-3 py-2 border rounded-lg bg-background text-foreground/50',
-                    'border-foreground/20 focus-visible:outline-primary cursor-not-allowed',
-                  )}
-                />
+                <h3 className="text-sm font-medium text-light">Téléphone</h3>
+                <p className="text-foreground">{conciergerieData.tel}</p>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Couleur (non modifiable)</label>
-              <div className="flex items-center space-x-2">
+              <h3 className="text-sm font-medium text-light">Couleur</h3>
+              <div className="flex items-center mt-1">
                 <div
-                  className="w-8 h-8 rounded-full border border-secondary"
+                  className="w-6 h-6 rounded-full border border-secondary mr-2"
                   style={{ backgroundColor: conciergerieData.color }}
                 />
-                <span className="text-foreground/70">{conciergerieData.colorName}</span>
+                <span className="text-foreground">{conciergerieData.colorName}</span>
               </div>
             </div>
 

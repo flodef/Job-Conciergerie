@@ -33,6 +33,12 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isFormChanged, setIsFormChanged] = useState(false);
 
+  // Validation states
+  const [descriptionError, setDescriptionError] = useState<string | null>(null);
+
+  // Constants for validation
+  const MAX_DESCRIPTION_LENGTH = 500;
+
   const isFormValid =
     (images.length > 0 || existingImages.length > 0) &&
     description.trim() !== '' &&
@@ -69,6 +75,16 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsFormSubmitted(true);
+
+    // Check description length
+    if (description.length > MAX_DESCRIPTION_LENGTH) {
+      setDescriptionError(`La description ne peut pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`);
+      setToastMessage({
+        type: ToastType.Error,
+        message: `La description ne peut pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`,
+      });
+      return;
+    }
 
     if (isFormValid) {
       try {
@@ -295,20 +311,38 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
           <label className="text-base font-medium text-foreground">
             <h2 className="mb-2">Description</h2>
           </label>
-          <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            className={clsx(
-              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-              'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && description.trim() === '' && 'border-red-500',
+          <div className="relative">
+            <textarea
+              value={description}
+              onChange={e => {
+                const newValue = e.target.value;
+                if (newValue.length > MAX_DESCRIPTION_LENGTH) {
+                  setDescriptionError(`La description ne peut pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`);
+                  setDescription(newValue.slice(0, MAX_DESCRIPTION_LENGTH));
+                } else {
+                  setDescriptionError(null);
+                  setDescription(newValue);
+                }
+              }}
+              className={clsx(
+                'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
+                'border-foreground/20 focus-visible:outline-primary',
+                (isFormSubmitted && description.trim() === '') || descriptionError ? 'border-red-500' : '',
+              )}
+              rows={4}
+              placeholder="Décrivez les caractéristiques du bien..."
+              maxLength={MAX_DESCRIPTION_LENGTH}
+            />
+            {isFormSubmitted && description.trim() === '' ? (
+              <p className="text-red-500 text-sm mt-1">Veuillez remplir la description</p>
+            ) : descriptionError ? (
+              <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
+            ) : (
+              <div className="text-right text-sm text-foreground/50 -mt-1.5">
+                {description.length}/{MAX_DESCRIPTION_LENGTH}
+              </div>
             )}
-            rows={4}
-            placeholder="Décrivez les caractéristiques du bien..."
-          />
-          {isFormSubmitted && description.trim() === '' && (
-            <p className="text-red-500 text-sm">Veuillez remplir la description</p>
-          )}
+          </div>
         </div>
 
         <div>

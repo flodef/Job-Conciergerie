@@ -2,11 +2,12 @@
 
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { clsx } from 'clsx/lite';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTheme } from '../contexts/themeProvider';
 import { Employee } from '../types/types';
 import { addEmployee, getEmployeeStatus } from '../utils/employeeUtils';
 import { generateSimpleId } from '../utils/id';
+import Select from './select';
 import FormActions from './formActions';
 import { ToastMessage, ToastProps, ToastType } from './toastMessage';
 import Tooltip from './tooltip';
@@ -31,6 +32,23 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Validation states
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [messageError, setMessageError] = useState<string | null>(null);
+
+  // References for form fields
+  const firstNameRef = React.useRef<HTMLInputElement>(null);
+  const familyNameRef = React.useRef<HTMLInputElement>(null);
+  const emailRef = React.useRef<HTMLInputElement>(null);
+  const phoneRef = React.useRef<HTMLInputElement>(null);
+  const messageRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // Regular expressions for validation
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const frenchPhoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/;
+  const MAX_MESSAGE_LENGTH = 500;
+
   // Update conciergerie if companies change and current selection is not in the list
   useEffect(() => {
     if (conciergerieNames.length > 0 && !conciergerieNames.includes(formData.conciergerieName ?? '')) {
@@ -48,7 +66,33 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Validate as user types
+    if (name === 'email') {
+      if (value && !emailRegex.test(value)) {
+        setEmailError("Format d'email invalide");
+      } else {
+        setEmailError(null);
+      }
+    } else if (name === 'tel') {
+      if (value && !frenchPhoneRegex.test(value)) {
+        setPhoneError('Format de numéro de téléphone invalide');
+      } else {
+        setPhoneError(null);
+      }
+    } else if (name === 'message') {
+      if (value.length > MAX_MESSAGE_LENGTH) {
+        setMessageError(`Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères`);
+      } else {
+        setMessageError(null);
+      }
+    }
+
+    // Update form data
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'message' ? value.slice(0, MAX_MESSAGE_LENGTH) : value,
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,11 +100,81 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
     setIsFormSubmitted(true);
 
     // Check if all required fields are filled
-    if (!formData.firstName || !formData.familyName || !formData.tel || !formData.email || !formData.conciergerieName) {
+    if (!formData.firstName) {
       setToastMessage({
         type: ToastType.Error,
         message: 'Veuillez remplir tous les champs obligatoires',
       });
+      firstNameRef.current?.focus();
+      return;
+    }
+
+    if (!formData.familyName) {
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez remplir tous les champs obligatoires',
+      });
+      familyNameRef.current?.focus();
+      return;
+    }
+
+    if (!formData.email) {
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez remplir tous les champs obligatoires',
+      });
+      emailRef.current?.focus();
+      return;
+    }
+
+    if (!formData.tel) {
+      setPhoneError('Veuillez entrer un numéro de téléphone');
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez remplir tous les champs obligatoires',
+      });
+      phoneRef.current?.focus();
+      return;
+    }
+
+    if (!formData.conciergerieName) {
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez sélectionner une conciergerie',
+      });
+      return;
+    }
+
+    // Validate email format
+    if (!emailRegex.test(formData.email)) {
+      setEmailError("Format d'email invalide");
+      setToastMessage({
+        type: ToastType.Error,
+        message: "Veuillez corriger le format de l'email",
+      });
+      emailRef.current?.focus();
+      return;
+    }
+
+    // Validate phone format
+    if (!frenchPhoneRegex.test(formData.tel)) {
+      setPhoneError('Format de numéro de téléphone invalide');
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez corriger le format du numéro de téléphone',
+      });
+      phoneRef.current?.focus();
+      return;
+    }
+
+    // Validate message length
+    if (formData.message && formData.message.length > MAX_MESSAGE_LENGTH) {
+      setMessageError(`Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères`);
+      setToastMessage({
+        type: ToastType.Error,
+        message: `Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères`,
+      });
+      messageRef.current?.focus();
       return;
     }
 
@@ -97,7 +211,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
         />
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-2">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-1">
             Prénom*
@@ -106,6 +220,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
             type="text"
             id="firstName"
             name="firstName"
+            ref={firstNameRef}
             value={formData.firstName}
             onChange={handleChange}
             className={clsx(
@@ -113,9 +228,11 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
               'border-foreground/20 focus-visible:outline-primary',
               isFormSubmitted && !formData.firstName && 'border-red-500',
             )}
-            required
             disabled={isSubmitting}
           />
+          {isFormSubmitted && !formData.firstName && (
+            <p className="text-red-500 text-sm mt-1">Veuillez entrer votre prénom</p>
+          )}
         </div>
 
         <div>
@@ -126,6 +243,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
             type="text"
             id="familyName"
             name="familyName"
+            ref={familyNameRef}
             value={formData.familyName}
             onChange={handleChange}
             className={clsx(
@@ -133,9 +251,11 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
               'border-foreground/20 focus-visible:outline-primary',
               isFormSubmitted && !formData.familyName && 'border-red-500',
             )}
-            required
             disabled={isSubmitting}
           />
+          {isFormSubmitted && !formData.familyName && (
+            <p className="text-red-500 text-sm mt-1">Veuillez entrer votre nom</p>
+          )}
         </div>
 
         <div>
@@ -146,16 +266,22 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
             type="tel"
             id="tel"
             name="tel"
+            ref={phoneRef}
             value={formData.tel}
             onChange={handleChange}
             className={clsx(
               'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
               'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && !formData.tel && 'border-red-500',
+              (isFormSubmitted && !formData.tel) || phoneError ? 'border-red-500' : '',
             )}
-            required
             disabled={isSubmitting}
+            placeholder="Ex: 06 12 34 56 78"
           />
+          {isFormSubmitted && !formData.tel ? (
+            <p className="text-red-500 text-sm mt-1">Veuillez entrer votre numéro de téléphone</p>
+          ) : phoneError ? (
+            <p className="text-red-500 text-sm mt-1">{phoneError}</p>
+          ) : null}
         </div>
 
         <div>
@@ -166,16 +292,21 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
             type="email"
             id="email"
             name="email"
+            ref={emailRef}
             value={formData.email}
             onChange={handleChange}
             className={clsx(
               'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
               'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && !formData.email && 'border-red-500',
+              (isFormSubmitted && !formData.email) || emailError ? 'border-red-500' : '',
             )}
-            required
             disabled={isSubmitting}
           />
+          {isFormSubmitted && !formData.email ? (
+            <p className="text-red-500 text-sm mt-1">Veuillez entrer votre adresse email</p>
+          ) : emailError ? (
+            <p className="text-red-500 text-sm mt-1">{emailError}</p>
+          ) : null}
         </div>
 
         <div>
@@ -183,43 +314,54 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
             <span>Conciergerie*</span>
             <Tooltip text="C'est la conciergerie par laquelle vous avez connu ce site, qui recevra votre candidature et qui validera votre inscription." />
           </label>
-          <select
+          <Select
             id="conciergerie"
-            name="conciergerie"
-            value={formData.conciergerieName}
-            onChange={handleChange}
-            className={clsx(
-              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-              'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && !formData.conciergerieName && 'border-red-500',
-            )}
-            required
+            value={formData.conciergerieName || ''}
+            onChange={(value: string) => {
+              setFormData({
+                ...formData,
+                conciergerieName: value,
+              });
+            }}
+            options={conciergerieNames}
+            placeholder="Sélectionner une conciergerie"
+            error={isFormSubmitted && !formData.conciergerieName}
             disabled={isSubmitting}
-          >
-            {conciergerieNames.map(company => (
-              <option key={company} value={company}>
-                {company}
-              </option>
-            ))}
-          </select>
+            borderColor={formData.conciergerieName ? 'var(--color-default)' : undefined}
+          />
+          {isFormSubmitted && !formData.conciergerieName && (
+            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une conciergerie</p>
+          )}
         </div>
 
         <div>
           <label htmlFor="message" className="block text-sm font-medium text-foreground mb-1">
             Message
           </label>
-          <textarea
-            id="message"
-            name="message"
-            value={formData.message}
-            onChange={handleChange}
-            className={clsx(
-              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-              'border-foreground/20 focus-visible:outline-primary',
+          <div className="relative">
+            <textarea
+              id="message"
+              name="message"
+              ref={messageRef}
+              value={formData.message}
+              onChange={handleChange}
+              className={clsx(
+                'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
+                'border-foreground/20 focus-visible:outline-primary',
+                messageError && 'border-red-500',
+              )}
+              rows={4}
+              disabled={isSubmitting}
+              maxLength={MAX_MESSAGE_LENGTH}
+            />
+            {messageError ? (
+              <p className="text-red-500 text-sm mt-1">{messageError}</p>
+            ) : (
+              <div className="text-right text-sm text-foreground/50 -mt-1.5">
+                {formData.message?.length || 0}/{MAX_MESSAGE_LENGTH}
+              </div>
             )}
-            rows={3}
-            disabled={isSubmitting}
-          />
+          </div>
         </div>
 
         <FormActions onCancel={onClose} submitText="Valider" submitType="submit" isSubmitting={isSubmitting} />

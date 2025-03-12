@@ -6,6 +6,7 @@ import { useMissions } from '../contexts/missionsProvider';
 import { Mission, Objective } from '../types/types';
 import { getObjectivesWithPoints } from '../utils/objectiveUtils';
 import FormActions from './formActions';
+import Select from './select';
 import { ToastMessage, ToastProps, ToastType } from './toastMessage';
 
 type MissionFormProps = {
@@ -219,23 +220,20 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium mb-2">Bien</label>
-          <select
+          <Select
+            id="home-select"
             value={homeId}
-            onChange={e => {
-              setHomeId(e.target.value);
+            onChange={(value: string) => {
+              setHomeId(value);
             }}
-            className={clsx(
-              'w-full p-2 border rounded-lg bg-background',
-              'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && !homeId ? 'border-red-500' : 'border-secondary',
-            )}
-          >
-            {filteredHomes.map(home => (
-              <option key={home.id} value={home.id}>
-                {home.title}
-              </option>
-            ))}
-          </select>
+            options={filteredHomes.map(home => ({
+              value: home.id,
+              label: home.title,
+            }))}
+            placeholder="Sélectionner un bien"
+            error={isFormSubmitted && !homeId}
+            borderColor={homeId && currentConciergerie?.color ? currentConciergerie.color : undefined}
+          />
           {isFormSubmitted && !homeId && <p className="text-red-500 text-sm mt-1">Veuillez sélectionner un bien</p>}
         </div>
 
