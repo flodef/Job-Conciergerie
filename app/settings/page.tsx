@@ -30,16 +30,16 @@ export default function Settings() {
     employeeData: null,
     conciergerieData: null,
   });
-  
+
   // Validation states
   const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
-  
+
   // References for form fields
   const emailRef = React.useRef<HTMLInputElement>(null);
   const phoneRef = React.useRef<HTMLInputElement>(null);
-  
+
   // Regular expressions for validation
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const frenchPhoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/;
@@ -152,7 +152,7 @@ export default function Settings() {
       emailRef.current?.focus();
       return;
     }
-    
+
     // Validate required phone number
     if (!tel) {
       setPhoneError('Veuillez entrer un numéro de téléphone');
@@ -164,7 +164,7 @@ export default function Settings() {
       phoneRef.current?.focus();
       return;
     }
-    
+
     // Validate email format
     if (!emailRegex.test(email)) {
       setEmailError("Format d'email invalide");
@@ -176,7 +176,7 @@ export default function Settings() {
       emailRef.current?.focus();
       return;
     }
-    
+
     // Validate phone format
     if (!frenchPhoneRegex.test(tel)) {
       setPhoneError('Format de numéro de téléphone invalide');
@@ -223,6 +223,8 @@ export default function Settings() {
           ...userInfo.employeeData,
           email,
           tel,
+          message: undefined,
+          conciergerieName: undefined,
         };
 
         // Save to localStorage
@@ -300,7 +302,7 @@ export default function Settings() {
                     const newValue = e.target.value;
                     setEmail(newValue);
                     if (newValue && !emailRegex.test(newValue)) {
-                      setEmailError('Format d\'email invalide');
+                      setEmailError("Format d'email invalide");
                     } else {
                       setEmailError(null);
                     }
@@ -457,7 +459,7 @@ export default function Settings() {
                   const newValue = e.target.value;
                   setEmail(newValue);
                   if (newValue && !emailRegex.test(newValue)) {
-                    setEmailError('Format d\'email invalide');
+                    setEmailError("Format d'email invalide");
                   } else {
                     setEmailError(null);
                   }

@@ -56,7 +56,9 @@ export default function EmployeesList() {
     updateEmployeeStatus(id, newStatus);
 
     // Update local state
-    const updatedEmployees = employees.map(emp => (emp.id === id ? { ...emp, status: newStatus } : emp));
+    const updatedEmployees = employees.map(emp =>
+      emp.id === id ? { ...emp, status: newStatus, message: undefined, conciergerieName: undefined } : emp,
+    );
 
     setEmployees(sortEmployees(updatedEmployees));
 
