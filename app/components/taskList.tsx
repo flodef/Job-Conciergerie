@@ -27,6 +27,11 @@ export default function TaskList({
   }, [tasks.length]);
 
   const addTask = () => {
+    // Prevent adding more than 10 tasks
+    if (tasks.length >= 10) {
+      return;
+    }
+    
     if (tasks[tasks.length - 1]?.trim() !== '') {
       setTasks([...tasks, '']);
     }
@@ -52,7 +57,7 @@ export default function TaskList({
     <div className="space-y-2">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-base font-medium text-foreground">Tâches</h2>
-        {(tasks.length === 0 || tasks[tasks.length - 1]?.trim() !== '') && (
+        {(tasks.length === 0 || tasks[tasks.length - 1]?.trim() !== '') && tasks.length < 10 && (
           <button
             type="button"
             onClick={addTask}
@@ -60,6 +65,11 @@ export default function TaskList({
           >
             + Ajouter
           </button>
+        )}
+        {tasks.length >= 10 && (
+          <span className="text-sm text-orange-500">
+            Maximum de 10 tâches atteint
+          </span>
         )}
       </div>
 
