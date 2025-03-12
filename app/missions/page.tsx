@@ -52,6 +52,7 @@ export default function Missions() {
   // Filter missions:
   // 1. Not deleted
   // 2. Taken by the current employee
+  // 3. For employees, only show missions they have access to based on prestataires setting
   // Then sort by date (closest to today first)
   const activeMissions = missions
     .filter(mission => {
@@ -59,7 +60,24 @@ export default function Missions() {
       if (mission.deleted || new Date(mission.endDateTime) < new Date()) return false;
 
       // For employee users, show only Available missions (not taken by anyone)
-      if (userType === 'employee') return !mission.employeeId;
+      if (userType === 'employee') {
+        // First check if the mission is available (not taken by anyone)
+        if (mission.employeeId) return false;
+
+        // Get the current employee ID from localStorage
+        const employeeDataStr = localStorage.getItem('employee_data');
+        const employeeData = employeeDataStr ? JSON.parse(employeeDataStr) : null;
+        const employeeId = employeeData?.id;
+        if (!employeeId) return false;
+
+        // If the mission has prestataires specified, check if the current employee is in the list
+        if (mission.prestataires?.length) {
+          return mission.prestataires.includes(employeeId);
+        }
+
+        // If no prestataires specified, show to all
+        return true;
+      }
 
       // For conciergerie users, show all the missions
       return true;

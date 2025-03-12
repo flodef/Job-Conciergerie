@@ -53,6 +53,7 @@ export interface Mission {
   deleted: boolean;
   conciergerieName: string; // Reference to the conciergerie by name
   status?: MissionStatus; // Default is 'pending' if not specified
+  prestataires?: string[]; // List of prestataire IDs who can see this mission, empty or undefined means all
 }
 
 export interface MissionPoints {

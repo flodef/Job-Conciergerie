@@ -1,11 +1,13 @@
 'use client';
 
 import { clsx } from 'clsx/lite';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
-import { Mission, Objective } from '../types/types';
+import { EmployeeWithStatus, Mission, Objective } from '../types/types';
+import { getEmployees } from '../utils/employeeUtils';
 import { getObjectivesWithPoints } from '../utils/objectiveUtils';
 import FormActions from './formActions';
+import MultiSelect from './multiSelect';
 import Select from './select';
 import { ToastMessage, ToastProps, ToastType } from './toastMessage';
 
@@ -24,8 +26,8 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
   const [objectivesState, setObjectives] = useState<Objective[]>(mission?.objectives || []);
+  const [selectedPrestataires, setSelectedPrestataires] = useState<string[]>(mission?.prestataires || []);
   const [isFormChanged, setIsFormChanged] = useState(false);
-
   // Get current date and time in local timezone
   const now = new Date();
   const localISOString = (date: Date) => {
@@ -36,6 +38,16 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
       return '';
     }
   };
+
+  // Get prestataires (employees with accepted status) using useMemo
+  // This avoids the infinite loop issue by not using state + useEffect
+  const prestataires = useMemo(() => {
+    // Get all employees from localStorage
+    const allEmployees = getEmployees();
+
+    // Filter to only include accepted employees for the current conciergerie
+    return allEmployees.filter((emp: EmployeeWithStatus) => emp.status === 'accepted');
+  }, []);
 
   // Initialize start and end date/time
   const [startDateTime, setStartDateTime] = useState<string>(
@@ -74,9 +86,17 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
     const homeIdChanged = homeId !== mission.homeId;
     const startDateChanged = startDateTime !== localISOString(mission.startDateTime);
     const endDateChanged = endDateTime !== localISOString(mission.endDateTime);
+    
+    // Check if prestataires selection has changed
+    // Compare arrays regardless of order
+    const missionPrestataires = mission.prestataires || [];
+    const prestatairesChanged = 
+      selectedPrestataires.length !== missionPrestataires.length || 
+      selectedPrestataires.some(id => !missionPrestataires.includes(id)) ||
+      missionPrestataires.some(id => !selectedPrestataires.includes(id));
 
-    return objectivesChanged || homeIdChanged || startDateChanged || endDateChanged;
-  }, [homeId, objectivesState, startDateTime, endDateTime, mode, mission]);
+    return objectivesChanged || homeIdChanged || startDateChanged || endDateChanged || prestatairesChanged;
+  }, [homeId, objectivesState, startDateTime, endDateTime, selectedPrestataires, mode, mission]);
 
   // Update isFormChanged whenever form fields change
   useEffect(() => {
@@ -118,6 +138,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           objectives: objectivesState,
           startDateTime: startDate,
           endDateTime: endDate,
+          prestataires: selectedPrestataires.length > 0 ? selectedPrestataires : undefined,
         });
 
         if (result === false) {
@@ -141,6 +162,9 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           conciergerieName: mission.conciergerieName,
           modifiedDate: new Date(),
           deleted: mission.deleted || false,
+          prestataires: selectedPrestataires.length > 0 ? selectedPrestataires : undefined,
+          status: mission.status,
+          employeeId: mission.employeeId,
         };
 
         // Check if update would create a duplicate (excluding the current mission)
@@ -314,6 +338,27 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           {isFormSubmitted && !endDateTime && (
             <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une date et heure de fin</p>
           )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Prestataires</label>
+          {/* Add debugging in useEffect instead of inline */}
+          <MultiSelect
+            id="prestataires-select"
+            values={selectedPrestataires}
+            onChange={setSelectedPrestataires}
+            options={prestataires.map(emp => ({
+              value: emp.id,
+              label: `${emp.firstName} ${emp.familyName}`,
+            }))}
+            borderColor={currentConciergerie?.color}
+            allOption={true}
+          />
+          <p className="text-sm text-foreground/70 mt-1">
+            {selectedPrestataires.length === 0
+              ? 'Tous les prestataires pourront voir cette mission'
+              : 'Seuls les prestataires sélectionnés pourront voir cette mission'}
+          </p>
         </div>
 
         <FormActions
