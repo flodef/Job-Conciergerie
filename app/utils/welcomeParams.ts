@@ -90,7 +90,11 @@ export function hasCompletedWelcomeFlow(): boolean {
 
     if (userType === 'employee') {
       return (
-        !!employeeData && !!employeeData.firstName && !!employeeData.familyName && !!employeeData.email && !!employeeData.tel
+        !!employeeData &&
+        !!employeeData.firstName &&
+        !!employeeData.familyName &&
+        !!employeeData.email &&
+        !!employeeData.tel
       );
     }
 
@@ -128,7 +132,8 @@ export function updateConciergerieData(data: Conciergerie): void {
 }
 
 /**
- * Update employed data in localStorage
+ * Update employee data in localStorage
+ * This updates both the employee_data and the employee in the employees_list
  */
 export function updateEmployeeData(employee: Employee): void {
   try {
@@ -140,8 +145,26 @@ export function updateEmployeeData(employee: Employee): void {
     // If there's existing data, merge it with the new data
     const updatedData = currentData ? { ...currentData, ...employee } : employee;
 
-    // Save the updated data
+    // Save the updated data to employee_data
     localStorage.setItem('employee_data', JSON.stringify(updatedData));
+
+    // Also update the employee in the employees_list if it exists
+    const employeesListStr = localStorage.getItem('employees_list');
+    if (employeesListStr) {
+      const employeesList = JSON.parse(employeesListStr);
+
+      // Find the employee in the list by ID
+      const employeeIndex = employeesList.findIndex((emp: Employee) => emp.id === employee.id);
+
+      if (employeeIndex !== -1) {
+        // Update the employee in the list
+        const updatedEmployee = { ...employeesList[employeeIndex], ...employee };
+        employeesList[employeeIndex] = updatedEmployee;
+
+        // Save the updated list back to localStorage
+        localStorage.setItem('employees_list', JSON.stringify(employeesList));
+      }
+    }
   } catch (error) {
     console.error('Error updating employee data:', error);
   }
