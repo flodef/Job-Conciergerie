@@ -10,7 +10,9 @@ import conciergeriesData from './data/conciergeries.json';
 import { getWelcomeParams, hasCompletedWelcomeFlow } from './utils/welcomeParams';
 
 // Get conciergerie names from the JSON data
-const conciergerieNames = conciergeriesData.map(conciergerie => conciergerie.name);
+const conciergerieNames = conciergeriesData
+  .sort((a, b) => a.name.localeCompare(b.name))
+  .map(conciergerie => conciergerie.name);
 
 export default function Home() {
   const router = useRouter();
@@ -85,14 +87,14 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background p-4">
+    <main className="min-h-screen flex items-center justify-center bg-background px-4 pt-2">
       <div className="w-full max-w-md bg-background overflow-hidden">
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
           <UserTypeSelection onSelect={handleUserTypeSelect} />
         ) : showEmployeeForm ? (
           <EmployeeForm conciergerieNames={conciergerieNames} onClose={handleCloseForm} />
         ) : showConciergerieForm ? (
-          <ConciergerieForm companies={conciergerieNames} onClose={handleCloseForm} />
+          <ConciergerieForm conciergerieNames={conciergerieNames} onClose={handleCloseForm} />
         ) : null}
       </div>
     </main>
