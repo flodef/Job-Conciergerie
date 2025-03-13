@@ -140,6 +140,11 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
         </div>
 
         <div>
+          <h3 className="text-sm font-medium text-light">Zone géographique</h3>
+          <p className="text-foreground">{home.geographicZone || 'Non spécifiée'}</p>
+        </div>
+
+        <div>
           <h3 className="text-sm font-medium text-light">Tâches</h3>
           <ul className="list-none pl-0 mt-2 space-y-1">
             {home.tasks.map((task, index) => (

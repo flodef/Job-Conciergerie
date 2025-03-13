@@ -8,7 +8,8 @@ export interface Home {
   title: string;
   description: string;
   tasks: string[];
-  images?: string[]; // URLs to images
+  images: string[]; // URLs to images
+  geographicZone: string; // Geographic zone where the home is located
 }
 
 export interface HomeData extends Home {

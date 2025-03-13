@@ -5,10 +5,14 @@ import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { useHomes } from '../contexts/homesProvider';
 import { HomeData } from '../types/types';
+import geographicZonesData from '../data/geographicZone.json';
+import Combobox from './combobox';
+import ConfirmationModal from './confirmationModal';
 import FormActions from './formActions';
 import FullScreenModal from './fullScreenModal';
 import TaskList from './taskList';
 import { ToastMessage, ToastProps, ToastType } from './toastMessage';
+import { useMissions } from '../contexts/missionsProvider';
 
 type HomeFormProps = {
   onClose: () => void;
@@ -18,6 +22,7 @@ type HomeFormProps = {
 
 export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps) {
   const { addHome, updateHome, homeExists } = useHomes();
+  const { getCurrentConciergerie } = useMissions();
 
   // Default mockup image path
   const mockupImagePath = '/home.webp';
@@ -28,40 +33,59 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
   const [images, setImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>(home?.images || []);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [geographicZone, setGeographicZone] = useState<string>(home?.geographicZone || '');
+  const [geographicZones, setGeographicZones] = useState<string[]>([]);
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [toastMessage, setToastMessage] = useState<ToastProps>();
-  const [isFormChanged, setIsFormChanged] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [initialFormValues, setInitialFormValues] = useState<{
+    title: string;
+    description: string;
+    tasks: string[];
+    geographicZone: string;
+  }>();
 
   // Validation states
   const [descriptionError, setDescriptionError] = useState<string | null>(null);
 
+  const currentConciergerie = getCurrentConciergerie();
+
   // Constants for validation
   const MAX_DESCRIPTION_LENGTH = 500;
-
   const isFormValid =
     (images.length > 0 || existingImages.length > 0) &&
     description.trim() !== '' &&
     tasks.some(task => task.trim() !== '') &&
-    title.trim() !== '';
+    title.trim() !== '' &&
+    geographicZone.trim() !== '';
+
+  // Load geographic zones from JSON file
+  useEffect(() => {
+    setGeographicZones(geographicZonesData);
+
+    // Save initial form state for comparison
+    setInitialFormValues({
+      title,
+      description,
+      tasks: [...tasks],
+      geographicZone,
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check if form has been modified
   const checkFormChanged = useCallback(() => {
-    if (mode === 'add' || !home) return true; // Always enable save button for new homes
+    if (!initialFormValues) return false;
 
-    // For edit mode, check if any field has changed
-    const titleChanged = title !== home.title;
-    const descriptionChanged = description !== home.description;
-    const tasksChanged = JSON.stringify(tasks) !== JSON.stringify(home.tasks);
-    const imagesChanged = images.length > 0 || JSON.stringify(existingImages) !== JSON.stringify(home.images);
+    // Check if any field has been filled in compared to initial state
+    const titleChanged = title !== initialFormValues.title;
+    const descriptionChanged = description !== initialFormValues.description;
+    const tasksChanged = JSON.stringify(tasks) !== JSON.stringify(initialFormValues.tasks);
+    const imagesChanged = images.length > 0;
+    const geographicZoneChanged = geographicZone !== initialFormValues.geographicZone;
 
-    return titleChanged || descriptionChanged || tasksChanged || imagesChanged;
-  }, [title, description, tasks, images, existingImages, mode, home]);
-
-  // Update isFormChanged whenever form fields change
-  useEffect(() => {
-    setIsFormChanged(checkFormChanged());
-  }, [checkFormChanged]);
+    return titleChanged || descriptionChanged || tasksChanged || imagesChanged || geographicZoneChanged;
+  }, [title, description, tasks, images, geographicZone, initialFormValues]);
 
   useEffect(() => {
     const urls = images.map(image => URL.createObjectURL(image));
@@ -109,6 +133,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
             description,
             tasks: tasks.filter(task => task.trim() !== ''),
             images: imageUrls,
+            geographicZone,
           });
 
           if (result === false) {
@@ -133,6 +158,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
               description,
               tasks: tasks.filter(task => task.trim() !== ''),
               images: imageUrls,
+              geographicZone,
             });
             setToastMessage({ type: ToastType.Success, message: 'Bien mis à jour avec succès !' });
           }
@@ -346,6 +372,24 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
         </div>
 
         <div>
+          <label className="text-base font-medium text-foreground">
+            <h2 className="mb-2">Zone géographique</h2>
+          </label>
+          <Combobox
+            id="geographic-zone"
+            options={geographicZones}
+            value={geographicZone}
+            onChange={setGeographicZone}
+            placeholder="Sélectionnez une zone géographique..."
+            error={isFormSubmitted && !geographicZone}
+            borderColor={currentConciergerie?.color}
+          />
+          {isFormSubmitted && !geographicZone && (
+            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une zone géographique</p>
+          )}
+        </div>
+
+        <div>
           <TaskList tasks={tasks} setTasks={setTasks} />
           {isFormSubmitted && !tasks.some(t => t.trim() !== '') && (
             <p className="text-red-500 text-sm mt-1">Veuillez ajouter au moins une tâche</p>
@@ -353,10 +397,27 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
         </div>
 
         <FormActions
-          onCancel={onClose}
+          onCancel={() => {
+            if (checkFormChanged()) {
+              setShowConfirmDialog(true);
+            } else {
+              onClose();
+            }
+          }}
           submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
           submitType="submit"
-          disabled={mode === 'edit' && !isFormChanged}
+        />
+
+        <ConfirmationModal
+          isOpen={showConfirmDialog}
+          onClose={() => setShowConfirmDialog(false)}
+          onConfirm={() => {
+            onClose();
+          }}
+          title="Modifications non enregistrées"
+          message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
+          confirmText="Quitter sans enregistrer"
+          cancelText="Continuer l'édition"
         />
       </form>
     </div>

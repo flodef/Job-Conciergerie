@@ -274,6 +274,11 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         </div>
 
         <div>
+          <h3 className="text-sm font-medium text-light">Zone géographique</h3>
+          <p className="text-foreground">{home?.geographicZone || 'Non spécifiée'}</p>
+        </div>
+
+        <div>
           <h3 className="text-sm font-medium text-light flex items-center gap-1">
             <IconCalculator size={16} />
             Points de mission
