@@ -2,6 +2,21 @@
 
 import { Mission } from '../types/types';
 
+export const monthNames = [
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
+];
+
 // Format date to display in calendar (e.g., "Lundi 8 mars 2025")
 export const formatCalendarDate = (date: Date): string => {
   return date.toLocaleDateString('fr-FR', {
@@ -15,24 +30,24 @@ export const formatCalendarDate = (date: Date): string => {
 // Get all dates between start and end date (inclusive)
 export const getDatesInRange = (startDate: Date, endDate: Date): Date[] => {
   const dates: Date[] = [];
-  
+
   // Create a new date object to avoid modifying the original
   // Use local year, month, day to create a date at midnight local time
   const currentDate = new Date();
   currentDate.setFullYear(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
   currentDate.setHours(0, 0, 0, 0);
-  
+
   // Create a new date object for the end date using local time
   const lastDate = new Date();
   lastDate.setFullYear(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
   lastDate.setHours(0, 0, 0, 0);
-  
+
   // Loop through each day and add it to the array
   while (currentDate <= lastDate) {
     dates.push(new Date(currentDate));
     currentDate.setDate(currentDate.getDate() + 1);
   }
-  
+
   return dates;
 };
 
@@ -50,27 +65,27 @@ export const toLocalDateString = (date: Date): string => {
 // Group missions by date
 export const groupMissionsByDate = (missions: Mission[]): Map<string, Mission[]> => {
   const missionsByDate = new Map<string, Mission[]>();
-  
+
   missions.forEach(mission => {
     // Create date objects in local timezone
     const startDate = new Date(mission.startDateTime);
     const endDate = new Date(mission.endDateTime);
-    
+
     // Get all dates in the range using local dates (including start and end dates)
     const datesInRange = getDatesInRange(startDate, endDate);
-    
+
     datesInRange.forEach(date => {
       // Use local date string to avoid timezone issues
       const dateStr = toLocalDateString(date);
       const existingMissions = missionsByDate.get(dateStr) || [];
-      
+
       // Only add the mission if it's not already in the array for this date
       if (!existingMissions.some(m => m.id === mission.id)) {
         missionsByDate.set(dateStr, [...existingMissions, mission]);
       }
     });
   });
-  
+
   return missionsByDate;
 };
 
@@ -115,25 +130,25 @@ export const formatTime = (date: Date): string => {
 export const formatMissionTimeForCalendar = (mission: Mission, currentDate: Date): string => {
   const startDate = new Date(mission.startDateTime);
   const endDate = new Date(mission.endDateTime);
-  
+
   // Reset hours to compare just the dates
   const startDay = new Date(startDate);
   startDay.setHours(0, 0, 0, 0);
-  
+
   const endDay = new Date(endDate);
   endDay.setHours(0, 0, 0, 0);
-  
+
   const currentDay = new Date(currentDate);
   currentDay.setHours(0, 0, 0, 0);
-  
+
   // Check if the mission spans multiple days
   const isMultiDayMission = startDay.getTime() !== endDay.getTime();
-  
+
   // If it's a single day mission or if start and end are on the same day
   if (!isMultiDayMission) {
     return `${formatTime(startDate)} - ${formatTime(endDate)}`;
   }
-  
+
   // For multi-day missions
   if (currentDay.getTime() === startDay.getTime()) {
     // Start day
@@ -143,6 +158,6 @@ export const formatMissionTimeForCalendar = (mission: Mission, currentDate: Date
     return `Jusqu'à ${formatTime(endDate)}`;
   } else {
     // Day in between
-    return "Toute la journée";
+    return 'Toute la journée';
   }
 };

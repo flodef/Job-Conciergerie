@@ -1,8 +1,8 @@
 'use client';
 
-import { IconBriefcase, IconPlus } from '@tabler/icons-react';
+import { IconBriefcase, IconChevronDown, IconPlus, IconSortAscending, IconSortDescending } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ConfirmationModal from '../components/confirmationModal';
 import FloatingActionButton from '../components/floatingActionButton';
 import FullScreenModal from '../components/fullScreenModal';
@@ -14,6 +14,7 @@ import MissionForm from '../components/missionForm';
 import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 import { useTheme } from '../contexts/themeProvider';
+import { monthNames } from '../utils/calendarUtils';
 import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
 import { getWelcomeParams } from '../utils/welcomeParams';
 
@@ -28,6 +29,12 @@ export default function Missions() {
   const [isNoHomesModalOpen, setIsNoHomesModalOpen] = useState(false);
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
   const [userType, setUserType] = useState<string | null>(null);
+
+  // Sorting state
+  type SortField = 'date' | 'conciergerie' | 'geographicZone' | 'homeTitle';
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [collapsedCategories, setCollapsedCategories] = useState<string[]>([]);
 
   // Redirect if not registered
   useRedirectIfNotRegistered();
@@ -53,39 +60,149 @@ export default function Missions() {
   // 1. Not deleted
   // 2. Taken by the current employee
   // 3. For employees, only show missions they have access to based on prestataires setting
-  // Then sort by date (closest to today first)
-  const activeMissions = missions
-    .filter(mission => {
-      // Filter out deleted missions and past missions
-      if (mission.deleted || new Date(mission.endDateTime) < new Date()) return false;
+  const filteredMissions = useMemo(
+    () =>
+      missions.filter(mission => {
+        // Filter out deleted missions and past missions
+        if (mission.deleted || new Date(mission.endDateTime) < new Date()) return false;
 
-      // For employee users, show only Available missions (not taken by anyone)
-      if (userType === 'employee') {
-        // First check if the mission is available (not taken by anyone)
-        if (mission.employeeId) return false;
+        // For employee users, show only Available missions (not taken by anyone)
+        if (userType === 'employee') {
+          // First check if the mission is available (not taken by anyone)
+          if (mission.employeeId) return false;
 
-        // Get the current employee ID from localStorage
-        const employeeDataStr = localStorage.getItem('employee_data');
-        const employeeData = employeeDataStr ? JSON.parse(employeeDataStr) : null;
-        const employeeId = employeeData?.id;
-        if (!employeeId) return false;
+          // Get the current employee ID from localStorage
+          const employeeDataStr = localStorage.getItem('employee_data');
+          const employeeData = employeeDataStr ? JSON.parse(employeeDataStr) : null;
+          const employeeId = employeeData?.id;
+          if (!employeeId) return false;
 
-        // If the mission has prestataires specified, check if the current employee is in the list
-        if (mission.prestataires?.length) {
-          return mission.prestataires.includes(employeeId);
+          // If the mission has prestataires specified, check if the current employee is in the list
+          if (mission.prestataires?.length) {
+            return mission.prestataires.includes(employeeId);
+          }
+
+          // If no prestataires specified, show to all
+          return true;
         }
 
-        // If no prestataires specified, show to all
+        // For conciergerie users, show all the missions
         return true;
+      }),
+    [missions, userType],
+  );
+
+  // Helper function to get the month name in French
+  const getMonthName = (date: Date): string => {
+    return monthNames[date.getMonth()];
+  };
+
+  // Group and sort missions based on the selected sort field
+  const groupedMissions = useMemo(() => {
+    // Create a map to store missions grouped by category
+    const groupMap = new Map<string, typeof filteredMissions>();
+
+    // Group missions based on sort field
+    filteredMissions.forEach(mission => {
+      let categoryKey = '';
+
+      if (sortField === 'date') {
+        const date = new Date(mission.startDateTime);
+        categoryKey = getMonthName(date);
+      } else if (sortField === 'conciergerie') {
+        categoryKey = mission.conciergerieName;
+      } else if (sortField === 'geographicZone') {
+        // Find the home associated with this mission to get its geographic zone
+        const home = homes.find(h => h.id === mission.homeId);
+        categoryKey = home?.geographicZone || 'Non définie';
+      } else if (sortField === 'homeTitle') {
+        // Find the home associated with this mission to get its title
+        const home = homes.find(h => h.id === mission.homeId);
+        categoryKey = home?.title || 'Sans titre';
       }
 
-      // For conciergerie users, show all the missions
-      return true;
-    })
-    .sort((a, b) => {
-      // Sort by date (closest to today first)
-      return new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime();
+      if (!groupMap.has(categoryKey)) {
+        groupMap.set(categoryKey, []);
+      }
+
+      groupMap.get(categoryKey)?.push(mission);
     });
+
+    // Sort each group internally
+    groupMap.forEach(missions => {
+      missions.sort((a, b) => {
+        if (sortField === 'date') {
+          // For date sorting, always sort by date within the group
+          const timeA = new Date(a.startDateTime).getTime();
+          const timeB = new Date(b.startDateTime).getTime();
+          return sortDirection === 'asc' ? timeA - timeB : timeB - timeA;
+        } else if (sortField === 'conciergerie') {
+          // For conciergerie sorting, sort by date within the conciergerie
+          const timeA = new Date(a.startDateTime).getTime();
+          const timeB = new Date(b.startDateTime).getTime();
+          return sortDirection === 'asc' ? timeA - timeB : timeB - timeA;
+        } else if (sortField === 'geographicZone') {
+          // For geographic zone sorting, sort by date within the zone
+          const timeA = new Date(a.startDateTime).getTime();
+          const timeB = new Date(b.startDateTime).getTime();
+          return sortDirection === 'asc' ? timeA - timeB : timeB - timeA;
+        }
+        return 0;
+      });
+    });
+
+    // Convert to array of [category, missions] pairs and sort categories
+    const groupArray = Array.from(groupMap.entries());
+
+    // Sort the categories
+    groupArray.sort((a, b) => {
+      const [keyA] = a;
+      const [keyB] = b;
+
+      if (sortField === 'date') {
+        // For date sorting, sort months chronologically
+        const indexA = monthNames.indexOf(keyA);
+        const indexB = monthNames.indexOf(keyB);
+        return sortDirection === 'asc' ? indexA - indexB : indexB - indexA;
+      } else {
+        // For other fields, sort alphabetically
+        return sortDirection === 'asc' ? keyA.localeCompare(keyB, 'fr') : keyB.localeCompare(keyA, 'fr');
+      }
+    });
+
+    return groupArray;
+  }, [filteredMissions, sortField, sortDirection, homes]);
+
+  // Expand all categories when needed
+  useEffect(() => {
+    setCollapsedCategories([]);
+  }, [sortField]);
+
+  // Toggle category expansion
+  const toggleCategory = (category: string) => {
+    setCollapsedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(cat => cat !== category);
+      } else {
+        return [...prev, category];
+      }
+    });
+  };
+
+  // Toggle sort direction
+  const toggleSortDirection = () => {
+    setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+  };
+
+  // Change sort field
+  const changeSortField = (field: SortField) => {
+    if (sortField === field) {
+      toggleSortDirection();
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   // Filter homes by the current conciergerie
   const filteredHomes = homes.filter(home => home.conciergerieName === currentConciergerie?.name);
@@ -146,7 +263,57 @@ export default function Missions() {
 
   return (
     <div>
-      {activeMissions.length === 0 ? (
+      {/* Sort controls */}
+      {filteredMissions.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <button
+            onClick={() => changeSortField('date')}
+            className={clsx(
+              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1',
+              sortField === 'date' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
+            )}
+          >
+            Date
+            {sortField === 'date' &&
+              (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
+          </button>
+          <button
+            onClick={() => changeSortField('conciergerie')}
+            className={clsx(
+              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1',
+              sortField === 'conciergerie' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
+            )}
+          >
+            Conciergerie
+            {sortField === 'conciergerie' &&
+              (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
+          </button>
+          <button
+            onClick={() => changeSortField('geographicZone')}
+            className={clsx(
+              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1',
+              sortField === 'geographicZone' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
+            )}
+          >
+            Zone
+            {sortField === 'geographicZone' &&
+              (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
+          </button>
+          <button
+            onClick={() => changeSortField('homeTitle')}
+            className={clsx(
+              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1',
+              sortField === 'homeTitle' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
+            )}
+          >
+            Bien
+            {sortField === 'homeTitle' &&
+              (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
+          </button>
+        </div>
+      )}
+
+      {filteredMissions.length === 0 ? (
         <div
           className={clsx(
             'flex flex-col items-center justify-center h-[calc(100dvh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8',
@@ -174,20 +341,57 @@ export default function Missions() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {activeMissions.map(mission => (
-            <MissionCard
-              key={mission.id}
-              mission={mission}
-              onClick={() => handleMissionClick(mission.id)}
-              onEdit={userType === 'conciergerie' ? () => handleMissionEdit(mission.id) : undefined}
-            />
+        <div className="space-y-2">
+          {groupedMissions.map(([category, missions]) => (
+            <div key={category} className="border border-foreground/10 rounded-lg overflow-hidden">
+              {/* Category header */}
+              <button
+                type="button"
+                onClick={() => toggleCategory(category)}
+                className="w-full flex justify-between items-center p-3 bg-foreground/5 hover:bg-foreground/10 transition-colors"
+              >
+                <h3 className="font-medium flex items-center gap-2">
+                  {category} <span className="text-sm text-foreground/70">({missions.length})</span>
+                </h3>
+                <div
+                  className={clsx(
+                    'transition-transform duration-300',
+                    collapsedCategories.includes(category) ? 'rotate-0' : 'rotate-180',
+                  )}
+                >
+                  <IconChevronDown size={20} className="text-foreground/70" />
+                </div>
+              </button>
+
+              {/* Category content with animation */}
+              <div
+                className={clsx(
+                  'overflow-hidden transition-all duration-300 ease-in-out',
+                  collapsedCategories.includes(category) ? 'max-h-0 opacity-0' : 'max-h-[5000px] opacity-100',
+                )}
+              >
+                <div className="p-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {missions.map(mission => (
+                      <MissionCard
+                        key={mission.id}
+                        mission={mission}
+                        onClick={() => handleMissionClick(mission.id)}
+                        onEdit={userType === 'conciergerie' ? () => handleMissionEdit(mission.id) : undefined}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}
 
       {/* Only show the floating action button for conciergerie users */}
-      {activeMissions.length > 0 && userType === 'conciergerie' && <FloatingActionButton onClick={handleAddMission} />}
+      {filteredMissions.length > 0 && userType === 'conciergerie' && (
+        <FloatingActionButton onClick={handleAddMission} />
+      )}
 
       {isAddModalOpen && (
         <FullScreenModal onClose={handleCloseModal} title="Nouvelle mission">
