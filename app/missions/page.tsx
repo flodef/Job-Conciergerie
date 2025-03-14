@@ -1,6 +1,14 @@
 'use client';
 
-import { IconBriefcase, IconChevronDown, IconPlus, IconSortAscending, IconSortDescending } from '@tabler/icons-react';
+import {
+  IconBriefcase,
+  IconChevronDown,
+  IconFilter,
+  IconPlus,
+  IconSortAscending,
+  IconSortDescending,
+  IconX,
+} from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { useEffect, useMemo, useState } from 'react';
 import ConfirmationModal from '../components/confirmationModal';
@@ -36,6 +44,13 @@ export default function Missions() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [collapsedCategories, setCollapsedCategories] = useState<string[]>([]);
 
+  // Filter states
+  const [selectedConciergeries, setSelectedConciergeries] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['current']);
+  const [selectedTakenStatus, setSelectedTakenStatus] = useState<string[]>(['notTaken']);
+  const [selectedZones, setSelectedZones] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+
   // Redirect if not registered
   useRedirectIfNotRegistered();
 
@@ -56,21 +71,36 @@ export default function Missions() {
   // Get current conciergerie
   const currentConciergerie = getCurrentConciergerie();
 
-  // Filter missions:
-  // 1. Not deleted
-  // 2. Taken by the current employee
-  // 3. For employees, only show missions they have access to based on prestataires setting
-  const filteredMissions = useMemo(
+  // Get all available concierges and geographic zones for filters
+  const availableConcierges = useMemo(() => {
+    const concierges = new Set<string>();
+    missions.forEach(mission => {
+      if (mission.conciergerieName) {
+        concierges.add(mission.conciergerieName);
+      }
+    });
+    return Array.from(concierges).sort();
+  }, [missions]);
+
+  const availableZones = useMemo(() => {
+    const zones = new Set<string>();
+    homes.forEach(home => {
+      if (home.geographicZone) {
+        zones.add(home.geographicZone);
+      }
+    });
+    return Array.from(zones).sort();
+  }, [homes]);
+
+  // Basic mission filtering (deleted, employee access)
+  const basicFilteredMissions = useMemo(
     () =>
       missions.filter(mission => {
-        // Filter out deleted missions and past missions
-        if (mission.deleted || new Date(mission.endDateTime) < new Date()) return false;
+        // Filter out deleted missions
+        if (mission.deleted) return false;
 
-        // For employee users, show only Available missions (not taken by anyone)
+        // For employee users, show only missions they have access to
         if (userType === 'employee') {
-          // First check if the mission is available (not taken by anyone)
-          if (mission.employeeId) return false;
-
           // Get the current employee ID from localStorage
           const employeeDataStr = localStorage.getItem('employee_data');
           const employeeData = employeeDataStr ? JSON.parse(employeeDataStr) : null;
@@ -91,6 +121,79 @@ export default function Missions() {
       }),
     [missions, userType],
   );
+
+  // Apply additional filters (conciergerie, status, zones)
+  const filteredMissions = useMemo(() => {
+    // If no filters are selected, show all missions
+    if (
+      selectedConciergeries.length === 0 &&
+      selectedStatuses.length === 0 &&
+      selectedTakenStatus.length === 0 &&
+      selectedZones.length === 0
+    ) {
+      return basicFilteredMissions;
+    }
+
+    return basicFilteredMissions.filter(mission => {
+      // Filter by conciergerie
+      if (selectedConciergeries.length > 0 && !selectedConciergeries.includes(mission.conciergerieName)) {
+        return false;
+      }
+
+      // Get mission status information
+      const now = new Date();
+      const missionEndDate = new Date(mission.endDateTime);
+      const isCurrent = missionEndDate >= now;
+      const isArchived = missionEndDate < now;
+      const isTaken = !!mission.employeeId;
+
+      // Filter by time period status (current/archived)
+      if (selectedStatuses.length > 0) {
+        // If both current and archived are selected or none are selected, show all time periods
+        const showAllTimePeriods =
+          selectedStatuses.length === 0 ||
+          (selectedStatuses.includes('current') && selectedStatuses.includes('archived'));
+
+        if (!showAllTimePeriods) {
+          const matchesTimeStatus =
+            (selectedStatuses.includes('current') && isCurrent) ||
+            (selectedStatuses.includes('archived') && isArchived);
+
+          if (!matchesTimeStatus) {
+            return false;
+          }
+        }
+      }
+
+      // Filter by taken status
+      if (selectedTakenStatus.length > 0) {
+        // If both taken and notTaken are selected or none are selected, show all missions
+        const showAllTakenStatuses =
+          selectedTakenStatus.length === 0 ||
+          (selectedTakenStatus.includes('taken') && selectedTakenStatus.includes('notTaken'));
+
+        if (!showAllTakenStatuses) {
+          const matchesTakenStatus =
+            (selectedTakenStatus.includes('taken') && isTaken) ||
+            (selectedTakenStatus.includes('notTaken') && !isTaken);
+
+          if (!matchesTakenStatus) {
+            return false;
+          }
+        }
+      }
+
+      // Filter by geographic zones
+      if (selectedZones.length > 0) {
+        const home = homes.find(h => h.id === mission.homeId);
+        if (!home?.geographicZone || !selectedZones.includes(home.geographicZone)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [basicFilteredMissions, selectedConciergeries, selectedStatuses, selectedTakenStatus, selectedZones, homes]);
 
   // Helper function to get the month name in French
   const getMonthName = (date: Date): string => {
@@ -263,57 +366,263 @@ export default function Missions() {
 
   return (
     <div>
-      {/* Sort controls */}
-      {filteredMissions.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          <button
-            onClick={() => changeSortField('date')}
-            className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1',
-              sortField === 'date' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
-            )}
-          >
-            Date
-            {sortField === 'date' &&
-              (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
-          </button>
-          <button
-            onClick={() => changeSortField('conciergerie')}
-            className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1',
-              sortField === 'conciergerie' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
-            )}
-          >
-            Conciergerie
-            {sortField === 'conciergerie' &&
-              (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
-          </button>
-          <button
-            onClick={() => changeSortField('geographicZone')}
-            className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1',
-              sortField === 'geographicZone' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
-            )}
-          >
-            Zone
-            {sortField === 'geographicZone' &&
-              (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
-          </button>
-          <button
-            onClick={() => changeSortField('homeTitle')}
-            className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1',
-              sortField === 'homeTitle' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
-            )}
-          >
-            Bien
-            {sortField === 'homeTitle' &&
-              (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
-          </button>
-        </div>
-      )}
+      {/* Sort and filter controls */}
+      <div className="mb-4 space-y-4">
+        {/* Sort and filter buttons */}
+        <div className="flex items-center justify-between">
+          <div className="flex flex-wrap gap-2 items-center flex-1 overflow-hidden">
+            <button
+              onClick={() => changeSortField('date')}
+              className={clsx(
+                'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 sm:w-auto',
+                sortField === 'date' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
+              )}
+            >
+              <span className="truncate">Date</span>
+              {sortField === 'date' &&
+                (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
+            </button>
+            <button
+              onClick={() => changeSortField('conciergerie')}
+              className={clsx(
+                'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 sm:w-auto',
+                sortField === 'conciergerie' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
+              )}
+            >
+              <span className="truncate">Conciergerie</span>
+              {sortField === 'conciergerie' &&
+                (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
+            </button>
+            <button
+              onClick={() => changeSortField('geographicZone')}
+              className={clsx(
+                'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 sm:w-auto',
+                sortField === 'geographicZone' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
+              )}
+            >
+              <span className="truncate">Zone</span>
+              {sortField === 'geographicZone' &&
+                (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
+            </button>
+            <button
+              onClick={() => changeSortField('homeTitle')}
+              className={clsx(
+                'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 sm:w-auto',
+                sortField === 'homeTitle' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
+              )}
+            >
+              <span className="truncate">Bien</span>
+              {sortField === 'homeTitle' &&
+                (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
+            </button>
+          </div>
 
-      {filteredMissions.length === 0 ? (
+          {/* Filter toggle button */}
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={clsx(
+                'w-8 h-8 rounded-lg flex items-center justify-center',
+                showFilters ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
+                selectedConciergeries.length > 0 || selectedStatuses.length > 0 || selectedZones.length > 0
+                  ? 'ring-1 ring-primary'
+                  : '',
+              )}
+              aria-label="Filtres"
+            >
+              <IconFilter size={20} />
+              {(selectedConciergeries.length > 0 ||
+                selectedStatuses.length > 0 ||
+                selectedTakenStatus.length > 0 ||
+                selectedZones.length > 0) && (
+                <span className="absolute top-0 right-0 -mt-2 -mr-2 flex items-center justify-center w-5 h-5 text-sm rounded-full bg-primary text-background">
+                  {filteredMissions.length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Filter options */}
+        {showFilters && (
+          <div className="p-4 bg-foreground/5 rounded-lg space-y-4">
+            {/* Conciergerie filter */}
+            <div>
+              <h3 className="text-sm font-medium mb-2">Conciergerie</h3>
+              <div className="flex flex-wrap gap-2">
+                {availableConcierges.map(conciergerie => (
+                  <button
+                    key={conciergerie}
+                    onClick={() => {
+                      setSelectedConciergeries(prev =>
+                        prev.includes(conciergerie) ? prev.filter(c => c !== conciergerie) : [...prev, conciergerie],
+                      );
+                    }}
+                    className={clsx(
+                      'px-3 py-1.5 rounded-lg text-sm',
+                      selectedConciergeries.includes(conciergerie)
+                        ? 'bg-primary text-background'
+                        : 'bg-foreground/10 text-foreground',
+                    )}
+                  >
+                    {conciergerie}
+                  </button>
+                ))}
+                {selectedConciergeries.length > 0 && (
+                  <button
+                    onClick={() => setSelectedConciergeries([])}
+                    className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
+                  >
+                    <IconX size={14} /> Réinitialiser
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Mission status filter */}
+            {/* Time period filter */}
+            <div>
+              <h3 className="text-sm font-medium mb-2">Période</h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    setSelectedStatuses(prev =>
+                      prev.includes('current') ? prev.filter(s => s !== 'current') : [...prev, 'current'],
+                    );
+                  }}
+                  className={clsx(
+                    'px-3 py-1.5 rounded-lg text-sm',
+                    selectedStatuses.includes('current')
+                      ? 'bg-primary text-background'
+                      : 'bg-foreground/10 text-foreground',
+                  )}
+                >
+                  Actuelles
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedStatuses(prev =>
+                      prev.includes('archived') ? prev.filter(s => s !== 'archived') : [...prev, 'archived'],
+                    );
+                  }}
+                  className={clsx(
+                    'px-3 py-1.5 rounded-lg text-sm',
+                    selectedStatuses.includes('archived')
+                      ? 'bg-primary text-background'
+                      : 'bg-foreground/10 text-foreground',
+                  )}
+                >
+                  Archivées
+                </button>
+                {selectedStatuses.length > 0 && (
+                  <button
+                    onClick={() => setSelectedStatuses([])}
+                    className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
+                  >
+                    <IconX size={14} /> Réinitialiser
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Taken status filter */}
+            <div>
+              <h3 className="text-sm font-medium mb-2">Statut</h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    setSelectedTakenStatus(prev =>
+                      prev.includes('taken') ? prev.filter(s => s !== 'taken') : [...prev, 'taken'],
+                    );
+                  }}
+                  className={clsx(
+                    'px-3 py-1.5 rounded-lg text-sm',
+                    selectedTakenStatus.includes('taken')
+                      ? 'bg-primary text-background'
+                      : 'bg-foreground/10 text-foreground',
+                  )}
+                >
+                  Prises
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedTakenStatus(prev =>
+                      prev.includes('notTaken') ? prev.filter(s => s !== 'notTaken') : [...prev, 'notTaken'],
+                    );
+                  }}
+                  className={clsx(
+                    'px-3 py-1.5 rounded-lg text-sm',
+                    selectedTakenStatus.includes('notTaken')
+                      ? 'bg-primary text-background'
+                      : 'bg-foreground/10 text-foreground',
+                  )}
+                >
+                  Disponibles
+                </button>
+                {selectedTakenStatus.length > 0 && (
+                  <button
+                    onClick={() => setSelectedTakenStatus([])}
+                    className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
+                  >
+                    <IconX size={14} /> Réinitialiser
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Geographic zones filter */}
+            <div>
+              <h3 className="text-sm font-medium mb-2">Zones géographiques</h3>
+              <div className="flex flex-wrap gap-2">
+                {availableZones.map(zone => (
+                  <button
+                    key={zone}
+                    onClick={() => {
+                      setSelectedZones(prev => (prev.includes(zone) ? prev.filter(z => z !== zone) : [...prev, zone]));
+                    }}
+                    className={clsx(
+                      'px-3 py-1.5 rounded-lg text-sm',
+                      selectedZones.includes(zone) ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
+                    )}
+                  >
+                    {zone}
+                  </button>
+                ))}
+                {selectedZones.length > 0 && (
+                  <button
+                    onClick={() => setSelectedZones([])}
+                    className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
+                  >
+                    <IconX size={14} /> Réinitialiser
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Reset all filters button */}
+            {(selectedConciergeries.length > 0 ||
+              selectedStatuses.length > 0 ||
+              selectedTakenStatus.length > 0 ||
+              selectedZones.length > 0) && (
+              <div className="pt-2 border-t border-foreground/10">
+                <button
+                  onClick={() => {
+                    setSelectedConciergeries([]);
+                    setSelectedStatuses([]);
+                    setSelectedTakenStatus([]);
+                    setSelectedZones([]);
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
+                >
+                  <IconX size={14} /> Réinitialiser tous les filtres
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {filteredMissions.length === 0 && !showFilters ? (
         <div
           className={clsx(
             'flex flex-col items-center justify-center h-[calc(100dvh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8',
@@ -389,7 +698,7 @@ export default function Missions() {
       )}
 
       {/* Only show the floating action button for conciergerie users */}
-      {filteredMissions.length > 0 && userType === 'conciergerie' && (
+      {(filteredMissions.length > 0 || showFilters) && userType === 'conciergerie' && (
         <FloatingActionButton onClick={handleAddMission} />
       )}
 
