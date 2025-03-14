@@ -249,6 +249,11 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         </div>
 
         <div>
+          <h3 className="text-sm font-medium text-light">Zone géographique</h3>
+          <p className="text-foreground">{home?.geographicZone || 'Non spécifiée'}</p>
+        </div>
+
+        <div>
           <h3 className="text-sm font-medium text-light">Objectifs</h3>
           <div className="flex flex-wrap gap-2 mt-1">
             {mission.objectives.map(objective => {
@@ -271,11 +276,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
               );
             })}
           </div>
-        </div>
-
-        <div>
-          <h3 className="text-sm font-medium text-light">Zone géographique</h3>
-          <p className="text-foreground">{home?.geographicZone || 'Non spécifiée'}</p>
         </div>
 
         <div>
