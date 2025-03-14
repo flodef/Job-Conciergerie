@@ -36,9 +36,7 @@ export default function Combobox({
   const optionsRef = useRef<HTMLDivElement>(null);
 
   // Filter options based on search term
-  const filteredOptions = options.filter(option => 
-    option.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOptions = options.filter(option => option.toLowerCase().includes(searchTerm.toLowerCase()));
 
   // Close the dropdown when clicking outside
   useEffect(() => {
@@ -138,22 +136,16 @@ export default function Combobox({
           error && 'border-red-500',
           disabled && 'opacity-50 cursor-not-allowed',
         )}
-        style={isFocused && borderColor 
-          ? { borderColor } 
-          : { borderColor: 'rgba(0, 0, 0, 0.1)' }}
+        style={isFocused && borderColor ? { borderColor } : { borderColor: 'rgba(0, 0, 0, 0.1)' }}
       >
         <IconSearch size={18} className="text-foreground/50 mr-2" />
         <input
           id={id}
           ref={inputRef}
           type="text"
-          className={clsx(
-            "flex-grow bg-transparent outline-none",
-            value ? "text-foreground" : "text-foreground/50",
-            isFocused && !value && "text-secondary"
-          )}
+          className={clsx('flex-grow bg-transparent outline-none', value ? 'text-foreground' : 'text-foreground/50')}
           placeholder={value || placeholder}
-          value={searchTerm}
+          value={isOpen ? searchTerm : value}
           onChange={handleInputChange}
           onClick={handleInputClick}
           onFocus={() => {
@@ -164,6 +156,7 @@ export default function Combobox({
               setHighlightedIndex(0);
             }
           }}
+          autoComplete="off"
           disabled={disabled}
         />
         <button
