@@ -1,12 +1,13 @@
 'use client';
 
-import { useLocalStorage } from '@/app/utils/localStorage';
+import { useLocalStorage, setLocalStorageItem } from '@/app/utils/localStorage';
 import { clsx } from 'clsx/lite';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useTheme } from '../contexts/themeProvider';
 import { Employee } from '../types/types';
 import { addEmployee, getEmployeeStatus } from '../utils/employeeUtils';
 import { generateSimpleId } from '../utils/id';
+import ConfirmationModal from './confirmationModal';
 import Select from './select';
 import FormActions from './formActions';
 import { ToastMessage, ToastProps, ToastType } from './toastMessage';
@@ -31,6 +32,9 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFormChanged, setIsFormChanged] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [originalFormData, setOriginalFormData] = useState<Employee | null>(null);
 
   // Validation states
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -56,13 +60,20 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
     }
   }, [conciergerieNames, formData.conciergerieName, setFormData]);
 
-  // Clear conciergerie data if it exists when this form is shown
+  // Save original form data when the form is first opened
+  const initialRenderRef = useRef(true);
   useEffect(() => {
     resetPrimaryColor();
-
+    
+    // Only save the initial data on first render
+    if (initialRenderRef.current) {
+      setOriginalFormData({ ...formData });
+      initialRenderRef.current = false;
+    }
+    
     //TODO: restore when in prod
     // localStorage.removeItem('conciergerie_data');
-  }, [resetPrimaryColor]);
+  }, [resetPrimaryColor, formData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -70,7 +81,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
     // Validate as user types
     if (name === 'email') {
       if (value && !emailRegex.test(value)) {
-        setEmailError("Format d'email invalide");
+        setEmailError("Format d&apos;email invalide");
       } else {
         setEmailError(null);
       }
@@ -87,6 +98,9 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
         setMessageError(null);
       }
     }
+
+    // Mark form as changed
+    setIsFormChanged(true);
 
     // Update form data
     setFormData(prev => ({
@@ -364,7 +378,40 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
           </div>
         </div>
 
-        <FormActions onCancel={onClose} submitText="Valider" submitType="submit" isSubmitting={isSubmitting} />
+        <FormActions 
+          onCancel={() => {
+            if (isFormChanged) {
+              setShowConfirmDialog(true);
+            } else {
+              onClose();
+            }
+          }} 
+          submitText="Valider" 
+          submitType="submit" 
+          isSubmitting={isSubmitting} 
+        />
+        
+        <ConfirmationModal
+          isOpen={showConfirmDialog}
+          onClose={() => setShowConfirmDialog(false)}
+          onConfirm={() => {
+            // Restore original form data by directly modifying localStorage
+            if (originalFormData) {
+              // Update localStorage directly
+              setLocalStorageItem('employee_data', originalFormData);
+              // Also update the state to ensure UI is consistent
+              setFormData(originalFormData);
+            }
+            // Close the form after a short delay to ensure state is updated
+            setTimeout(() => {
+              onClose();
+            }, 50);
+          }}
+          title="Modifications non enregistrées"
+          message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
+          confirmText="Quitter sans enregistrer"
+          cancelText="Continuer l&apos;édition"
+        />
       </form>
     </div>
   );

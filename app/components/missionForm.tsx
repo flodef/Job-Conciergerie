@@ -1,11 +1,12 @@
 'use client';
 
 import { clsx } from 'clsx/lite';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
 import { EmployeeWithStatus, Mission, Objective } from '../types/types';
 import { getEmployees } from '../utils/employeeUtils';
 import { getObjectivesWithPoints } from '../utils/objectiveUtils';
+import ConfirmationModal from './confirmationModal';
 import FormActions from './formActions';
 import MultiSelect from './multiSelect';
 import Select from './select';
@@ -27,17 +28,23 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
   const [objectivesState, setObjectives] = useState<Objective[]>(mission?.objectives || []);
   const [selectedPrestataires, setSelectedPrestataires] = useState<string[]>(mission?.prestataires || []);
-  const [isFormChanged, setIsFormChanged] = useState(false);
+  const [initialFormValues, setInitialFormValues] = useState<{
+    homeId: string;
+    startDateTime: string;
+    endDateTime: string;
+    objectivesState: Objective[];
+    selectedPrestataires: string[];
+  }>();
   // Get current date and time in local timezone
   const now = new Date();
-  const localISOString = (date: Date) => {
+  const localISOString = useCallback((date: Date) => {
     try {
       const offset = date.getTimezoneOffset() * 60000;
       return new Date(date.getTime() - offset).toISOString().slice(0, 16);
     } catch {
       return '';
     }
-  };
+  }, []);
 
   // Get prestataires (employees with accepted status) using useMemo
   // This avoids the infinite loop issue by not using state + useEffect
@@ -62,6 +69,13 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [toastMessage, setToastMessage] = useState<ToastProps>();
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  
+  // Refs for form elements
+  const homeSelectRef = useRef<HTMLDivElement>(null);
+  const objectivesRef = useRef<HTMLDivElement>(null);
+  const startDateRef = useRef<HTMLInputElement>(null);
+  const endDateRef = useRef<HTMLInputElement>(null);
 
   // Set up French locale for date inputs
   useEffect(() => {
@@ -73,39 +87,68 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
 
     // Set document language to French
     document.documentElement.lang = 'fr';
-  }, []);
+
+    setInitialFormValues({
+      homeId,
+      startDateTime,
+      endDateTime,
+      objectivesState,
+      selectedPrestataires,
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isFormValid = homeId !== '' && objectivesState.length > 0 && startDateTime !== '' && endDateTime !== '';
 
   // Check if form has been modified
   const checkFormChanged = useCallback(() => {
-    if (mode === 'add' || !mission) return true; // Always enable save button for new missions
+    if (!initialFormValues) return false;
 
-    // For edit mode, check if any field has changed
-    const objectivesChanged = JSON.stringify(objectivesState) !== JSON.stringify(mission.objectives);
-    const homeIdChanged = homeId !== mission.homeId;
-    const startDateChanged = startDateTime !== localISOString(mission.startDateTime);
-    const endDateChanged = endDateTime !== localISOString(mission.endDateTime);
-    
-    // Check if prestataires selection has changed
-    // Compare arrays regardless of order
-    const missionPrestataires = mission.prestataires || [];
-    const prestatairesChanged = 
-      selectedPrestataires.length !== missionPrestataires.length || 
-      selectedPrestataires.some(id => !missionPrestataires.includes(id)) ||
-      missionPrestataires.some(id => !selectedPrestataires.includes(id));
+    // Check if any field has been filled in compared to initial state
+    const objectivesChanged = JSON.stringify(objectivesState) !== JSON.stringify(initialFormValues.objectivesState);
+    const homeIdChanged = homeId !== initialFormValues.homeId;
+    const startDateChanged = startDateTime !== initialFormValues.startDateTime;
+    const endDateChanged = endDateTime !== initialFormValues.endDateTime;
+    const prestatairesChanged =
+      JSON.stringify(selectedPrestataires.sort()) !== JSON.stringify(initialFormValues.selectedPrestataires.sort());
 
     return objectivesChanged || homeIdChanged || startDateChanged || endDateChanged || prestatairesChanged;
-  }, [homeId, objectivesState, startDateTime, endDateTime, selectedPrestataires, mode, mission]);
-
-  // Update isFormChanged whenever form fields change
-  useEffect(() => {
-    setIsFormChanged(checkFormChanged());
-  }, [checkFormChanged]);
+  }, [homeId, objectivesState, startDateTime, endDateTime, selectedPrestataires, initialFormValues]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsFormSubmitted(true);
+    
+    // Check if home is selected
+    if (!homeId) {
+      setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner un bien' });
+      homeSelectRef.current?.querySelector('select')?.focus();
+      return;
+    }
+    
+    // Check if objectives are selected
+    if (objectivesState.length === 0) {
+      setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner au moins un objectif' });
+      // Focus on the first objective button
+      const firstObjectiveButton = objectivesRef.current?.querySelector('button');
+      if (firstObjectiveButton) {
+        firstObjectiveButton.focus();
+      }
+      return;
+    }
+    
+    // Check if start date is selected
+    if (!startDateTime) {
+      setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner une date de début' });
+      startDateRef.current?.focus();
+      return;
+    }
+    
+    // Check if end date is selected
+    if (!endDateTime) {
+      setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner une date de fin' });
+      endDateRef.current?.focus();
+      return;
+    }
 
     if (isFormValid) {
       const selectedHome = filteredHomes.find(h => h.id === homeId);
@@ -241,29 +284,31 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         />
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-2">
         <div>
           <label className="block text-sm font-medium mb-2">Bien</label>
-          <Select
-            id="home-select"
-            value={homeId}
-            onChange={(value: string) => {
-              setHomeId(value);
-            }}
-            options={filteredHomes.map(home => ({
-              value: home.id,
-              label: home.title,
-            }))}
-            placeholder="Sélectionner un bien"
-            error={isFormSubmitted && !homeId}
-            borderColor={homeId && currentConciergerie?.color ? currentConciergerie.color : undefined}
-          />
+          <div ref={homeSelectRef}>
+            <Select
+              id="home-select"
+              value={homeId}
+              onChange={(value: string) => {
+                setHomeId(value);
+              }}
+              options={filteredHomes.map(home => ({
+                value: home.id,
+                label: home.title,
+              }))}
+              placeholder="Sélectionner un bien"
+              error={isFormSubmitted && !homeId}
+              borderColor={homeId && currentConciergerie?.color ? currentConciergerie.color : undefined}
+            />
+          </div>
           {isFormSubmitted && !homeId && <p className="text-red-500 text-sm mt-1">Veuillez sélectionner un bien</p>}
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-2">Objectifs</label>
-          <div className="grid grid-cols-2 gap-2">
+          <div ref={objectivesRef} className="grid grid-cols-2 gap-2">
             {getObjectivesWithPoints().map(objective => (
               <button
                 type="button"
@@ -301,6 +346,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           <input
             type="datetime-local"
             lang="fr"
+            ref={startDateRef}
             value={startDateTime}
             min={nowString}
             onChange={handleStartDateChange}
@@ -320,6 +366,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           <input
             type="datetime-local"
             lang="fr"
+            ref={endDateRef}
             value={endDateTime}
             min={(() => {
               // Calculate minimum end date (start date + 1 hour)
@@ -362,10 +409,27 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
         </div>
 
         <FormActions
-          onCancel={onClose}
+          onCancel={() => {
+            if (checkFormChanged()) {
+              setShowConfirmDialog(true);
+            } else {
+              onClose();
+            }
+          }}
           submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
           submitType="submit"
-          disabled={mode === 'edit' && !isFormChanged}
+        />
+
+        <ConfirmationModal
+          isOpen={showConfirmDialog}
+          onClose={() => setShowConfirmDialog(false)}
+          onConfirm={() => {
+            onClose();
+          }}
+          title="Modifications non enregistrées"
+          message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
+          confirmText="Quitter sans enregistrer"
+          cancelText="Continuer l'édition"
         />
       </form>
     </div>

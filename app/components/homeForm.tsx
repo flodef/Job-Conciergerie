@@ -2,7 +2,7 @@
 
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useHomes } from '../contexts/homesProvider';
 import { HomeData } from '../types/types';
 import geographicZonesData from '../data/geographicZone.json';
@@ -48,6 +48,13 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
 
   // Validation states
   const [descriptionError, setDescriptionError] = useState<string | null>(null);
+  
+  // Refs for form elements
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const comboboxRef = useRef<HTMLDivElement>(null);
+  const taskListRef = useRef<HTMLDivElement>(null);
+  const imageUploadRef = useRef<HTMLLabelElement>(null);
 
   const currentConciergerie = getCurrentConciergerie();
 
@@ -99,6 +106,16 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsFormSubmitted(true);
+    
+    // Check if images are uploaded
+    if (images.length === 0 && existingImages.length === 0) {
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez ajouter au moins une photo',
+      });
+      imageUploadRef.current?.focus();
+      return;
+    }
 
     // Check description length
     if (description.length > MAX_DESCRIPTION_LENGTH) {
@@ -107,6 +124,51 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
         type: ToastType.Error,
         message: `La description ne peut pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`,
       });
+      descriptionTextareaRef.current?.focus();
+      return;
+    }
+    
+    // Check if title is empty
+    if (!title.trim()) {
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez saisir un titre',
+      });
+      titleInputRef.current?.focus();
+      return;
+    }
+    
+    // Check if description is empty
+    if (!description.trim()) {
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez remplir la description',
+      });
+      descriptionTextareaRef.current?.focus();
+      return;
+    }
+    
+    // Check if at least one task is added
+    if (!tasks.some(task => task.trim() !== '')) {
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez ajouter au moins une tâche',
+      });
+      // Focus on the first task input
+      const firstTaskInput = taskListRef.current?.querySelector('input');
+      if (firstTaskInput) {
+        firstTaskInput.focus();
+      }
+      return;
+    }
+    
+    // Check if geographic zone is empty
+    if (!geographicZone) {
+      setToastMessage({
+        type: ToastType.Error,
+        message: 'Veuillez sélectionner une zone géographique',
+      });
+      comboboxRef.current?.querySelector('input')?.focus();
       return;
     }
 
@@ -299,6 +361,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
               id="image-upload"
             />
             <label
+              ref={imageUploadRef}
               htmlFor="image-upload"
               className="aspect-square flex items-center justify-center border-2 border-dashed border-foreground/30 rounded-lg hover:border-foreground/50 cursor-pointer transition-colors"
             >
@@ -319,6 +382,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
           </label>
           <input
             type="text"
+            ref={titleInputRef}
             value={title}
             onChange={e => setTitle(e.target.value)}
             className={clsx(
@@ -339,6 +403,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
           </label>
           <div className="relative">
             <textarea
+              ref={descriptionTextareaRef}
               value={description}
               onChange={e => {
                 const newValue = e.target.value;
@@ -375,21 +440,23 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
           <label className="text-base font-medium text-foreground">
             <h2 className="mb-2">Zone géographique</h2>
           </label>
-          <Combobox
-            id="geographic-zone"
-            options={geographicZones}
-            value={geographicZone}
-            onChange={setGeographicZone}
-            placeholder="Sélectionnez une zone géographique..."
-            error={isFormSubmitted && !geographicZone}
-            borderColor={currentConciergerie?.color}
-          />
+          <div ref={comboboxRef}>
+            <Combobox
+              id="geographic-zone"
+              options={geographicZones}
+              value={geographicZone}
+              onChange={setGeographicZone}
+              placeholder="Sélectionnez une zone géographique..."
+              error={isFormSubmitted && !geographicZone}
+              borderColor={currentConciergerie?.color}
+            />
+          </div>
           {isFormSubmitted && !geographicZone && (
             <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une zone géographique</p>
           )}
         </div>
 
-        <div>
+        <div ref={taskListRef}>
           <TaskList tasks={tasks} setTasks={setTasks} />
           {isFormSubmitted && !tasks.some(t => t.trim() !== '') && (
             <p className="text-red-500 text-sm mt-1">Veuillez ajouter au moins une tâche</p>
