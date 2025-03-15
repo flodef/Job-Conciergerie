@@ -250,7 +250,7 @@ const EmployeeSettings: React.FC = () => {
         ) : null}
       </div>
 
-      <div className="flex justify-center">
+      <div className="flex justify-center pt-2">
         <button
           onClick={handleSave}
           disabled={isSaving || !hasChanges()}
