@@ -27,7 +27,7 @@ export default function FormActions({
   return (
     <div
       className={clsx(
-        'flex justify-end gap-4 py-4',
+        'flex justify-end gap-4 pt-4 pb-2',
         'sticky bottom-0 bg-background border-t border-secondary px-4 -mx-4 rounded-b-lg',
         className,
       )}
