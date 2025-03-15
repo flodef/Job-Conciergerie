@@ -8,7 +8,7 @@ import { getColorValueByName } from '../utils/welcomeParams';
 type MissionCardProps = {
   mission: Mission;
   onClick: () => void;
-  onEdit?: () => void;
+  onEdit: () => void;
 };
 
 export default function MissionCard({ mission, onClick, onEdit }: MissionCardProps) {

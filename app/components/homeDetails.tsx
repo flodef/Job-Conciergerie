@@ -84,18 +84,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   };
 
   if (isEditMode) {
-    return (
-      <FullScreenModal onClose={() => setIsEditMode(false)} title="Modification du bien">
-        <HomeForm
-          home={home}
-          onClose={() => {
-            setIsEditMode(false);
-            onClose();
-          }}
-          mode="edit"
-        />
-      </FullScreenModal>
-    );
+    return <HomeForm home={home} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" />;
   }
 
   return (

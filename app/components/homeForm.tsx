@@ -16,11 +16,12 @@ import { useMissions } from '../contexts/missionsProvider';
 
 type HomeFormProps = {
   onClose: () => void;
+  onCancel?: () => void;
   home?: HomeData;
   mode?: 'add' | 'edit';
 };
 
-export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps) {
+export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: HomeFormProps) {
   const { addHome, updateHome, homeExists } = useHomes();
   const { getCurrentConciergerie } = useMissions();
 
@@ -48,7 +49,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
 
   // Validation states
   const [descriptionError, setDescriptionError] = useState<string | null>(null);
-  
+
   // Refs for form elements
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -106,7 +107,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsFormSubmitted(true);
-    
+
     // Check if images are uploaded
     if (images.length === 0 && existingImages.length === 0) {
       setToastMessage({
@@ -127,7 +128,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
       descriptionTextareaRef.current?.focus();
       return;
     }
-    
+
     // Check if title is empty
     if (!title.trim()) {
       setToastMessage({
@@ -137,7 +138,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
       titleInputRef.current?.focus();
       return;
     }
-    
+
     // Check if description is empty
     if (!description.trim()) {
       setToastMessage({
@@ -147,7 +148,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
       descriptionTextareaRef.current?.focus();
       return;
     }
-    
+
     // Check if at least one task is added
     if (!tasks.some(task => task.trim() !== '')) {
       setToastMessage({
@@ -161,7 +162,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
       }
       return;
     }
-    
+
     // Check if geographic zone is empty
     if (!geographicZone) {
       setToastMessage({
@@ -256,20 +257,22 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  return (
-    <div className="max-w-md mx-auto">
-      {selectedImageIndex !== undefined && (
-        <FullScreenModal
-          title={`Photo de ${title}`}
-          imageUrl={
-            selectedImageIndex < existingImages.length
-              ? mockupImagePath // Use mockup for existing images
-              : previewUrls[selectedImageIndex - existingImages.length] // Use preview for new images (UI only)
-          }
-          onClose={() => setSelectedImageIndex(undefined)}
-        />
-      )}
+  if (selectedImageIndex !== undefined) {
+    return (
+      <FullScreenModal
+        title={`Photo de ${title}`}
+        imageUrl={
+          selectedImageIndex < existingImages.length
+            ? mockupImagePath // Use mockup for existing images
+            : previewUrls[selectedImageIndex - existingImages.length] // Use preview for new images (UI only)
+        }
+        onClose={() => setSelectedImageIndex(undefined)}
+      />
+    );
+  }
 
+  return (
+    <FullScreenModal title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'} onClose={onClose}>
       {toastMessage && (
         <ToastMessage
           type={toastMessage.type}
@@ -469,6 +472,7 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
               setShowConfirmDialog(true);
             } else {
               onClose();
+              onCancel?.();
             }
           }}
           submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
@@ -487,6 +491,6 @@ export default function HomeForm({ onClose, home, mode = 'add' }: HomeFormProps)
           cancelText="Continuer l'édition"
         />
       </form>
-    </div>
+    </FullScreenModal>
   );
 }

@@ -3,7 +3,6 @@
 import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import FloatingActionButton from '../components/floatingActionButton';
-import FullScreenModal from '../components/fullScreenModal';
 import HomeCard from '../components/homeCard';
 import HomeDetails from '../components/homeDetails';
 import HomeForm from '../components/homeForm';
@@ -120,19 +119,14 @@ export default function HomesPage() {
       {/* Only show the floating action button if there are homes and we're not in search mode with no results */}
       {filteredHomes.length > 0 && <FloatingActionButton onClick={handleAddHome} />}
 
-      {isAddModalOpen && (
-        <FullScreenModal onClose={handleCloseAddModal} title="Nouveau bien">
-          <HomeForm onClose={handleCloseAddModal} mode="add" />
-        </FullScreenModal>
-      )}
+      {isAddModalOpen && <HomeForm onClose={handleCloseAddModal} mode="add" />}
 
-      {selectedHome && !isEditModalOpen && <HomeDetails home={selectedHome} onClose={handleCloseDetails} />}
-
-      {selectedHome && isEditModalOpen && (
-        <FullScreenModal onClose={handleCloseEditModal} title="Modification du bien">
+      {selectedHome &&
+        (!isEditModalOpen ? (
+          <HomeDetails home={selectedHome} onClose={handleCloseDetails} />
+        ) : (
           <HomeForm home={selectedHome} onClose={handleCloseEditModal} mode="edit" />
-        </FullScreenModal>
-      )}
+        ))}
     </div>
   );
 }

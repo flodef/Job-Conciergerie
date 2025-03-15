@@ -11,14 +11,16 @@ import FormActions from './formActions';
 import MultiSelect from './multiSelect';
 import Select from './select';
 import { ToastMessage, ToastProps, ToastType } from './toastMessage';
+import FullScreenModal from './fullScreenModal';
 
 type MissionFormProps = {
   mission?: Mission;
   onClose: () => void;
+  onCancel?: () => void;
   mode: 'add' | 'edit';
 };
 
-export default function MissionForm({ mission, onClose, mode }: MissionFormProps) {
+export default function MissionForm({ mission, onClose, onCancel, mode }: MissionFormProps) {
   const { homes, addMission, updateMission, getCurrentConciergerie, missionExists } = useMissions();
 
   // Filter homes by the current conciergerie
@@ -70,7 +72,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  
+
   // Refs for form elements
   const homeSelectRef = useRef<HTMLDivElement>(null);
   const objectivesRef = useRef<HTMLDivElement>(null);
@@ -117,14 +119,14 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsFormSubmitted(true);
-    
+
     // Check if home is selected
     if (!homeId) {
       setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner un bien' });
       homeSelectRef.current?.querySelector('select')?.focus();
       return;
     }
-    
+
     // Check if objectives are selected
     if (objectivesState.length === 0) {
       setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner au moins un objectif' });
@@ -135,14 +137,14 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
       }
       return;
     }
-    
+
     // Check if start date is selected
     if (!startDateTime) {
       setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner une date de début' });
       startDateRef.current?.focus();
       return;
     }
-    
+
     // Check if end date is selected
     if (!endDateTime) {
       setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner une date de fin' });
@@ -272,7 +274,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
   };
 
   return (
-    <div className="w-full">
+    <FullScreenModal title={mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'} onClose={onClose}>
       {toastMessage && (
         <ToastMessage
           type={toastMessage.type}
@@ -414,6 +416,7 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
               setShowConfirmDialog(true);
             } else {
               onClose();
+              onCancel?.();
             }
           }}
           submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
@@ -432,6 +435,6 @@ export default function MissionForm({ mission, onClose, mode }: MissionFormProps
           cancelText="Continuer l'édition"
         />
       </form>
-    </div>
+    </FullScreenModal>
   );
 }

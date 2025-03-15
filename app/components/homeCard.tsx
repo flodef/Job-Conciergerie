@@ -9,7 +9,7 @@ import { getColorValueByName } from '../utils/welcomeParams';
 type HomeCardProps = {
   home: HomeData;
   onClick: () => void;
-  onEdit?: () => void;
+  onEdit: () => void;
 };
 
 export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {

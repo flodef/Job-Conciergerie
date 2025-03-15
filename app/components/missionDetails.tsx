@@ -80,7 +80,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     if (isEmployee) {
       // Employees can never edit missions
       setIsReadOnly(true);
-    } else if (currentConciergerie && mission.conciergerieName === currentConciergerie.name) {
+    } else if (mission.conciergerieName === currentConciergerie?.name) {
       // Conciergerie can edit their own missions
       // Always allow editing if mission hasn't been started
       setIsReadOnly(false);
@@ -134,18 +134,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   };
 
   if (isEditMode) {
-    return (
-      <FullScreenModal onClose={() => setIsEditMode(false)} title="Modification de la mission">
-        <MissionForm
-          mission={mission}
-          onClose={() => {
-            setIsEditMode(false);
-            onClose();
-          }}
-          mode="edit"
-        />
-      </FullScreenModal>
-    );
+    return <MissionForm mission={mission} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" />;
   }
 
   if (showHomeDetails && home) {
