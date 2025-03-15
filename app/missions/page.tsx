@@ -48,8 +48,52 @@ export default function Missions() {
   const [selectedZones, setSelectedZones] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Store for saved filter values
+  const [savedFilters, setSavedFilters] = useState<{
+    conciergeries: string[];
+    statuses: string[];
+    takenStatus: string[];
+    zones: string[];
+  }>({
+    conciergeries: [],
+    statuses: ['current'],
+    takenStatus: ['notTaken'],
+    zones: [],
+  });
+
+  // Function to save current filter values to localStorage
+  const saveFiltersToLocalStorage = () => {
+    const filtersToSave = {
+      conciergeries: selectedConciergeries,
+      statuses: selectedStatuses,
+      takenStatus: selectedTakenStatus,
+      zones: selectedZones,
+    };
+    localStorage.setItem('mission_filters', JSON.stringify(filtersToSave));
+    setSavedFilters(filtersToSave);
+  };
+
   // Redirect if not registered
   useRedirectIfNotRegistered();
+
+  // Load saved filters from localStorage on component mount
+  useEffect(() => {
+    const savedFiltersStr = localStorage.getItem('mission_filters');
+    if (savedFiltersStr) {
+      try {
+        const savedFiltersData = JSON.parse(savedFiltersStr);
+        setSavedFilters(savedFiltersData);
+
+        // Initialize filter states with saved values
+        setSelectedConciergeries(savedFiltersData.conciergeries || []);
+        setSelectedStatuses(savedFiltersData.statuses || ['current']);
+        setSelectedTakenStatus(savedFiltersData.takenStatus || ['notTaken']);
+        setSelectedZones(savedFiltersData.zones || []);
+      } catch (error) {
+        console.error('Error parsing saved filters:', error);
+      }
+    }
+  }, []);
 
   // Set primary color from welcome params
   useEffect(() => {
@@ -173,6 +217,8 @@ export default function Missions() {
             setSelectedTakenStatus={setSelectedTakenStatus}
             selectedZones={selectedZones}
             setSelectedZones={setSelectedZones}
+            saveFiltersToLocalStorage={saveFiltersToLocalStorage}
+            savedFilters={savedFilters}
           />
         </div>
       )}

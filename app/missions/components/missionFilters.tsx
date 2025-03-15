@@ -1,6 +1,6 @@
 'use client';
 
-import { IconX } from '@tabler/icons-react';
+import { IconDeviceFloppy, IconX } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import React from 'react';
 
@@ -15,6 +15,13 @@ interface MissionFiltersProps {
   setSelectedTakenStatus: React.Dispatch<React.SetStateAction<string[]>>;
   selectedZones: string[];
   setSelectedZones: React.Dispatch<React.SetStateAction<string[]>>;
+  saveFiltersToLocalStorage?: () => void;
+  savedFilters?: {
+    conciergeries: string[];
+    statuses: string[];
+    takenStatus: string[];
+    zones: string[];
+  };
 }
 
 export default function MissionFilters({
@@ -28,7 +35,41 @@ export default function MissionFilters({
   setSelectedTakenStatus,
   selectedZones,
   setSelectedZones,
+  saveFiltersToLocalStorage,
+  savedFilters,
 }: MissionFiltersProps) {
+  // Function to compare arrays (order doesn't matter)
+  const compareArrays = (arr1: string[], arr2: string[]) => {
+    if (arr1.length !== arr2.length) return true;
+    const set1 = new Set(arr1);
+    return arr2.some(item => !set1.has(item));
+  };
+
+  // Check if individual filter categories have changed
+  const conciergeriesChanged = React.useMemo(() => {
+    if (!savedFilters) return false;
+    return compareArrays(selectedConciergeries, savedFilters.conciergeries);
+  }, [selectedConciergeries, savedFilters]);
+
+  const statusesChanged = React.useMemo(() => {
+    if (!savedFilters) return false;
+    return compareArrays(selectedStatuses, savedFilters.statuses);
+  }, [selectedStatuses, savedFilters]);
+
+  const takenStatusChanged = React.useMemo(() => {
+    if (!savedFilters) return false;
+    return compareArrays(selectedTakenStatus, savedFilters.takenStatus);
+  }, [selectedTakenStatus, savedFilters]);
+
+  const zonesChanged = React.useMemo(() => {
+    if (!savedFilters) return false;
+    return compareArrays(selectedZones, savedFilters.zones);
+  }, [selectedZones, savedFilters]);
+
+  // Check if any filters have been changed from saved values
+  const filtersChanged = React.useMemo(() => {
+    return conciergeriesChanged || statusesChanged || takenStatusChanged || zonesChanged;
+  }, [conciergeriesChanged, statusesChanged, takenStatusChanged, zonesChanged]);
   return (
     <div className="px-4 pb-4 bg-background rounded-lg shadow-md flex flex-col gap-2">
       {/* Conciergeries filter */}
@@ -54,9 +95,22 @@ export default function MissionFilters({
                 {conciergerie}
               </button>
             ))}
-            {selectedConciergeries.length > 0 && (
+            {conciergeriesChanged && (
               <button
-                onClick={() => setSelectedConciergeries([])}
+                onClick={() => {
+                  // Get saved filters from localStorage
+                  const savedFiltersStr = localStorage.getItem('mission_filters');
+                  if (savedFiltersStr) {
+                    try {
+                      const savedFilters = JSON.parse(savedFiltersStr);
+                      setSelectedConciergeries(savedFilters.conciergeries || []);
+                    } catch {
+                      setSelectedConciergeries([]);
+                    }
+                  } else {
+                    setSelectedConciergeries([]);
+                  }
+                }}
                 className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
               >
                 <IconX size={14} /> Réinitialiser
@@ -96,9 +150,22 @@ export default function MissionFilters({
           >
             Archivées
           </button>
-          {selectedStatuses.length > 0 && (
+          {statusesChanged && (
             <button
-              onClick={() => setSelectedStatuses([])}
+              onClick={() => {
+                // Get saved filters from localStorage
+                const savedFiltersStr = localStorage.getItem('mission_filters');
+                if (savedFiltersStr) {
+                  try {
+                    const savedFilters = JSON.parse(savedFiltersStr);
+                    setSelectedStatuses(savedFilters.statuses || ['current']);
+                  } catch {
+                    setSelectedStatuses(['current']);
+                  }
+                } else {
+                  setSelectedStatuses(['current']);
+                }
+              }}
               className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
             >
               <IconX size={14} /> Réinitialiser
@@ -139,9 +206,22 @@ export default function MissionFilters({
           >
             Disponibles
           </button>
-          {selectedTakenStatus.length > 0 && (
+          {takenStatusChanged && (
             <button
-              onClick={() => setSelectedTakenStatus([])}
+              onClick={() => {
+                // Get saved filters from localStorage
+                const savedFiltersStr = localStorage.getItem('mission_filters');
+                if (savedFiltersStr) {
+                  try {
+                    const savedFilters = JSON.parse(savedFiltersStr);
+                    setSelectedTakenStatus(savedFilters.takenStatus || ['notTaken']);
+                  } catch {
+                    setSelectedTakenStatus(['notTaken']);
+                  }
+                } else {
+                  setSelectedTakenStatus(['notTaken']);
+                }
+              }}
               className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
             >
               <IconX size={14} /> Réinitialiser
@@ -168,9 +248,22 @@ export default function MissionFilters({
               {zone}
             </button>
           ))}
-          {selectedZones.length > 0 && (
+          {zonesChanged && (
             <button
-              onClick={() => setSelectedZones([])}
+              onClick={() => {
+                // Get saved filters from localStorage
+                const savedFiltersStr = localStorage.getItem('mission_filters');
+                if (savedFiltersStr) {
+                  try {
+                    const savedFilters = JSON.parse(savedFiltersStr);
+                    setSelectedZones(savedFilters.zones || []);
+                  } catch {
+                    setSelectedZones([]);
+                  }
+                } else {
+                  setSelectedZones([]);
+                }
+              }}
               className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
             >
               <IconX size={14} /> Réinitialiser
@@ -179,25 +272,63 @@ export default function MissionFilters({
         </div>
       </div>
 
-      {/* Reset all filters button */}
-      {(selectedConciergeries.length > 0 ||
-        selectedStatuses.length > 0 ||
-        selectedTakenStatus.length > 0 ||
-        selectedZones.length > 0) && (
-        <div className="pt-2 border-t border-foreground/10">
+      {/* Save and Reset all filters buttons */}
+
+      <div className="pt-2 border-t border-foreground/10 flex gap-2">
+        {/* Save filters button */}
+        {saveFiltersToLocalStorage && (
           <button
-            onClick={() => {
-              setSelectedConciergeries([]);
-              setSelectedStatuses([]);
-              setSelectedTakenStatus([]);
-              setSelectedZones([]);
-            }}
-            className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
+            onClick={saveFiltersToLocalStorage}
+            disabled={!filtersChanged}
+            className={clsx(
+              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1',
+              filtersChanged ? 'bg-primary text-background' : 'bg-foreground/5 text-foreground/40 cursor-not-allowed',
+            )}
           >
-            <IconX size={14} /> Réinitialiser tous les filtres
+            <IconDeviceFloppy size={20} />
+            Enregistrer filtres
           </button>
-        </div>
-      )}
+        )}
+
+        {/* Reset all filters button */}
+        <button
+          onClick={() => {
+            // Get saved filters from localStorage
+            const savedFiltersStr = localStorage.getItem('mission_filters');
+            if (savedFiltersStr) {
+              try {
+                const savedFilters = JSON.parse(savedFiltersStr);
+                setSelectedConciergeries(savedFilters.conciergeries || []);
+                setSelectedStatuses(savedFilters.statuses || ['current']);
+                setSelectedTakenStatus(savedFilters.takenStatus || ['notTaken']);
+                setSelectedZones(savedFilters.zones || []);
+              } catch {
+                // Fallback to defaults if there's an error
+                setSelectedConciergeries([]);
+                setSelectedStatuses(['current']);
+                setSelectedTakenStatus(['notTaken']);
+                setSelectedZones([]);
+              }
+            } else {
+              // Fallback to defaults if no saved filters
+              setSelectedConciergeries([]);
+              setSelectedStatuses(['current']);
+              setSelectedTakenStatus(['notTaken']);
+              setSelectedZones([]);
+            }
+          }}
+          disabled={!filtersChanged}
+          className={clsx(
+            'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1',
+            filtersChanged
+              ? 'bg-foreground/10 text-foreground'
+              : 'bg-foreground/5 text-foreground/40 cursor-not-allowed',
+          )}
+        >
+          <IconX size={20} />
+          Réinitialiser tout
+        </button>
+      </div>
     </div>
   );
 }
