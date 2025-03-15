@@ -16,7 +16,7 @@ const conciergerieNames = conciergeriesData
 
 export default function Home() {
   const router = useRouter();
-  const [userType, setUserType] = useState<string | null>(null);
+  const [userType, setUserType] = useState<string>();
   const [isLoading, setIsLoading] = useState(true);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [showConciergerieForm, setShowConciergerieForm] = useState(false);
@@ -72,7 +72,7 @@ export default function Home() {
     localStorage.removeItem('user_type');
 
     // Reset state to show selection screen
-    setUserType(null);
+    setUserType(undefined);
     setShowEmployeeForm(false);
     setShowConciergerieForm(false);
   };
@@ -87,7 +87,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background px-4 pt-2">
+    <main className="min-h-screen flex items-center justify-center bg-background px-4 py-2">
       <div className="w-full max-w-md bg-background overflow-hidden">
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
           <UserTypeSelection onSelect={handleUserTypeSelect} />

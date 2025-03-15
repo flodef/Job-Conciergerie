@@ -8,7 +8,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { useBadge } from '../contexts/badgeProvider';
 
 // Map pages to their respective icons
-const pageSettings: Record<Page, { icon: ReactNode; userType: ('conciergerie' | 'employee' | 'both') }> = {
+const pageSettings: Record<Page, { icon: ReactNode; userType: 'conciergerie' | 'employee' | 'both' }> = {
   [Page.Welcome]: { icon: null, userType: 'both' },
   [Page.Missions]: { icon: <IconBriefcase size={30} />, userType: 'both' },
   [Page.Calendar]: { icon: <IconCalendar size={30} />, userType: 'both' },
@@ -20,8 +20,15 @@ const pageSettings: Record<Page, { icon: ReactNode; userType: ('conciergerie' | 
 export default function NavigationLayout({ children }: { children: ReactNode }) {
   const { currentPage, onMenuChange } = useMenuContext();
   const [isHomePage, setIsHomePage] = useState(false);
-  const [userType, setUserType] = useState<string | null>(null);
-  const { pendingEmployeesCount, newMissionsCount, todayMissionsCount, startedMissionsCount, resetPendingEmployeesCount, resetNewMissionsCount } = useBadge();
+  const [userType, setUserType] = useState<string>();
+  const {
+    pendingEmployeesCount,
+    newMissionsCount,
+    todayMissionsCount,
+    startedMissionsCount,
+    resetPendingEmployeesCount,
+    resetNewMissionsCount,
+  } = useBadge();
 
   useEffect(() => {
     // Check if we're on the homepage or waiting page
@@ -88,13 +95,10 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
               .filter(page => {
                 // Skip Welcome page in navigation
                 if (page === Page.Welcome) return false;
-                
+
                 // Filter pages based on user type defined in pageSettings
                 const pageConfig = pageSettings[page];
-                return (
-                  userType && 
-                  (pageConfig.userType === userType || pageConfig.userType === 'both')
-                );
+                return userType && (pageConfig.userType === userType || pageConfig.userType === 'both');
               })
               .map(page => (
                 <button
@@ -122,19 +126,18 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
                         {newMissionsCount > 9 ? '9+' : newMissionsCount}
                       </div>
                     )}
-                    
+
                     {/* Badge for today's missions (employee) or started missions (conciergerie) */}
-                    {page === Page.Calendar && (
-                      (userType === 'employee' && todayMissionsCount > 0) ? (
+                    {page === Page.Calendar &&
+                      (userType === 'employee' && todayMissionsCount > 0 ? (
                         <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                           {todayMissionsCount > 9 ? '9+' : todayMissionsCount}
                         </div>
-                      ) : (userType === 'conciergerie' && startedMissionsCount > 0) ? (
+                      ) : userType === 'conciergerie' && startedMissionsCount > 0 ? (
                         <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                           {startedMissionsCount > 9 ? '9+' : startedMissionsCount}
                         </div>
-                      ) : null
-                    )}
+                      ) : null)}
                   </div>
                   <span className="text-xs font-medium">{page}</span>
                 </button>

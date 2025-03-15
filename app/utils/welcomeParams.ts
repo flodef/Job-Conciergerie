@@ -9,10 +9,10 @@ import { generateSimpleId } from './id';
  * Type definition for the object returned by getWelcomeParams
  */
 export interface WelcomeParams {
-  userType: 'employee' | 'conciergerie' | null;
-  employeeData: (Employee & { id: string }) | null;
-  conciergerieData: (Conciergerie & { color?: string }) | null;
-  userData: (Employee & { id: string }) | null;
+  userType: 'employee' | 'conciergerie' | undefined;
+  employeeData: (Employee & { id: string }) | undefined;
+  conciergerieData: (Conciergerie & { color?: string }) | undefined;
+  userData: (Employee & { id: string }) | undefined;
 }
 
 // Get the color value from colors.json based on colorName
@@ -24,10 +24,10 @@ export const getColorValueByName = (colorName: string | undefined): string => {
 export function getWelcomeParams(): WelcomeParams {
   if (typeof window === 'undefined') {
     return {
-      userType: null,
-      employeeData: null,
-      conciergerieData: null,
-      userData: null,
+      userType: undefined,
+      employeeData: undefined,
+      conciergerieData: undefined,
+      userData: undefined,
     };
   }
 
@@ -64,10 +64,10 @@ export function getWelcomeParams(): WelcomeParams {
   } catch (error) {
     console.error('Error retrieving welcome params from localStorage:', error);
     return {
-      userType: null,
-      employeeData: null,
-      conciergerieData: null,
-      userData: null,
+      userType: undefined,
+      employeeData: undefined,
+      conciergerieData: undefined,
+      userData: undefined,
     };
   }
 }

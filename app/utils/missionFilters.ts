@@ -3,7 +3,7 @@ import { Mission, Home } from '../types/types';
 /**
  * Filter missions based on user type
  */
-export function filterMissionsByUserType(missions: Mission[], userType: string | null): Mission[] {
+export function filterMissionsByUserType(missions: Mission[], userType: string | undefined): Mission[] {
   return missions.filter(mission => {
     // Skip deleted missions
     if (mission.deleted) return false;

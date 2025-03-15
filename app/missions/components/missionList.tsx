@@ -21,7 +21,7 @@ interface MissionListProps {
   setCollapsedCategories: React.Dispatch<React.SetStateAction<string[]>>;
   setSelectedMission: (id: string | null) => void;
   showFilters: boolean;
-  userType: string | null;
+  userType: string | undefined;
   handleAddMission: () => void;
   setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   sortField: MissionSortField;
