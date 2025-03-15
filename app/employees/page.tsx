@@ -2,7 +2,7 @@
 
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import EmployeeDetails from '../components/employeeDetails';
+import EmployeeDetails from './components/employeeDetails';
 import FullScreenModal from '../components/fullScreenModal';
 import SearchInput from '../components/searchInput';
 import { ToastMessage, ToastProps, ToastType } from '../components/toastMessage';

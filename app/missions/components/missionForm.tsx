@@ -2,16 +2,16 @@
 
 import { clsx } from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMissions } from '../contexts/missionsProvider';
-import { EmployeeWithStatus, Mission, Objective } from '../types/types';
-import { getEmployees } from '../utils/employeeUtils';
-import { getObjectivesWithPoints } from '../utils/objectiveUtils';
-import ConfirmationModal from './confirmationModal';
-import FormActions from './formActions';
-import MultiSelect from './multiSelect';
-import Select from './select';
-import { ToastMessage, ToastProps, ToastType } from './toastMessage';
-import FullScreenModal from './fullScreenModal';
+import { useMissions } from '../../contexts/missionsProvider';
+import { EmployeeWithStatus, Mission, Objective } from '../../types/types';
+import { getEmployees } from '../../utils/employeeUtils';
+import { getObjectivesWithPoints } from '../../utils/objectiveUtils';
+import ConfirmationModal from '../../components/confirmationModal';
+import FormActions from '../../components/formActions';
+import MultiSelect from '../../components/multiSelect';
+import Select from '../../components/select';
+import { ToastMessage, ToastProps, ToastType } from '../../components/toastMessage';
+import FullScreenModal from '../../components/fullScreenModal';
 
 type MissionFormProps = {
   mission?: Mission;

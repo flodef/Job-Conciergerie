@@ -1,9 +1,9 @@
 'use client';
 
-import { useMissions } from '../contexts/missionsProvider';
-import { Mission } from '../types/types';
-import { formatDateRange } from '../utils/dateUtils';
-import { getColorValueByName } from '../utils/welcomeParams';
+import { useMissions } from '../../contexts/missionsProvider';
+import { Mission } from '../../types/types';
+import { formatDateRange } from '../../utils/dateUtils';
+import { getColorValueByName } from '../../utils/welcomeParams';
 
 type MissionCardProps = {
   mission: Mission;

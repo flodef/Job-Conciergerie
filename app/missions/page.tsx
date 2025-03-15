@@ -3,25 +3,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import ConfirmationModal from '../components/confirmationModal';
 import FloatingActionButton from '../components/floatingActionButton';
-import HomeForm from '../components/homeForm';
+import HomeForm from '../homes/components/homeForm';
 import LoadingSpinner from '../components/loadingSpinner';
-import MissionDetails from '../components/missionDetails';
-import MissionForm from '../components/missionForm';
+import MissionDetails from './components/missionDetails';
+import MissionForm from './components/missionForm';
 import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 import { useTheme } from '../contexts/themeProvider';
 import { Mission, MissionSortField } from '../types/types';
 import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
 import { getWelcomeParams } from '../utils/welcomeParams';
-import MissionFilters from './components/MissionFilters';
-import MissionList from './components/MissionList';
-import MissionSortControls from './components/MissionSortControls';
+import MissionFilters from './components/missionFilters';
+import MissionList from './components/missionList';
+import MissionSortControls from './components/missionSortControls';
 import {
   applyMissionFilters,
   filterMissionsByUserType,
   groupMissionsByCategory,
   sortMissions,
-} from './utils/missionFilters';
+} from '../utils/missionFilters';
 
 export default function Missions() {
   const { missions, isLoading } = useMissions();

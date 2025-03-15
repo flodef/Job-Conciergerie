@@ -11,23 +11,23 @@ import {
 } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useMissions } from '../contexts/missionsProvider';
-import { Mission } from '../types/types';
-import { formatDateTime, getTimeDifference } from '../utils/dateUtils';
-import { formatPoints } from '../utils/formatUtils';
+import { useMissions } from '../../contexts/missionsProvider';
+import { Mission } from '../../types/types';
+import { formatDateTime, getTimeDifference } from '../../utils/dateUtils';
+import { formatPoints } from '../../utils/formatUtils';
 import {
   calculateEmployeePointsForDay,
   calculateMissionPoints,
   calculateRemainingPointsPerDay,
   getObjectiveWithPoints,
-} from '../utils/objectiveUtils';
-import { getColorValueByName, getWelcomeParams } from '../utils/welcomeParams';
-import ConfirmationModal from './confirmationModal';
-import FullScreenModal from './fullScreenModal';
-import HomeDetails from './homeDetails';
+} from '../../utils/objectiveUtils';
+import { getColorValueByName, getWelcomeParams } from '../../utils/welcomeParams';
+import ConfirmationModal from '../../components/confirmationModal';
+import FullScreenModal from '../../components/fullScreenModal';
+import HomeDetails from '../../homes/components/homeDetails';
 import MissionActionButtons from './missionActionButtons';
 import MissionForm from './missionForm';
-import { ToastMessage, ToastProps, ToastType } from './toastMessage';
+import { ToastMessage, ToastProps, ToastType } from '../../components/toastMessage';
 
 type MissionDetailsProps = {
   mission: Mission;

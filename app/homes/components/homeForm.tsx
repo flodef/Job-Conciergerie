@@ -3,16 +3,16 @@
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useHomes } from '../contexts/homesProvider';
-import { HomeData } from '../types/types';
-import geographicZonesData from '../data/geographicZone.json';
-import Combobox from './combobox';
-import ConfirmationModal from './confirmationModal';
-import FormActions from './formActions';
-import FullScreenModal from './fullScreenModal';
-import TaskList from './taskList';
-import { ToastMessage, ToastProps, ToastType } from './toastMessage';
-import { useMissions } from '../contexts/missionsProvider';
+import { useHomes } from '../../contexts/homesProvider';
+import { HomeData } from '../../types/types';
+import geographicZonesData from '../../data/geographicZone.json';
+import Combobox from '../../components/combobox';
+import ConfirmationModal from '../../components/confirmationModal';
+import FormActions from '../../components/formActions';
+import FullScreenModal from '../../components/fullScreenModal';
+import TaskList from '../../components/taskList';
+import { ToastMessage, ToastProps, ToastType } from '../../components/toastMessage';
+import { useMissions } from '../../contexts/missionsProvider';
 
 type HomeFormProps = {
   onClose: () => void;

@@ -18,7 +18,7 @@ import { formatPoints } from '../utils/formatUtils';
 import { calculateEmployeePointsForDay, calculateMissionPoints, getObjectiveWithPoints } from '../utils/objectiveUtils';
 import { getColorValueByName, getWelcomeParams } from '../utils/welcomeParams';
 import LoadingSpinner from './loadingSpinner';
-import MissionDetails from './missionDetails';
+import MissionDetails from '../missions/components/missionDetails';
 
 export default function CalendarView() {
   const { missions, isLoading, getConciergerieByName } = useMissions();
@@ -69,12 +69,13 @@ export default function CalendarView() {
     // Count started missions
     const startedCount = filteredMissions.filter(mission => mission.status === 'started').length;
     setStartedMissionsCount(startedCount);
-    
+
     // Count late missions (ended without being started)
-    const lateCount = filteredMissions.filter(mission => 
-      mission.employeeId && 
-      (!mission.status || mission.status === 'pending') && 
-      new Date(mission.endDateTime) < new Date()
+    const lateCount = filteredMissions.filter(
+      mission =>
+        mission.employeeId &&
+        (!mission.status || mission.status === 'pending') &&
+        new Date(mission.endDateTime) < new Date(),
     ).length;
     setLateMissionsCount(lateCount);
 
@@ -160,14 +161,14 @@ export default function CalendarView() {
             </div>
           </div>
         )}
-        
+
         {lateMissionsCount > 0 && (
           <div className="p-2 border border-red-200 bg-red-50 dark:bg-red-950/10 rounded-lg flex items-center justify-between">
             <div className="flex items-center">
               <IconAlertTriangle className="text-red-500 mr-2" />
               <span>
-                <span className="font-medium">{lateMissionsCount}</span> mission{lateMissionsCount > 1 ? 's' : ''}{' '}
-                en retard non terminée{lateMissionsCount > 1 ? 's' : ''}
+                <span className="font-medium">{lateMissionsCount}</span> mission{lateMissionsCount > 1 ? 's' : ''} en
+                retard non terminée{lateMissionsCount > 1 ? 's' : ''}
               </span>
             </div>
           </div>

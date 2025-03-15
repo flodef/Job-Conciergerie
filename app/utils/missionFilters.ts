@@ -1,4 +1,4 @@
-import { Mission, Home } from '../../types/types';
+import { Mission, Home } from '../types/types';
 
 /**
  * Filter missions based on user type
@@ -39,7 +39,7 @@ export function applyMissionFilters(
   selectedStatuses: string[],
   selectedTakenStatus: string[],
   selectedZones: string[],
-  homes: Home[]
+  homes: Home[],
 ): Mission[] {
   // If no filters are selected, show all missions
   if (
@@ -63,34 +63,34 @@ export function applyMissionFilters(
     const isCurrent = missionEndDate >= now;
     const isArchived = missionEndDate < now;
     const isTaken = !!mission.employeeId;
-    
+
     // Filter by time period status (current/archived)
     if (selectedStatuses.length > 0) {
       // If both current and archived are selected or none are selected, show all time periods
-      const showAllTimePeriods = selectedStatuses.length === 0 || 
+      const showAllTimePeriods =
+        selectedStatuses.length === 0 ||
         (selectedStatuses.includes('current') && selectedStatuses.includes('archived'));
-        
+
       if (!showAllTimePeriods) {
         const matchesTimeStatus =
-          (selectedStatuses.includes('current') && isCurrent) ||
-          (selectedStatuses.includes('archived') && isArchived);
+          (selectedStatuses.includes('current') && isCurrent) || (selectedStatuses.includes('archived') && isArchived);
 
         if (!matchesTimeStatus) {
           return false;
         }
       }
     }
-    
+
     // Filter by taken status
     if (selectedTakenStatus.length > 0) {
       // If both taken and notTaken are selected or none are selected, show all missions
-      const showAllTakenStatuses = selectedTakenStatus.length === 0 || 
+      const showAllTakenStatuses =
+        selectedTakenStatus.length === 0 ||
         (selectedTakenStatus.includes('taken') && selectedTakenStatus.includes('notTaken'));
-        
+
       if (!showAllTakenStatuses) {
         const matchesTakenStatus =
-          (selectedTakenStatus.includes('taken') && isTaken) ||
-          (selectedTakenStatus.includes('notTaken') && !isTaken);
+          (selectedTakenStatus.includes('taken') && isTaken) || (selectedTakenStatus.includes('notTaken') && !isTaken);
 
         if (!matchesTakenStatus) {
           return false;
@@ -117,7 +117,7 @@ export function sortMissions(
   missions: Mission[],
   sortField: 'date' | 'conciergerie' | 'geographicZone' | 'homeTitle',
   sortDirection: 'asc' | 'desc',
-  homes: Home[]
+  homes: Home[],
 ): Mission[] {
   return [...missions].sort((a, b) => {
     let comparison = 0;
@@ -152,7 +152,7 @@ export function sortMissions(
 export function groupMissionsByCategory(
   missions: Mission[],
   sortField: 'date' | 'conciergerie' | 'geographicZone' | 'homeTitle',
-  homes: Home[]
+  homes: Home[],
 ): Record<string, Mission[]> {
   const grouped: Record<string, Mission[]> = {};
 

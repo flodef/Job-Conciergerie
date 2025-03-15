@@ -11,7 +11,7 @@ import {
 } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import React from 'react';
-import MissionCard from '../../components/missionCard';
+import MissionCard from './missionCard';
 import { useHomes } from '../../contexts/homesProvider';
 import { Mission, MissionSortField } from '../../types/types';
 

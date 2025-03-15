@@ -2,8 +2,8 @@
 
 import { IconMail, IconPhone } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
-import { EmployeeWithStatus } from '../types/types';
-import { formatDate } from '../utils/dateUtils';
+import { EmployeeWithStatus } from '../../types/types';
+import { formatDate } from '../../utils/dateUtils';
 
 type EmployeeDetailsProps = {
   employee: EmployeeWithStatus;

@@ -64,13 +64,13 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
   const initialRenderRef = useRef(true);
   useEffect(() => {
     resetPrimaryColor();
-    
+
     // Only save the initial data on first render
     if (initialRenderRef.current) {
       setOriginalFormData({ ...formData });
       initialRenderRef.current = false;
     }
-    
+
     //TODO: restore when in prod
     // localStorage.removeItem('conciergerie_data');
   }, [resetPrimaryColor, formData]);
@@ -81,7 +81,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
     // Validate as user types
     if (name === 'email') {
       if (value && !emailRegex.test(value)) {
-        setEmailError("Format d&apos;email invalide");
+        setEmailError('Format d&apos;email invalide');
       } else {
         setEmailError(null);
       }
@@ -378,19 +378,19 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
           </div>
         </div>
 
-        <FormActions 
+        <FormActions
           onCancel={() => {
             if (isFormChanged) {
               setShowConfirmDialog(true);
             } else {
               onClose();
             }
-          }} 
-          submitText="Valider" 
-          submitType="submit" 
-          isSubmitting={isSubmitting} 
+          }}
+          submitText="Valider"
+          submitType="submit"
+          isSubmitting={isSubmitting}
         />
-        
+
         <ConfirmationModal
           isOpen={showConfirmDialog}
           onClose={() => setShowConfirmDialog(false)}
@@ -410,7 +410,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
           title="Modifications non enregistrées"
           message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
           confirmText="Quitter sans enregistrer"
-          cancelText="Continuer l&apos;édition"
+          cancelText="Continuer l'édition"
         />
       </form>
     </div>

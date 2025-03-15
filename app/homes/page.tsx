@@ -3,9 +3,9 @@
 import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import FloatingActionButton from '../components/floatingActionButton';
-import HomeCard from '../components/homeCard';
-import HomeDetails from '../components/homeDetails';
-import HomeForm from '../components/homeForm';
+import HomeCard from './components/homeCard';
+import HomeDetails from './components/homeDetails';
+import HomeForm from './components/homeForm';
 import LoadingSpinner from '../components/loadingSpinner';
 import SearchInput from '../components/searchInput';
 import { useHomes } from '../contexts/homesProvider';

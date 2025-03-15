@@ -1,10 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { useMissions } from '../contexts/missionsProvider';
-import { HomeData } from '../types/types';
-import { formatDateTime } from '../utils/dateUtils';
-import { getColorValueByName } from '../utils/welcomeParams';
+import { useMissions } from '../../contexts/missionsProvider';
+import { HomeData } from '../../types/types';
+import { formatDateTime } from '../../utils/dateUtils';
+import { getColorValueByName } from '../../utils/welcomeParams';
 
 type HomeCardProps = {
   home: HomeData;

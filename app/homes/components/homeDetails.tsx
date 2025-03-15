@@ -3,12 +3,12 @@
 import { IconPencil, IconTrash } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useHomes } from '../contexts/homesProvider';
-import { useMissions } from '../contexts/missionsProvider';
-import { HomeData } from '../types/types';
-import { getWelcomeParams } from '../utils/welcomeParams';
-import ConfirmationModal from './confirmationModal';
-import FullScreenModal from './fullScreenModal';
+import { useHomes } from '../../contexts/homesProvider';
+import { useMissions } from '../../contexts/missionsProvider';
+import { HomeData } from '../../types/types';
+import { getWelcomeParams } from '../../utils/welcomeParams';
+import ConfirmationModal from '../../components/confirmationModal';
+import FullScreenModal from '../../components/fullScreenModal';
 import HomeForm from './homeForm';
 
 type HomeDetailsProps = {
