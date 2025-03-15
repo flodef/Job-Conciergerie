@@ -42,6 +42,7 @@ export interface Conciergerie {
 }
 
 export type MissionStatus = 'pending' | 'started' | 'completed';
+export type MissionSortField = 'date' | 'conciergerie' | 'geographicZone' | 'homeTitle';
 
 export interface Mission {
   id: string;

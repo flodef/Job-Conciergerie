@@ -10,7 +10,7 @@ import MissionForm from '../components/missionForm';
 import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 import { useTheme } from '../contexts/themeProvider';
-import { Mission } from '../types/types';
+import { Mission, MissionSortField } from '../types/types';
 import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
 import { getWelcomeParams } from '../utils/welcomeParams';
 import MissionFilters from './components/MissionFilters';
@@ -37,8 +37,7 @@ export default function Missions() {
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
 
   // Sorting state
-  type SortField = 'date' | 'conciergerie' | 'geographicZone' | 'homeTitle';
-  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortField, setSortField] = useState<MissionSortField>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [collapsedCategories, setCollapsedCategories] = useState<string[]>([]);
 
@@ -112,7 +111,7 @@ export default function Missions() {
   }, [basicFilteredMissions, homes]);
 
   // Change sort field
-  const changeSortField = (field: SortField) => {
+  const changeSortField = (field: MissionSortField) => {
     if (sortField === field) {
       // If already sorting by this field, toggle direction
       setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
@@ -188,6 +187,7 @@ export default function Missions() {
         userType={userType}
         handleAddMission={handleAddMission}
         setIsEditModalOpen={setIsEditModalOpen}
+        sortField={sortField}
       />
 
       {/* Only show the floating action button for conciergerie users */}

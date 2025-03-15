@@ -1,11 +1,19 @@
 'use client';
 
-import { IconBriefcase, IconChevronDown, IconPlus } from '@tabler/icons-react';
+import {
+  IconBriefcase,
+  IconCalendar,
+  IconChevronDown,
+  IconHome,
+  IconMap2,
+  IconPlus,
+  IconUser,
+} from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import React from 'react';
 import MissionCard from '../../components/missionCard';
 import { useHomes } from '../../contexts/homesProvider';
-import { Mission } from '../../types/types';
+import { Mission, MissionSortField } from '../../types/types';
 
 interface MissionListProps {
   groupedMissions: Record<string, Mission[]>;
@@ -16,6 +24,7 @@ interface MissionListProps {
   userType: string | null;
   handleAddMission: () => void;
   setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  sortField: MissionSortField;
 }
 
 export default function MissionList({
@@ -27,6 +36,7 @@ export default function MissionList({
   userType,
   handleAddMission,
   setIsEditModalOpen,
+  sortField,
 }: MissionListProps) {
   const { getCurrentConciergerie } = useHomes();
   const currentConciergerie = getCurrentConciergerie();
@@ -84,7 +94,14 @@ export default function MissionList({
             className="w-full px-4 py-3 flex items-center justify-between bg-foreground/5"
           >
             <div className="flex items-center gap-2">
-              <IconBriefcase size={18} className="text-foreground/70" />
+              {
+                {
+                  date: <IconCalendar size={18} className="text-foreground/70" />,
+                  conciergerie: <IconUser size={18} className="text-foreground/70" />,
+                  homeTitle: <IconHome size={18} className="text-foreground/70" />,
+                  geographicZone: <IconMap2 size={18} className="text-foreground/70" />,
+                }[sortField]
+              }
               <h2 className="font-medium">{category}</h2>
               <span className="text-sm text-foreground/70">({missions.length})</span>
             </div>
