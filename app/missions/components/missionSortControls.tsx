@@ -29,7 +29,7 @@ export default function MissionSortControls({
     <div className="mb-4 space-y-4">
       {/* Sort and filter buttons */}
       <div className="flex items-center justify-between">
-        <div className="flex flex-wrap gap-2 items-center flex-1 overflow-hidden">
+        <div className="flex flex-wrap gap-1.5 items-center flex-1 overflow-hidden">
           <button
             onClick={() => changeSortField('date')}
             className={clsx(
