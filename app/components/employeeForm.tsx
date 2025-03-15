@@ -1,15 +1,16 @@
 'use client';
 
-import { useLocalStorage, setLocalStorageItem } from '@/app/utils/localStorage';
+import { setLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
 import { clsx } from 'clsx/lite';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../contexts/themeProvider';
 import { Employee } from '../types/types';
 import { addEmployee, getEmployeeStatus } from '../utils/employeeUtils';
 import { generateSimpleId } from '../utils/id';
+import { emailRegex, frenchPhoneRegex } from '../utils/regex';
 import ConfirmationModal from './confirmationModal';
-import Select from './select';
 import FormActions from './formActions';
+import Select from './select';
 import { ToastMessage, ToastProps, ToastType } from './toastMessage';
 import Tooltip from './tooltip';
 
@@ -49,8 +50,6 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
   const messageRef = React.useRef<HTMLTextAreaElement>(null);
 
   // Regular expressions for validation
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  const frenchPhoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/;
   const MAX_MESSAGE_LENGTH = 500;
 
   // Update conciergerie if companies change and current selection is not in the list
