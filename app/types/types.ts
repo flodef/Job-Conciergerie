@@ -18,6 +18,20 @@ export interface HomeData extends Home {
 }
 
 export type EmployeeStatus = 'pending' | 'accepted' | 'rejected';
+export interface ConciergerieNotificationSettings {
+  acceptedMissions: boolean;
+  startedMissions: boolean;
+  completedMissions: boolean;
+  missionsEndedWithoutStart: boolean;
+}
+
+export interface EmployeeNotificationSettings {
+  acceptedMissions: boolean;
+  missionChanged: boolean;
+  missionDeleted: boolean;
+  missionsCanceled: boolean;
+}
+
 export interface Employee {
   id: string;
   firstName: string;
@@ -26,6 +40,7 @@ export interface Employee {
   email: string;
   conciergerieName?: string;
   message?: string;
+  notificationSettings?: EmployeeNotificationSettings;
 }
 
 export interface EmployeeWithStatus extends Employee {
@@ -39,6 +54,7 @@ export interface Conciergerie {
   colorName: string;
   email: string;
   tel: string;
+  notificationSettings?: ConciergerieNotificationSettings;
 }
 
 export type MissionStatus = 'pending' | 'started' | 'completed';
