@@ -3,7 +3,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import React, { useState } from 'react';
 
 const AdvancedSettings: React.FC = () => {
-  const { userType } = useAuth();
+  const { userType, disconnect } = useAuth();
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showNukeConfirmation, setShowNukeConfirmation] = useState(false);
 
@@ -42,14 +42,7 @@ const AdvancedSettings: React.FC = () => {
       <ConfirmationModal
         isOpen={showConfirmation}
         onClose={() => setShowConfirmation(false)}
-        onConfirm={() => {
-          // Clear only the user type from localStorage (keep other data)
-          localStorage.removeItem('user_type');
-          localStorage.removeItem('user_id');
-
-          // Force a full page reload to reset the app state
-          window.location.href = '/';
-        }}
+        onConfirm={disconnect}
         title="Réinitialiser mes données"
         confirmText="Réinitialiser"
         cancelText="Annuler"

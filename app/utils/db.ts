@@ -59,8 +59,9 @@ export const getAllConciergeries = unstable_cache(
  * Get a single conciergerie by ID
  */
 export const getConciergerieById = unstable_cache(
-  async (id: string) => {
+  async (id?: string) => {
     try {
+      if (!id) throw new Error('No ID provided');
       const result = await sql`
         SELECT id, name, email, tel, color_name, notification_settings
         FROM conciergerie
@@ -104,8 +105,10 @@ export const createConciergerie = async (data: Omit<DbConciergerie, 'id'>) => {
 /**
  * Update a conciergerie's data
  */
-export const updateConciergerie = async (id: string | number, data: Partial<DbConciergerie>) => {
+export const updateConciergerie = async (id: string | undefined, data: Partial<DbConciergerie>) => {
   try {
+    if (!id) throw new Error('No ID provided');
+
     // Convert notification_settings to JSONB if present
     const notificationSettings = data.notification_settings ? JSON.stringify(data.notification_settings) : null;
 
@@ -198,8 +201,9 @@ export const getAllEmployees = unstable_cache(
  * Get a single employee by ID
  */
 export const getEmployeeById = unstable_cache(
-  async (id: string) => {
+  async (id?: string) => {
     try {
+      if (!id) throw new Error('No ID provided');
       const result = await sql`
         SELECT id, first_name, family_name, tel, email, message, conciergerie_name, notification_settings, status, created_at
         FROM employee
@@ -269,8 +273,9 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
 /**
  * Update an employee's status
  */
-export const updateEmployeeStatus = async (id: string, status: 'pending' | 'accepted' | 'rejected') => {
+export const updateEmployeeStatus = async (id: string | undefined, status: 'pending' | 'accepted' | 'rejected') => {
   try {
+    if (!id) throw new Error('No ID provided');
     const result = await sql`
       UPDATE employee
       SET status = ${status}
@@ -288,8 +293,9 @@ export const updateEmployeeStatus = async (id: string, status: 'pending' | 'acce
 /**
  * Update an employee's settings
  */
-export const updateEmployeeSettings = async (id: string, data: Partial<DbEmployee>) => {
+export const updateEmployeeSettings = async (id: string | undefined, data: Partial<DbEmployee>) => {
   try {
+    if (!id) throw new Error('No ID provided');
     // Convert notification_settings to JSONB if present
     const notificationSettings = data.notification_settings ? JSON.stringify(data.notification_settings) : null;
 

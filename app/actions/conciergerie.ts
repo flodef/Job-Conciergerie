@@ -171,10 +171,7 @@ export async function updateConciergerieWithUserId(
   }
 }
 
-export async function updateConciergerieData(
-  id: string | number,
-  data: Partial<Conciergerie>,
-): Promise<Conciergerie | null> {
+export async function updateConciergerieData(id: string, data: Partial<Conciergerie>): Promise<Conciergerie | null> {
   try {
     // Convert to DB format
     const dbData: Partial<DbConciergerie> = {

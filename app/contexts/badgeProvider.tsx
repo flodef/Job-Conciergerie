@@ -113,23 +113,24 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
       const todayMissions = missions.filter(mission => {
         return !mission.deleted && mission.id === 'klv2ul9w1vzfzfme06zqh';
       });
-      
+
       // Set the count of missions for today
       setTodayMissionsCount(todayMissions.length);
     };
-    
+
     // Count started missions for conciergeries
     const countStartedMissions = () => {
       if (!missions.length || userType !== 'conciergerie') return;
-      
+
       // Filter missions that are from this conciergerie, have an employee assigned, and are in started status
-      const startedMissions = missions.filter(mission => 
-        mission.conciergerieName === conciergerieName &&
-        mission.employeeId && 
-        mission.status === 'started' &&
-        !mission.deleted
+      const startedMissions = missions.filter(
+        mission =>
+          mission.conciergerieName === conciergerieName &&
+          mission.employeeId &&
+          mission.status === 'started' &&
+          !mission.deleted,
       );
-      
+
       setStartedMissionsCount(startedMissions.length);
     };
 

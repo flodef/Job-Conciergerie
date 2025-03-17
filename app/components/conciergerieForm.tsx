@@ -126,7 +126,7 @@ export default function ConciergerieForm({ conciergerieNames, onClose }: Concier
           </label>
           <Select
             id="conciergerie"
-            value={selectedConciergerieName}
+            value={selectedConciergerieName || ''}
             onChange={selectConciergerie}
             options={conciergerieNames}
             placeholder="Sélectionner une conciergerie"

@@ -10,38 +10,25 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 export type UserType = 'conciergerie' | 'employee' | undefined;
 
 interface AuthContextType {
-  userId: string;
+  userId: string | undefined;
   userType: UserType;
   setUserType: (userType: UserType) => void;
-  selectedConciergerieName: string;
+  selectedConciergerieName: string | undefined;
   setSelectedConciergerieName: (name: string) => void;
   conciergerieData: Conciergerie | undefined;
   employeeData: Employee | undefined;
   isLoading: boolean;
   error: string | undefined;
   refreshUserData: () => Promise<void>;
+  disconnect: () => void;
 }
 
 // Create the auth context
-const AuthContext = createContext<AuthContextType>({
-  userId: '',
-  userType: undefined,
-  setUserType: () => {},
-  selectedConciergerieName: '',
-  setSelectedConciergerieName: () => {},
-  conciergerieData: undefined,
-  employeeData: undefined,
-  isLoading: true,
-  error: undefined,
-  refreshUserData: async () => {},
-});
-
-// Custom hook to use the auth context
-export const useAuth = () => useContext(AuthContext);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Auth provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [userId, setUserId] = useLocalStorage<string>('user_id', '');
+  const [userId, setUserId] = useLocalStorage<string>('user_id', generateSimpleId());
   const [userType, setUserType] = useLocalStorage<UserType>('user_type', undefined);
   const [selectedConciergerieName, setSelectedConciergerieName] = useLocalStorage<string>(
     'selected_conciergerie_name',
@@ -104,11 +91,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        if (!userId) {
-          // Generate a new ID and store it in localStorage
-          const id = generateSimpleId();
-          setUserId(id);
-        }
+        if (!userId) return;
+        // const id = userId ?? generateSimpleId();
+        // if (!userId) {
+        //   // Generate a new ID and store it in localStorage
+        //   const id = generateSimpleId();
+        //   setUserId(id);
+        // }
 
         // Check if the user exists in the database
         // This will set the userType based on where the ID is found
@@ -124,6 +113,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const disconnect = () => {
+    // Clear only the user type from localStorage (keep other data)
+    setUserId(undefined);
+    setUserType(undefined);
+    setSelectedConciergerieName(undefined);
+
+    // Force a full page reload to reset the app state
+    window.location.href = '/';
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -137,9 +136,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         error,
         refreshUserData,
+        disconnect,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }

@@ -63,10 +63,10 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
 
   // Update conciergerie if companies change and current selection is not in the list
   useEffect(() => {
-    if (conciergerieNames.length > 0 && !conciergerieNames.includes(formData.conciergerieName ?? '')) {
+    if (conciergerieNames.length > 0 && !conciergerieNames.includes(formData?.conciergerieName ?? '')) {
       setFormData(prev => ({ ...prev, conciergerie: conciergerieNames[0] }));
     }
-  }, [conciergerieNames, formData.conciergerieName, setFormData]);
+  }, [conciergerieNames, formData?.conciergerieName, setFormData]);
 
   // Save original form data when the form is first opened
   const initialRenderRef = useRef(true);
@@ -120,6 +120,8 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsFormSubmitted(true);
+
+    if (!formData) return;
 
     // Check if all required fields are filled
     if (!formData.firstName) {
@@ -251,6 +253,8 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
 
     createEmployee();
   };
+
+  if (!formData) return null;
 
   return (
     <div>

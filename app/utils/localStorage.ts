@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
-export function useLocalStorage<T>(key: string, defaultValue: T): [T, Dispatch<SetStateAction<T>>] {
-  const state = useState<T>(() => getLocalStorageItem(key, defaultValue));
+export function useLocalStorage<T>(
+  key: string,
+  defaultValue?: T,
+): [T | undefined, Dispatch<SetStateAction<T | undefined>>] {
+  const state = useState<T | undefined>(() => getLocalStorageItem(key, defaultValue));
   const value = key ? state[0] : defaultValue;
 
   const isFirstRenderRef = useRef(true);
@@ -16,7 +19,7 @@ export function useLocalStorage<T>(key: string, defaultValue: T): [T, Dispatch<S
   return state;
 }
 
-export function getLocalStorageItem<T>(key: string, defaultValue: T) {
+export function getLocalStorageItem<T>(key: string, defaultValue?: T) {
   if (!key) {
     console.warn('useLocalStorage: key is not defined');
     return defaultValue;
@@ -33,7 +36,7 @@ export function getLocalStorageItem<T>(key: string, defaultValue: T) {
   return defaultValue;
 }
 
-export function setLocalStorageItem<T>(key: string, value: T) {
+export function setLocalStorageItem<T>(key: string, value: T | undefined) {
   if (!key) {
     console.warn('useLocalStorage: key is not defined');
     return;

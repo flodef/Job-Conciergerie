@@ -36,7 +36,7 @@ const EmployeeSettings: React.FC = () => {
     const loadEmployeeData = async () => {
       setIsLoading(true);
       try {
-        const employee = await fetchEmployeeById(userId);
+        const employee = await fetchEmployeeById(userId!);
         if (employee) {
           // Set employee data for form
           setName(employee.firstName + ' ' + employee.familyName);
