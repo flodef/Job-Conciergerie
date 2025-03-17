@@ -10,6 +10,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@neondatabase/serverless": "latest",
     "@tabler/icons-react": "latest",
     "@tailwindcss/postcss": "latest",
     "clsx": "latest",
@@ -22,6 +23,7 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "dotenv": "^16.4.7",
     "eslint": "latest",
     "eslint-config-next": "latest",
     "husky": "latest",

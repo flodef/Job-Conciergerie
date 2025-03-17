@@ -12,7 +12,7 @@ import {
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useMissions } from '../../contexts/missionsProvider';
-import { Mission } from '../../types/types';
+import { Conciergerie, Mission } from '../../types/types';
 import { formatDateTime, getTimeDifference } from '../../utils/dateUtils';
 import { formatPoints } from '../../utils/formatUtils';
 import {
@@ -66,8 +66,22 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [isDeleteWarningModalOpen, setIsDeleteWarningModalOpen] = useState(false);
 
   // Get the conciergerie from the mission data
-  const conciergerie = getConciergerieByName(mission.conciergerieName);
+  const [conciergerie, setConciergerie] = useState<Conciergerie | null>(null);
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
+  
+  // Fetch conciergerie data when mission changes
+  useEffect(() => {
+    const loadConciergerieData = async () => {
+      try {
+        const conciergerieData = await getConciergerieByName(mission.conciergerieName);
+        setConciergerie(conciergerieData);
+      } catch (error) {
+        console.error(`Error fetching conciergerie ${mission.conciergerieName}:`, error);
+      }
+    };
+    
+    loadConciergerieData();
+  }, [mission.conciergerieName, getConciergerieByName]);
 
   // Get the home data
   const home = getHomeById(mission.homeId);

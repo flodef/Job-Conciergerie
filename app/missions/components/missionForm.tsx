@@ -3,7 +3,7 @@
 import { clsx } from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMissions } from '../../contexts/missionsProvider';
-import { EmployeeWithStatus, Mission, Objective } from '../../types/types';
+import { Employee, Mission, Objective } from '../../types/types';
 import { getEmployees } from '../../utils/employeeUtils';
 import { getObjectivesWithPoints } from '../../utils/objectiveUtils';
 import ConfirmationModal from '../../components/confirmationModal';
@@ -55,7 +55,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     const allEmployees = getEmployees();
 
     // Filter to only include accepted employees for the current conciergerie
-    return allEmployees.filter((emp: EmployeeWithStatus) => emp.status === 'accepted');
+    return allEmployees.filter((emp: Employee) => emp.status === 'accepted');
   }, []);
 
   // Initialize start and end date/time

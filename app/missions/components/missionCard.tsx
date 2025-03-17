@@ -1,7 +1,8 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useMissions } from '../../contexts/missionsProvider';
-import { Mission } from '../../types/types';
+import { Conciergerie, Mission } from '../../types/types';
 import { formatDateRange } from '../../utils/dateUtils';
 import { getColorValueByName } from '../../utils/welcomeParams';
 
@@ -13,9 +14,23 @@ type MissionCardProps = {
 
 export default function MissionCard({ mission, onClick, onEdit }: MissionCardProps) {
   const { getConciergerieByName, getHomeById, getEmployeeById } = useMissions();
+  const [conciergerie, setConciergerie] = useState<Conciergerie | null>(null);
+
+  // Fetch conciergerie data when mission changes
+  useEffect(() => {
+    const loadConciergerieData = async () => {
+      try {
+        const conciergerieData = await getConciergerieByName(mission.conciergerieName);
+        setConciergerie(conciergerieData);
+      } catch (error) {
+        console.error(`Error fetching conciergerie ${mission.conciergerieName}:`, error);
+      }
+    };
+    
+    loadConciergerieData();
+  }, [mission.conciergerieName, getConciergerieByName]);
 
   const homeTitle = getHomeById(mission.homeId)?.title || 'Bien inconnu';
-  const conciergerie = getConciergerieByName(mission.conciergerieName);
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
   const employee = getEmployeeById(mission.employeeId);
 

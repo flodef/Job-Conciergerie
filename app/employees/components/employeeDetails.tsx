@@ -1,12 +1,12 @@
 'use client';
 
+import { Employee } from '@/app/types/types';
+import { formatDate } from '@/app/utils/dateUtils';
 import { IconMail, IconPhone } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
-import { EmployeeWithStatus } from '../../types/types';
-import { formatDate } from '../../utils/dateUtils';
 
 type EmployeeDetailsProps = {
-  employee: EmployeeWithStatus;
+  employee: Employee;
   onClose: () => void;
 };
 

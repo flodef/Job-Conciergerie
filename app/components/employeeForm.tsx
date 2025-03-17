@@ -1,11 +1,12 @@
 'use client';
 
+import { createNewEmployee } from '@/app/actions/employee';
 import { setLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
 import { clsx } from 'clsx/lite';
 import React, { useEffect, useRef, useState } from 'react';
+import { useAuth } from '../contexts/authProvider';
 import { useTheme } from '../contexts/themeProvider';
-import { Employee } from '../types/types';
-import { addEmployee, getEmployeeStatus } from '../utils/employeeUtils';
+import { Employee, EmployeeNotificationSettings } from '../types/types';
 import { generateSimpleId } from '../utils/id';
 import { emailRegex, frenchPhoneRegex } from '../utils/regex';
 import ConfirmationModal from './confirmationModal';
@@ -21,7 +22,9 @@ type EmployeeFormProps = {
 
 export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFormProps) {
   const { resetPrimaryColor } = useTheme();
-  const [formData, setFormData] = useLocalStorage<Employee>('employee_data', {
+  const { userId, refreshUserData } = useAuth();
+  // Using Partial<Employee> since we don't have status and createdAt yet
+  const [formData, setFormData] = useLocalStorage<Partial<Employee>>('employee_data', {
     id: '',
     firstName: '',
     familyName: '',
@@ -29,13 +32,19 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
     email: '',
     conciergerieName: conciergerieNames[0] || '',
     message: '',
+    notificationSettings: {
+      acceptedMissions: true,
+      missionChanged: true,
+      missionDeleted: true,
+      missionsCanceled: true,
+    },
   });
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormChanged, setIsFormChanged] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [originalFormData, setOriginalFormData] = useState<Employee | null>(null);
+  const [originalFormData, setOriginalFormData] = useState<Partial<Employee> | null>(null);
 
   // Validation states
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -193,23 +202,54 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
 
     setIsSubmitting(true);
 
-    // Redirect based on status
-    const status = getEmployeeStatus(formData);
-    if (status === 'accepted') {
-      // If accepted, go to missions page
-      window.location.href = '/missions';
-    } else if (status === 'pending' || status === 'rejected') {
-      // If pending or rejected, go to waiting page
-      window.location.href = '/waiting';
-    } else {
-      // Add the employee to the employees list
-      formData.id = generateSimpleId();
-      setFormData(prev => ({ ...prev, id: formData.id }));
-      addEmployee(formData);
+    // Always use the user ID from auth context if available
+    // This ensures we're using the ID that was generated when the app started
+    const employeeId = userId || generateSimpleId();
 
-      // Redirect to waiting page
-      window.location.href = '/waiting';
-    }
+    // Create the employee in the database
+    const createEmployee = async () => {
+      try {
+        // Update the form data with the user ID
+        setFormData(prev => ({ ...prev, id: employeeId }));
+
+        // Create the employee in the database with the user's ID
+        const result = await createNewEmployee({
+          id: employeeId, // Using the user's ID from localStorage
+          firstName: formData.firstName || '',
+          familyName: formData.familyName || '',
+          tel: formData.tel || '',
+          email: formData.email || '',
+          message: formData.message,
+          conciergerieName: formData.conciergerieName,
+          notificationSettings: formData.notificationSettings as EmployeeNotificationSettings,
+        });
+
+        if (result) {
+          // No need to update localStorage as we're using the existing ID
+
+          // Refresh user data to update the auth context
+          refreshUserData();
+
+          // Redirect to waiting page
+          window.location.href = '/waiting';
+        } else {
+          setToastMessage({
+            type: ToastType.Error,
+            message: "Erreur lors de l'enregistrement. Veuillez réessayer.",
+          });
+          setIsSubmitting(false);
+        }
+      } catch (error) {
+        console.error('Error creating employee:', error);
+        setToastMessage({
+          type: ToastType.Error,
+          message: "Erreur lors de l'enregistrement. Veuillez réessayer.",
+        });
+        setIsSubmitting(false);
+      }
+    };
+
+    createEmployee();
   };
 
   return (
@@ -227,7 +267,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-1">
-            Prénom*
+            Prénom
           </label>
           <input
             type="text"
@@ -250,7 +290,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
 
         <div>
           <label htmlFor="familyName" className="block text-sm font-medium text-foreground mb-1">
-            Nom*
+            Nom
           </label>
           <input
             type="text"
@@ -273,7 +313,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
 
         <div>
           <label htmlFor="tel" className="block text-sm font-medium text-foreground mb-1">
-            Téléphone*
+            Téléphone
           </label>
           <input
             type="tel"
@@ -299,7 +339,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
-            Email*
+            Email
           </label>
           <input
             type="email"
@@ -324,7 +364,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
 
         <div>
           <label htmlFor="conciergerie" className="flex items-center text-sm font-medium text-foreground mb-1">
-            <span>Conciergerie*</span>
+            <span>Conciergerie</span>
             <Tooltip text="C'est la conciergerie par laquelle vous avez connu ce site, qui recevra votre candidature et qui validera votre inscription." />
           </label>
           <Select
@@ -349,7 +389,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
 
         <div>
           <label htmlFor="message" className="block text-sm font-medium text-foreground mb-1">
-            Message
+            Message (facultatif)
           </label>
           <div className="relative">
             <textarea

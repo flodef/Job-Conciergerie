@@ -5,22 +5,23 @@ import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import { IconBriefcase, IconCalendar, IconHome, IconSettings, IconUser } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { ReactNode, useEffect, useState } from 'react';
+import { UserType } from '../contexts/authProvider';
 import { useBadge } from '../contexts/badgeProvider';
 
 // Map pages to their respective icons
-const pageSettings: Record<Page, { icon: ReactNode; userType: 'conciergerie' | 'employee' | 'both' }> = {
-  [Page.Welcome]: { icon: null, userType: 'both' },
-  [Page.Missions]: { icon: <IconBriefcase size={30} />, userType: 'both' },
-  [Page.Calendar]: { icon: <IconCalendar size={30} />, userType: 'both' },
+const pageSettings: Record<Page, { icon: ReactNode; userType: UserType }> = {
+  [Page.Welcome]: { icon: null, userType: undefined },
+  [Page.Missions]: { icon: <IconBriefcase size={30} />, userType: undefined },
+  [Page.Calendar]: { icon: <IconCalendar size={30} />, userType: undefined },
   [Page.Homes]: { icon: <IconHome size={30} />, userType: 'conciergerie' },
   [Page.Employees]: { icon: <IconUser size={30} />, userType: 'conciergerie' },
-  [Page.Settings]: { icon: <IconSettings size={30} />, userType: 'both' },
+  [Page.Settings]: { icon: <IconSettings size={30} />, userType: undefined },
 };
 
 export default function NavigationLayout({ children }: { children: ReactNode }) {
   const { currentPage, onMenuChange } = useMenuContext();
   const [isHomePage, setIsHomePage] = useState(false);
-  const [userType, setUserType] = useState<string>();
+  const [userType, setUserType] = useState<UserType>();
   const {
     pendingEmployeesCount,
     newMissionsCount,
@@ -98,7 +99,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
                 // Filter pages based on user type defined in pageSettings
                 const pageConfig = pageSettings[page];
-                return userType && (pageConfig.userType === userType || pageConfig.userType === 'both');
+                return userType && (pageConfig.userType === userType || pageConfig.userType === undefined);
               })
               .map(page => (
                 <button

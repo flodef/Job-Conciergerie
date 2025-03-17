@@ -1,14 +1,15 @@
+import { fetchEmployeeById, updateEmployeeData } from '@/app/actions/employee';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
-import { Employee } from '@/app/types/types';
+import { useAuth } from '@/app/contexts/authProvider';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
-import { getWelcomeParams, updateEmployeeData } from '@/app/utils/welcomeParams';
 import { clsx } from 'clsx/lite';
 import React, { useEffect, useState } from 'react';
 
 const EmployeeSettings: React.FC = () => {
+  const { userId } = useAuth();
+
   const [isLoading, setIsLoading] = useState(true);
-  const [userInfo, setUserInfo] = useState<Employee & { id: string }>();
 
   // Validation states
   const [emailError, setEmailError] = useState('');
@@ -20,6 +21,7 @@ const EmployeeSettings: React.FC = () => {
   const phoneRef = React.useRef<HTMLInputElement>(null);
 
   // Form state for editable fields
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [tel, setTel] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -31,38 +33,42 @@ const EmployeeSettings: React.FC = () => {
 
   // Load user info and set form values
   useEffect(() => {
-    setIsLoading(true);
-    // Add a small delay to simulate loading and ensure localStorage is read
-    // await new Promise(resolve => setTimeout(resolve, 500));
+    const loadEmployeeData = async () => {
+      setIsLoading(true);
+      try {
+        const employee = await fetchEmployeeById(userId);
+        if (employee) {
+          // Set employee data for form
+          setName(employee.firstName + ' ' + employee.familyName);
+          setEmail(employee.email);
+          setTel(employee.tel);
 
-    const params = getWelcomeParams();
-    setUserInfo(params.employeeData);
+          // Store original values for comparison
+          setOriginalEmail(employee.email);
+          setOriginalTel(employee.tel);
+        }
+      } catch (error) {
+        console.error('Error loading employee data:', error);
+        setToastMessage({
+          type: ToastType.Error,
+          message: 'Erreur lors du chargement des données',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    if (params.employeeData) {
-      // Set employee data for form
-      setEmail(params.employeeData.email || '');
-      setTel(params.employeeData.tel || '');
-
-      // Store original values for comparison
-      setOriginalEmail(params.employeeData.email || '');
-      setOriginalTel(params.employeeData.tel || '');
-    }
-
-    setIsLoading(false);
-  }, []);
+    loadEmployeeData();
+  }, [userId]);
 
   const hasChanges = () => {
-    if (!userInfo) return false;
-
     const emailChanged = email !== originalEmail;
     const telChanged = tel !== originalTel;
     return emailChanged || telChanged;
   };
 
   // Handle form submission
-  const handleSave = () => {
-    if (!userInfo) return;
-
+  const handleSave = async () => {
     setIsFormSubmitted(true);
 
     // Validate required fields
@@ -115,20 +121,22 @@ const EmployeeSettings: React.FC = () => {
     setIsSaving(true);
 
     try {
-      // Update employee data
-      const updatedData = {
-        ...userInfo,
-        email,
-        tel,
-        message: undefined,
-        conciergerieName: undefined,
-      };
-
-      // Save to localStorage
-      updateEmployeeData(updatedData);
-
-      // Update local state
-      setUserInfo(updatedData);
+      if (userId) {
+        await updateEmployeeData(userId, {
+          email,
+          tel,
+          message: undefined,
+          conciergerieName: undefined,
+        });
+      } else {
+        console.error('Cannot update employee: missing ID');
+        setToastMessage({
+          type: ToastType.Error,
+          message: 'Erreur: impossible de mettre à jour l&apos;employé (ID manquant)',
+        });
+        setIsSaving(false);
+        return;
+      }
 
       // Update original values to match current values after save
       setOriginalEmail(email);
@@ -170,9 +178,7 @@ const EmployeeSettings: React.FC = () => {
 
       <div>
         <p className="text-sm text-foreground/70 mb-1">Nom</p>
-        <p className="font-medium">
-          {userInfo?.firstName} {userInfo?.familyName}
-        </p>
+        <p className="font-medium">{name}</p>
       </div>
 
       <div>

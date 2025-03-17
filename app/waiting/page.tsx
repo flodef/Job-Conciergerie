@@ -1,17 +1,17 @@
 'use client';
 
+import LoadingSpinner from '@/app/components/loadingSpinner';
+import { Employee } from '@/app/types/types';
+import { findEmployee } from '@/app/utils/employeeUtils';
+import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import { IconAlertCircle, IconCircleCheck, IconClock } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import LoadingSpinner from '../components/loadingSpinner';
-import { EmployeeWithStatus } from '../types/types';
-import { findEmployee } from '../utils/employeeUtils';
-import { getWelcomeParams } from '../utils/welcomeParams';
 
 export default function WaitingPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [employee, setEmployee] = useState<EmployeeWithStatus | null>(null);
+  const [employee, setEmployee] = useState<Employee>();
   const [daysWaiting, setDaysWaiting] = useState('');
 
   useEffect(() => {
@@ -172,20 +172,6 @@ export default function WaitingPage() {
             nouvelle demande.
           </p>
         )}
-
-        {/* //TODO : remove this when in Prod */}
-        <div className="mt-4 justify-self-center">
-          <button
-            onClick={() => {
-              // Clear user type from localStorage for testing purposes
-              localStorage.removeItem('user_type');
-              window.location.href = '/';
-            }}
-            className="px-4 py-2 bg-primary text-background rounded-md hover:bg-primary/80"
-          >
-            Retour à l&apos;accueil
-          </button>
-        </div>
       </div>
     </main>
   );

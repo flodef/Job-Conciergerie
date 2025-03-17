@@ -11,23 +11,35 @@ import SearchInput from '../components/searchInput';
 import { useHomes } from '../contexts/homesProvider';
 import { useMenuContext } from '../contexts/menuProvider';
 import { HomeData } from '../types/types';
-import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
+import { useRedirectIfNotRegistered } from '../utils/authRedirect';
+import { useAuth } from '../contexts/authProvider';
 
 export default function HomesPage() {
-  const { homes, isLoading, getCurrentConciergerie } = useHomes();
+  const { homes, isLoading: homesLoading, getCurrentConciergerie } = useHomes();
   const { setHasUnsavedChanges } = useMenuContext();
   const [selectedHome, setSelectedHome] = useState<HomeData | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const { userType, isLoading: authLoading } = useAuth();
 
-  // Redirect if not registered
+  // Redirect if not registered - must be called before any conditional returns
   useRedirectIfNotRegistered();
 
-  // Reset unsaved changes when navigating to this page
+  // Reset unsaved changes when navigating to this page - must be called before any conditional returns
   useEffect(() => {
     setHasUnsavedChanges(false);
   }, [setHasUnsavedChanges]);
+
+  // Prevent rendering anything until authentication is complete
+  // This prevents the brief flash of the homes page before redirect
+  if (authLoading || !userType) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner size="large" text="Vérification de l'authentification..." />
+      </div>
+    );
+  }
 
   // Get current conciergerie
   const currentConciergerie = getCurrentConciergerie();
@@ -82,7 +94,7 @@ export default function HomesPage() {
         />
       )}
 
-      {isLoading ? (
+      {homesLoading ? (
         <div className="min-h-[calc(100dvh-9rem)] flex items-center justify-center bg-background">
           <LoadingSpinner size="large" text="Chargement des biens..." />
         </div>

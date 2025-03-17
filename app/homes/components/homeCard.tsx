@@ -1,8 +1,9 @@
 'use client';
 
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { useMissions } from '../../contexts/missionsProvider';
-import { HomeData } from '../../types/types';
+import { Conciergerie, HomeData } from '../../types/types';
 import { formatDateTime } from '../../utils/dateUtils';
 import { getColorValueByName } from '../../utils/welcomeParams';
 
@@ -15,8 +16,22 @@ type HomeCardProps = {
 export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
   // Get the conciergerie color from the home data
   const { getConciergerieByName } = useMissions();
-  const conciergerie = getConciergerieByName(home.conciergerieName);
+  const [conciergerie, setConciergerie] = useState<Conciergerie | null>(null);
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
+  
+  // Fetch conciergerie data when home changes
+  useEffect(() => {
+    const loadConciergerieData = async () => {
+      try {
+        const conciergerieData = await getConciergerieByName(home.conciergerieName);
+        setConciergerie(conciergerieData);
+      } catch (error) {
+        console.error(`Error fetching conciergerie ${home.conciergerieName}:`, error);
+      }
+    };
+    
+    loadConciergerieData();
+  }, [home.conciergerieName, getConciergerieByName]);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent the default context menu

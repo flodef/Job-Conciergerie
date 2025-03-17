@@ -1,11 +1,11 @@
-import { Employee, EmployeeStatus, EmployeeWithStatus, Mission } from '../types/types';
+import { Employee, EmployeeStatus, Mission } from '../types/types';
 
 // Get all employees from localStorage
-export function getEmployees(): EmployeeWithStatus[] {
+export function getEmployees(): Employee[] {
   try {
     const employeesStr = localStorage.getItem('employees_list');
     if (employeesStr) {
-      return JSON.parse(employeesStr) as EmployeeWithStatus[];
+      return JSON.parse(employeesStr) as Employee[];
     }
   } catch (error) {
     console.error('Error getting employees:', error);
@@ -14,7 +14,7 @@ export function getEmployees(): EmployeeWithStatus[] {
 }
 
 // Save employees to localStorage
-export function saveEmployees(employees: EmployeeWithStatus[]): void {
+export function saveEmployees(employees: Employee[]): void {
   try {
     localStorage.setItem('employees_list', JSON.stringify(employees));
   } catch (error) {
@@ -23,10 +23,7 @@ export function saveEmployees(employees: EmployeeWithStatus[]): void {
 }
 
 // Find an employee by matching name, email, or phone
-export function findEmployee(
-  employee: Employee,
-  existingEmployees?: EmployeeWithStatus[],
-): EmployeeWithStatus | undefined {
+export function findEmployee(employee: Employee, existingEmployees?: Employee[]): Employee | undefined {
   const employees = existingEmployees || getEmployees();
 
   // Check if employee exists with the same name, email, or phone
@@ -40,7 +37,7 @@ export function findEmployee(
 }
 
 // Check if employee already exists
-export function employeeExists(employee: Employee, existingEmployees?: EmployeeWithStatus[]): boolean {
+export function employeeExists(employee: Employee, existingEmployees?: Employee[]): boolean {
   return !!findEmployee(employee, existingEmployees);
 }
 
@@ -52,7 +49,7 @@ export function addEmployee(employee: Employee): void {
   if (employeeExists(employee, employees)) return;
 
   // Create a new employee with status
-  const newEmployee: EmployeeWithStatus = {
+  const newEmployee: Employee = {
     ...employee,
     status: 'pending',
     createdAt: new Date().toISOString(),
@@ -77,7 +74,7 @@ export function updateEmployeeStatus(id: string, status: EmployeeStatus): void {
         return { ...emp, status };
       }
       return emp;
-    }) as EmployeeWithStatus[];
+    }) as Employee[];
 
     saveEmployees(updatedEmployees);
 
@@ -122,7 +119,7 @@ export function deleteEmployee(id: string): void {
 
 // Sort employees by status (pending first, then accepted, then rejected)
 // and then alphabetically by name
-export function sortEmployees(employees: EmployeeWithStatus[]): EmployeeWithStatus[] {
+export function sortEmployees(employees: Employee[]): Employee[] {
   const statusOrder: Record<EmployeeStatus, number> = {
     pending: 0,
     accepted: 1,
@@ -149,7 +146,7 @@ export function sortEmployees(employees: EmployeeWithStatus[]): EmployeeWithStat
 }
 
 // Filter employees by search term
-export function filterEmployees(employees: EmployeeWithStatus[], searchTerm: string): EmployeeWithStatus[] {
+export function filterEmployees(employees: Employee[], searchTerm: string): Employee[] {
   if (!searchTerm.trim()) {
     return employees;
   }
@@ -165,10 +162,7 @@ export function filterEmployees(employees: EmployeeWithStatus[], searchTerm: str
 }
 
 // Filter employees by conciergerie
-export function filterEmployeesByConciergerie(
-  employees: EmployeeWithStatus[],
-  conciergerieName: string | null,
-): EmployeeWithStatus[] {
+export function filterEmployeesByConciergerie(employees: Employee[], conciergerieName: string | null): Employee[] {
   if (!conciergerieName) return [];
 
   return employees.filter(

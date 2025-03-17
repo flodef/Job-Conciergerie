@@ -1,19 +1,8 @@
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 
-export function useLocalStorage<T>(key: string, defaultState: T): [T, Dispatch<SetStateAction<T>>] {
-  const state = useState<T>(() => {
-    try {
-      const value = localStorage.getItem(key);
-      if (value) return JSON.parse(value) as T;
-    } catch (error) {
-      if (typeof window !== 'undefined') {
-        console.error(error);
-      }
-    }
-
-    return defaultState;
-  });
-  const value = key ? state[0] : defaultState;
+export function useLocalStorage<T>(key: string, defaultValue: T): [T, Dispatch<SetStateAction<T>>] {
+  const state = useState<T>(() => getLocalStorageItem(key, defaultValue));
+  const value = key ? state[0] : defaultValue;
 
   const isFirstRenderRef = useRef(true);
   useEffect(() => {

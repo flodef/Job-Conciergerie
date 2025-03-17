@@ -41,14 +41,14 @@ export interface Employee {
   conciergerieName?: string;
   message?: string;
   notificationSettings?: EmployeeNotificationSettings;
-}
-
-export interface EmployeeWithStatus extends Employee {
   status: EmployeeStatus;
   createdAt: string;
 }
 
+// EmployeeWithStatus is now merged into Employee type
+
 export interface Conciergerie {
+  id: string;
   name: string;
   color: string;
   colorName: string;

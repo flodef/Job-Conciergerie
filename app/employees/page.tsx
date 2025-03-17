@@ -6,7 +6,7 @@ import EmployeeDetails from './components/employeeDetails';
 import FullScreenModal from '../components/fullScreenModal';
 import SearchInput from '../components/searchInput';
 import { ToastMessage, ToastProps, ToastType } from '../components/toastMessage';
-import { EmployeeWithStatus } from '../types/types';
+import { Employee } from '../types/types';
 import {
   filterEmployees,
   filterEmployeesByConciergerie,
@@ -14,31 +14,45 @@ import {
   sortEmployees,
   updateEmployeeStatus,
 } from '../utils/employeeUtils';
-import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
-import { getWelcomeParams } from '../utils/welcomeParams';
+import { useRedirectIfNotRegistered } from '../utils/authRedirect';
+import { useAuth } from '../contexts/authProvider';
+import LoadingSpinner from '../components/loadingSpinner';
 
 export default function EmployeesList() {
-  const [employees, setEmployees] = useState<EmployeeWithStatus[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState<ToastProps>();
-  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeWithStatus | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const { userType, conciergerieData, isLoading: authLoading } = useAuth();
 
-  // Redirect if not registered
+  // Redirect if not registered - must be called before any conditional returns
   useRedirectIfNotRegistered();
 
-  // Load employees on component mount
+  // Load employees on component mount - must be called before any conditional returns
   useEffect(() => {
+    // Skip if still loading
+    if (authLoading || !userType) return;
+
     const allEmployees = getEmployees();
 
-    // Get current conciergerie
-    const { conciergerieData } = getWelcomeParams();
+    // Get current conciergerie from auth context
     const conciergerieName = conciergerieData?.name || null;
 
     // Filter employees by conciergerie
     const filteredEmployees = filterEmployeesByConciergerie(allEmployees, conciergerieName);
 
     setEmployees(sortEmployees(filteredEmployees));
-  }, []);
+  }, [conciergerieData?.name, authLoading, userType]);
+
+  // Prevent rendering anything until authentication is complete
+  // This prevents the brief flash of the employees page before redirect
+  if (authLoading || !userType) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner size="large" text="Vérification de l'authentification..." />
+      </div>
+    );
+  }
 
   // Filter employees by status
   const pendingEmployees = employees.filter(
@@ -75,7 +89,7 @@ export default function EmployeesList() {
   };
 
   // Handle employee selection
-  const handleEmployeeClick = (employee: EmployeeWithStatus) => {
+  const handleEmployeeClick = (employee: Employee) => {
     setSelectedEmployee(employee);
   };
 
@@ -238,7 +252,7 @@ function EmployeeRow({
   onStatusChange,
   onClick,
 }: {
-  employee: EmployeeWithStatus;
+  employee: Employee;
   onStatusChange: (id: string, status: 'accepted' | 'rejected') => void;
   onClick: () => void;
 }) {

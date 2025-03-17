@@ -4,7 +4,7 @@ import { IconCalendarEvent, IconClock, IconPlayerPlay, IconAlertTriangle } from 
 import clsx from 'clsx/lite';
 import { useEffect, useState } from 'react';
 import { useMissions } from '../contexts/missionsProvider';
-import { Mission } from '../types/types';
+import { Conciergerie, Mission } from '../types/types';
 import {
   formatCalendarDate,
   formatMissionTimeForCalendar,
@@ -28,6 +28,7 @@ export default function CalendarView() {
   const [missionsByDate, setMissionsByDate] = useState<Map<string, Mission[]>>(new Map());
   const [sortedDates, setSortedDates] = useState<string[]>([]);
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
+  const [conciergerieMap, setConciergerieMap] = useState<Map<string, Conciergerie>>(new Map());
 
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string | undefined>(undefined);
   const [currentConciergerieName, setCurrentConciergerieName] = useState<string | undefined>(undefined);
@@ -47,6 +48,30 @@ export default function CalendarView() {
       setCurrentConciergerieName(conciergerieData?.name);
     }
   }, [employeeData, conciergerieData, isEmployee, isConciergerie]);
+
+  // Load conciergerie data for all missions
+  useEffect(() => {
+    const loadConciergerieData = async () => {
+      const newConciergerieMap = new Map<string, Conciergerie>();
+      
+      // Get unique conciergerie names from missions
+      const conciergerieNames = [...new Set(missions.map(mission => mission.conciergerieName))];
+      
+      // Fetch conciergerie data for each name
+      for (const name of conciergerieNames) {
+        if (!newConciergerieMap.has(name)) {
+          const conciergerie = await getConciergerieByName(name);
+          if (conciergerie) {
+            newConciergerieMap.set(name, conciergerie);
+          }
+        }
+      }
+      
+      setConciergerieMap(newConciergerieMap);
+    };
+    
+    loadConciergerieData();
+  }, [missions, getConciergerieByName]);
 
   // Second useEffect to handle mission filtering after we have the user identity
   useEffect(() => {
@@ -215,7 +240,7 @@ export default function CalendarView() {
 
               <div className="divide-y divide-secondary/30">
                 {missionsForDate.map(mission => {
-                  const conciergerie = getConciergerieByName(mission.conciergerieName);
+                  const conciergerie = conciergerieMap.get(mission.conciergerieName);
                   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
                   const { totalPoints } = calculateMissionPoints(mission);
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import conciergeriesData from '../data/conciergeries.json';
+import { fetchConciergerieByName } from '../actions/conciergerie';
 import { Conciergerie, Employee, HomeData, Mission, MissionStatus, Objective } from '../types/types';
 import { generateSimpleId } from '../utils/id';
 import { getWelcomeParams } from '../utils/welcomeParams';
@@ -20,7 +20,7 @@ type MissionsContextType = {
   startMission: (id: string) => void;
   completeMission: (id: string) => void;
   getCurrentConciergerie: () => Conciergerie | null;
-  getConciergerieByName: (name: string) => Conciergerie | null;
+  getConciergerieByName: (name: string) => Promise<Conciergerie | null>;
   getHomeById: (id: string) => HomeData | undefined;
   getEmployeeById: (id: string | undefined) => Employee | undefined;
   shouldShowAcceptWarning: boolean;
@@ -304,6 +304,14 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       email: employeeData.email,
       conciergerieName: employeeData.conciergerieName,
       message: employeeData.message,
+      status: 'accepted', // Default to accepted since they're viewing missions
+      createdAt: new Date().toISOString(), // Use current date as fallback
+      notificationSettings: employeeData.notificationSettings || {
+        acceptedMissions: true,
+        missionChanged: true,
+        missionDeleted: true,
+        missionsCanceled: true,
+      },
     };
 
     if (!employee.id) {
@@ -393,26 +401,21 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   };
 
   // Helper function to get a conciergerie by name
-  const getConciergerieByName = (name: string): Conciergerie | null => {
+  const getConciergerieByName = async (name: string): Promise<Conciergerie | null> => {
     // If the name matches the current conciergerie, return it
     const currentConciergerie = getCurrentConciergerie();
     if (currentConciergerie && currentConciergerie.name === name) {
       return currentConciergerie;
     }
 
-    // If not the current conciergerie, look it up in the conciergeries.json data
-    const foundConciergerie = conciergeriesData.find(c => c.name === name);
-    if (foundConciergerie) {
-      // The data from JSON doesn't have the 'color' property that Conciergerie interface requires
-      // but we can add it using the colorName and getColorValueByName function
-      return {
-        ...foundConciergerie,
-        color: '', // This will be set by getColorValueByName using the colorName
-      } as Conciergerie;
+    // If not the current conciergerie, fetch it from the database
+    try {
+      const foundConciergerie = await fetchConciergerieByName(name);
+      return foundConciergerie;
+    } catch (error) {
+      console.error(`Error fetching conciergerie ${name}:`, error);
+      return null;
     }
-
-    // Return null if conciergerie not found
-    return null;
   };
 
   // Helper function to get a home by ID

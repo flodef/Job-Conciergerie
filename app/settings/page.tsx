@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Accordion from '../components/accordion';
-import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
-import { getWelcomeParams } from '../utils/welcomeParams';
+import LoadingSpinner from '../components/loadingSpinner';
+import { useAuth } from '../contexts/authProvider';
+import { useRedirectIfNotRegistered } from '../utils/authRedirect';
 import AdvancedSettings from './components/advancedSettings';
 import ConciergerieSettings from './components/conciergerieSettings';
 import EmployeeSettings from './components/employeeSettings';
@@ -18,26 +18,31 @@ function NoUserInfo() {
 }
 
 export default function Settings() {
-  const [userType, setUserType] = useState<'conciergerie' | 'employee'>();
+  const { userType, isLoading } = useAuth();
 
-  // Redirect if not registered
+  // Redirect if not registered - must be called before any conditional returns
   useRedirectIfNotRegistered();
 
-  useEffect(() => {
-    const params = getWelcomeParams();
-    setUserType(params.userType);
-  }, []);
+  // Prevent rendering anything until authentication is complete
+  // This prevents the brief flash of the settings page before redirect
+  if (isLoading || !userType) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner size="large" text="Vérification de l'authentification..." />
+      </div>
+    );
+  }
 
   // Sections content
   const generalSection = {
     conciergerie: <ConciergerieSettings />,
     employee: <EmployeeSettings />,
-    '': <NoUserInfo />,
-  }[userType || ''];
+    undefined: <NoUserInfo />,
+  }[userType || 'undefined'];
 
-  const notificationsSection = <NotificationSettings userType={userType} />;
+  const notificationsSection = <NotificationSettings />;
 
-  const advancedSection = <AdvancedSettings userType={userType} />;
+  const advancedSection = <AdvancedSettings />;
 
   const accordionItems = [
     {

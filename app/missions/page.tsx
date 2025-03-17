@@ -11,8 +11,8 @@ import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 import { useTheme } from '../contexts/themeProvider';
 import { Mission, MissionSortField } from '../types/types';
-import { useRedirectIfNotRegistered } from '../utils/redirectIfNotRegistered';
-import { getWelcomeParams } from '../utils/welcomeParams';
+import { useRedirectIfNotRegistered } from '../utils/authRedirect';
+import { useAuth } from '../contexts/authProvider';
 import MissionFilters from './components/missionFilters';
 import MissionList from './components/missionList';
 import MissionSortControls from './components/missionSortControls';
@@ -24,31 +24,31 @@ import {
 } from '../utils/missionFilters';
 
 export default function Missions() {
-  const { missions, isLoading } = useMissions();
+  const { missions, isLoading: missionsLoading } = useMissions();
   const { homes } = useHomes();
   const { setPrimaryColor, resetPrimaryColor } = useTheme();
-  const { conciergerieData, userType } = getWelcomeParams();
+  const { userType, conciergerieData, isLoading: authLoading } = useAuth();
 
-  // Modal states
+  // Modal states - must be declared before any conditional returns
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddHomeModalOpen, setIsAddHomeModalOpen] = useState(false);
   const [isNoHomesModalOpen, setIsNoHomesModalOpen] = useState(false);
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
 
-  // Sorting state
+  // Sorting state - must be declared before any conditional returns
   const [sortField, setSortField] = useState<MissionSortField>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [collapsedCategories, setCollapsedCategories] = useState<string[]>([]);
 
-  // Filter states
+  // Filter states - must be declared before any conditional returns
   const [selectedConciergeries, setSelectedConciergeries] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['current']);
   const [selectedTakenStatus, setSelectedTakenStatus] = useState<string[]>(['notTaken']);
   const [selectedZones, setSelectedZones] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Store for saved filter values
+  // Store for saved filter values - must be declared before any conditional returns
   const [savedFilters, setSavedFilters] = useState<{
     conciergeries: string[];
     statuses: string[];
@@ -61,23 +61,14 @@ export default function Missions() {
     zones: [],
   });
 
-  // Function to save current filter values to localStorage
-  const saveFiltersToLocalStorage = () => {
-    const filtersToSave = {
-      conciergeries: selectedConciergeries,
-      statuses: selectedStatuses,
-      takenStatus: selectedTakenStatus,
-      zones: selectedZones,
-    };
-    localStorage.setItem('mission_filters', JSON.stringify(filtersToSave));
-    setSavedFilters(filtersToSave);
-  };
-
-  // Redirect if not registered
+  // Use the new redirect hook - must be called before any conditional returns
   useRedirectIfNotRegistered();
 
-  // Load saved filters from localStorage on component mount
+  // Load saved filters from localStorage on component mount - must be called before any conditional returns
   useEffect(() => {
+    // Skip if still loading
+    if (authLoading || !userType) return;
+
     const savedFiltersStr = localStorage.getItem('mission_filters');
     if (savedFiltersStr) {
       try {
@@ -93,24 +84,29 @@ export default function Missions() {
         console.error('Error parsing saved filters:', error);
       }
     }
-  }, []);
+  }, [authLoading, userType]);
 
-  // Set primary color from welcome params
+  // Set primary color from welcome params - must be called before any conditional returns
   useEffect(() => {
+    // Skip if still loading
+    if (authLoading || !userType) return;
+
     if (userType === 'conciergerie' && conciergerieData?.color) {
       setPrimaryColor(conciergerieData.color);
     } else {
       resetPrimaryColor();
     }
-  }, [setPrimaryColor, resetPrimaryColor, conciergerieData, userType]);
+  }, [setPrimaryColor, resetPrimaryColor, conciergerieData, userType, authLoading]);
 
-  // Basic filtered missions (by user type)
+  // Basic filtered missions (by user type) - must be declared before any conditional returns
   const basicFilteredMissions = useMemo(() => {
+    if (authLoading || !userType) return [];
     return filterMissionsByUserType(missions, userType);
-  }, [missions, userType]);
+  }, [missions, userType, authLoading]);
 
-  // Apply additional filters (conciergerie, status, zones)
+  // Apply additional filters (conciergerie, status, zones) - must be declared before any conditional returns
   const filteredMissions = useMemo(() => {
+    if (authLoading || !userType) return [];
     return applyMissionFilters(
       basicFilteredMissions,
       selectedConciergeries,
@@ -119,20 +115,32 @@ export default function Missions() {
       selectedZones,
       homes,
     );
-  }, [basicFilteredMissions, selectedConciergeries, selectedStatuses, selectedTakenStatus, selectedZones, homes]);
+  }, [
+    basicFilteredMissions,
+    selectedConciergeries,
+    selectedStatuses,
+    selectedTakenStatus,
+    selectedZones,
+    homes,
+    authLoading,
+    userType,
+  ]);
 
-  // Sort missions
+  // Sort missions - must be declared before any conditional returns
   const sortedMissions = useMemo(() => {
+    if (authLoading || !userType) return [];
     return sortMissions(filteredMissions, sortField, sortDirection, homes);
-  }, [filteredMissions, sortField, sortDirection, homes]);
+  }, [filteredMissions, sortField, sortDirection, homes, authLoading, userType]);
 
-  // Group missions by category
+  // Group missions by category - must be declared before any conditional returns
   const groupedMissions = useMemo(() => {
+    if (authLoading || !userType) return {};
     return groupMissionsByCategory(sortedMissions, sortField, homes);
-  }, [sortedMissions, sortField, homes]);
+  }, [sortedMissions, sortField, homes, authLoading, userType]);
 
-  // Get available conciergeries for filtering
+  // Get available conciergeries for filtering - must be declared before any conditional returns
   const availableConciergeries = useMemo(() => {
+    if (authLoading || !userType) return [];
     const conciergeries = new Set<string>();
     basicFilteredMissions.forEach(mission => {
       if (mission.conciergerieName) {
@@ -140,10 +148,11 @@ export default function Missions() {
       }
     });
     return Array.from(conciergeries).sort();
-  }, [basicFilteredMissions]);
+  }, [basicFilteredMissions, authLoading, userType]);
 
-  // Get available geographic zones for filtering
+  // Get available geographic zones for filtering - must be declared before any conditional returns
   const availableZones = useMemo(() => {
+    if (authLoading || !userType) return [];
     const zones = new Set<string>();
     basicFilteredMissions.forEach(mission => {
       const home = homes.find(h => h.id === mission.homeId);
@@ -152,7 +161,29 @@ export default function Missions() {
       }
     });
     return Array.from(zones).sort();
-  }, [basicFilteredMissions, homes]);
+  }, [basicFilteredMissions, homes, authLoading, userType]);
+
+  // Function to save current filter values to localStorage
+  const saveFiltersToLocalStorage = () => {
+    const filtersToSave = {
+      conciergeries: selectedConciergeries,
+      statuses: selectedStatuses,
+      takenStatus: selectedTakenStatus,
+      zones: selectedZones,
+    };
+    localStorage.setItem('mission_filters', JSON.stringify(filtersToSave));
+    setSavedFilters(filtersToSave);
+  };
+
+  // Prevent rendering anything until authentication is complete
+  // This prevents the brief flash of the missions page before redirect
+  if (authLoading || !userType) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner size="large" text="Vérification de l'authentification..." />
+      </div>
+    );
+  }
 
   // Change sort field
   const changeSortField = (field: MissionSortField) => {
@@ -182,7 +213,7 @@ export default function Missions() {
     selectedTakenStatus.length > 0 ||
     selectedZones.length > 0;
 
-  if (isLoading) {
+  if (missionsLoading || authLoading) {
     return (
       <div className="min-h-[calc(100dvh-9rem)] flex items-center justify-center bg-background">
         <LoadingSpinner size="large" text="Chargement des missions..." />

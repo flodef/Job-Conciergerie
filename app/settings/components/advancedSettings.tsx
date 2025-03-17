@@ -1,11 +1,9 @@
 import ConfirmationModal from '@/app/components/confirmationModal';
+import { useAuth } from '@/app/contexts/authProvider';
 import React, { useState } from 'react';
 
-interface AdvancedSettingsProps {
-  userType?: 'conciergerie' | 'employee';
-}
-
-const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ userType }) => {
+const AdvancedSettings: React.FC = () => {
+  const { userType } = useAuth();
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showNukeConfirmation, setShowNukeConfirmation] = useState(false);
 
@@ -47,6 +45,7 @@ const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({ userType }) => {
         onConfirm={() => {
           // Clear only the user type from localStorage (keep other data)
           localStorage.removeItem('user_type');
+          localStorage.removeItem('user_id');
 
           // Force a full page reload to reset the app state
           window.location.href = '/';

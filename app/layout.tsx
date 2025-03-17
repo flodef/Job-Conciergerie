@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import NavigationLayout from './components/navigationLayout';
+import { AuthProvider } from './contexts/authProvider';
+import { BadgeProvider } from './contexts/badgeProvider';
 import { HomesProvider } from './contexts/homesProvider';
 import { MenuProvider } from './contexts/menuProvider';
 import { MissionsProviderWrapper } from './contexts/missionsProvider';
 import { ThemeProvider } from './contexts/themeProvider';
-import { BadgeProvider } from './contexts/badgeProvider';
 import './globals.css';
 
 const geistSans = localFont({
@@ -33,15 +34,17 @@ export default function RootLayout({
     <html lang="fr">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
-          <MenuProvider>
-            <HomesProvider>
-              <MissionsProviderWrapper>
-                <BadgeProvider>
-                  <NavigationLayout>{children}</NavigationLayout>
-                </BadgeProvider>
-              </MissionsProviderWrapper>
-            </HomesProvider>
-          </MenuProvider>
+          <AuthProvider>
+            <MenuProvider>
+              <HomesProvider>
+                <MissionsProviderWrapper>
+                  <BadgeProvider>
+                    <NavigationLayout>{children}</NavigationLayout>
+                  </BadgeProvider>
+                </MissionsProviderWrapper>
+              </HomesProvider>
+            </MenuProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
