@@ -1,15 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { fetchConciergeries } from '../actions/conciergerie';
+import { useCallback, useState } from 'react';
 import { useAuth } from '../contexts/authProvider';
 import { useTheme } from '../contexts/themeProvider';
 import { Conciergerie } from '../types/types';
 import { getColorValueByName } from '../utils/welcomeParams';
 import FormActions from './formActions';
+import LoadingSpinner from './loadingSpinner';
 import Select from './select';
 import { ToastMessage, ToastProps, ToastType } from './toastMessage';
-import LoadingSpinner from './loadingSpinner';
 
 type ConciergerieFormProps = {
   conciergeries: Conciergerie[];
@@ -18,44 +17,17 @@ type ConciergerieFormProps = {
 
 export default function ConciergerieForm({ conciergeries, onClose }: ConciergerieFormProps) {
   const { setPrimaryColor, resetPrimaryColor } = useTheme();
-  const {
-    refreshUserData,
-    conciergerieData,
-    selectedConciergerieName,
-    setSelectedConciergerieName,
-    isLoading: authLoading,
-  } = useAuth();
+  const { refreshUserData, selectedConciergerieName, setSelectedConciergerieName, isLoading: authLoading } = useAuth();
 
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [allConciergeries, setAllConciergeries] = useState(conciergeries);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Fetch all conciergeries on component mount
-  useEffect(() => {
-    const loadConciergeries = async () => {
-      try {
-        if (!allConciergeries.length) return;
-
-        setIsLoading(true);
-        const conciergeries = await fetchConciergeries();
-        setAllConciergeries(conciergeries);
-      } catch (error) {
-        console.error('Error fetching conciergeries:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadConciergeries();
-  }, [allConciergeries.length]);
 
   const selectConciergerie = useCallback(
     (conciergerieName?: string) => {
-      if (!allConciergeries.length) return;
+      if (!conciergeries.length) return;
 
       const selectedConciergerie =
-        allConciergeries.find((c: Conciergerie) => c.name === conciergerieName) || allConciergeries[0];
+        conciergeries.find((c: Conciergerie) => c.name === conciergerieName) || conciergeries[0];
       setSelectedConciergerieName(selectedConciergerie.name);
 
       // Get color value based on colorName
@@ -66,15 +38,11 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
         setPrimaryColor(colorValue);
       }
     },
-    [allConciergeries, setPrimaryColor, setSelectedConciergerieName],
+    [conciergeries, setPrimaryColor, setSelectedConciergerieName],
   );
 
-  // Update selected company data when name changes
-  useEffect(() => {
-    selectConciergerie(conciergerieData?.name);
-  }, [selectConciergerie, conciergerieData]);
-
   const handleClose = () => {
+    setSelectedConciergerieName(undefined);
     resetPrimaryColor();
     onClose();
   };
@@ -85,7 +53,7 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
     e.preventDefault();
     setIsFormSubmitted(true);
 
-    if (!conciergerieData?.name) {
+    if (!selectedConciergerieName) {
       setToastMessage({
         type: ToastType.Error,
         message: 'Veuillez sélectionner une conciergerie',
@@ -103,17 +71,17 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
 
       window.location.href = '/waiting';
     } catch (error) {
-      console.error('Error updating conciergerie:', error);
       setToastMessage({
         type: ToastType.Error,
         message: 'Une erreur est survenue lors de la mise à jour de la conciergerie',
+        error,
       });
       setIsSubmitting(false);
     }
   };
 
   // Show loading spinner while checking auth state
-  if (isLoading || authLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingSpinner size="large" text="Chargement..." />
@@ -121,7 +89,7 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
     );
   }
 
-  if (!allConciergeries.length)
+  if (!conciergeries.length)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
         <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
@@ -141,17 +109,17 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
         />
       )}
 
-      <form onSubmit={handleSubmit} className="max-w-52 w-full space-y-4">
+      <form onSubmit={handleSubmit} className="max-w-64 w-full space-y-4">
         <div>
           <Select
             id="conciergerie"
             value={selectedConciergerieName || ''}
             onChange={selectConciergerie}
-            options={allConciergeries.map(c => c.name)}
-            placeholder="Sélectionner une conciergerie"
-            error={isFormSubmitted && !conciergerieData?.name}
+            options={conciergeries.map(c => c.name)}
+            placeholder="Sélectionnez une conciergerie"
+            error={isFormSubmitted && !selectedConciergerieName}
           />
-          {isFormSubmitted && !conciergerieData?.name && (
+          {isFormSubmitted && !selectedConciergerieName && (
             <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une conciergerie</p>
           )}
         </div>

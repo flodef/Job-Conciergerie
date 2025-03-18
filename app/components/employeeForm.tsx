@@ -13,7 +13,6 @@ import { setLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
 import React, { useEffect, useRef, useState } from 'react';
-import { fetchConciergeries } from '../actions/conciergerie';
 import LoadingSpinner from './loadingSpinner';
 
 type EmployeeFormProps = {
@@ -25,9 +24,6 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
   const { resetPrimaryColor } = useTheme();
   const { userId, refreshUserData, isLoading: authLoading } = useAuth();
 
-  const [allConciergeries, setAllConciergeries] = useState(conciergeries);
-  const [isLoading, setIsLoading] = useState(true);
-
   // Using Partial<Employee> since we don't have status and createdAt yet
   const [formData, setFormData] = useLocalStorage<Partial<Employee>>('employee_data', {
     id: '',
@@ -35,7 +31,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
     familyName: '',
     tel: '',
     email: '',
-    conciergerieName: allConciergeries[0]?.name || '',
+    conciergerieName: conciergeries[0]?.name || '',
     message: '',
     notificationSettings: {
       acceptedMissions: true,
@@ -65,32 +61,6 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
 
   // Regular expressions for validation
   const MAX_MESSAGE_LENGTH = 500;
-
-  // Fetch all conciergeries on component mount
-  useEffect(() => {
-    const loadConciergeries = async () => {
-      try {
-        if (!allConciergeries.length) return;
-
-        setIsLoading(true);
-        const conciergeries = await fetchConciergeries();
-        setAllConciergeries(conciergeries);
-      } catch (error) {
-        console.error('Error fetching conciergeries:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadConciergeries();
-  }, [allConciergeries.length]);
-
-  // Update conciergerie if companies change and current selection is not in the list
-  useEffect(() => {
-    if (allConciergeries.length > 0 && !allConciergeries.map(c => c.name).includes(formData?.conciergerieName ?? '')) {
-      setFormData(prev => ({ ...prev, conciergerie: allConciergeries[0].name }));
-    }
-  }, [allConciergeries, formData?.conciergerieName, setFormData]);
 
   // Save original form data when the form is first opened
   const initialRenderRef = useRef(true);
@@ -284,7 +254,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
   if (!formData) return null;
 
   // Show loading spinner while checking auth state
-  if (isLoading || authLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingSpinner size="large" text="Chargement..." />
@@ -292,7 +262,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
     );
   }
 
-  if (!allConciergeries.length)
+  if (!conciergeries.length)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
         <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
@@ -330,6 +300,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
               isFormSubmitted && !formData.firstName && 'border-red-500',
             )}
             disabled={isSubmitting}
+            placeholder="Jean"
           />
           {isFormSubmitted && !formData.firstName && (
             <p className="text-red-500 text-sm mt-1">Veuillez entrer votre prénom</p>
@@ -353,6 +324,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
               isFormSubmitted && !formData.familyName && 'border-red-500',
             )}
             disabled={isSubmitting}
+            placeholder="Dupont"
           />
           {isFormSubmitted && !formData.familyName && (
             <p className="text-red-500 text-sm mt-1">Veuillez entrer votre nom</p>
@@ -376,7 +348,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
               (isFormSubmitted && !formData.tel) || phoneError ? 'border-red-500' : '',
             )}
             disabled={isSubmitting}
-            placeholder="Ex: 06 12 34 56 78"
+            placeholder="06 12 34 56 78"
           />
           {isFormSubmitted && !formData.tel ? (
             <p className="text-red-500 text-sm mt-1">Veuillez entrer votre numéro de téléphone</p>
@@ -402,6 +374,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
               (isFormSubmitted && !formData.email) || emailError ? 'border-red-500' : '',
             )}
             disabled={isSubmitting}
+            placeholder="jean.dupont@example.com"
           />
           {isFormSubmitted && !formData.email ? (
             <p className="text-red-500 text-sm mt-1">Veuillez entrer votre adresse email</p>
@@ -424,7 +397,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
                 conciergerieName: value,
               });
             }}
-            options={allConciergeries.map(c => c.name)}
+            options={conciergeries.map(c => c.name)}
             placeholder="Sélectionner une conciergerie"
             error={isFormSubmitted && !formData.conciergerieName}
             disabled={isSubmitting}
@@ -453,6 +426,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
               rows={4}
               disabled={isSubmitting}
               maxLength={MAX_MESSAGE_LENGTH}
+              placeholder="Exemple : Nous nous sommes rencontrés lors de l'événement Machin à Trucville."
             />
             {messageError ? (
               <p className="text-red-500 text-sm mt-1">{messageError}</p>

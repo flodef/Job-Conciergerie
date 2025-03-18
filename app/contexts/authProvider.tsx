@@ -14,7 +14,7 @@ interface AuthContextType {
   userType: UserType;
   setUserType: (userType: UserType) => void;
   selectedConciergerieName: string | undefined;
-  setSelectedConciergerieName: (name: string) => void;
+  setSelectedConciergerieName: (name: string | undefined) => void;
   conciergerieData: Conciergerie | undefined;
   employeeData: Employee | undefined;
   isLoading: boolean;
@@ -29,7 +29,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Auth provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useLocalStorage<string>('user_id');
-  const [userType, setUserType] = useLocalStorage<UserType>('user_type', undefined);
+  const [userType, setUserType] = useLocalStorage<UserType>('user_type');
   const [selectedConciergerieName, setSelectedConciergerieName] = useLocalStorage<string>('selected_conciergerie_name');
   const [conciergerieData, setConciergerieData] = useState<Conciergerie>();
   const [employeeData, setEmployeeData] = useState<Employee>();
@@ -52,22 +52,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Use the server action to check if the user exists
         const { userType: foundUserType, userData } = await checkUserExists(id);
 
-        // Update state based on what was found
-        setUserType(foundUserType);
+        // Update state only if we have a valid user type, otherwise it means the user is still registering
+        if (foundUserType) setUserType(foundUserType);
 
-        if (foundUserType === 'employee') {
-          setEmployeeData(userData as Employee);
-          setConciergerieData(undefined);
-          setSelectedConciergerieName('');
-        } else if (foundUserType === 'conciergerie') {
-          setEmployeeData(undefined);
-          setConciergerieData(userData as Conciergerie);
-          setSelectedConciergerieName((userData as Conciergerie).name);
-        } else {
-          setEmployeeData(undefined);
-          setConciergerieData(undefined);
-          setSelectedConciergerieName('');
-        }
+        setEmployeeData(foundUserType === 'employee' ? (userData as Employee) : undefined);
+        setConciergerieData(foundUserType === 'conciergerie' ? (userData as Conciergerie) : undefined);
       } catch (err) {
         console.error('Error checking user in database:', err);
         setError('Error checking user in database');
@@ -75,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     },
-    [setUserType, setSelectedConciergerieName],
+    [setUserType],
   );
 
   // Function to refresh user data

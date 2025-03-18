@@ -1,12 +1,11 @@
 'use client';
 
+import { useAuth, UserType } from '@/app/contexts/authProvider';
+import { useBadge } from '@/app/contexts/badgeProvider';
 import { Page, pages, useMenuContext } from '@/app/contexts/menuProvider';
-import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import { IconBriefcase, IconCalendar, IconHome, IconSettings, IconUser } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { ReactNode, useEffect, useState } from 'react';
-import { UserType } from '../contexts/authProvider';
-import { useBadge } from '../contexts/badgeProvider';
 
 // Map pages to their respective icons
 const pageSettings: Record<Page, { icon: ReactNode; userType: UserType }> = {
@@ -19,9 +18,11 @@ const pageSettings: Record<Page, { icon: ReactNode; userType: UserType }> = {
 };
 
 export default function NavigationLayout({ children }: { children: ReactNode }) {
+  const { isLoading, userType: authUserType } = useAuth();
   const { currentPage, onMenuChange } = useMenuContext();
-  const [isHomePage, setIsHomePage] = useState(false);
+
   const [userType, setUserType] = useState<UserType>();
+  const [isHomePage, setIsHomePage] = useState(false);
   const {
     pendingEmployeesCount,
     newMissionsCount,
@@ -37,20 +38,17 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     setIsHomePage(path === '/' || path === '/waiting');
   }, []);
 
+  // Hack to handle user type change : listen for storage events to detect when user type changes
   useEffect(() => {
-    // Get user type from localStorage
-    const { userType } = getWelcomeParams();
-    setUserType(userType);
-
-    // Listen for storage events to detect when user data changes
     const handleStorageChange = () => {
-      const { userType: newUserType } = getWelcomeParams();
-      setUserType(newUserType);
+      setUserType(authUserType);
     };
+
+    handleStorageChange();
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle menu item click with badge reset
   const handleMenuClick = (page: Page) => {
@@ -83,7 +81,12 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {/* Main content */}
       <main className="flex-1 relative">
         {/* Content wrapper with padding to prevent content from being hidden under the navigation */}
-        <div className={clsx('bg-background px-4', !isHomePage ? 'min-h-[calc(100dvh-9rem)] pb-24' : 'min-h-screen')}>
+        <div
+          className={clsx(
+            'bg-background px-4',
+            !isHomePage && !isLoading ? 'min-h-[calc(100dvh-9rem)] pb-24' : 'min-h-screen',
+          )}
+        >
           {children}
         </div>
       </main>
