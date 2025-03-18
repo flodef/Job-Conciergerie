@@ -1,14 +1,14 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { useAuth } from '../contexts/authProvider';
-import { useTheme } from '../contexts/themeProvider';
-import { Conciergerie } from '../types/types';
-import { getColorValueByName } from '../utils/welcomeParams';
-import FormActions from './formActions';
-import LoadingSpinner from './loadingSpinner';
-import Select from './select';
-import { ToastMessage, ToastProps, ToastType } from './toastMessage';
+import FormActions from '@/app/components/formActions';
+import LoadingSpinner from '@/app/components/loadingSpinner';
+import Select from '@/app/components/select';
+import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { useAuth } from '@/app/contexts/authProvider';
+import { useTheme } from '@/app/contexts/themeProvider';
+import { Conciergerie } from '@/app/types/types';
+import { getColorValueByName } from '@/app/utils/colorUtil';
+import { useCallback, useEffect, useState } from 'react';
 
 type ConciergerieFormProps = {
   conciergeries: Conciergerie[];
@@ -22,6 +22,12 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    const selectedConciergerie = conciergeries.find((c: Conciergerie) => c.name === selectedConciergerieName);
+    const color = getColorValueByName(selectedConciergerie?.colorName);
+    setPrimaryColor(color);
+  }, [selectedConciergerieName, setPrimaryColor, conciergeries]);
+
   const selectConciergerie = useCallback(
     (conciergerieName?: string) => {
       if (!conciergeries.length) return;
@@ -29,16 +35,8 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
       const selectedConciergerie =
         conciergeries.find((c: Conciergerie) => c.name === conciergerieName) || conciergeries[0];
       setSelectedConciergerieName(selectedConciergerie.name);
-
-      // Get color value based on colorName
-      const colorValue = getColorValueByName(selectedConciergerie.colorName);
-
-      // Set the primary color theme
-      if (colorValue) {
-        setPrimaryColor(colorValue);
-      }
     },
-    [conciergeries, setPrimaryColor, setSelectedConciergerieName],
+    [conciergeries, setSelectedConciergerieName],
   );
 
   const handleClose = () => {
