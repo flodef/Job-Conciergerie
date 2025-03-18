@@ -28,12 +28,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Auth provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [userId, setUserId] = useLocalStorage<string>('user_id', generateSimpleId());
+  const [userId, setUserId] = useLocalStorage<string>('user_id');
   const [userType, setUserType] = useLocalStorage<UserType>('user_type', undefined);
-  const [selectedConciergerieName, setSelectedConciergerieName] = useLocalStorage<string>(
-    'selected_conciergerie_name',
-    '',
-  );
+  const [selectedConciergerieName, setSelectedConciergerieName] = useLocalStorage<string>('selected_conciergerie_name');
   const [conciergerieData, setConciergerieData] = useState<Conciergerie>();
   const [employeeData, setEmployeeData] = useState<Employee>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -83,25 +80,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Function to refresh user data
   const refreshUserData = async () => {
-    if (!userId) return;
-    await checkUserInDatabase(userId);
+    await checkUserInDatabase(userId!);
   };
 
   // Initialize the auth provider
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        if (!userId) return;
-        // const id = userId ?? generateSimpleId();
-        // if (!userId) {
-        //   // Generate a new ID and store it in localStorage
-        //   const id = generateSimpleId();
-        //   setUserId(id);
-        // }
+        const id = userId ?? generateSimpleId();
+        setUserId(id);
 
         // Check if the user exists in the database
         // This will set the userType based on where the ID is found
-        await checkUserInDatabase(userId);
+        await checkUserInDatabase(id);
       } catch (err) {
         console.error('Error initializing auth:', err);
         setError('Error initializing auth');

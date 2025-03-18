@@ -9,33 +9,46 @@ import { getColorValueByName } from '../utils/welcomeParams';
 import FormActions from './formActions';
 import Select from './select';
 import { ToastMessage, ToastProps, ToastType } from './toastMessage';
+import LoadingSpinner from './loadingSpinner';
 
 type ConciergerieFormProps = {
-  conciergerieNames: string[];
+  conciergeries: Conciergerie[];
   onClose: () => void;
 };
 
-export default function ConciergerieForm({ conciergerieNames, onClose }: ConciergerieFormProps) {
+export default function ConciergerieForm({ conciergeries, onClose }: ConciergerieFormProps) {
   const { setPrimaryColor, resetPrimaryColor } = useTheme();
-  const { refreshUserData, conciergerieData, selectedConciergerieName, setSelectedConciergerieName } = useAuth();
+  const {
+    refreshUserData,
+    conciergerieData,
+    selectedConciergerieName,
+    setSelectedConciergerieName,
+    isLoading: authLoading,
+  } = useAuth();
 
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [allConciergeries, setAllConciergeries] = useState<Conciergerie[]>([]);
+  const [allConciergeries, setAllConciergeries] = useState(conciergeries);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Fetch all conciergeries on component mount
   useEffect(() => {
     const loadConciergeries = async () => {
       try {
+        if (!allConciergeries.length) return;
+
+        setIsLoading(true);
         const conciergeries = await fetchConciergeries();
         setAllConciergeries(conciergeries);
       } catch (error) {
         console.error('Error fetching conciergeries:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadConciergeries();
-  }, []);
+  }, [allConciergeries.length]);
 
   const selectConciergerie = useCallback(
     (conciergerieName?: string) => {
@@ -99,17 +112,26 @@ export default function ConciergerieForm({ conciergerieNames, onClose }: Concier
     }
   };
 
+  // Show loading spinner while checking auth state
+  if (isLoading || authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner size="large" text="Chargement..." />
+      </div>
+    );
+  }
+
   if (!allConciergeries.length)
     return (
-      <div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
         <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
         <p className="text-foreground">Aucune conciergerie trouvée !</p>
       </div>
     );
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
+      <h2 className="text-2xl font-bold mb-4">Conciergerie</h2>
 
       {toastMessage && (
         <ToastMessage
@@ -119,28 +141,22 @@ export default function ConciergerieForm({ conciergerieNames, onClose }: Concier
         />
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="max-w-52 w-full space-y-4">
         <div>
-          <label htmlFor="conciergerie" className="block text-sm font-medium text-foreground mb-1">
-            Conciergerie
-          </label>
           <Select
             id="conciergerie"
             value={selectedConciergerieName || ''}
             onChange={selectConciergerie}
-            options={conciergerieNames}
+            options={allConciergeries.map(c => c.name)}
             placeholder="Sélectionner une conciergerie"
             error={isFormSubmitted && !conciergerieData?.name}
-            borderColor={conciergerieData?.name && conciergerieData?.color ? conciergerieData?.color : undefined}
           />
           {isFormSubmitted && !conciergerieData?.name && (
             <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une conciergerie</p>
           )}
         </div>
 
-        {conciergerieData?.name && (
-          <FormActions onCancel={handleClose} submitText="Valider" submitType="submit" isSubmitting={isSubmitting} />
-        )}
+        <FormActions onCancel={handleClose} submitText="Valider" submitType="submit" isSubmitting={isSubmitting} />
       </form>
     </div>
   );

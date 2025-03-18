@@ -21,15 +21,17 @@ export async function fetchConciergeries(): Promise<Conciergerie[]> {
     const conciergeries = await getAllConciergeries();
 
     // Convert from DB format to application format
-    return conciergeries.map(c => ({
-      id: c.id,
-      name: c.name,
-      email: c.email,
-      tel: c.tel,
-      colorName: c.colorName,
-      color: getColorValue(c.colorName), // You may need to implement this function
-      notificationSettings: c.notificationSettings,
-    }));
+    return conciergeries
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(c => ({
+        id: c.id,
+        name: c.name,
+        email: c.email,
+        tel: c.tel,
+        colorName: c.colorName,
+        color: getColorValue(c.colorName), // You may need to implement this function
+        notificationSettings: c.notificationSettings,
+      }));
   } catch (error) {
     console.error('Error fetching conciergeries:', error);
     return [];

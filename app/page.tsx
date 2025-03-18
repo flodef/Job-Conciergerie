@@ -8,71 +8,56 @@ import UserTypeSelection from '@/app/components/userTypeSelection';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { Conciergerie } from '@/app/types/types';
 import { useRedirectIfRegistered } from '@/app/utils/authRedirect';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export default function Home() {
   const { isLoading: authLoading, userType, setUserType } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [showConciergerieForm, setShowConciergerieForm] = useState(false);
-  const [conciergerieNames, setConciergerieNames] = useState<string[]>([]);
+  const [conciergeries, setConciergeries] = useState<Conciergerie[]>([]);
 
   // Fetch conciergerie names from the database
   useEffect(() => {
-    const loadConciergerieNames = async () => {
+    const loadConciergeries = async () => {
       try {
+        setIsLoading(true);
         const conciergeries = await fetchConciergeries();
-        const names = conciergeries
-          .sort((a: Conciergerie, b: Conciergerie) => a.name.localeCompare(b.name))
-          .map((conciergerie: Conciergerie) => conciergerie.name);
-        setConciergerieNames(names);
+        setConciergeries(conciergeries);
       } catch (error) {
         console.error('Error fetching conciergerie names:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    loadConciergerieNames();
+    loadConciergeries();
   }, []);
 
   // Use the redirect hook to redirect if already registered
+  // Only redirect if we have a valid user type and they're already registered
   useRedirectIfRegistered();
+
+  const handleUserTypeSelect = useCallback(
+    (type: UserType) => {
+      // Save user type to localStorage
+      setUserType(type);
+
+      // Show appropriate form based on user type
+      setShowEmployeeForm(type === 'employee');
+      setShowConciergerieForm(type === 'conciergerie');
+    },
+    [setUserType, setShowEmployeeForm, setShowConciergerieForm],
+  );
 
   // Initialize state from auth context
   useEffect(() => {
-    const initializeFromAuth = async () => {
-      setIsLoading(true);
-
-      // Add a small delay for smoother loading experience
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      // Show appropriate form based on user type
-      if (userType === 'employee') {
-        setShowEmployeeForm(true);
-        setShowConciergerieForm(false);
-      } else if (userType === 'conciergerie') {
-        setShowConciergerieForm(true);
-        setShowEmployeeForm(false);
-      }
-
-      setIsLoading(false);
-    };
-
-    if (!authLoading) {
-      initializeFromAuth();
-    }
-  }, [authLoading, userType]);
-
-  const handleUserTypeSelect = (type: UserType) => {
-    // Save user type to localStorage
-    setUserType(type);
+    if (!authLoading) return;
 
     // Show appropriate form based on user type
-    if (type === 'employee') {
-      setShowEmployeeForm(true);
-    } else if (type === 'conciergerie') {
-      setShowConciergerieForm(true);
-    }
-  };
+    // If the user is not found in the database, they should still see the form
+    handleUserTypeSelect(userType);
+  }, [authLoading, userType, handleUserTypeSelect]);
 
   const handleCloseForm = () => {
     // Reset state to show selection screen
@@ -96,9 +81,9 @@ export default function Home() {
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
           <UserTypeSelection onSelect={handleUserTypeSelect} />
         ) : showEmployeeForm ? (
-          <EmployeeForm conciergerieNames={conciergerieNames} onClose={handleCloseForm} />
+          <EmployeeForm conciergeries={conciergeries} onClose={handleCloseForm} />
         ) : showConciergerieForm ? (
-          <ConciergerieForm conciergerieNames={conciergerieNames} onClose={handleCloseForm} />
+          <ConciergerieForm conciergeries={conciergeries} onClose={handleCloseForm} />
         ) : null}
       </div>
     </main>

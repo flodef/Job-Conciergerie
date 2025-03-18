@@ -4,25 +4,31 @@ import { createNewEmployee } from '@/app/actions/employee';
 import { setLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
 import { clsx } from 'clsx/lite';
 import React, { useEffect, useRef, useState } from 'react';
-import { useAuth } from '../contexts/authProvider';
-import { useTheme } from '../contexts/themeProvider';
-import { Employee, EmployeeNotificationSettings } from '../types/types';
-import { generateSimpleId } from '../utils/id';
-import { emailRegex, frenchPhoneRegex } from '../utils/regex';
-import ConfirmationModal from './confirmationModal';
-import FormActions from './formActions';
-import Select from './select';
-import { ToastMessage, ToastProps, ToastType } from './toastMessage';
-import Tooltip from './tooltip';
+import { useAuth } from '@/app/contexts/authProvider';
+import { useTheme } from '@/app/contexts/themeProvider';
+import { Conciergerie, Employee, EmployeeNotificationSettings } from '@/app/types/types';
+import { generateSimpleId } from '@/app/utils/id';
+import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
+import ConfirmationModal from '@/app/components/confirmationModal';
+import FormActions from '@/app/components/formActions';
+import Select from '@/app/components/select';
+import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import Tooltip from '@/app/components/tooltip';
+import LoadingSpinner from './loadingSpinner';
+import { fetchConciergeries } from '../actions/conciergerie';
 
 type EmployeeFormProps = {
-  conciergerieNames: string[];
+  conciergeries: Conciergerie[];
   onClose: () => void;
 };
 
-export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFormProps) {
+export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormProps) {
   const { resetPrimaryColor } = useTheme();
-  const { userId, refreshUserData } = useAuth();
+  const { userId, refreshUserData, isLoading: authLoading } = useAuth();
+
+  const [allConciergeries, setAllConciergeries] = useState(conciergeries);
+  const [isLoading, setIsLoading] = useState(true);
+
   // Using Partial<Employee> since we don't have status and createdAt yet
   const [formData, setFormData] = useLocalStorage<Partial<Employee>>('employee_data', {
     id: '',
@@ -30,7 +36,7 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
     familyName: '',
     tel: '',
     email: '',
-    conciergerieName: conciergerieNames[0] || '',
+    conciergerieName: allConciergeries[0]?.name || '',
     message: '',
     notificationSettings: {
       acceptedMissions: true,
@@ -61,12 +67,31 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
   // Regular expressions for validation
   const MAX_MESSAGE_LENGTH = 500;
 
+  // Fetch all conciergeries on component mount
+  useEffect(() => {
+    const loadConciergeries = async () => {
+      try {
+        if (!allConciergeries.length) return;
+
+        setIsLoading(true);
+        const conciergeries = await fetchConciergeries();
+        setAllConciergeries(conciergeries);
+      } catch (error) {
+        console.error('Error fetching conciergeries:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadConciergeries();
+  }, [allConciergeries.length]);
+
   // Update conciergerie if companies change and current selection is not in the list
   useEffect(() => {
-    if (conciergerieNames.length > 0 && !conciergerieNames.includes(formData?.conciergerieName ?? '')) {
-      setFormData(prev => ({ ...prev, conciergerie: conciergerieNames[0] }));
+    if (allConciergeries.length > 0 && !allConciergeries.map(c => c.name).includes(formData?.conciergerieName ?? '')) {
+      setFormData(prev => ({ ...prev, conciergerie: allConciergeries[0].name }));
     }
-  }, [conciergerieNames, formData?.conciergerieName, setFormData]);
+  }, [allConciergeries, formData?.conciergerieName, setFormData]);
 
   // Save original form data when the form is first opened
   const initialRenderRef = useRef(true);
@@ -256,6 +281,23 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
 
   if (!formData) return null;
 
+  // Show loading spinner while checking auth state
+  if (isLoading || authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner size="large" text="Chargement..." />
+      </div>
+    );
+  }
+
+  if (!allConciergeries.length)
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
+        <p className="text-foreground">Aucune conciergerie trouvée !</p>
+      </div>
+    );
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>
@@ -380,11 +422,10 @@ export default function EmployeeForm({ conciergerieNames, onClose }: EmployeeFor
                 conciergerieName: value,
               });
             }}
-            options={conciergerieNames}
+            options={allConciergeries.map(c => c.name)}
             placeholder="Sélectionner une conciergerie"
             error={isFormSubmitted && !formData.conciergerieName}
             disabled={isSubmitting}
-            borderColor={formData.conciergerieName ? 'var(--color-default)' : undefined}
           />
           {isFormSubmitted && !formData.conciergerieName && (
             <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une conciergerie</p>

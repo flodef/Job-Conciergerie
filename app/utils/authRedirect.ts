@@ -67,8 +67,20 @@ export function useRedirectIfNotRegistered() {
  * Hook to redirect users if they are already registered
  */
 export function useRedirectIfRegistered() {
-  return useAuthRedirect({
-    redirectIfAuthenticated: true,
-    redirectPath: '/missions',
-  });
+  const { userType, conciergerieData, employeeData, isLoading } = useAuth();
+  
+  useEffect(() => {
+    // Skip redirect if still loading
+    if (isLoading) return;
+    
+    // Only redirect if the user has a valid type AND their data exists in the database
+    const isRegistered = userType && (
+      (userType === 'conciergerie' && conciergerieData) || 
+      (userType === 'employee' && employeeData)
+    );
+    
+    if (isRegistered) {
+      window.location.href = '/missions';
+    }
+  }, [isLoading, userType, conciergerieData, employeeData]);
 }
