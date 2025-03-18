@@ -101,10 +101,10 @@ const NotificationSettings: React.FC = () => {
         throw new Error('Failed to update notification settings');
       }
     } catch (error) {
-      console.error('Error saving notification settings:', error);
       setToastMessage({
         type: ToastType.Error,
         message: "Erreur lors de l'enregistrement des préférences",
+        error,
       });
     }
   };

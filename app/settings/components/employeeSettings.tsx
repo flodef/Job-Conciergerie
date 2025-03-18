@@ -48,10 +48,10 @@ const EmployeeSettings: React.FC = () => {
           setOriginalTel(employee.tel);
         }
       } catch (error) {
-        console.error('Error loading employee data:', error);
         setToastMessage({
           type: ToastType.Error,
           message: 'Erreur lors du chargement des données',
+          error,
         });
       } finally {
         setIsLoading(false);
@@ -129,7 +129,6 @@ const EmployeeSettings: React.FC = () => {
           conciergerieName: undefined,
         });
       } else {
-        console.error('Cannot update employee: missing ID');
         setToastMessage({
           type: ToastType.Error,
           message: 'Erreur: impossible de mettre à jour l&apos;employé (ID manquant)',
@@ -148,10 +147,10 @@ const EmployeeSettings: React.FC = () => {
         message: 'Modifications enregistrées avec succès',
       });
     } catch (error) {
-      console.error('Error saving settings:', error);
       setToastMessage({
         type: ToastType.Error,
         message: 'Erreur lors de l&apos;enregistrement',
+        error,
       });
     } finally {
       setIsSaving(false);

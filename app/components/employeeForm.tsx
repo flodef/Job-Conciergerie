@@ -1,21 +1,20 @@
 'use client';
 
 import { createNewEmployee } from '@/app/actions/employee';
-import { setLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
-import { clsx } from 'clsx/lite';
-import React, { useEffect, useRef, useState } from 'react';
-import { useAuth } from '@/app/contexts/authProvider';
-import { useTheme } from '@/app/contexts/themeProvider';
-import { Conciergerie, Employee, EmployeeNotificationSettings } from '@/app/types/types';
-import { generateSimpleId } from '@/app/utils/id';
-import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import Select from '@/app/components/select';
 import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
-import LoadingSpinner from './loadingSpinner';
+import { useAuth } from '@/app/contexts/authProvider';
+import { useTheme } from '@/app/contexts/themeProvider';
+import { Conciergerie, Employee, EmployeeNotificationSettings } from '@/app/types/types';
+import { setLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
+import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
+import { clsx } from 'clsx/lite';
+import React, { useEffect, useRef, useState } from 'react';
 import { fetchConciergeries } from '../actions/conciergerie';
+import LoadingSpinner from './loadingSpinner';
 
 type EmployeeFormProps = {
   conciergeries: Conciergerie[];
@@ -103,9 +102,6 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
       setOriginalFormData({ ...formData });
       initialRenderRef.current = false;
     }
-
-    //TODO: restore when in prod
-    // localStorage.removeItem('conciergerie_data');
   }, [resetPrimaryColor, formData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -227,21 +223,26 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
       return;
     }
 
-    setIsSubmitting(true);
+    if (!userId) {
+      setToastMessage({
+        type: ToastType.Error,
+        message: "Une erreur est survenue lors de la création de l'employé",
+        error: 'No User ID',
+      });
+      return;
+    }
 
-    // Always use the user ID from auth context if available
-    // This ensures we're using the ID that was generated when the app started
-    const employeeId = userId || generateSimpleId();
+    setIsSubmitting(true);
 
     // Create the employee in the database
     const createEmployee = async () => {
       try {
         // Update the form data with the user ID
-        setFormData(prev => ({ ...prev, id: employeeId }));
+        setFormData(prev => ({ ...prev, id: userId }));
 
         // Create the employee in the database with the user's ID
         const result = await createNewEmployee({
-          id: employeeId, // Using the user's ID from localStorage
+          id: userId,
           firstName: formData.firstName || '',
           familyName: formData.familyName || '',
           tel: formData.tel || '',
@@ -252,7 +253,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
         });
 
         if (result) {
-          // No need to update localStorage as we're using the existing ID
+          // TODO: send request email to conciergerie
 
           // Refresh user data to update the auth context
           refreshUserData();
@@ -263,14 +264,15 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
           setToastMessage({
             type: ToastType.Error,
             message: "Erreur lors de l'enregistrement. Veuillez réessayer.",
+            error: 'No result returned from database',
           });
           setIsSubmitting(false);
         }
       } catch (error) {
-        console.error('Error creating employee:', error);
         setToastMessage({
           type: ToastType.Error,
           message: "Erreur lors de l'enregistrement. Veuillez réessayer.",
+          error,
         });
         setIsSubmitting(false);
       }

@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 export enum ToastType {
   Success,
   Error,
@@ -8,9 +10,10 @@ export interface ToastProps {
   type: ToastType;
   message: string;
   onClose?: () => void;
+  error?: unknown;
 }
 
-export const ToastMessage = ({ type, message, onClose }: ToastProps) => {
+export const ToastMessage = ({ type, message, onClose, error }: ToastProps) => {
   const typeStyles = {
     [ToastType.Success]: 'bg-green-500 animate-fade-in-up',
     [ToastType.Error]: 'bg-[#fb8c8c] animate-shake',
@@ -21,6 +24,10 @@ export const ToastMessage = ({ type, message, onClose }: ToastProps) => {
     [ToastType.Error]: '❌ ',
     [ToastType.Warning]: '⚠️ ',
   };
+
+  useEffect(() => {
+    if (error) console.error(message, error);
+  }, [type, message, error]);
 
   // Auto-close the toast after 3 seconds if onClose is provided
   if (onClose) {

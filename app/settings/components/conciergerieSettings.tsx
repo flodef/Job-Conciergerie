@@ -73,10 +73,10 @@ const ConciergerieSettings: React.FC = () => {
           setPrimaryColor(conciergerie.color);
         }
       } catch (error) {
-        console.error('Error loading conciergerie data:', error);
         setToastMessage({
           type: ToastType.Error,
           message: 'Erreur lors du chargement des données',
+          error,
         });
       } finally {
         setIsLoading(false);
@@ -165,7 +165,6 @@ const ConciergerieSettings: React.FC = () => {
           colorName: selectedColor?.name || '',
         });
       } else {
-        console.error('Cannot update conciergerie: missing ID');
         setToastMessage({
           type: ToastType.Error,
           message: 'Erreur: impossible de mettre à jour la conciergerie (ID manquant)',
@@ -192,10 +191,10 @@ const ConciergerieSettings: React.FC = () => {
         message: 'Modifications enregistrées avec succès',
       });
     } catch (error) {
-      console.error('Error saving settings:', error);
       setToastMessage({
         type: ToastType.Error,
         message: 'Erreur lors de l&apos;enregistrement',
+        error,
       });
     } finally {
       setIsSaving(false);

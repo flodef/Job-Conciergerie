@@ -23,7 +23,6 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
 
         // Check if the ID in the URL matches the ID in localStorage AND that there is a selected conciergerie in localStorage
         if (!userId || userId !== id || !selectedConciergerieName) {
-          console.log('ID mismatch or no selected conciergerie, redirecting to landing page');
           router.push('/');
           return;
         }
@@ -40,7 +39,6 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
 
         // If the ID fetched is the one in the localStorage, do nothing
         if (conciergerie.id === userId) {
-          console.log('Conciergerie ID already matches user ID');
           router.push('/missions');
           return;
         }

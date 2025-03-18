@@ -227,8 +227,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           }
         }
       } catch (error) {
-        console.error('Error:', error);
-        setToastMessage({ type: ToastType.Error, message: 'Une erreur est survenue' });
+        setToastMessage({ type: ToastType.Error, message: 'Une erreur est survenue', error });
       }
     }
   };

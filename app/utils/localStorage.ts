@@ -21,7 +21,7 @@ export function useLocalStorage<T>(
 
 export function getLocalStorageItem<T>(key: string, defaultValue?: T) {
   if (!key) {
-    console.warn('useLocalStorage: key is not defined');
+    console.error('useLocalStorage: key is not defined');
     return defaultValue;
   }
 
@@ -38,7 +38,7 @@ export function getLocalStorageItem<T>(key: string, defaultValue?: T) {
 
 export function setLocalStorageItem<T>(key: string, value: T | undefined) {
   if (!key) {
-    console.warn('useLocalStorage: key is not defined');
+    console.error('useLocalStorage: key is not defined');
     return;
   }
 
