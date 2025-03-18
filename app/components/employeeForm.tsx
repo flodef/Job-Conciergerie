@@ -9,10 +9,10 @@ import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useTheme } from '@/app/contexts/themeProvider';
 import { Conciergerie, Employee, EmployeeNotificationSettings } from '@/app/types/types';
-import { setLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
+import { useLocalStorage } from '@/app/utils/localStorage';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import LoadingSpinner from './loadingSpinner';
 
 type EmployeeFormProps = {
@@ -45,9 +45,10 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormChanged, setIsFormChanged] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [originalFormData, setOriginalFormData] = useState<Partial<Employee> | null>(null);
 
   // Validation states
+  const [firstNameError, setFirstNameError] = useState<string | null>(null);
+  const [familyNameError, setFamilyNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [messageError, setMessageError] = useState<string | null>(null);
@@ -59,26 +60,31 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
   const phoneRef = React.useRef<HTMLInputElement>(null);
   const messageRef = React.useRef<HTMLTextAreaElement>(null);
 
-  // Regular expressions for validation
+  // Constants for validation
+  const MAX_NAME_LENGTH = 30;
   const MAX_MESSAGE_LENGTH = 500;
 
-  // Save original form data when the form is first opened
-  const initialRenderRef = useRef(true);
   useEffect(() => {
     resetPrimaryColor();
-
-    // Only save the initial data on first render
-    if (initialRenderRef.current) {
-      setOriginalFormData({ ...formData });
-      initialRenderRef.current = false;
-    }
-  }, [resetPrimaryColor, formData]);
+  }, [resetPrimaryColor]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
     // Validate as user types
-    if (name === 'email') {
+    if (name === 'firstName') {
+      if (value.length > MAX_NAME_LENGTH) {
+        setFirstNameError(`Le prénom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`);
+      } else {
+        setFirstNameError(null);
+      }
+    } else if (name === 'familyName') {
+      if (value.length > MAX_NAME_LENGTH) {
+        setFamilyNameError(`Le nom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`);
+      } else {
+        setFamilyNameError(null);
+      }
+    } else if (name === 'email') {
       if (value && !emailRegex.test(value)) {
         setEmailError('Format d&apos;email invalide');
       } else {
@@ -123,11 +129,33 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
       firstNameRef.current?.focus();
       return;
     }
+    
+    // Validate first name length
+    if (formData.firstName.length > MAX_NAME_LENGTH) {
+      setFirstNameError(`Le prénom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`);
+      setToastMessage({
+        type: ToastType.Error,
+        message: `Le prénom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`,
+      });
+      firstNameRef.current?.focus();
+      return;
+    }
 
     if (!formData.familyName) {
       setToastMessage({
         type: ToastType.Error,
         message: 'Veuillez remplir tous les champs obligatoires',
+      });
+      familyNameRef.current?.focus();
+      return;
+    }
+    
+    // Validate family name length
+    if (formData.familyName.length > MAX_NAME_LENGTH) {
+      setFamilyNameError(`Le nom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`);
+      setToastMessage({
+        type: ToastType.Error,
+        message: `Le nom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`,
       });
       familyNameRef.current?.focus();
       return;
@@ -297,14 +325,16 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
             className={clsx(
               'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
               'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && !formData.firstName && 'border-red-500',
+              (isFormSubmitted && !formData.firstName) || firstNameError ? 'border-red-500' : '',
             )}
             disabled={isSubmitting}
             placeholder="Jean"
           />
-          {isFormSubmitted && !formData.firstName && (
+          {isFormSubmitted && !formData.firstName ? (
             <p className="text-red-500 text-sm mt-1">Veuillez entrer votre prénom</p>
-          )}
+          ) : firstNameError ? (
+            <p className="text-red-500 text-sm mt-1">{firstNameError}</p>
+          ) : null}
         </div>
 
         <div>
@@ -321,14 +351,16 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
             className={clsx(
               'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
               'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && !formData.familyName && 'border-red-500',
+              (isFormSubmitted && !formData.familyName) || familyNameError ? 'border-red-500' : '',
             )}
             disabled={isSubmitting}
             placeholder="Dupont"
           />
-          {isFormSubmitted && !formData.familyName && (
+          {isFormSubmitted && !formData.familyName ? (
             <p className="text-red-500 text-sm mt-1">Veuillez entrer votre nom</p>
-          )}
+          ) : familyNameError ? (
+            <p className="text-red-500 text-sm mt-1">{familyNameError}</p>
+          ) : null}
         </div>
 
         <div>
@@ -456,12 +488,8 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
           onClose={() => setShowConfirmDialog(false)}
           onConfirm={() => {
             // Restore original form data by directly modifying localStorage
-            if (originalFormData) {
-              // Update localStorage directly
-              setLocalStorageItem('employee_data', originalFormData);
-              // Also update the state to ensure UI is consistent
-              setFormData(originalFormData);
-            }
+            setFormData(undefined);
+
             // Close the form after a short delay to ensure state is updated
             setTimeout(() => {
               onClose();
