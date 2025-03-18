@@ -1,9 +1,9 @@
 /**
  * Get all welcome page parameters from localStorage
  */
-import colorOptions from '../data/colors.json';
-import { Conciergerie, Employee } from '../types/types';
-import { generateSimpleId } from './id';
+import { Conciergerie, Employee } from '@/app/types/types';
+import { getColorValueByName } from '@/app/utils/colorUtil';
+import { generateSimpleId } from '@/app/utils/id';
 
 /**
  * Type definition for the object returned by getWelcomeParams
@@ -14,12 +14,6 @@ export interface WelcomeParams {
   conciergerieData: (Conciergerie & { color?: string }) | undefined;
   userData: (Employee & { id: string }) | undefined;
 }
-
-// Get the color value from colors.json based on colorName
-export const getColorValueByName = (colorName: string | undefined): string => {
-  const colorOption = colorOptions.find(color => color.name === colorName);
-  return colorOption?.value || 'var(--color-default)';
-};
 
 export function getWelcomeParams(): WelcomeParams {
   if (typeof window === 'undefined') {

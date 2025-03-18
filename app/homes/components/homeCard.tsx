@@ -1,11 +1,11 @@
 'use client';
 
+import { useMissions } from '@/app/contexts/missionsProvider';
+import { Conciergerie, HomeData } from '@/app/types/types';
+import { getColorValueByName } from '@/app/utils/colorUtil';
+import { formatDateTime } from '@/app/utils/dateUtils';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useMissions } from '../../contexts/missionsProvider';
-import { Conciergerie, HomeData } from '../../types/types';
-import { formatDateTime } from '../../utils/dateUtils';
-import { getColorValueByName } from '../../utils/welcomeParams';
 
 type HomeCardProps = {
   home: HomeData;

@@ -15,10 +15,11 @@ import {
 import { formatDateRange } from '@/app/utils/dateUtils';
 import { formatPoints } from '@/app/utils/formatUtils';
 import { calculateEmployeePointsForDay, calculateMissionPoints } from '@/app/utils/taskUtils';
-import { getColorValueByName, getWelcomeParams } from '@/app/utils/welcomeParams';
+import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { useEffect, useState } from 'react';
+import { getColorValueByName } from '../utils/colorUtil';
 
 export default function CalendarView() {
   const { missions, isLoading, getConciergerieByName } = useMissions();

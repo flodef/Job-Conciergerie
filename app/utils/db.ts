@@ -1,7 +1,7 @@
+import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/types/types';
+import { getColorValueByName } from '@/app/utils/colorUtil';
 import { neon } from '@neondatabase/serverless';
 import { unstable_cache } from 'next/cache';
-import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '../types/types';
-import { getColorValueByName } from './welcomeParams';
 
 // Type definition for database conciergerie
 export interface DbConciergerie {

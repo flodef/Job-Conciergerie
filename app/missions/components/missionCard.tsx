@@ -1,10 +1,10 @@
 'use client';
 
+import { useMissions } from '@/app/contexts/missionsProvider';
+import { Conciergerie, Mission } from '@/app/types/types';
+import { getColorValueByName } from '@/app/utils/colorUtil';
+import { formatDateRange } from '@/app/utils/dateUtils';
 import { useEffect, useState } from 'react';
-import { useMissions } from '../../contexts/missionsProvider';
-import { Conciergerie, Mission } from '../../types/types';
-import { formatDateRange } from '../../utils/dateUtils';
-import { getColorValueByName } from '../../utils/welcomeParams';
 
 type MissionCardProps = {
   mission: Mission;
