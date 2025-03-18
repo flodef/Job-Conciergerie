@@ -134,15 +134,15 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-light">Tâches</h3>
+          <h3 className="text-sm font-medium text-light">Objectifs</h3>
           <ul className="list-none pl-0 mt-2 space-y-1">
-            {home.tasks.map((task, index) => (
+            {home.objectives.map((objective, index) => (
               <li key={index} className="flex items-start">
                 <span
                   className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 flex-shrink-0 border border-foreground"
                   style={{ borderColor: 'var(--color-foreground)' }}
                 />
-                <span className="text-foreground">{task}</span>
+                <span className="text-foreground">{objective}</span>
               </li>
             ))}
           </ul>

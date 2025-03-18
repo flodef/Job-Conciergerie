@@ -1,4 +1,4 @@
-export interface Objective {
+export interface Task {
   label: string;
   points: number;
 }
@@ -7,7 +7,7 @@ export interface Home {
   id: string;
   title: string;
   description: string;
-  tasks: string[];
+  objectives: string[];
   images: string[]; // URLs to images
   geographicZone: string; // Geographic zone where the home is located
 }
@@ -63,7 +63,7 @@ export type MissionSortField = 'date' | 'conciergerie' | 'geographicZone' | 'hom
 export interface Mission {
   id: string;
   homeId: string; // Reference to the home by ID
-  objectives: Objective[];
+  tasks: Task[];
   startDateTime: Date;
   endDateTime: Date;
   employeeId?: string;

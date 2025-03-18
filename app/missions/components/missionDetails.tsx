@@ -1,5 +1,22 @@
 'use client';
 
+import ConfirmationModal from '@/app/components/confirmationModal';
+import FullScreenModal from '@/app/components/fullScreenModal';
+import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { useMissions } from '@/app/contexts/missionsProvider';
+import HomeDetails from '@/app/homes/components/homeDetails';
+import MissionActionButtons from '@/app/missions/components/missionActionButtons';
+import MissionForm from '@/app/missions/components/missionForm';
+import { Conciergerie, Mission } from '@/app/types/types';
+import { formatDateTime, getTimeDifference } from '@/app/utils/dateUtils';
+import { formatPoints } from '@/app/utils/formatUtils';
+import {
+  calculateEmployeePointsForDay,
+  calculateMissionPoints,
+  calculateRemainingPointsPerDay,
+  getTaskWithPoints,
+} from '@/app/utils/taskUtils';
+import { getColorValueByName, getWelcomeParams } from '@/app/utils/welcomeParams';
 import {
   IconAlertTriangle,
   IconCalculator,
@@ -11,23 +28,6 @@ import {
 } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useMissions } from '../../contexts/missionsProvider';
-import { Conciergerie, Mission } from '../../types/types';
-import { formatDateTime, getTimeDifference } from '../../utils/dateUtils';
-import { formatPoints } from '../../utils/formatUtils';
-import {
-  calculateEmployeePointsForDay,
-  calculateMissionPoints,
-  calculateRemainingPointsPerDay,
-  getObjectiveWithPoints,
-} from '../../utils/objectiveUtils';
-import { getColorValueByName, getWelcomeParams } from '../../utils/welcomeParams';
-import ConfirmationModal from '../../components/confirmationModal';
-import FullScreenModal from '../../components/fullScreenModal';
-import HomeDetails from '../../homes/components/homeDetails';
-import MissionActionButtons from './missionActionButtons';
-import MissionForm from './missionForm';
-import { ToastMessage, ToastProps, ToastType } from '../../components/toastMessage';
 
 type MissionDetailsProps = {
   mission: Mission;
@@ -68,7 +68,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   // Get the conciergerie from the mission data
   const [conciergerie, setConciergerie] = useState<Conciergerie | null>(null);
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
-  
+
   // Fetch conciergerie data when mission changes
   useEffect(() => {
     const loadConciergerieData = async () => {
@@ -79,7 +79,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         console.error(`Error fetching conciergerie ${mission.conciergerieName}:`, error);
       }
     };
-    
+
     loadConciergerieData();
   }, [mission.conciergerieName, getConciergerieByName]);
 
@@ -257,22 +257,22 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-light">Objectifs</h3>
+          <h3 className="text-sm font-medium text-light">Tâches</h3>
           <div className="flex flex-wrap gap-2 mt-1">
-            {mission.objectives.map(objective => {
-              const objectiveWithPoints = getObjectiveWithPoints(objective.label);
+            {mission.tasks.map(task => {
+              const taskWithPoints = getTaskWithPoints(task.label);
               return (
                 <span
-                  key={objective.label}
+                  key={task.label}
                   className="px-2 py-1 rounded-lg text-sm text-background flex items-center gap-1"
                   style={{
                     backgroundColor: `${conciergerieColor}`,
                   }}
                 >
-                  <span>{objective.label}</span>
-                  {objectiveWithPoints && (
+                  <span>{task.label}</span>
+                  {taskWithPoints && (
                     <span className="ml-1 px-1.5 py-0.5 bg-background/20 rounded-full text-xs">
-                      {objectiveWithPoints.points} pt{objectiveWithPoints.points !== 1 ? 's' : ''}
+                      {taskWithPoints.points} pt{taskWithPoints.points !== 1 ? 's' : ''}
                     </span>
                   )}
                 </span>

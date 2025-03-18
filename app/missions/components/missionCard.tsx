@@ -26,7 +26,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         console.error(`Error fetching conciergerie ${mission.conciergerieName}:`, error);
       }
     };
-    
+
     loadConciergerieData();
   }, [mission.conciergerieName, getConciergerieByName]);
 
@@ -73,13 +73,13 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
       <h3 className="font-medium text-foreground">{homeTitle}</h3>
 
       <div className="flex flex-wrap gap-1 mt-2">
-        {mission.objectives.map(objective => (
+        {mission.tasks.map(task => (
           <span
-            key={mission.id + objective.label}
+            key={mission.id + task.label}
             className="px-2 py-0.5 text-background rounded-full text-xs"
             style={{ backgroundColor: conciergerieColor }}
           >
-            {objective.label}
+            {task.label}
           </span>
         ))}
       </div>

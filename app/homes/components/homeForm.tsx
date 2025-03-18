@@ -10,7 +10,7 @@ import Combobox from '../../components/combobox';
 import ConfirmationModal from '../../components/confirmationModal';
 import FormActions from '../../components/formActions';
 import FullScreenModal from '../../components/fullScreenModal';
-import TaskList from '../../components/taskList';
+import ObjectiveList from '../../components/objectiveList';
 import { ToastMessage, ToastProps, ToastType } from '../../components/toastMessage';
 import { useMissions } from '../../contexts/missionsProvider';
 
@@ -30,7 +30,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
 
   const [title, setTitle] = useState(home?.title || '');
   const [description, setDescription] = useState(home?.description || '');
-  const [tasks, setTasks] = useState<string[]>(home?.tasks || ['']);
+  const [objectives, setObjectives] = useState<string[]>(home?.objectives || ['']);
   const [images, setImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>(home?.images || []);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -43,7 +43,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const [initialFormValues, setInitialFormValues] = useState<{
     title: string;
     description: string;
-    tasks: string[];
+    objectives: string[];
     geographicZone: string;
   }>();
 
@@ -64,7 +64,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const isFormValid =
     (images.length > 0 || existingImages.length > 0) &&
     description.trim() !== '' &&
-    tasks.some(task => task.trim() !== '') &&
+    objectives.some(objective => objective.trim() !== '') &&
     title.trim() !== '' &&
     geographicZone.trim() !== '';
 
@@ -76,7 +76,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     setInitialFormValues({
       title,
       description,
-      tasks: [...tasks],
+      objectives: [...objectives],
       geographicZone,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -88,12 +88,12 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     // Check if any field has been filled in compared to initial state
     const titleChanged = title !== initialFormValues.title;
     const descriptionChanged = description !== initialFormValues.description;
-    const tasksChanged = JSON.stringify(tasks) !== JSON.stringify(initialFormValues.tasks);
+    const objectivesChanged = JSON.stringify(objectives) !== JSON.stringify(initialFormValues.objectives);
     const imagesChanged = images.length > 0;
     const geographicZoneChanged = geographicZone !== initialFormValues.geographicZone;
 
-    return titleChanged || descriptionChanged || tasksChanged || imagesChanged || geographicZoneChanged;
-  }, [title, description, tasks, images, geographicZone, initialFormValues]);
+    return titleChanged || descriptionChanged || objectivesChanged || imagesChanged || geographicZoneChanged;
+  }, [title, description, objectives, images, geographicZone, initialFormValues]);
 
   useEffect(() => {
     const urls = images.map(image => URL.createObjectURL(image));
@@ -149,16 +149,16 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
       return;
     }
 
-    // Check if at least one task is added
-    if (!tasks.some(task => task.trim() !== '')) {
+    // Check if at least one objective is added
+    if (!objectives.some(objective => objective.trim() !== '')) {
       setToastMessage({
         type: ToastType.Error,
-        message: 'Veuillez ajouter au moins une tâche',
+        message: 'Veuillez ajouter au moins un objectif',
       });
-      // Focus on the first task input
-      const firstTaskInput = taskListRef.current?.querySelector('input');
-      if (firstTaskInput) {
-        firstTaskInput.focus();
+      // Focus on the first objective input
+      const firstObjectiveInput = taskListRef.current?.querySelector('input');
+      if (firstObjectiveInput) {
+        firstObjectiveInput.focus();
       }
       return;
     }
@@ -194,7 +194,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           const result = addHome({
             title,
             description,
-            tasks: tasks.filter(task => task.trim() !== ''),
+            objectives: objectives.filter(objective => objective.trim() !== ''),
             images: imageUrls,
             geographicZone,
           });
@@ -219,7 +219,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
               ...home,
               title,
               description,
-              tasks: tasks.filter(task => task.trim() !== ''),
+              objectives: objectives.filter(objective => objective.trim() !== ''),
               images: imageUrls,
               geographicZone,
             });
@@ -460,9 +460,9 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
         </div>
 
         <div ref={taskListRef}>
-          <TaskList tasks={tasks} setTasks={setTasks} />
-          {isFormSubmitted && !tasks.some(t => t.trim() !== '') && (
-            <p className="text-red-500 text-sm mt-1">Veuillez ajouter au moins une tâche</p>
+          <ObjectiveList objectives={objectives} setObjectives={setObjectives} />
+          {isFormSubmitted && !objectives.some(o => o.trim() !== '') && (
+            <p className="text-red-500 text-sm mt-1">Veuillez ajouter au moins un point particulier</p>
           )}
         </div>
 

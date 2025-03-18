@@ -53,7 +53,7 @@ export default function HomesPage() {
       return (
         home.title.toLowerCase().includes(searchLower) ||
         home.description.toLowerCase().includes(searchLower) ||
-        home.tasks.some(task => task.toLowerCase().includes(searchLower))
+        home.objectives.some(objective => objective.toLowerCase().includes(searchLower))
       );
     });
 

@@ -1,10 +1,9 @@
 'use client';
 
-import { IconCalendarEvent, IconClock, IconPlayerPlay, IconAlertTriangle } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
-import { useEffect, useState } from 'react';
-import { useMissions } from '../contexts/missionsProvider';
-import { Conciergerie, Mission } from '../types/types';
+import LoadingSpinner from '@/app/components/loadingSpinner';
+import { useMissions } from '@/app/contexts/missionsProvider';
+import MissionDetails from '@/app/missions/components/missionDetails';
+import { Conciergerie, Mission } from '@/app/types/types';
 import {
   formatCalendarDate,
   formatMissionTimeForCalendar,
@@ -12,13 +11,14 @@ import {
   isPastDate,
   isToday,
   sortDates,
-} from '../utils/calendarUtils';
-import { formatDateRange } from '../utils/dateUtils';
-import { formatPoints } from '../utils/formatUtils';
-import { calculateEmployeePointsForDay, calculateMissionPoints, getObjectiveWithPoints } from '../utils/objectiveUtils';
-import { getColorValueByName, getWelcomeParams } from '../utils/welcomeParams';
-import LoadingSpinner from './loadingSpinner';
-import MissionDetails from '../missions/components/missionDetails';
+} from '@/app/utils/calendarUtils';
+import { formatDateRange } from '@/app/utils/dateUtils';
+import { formatPoints } from '@/app/utils/formatUtils';
+import { calculateEmployeePointsForDay, calculateMissionPoints } from '@/app/utils/taskUtils';
+import { getColorValueByName, getWelcomeParams } from '@/app/utils/welcomeParams';
+import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
+import clsx from 'clsx/lite';
+import { useEffect, useState } from 'react';
 
 export default function CalendarView() {
   const { missions, isLoading, getConciergerieByName } = useMissions();
@@ -53,10 +53,10 @@ export default function CalendarView() {
   useEffect(() => {
     const loadConciergerieData = async () => {
       const newConciergerieMap = new Map<string, Conciergerie>();
-      
+
       // Get unique conciergerie names from missions
       const conciergerieNames = [...new Set(missions.map(mission => mission.conciergerieName))];
-      
+
       // Fetch conciergerie data for each name
       for (const name of conciergerieNames) {
         if (!newConciergerieMap.has(name)) {
@@ -66,10 +66,10 @@ export default function CalendarView() {
           }
         }
       }
-      
+
       setConciergerieMap(newConciergerieMap);
     };
-    
+
     loadConciergerieData();
   }, [missions, getConciergerieByName]);
 
@@ -285,15 +285,15 @@ export default function CalendarView() {
                       </div>
 
                       <div className="flex flex-wrap gap-1 mt-2 mb-2">
-                        {mission.objectives.map(objective => (
+                        {mission.tasks.map(task => (
                           <span
-                            key={mission.id + objective.label}
+                            key={mission.id + task.label}
                             className="px-2 py-0.5 text-background rounded-full text-xs flex items-center gap-1"
                             style={{ backgroundColor: conciergerieColor }}
                           >
-                            <span>{objective.label}</span>
+                            <span>{task.label}</span>
                             <span className="ml-1 px-1 py-0.5 bg-background/20 rounded-full text-xs">
-                              {getObjectiveWithPoints(objective.label)?.points || 0} pt
+                              {task.points} pt
                             </span>
                           </span>
                         ))}

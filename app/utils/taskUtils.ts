@@ -1,30 +1,30 @@
 'use client';
 
-import objectivesData from '../data/objectives.json';
-import { Mission, MissionPoints, Objective } from '../types/types';
+import tasksData from '../data/tasks.json';
+import { Mission, MissionPoints, Task } from '../types/types';
 
 // Get all objectives with their points
-export const getObjectivesWithPoints = (): Objective[] => {
-  return objectivesData as Objective[];
+export const getTasksWithPoints = (): Task[] => {
+  return tasksData as Task[];
 };
 
 // Get a specific objective with its points
-export const getObjectiveWithPoints = (label: string): Objective | undefined => {
-  return getObjectivesWithPoints().find(obj => obj.label === label);
+export const getTaskWithPoints = (label: string): Task | undefined => {
+  return getTasksWithPoints().find(obj => obj.label === label);
 };
 
 // Calculate total points for a set of objectives
-export const calculateTotalPoints = (objectives: Objective[]): number => {
-  return objectives.reduce((total, objective) => {
-    const objectiveWithPoints = getObjectiveWithPoints(objective.label);
-    return total + (objectiveWithPoints?.points || 0);
+export const calculateTotalPoints = (tasks: Task[]): number => {
+  return tasks.reduce((total, task) => {
+    const taskWithPoints = getTaskWithPoints(task.label);
+    return total + (taskWithPoints?.points || 0);
   }, 0);
 };
 
 // Calculate mission points including points per day
 export const calculateMissionPoints = (mission: Mission): MissionPoints => {
   // Calculate total points for all objectives in the mission
-  const totalPoints = calculateTotalPoints(mission.objectives);
+  const totalPoints = calculateTotalPoints(mission.tasks);
 
   // Calculate the number of days the mission spans
   const startDate = new Date(mission.startDateTime);

@@ -18,7 +18,7 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
   const { getConciergerieByName } = useMissions();
   const [conciergerie, setConciergerie] = useState<Conciergerie | null>(null);
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
-  
+
   // Fetch conciergerie data when home changes
   useEffect(() => {
     const loadConciergerieData = async () => {
@@ -29,7 +29,7 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
         console.error(`Error fetching conciergerie ${home.conciergerieName}:`, error);
       }
     };
-    
+
     loadConciergerieData();
   }, [home.conciergerieName, getConciergerieByName]);
 
@@ -66,16 +66,18 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
       <p className="text-sm text-light line-clamp-2 mb-2">{home.description}</p>
 
       <ul className="list-none pl-0 space-y-1 mb-2">
-        {home.tasks.slice(0, 3).map((task, index) => (
+        {home.objectives.slice(0, 3).map((objective, index) => (
           <li key={index} className="flex items-start">
             <span
               className="inline-block w-2 h-2 mt-1 mr-2 flex-shrink-0 border border-foreground"
               style={{ borderColor: 'var(--color-foreground)' }}
             />
-            <span className="text-xs text-foreground truncate">{task}</span>
+            <span className="text-xs text-foreground truncate">{objective}</span>
           </li>
         ))}
-        {home.tasks.length > 3 && <li className="text-xs text-light ml-4">+{home.tasks.length - 3} autres tâches</li>}
+        {home.objectives.length > 3 && (
+          <li className="text-xs text-light ml-4">+{home.objectives.length - 3} autres points</li>
+        )}
       </ul>
 
       <div className="mt-3 text-sm text-light">

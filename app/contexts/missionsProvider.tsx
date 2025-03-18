@@ -2,7 +2,7 @@
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { fetchConciergerieByName } from '../actions/conciergerie';
-import { Conciergerie, Employee, HomeData, Mission, MissionStatus, Objective } from '../types/types';
+import { Conciergerie, Employee, HomeData, Mission, MissionStatus, Task } from '../types/types';
 import { generateSimpleId } from '../utils/id';
 import { getWelcomeParams } from '../utils/welcomeParams';
 import { useHomes } from './homesProvider';
@@ -27,7 +27,7 @@ type MissionsContextType = {
   setShouldShowAcceptWarning: (show: boolean) => void;
   missionExists: (
     homeId: string,
-    objectives: Objective[],
+    tasks: Task[],
     startDateTime: Date,
     endDateTime: Date,
     excludeMissionId?: string,
@@ -102,10 +102,10 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('show_accept_mission_warning', JSON.stringify(shouldShowAcceptWarning));
   }, [shouldShowAcceptWarning]);
 
-  // Check if a mission with the same home, objectives, start date, and end date already exists
+  // Check if a mission with the same home, tasks, start date, and end date already exists
   const missionExists = (
     homeId: string,
-    objectives: Objective[],
+    tasks: Task[],
     startDateTime: Date,
     endDateTime: Date,
     excludeMissionId?: string,
@@ -113,8 +113,8 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const currentConciergerie = getCurrentConciergerie();
     if (!currentConciergerie) return false;
 
-    // Sort objectives to ensure consistent comparison
-    const sortedObjectives = [...objectives].sort((a, b) => a.label.localeCompare(b.label));
+    // Sort tasks to ensure consistent comparison
+    const sortedTasks = [...tasks].sort((a, b) => a.label.localeCompare(b.label));
 
     return missions.some(mission => {
       // Skip deleted missions and the mission being edited (if excludeMissionId is provided)
@@ -156,17 +156,17 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      // Check if objectives match (same number and same labels)
-      if (mission.objectives.length !== sortedObjectives.length) {
+      // Check if tasks match (same number and same labels)
+      if (mission.tasks.length !== sortedTasks.length) {
         return false;
       }
 
-      // Sort mission objectives for consistent comparison
-      const missionSortedObjectives = [...mission.objectives].sort((a, b) => a.label.localeCompare(b.label));
+      // Sort mission tasks for consistent comparison
+      const missionSortedTasks = [...mission.tasks].sort((a, b) => a.label.localeCompare(b.label));
 
-      // Check if all objectives match
-      for (let i = 0; i < sortedObjectives.length; i++) {
-        if (sortedObjectives[i].label !== missionSortedObjectives[i].label) {
+      // Check if all tasks match
+      for (let i = 0; i < sortedTasks.length; i++) {
+        if (sortedTasks[i].label !== missionSortedTasks[i].label) {
           return false;
         }
       }
@@ -185,7 +185,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     }
 
     // Check if a mission with the same criteria already exists
-    if (missionExists(missionData.homeId, missionData.objectives, missionData.startDateTime, missionData.endDateTime)) {
+    if (missionExists(missionData.homeId, missionData.tasks, missionData.startDateTime, missionData.endDateTime)) {
       // Return false to indicate that the mission wasn't added due to duplication
       return false;
     }
@@ -211,7 +211,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       if (
         missionExists(
           updatedMission.homeId,
-          updatedMission.objectives,
+          updatedMission.tasks,
           updatedMission.startDateTime,
           updatedMission.endDateTime,
           updatedMission.id, // Exclude the current mission from the duplicate check

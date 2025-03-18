@@ -1,17 +1,17 @@
 'use client';
 
+import ConfirmationModal from '@/app/components/confirmationModal';
+import FormActions from '@/app/components/formActions';
+import FullScreenModal from '@/app/components/fullScreenModal';
+import MultiSelect from '@/app/components/multiSelect';
+import Select from '@/app/components/select';
+import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { useMissions } from '@/app/contexts/missionsProvider';
+import { Employee, Mission, Task } from '@/app/types/types';
+import { getEmployees } from '@/app/utils/employeeUtils';
+import { getTasksWithPoints } from '@/app/utils/taskUtils';
 import { clsx } from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMissions } from '../../contexts/missionsProvider';
-import { Employee, Mission, Objective } from '../../types/types';
-import { getEmployees } from '../../utils/employeeUtils';
-import { getObjectivesWithPoints } from '../../utils/objectiveUtils';
-import ConfirmationModal from '../../components/confirmationModal';
-import FormActions from '../../components/formActions';
-import MultiSelect from '../../components/multiSelect';
-import Select from '../../components/select';
-import { ToastMessage, ToastProps, ToastType } from '../../components/toastMessage';
-import FullScreenModal from '../../components/fullScreenModal';
 
 type MissionFormProps = {
   mission?: Mission;
@@ -28,13 +28,13 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   const filteredHomes = homes.filter(home => home.conciergerieName === currentConciergerie?.name);
 
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
-  const [objectivesState, setObjectives] = useState<Objective[]>(mission?.objectives || []);
+  const [tasksState, setTasks] = useState<Task[]>(mission?.tasks || []);
   const [selectedPrestataires, setSelectedPrestataires] = useState<string[]>(mission?.prestataires || []);
   const [initialFormValues, setInitialFormValues] = useState<{
     homeId: string;
     startDateTime: string;
     endDateTime: string;
-    objectivesState: Objective[];
+    tasksState: Task[];
     selectedPrestataires: string[];
   }>();
   // Get current date and time in local timezone
@@ -75,7 +75,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
   // Refs for form elements
   const homeSelectRef = useRef<HTMLDivElement>(null);
-  const objectivesRef = useRef<HTMLDivElement>(null);
+  const taskRef = useRef<HTMLDivElement>(null);
   const startDateRef = useRef<HTMLInputElement>(null);
   const endDateRef = useRef<HTMLInputElement>(null);
 
@@ -94,27 +94,27 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       homeId,
       startDateTime,
       endDateTime,
-      objectivesState,
+      tasksState,
       selectedPrestataires,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const isFormValid = homeId !== '' && objectivesState.length > 0 && startDateTime !== '' && endDateTime !== '';
+  const isFormValid = homeId !== '' && tasksState.length > 0 && startDateTime !== '' && endDateTime !== '';
 
   // Check if form has been modified
   const checkFormChanged = useCallback(() => {
     if (!initialFormValues) return false;
 
     // Check if any field has been filled in compared to initial state
-    const objectivesChanged = JSON.stringify(objectivesState) !== JSON.stringify(initialFormValues.objectivesState);
+    const tasksChanged = JSON.stringify(tasksState) !== JSON.stringify(initialFormValues.tasksState);
     const homeIdChanged = homeId !== initialFormValues.homeId;
     const startDateChanged = startDateTime !== initialFormValues.startDateTime;
     const endDateChanged = endDateTime !== initialFormValues.endDateTime;
     const prestatairesChanged =
       JSON.stringify(selectedPrestataires.sort()) !== JSON.stringify(initialFormValues.selectedPrestataires.sort());
 
-    return objectivesChanged || homeIdChanged || startDateChanged || endDateChanged || prestatairesChanged;
-  }, [homeId, objectivesState, startDateTime, endDateTime, selectedPrestataires, initialFormValues]);
+    return tasksChanged || homeIdChanged || startDateChanged || endDateChanged || prestatairesChanged;
+  }, [homeId, tasksState, startDateTime, endDateTime, selectedPrestataires, initialFormValues]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,13 +127,13 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       return;
     }
 
-    // Check if objectives are selected
-    if (objectivesState.length === 0) {
-      setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner au moins un objectif' });
-      // Focus on the first objective button
-      const firstObjectiveButton = objectivesRef.current?.querySelector('button');
-      if (firstObjectiveButton) {
-        firstObjectiveButton.focus();
+    // Check if tasks are selected
+    if (tasksState.length === 0) {
+      setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner au moins une tâche' });
+      // Focus on the first task button
+      const firstTaskButton = taskRef.current?.querySelector('button');
+      if (firstTaskButton) {
+        firstTaskButton.focus();
       }
       return;
     }
@@ -170,7 +170,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
       if (mode === 'add') {
         // Check if a mission with the same criteria already exists
-        if (missionExists(selectedHome.id, objectivesState, startDate, endDate)) {
+        if (missionExists(selectedHome.id, tasksState, startDate, endDate)) {
           setToastMessage({
             type: ToastType.Warning,
             message: 'Une mission identique existe déjà',
@@ -180,7 +180,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
         const result = addMission({
           homeId: selectedHome.id,
-          objectives: objectivesState,
+          tasks: tasksState,
           startDateTime: startDate,
           endDateTime: endDate,
           prestataires: selectedPrestataires.length > 0 ? selectedPrestataires : undefined,
@@ -201,7 +201,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         const updatedMission: Mission = {
           id: mission.id,
           homeId: selectedHome.id,
-          objectives: objectivesState,
+          tasks: tasksState,
           startDateTime: startDate,
           endDateTime: endDate,
           conciergerieName: mission.conciergerieName,
@@ -213,7 +213,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         };
 
         // Check if update would create a duplicate (excluding the current mission)
-        if (missionExists(selectedHome.id, objectivesState, startDate, endDate, mission.id)) {
+        if (missionExists(selectedHome.id, tasksState, startDate, endDate, mission.id)) {
           setToastMessage({
             type: ToastType.Warning,
             message: 'Une mission identique existe déjà',
@@ -236,16 +236,16 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     }
   };
 
-  const toggleObjective = (objective: Objective) => {
-    // Check if the objective is already in the array by comparing labels
-    const objectiveExists = objectivesState.some(o => o.label === objective.label);
+  const toggleTask = (task: Task) => {
+    // Check if the task is already in the array by comparing labels
+    const taskExists = tasksState.some(t => t.label === task.label);
 
-    if (objectiveExists) {
-      // Remove the objective if it exists
-      setObjectives(objectivesState.filter(o => o.label !== objective.label));
+    if (taskExists) {
+      // Remove the task if it exists
+      setTasks(tasksState.filter(t => t.label !== task.label));
     } else {
-      // Add the objective if it doesn't exist
-      setObjectives([...objectivesState, objective]);
+      // Add the task if it doesn't exist
+      setTasks([...tasksState, task]);
     }
   };
 
@@ -302,44 +302,43 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               }))}
               placeholder="Sélectionner un bien"
               error={isFormSubmitted && !homeId}
-              borderColor={homeId && currentConciergerie?.color ? currentConciergerie.color : undefined}
             />
           </div>
           {isFormSubmitted && !homeId && <p className="text-red-500 text-sm mt-1">Veuillez sélectionner un bien</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Objectifs</label>
-          <div ref={objectivesRef} className="grid grid-cols-2 gap-2">
-            {getObjectivesWithPoints().map(objective => (
+          <label className="block text-sm font-medium mb-2">Tâches</label>
+          <div ref={taskRef} className="grid grid-cols-2 gap-2">
+            {getTasksWithPoints().map(task => (
               <button
                 type="button"
-                key={objective.label}
-                onClick={() => toggleObjective(objective)}
+                key={task.label}
+                onClick={() => toggleTask(task)}
                 className={clsx(
                   'p-2 border rounded-lg text-sm flex justify-between items-center',
                   'border-foreground/20 focus-visible:outline-primary',
-                  objectivesState.some(o => o.label === objective.label)
+                  tasksState.some(t => t.label === task.label)
                     ? 'bg-primary text-background border-primary'
                     : 'bg-background text-foreground border-secondary',
                 )}
               >
-                <span>{objective.label}</span>
+                <span>{task.label}</span>
                 <span
                   className={clsx(
                     'px-1.5 py-0.5 rounded-full text-xs',
-                    objectivesState.some(o => o.label === objective.label)
+                    tasksState.some(t => t.label === task.label)
                       ? 'bg-background/20 text-background'
                       : 'bg-primary/10 text-primary',
                   )}
                 >
-                  {objective.points} pt{objective.points !== 1 ? 's' : ''}
+                  {task.points} pt{task.points !== 1 ? 's' : ''}
                 </span>
               </button>
             ))}
           </div>
-          {isFormSubmitted && objectivesState.length === 0 && (
-            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner au moins un objectif</p>
+          {isFormSubmitted && tasksState.length === 0 && (
+            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner au moins une tâche</p>
           )}
         </div>
 
