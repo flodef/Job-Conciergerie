@@ -18,7 +18,6 @@ type SelectProps = {
   className?: string;
   error?: boolean;
   disabled?: boolean;
-  borderColor?: string; // New prop for border color when focused
 };
 
 export default function Select({
@@ -30,7 +29,6 @@ export default function Select({
   className = '',
   error = false,
   disabled = false,
-  borderColor,
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -108,7 +106,7 @@ export default function Select({
     setIsOpen(false);
     // Keep focus state after selection
     setIsFocused(true);
-    
+
     // Focus the select element after selection
     if (selectRef.current) {
       const selectElement = selectRef.current.querySelector(`#${id}`) as HTMLElement;
@@ -137,10 +135,11 @@ export default function Select({
       <div
         id={id}
         className={clsx(
-          'w-full p-2 border-2 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer',
+          'w-full p-2 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer',
           'focus-visible:outline-none',
           error && 'border-red-500',
           disabled && 'opacity-50 cursor-not-allowed',
+          isFocused || isOpen ? 'border-primary border-2' : 'border-secondary border',
         )}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         tabIndex={disabled ? -1 : 0}
@@ -153,9 +152,6 @@ export default function Select({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-controls={`${id}-options`}
-        style={(isFocused || isOpen) && borderColor 
-          ? { borderColor } 
-          : { borderColor: 'rgba(0, 0, 0, 0.1)' }} // Light gray transparent border when not focused
       >
         <span className={clsx(!value && 'text-foreground/50')}>{displayValue}</span>
         <IconChevronDown
