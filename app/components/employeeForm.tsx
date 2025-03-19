@@ -129,7 +129,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
       firstNameRef.current?.focus();
       return;
     }
-    
+
     // Validate first name length
     if (formData.firstName.length > MAX_NAME_LENGTH) {
       setFirstNameError(`Le prénom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`);
@@ -149,7 +149,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
       familyNameRef.current?.focus();
       return;
     }
-    
+
     // Validate family name length
     if (formData.familyName.length > MAX_NAME_LENGTH) {
       setFamilyNameError(`Le nom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`);
@@ -234,7 +234,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
 
     try {
       // Create a new employee in the database
-      const result = await createNewEmployee({
+      const { employee, alreadyExists } = await createNewEmployee({
         id: userId,
         firstName: formData.firstName || '',
         familyName: formData.familyName || '',
@@ -245,7 +245,17 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
         notificationSettings: formData.notificationSettings as EmployeeNotificationSettings,
       });
 
-      if (result) {
+      // Double-check if employee already exists (in case of race condition)
+      if (alreadyExists) {
+        setToastMessage({
+          type: ToastType.Error,
+          message: 'Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (employee) {
         // TODO: send request email to conciergerie
 
         // Refresh user data to update the auth context

@@ -8,8 +8,8 @@ import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@t
 import { useEffect, useRef, useState } from 'react';
 
 export default function WaitingPage() {
-  const { userId, userType, isLoading: authLoading, disconnect } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
+  const { userId, userType, isLoading: authLoading, employeeData, disconnect } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [employee, setEmployee] = useState<Employee>();
   const [daysWaiting, setDaysWaiting] = useState('');
   const [isConciergerie, setIsConciergerie] = useState(false);
@@ -34,13 +34,12 @@ export default function WaitingPage() {
         return;
       }
 
-      setIsLoading(true);
-
       // Handle employee user type
       if (userType === 'employee') {
         try {
+          setIsLoading(true);
           // Check if employee exists in database with this ID
-          const foundEmployee = await fetchEmployeeById(userId);
+          const foundEmployee = employeeData || (await fetchEmployeeById(userId));
 
           if (foundEmployee) {
             setEmployee(foundEmployee);
@@ -85,14 +84,14 @@ export default function WaitingPage() {
           }
         } catch (error) {
           console.error('Error fetching employee:', error);
+        } finally {
+          setIsLoading(false);
         }
       }
-
-      setIsLoading(false);
     };
 
     loadEmployeeData();
-  }, [userId, userType, authLoading]);
+  }, [userId, userType, authLoading, employeeData]);
 
   // Show loading spinner while checking localStorage
   if (isLoading || authLoading) {

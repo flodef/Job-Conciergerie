@@ -4,6 +4,7 @@ import { Employee, EmployeeNotificationSettings, EmployeeStatus } from '@/app/ty
 import {
   DbEmployee,
   createEmployee,
+  employeeExists,
   getAllEmployees,
   getEmployeeById,
   getEmployeesByConciergerie,
@@ -64,8 +65,15 @@ export async function createNewEmployee(data: {
   message?: string;
   conciergerieName?: string;
   notificationSettings?: EmployeeNotificationSettings;
-}): Promise<Employee | null> {
+}): Promise<{ employee: Employee | null; alreadyExists: boolean }> {
   try {
+    // Check if employee already exists with the same name, phone, or email
+    const exists = await employeeExists(data.firstName, data.familyName, data.tel, data.email);
+
+    if (exists) {
+      return { employee: null, alreadyExists: true };
+    }
+
     // Convert to DB format
     const dbData: Omit<DbEmployee, 'created_at'> = {
       id: data.id,
@@ -81,16 +89,16 @@ export async function createNewEmployee(data: {
 
     const created = await createEmployee(dbData);
 
-    if (!created) return null;
+    if (!created) return { employee: null, alreadyExists: false };
 
     // Revalidate cache after creation
     revalidateTag('employees');
     revalidateTag('employees_by_conciergerie');
 
-    return created;
+    return { employee: created, alreadyExists: false };
   } catch (error) {
     console.error('Error creating employee:', error);
-    return null;
+    return { employee: null, alreadyExists: false };
   }
 }
 

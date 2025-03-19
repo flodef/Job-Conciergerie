@@ -244,6 +244,32 @@ export const getEmployeesByConciergerie = unstable_cache(
 );
 
 /**
+ * Check if an employee already exists with the same name, phone, or email
+ */
+export const employeeExists = async (
+  firstName: string,
+  familyName: string,
+  tel: string,
+  email: string,
+): Promise<boolean> => {
+  try {
+    const result = await sql`
+      SELECT id FROM employee
+      WHERE 
+        (LOWER(first_name) = LOWER(${firstName}) AND LOWER(family_name) = LOWER(${familyName}))
+        OR tel = ${tel}
+        OR LOWER(email) = LOWER(${email})
+      LIMIT 1
+    `;
+
+    return result.length > 0;
+  } catch (error) {
+    console.error('Error checking if employee exists:', error);
+    return false;
+  }
+};
+
+/**
  * Create a new employee
  */
 export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {

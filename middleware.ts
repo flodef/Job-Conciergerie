@@ -16,11 +16,16 @@ export async function middleware(request: NextRequest) {
   const userType = request.cookies.get('user_type')?.value;
 
   // If no user ID or user type, redirect to home page
-  if (!userId || !userType) return redirect(path, '/', request);
+  if (!userId || !userType) {
+    if (path !== '/') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+    return NextResponse.next();
+  }
 
   try {
     // Make a fetch request to our own API to check user status
-    const response = await fetch(new URL('/api/auth/check-user-status', request.url), {
+    const response = await fetch(new URL('/api/auth/', request.url), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -36,22 +41,22 @@ export async function middleware(request: NextRequest) {
 
     // Handle redirects based on user type and status
     if (foundUserType === 'conciergerie' || (foundUserType === 'employee' && data.status === 'accepted')) {
-      redirect(path, '/missions', request);
+      if (path !== '/missions') {
+        return NextResponse.redirect(new URL('/missions', request.url));
+      }
     } else {
-      redirect(path, '/waiting', request);
+      if (path !== '/waiting') {
+        return NextResponse.redirect(new URL('/waiting', request.url));
+      }
     }
   } catch (error) {
     console.error('Middleware error:', error);
-    redirect(path, '/', request);
+    if (path !== '/') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+    return NextResponse.next();
   }
 }
-
-const redirect = (currentPath: string, targetPath: string, request: NextRequest) => {
-  if (currentPath !== targetPath) {
-    return NextResponse.redirect(new URL(targetPath, request.url));
-  }
-  return NextResponse.next();
-};
 
 // See "Matching Paths" below to learn more
 export const config = {
