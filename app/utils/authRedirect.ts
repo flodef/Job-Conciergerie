@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/authProvider';
+import { checkUserExists } from '../actions/auth';
+import { fetchEmployeeById } from '../actions/employee';
 
 /**
  * Hook to redirect users based on their authentication status
@@ -57,30 +59,164 @@ export function useAuthRedirect(options: {
  * This is a replacement for the existing useRedirectIfNotRegistered hook
  */
 export function useRedirectIfNotRegistered() {
-  return useAuthRedirect({
-    requireAuth: true,
-    redirectPath: '/',
-  });
+  const { userId, userType, isLoading } = useAuth();
+  const hasCheckedRef = useRef(false);
+  
+  useEffect(() => {
+    // Store whether we've already checked to prevent infinite loops
+    if (hasCheckedRef.current) return;
+    
+    const checkUserStatus = async () => {
+      // Skip if still loading or no userId
+      if (isLoading || !userId) return;
+      
+      try {
+        // Mark that we've checked to prevent infinite loops
+        hasCheckedRef.current = true;
+        
+        // Check if user exists in the database
+        const { userType: foundUserType } = await checkUserExists(userId);
+        
+        // If user doesn't exist in the database, redirect to home
+        if (!foundUserType) {
+          window.location.href = '/';
+          return;
+        }
+        
+        // If user is an employee, check their status
+        if (foundUserType === 'employee') {
+          const employee = await fetchEmployeeById(userId);
+          
+          if (employee) {
+            // If employee is not accepted, redirect to waiting page
+            if (employee.status !== 'accepted') {
+              window.location.href = '/waiting';
+              return;
+            }
+          } else {
+            // Employee not found, redirect to home
+            window.location.href = '/';
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking user status:', error);
+      }
+    };
+    
+    checkUserStatus();
+  }, [userId, userType, isLoading]);
+}
+
+/**
+ * Hook to redirect users if they are not pending or rejected employees
+ * This ensures only the right users can access the waiting page
+ */
+export function useRedirectIfNotPending() {
+  const { userId, userType, isLoading } = useAuth();
+  const hasCheckedRef = useRef(false);
+  
+  useEffect(() => {
+    // Store whether we've already checked to prevent infinite loops
+    if (hasCheckedRef.current) return;
+    
+    const checkUserStatus = async () => {
+      // Skip if still loading or no userId
+      if (isLoading || !userId) return;
+      
+      try {
+        // Mark that we've checked to prevent infinite loops
+        hasCheckedRef.current = true;
+        
+        // Check if user exists in the database
+        const { userType: foundUserType } = await checkUserExists(userId);
+        
+        // If user doesn't exist in the database, redirect to home
+        if (!foundUserType) {
+          window.location.href = '/';
+          return;
+        }
+        
+        // If user is a conciergerie, they can stay on the waiting page
+        if (foundUserType === 'conciergerie') {
+          return;
+        }
+        
+        // If user is an employee, check their status
+        if (foundUserType === 'employee') {
+          const employee = await fetchEmployeeById(userId);
+          
+          if (employee) {
+            // If employee is accepted, redirect to missions
+            if (employee.status === 'accepted') {
+              window.location.href = '/missions';
+              return;
+            }
+            
+            // If employee is pending or rejected, they can stay on the waiting page
+            return;
+          } else {
+            // Employee not found, redirect to home
+            window.location.href = '/';
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking user status:', error);
+      }
+    };
+    
+    checkUserStatus();
+  }, [userId, userType, isLoading]);
 }
 
 /**
  * Hook to redirect users if they are already registered
  */
 export function useRedirectIfRegistered() {
-  const { userType, conciergerieData, employeeData, isLoading } = useAuth();
+  const { userId, userType, isLoading } = useAuth();
+  const hasCheckedRef = useRef(false);
   
   useEffect(() => {
-    // Skip redirect if still loading
-    if (isLoading) return;
+    // Store whether we've already checked to prevent infinite loops
+    if (hasCheckedRef.current) return;
     
-    // Only redirect if the user has a valid type AND their data exists in the database
-    const isRegistered = userType && (
-      (userType === 'conciergerie' && conciergerieData) || 
-      (userType === 'employee' && employeeData)
-    );
+    const checkUserStatus = async () => {
+      // Skip if still loading or no userId
+      if (isLoading || !userId) return;
+      
+      try {
+        // Mark that we've checked to prevent infinite loops
+        hasCheckedRef.current = true;
+        
+        // Check if user exists in the database
+        const { userType: foundUserType } = await checkUserExists(userId);
+        
+        if (foundUserType === 'employee') {
+          // If user is an employee, check their status
+          const employee = await fetchEmployeeById(userId);
+          
+          if (employee) {
+            // Redirect based on employee status
+            if (employee.status === 'accepted') {
+              window.location.href = '/missions';
+              return; // Exit early to prevent further execution
+            } else {
+              // For pending or rejected employees
+              window.location.href = '/waiting';
+              return; // Exit early to prevent further execution
+            }
+          }
+        } else if (foundUserType === 'conciergerie') {
+          // If user is a conciergerie, redirect to missions
+          window.location.href = '/missions';
+          return; // Exit early to prevent further execution
+        }
+      } catch (error) {
+        console.error('Error checking user status:', error);
+      }
+    };
     
-    if (isRegistered) {
-      window.location.href = '/missions';
-    }
-  }, [isLoading, userType, conciergerieData, employeeData]);
+    checkUserStatus();
+  }, [userId, userType, isLoading]);
 }

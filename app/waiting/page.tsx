@@ -1,98 +1,101 @@
 'use client';
 
+import { fetchEmployeeById } from '@/app/actions/employee';
 import LoadingSpinner from '@/app/components/loadingSpinner';
+import { useAuth } from '@/app/contexts/authProvider';
 import { Employee } from '@/app/types/types';
-import { findEmployee } from '@/app/utils/employeeUtils';
-import { getWelcomeParams } from '@/app/utils/welcomeParams';
-import { IconAlertCircle, IconCircleCheck, IconClock } from '@tabler/icons-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@tabler/icons-react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function WaitingPage() {
-  const router = useRouter();
+  const { userId, userType, isLoading: authLoading, disconnect } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [employee, setEmployee] = useState<Employee>();
   const [daysWaiting, setDaysWaiting] = useState('');
+  const [isConciergerie, setIsConciergerie] = useState(false);
+
+  // We don't need the redirect hook anymore since middleware handles it
+  // Also don't need to check auth status again since middleware already did
+
+  // Use a ref to track if we've already loaded the data to prevent infinite loops
+  const hasLoadedDataRef = useRef(false);
 
   useEffect(() => {
-    const checkApplicationStatus = async () => {
+    const loadEmployeeData = async () => {
+      // Wait for auth to be loaded or if we've already loaded the data
+      if (authLoading || !userId || hasLoadedDataRef.current) return;
+
+      // Mark that we're loading data to prevent infinite loops
+      hasLoadedDataRef.current = true;
+
+      // Handle conciergerie user type
+      if (userType === 'conciergerie') {
+        setIsConciergerie(true);
+        return;
+      }
+
       setIsLoading(true);
 
-      // Add a small delay to ensure localStorage is properly loaded
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Handle employee user type
+      if (userType === 'employee') {
+        try {
+          // Check if employee exists in database with this ID
+          const foundEmployee = await fetchEmployeeById(userId);
 
-      // Get employee data from localStorage
-      const { employeeData, userType } = getWelcomeParams();
+          if (foundEmployee) {
+            setEmployee(foundEmployee);
 
-      // If user is conciergerie, redirect to missions page
-      if (userType === 'conciergerie') {
-        window.location.href = '/missions';
-        return;
-      }
+            // Calculate time waiting
+            if (foundEmployee.createdAt) {
+              const createdDate = new Date(foundEmployee.createdAt);
+              const today = new Date();
 
-      // Only proceed if user type is employee
-      if (userType !== 'employee') {
-        window.location.href = '/';
-        return;
-      }
+              // Calculate the difference in milliseconds
+              const diffTime = Math.abs(today.getTime() - createdDate.getTime());
 
-      if (!employeeData) {
-        // If no employee data, redirect to home
-        window.location.href = '/';
-        return;
-      }
+              // Calculate the difference in minutes, hours, and days
+              const diffMinutes = Math.floor(diffTime / (1000 * 60));
+              const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+              const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-      const foundEmployee = findEmployee(employeeData);
-      if (foundEmployee) {
-        setEmployee(foundEmployee);
-
-        // If employee is accepted, redirect to missions
-        if (foundEmployee.status === 'accepted') {
-          window.location.href = '/missions';
-          return;
-        }
-
-        // Calculate days waiting
-        const createdDate = new Date(foundEmployee.createdAt);
-        const today = new Date();
-
-        // Calculate the difference in milliseconds
-        const diffTime = Math.abs(today.getTime() - createdDate.getTime());
-
-        // Calculate the difference in minutes, hours, and days
-        const diffMinutes = Math.floor(diffTime / (1000 * 60));
-        const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffMinutes < 60) {
-          // If less than 60 minutes, show minutes
-          setDaysWaiting(`${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`);
-        } else if (diffHours < 24) {
-          // If less than 24 hours but more than 60 minutes, show hours and minutes
-          const remainingMinutes = diffMinutes % 60;
-          if (remainingMinutes > 0) {
-            setDaysWaiting(
-              `${diffHours} heure${diffHours > 1 ? 's' : ''} et ${remainingMinutes} minute${
-                remainingMinutes > 1 ? 's' : ''
-              }`,
-            );
+              if (diffMinutes < 60) {
+                // If less than 60 minutes, show minutes
+                setDaysWaiting(`${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`);
+              } else if (diffHours < 24) {
+                // If less than 24 hours but more than 60 minutes, show hours and minutes
+                const remainingMinutes = diffMinutes % 60;
+                if (remainingMinutes > 0) {
+                  setDaysWaiting(
+                    `${diffHours} heure${diffHours > 1 ? 's' : ''} et ${remainingMinutes} minute${
+                      remainingMinutes > 1 ? 's' : ''
+                    }`,
+                  );
+                } else {
+                  setDaysWaiting(`${diffHours} heure${diffHours > 1 ? 's' : ''}`);
+                }
+              } else {
+                // If 24 hours or more, calculate days
+                setDaysWaiting(`${diffDays} jour${diffDays > 1 ? 's' : ''}`);
+              }
+            }
           } else {
-            setDaysWaiting(`${diffHours} heure${diffHours > 1 ? 's' : ''}`);
+            // Employee not found in database with this ID
+            // This shouldn't happen if the form submission worked correctly
+            console.error('Employee not found in database with ID:', userId);
           }
-        } else {
-          // If 24 hours or more, calculate days
-          setDaysWaiting(`${diffDays} jour${diffDays > 1 ? 's' : ''}`);
+        } catch (error) {
+          console.error('Error fetching employee:', error);
         }
       }
 
       setIsLoading(false);
     };
 
-    checkApplicationStatus();
-  }, [router]);
+    loadEmployeeData();
+  }, [userId, userType, authLoading]);
 
   // Show loading spinner while checking localStorage
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingSpinner size="large" text="Chargement..." />
@@ -103,10 +106,51 @@ export default function WaitingPage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md bg-background overflow-hidden p-6">
-        <h1 className="text-2xl font-bold mb-4 text-center">Demande en cours d&apos;examen</h1>
-
-        {employee && (
+        {isLoading || authLoading ? (
+          <div className="flex flex-col items-center justify-center">
+            <LoadingSpinner size="large" text="Chargement..." />
+          </div>
+        ) : isConciergerie ? (
+          // Conciergerie waiting page
           <>
+            <h1 className="text-2xl font-bold mb-4 text-center">Vérification en cours</h1>
+
+            <div className="flex items-center justify-center mb-6">
+              <IconMailForward size={60} className="text-primary" />
+            </div>
+
+            <p className="mb-4">
+              Nous avons envoyé un email de vérification à l&apos;adresse associée à votre conciergerie.
+            </p>
+
+            <p className="mb-4">
+              Veuillez vérifier votre boîte de réception et suivre les instructions pour activer votre compte.
+            </p>
+
+            <div className="bg-secondary/10 p-4 rounded-lg mb-4">
+              <div className="flex items-center mb-2">
+                <IconClock size={25} className="text-yellow-500 mr-2" />
+                <p className="text-sm text-foreground font-medium">
+                  Statut actuel : <span className="font-bold text-yellow-500">En attente de vérification</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-primary/10 p-4 rounded-lg mb-6">
+              <p className="text-sm text-foreground">
+                <span className="font-medium">Délai de traitement habituel :</span> 24 heures ouvrées
+              </p>
+              <p className="text-sm text-foreground mt-2">
+                Une fois votre compte vérifié, vous pourrez accéder directement à l&apos;application lors de votre
+                prochaine visite.
+              </p>
+            </div>
+          </>
+        ) : employee ? (
+          // Employee waiting page
+          <>
+            <h1 className="text-2xl font-bold mb-4 text-center">Demande en cours d&apos;examen</h1>
+
             <p className="mb-4">
               Bonjour{' '}
               <span className="font-semibold">
@@ -148,10 +192,12 @@ export default function WaitingPage() {
                   </span>
                 </p>
               </div>
-              <p className="text-sm text-foreground ml-7">
-                <span className="font-medium">Demande soumise il y a : </span>
-                <span className="font-bold">{daysWaiting}</span>
-              </p>
+              {daysWaiting && (
+                <p className="text-sm text-foreground ml-7">
+                  <span className="font-medium">Demande soumise il y a : </span>
+                  <span className="font-bold">{daysWaiting}</span>
+                </p>
+              )}
             </div>
 
             <div className="bg-primary/10 p-4 rounded-lg mb-6">
@@ -164,13 +210,23 @@ export default function WaitingPage() {
               </p>
             </div>
           </>
-        )}
-
-        {!employee && (
-          <p>
-            Nous n&apos;avons pas pu trouver votre demande. Veuillez retourner à la page d&apos;accueil et soumettre une
-            nouvelle demande.
-          </p>
+        ) : (
+          // Error state
+          <>
+            <h1 className="text-2xl font-bold mb-4 text-center">Demande non trouvée</h1>
+            <p className="mb-4 text-center">
+              Nous n&apos;avons pas pu trouver votre demande. Veuillez retourner à la page d&apos;accueil et soumettre
+              une nouvelle demande.
+            </p>
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={disconnect}
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Retour à l&apos;accueil
+              </button>
+            </div>
+          </>
         )}
       </div>
     </main>

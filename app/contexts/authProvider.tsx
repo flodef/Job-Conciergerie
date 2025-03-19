@@ -4,6 +4,7 @@ import { checkUserExists } from '@/app/actions/auth';
 import { Conciergerie, Employee } from '@/app/types/types';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
+import { setCookie, deleteCookie } from '@/app/utils/cookies';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 // Define the type for the auth context
@@ -12,7 +13,7 @@ export type UserType = 'conciergerie' | 'employee' | undefined;
 interface AuthContextType {
   userId: string | undefined;
   userType: UserType;
-  setUserType: (userType: UserType) => void;
+  updateUserType: (userType: UserType) => void;
   selectedConciergerieName: string | undefined;
   setSelectedConciergerieName: (name: string | undefined) => void;
   conciergerieData: Conciergerie | undefined;
@@ -36,6 +37,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>();
 
+  const updateUserId = useCallback(
+    (userId: string | undefined) => {
+      setUserId(userId);
+      if (userId) {
+        setCookie('user_id', userId);
+      } else {
+        deleteCookie('user_id');
+      }
+    },
+    [setUserId],
+  );
+
+  const updateUserType = useCallback(
+    (userType: UserType) => {
+      setUserType(userType);
+      if (userType) {
+        setCookie('user_type', userType);
+      } else {
+        deleteCookie('user_type');
+      }
+    },
+    [setUserType],
+  );
+
   // Function to check if a user exists in the database
   const checkUserInDatabase = useCallback(
     async (id: string) => {
@@ -45,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Only proceed if we have a valid ID
         if (!id) {
-          setUserType(undefined);
+          updateUserType(undefined);
           return;
         }
 
@@ -53,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { userType: foundUserType, userData } = await checkUserExists(id);
 
         // Update state only if we have a valid user type, otherwise it means the user is still registering
-        if (foundUserType) setUserType(foundUserType);
+        if (foundUserType) updateUserType(foundUserType);
 
         setEmployeeData(foundUserType === 'employee' ? (userData as Employee) : undefined);
         setConciergerieData(foundUserType === 'conciergerie' ? (userData as Conciergerie) : undefined);
@@ -64,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     },
-    [setUserType],
+    [updateUserType],
   );
 
   // Function to refresh user data
@@ -77,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       try {
         const id = userId ?? generateSimpleId();
-        setUserId(id);
+        updateUserId(id);
 
         // Check if the user exists in the database
         // This will set the userType based on where the ID is found
@@ -95,8 +120,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const disconnect = () => {
     // Clear only the user type from localStorage (keep other data)
-    setUserId(undefined);
-    setUserType(undefined);
+    updateUserId(undefined);
+    updateUserType(undefined);
     setSelectedConciergerieName(undefined);
 
     // Force a full page reload to reset the app state
@@ -108,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         userId,
         userType,
-        setUserType,
+        updateUserType,
         selectedConciergerieName,
         setSelectedConciergerieName,
         conciergerieData,

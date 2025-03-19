@@ -114,7 +114,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsFormSubmitted(true);
 
@@ -232,51 +232,43 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
 
     setIsSubmitting(true);
 
-    // Create the employee in the database
-    const createEmployee = async () => {
-      try {
-        // Update the form data with the user ID
-        setFormData(prev => ({ ...prev, id: userId }));
+    try {
+      // Create a new employee in the database
+      const result = await createNewEmployee({
+        id: userId,
+        firstName: formData.firstName || '',
+        familyName: formData.familyName || '',
+        tel: formData.tel || '',
+        email: formData.email || '',
+        message: formData.message,
+        conciergerieName: formData.conciergerieName,
+        notificationSettings: formData.notificationSettings as EmployeeNotificationSettings,
+      });
 
-        // Create the employee in the database with the user's ID
-        const result = await createNewEmployee({
-          id: userId,
-          firstName: formData.firstName || '',
-          familyName: formData.familyName || '',
-          tel: formData.tel || '',
-          email: formData.email || '',
-          message: formData.message,
-          conciergerieName: formData.conciergerieName,
-          notificationSettings: formData.notificationSettings as EmployeeNotificationSettings,
-        });
+      if (result) {
+        // TODO: send request email to conciergerie
 
-        if (result) {
-          // TODO: send request email to conciergerie
+        // Refresh user data to update the auth context
+        await refreshUserData();
 
-          // Refresh user data to update the auth context
-          refreshUserData();
-
-          // Redirect to waiting page
-          window.location.href = '/waiting';
-        } else {
-          setToastMessage({
-            type: ToastType.Error,
-            message: "Erreur lors de l'enregistrement. Veuillez réessayer.",
-            error: 'No result returned from database',
-          });
-          setIsSubmitting(false);
-        }
-      } catch (error) {
+        // Redirect to waiting page
+        window.location.href = '/waiting';
+      } else {
         setToastMessage({
           type: ToastType.Error,
           message: "Erreur lors de l'enregistrement. Veuillez réessayer.",
-          error,
+          error: 'No result returned from database',
         });
         setIsSubmitting(false);
       }
-    };
-
-    createEmployee();
+    } catch (error) {
+      setToastMessage({
+        type: ToastType.Error,
+        message: "Erreur lors de l'enregistrement. Veuillez réessayer.",
+        error,
+      });
+      setIsSubmitting(false);
+    }
   };
 
   if (!formData) return null;

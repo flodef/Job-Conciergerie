@@ -29,7 +29,7 @@ export async function fetchConciergeries(): Promise<Conciergerie[]> {
         email: c.email,
         tel: c.tel,
         colorName: c.colorName,
-        color: getColorValue(c.colorName), // You may need to implement this function
+        color: getColorValue(c.colorName),
         notificationSettings: c.notificationSettings,
       }));
   } catch (error) {
@@ -122,6 +122,72 @@ export async function createConciergerieData(data: Partial<Conciergerie>): Promi
   } catch (error) {
     console.error('Error creating conciergerie:', error);
     return null;
+  }
+}
+
+/**
+ * Create a new conciergerie with the user's ID
+ * This is used for the initial registration process
+ */
+export async function createNewConciergerie(data: Partial<Conciergerie>): Promise<Conciergerie | null> {
+  try {
+    if (!data.id) {
+      throw new Error('User ID is required');
+    }
+
+    if (!data.name) {
+      throw new Error('Conciergerie name is required');
+    }
+
+    // Check if a conciergerie with this ID already exists
+    const existingConciergerie = await getConciergerieById(data.id);
+
+    if (existingConciergerie) {
+      // If it exists, return it without creating a new one
+      return {
+        id: existingConciergerie.id,
+        name: existingConciergerie.name,
+        email: existingConciergerie.email,
+        tel: existingConciergerie.tel,
+        colorName: existingConciergerie.colorName,
+        color: getColorValue(existingConciergerie.colorName),
+        notificationSettings: existingConciergerie.notificationSettings,
+      };
+    }
+
+    // Get the conciergerie data from the database based on name
+    const conciergeries = await getAllConciergeries();
+    const conciergerieData = conciergeries.find(c => c.name === data.name);
+
+    if (!conciergerieData) {
+      throw new Error(`Conciergerie with name ${data.name} not found`);
+    }
+
+    // Update the conciergerie with the user ID
+    const updatedConciergerie = await updateConciergerie(conciergerieData.id, {
+      id: data.id,
+    });
+
+    if (!updatedConciergerie) {
+      throw new Error('Failed to update conciergerie with user ID');
+    }
+
+    // Revalidate the conciergeries cache
+    revalidateTag('conciergeries');
+
+    // Return the updated conciergerie
+    return {
+      id: updatedConciergerie.id,
+      name: updatedConciergerie.name,
+      email: updatedConciergerie.email,
+      tel: updatedConciergerie.tel,
+      colorName: updatedConciergerie.colorName,
+      color: getColorValue(updatedConciergerie.colorName),
+      notificationSettings: updatedConciergerie.notificationSettings,
+    };
+  } catch (error) {
+    console.error('Error creating new conciergerie:', error);
+    throw error;
   }
 }
 

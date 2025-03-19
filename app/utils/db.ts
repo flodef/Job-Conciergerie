@@ -1,4 +1,4 @@
-import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/types/types';
+import { ConciergerieNotificationSettings, EmployeeNotificationSettings, EmployeeStatus } from '@/app/types/types';
 import { getColorValueByName } from '@/app/utils/colorUtil';
 import { neon } from '@neondatabase/serverless';
 import { unstable_cache } from 'next/cache';
@@ -23,7 +23,7 @@ export interface DbEmployee {
   message?: string;
   conciergerie_name?: string;
   notification_settings?: EmployeeNotificationSettings;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: EmployeeStatus;
   created_at: string;
 }
 
@@ -163,13 +163,13 @@ function formatEmployee(dbEmployee: DbEmployee) {
     email: dbEmployee.email,
     message: dbEmployee.message || '',
     conciergerieName: dbEmployee.conciergerie_name || '',
+    status: dbEmployee.status,
     notificationSettings: dbEmployee.notification_settings || {
       acceptedMissions: true,
       missionChanged: true,
       missionDeleted: true,
       missionsCanceled: true,
     },
-    status: dbEmployee.status,
     createdAt: dbEmployee.created_at,
   };
 }
@@ -273,7 +273,7 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
 /**
  * Update an employee's status
  */
-export const updateEmployeeStatus = async (id: string | undefined, status: 'pending' | 'accepted' | 'rejected') => {
+export const updateEmployeeStatus = async (id: string | undefined, status: EmployeeStatus) => {
   try {
     if (!id) throw new Error('No ID provided');
     const result = await sql`

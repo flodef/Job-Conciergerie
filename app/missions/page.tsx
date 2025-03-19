@@ -11,7 +11,6 @@ import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 import { useTheme } from '../contexts/themeProvider';
 import { Mission, MissionSortField } from '../types/types';
-import { useRedirectIfNotRegistered } from '../utils/authRedirect';
 import { useAuth } from '../contexts/authProvider';
 import MissionFilters from './components/missionFilters';
 import MissionList from './components/missionList';
@@ -61,8 +60,8 @@ export default function Missions() {
     zones: [],
   });
 
-  // Use the new redirect hook - must be called before any conditional returns
-  useRedirectIfNotRegistered();
+  // We don't need the redirect hook anymore since middleware handles it
+  // Also don't need to check auth status again since middleware already did
 
   // Load saved filters from localStorage on component mount - must be called before any conditional returns
   useEffect(() => {

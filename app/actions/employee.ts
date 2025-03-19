@@ -1,6 +1,6 @@
 'use server';
 
-import { Employee, EmployeeNotificationSettings } from '@/app/types/types';
+import { Employee, EmployeeNotificationSettings, EmployeeStatus } from '@/app/types/types';
 import {
   DbEmployee,
   createEmployee,
@@ -97,10 +97,7 @@ export async function createNewEmployee(data: {
 /**
  * Update an employee's status in the database
  */
-export async function updateEmployeeStatusAction(
-  id: string,
-  status: 'pending' | 'accepted' | 'rejected',
-): Promise<Employee | null> {
+export async function updateEmployeeStatusAction(id: string, status: EmployeeStatus): Promise<Employee | null> {
   try {
     const updated = await updateEmployeeStatus(id, status);
 

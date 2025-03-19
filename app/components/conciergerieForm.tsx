@@ -1,5 +1,6 @@
 'use client';
 
+import { createNewConciergerie } from '@/app/actions/conciergerie';
 import FormActions from '@/app/components/formActions';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import Select from '@/app/components/select';
@@ -8,6 +9,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useTheme } from '@/app/contexts/themeProvider';
 import { Conciergerie } from '@/app/types/types';
 import { getColorValueByName } from '@/app/utils/colorUtil';
+
 import { useCallback, useEffect, useState } from 'react';
 
 type ConciergerieFormProps = {
@@ -62,11 +64,29 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
     setIsSubmitting(true);
 
     try {
-      // TODO: send request email to conciergerie
+      // Get the selected conciergerie data
+      const selectedConciergerie = conciergeries.find(c => c.name === selectedConciergerieName);
+      
+      if (!selectedConciergerie) {
+        throw new Error('Conciergerie not found');
+      }
+      
+      if (!selectedConciergerie.email) {
+        throw new Error('Conciergerie email not found');
+      }
+      
+      // Create a new conciergerie record in the database
+      await createNewConciergerie({
+        ...selectedConciergerie,
+      });
+      
+      // TODO: send verification email to conciergerie's email address with a link
+      console.log(`Sending verification email to ${selectedConciergerie.email}`);
 
       // Refresh user data to update the auth context
-      refreshUserData();
+      await refreshUserData();
 
+      // Redirect to waiting page
       window.location.href = '/waiting';
     } catch (error) {
       setToastMessage({

@@ -7,12 +7,12 @@ import LoadingSpinner from '@/app/components/loadingSpinner';
 import UserTypeSelection from '@/app/components/userTypeSelection';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { Conciergerie } from '@/app/types/types';
-import { useRedirectIfRegistered } from '@/app/utils/authRedirect';
 import { useCallback, useEffect, useState } from 'react';
 
 export default function Home() {
-  const { isLoading: authLoading, userType, setUserType } = useAuth();
+  const { isLoading: authLoading, userType, updateUserType } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingRegistration, setIsCheckingRegistration] = useState(true);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [showConciergerieForm, setShowConciergerieForm] = useState(false);
   const [conciergeries, setConciergeries] = useState<Conciergerie[]>([]);
@@ -34,40 +34,44 @@ export default function Home() {
     loadConciergeries();
   }, []);
 
-  // Use the redirect hook to redirect if already registered
-  // Only redirect if we have a valid user type and they're already registered
-  useRedirectIfRegistered();
+  // Simplified check to know when to show forms
+  useEffect(() => {
+    if (!authLoading) {
+      setIsCheckingRegistration(false);
+    }
+  }, [authLoading]);
 
   const handleUserTypeSelect = useCallback(
     (type: UserType) => {
       // Save user type to localStorage
-      setUserType(type);
+      updateUserType(type);
 
       // Show appropriate form based on user type
       setShowEmployeeForm(type === 'employee');
       setShowConciergerieForm(type === 'conciergerie');
     },
-    [setUserType, setShowEmployeeForm, setShowConciergerieForm],
+    [updateUserType, setShowEmployeeForm, setShowConciergerieForm],
   );
 
   // Initialize state from auth context
   useEffect(() => {
-    if (!authLoading) return;
+    // Only initialize forms after auth is loaded and we've checked registration
+    if (authLoading || isCheckingRegistration) return;
 
     // Show appropriate form based on user type
     // If the user is not found in the database, they should still see the form
     handleUserTypeSelect(userType);
-  }, [authLoading, userType, handleUserTypeSelect]);
+  }, [authLoading, userType, handleUserTypeSelect, isCheckingRegistration]);
 
   const handleCloseForm = () => {
     // Reset state to show selection screen
-    setUserType(undefined);
+    updateUserType(undefined);
     setShowEmployeeForm(false);
     setShowConciergerieForm(false);
   };
 
-  // Show loading spinner while checking auth state
-  if (isLoading || authLoading) {
+  // Show loading spinner while checking auth state or registration status
+  if (isLoading || authLoading || isCheckingRegistration) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingSpinner size="large" text="Chargement..." />
