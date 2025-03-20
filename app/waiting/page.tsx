@@ -1,16 +1,17 @@
 'use client';
 
+import { loadEmail } from '@/app/actions/email';
 import { fetchEmployeeById } from '@/app/actions/employee';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Employee } from '@/app/types/types';
+import { convertUTCDateToUserTime, getTimeDifference } from '@/app/utils/dateUtils';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
-import { loadEmail } from '@/app/actions/email';
 
 export default function WaitingPage() {
   const { userId, userType, isLoading: authLoading, employeeData, disconnect } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [employee, setEmployee] = useState<Employee>();
   const [daysWaiting, setDaysWaiting] = useState('');
   const [isConciergerie, setIsConciergerie] = useState(false);
@@ -33,13 +34,13 @@ export default function WaitingPage() {
       // Handle conciergerie user type
       if (userType === 'conciergerie') {
         setIsConciergerie(true);
+        setIsLoading(false);
         return;
       }
 
       // Handle employee user type
       if (userType === 'employee') {
         try {
-          setIsLoading(true);
           // Check if employee exists in database with this ID
           const foundEmployee = employeeData || (await fetchEmployeeById(userId));
 
@@ -48,36 +49,8 @@ export default function WaitingPage() {
 
             // Calculate time waiting
             if (foundEmployee.createdAt) {
-              const createdDate = new Date(foundEmployee.createdAt);
-              const today = new Date();
-
-              // Calculate the difference in milliseconds
-              const diffTime = Math.abs(today.getTime() - createdDate.getTime());
-
-              // Calculate the difference in minutes, hours, and days
-              const diffMinutes = Math.floor(diffTime / (1000 * 60));
-              const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-              const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-              if (diffMinutes < 60) {
-                // If less than 60 minutes, show minutes
-                setDaysWaiting(`${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`);
-              } else if (diffHours < 24) {
-                // If less than 24 hours but more than 60 minutes, show hours and minutes
-                const remainingMinutes = diffMinutes % 60;
-                if (remainingMinutes > 0) {
-                  setDaysWaiting(
-                    `${diffHours} heure${diffHours > 1 ? 's' : ''} et ${remainingMinutes} minute${
-                      remainingMinutes > 1 ? 's' : ''
-                    }`,
-                  );
-                } else {
-                  setDaysWaiting(`${diffHours} heure${diffHours > 1 ? 's' : ''}`);
-                }
-              } else {
-                // If 24 hours or more, calculate days
-                setDaysWaiting(`${diffDays} jour${diffDays > 1 ? 's' : ''}`);
-              }
+              const createdAt = convertUTCDateToUserTime(new Date(foundEmployee.createdAt));
+              setDaysWaiting(getTimeDifference(createdAt, new Date()));
             }
           } else {
             // Employee not found in database with this ID
