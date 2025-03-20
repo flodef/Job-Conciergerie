@@ -200,25 +200,23 @@ export const getAllEmployees = unstable_cache(
 /**
  * Get a single employee by ID
  */
-export const getEmployeeById = unstable_cache(
-  async (id?: string) => {
-    try {
-      if (!id) throw new Error('No ID provided');
-      const result = await sql`
-        SELECT id, first_name, family_name, tel, email, message, conciergerie_name, notification_settings, status, created_at
-        FROM employee
-        WHERE id = ${id}
-      `;
+export const getEmployeeById = async (id?: string) => {
+  try {
+    if (!id) throw new Error('No ID provided');
+    const result = await sql`
+      SELECT id, first_name, family_name, tel, email, message, conciergerie_name, notification_settings, status, created_at
+      FROM employee
+      WHERE id = ${id}
+    `;
 
-      return result.length > 0 ? formatEmployee(result[0] as unknown as DbEmployee) : null;
-    } catch (error) {
-      console.error(`Error fetching employee with ID ${id}:`, error);
-      return null;
-    }
-  },
-  ['employee'],
-  { revalidate: CACHE_TIME },
-);
+    console.log('Employee query result:', result);
+
+    return result.length > 0 ? formatEmployee(result[0] as unknown as DbEmployee) : null;
+  } catch (error) {
+    console.error(`Error fetching employee with ID ${id}:`, error);
+    return null;
+  }
+};
 
 /**
  * Get employees by conciergerie name
