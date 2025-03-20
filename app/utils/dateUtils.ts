@@ -25,8 +25,20 @@ export const formatTime = (date: Date): string => {
 export const formatDateTime = (date: Date): string => {
   const dateStr = formatDate(date);
   const timeStr = formatTime(date);
-
   return `${dateStr} à ${timeStr}`;
+};
+
+/**
+ * Convert a UTC date to the user's local time
+ */
+export const convertUTCDateToUserTime = (date: Date): Date => {
+  const userOffsetMinutes = new Date().getTimezoneOffset(); // Browser's offset in minutes
+  const userOffsetHours = -userOffsetMinutes / 60; // Convert to hours (negative because getTimezoneOffset is opposite)
+
+  // Create a new date object with the user's offset
+  const userDate = new Date(date);
+  userDate.setHours(userDate.getHours() + userOffsetHours);
+  return userDate;
 };
 
 /**
@@ -34,35 +46,61 @@ export const formatDateTime = (date: Date): string => {
  * Consistent with mission points calculation (counting both start and end days)
  */
 export const getTimeDifference = (startDate: Date, endDate: Date): string => {
-  // Create copies of the dates to avoid modifying the original objects
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-
-  // Set hours to 0 to calculate just the days (same as in calculateMissionPoints)
-  start.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
-
   // Calculate the difference in days
-  const diffTime = Math.abs(end.getTime() - start.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
 
-  // For hours and minutes, use the original calculation
-  const diffMs = endDate.getTime() - startDate.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
-  const diffMins = Math.floor(diffSecs / 60);
-  const diffHours = Math.floor(diffMins / 60);
+  // Calculate the difference in minutes, hours, and days
+  const diffMinutes = Math.floor(diffTime / (1000 * 60));
+  const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays > 1) {
     // Use the day calculation that includes both days
     return `${diffDays} jour${diffDays > 1 ? 's' : ''}`;
   } else if (diffHours > 0) {
     return `${diffHours} heure${diffHours > 1 ? 's' : ''}`;
-  } else if (diffMins > 0) {
-    return `${diffMins} minute${diffMins > 1 ? 's' : ''}`;
+  } else if (diffMinutes > 0) {
+    return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
   } else {
     return "Moins d'une minute";
   }
 };
+
+// TODO: remove if not used
+// /**
+//  * Calculate the time difference between two dates in a human-readable format
+//  * Consistent with mission points calculation (counting both start and end days)
+//  */
+// export const getDateRangeDifference = (startDate: Date, endDate: Date): string => {
+//   // Create copies of the dates to avoid modifying the original objects
+//   const start = new Date(startDate);
+//   const end = new Date(endDate);
+
+//   // Set hours to 0 to calculate just the days (same as in calculateMissionPoints)
+//   start.setHours(0, 0, 0, 0);
+//   end.setHours(0, 0, 0, 0);
+
+//   // Calculate the difference in days
+//   const diffTime = Math.abs(end.getTime() - start.getTime());
+//   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+
+//   // For hours and minutes, use the original calculation
+//   const diffMs = endDate.getTime() - startDate.getTime();
+//   const diffSecs = Math.floor(diffMs / 1000);
+//   const diffMins = Math.floor(diffSecs / 60);
+//   const diffHours = Math.floor(diffMins / 60);
+
+//   if (diffDays > 1) {
+//     // Use the day calculation that includes both days
+//     return `${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+//   } else if (diffHours > 0) {
+//     return `${diffHours} heure${diffHours > 1 ? 's' : ''}`;
+//   } else if (diffMins > 0) {
+//     return `${diffMins} minute${diffMins > 1 ? 's' : ''}`;
+//   } else {
+//     return "Moins d'une minute";
+//   }
+// };
 
 /**
  * Calculate the remaining time for a mission that has already started
