@@ -1,5 +1,6 @@
 'use client';
 
+import { sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import { createNewEmployee } from '@/app/actions/employee';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
@@ -230,9 +231,9 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
       return;
     }
 
-    setIsSubmitting(true);
-
     try {
+      setIsSubmitting(true);
+
       // Create a new employee in the database
       const { employee, alreadyExists } = await createNewEmployee({
         id: userId,
@@ -245,38 +246,48 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
         notificationSettings: formData.notificationSettings as EmployeeNotificationSettings,
       });
 
-      // Double-check if employee already exists (in case of race condition)
       if (alreadyExists) {
         setToastMessage({
           type: ToastType.Error,
           message: 'Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.',
         });
-        setIsSubmitting(false);
         return;
       }
 
-      if (employee) {
-        // TODO: send request email to conciergerie
+      if (!employee) throw new Error('Employee not found');
 
-        // Refresh user data to update the auth context
-        await refreshUserData();
+      // Send notification email to conciergerie
+      const selectedConciergerie = conciergeries.find(c => c.name === employee.conciergerieName);
+      if (!selectedConciergerie) throw new Error('Conciergerie not found');
+      if (!selectedConciergerie.email) throw new Error('Conciergerie email not found');
 
-        // Redirect to waiting page
-        window.location.href = '/waiting';
-      } else {
-        setToastMessage({
-          type: ToastType.Error,
-          message: "Erreur lors de l'enregistrement. Veuillez réessayer.",
-          error: 'No result returned from database',
-        });
-        setIsSubmitting(false);
+      try {
+        const result = await sendEmployeeRegistrationEmail(
+          selectedConciergerie.email,
+          selectedConciergerie.name,
+          `${employee.firstName} ${employee.familyName}`,
+          employee.email,
+          employee.tel,
+        );
+        if (result && !result.success) {
+          console.error('Failed to send notification email to conciergerie:', result.error);
+        }
+      } catch (emailError) {
+        console.error('Error sending notification email:', emailError);
       }
+
+      // Refresh user data to update the auth context
+      await refreshUserData();
+
+      // Redirect to waiting page
+      window.location.href = '/waiting';
     } catch (error) {
       setToastMessage({
         type: ToastType.Error,
         message: "Erreur lors de l'enregistrement. Veuillez réessayer.",
         error,
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -304,13 +315,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
     <div>
       <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>
 
-      {toastMessage && (
-        <ToastMessage
-          type={toastMessage.type}
-          message={toastMessage.message}
-          onClose={() => setToastMessage(undefined)}
-        />
-      )}
+      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>

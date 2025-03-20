@@ -6,6 +6,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { Employee } from '@/app/types/types';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
+import { loadEmail } from '@/app/actions/email';
 
 export default function WaitingPage() {
   const { userId, userType, isLoading: authLoading, employeeData, disconnect } = useAuth();
@@ -14,8 +15,9 @@ export default function WaitingPage() {
   const [daysWaiting, setDaysWaiting] = useState('');
   const [isConciergerie, setIsConciergerie] = useState(false);
 
-  // We don't need the redirect hook anymore since middleware handles it
-  // Also don't need to check auth status again since middleware already did
+  // Hack to make the action server works
+  // eslint-disable-next-line
+  const load = async () => await loadEmail();
 
   // Use a ref to track if we've already loaded the data to prevent infinite loops
   const hasLoadedDataRef = useRef(false);
