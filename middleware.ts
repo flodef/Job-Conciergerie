@@ -6,8 +6,15 @@ export async function middleware(request: NextRequest) {
   // Get the pathname of the request
   const path = request.nextUrl.pathname;
 
-  // Skip middleware for API routes, static files, etc.
-  if (path.startsWith('/_next') || path.startsWith('/api') || path.includes('.') || path === '/favicon.ico') {
+  // Skip middleware for API routes, static files, and direct user ID access
+  if (
+    path.startsWith('/_next') ||
+    path.startsWith('/api') ||
+    path.includes('.') ||
+    path === '/favicon.ico' ||
+    // Skip if path matches a user ID pattern (20-22 characters alphanumeric string)
+    /^\/[a-z0-9]{20,22}$/.test(path)
+  ) {
     return NextResponse.next();
   }
 
@@ -30,17 +37,17 @@ export async function middleware(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ userId, userType }),
+      body: JSON.stringify({ userId }),
     });
 
     if (!response.ok) {
       throw new Error('Failed to check user status');
     }
 
-    const { userType: foundUserType, data } = await response.json();
+    const { userType: foundUserType } = await response.json();
 
     // Handle redirects based on user type and status
-    if (foundUserType === 'conciergerie' || (foundUserType === 'employee' && data.status === 'accepted')) {
+    if (userType === foundUserType) {
       if (path !== '/missions') {
         return NextResponse.redirect(new URL('/missions', request.url));
       }

@@ -2,9 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { use, useEffect, useState } from 'react';
-import { fetchConciergerieByName, updateConciergerieWithUserId } from '../actions/conciergerie';
-import LoadingSpinner from '../components/loadingSpinner';
-import { useAuth } from '../contexts/authProvider';
+import { fetchConciergerieByName, updateConciergerieWithUserId } from '@/app/actions/conciergerie';
+import LoadingSpinner from '@/app/components/loadingSpinner';
+import { useAuth } from '@/app/contexts/authProvider';
 
 export default function IdPage({ params }: { params: Promise<{ id: string }> }) {
   // Use React.use to unwrap the params promise
