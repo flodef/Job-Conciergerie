@@ -167,13 +167,7 @@ const EmployeeSettings: React.FC = () => {
 
   return (
     <div className="space-y-2">
-      {toastMessage && (
-        <ToastMessage
-          type={toastMessage.type}
-          message={toastMessage.message}
-          onClose={() => setToastMessage(undefined)}
-        />
-      )}
+      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
       <div>
         <p className="text-sm text-foreground/70 mb-1">Nom</p>

@@ -113,13 +113,7 @@ const NotificationSettings: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {toastMessage && (
-        <ToastMessage
-          type={toastMessage.type}
-          message={toastMessage.message}
-          onClose={() => setToastMessage(undefined)}
-        />
-      )}
+      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
       <div className="space-y-1">
         <h3 className="text-sm font-medium mb-2">Recevoir un email lorsque :</h3>

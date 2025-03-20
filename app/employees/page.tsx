@@ -228,13 +228,7 @@ export default function EmployeesList() {
         </div>
       </div>
 
-      {toastMessage && (
-        <ToastMessage
-          message={toastMessage.message}
-          type={toastMessage.type}
-          onClose={() => setToastMessage(undefined)}
-        />
-      )}
+      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
       {/* Employee details modal */}
       {selectedEmployee && (

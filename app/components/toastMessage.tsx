@@ -9,11 +9,15 @@ export enum ToastType {
 export interface ToastProps {
   type: ToastType;
   message: string;
-  onClose?: () => void;
   error?: unknown;
 }
 
-export const ToastMessage = ({ type, message, onClose, error }: ToastProps) => {
+interface ToastMessageProps {
+  toast?: ToastProps;
+  onClose?: () => void;
+}
+
+export const ToastMessage = ({ toast, onClose }: ToastMessageProps) => {
   const typeStyles = {
     [ToastType.Success]: 'bg-green-500 animate-fade-in-up',
     [ToastType.Error]: 'bg-[#fb8c8c] animate-shake',
@@ -26,8 +30,8 @@ export const ToastMessage = ({ type, message, onClose, error }: ToastProps) => {
   };
 
   useEffect(() => {
-    if (error) console.error(message, error);
-  }, [type, message, error]);
+    if (toast?.error) console.error(toast.message, toast.error);
+  }, [toast?.message, toast?.error]);
 
   // Auto-close the toast after 3 seconds if onClose is provided
   if (onClose) {
@@ -35,9 +39,11 @@ export const ToastMessage = ({ type, message, onClose, error }: ToastProps) => {
   }
 
   return (
-    <div className={`fixed z-50 top-4 inset-x-2 text-black text-center py-2 rounded-lg ${typeStyles[type]}`}>
-      {typeIcon[type]}
-      {message}
-    </div>
+    toast && (
+      <div className={`fixed z-50 top-4 inset-x-2 text-black text-center py-2 rounded-lg ${typeStyles[toast.type]}`}>
+        {typeIcon[toast.type]}
+        {toast.message}
+      </div>
+    )
   );
 };

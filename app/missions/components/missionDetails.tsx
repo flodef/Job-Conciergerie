@@ -208,16 +208,14 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   return (
     <FullScreenModal onClose={onClose} title="Détails de la mission">
-      {toastMessage && (
-        <ToastMessage
-          type={toastMessage.type}
-          message={toastMessage.message}
-          onClose={() => {
-            setToastMessage(undefined);
-            if (toastMessage.type === ToastType.Success) onClose();
-          }}
-        />
-      )}
+      <ToastMessage
+        toast={toastMessage}
+        onClose={() => {
+          setToastMessage(undefined);
+          if (toastMessage?.type === ToastType.Success) onClose();
+        }}
+      />
+
       {selectedImage && (
         <FullScreenModal
           imageUrl={selectedImage}

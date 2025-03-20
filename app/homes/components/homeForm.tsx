@@ -272,16 +272,13 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
 
   return (
     <FullScreenModal title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'} onClose={onClose}>
-      {toastMessage && (
-        <ToastMessage
-          type={toastMessage.type}
-          message={toastMessage.message}
-          onClose={() => {
-            setToastMessage(undefined);
-            if (toastMessage?.type === ToastType.Success) onClose();
-          }}
-        />
-      )}
+      <ToastMessage
+        toast={toastMessage}
+        onClose={() => {
+          setToastMessage(undefined);
+          if (toastMessage?.type === ToastType.Success) onClose();
+        }}
+      />
 
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>
