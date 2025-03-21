@@ -1,22 +1,21 @@
 'use client';
 
-import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
-import EmployeeDetails from './components/employeeDetails';
-import FullScreenModal from '../components/fullScreenModal';
-import SearchInput from '../components/searchInput';
-import { ToastMessage, ToastProps, ToastType } from '../components/toastMessage';
-import { Employee } from '../types/types';
+import FullScreenModal from '@/app/components/fullScreenModal';
+import SearchInput from '@/app/components/searchInput';
+import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { useAuth } from '@/app/contexts/authProvider';
+import EmployeeDetails from '@/app/employees/components/employeeDetails';
+import { Employee } from '@/app/types/types';
+import { useRedirectIfNotRegistered } from '@/app/utils/authRedirect';
 import {
   filterEmployees,
   filterEmployeesByConciergerie,
   getEmployees,
   sortEmployees,
   updateEmployeeStatus,
-} from '../utils/employeeUtils';
-import { useRedirectIfNotRegistered } from '../utils/authRedirect';
-import { useAuth } from '../contexts/authProvider';
-import LoadingSpinner from '../components/loadingSpinner';
+} from '@/app/utils/employee';
+import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
 
 export default function EmployeesList() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -43,16 +42,6 @@ export default function EmployeesList() {
 
     setEmployees(sortEmployees(filteredEmployees));
   }, [conciergerieData?.name, authLoading, userType]);
-
-  // Prevent rendering anything until authentication is complete
-  // This prevents the brief flash of the employees page before redirect
-  if (authLoading || !userType) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <LoadingSpinner size="large" text="Vérification de l'authentification..." />
-      </div>
-    );
-  }
 
   // Filter employees by status
   const pendingEmployees = employees.filter(

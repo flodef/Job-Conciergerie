@@ -1,18 +1,17 @@
 'use client';
 
+import FloatingActionButton from '@/app/components/floatingActionButton';
+import LoadingSpinner from '@/app/components/loadingSpinner';
+import SearchInput from '@/app/components/searchInput';
+import { useHomes } from '@/app/contexts/homesProvider';
+import { useMenuContext } from '@/app/contexts/menuProvider';
+import HomeCard from '@/app/homes/components/homeCard';
+import HomeDetails from '@/app/homes/components/homeDetails';
+import HomeForm from '@/app/homes/components/homeForm';
+import { HomeData } from '@/app/types/types';
+import { useRedirectIfNotRegistered } from '@/app/utils/authRedirect';
 import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import FloatingActionButton from '../components/floatingActionButton';
-import HomeCard from './components/homeCard';
-import HomeDetails from './components/homeDetails';
-import HomeForm from './components/homeForm';
-import LoadingSpinner from '../components/loadingSpinner';
-import SearchInput from '../components/searchInput';
-import { useHomes } from '../contexts/homesProvider';
-import { useMenuContext } from '../contexts/menuProvider';
-import { HomeData } from '../types/types';
-import { useRedirectIfNotRegistered } from '../utils/authRedirect';
-import { useAuth } from '../contexts/authProvider';
 
 export default function HomesPage() {
   const { homes, isLoading: homesLoading, getCurrentConciergerie } = useHomes();
@@ -21,7 +20,6 @@ export default function HomesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const { userType, isLoading: authLoading } = useAuth();
 
   // Redirect if not registered - must be called before any conditional returns
   useRedirectIfNotRegistered();
@@ -30,16 +28,6 @@ export default function HomesPage() {
   useEffect(() => {
     setHasUnsavedChanges(false);
   }, [setHasUnsavedChanges]);
-
-  // Prevent rendering anything until authentication is complete
-  // This prevents the brief flash of the homes page before redirect
-  if (authLoading || !userType) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <LoadingSpinner size="large" text="Vérification de l'authentification..." />
-      </div>
-    );
-  }
 
   // Get current conciergerie
   const currentConciergerie = getCurrentConciergerie();

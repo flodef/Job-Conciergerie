@@ -174,16 +174,6 @@ export default function Missions() {
     setSavedFilters(filtersToSave);
   };
 
-  // Prevent rendering anything until authentication is complete
-  // This prevents the brief flash of the missions page before redirect
-  if (authLoading || !userType) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <LoadingSpinner size="large" text="Vérification de l'authentification..." />
-      </div>
-    );
-  }
-
   // Change sort field
   const changeSortField = (field: MissionSortField) => {
     if (sortField === field) {
