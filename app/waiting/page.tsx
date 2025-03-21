@@ -5,7 +5,7 @@ import { fetchEmployeeById } from '@/app/actions/employee';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Employee } from '@/app/types/types';
-import { convertUTCDateToUserTime, getTimeDifference } from '@/app/utils/dateUtils';
+import { convertUTCDateToUserTime, getTimeDifference } from '@/app/utils/date';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 

@@ -287,7 +287,6 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
         message: "Erreur lors de l'enregistrement. Veuillez réessayer.",
         error,
       });
-    } finally {
       setIsSubmitting(false);
     }
   };

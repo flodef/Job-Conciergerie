@@ -1,6 +1,6 @@
 'use client';
 
-import { defaultPrimaryColor, getColorValueByName } from '@/app/utils/colorUtil';
+import { defaultPrimaryColor, getColorValueByName } from '@/app/utils/color';
 import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import { createContext, ReactNode, useContext, useEffect } from 'react';
 

@@ -6,7 +6,7 @@ import { Conciergerie, Employee, HomeData, Mission, MissionStatus, Task } from '
 import { generateSimpleId } from '../utils/id';
 import { getWelcomeParams } from '../utils/welcomeParams';
 import { useHomes } from './homesProvider';
-import { getEmployees } from '../utils/employeeUtils';
+import { getEmployees } from '../utils/employee';
 
 type MissionsContextType = {
   missions: Mission[];

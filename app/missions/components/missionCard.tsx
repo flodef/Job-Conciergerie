@@ -2,8 +2,8 @@
 
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Conciergerie, Mission } from '@/app/types/types';
-import { getColorValueByName } from '@/app/utils/colorUtil';
-import { formatDateRange } from '@/app/utils/dateUtils';
+import { getColorValueByName } from '@/app/utils/color';
+import { formatDateRange } from '@/app/utils/date';
 import { useEffect, useState } from 'react';
 
 type MissionCardProps = {

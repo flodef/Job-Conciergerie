@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { findEmployee } from './employeeUtils';
+import { findEmployee } from './employee';
 import { getWelcomeParams, hasCompletedWelcomeFlow } from './welcomeParams';
 
 /**

@@ -2,8 +2,8 @@
 
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Conciergerie, HomeData } from '@/app/types/types';
-import { getColorValueByName } from '@/app/utils/colorUtil';
-import { formatDateTime } from '@/app/utils/dateUtils';
+import { getColorValueByName } from '@/app/utils/color';
+import { formatDateTime } from '@/app/utils/date';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 

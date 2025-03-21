@@ -8,8 +8,8 @@ import Select from '@/app/components/select';
 import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Employee, Mission, Task } from '@/app/types/types';
-import { getEmployees } from '@/app/utils/employeeUtils';
-import { getTasksWithPoints } from '@/app/utils/taskUtils';
+import { getEmployees } from '@/app/utils/employee';
+import { getTasksWithPoints } from '@/app/utils/task';
 import { clsx } from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

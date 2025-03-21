@@ -2,7 +2,7 @@
  * Get all welcome page parameters from localStorage
  */
 import { Conciergerie, Employee } from '@/app/types/types';
-import { getColorValueByName } from '@/app/utils/colorUtil';
+import { getColorValueByName } from '@/app/utils/color';
 import { generateSimpleId } from '@/app/utils/id';
 
 /**

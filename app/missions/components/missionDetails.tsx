@@ -8,15 +8,15 @@ import HomeDetails from '@/app/homes/components/homeDetails';
 import MissionActionButtons from '@/app/missions/components/missionActionButtons';
 import MissionForm from '@/app/missions/components/missionForm';
 import { Conciergerie, Mission } from '@/app/types/types';
-import { getColorValueByName } from '@/app/utils/colorUtil';
-import { formatDateTime, getTimeDifference } from '@/app/utils/dateUtils';
-import { formatPoints } from '@/app/utils/formatUtils';
+import { getColorValueByName } from '@/app/utils/color';
+import { formatDateTime, getTimeDifference } from '@/app/utils/date';
 import {
   calculateEmployeePointsForDay,
   calculateMissionPoints,
   calculateRemainingPointsPerDay,
+  formatPoints,
   getTaskWithPoints,
-} from '@/app/utils/taskUtils';
+} from '@/app/utils/task';
 import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import {
   IconAlertTriangle,

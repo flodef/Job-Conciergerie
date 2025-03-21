@@ -8,7 +8,7 @@ import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessa
 import { useAuth } from '@/app/contexts/authProvider';
 import { useTheme } from '@/app/contexts/themeProvider';
 import { Conciergerie } from '@/app/types/types';
-import { getColorValueByName } from '@/app/utils/colorUtil';
+import { getColorValueByName } from '@/app/utils/color';
 import { useCallback, useEffect, useState } from 'react';
 
 type ConciergerieFormProps = {
@@ -91,7 +91,6 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
         message: 'Une erreur est survenue lors de la mise à jour de la conciergerie',
         error,
       });
-    } finally {
       setIsSubmitting(false);
     }
   };

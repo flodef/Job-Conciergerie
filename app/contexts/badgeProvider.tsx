@@ -2,7 +2,7 @@
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { Mission } from '../types/types';
-import { getEmployees } from '../utils/employeeUtils';
+import { getEmployees } from '../utils/employee';
 import { getWelcomeParams } from '../utils/welcomeParams';
 import { useMissions } from './missionsProvider';
 

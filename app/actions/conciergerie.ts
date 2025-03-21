@@ -1,7 +1,7 @@
 'use server';
 
 import { Conciergerie } from '@/app/types/types';
-import { getColorValueByName } from '@/app/utils/colorUtil';
+import { getColorValueByName } from '@/app/utils/color';
 import {
   DbConciergerie,
   createConciergerie,
