@@ -3,6 +3,7 @@
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import MissionActionButtons from '@/app/missions/components/missionActionButtons';
@@ -17,7 +18,6 @@ import {
   formatPoints,
   getTaskWithPoints,
 } from '@/app/utils/task';
-import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import {
   IconAlertTriangle,
   IconCalculator,
@@ -40,7 +40,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const {
     deleteMission,
     removeEmployee,
-    getCurrentConciergerie,
     shouldShowAcceptWarning,
     acceptMission,
     startMission,
@@ -53,7 +52,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   } = useMissions();
 
   const [toastMessage, setToastMessage] = useState<ToastProps>();
-  const { userType, employeeData } = getWelcomeParams();
+  const { userType, employeeData, conciergerieData } = useAuth();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -91,11 +90,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   useEffect(() => {
     // Check if the current conciergerie is the one that created the mission
-    const currentConciergerie = getCurrentConciergerie();
     if (isEmployee) {
       // Employees can never edit missions
       setIsReadOnly(true);
-    } else if (mission.conciergerieName === currentConciergerie?.name) {
+    } else if (mission.conciergerieName === conciergerieData?.name) {
       // Conciergerie can edit their own missions
       // Always allow editing if mission hasn't been started
       setIsReadOnly(false);
@@ -103,7 +101,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
       // Default to read-only
       setIsReadOnly(true);
     }
-  }, [mission, getCurrentConciergerie, isEmployee]);
+  }, [mission, conciergerieData, isEmployee]);
 
   const handleDelete = () => {
     deleteMission(mission.id);

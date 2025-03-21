@@ -1,6 +1,6 @@
 'use client';
 
-import { useHomes } from '@/app/contexts/homesProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import MissionCard from '@/app/missions/components/missionCard';
 import { Mission, MissionSortField } from '@/app/types/types';
 import {
@@ -38,8 +38,7 @@ export default function MissionList({
   setIsEditModalOpen,
   sortField,
 }: MissionListProps) {
-  const { getCurrentConciergerie } = useHomes();
-  const currentConciergerie = getCurrentConciergerie();
+  const { conciergerieData } = useAuth();
 
   // Toggle category collapse
   const toggleCategory = (category: string) => {
@@ -128,7 +127,7 @@ export default function MissionList({
                     onClick={() => setSelectedMission(mission.id)}
                     onEdit={() => {
                       setSelectedMission(mission.id);
-                      if (mission.conciergerieName === currentConciergerie?.name) setIsEditModalOpen(true);
+                      if (mission.conciergerieName === conciergerieData?.name) setIsEditModalOpen(true);
                     }}
                   />
                 </div>

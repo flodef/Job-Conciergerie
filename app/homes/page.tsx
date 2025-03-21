@@ -3,38 +3,34 @@
 import FloatingActionButton from '@/app/components/floatingActionButton';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import SearchInput from '@/app/components/searchInput';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import HomeCard from '@/app/homes/components/homeCard';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
 import { HomeData } from '@/app/types/types';
-import { useRedirectIfNotRegistered } from '@/app/utils/authRedirect';
 import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
 export default function HomesPage() {
-  const { homes, isLoading: homesLoading, getCurrentConciergerie } = useHomes();
+  const { homes, isLoading: homesLoading } = useHomes();
+  const { conciergerieData } = useAuth();
   const { setHasUnsavedChanges } = useMenuContext();
+
   const [selectedHome, setSelectedHome] = useState<HomeData | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Redirect if not registered - must be called before any conditional returns
-  useRedirectIfNotRegistered();
 
   // Reset unsaved changes when navigating to this page - must be called before any conditional returns
   useEffect(() => {
     setHasUnsavedChanges(false);
   }, [setHasUnsavedChanges]);
 
-  // Get current conciergerie
-  const currentConciergerie = getCurrentConciergerie();
-
   // Filter homes by the current conciergerie
   const filteredHomes = homes
-    .filter(home => home.conciergerieName === currentConciergerie?.name)
+    .filter(home => home.conciergerieName === conciergerieData?.name)
     .filter(home => {
       if (searchTerm.trim() === '') return true;
       const searchLower = searchTerm.toLowerCase();

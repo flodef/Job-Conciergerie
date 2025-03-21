@@ -1,7 +1,7 @@
 'use client';
 
+import { useAuth } from '@/app/contexts/authProvider';
 import { defaultPrimaryColor, getColorValueByName } from '@/app/utils/color';
-import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import { createContext, ReactNode, useContext, useEffect } from 'react';
 
 type ThemeContextType = {
@@ -12,6 +12,8 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
+  const { conciergerieData, userType } = useAuth();
+
   const setPrimaryColor = (color: string) => {
     if (typeof document !== 'undefined') {
       document.documentElement.style.setProperty('--color-primary', color);
@@ -24,14 +26,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Initialize theme from localStorage on mount
+  // Initialize theme on mount
   useEffect(() => {
     const initializeTheme = async () => {
-      // Add a small delay to ensure localStorage is properly loaded
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      const { conciergerieData, userType } = getWelcomeParams();
-
       if (userType === 'conciergerie') {
         // If conciergerie data exists and has a color, set it as primary
         if (conciergerieData && conciergerieData.color) {
@@ -50,7 +47,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     };
 
     initializeTheme();
-  }, []);
+  }, [conciergerieData, userType]);
 
   return <ThemeContext.Provider value={{ setPrimaryColor, resetPrimaryColor }}>{children}</ThemeContext.Provider>;
 }

@@ -3,7 +3,7 @@
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission } from '@/app/types/types';
 import { getEmployees } from '@/app/utils/employee';
-import { getWelcomeParams } from '@/app/utils/welcomeParams';
+import { useAuth } from '@/app/contexts/authProvider';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 type BadgeContextType = {
@@ -21,7 +21,7 @@ const missionsCheckKey = 'last_checked_missions';
 const BadgeContext = createContext<BadgeContextType | undefined>(undefined);
 
 export function BadgeProvider({ children }: { children: ReactNode }) {
-  const { userType, conciergerieData } = getWelcomeParams();
+  const { userType, conciergerieData } = useAuth();
   const { missions } = useMissions();
 
   const [pendingEmployeesCount, setPendingEmployeesCount] = useState(0);

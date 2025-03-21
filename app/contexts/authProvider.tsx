@@ -25,7 +25,19 @@ interface AuthContextType {
 }
 
 // Create the auth context
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  userId: undefined,
+  userType: undefined,
+  updateUserType: () => {},
+  selectedConciergerieName: undefined,
+  setSelectedConciergerieName: () => {},
+  conciergerieData: undefined,
+  employeeData: undefined,
+  isLoading: false,
+  error: undefined,
+  refreshUserData: async () => {},
+  disconnect: () => {},
+});
 
 // Auth provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -150,9 +162,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 }

@@ -6,8 +6,8 @@ import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import ObjectiveList from '@/app/components/objectiveList';
 import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
-import { useMissions } from '@/app/contexts/missionsProvider';
 import geographicZonesData from '@/app/data/geographicZone.json';
 import { HomeData } from '@/app/types/types';
 import { clsx } from 'clsx/lite';
@@ -23,7 +23,7 @@ type HomeFormProps = {
 
 export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: HomeFormProps) {
   const { addHome, updateHome, homeExists } = useHomes();
-  const { getCurrentConciergerie } = useMissions();
+  const { conciergerieData } = useAuth();
 
   // Default mockup image path
   const mockupImagePath = '/home.webp';
@@ -56,8 +56,6 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const comboboxRef = useRef<HTMLDivElement>(null);
   const taskListRef = useRef<HTMLDivElement>(null);
   const imageUploadRef = useRef<HTMLLabelElement>(null);
-
-  const currentConciergerie = getCurrentConciergerie();
 
   // Constants for validation
   const MAX_DESCRIPTION_LENGTH = 500;
@@ -447,7 +445,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
               onChange={setGeographicZone}
               placeholder="Sélectionnez une zone géographique..."
               error={isFormSubmitted && !geographicZone}
-              borderColor={currentConciergerie?.color}
+              borderColor={conciergerieData?.color}
             />
           </div>
           {isFormSubmitted && !geographicZone && (

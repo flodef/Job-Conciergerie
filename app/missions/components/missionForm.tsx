@@ -6,6 +6,7 @@ import FullScreenModal from '@/app/components/fullScreenModal';
 import MultiSelect from '@/app/components/multiSelect';
 import Select from '@/app/components/select';
 import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Employee, Mission, Task } from '@/app/types/types';
 import { getEmployees } from '@/app/utils/employee';
@@ -21,11 +22,11 @@ type MissionFormProps = {
 };
 
 export default function MissionForm({ mission, onClose, onCancel, mode }: MissionFormProps) {
-  const { homes, addMission, updateMission, getCurrentConciergerie, missionExists } = useMissions();
+  const { homes, addMission, updateMission, missionExists } = useMissions();
+  const { conciergerieData } = useAuth();
 
   // Filter homes by the current conciergerie
-  const currentConciergerie = getCurrentConciergerie();
-  const filteredHomes = homes.filter(home => home.conciergerieName === currentConciergerie?.name);
+  const filteredHomes = homes.filter(home => home.conciergerieName === conciergerieData?.name);
 
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
   const [tasksState, setTasks] = useState<Task[]>(mission?.tasks || []);
@@ -396,7 +397,6 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               value: emp.id,
               label: `${emp.firstName} ${emp.familyName}`,
             }))}
-            borderColor={currentConciergerie?.color}
             allOption={true}
           />
           <p className="text-sm text-foreground/70 mt-1">

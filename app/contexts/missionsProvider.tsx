@@ -5,7 +5,7 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import { Conciergerie, Employee, HomeData, Mission, MissionStatus, Task } from '@/app/types/types';
 import { getEmployees } from '@/app/utils/employee';
 import { generateSimpleId } from '@/app/utils/id';
-import { getWelcomeParams } from '@/app/utils/welcomeParams';
+import { useAuth } from '@/app/contexts/authProvider';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 type MissionsContextType = {
@@ -19,7 +19,6 @@ type MissionsContextType = {
   acceptMission: (id: string) => void;
   startMission: (id: string) => void;
   completeMission: (id: string) => void;
-  getCurrentConciergerie: () => Conciergerie | null;
   getConciergerieByName: (name: string) => Promise<Conciergerie | null>;
   getHomeById: (id: string) => HomeData | undefined;
   getEmployeeById: (id: string | undefined) => Employee | undefined;
@@ -41,18 +40,12 @@ export function MissionsProviderWrapper({ children }: { children: ReactNode }) {
 }
 
 function MissionsProvider({ children }: { children: ReactNode }) {
+  const { conciergerieData, employeeData } = useAuth();
   const { homes } = useHomes();
   const [missions, setMissions] = useState<Mission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [shouldShowAcceptWarning, setShouldShowAcceptWarning] = useState<boolean>(true);
 
-  // Get current conciergerie from localStorage
-  const getCurrentConciergerie = (): Conciergerie | null => {
-    const { conciergerieData } = getWelcomeParams();
-    return conciergerieData as Conciergerie | null;
-  };
-
-  // Load missions from localStorage on initial render
   useEffect(() => {
     const loadMissions = async () => {
       setIsLoading(true);
@@ -110,8 +103,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     endDateTime: Date,
     excludeMissionId?: string,
   ): boolean => {
-    const currentConciergerie = getCurrentConciergerie();
-    if (!currentConciergerie) return false;
+    if (!conciergerieData) return false;
 
     // Sort tasks to ensure consistent comparison
     const sortedTasks = [...tasks].sort((a, b) => a.label.localeCompare(b.label));
@@ -123,7 +115,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       }
 
       // Check if mission belongs to current conciergerie
-      if (mission.conciergerieName !== currentConciergerie.name) {
+      if (mission.conciergerieName !== conciergerieData.name) {
         return false;
       }
 
@@ -177,12 +169,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   };
 
   const addMission = (missionData: Omit<Mission, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => {
-    const currentConciergerie = getCurrentConciergerie();
-
-    if (!currentConciergerie) {
-      console.error('No conciergerie found in localStorage');
-      return;
-    }
+    if (!conciergerieData) return;
 
     // Check if a mission with the same criteria already exists
     if (missionExists(missionData.homeId, missionData.tasks, missionData.startDateTime, missionData.endDateTime)) {
@@ -195,7 +182,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       id: generateSimpleId(),
       modifiedDate: new Date(),
       deleted: false,
-      conciergerieName: currentConciergerie.name,
+      conciergerieName: conciergerieData.name,
     };
 
     setMissions(prev => [...prev, newMission]);
@@ -203,10 +190,10 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   };
 
   const updateMission = (updatedMission: Mission) => {
-    const currentConciergerie = getCurrentConciergerie();
+    if (!conciergerieData) return;
 
     // Only allow updates if the mission was created by the current conciergerie
-    if (currentConciergerie && updatedMission.conciergerieName === currentConciergerie.name) {
+    if (updatedMission.conciergerieName === conciergerieData.name) {
       // Check if this would create a duplicate mission (excluding the current mission being updated)
       if (
         missionExists(
@@ -244,10 +231,9 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   const deleteMission = (id: string) => {
     const missionToDelete = missions.find(m => m.id === id);
-    const currentConciergerie = getCurrentConciergerie();
 
     // Only allow deletion if the mission was created by the current conciergerie
-    if (missionToDelete && currentConciergerie && missionToDelete.conciergerieName === currentConciergerie.name) {
+    if (missionToDelete && conciergerieData && missionToDelete.conciergerieName === conciergerieData.name) {
       setMissions(prev =>
         prev.map(mission =>
           mission.id === id
@@ -283,7 +269,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   const acceptMission = (id: string) => {
     const missionToAccept = missions.find(m => m.id === id);
-    const { employeeData } = getWelcomeParams();
 
     if (!missionToAccept) {
       console.error('Mission not found');
@@ -338,7 +323,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   // Start a mission - changes status from pending to started
   const startMission = (id: string) => {
     const missionToStart = missions.find(m => m.id === id);
-    const { employeeData } = getWelcomeParams();
 
     if (!missionToStart) {
       console.error('Mission not found');
@@ -375,7 +359,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   // Complete a mission - changes status from started to completed
   const completeMission = (id: string) => {
     const missionToComplete = missions.find(m => m.id === id);
-    const { employeeData } = getWelcomeParams();
 
     if (!missionToComplete) {
       console.error('Mission not found');
@@ -403,9 +386,8 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   // Helper function to get a conciergerie by name
   const getConciergerieByName = async (name: string): Promise<Conciergerie | null> => {
     // If the name matches the current conciergerie, return it
-    const currentConciergerie = getCurrentConciergerie();
-    if (currentConciergerie && currentConciergerie.name === name) {
-      return currentConciergerie;
+    if (conciergerieData?.name === name) {
+      return conciergerieData;
     }
 
     // If not the current conciergerie, fetch it from the database
@@ -441,7 +423,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         acceptMission,
         startMission,
         completeMission,
-        getCurrentConciergerie,
         getConciergerieByName,
         getHomeById,
         getEmployeeById,

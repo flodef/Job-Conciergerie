@@ -1,8 +1,8 @@
 'use client';
 
-import { Conciergerie, HomeData } from '@/app/types/types';
+import { useAuth } from '@/app/contexts/authProvider';
+import { HomeData } from '@/app/types/types';
 import { generateSimpleId } from '@/app/utils/id';
-import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 type HomesContextType = {
@@ -11,22 +11,15 @@ type HomesContextType = {
   addHome: (home: Omit<HomeData, 'id' | 'modifiedDate' | 'conciergerieName'>) => boolean | void;
   updateHome: (home: HomeData) => void;
   deleteHome: (id: string) => void;
-  getCurrentConciergerie: () => Conciergerie | null;
-  getConciergerieByName: (name: string) => Conciergerie | null;
   homeExists: (title: string) => boolean;
 };
 
 const HomesContext = createContext<HomesContextType | undefined>(undefined);
 
 export function HomesProvider({ children }: { children: ReactNode }) {
+  const { conciergerieData } = useAuth();
   const [homes, setHomes] = useState<HomeData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Get current conciergerie from localStorage
-  const getCurrentConciergerie = (): Conciergerie | null => {
-    const { conciergerieData } = getWelcomeParams();
-    return conciergerieData as Conciergerie | null;
-  };
 
   // Load homes from localStorage on initial render
   useEffect(() => {
@@ -67,20 +60,17 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
   // Check if a home with the same title already exists for the current conciergerie
   const homeExists = (title: string): boolean => {
-    const currentConciergerie = getCurrentConciergerie();
-    if (!currentConciergerie) return false;
+    if (!conciergerieData) return false;
 
     return homes.some(
       home =>
-        home.conciergerieName === currentConciergerie.name &&
+        home.conciergerieName === conciergerieData.name &&
         home.title.trim().toLowerCase() === title.trim().toLowerCase(),
     );
   };
 
   const addHome = (homeData: Omit<HomeData, 'id' | 'modifiedDate' | 'conciergerieName'>) => {
-    const currentConciergerie = getCurrentConciergerie();
-
-    if (!currentConciergerie) {
+    if (!conciergerieData) {
       console.error('No conciergerie found in localStorage');
       return;
     }
@@ -95,7 +85,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
       ...homeData,
       id: generateSimpleId(),
       modifiedDate: new Date(),
-      conciergerieName: currentConciergerie.name,
+      conciergerieName: conciergerieData.name,
     };
 
     setHomes(prev => [...prev, newHome]);
@@ -103,10 +93,13 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   };
 
   const updateHome = (updatedHome: HomeData) => {
-    const currentConciergerie = getCurrentConciergerie();
+    if (!conciergerieData) {
+      console.error('No conciergerie found in localStorage');
+      return;
+    }
 
     // Only allow updates if the home was created by the current conciergerie
-    if (currentConciergerie && updatedHome.conciergerieName === currentConciergerie.name) {
+    if (updatedHome.conciergerieName === conciergerieData.name) {
       setHomes(prev =>
         prev.map(home => (home.id === updatedHome.id ? { ...updatedHome, modifiedDate: new Date() } : home)),
       );
@@ -117,10 +110,9 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
   const deleteHome = (id: string) => {
     const homeToDelete = homes.find(h => h.id === id);
-    const currentConciergerie = getCurrentConciergerie();
 
     // Only allow deletion if the home was created by the current conciergerie
-    if (homeToDelete && currentConciergerie && homeToDelete.conciergerieName === currentConciergerie.name) {
+    if (homeToDelete && conciergerieData && homeToDelete.conciergerieName === conciergerieData.name) {
       // Remove the home from the array
       setHomes(prev => prev.filter(home => home.id !== id));
 
@@ -132,19 +124,6 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Helper function to get a conciergerie by name
-  const getConciergerieByName = (name: string): Conciergerie | null => {
-    // If the name matches the current conciergerie, return it
-    const currentConciergerie = getCurrentConciergerie();
-    if (currentConciergerie && currentConciergerie.name === name) {
-      return currentConciergerie;
-    }
-
-    // Otherwise, we would need to fetch from a list of conciergeries
-    // For now, return null if it's not the current conciergerie
-    return null;
-  };
-
   return (
     <HomesContext.Provider
       value={{
@@ -153,8 +132,6 @@ export function HomesProvider({ children }: { children: ReactNode }) {
         addHome,
         updateHome,
         deleteHome,
-        getCurrentConciergerie,
-        getConciergerieByName,
         homeExists,
       }}
     >

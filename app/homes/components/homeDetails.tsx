@@ -2,11 +2,11 @@
 
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import { HomeData } from '@/app/types/types';
-import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import { IconPencil, IconTrash } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -17,9 +17,9 @@ type HomeDetailsProps = {
 };
 
 export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
-  const { deleteHome, getCurrentConciergerie, homes: allHomes } = useHomes();
+  const { deleteHome, homes: allHomes } = useHomes();
   const { missions, deleteMission } = useMissions();
-  const { userType } = getWelcomeParams();
+  const { userType, conciergerieData } = useAuth();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteWithMissionsModalOpen, setIsDeleteWithMissionsModalOpen] = useState(false);
@@ -32,13 +32,12 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
 
   useEffect(() => {
     // Check if the current conciergerie is the one that created the home
-    const currentConciergerie = getCurrentConciergerie();
-    if (currentConciergerie && home.conciergerieName === currentConciergerie.name) {
+    if (conciergerieData && home.conciergerieName === conciergerieData.name) {
       setIsReadOnly(false);
     } else {
       setIsReadOnly(true);
     }
-  }, [home, getCurrentConciergerie]);
+  }, [home, conciergerieData]);
 
   // Find missions associated with this home
   useEffect(() => {
