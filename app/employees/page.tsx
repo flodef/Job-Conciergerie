@@ -6,7 +6,6 @@ import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessa
 import { useAuth } from '@/app/contexts/authProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import { Employee } from '@/app/types/types';
-import { useRedirectIfNotRegistered } from '@/app/utils/authRedirect';
 import {
   filterEmployees,
   filterEmployeesByConciergerie,
@@ -23,9 +22,6 @@ export default function EmployeesList() {
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const { userType, conciergerieData, isLoading: authLoading } = useAuth();
-
-  // Redirect if not registered - must be called before any conditional returns
-  useRedirectIfNotRegistered();
 
   // Load employees on component mount - must be called before any conditional returns
   useEffect(() => {

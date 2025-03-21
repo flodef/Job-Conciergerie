@@ -6,7 +6,6 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import { useTheme } from '@/app/contexts/themeProvider';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import { Conciergerie, Mission } from '@/app/types/types';
-import { useRedirectIfNotRegistered } from '@/app/utils/authRedirect';
 import {
   formatCalendarDate,
   formatMissionTimeForCalendar,
@@ -41,9 +40,6 @@ export default function Calendar() {
 
   const isEmployee = userType === 'employee';
   const isConciergerie = userType === 'conciergerie';
-
-  // Redirect if not registered - must be called before any conditional returns
-  useRedirectIfNotRegistered();
 
   // Apply theme color on component mount - must be called before any conditional returns
   useEffect(() => {
