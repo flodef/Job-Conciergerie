@@ -41,7 +41,7 @@ export async function sendConciergerieVerificationEmail(
     const verificationUrl = `${baseUrl}/${userId}`;
 
     // Send the email
-    const info = await transporter.sendMail({
+    await transporter.sendMail({
       from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
       to: to || email,
       subject: 'Vérification de votre compte conciergerie',
@@ -64,7 +64,6 @@ export async function sendConciergerieVerificationEmail(
       `,
     });
 
-    console.log('Email sent:', info.messageId);
     return { success: true };
   } catch (error) {
     console.error('Error sending verification email:', error);
@@ -84,7 +83,7 @@ export async function sendEmployeeRegistrationEmail(
 ): Promise<{ success: boolean; error?: unknown }> {
   try {
     // Send the email
-    const info = await transporter.sendMail({
+    await transporter.sendMail({
       from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
       to: to || conciergerieEmail,
       subject: "Nouvelle demande d'inscription employé",
@@ -105,7 +104,6 @@ export async function sendEmployeeRegistrationEmail(
       `,
     });
 
-    console.log('Email sent:', info.messageId);
     return { success: true };
   } catch (error) {
     console.error('Error sending employee registration email:', error);

@@ -209,8 +209,6 @@ export const getEmployeeById = async (id?: string) => {
       WHERE id = ${id}
     `;
 
-    console.log('Employee query result:', result);
-
     return result.length > 0 ? formatEmployee(result[0] as unknown as DbEmployee) : null;
   } catch (error) {
     console.error(`Error fetching employee with ID ${id}:`, error);
