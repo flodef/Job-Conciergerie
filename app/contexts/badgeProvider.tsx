@@ -1,10 +1,10 @@
 'use client';
 
+import { useMissions } from '@/app/contexts/missionsProvider';
+import { Mission } from '@/app/types/types';
+import { getEmployees } from '@/app/utils/employee';
+import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Mission } from '../types/types';
-import { getEmployees } from '../utils/employee';
-import { getWelcomeParams } from '../utils/welcomeParams';
-import { useMissions } from './missionsProvider';
 
 type BadgeContextType = {
   pendingEmployeesCount: number;

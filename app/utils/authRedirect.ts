@@ -1,9 +1,9 @@
 'use client';
 
+import { checkUserExists } from '@/app/actions/auth';
+import { fetchEmployeeById } from '@/app/actions/employee';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useEffect, useRef } from 'react';
-import { useAuth } from '../contexts/authProvider';
-import { checkUserExists } from '../actions/auth';
-import { fetchEmployeeById } from '../actions/employee';
 
 /**
  * Hook to redirect users based on their authentication status
@@ -61,32 +61,32 @@ export function useAuthRedirect(options: {
 export function useRedirectIfNotRegistered() {
   const { userId, userType, isLoading } = useAuth();
   const hasCheckedRef = useRef(false);
-  
+
   useEffect(() => {
     // Store whether we've already checked to prevent infinite loops
     if (hasCheckedRef.current) return;
-    
+
     const checkUserStatus = async () => {
       // Skip if still loading or no userId
       if (isLoading || !userId) return;
-      
+
       try {
         // Mark that we've checked to prevent infinite loops
         hasCheckedRef.current = true;
-        
+
         // Check if user exists in the database
         const { userType: foundUserType } = await checkUserExists(userId);
-        
+
         // If user doesn't exist in the database, redirect to home
         if (!foundUserType) {
           window.location.href = '/';
           return;
         }
-        
+
         // If user is an employee, check their status
         if (foundUserType === 'employee') {
           const employee = await fetchEmployeeById(userId);
-          
+
           if (employee) {
             // If employee is not accepted, redirect to waiting page
             if (employee.status !== 'accepted') {
@@ -103,7 +103,7 @@ export function useRedirectIfNotRegistered() {
         console.error('Error checking user status:', error);
       }
     };
-    
+
     checkUserStatus();
   }, [userId, userType, isLoading]);
 }
@@ -115,44 +115,44 @@ export function useRedirectIfNotRegistered() {
 export function useRedirectIfNotPending() {
   const { userId, userType, isLoading } = useAuth();
   const hasCheckedRef = useRef(false);
-  
+
   useEffect(() => {
     // Store whether we've already checked to prevent infinite loops
     if (hasCheckedRef.current) return;
-    
+
     const checkUserStatus = async () => {
       // Skip if still loading or no userId
       if (isLoading || !userId) return;
-      
+
       try {
         // Mark that we've checked to prevent infinite loops
         hasCheckedRef.current = true;
-        
+
         // Check if user exists in the database
         const { userType: foundUserType } = await checkUserExists(userId);
-        
+
         // If user doesn't exist in the database, redirect to home
         if (!foundUserType) {
           window.location.href = '/';
           return;
         }
-        
+
         // If user is a conciergerie, they can stay on the waiting page
         if (foundUserType === 'conciergerie') {
           return;
         }
-        
+
         // If user is an employee, check their status
         if (foundUserType === 'employee') {
           const employee = await fetchEmployeeById(userId);
-          
+
           if (employee) {
             // If employee is accepted, redirect to missions
             if (employee.status === 'accepted') {
               window.location.href = '/missions';
               return;
             }
-            
+
             // If employee is pending or rejected, they can stay on the waiting page
             return;
           } else {
@@ -165,7 +165,7 @@ export function useRedirectIfNotPending() {
         console.error('Error checking user status:', error);
       }
     };
-    
+
     checkUserStatus();
   }, [userId, userType, isLoading]);
 }
@@ -176,26 +176,26 @@ export function useRedirectIfNotPending() {
 export function useRedirectIfRegistered() {
   const { userId, userType, isLoading } = useAuth();
   const hasCheckedRef = useRef(false);
-  
+
   useEffect(() => {
     // Store whether we've already checked to prevent infinite loops
     if (hasCheckedRef.current) return;
-    
+
     const checkUserStatus = async () => {
       // Skip if still loading or no userId
       if (isLoading || !userId) return;
-      
+
       try {
         // Mark that we've checked to prevent infinite loops
         hasCheckedRef.current = true;
-        
+
         // Check if user exists in the database
         const { userType: foundUserType } = await checkUserExists(userId);
-        
+
         if (foundUserType === 'employee') {
           // If user is an employee, check their status
           const employee = await fetchEmployeeById(userId);
-          
+
           if (employee) {
             // Redirect based on employee status
             if (employee.status === 'accepted') {
@@ -216,7 +216,7 @@ export function useRedirectIfRegistered() {
         console.error('Error checking user status:', error);
       }
     };
-    
+
     checkUserStatus();
   }, [userId, userType, isLoading]);
 }

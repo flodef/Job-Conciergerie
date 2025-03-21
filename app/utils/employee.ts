@@ -1,4 +1,4 @@
-import { Employee, EmployeeStatus, Mission } from '../types/types';
+import { Employee, EmployeeStatus, Mission } from '@/app/types/types';
 
 // Get all employees from localStorage
 export function getEmployees(): Employee[] {

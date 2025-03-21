@@ -1,15 +1,15 @@
 'use client';
 
+import ConfirmationModal from '@/app/components/confirmationModal';
+import FullScreenModal from '@/app/components/fullScreenModal';
+import { useHomes } from '@/app/contexts/homesProvider';
+import { useMissions } from '@/app/contexts/missionsProvider';
+import HomeForm from '@/app/homes/components/homeForm';
+import { HomeData } from '@/app/types/types';
+import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import { IconPencil, IconTrash } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useHomes } from '../../contexts/homesProvider';
-import { useMissions } from '../../contexts/missionsProvider';
-import { HomeData } from '../../types/types';
-import { getWelcomeParams } from '../../utils/welcomeParams';
-import ConfirmationModal from '../../components/confirmationModal';
-import FullScreenModal from '../../components/fullScreenModal';
-import HomeForm from './homeForm';
 
 type HomeDetailsProps = {
   home: HomeData;

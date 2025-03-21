@@ -1,7 +1,7 @@
 'use client';
 
+import { Mission } from '@/app/types/types';
 import { IconCancel, IconCheck, IconPencil, IconPlayerPlay, IconTrash } from '@tabler/icons-react';
-import { Mission } from '../../types/types';
 
 type MissionActionButtonsProps = {
   mission: Mission;

@@ -1,4 +1,4 @@
-import { Mission, Home } from '../types/types';
+import { Home, Mission } from '@/app/types/types';
 
 /**
  * Filter missions based on user type

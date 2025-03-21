@@ -4,6 +4,7 @@ import { sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import { createNewEmployee } from '@/app/actions/employee';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
+import LoadingSpinner from '@/app/components/loadingSpinner';
 import Select from '@/app/components/select';
 import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
@@ -14,7 +15,6 @@ import { useLocalStorage } from '@/app/utils/localStorage';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
 import React, { useEffect, useState } from 'react';
-import LoadingSpinner from './loadingSpinner';
 
 type EmployeeFormProps = {
   conciergeries: Conciergerie[];

@@ -1,7 +1,7 @@
 'use client';
 
+import FormActions from '@/app/components/formActions';
 import { ReactNode } from 'react';
-import FormActions from './formActions';
 
 type ConfirmationModalProps = {
   isOpen: boolean;

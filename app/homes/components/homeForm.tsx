@@ -1,18 +1,18 @@
 'use client';
 
+import Combobox from '@/app/components/combobox';
+import ConfirmationModal from '@/app/components/confirmationModal';
+import FormActions from '@/app/components/formActions';
+import FullScreenModal from '@/app/components/fullScreenModal';
+import ObjectiveList from '@/app/components/objectiveList';
+import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { useHomes } from '@/app/contexts/homesProvider';
+import { useMissions } from '@/app/contexts/missionsProvider';
+import geographicZonesData from '@/app/data/geographicZone.json';
+import { HomeData } from '@/app/types/types';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useHomes } from '../../contexts/homesProvider';
-import { HomeData } from '../../types/types';
-import geographicZonesData from '../../data/geographicZone.json';
-import Combobox from '../../components/combobox';
-import ConfirmationModal from '../../components/confirmationModal';
-import FormActions from '../../components/formActions';
-import FullScreenModal from '../../components/fullScreenModal';
-import ObjectiveList from '../../components/objectiveList';
-import { ToastMessage, ToastProps, ToastType } from '../../components/toastMessage';
-import { useMissions } from '../../contexts/missionsProvider';
 
 type HomeFormProps = {
   onClose: () => void;

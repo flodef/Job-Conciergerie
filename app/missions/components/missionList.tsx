@@ -1,5 +1,8 @@
 'use client';
 
+import { useHomes } from '@/app/contexts/homesProvider';
+import MissionCard from '@/app/missions/components/missionCard';
+import { Mission, MissionSortField } from '@/app/types/types';
 import {
   IconBriefcase,
   IconCalendar,
@@ -11,9 +14,6 @@ import {
 } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import React from 'react';
-import MissionCard from './missionCard';
-import { useHomes } from '../../contexts/homesProvider';
-import { Mission, MissionSortField } from '../../types/types';
 
 interface MissionListProps {
   groupedMissions: Record<string, Mission[]>;

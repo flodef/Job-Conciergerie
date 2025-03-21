@@ -1,6 +1,6 @@
 'use client';
 
-import { Mission } from '../types/types';
+import { Mission } from '@/app/types/types';
 
 export const monthNames = [
   'Janvier',

@@ -2,7 +2,7 @@
  * Gets the default primary color from CSS variables
  * This is used for server-side rendering and as a fallback
  */
-import colorOptions from '../data/colors.json';
+import colorOptions from '@/app/data/colors.json';
 
 /**
  * Default primary color

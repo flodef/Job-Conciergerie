@@ -1,13 +1,13 @@
+import NavigationLayout from '@/app/components/navigationLayout';
+import { AuthProvider } from '@/app/contexts/authProvider';
+import { BadgeProvider } from '@/app/contexts/badgeProvider';
+import { HomesProvider } from '@/app/contexts/homesProvider';
+import { MenuProvider } from '@/app/contexts/menuProvider';
+import { MissionsProviderWrapper } from '@/app/contexts/missionsProvider';
+import { ThemeProvider } from '@/app/contexts/themeProvider';
+import '@/app/globals.css';
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
-import NavigationLayout from './components/navigationLayout';
-import { AuthProvider } from './contexts/authProvider';
-import { BadgeProvider } from './contexts/badgeProvider';
-import { HomesProvider } from './contexts/homesProvider';
-import { MenuProvider } from './contexts/menuProvider';
-import { MissionsProviderWrapper } from './contexts/missionsProvider';
-import { ThemeProvider } from './contexts/themeProvider';
-import './globals.css';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',

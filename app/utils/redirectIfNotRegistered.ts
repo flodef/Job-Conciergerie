@@ -1,9 +1,9 @@
 'use client';
 
+import { findEmployee } from '@/app/utils/employee';
+import { getWelcomeParams, hasCompletedWelcomeFlow } from '@/app/utils/welcomeParams';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { findEmployee } from './employee';
-import { getWelcomeParams, hasCompletedWelcomeFlow } from './welcomeParams';
 
 /**
  * Hook to redirect users to the landing page if they haven't completed registration

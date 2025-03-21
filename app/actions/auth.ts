@@ -1,7 +1,7 @@
 'use server';
 
-import { Conciergerie, Employee } from '../types/types';
-import { getConciergerieById, getEmployeeById } from '../utils/db';
+import { Conciergerie, Employee } from '@/app/types/types';
+import { getConciergerieById, getEmployeeById } from '@/app/utils/db';
 
 /**
  * Check if a user ID exists in either the conciergerie or employee tables

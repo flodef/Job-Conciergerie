@@ -1,26 +1,26 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import ConfirmationModal from '../components/confirmationModal';
-import FloatingActionButton from '../components/floatingActionButton';
-import HomeForm from '../homes/components/homeForm';
-import LoadingSpinner from '../components/loadingSpinner';
-import MissionDetails from './components/missionDetails';
-import MissionForm from './components/missionForm';
-import { useHomes } from '../contexts/homesProvider';
-import { useMissions } from '../contexts/missionsProvider';
-import { useTheme } from '../contexts/themeProvider';
-import { Mission, MissionSortField } from '../types/types';
-import { useAuth } from '../contexts/authProvider';
-import MissionFilters from './components/missionFilters';
-import MissionList from './components/missionList';
-import MissionSortControls from './components/missionSortControls';
+import ConfirmationModal from '@/app/components/confirmationModal';
+import FloatingActionButton from '@/app/components/floatingActionButton';
+import LoadingSpinner from '@/app/components/loadingSpinner';
+import { useAuth } from '@/app/contexts/authProvider';
+import { useHomes } from '@/app/contexts/homesProvider';
+import { useMissions } from '@/app/contexts/missionsProvider';
+import { useTheme } from '@/app/contexts/themeProvider';
+import HomeForm from '@/app/homes/components/homeForm';
+import MissionDetails from '@/app/missions/components/missionDetails';
+import MissionFilters from '@/app/missions/components/missionFilters';
+import MissionForm from '@/app/missions/components/missionForm';
+import MissionList from '@/app/missions/components/missionList';
+import MissionSortControls from '@/app/missions/components/missionSortControls';
+import { Mission, MissionSortField } from '@/app/types/types';
 import {
   applyMissionFilters,
   filterMissionsByUserType,
   groupMissionsByCategory,
   sortMissions,
-} from '../utils/missionFilters';
+} from '@/app/utils/missionFilters';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function Missions() {
   const { missions, isLoading: missionsLoading } = useMissions();

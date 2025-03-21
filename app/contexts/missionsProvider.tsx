@@ -1,12 +1,12 @@
 'use client';
 
+import { fetchConciergerieByName } from '@/app/actions/conciergerie';
+import { useHomes } from '@/app/contexts/homesProvider';
+import { Conciergerie, Employee, HomeData, Mission, MissionStatus, Task } from '@/app/types/types';
+import { getEmployees } from '@/app/utils/employee';
+import { generateSimpleId } from '@/app/utils/id';
+import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { fetchConciergerieByName } from '../actions/conciergerie';
-import { Conciergerie, Employee, HomeData, Mission, MissionStatus, Task } from '../types/types';
-import { generateSimpleId } from '../utils/id';
-import { getWelcomeParams } from '../utils/welcomeParams';
-import { useHomes } from './homesProvider';
-import { getEmployees } from '../utils/employee';
 
 type MissionsContextType = {
   missions: Mission[];

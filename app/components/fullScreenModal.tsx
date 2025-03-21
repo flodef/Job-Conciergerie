@@ -1,9 +1,9 @@
 'use client';
 
-import { ReactNode } from 'react';
-import CloseButton from './closeButton';
+import CloseButton from '@/app/components/closeButton';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
+import { ReactNode } from 'react';
 
 type FullScreenModalProps = {
   children?: ReactNode;

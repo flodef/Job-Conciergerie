@@ -1,9 +1,9 @@
 'use client';
 
+import { Conciergerie, HomeData } from '@/app/types/types';
+import { generateSimpleId } from '@/app/utils/id';
+import { getWelcomeParams } from '@/app/utils/welcomeParams';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Conciergerie, HomeData } from '../types/types';
-import { generateSimpleId } from '../utils/id';
-import { getWelcomeParams } from '../utils/welcomeParams';
 
 type HomesContextType = {
   homes: HomeData[];
@@ -69,11 +69,11 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   const homeExists = (title: string): boolean => {
     const currentConciergerie = getCurrentConciergerie();
     if (!currentConciergerie) return false;
-    
+
     return homes.some(
-      home => 
-        home.conciergerieName === currentConciergerie.name && 
-        home.title.trim().toLowerCase() === title.trim().toLowerCase()
+      home =>
+        home.conciergerieName === currentConciergerie.name &&
+        home.title.trim().toLowerCase() === title.trim().toLowerCase(),
     );
   };
 
@@ -84,7 +84,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
       console.error('No conciergerie found in localStorage');
       return;
     }
-    
+
     // Check if a home with the same title already exists
     if (homeExists(homeData.title)) {
       // Return false to indicate that the home wasn't added due to duplication
@@ -123,7 +123,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     if (homeToDelete && currentConciergerie && homeToDelete.conciergerieName === currentConciergerie.name) {
       // Remove the home from the array
       setHomes(prev => prev.filter(home => home.id !== id));
-      
+
       // Update localStorage immediately to ensure the deletion is persisted
       const updatedHomes = homes.filter(home => home.id !== id);
       localStorage.setItem('homes', JSON.stringify(updatedHomes));

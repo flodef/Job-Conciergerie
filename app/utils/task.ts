@@ -1,7 +1,7 @@
 'use client';
 
-import tasksData from '../data/tasks.json';
-import { Mission, MissionPoints, Task } from '../types/types';
+import tasksData from '@/app/data/tasks.json';
+import { Mission, MissionPoints, Task } from '@/app/types/types';
 
 // Get all objectives with their points
 export const getTasksWithPoints = (): Task[] => {
