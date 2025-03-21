@@ -17,7 +17,6 @@ type MultiSelectProps = {
   className?: string;
   error?: boolean;
   disabled?: boolean;
-  borderColor?: string;
   allOption?: boolean; // Whether to include an "All" option
 };
 
@@ -29,7 +28,6 @@ export default function MultiSelect({
   className = '',
   error = false,
   disabled = false,
-  borderColor,
   allOption = true,
 }: MultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -38,10 +36,8 @@ export default function MultiSelect({
 
   // Add "All" option if enabled and ensure options are properly processed
   const processedOptions = options || [];
-  
-  const allOptions = allOption
-    ? [{ value: 'all', label: 'Tous' }, ...processedOptions]
-    : processedOptions;
+
+  const allOptions = allOption ? [{ value: 'all', label: 'Tous' }, ...processedOptions] : processedOptions;
 
   // Close the dropdown when clicking outside
   useEffect(() => {
@@ -65,7 +61,7 @@ export default function MultiSelect({
     } else {
       // If any specific option is selected, remove "All" from the selection
       let newValues = [...values];
-      
+
       if (newValues.includes(optionValue)) {
         // Remove the option if it's already selected
         newValues = newValues.filter(v => v !== optionValue);
@@ -73,7 +69,7 @@ export default function MultiSelect({
         // Add the option if it's not selected
         newValues.push(optionValue);
       }
-      
+
       onChange(newValues);
     }
   };
@@ -83,12 +79,12 @@ export default function MultiSelect({
     if (values.length === 0) {
       return 'Tous'; // Default to "All" if nothing selected
     }
-    
+
     if (values.length === 1) {
       const option = processedOptions.find(opt => opt.value === values[0]);
       return option ? option.label : values[0];
     }
-    
+
     return `${values.length} sélectionnés`;
   };
 
@@ -97,10 +93,11 @@ export default function MultiSelect({
       <div
         id={id}
         className={clsx(
-          'w-full p-2 border-2 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer',
-          'focus-visible:outline-none',
+          'w-full p-2 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer',
+          'focus-visible:outline-none focus-within:outline-none',
           error && 'border-red-500',
           disabled && 'opacity-50 cursor-not-allowed',
+          isFocused || isOpen ? 'border-primary border-2' : 'border-secondary border',
         )}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         tabIndex={disabled ? -1 : 0}
@@ -113,9 +110,6 @@ export default function MultiSelect({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-controls={`${id}-options`}
-        style={(isFocused || isOpen) && borderColor 
-          ? { borderColor } 
-          : { borderColor: 'rgba(0, 0, 0, 0.1)' }}
       >
         <span className={clsx(values.length === 0 && 'text-foreground/50')}>{displayValue()}</span>
         <IconChevronDown
@@ -135,28 +129,22 @@ export default function MultiSelect({
           {allOptions.length === 0 ? (
             <div className="p-2 text-foreground/50 text-center">Aucune option disponible</div>
           ) : (
-            allOptions.map((option) => {
-              const isSelected = option.value === 'all' 
-                ? values.length === 0 
-                : values.includes(option.value);
-  
+            allOptions.map(option => {
+              const isSelected = option.value === 'all' ? values.length === 0 : values.includes(option.value);
+
               return (
                 <div
                   key={option.value}
                   className={clsx(
                     'p-2 cursor-pointer hover:bg-primary/10 flex items-center justify-between',
-                    isSelected && 'bg-primary/10'
+                    isSelected && 'bg-primary/10',
                   )}
                   onClick={() => toggleOption(option.value)}
                   role="option"
                   aria-selected={isSelected}
                 >
-                  <span className={clsx(isSelected && 'font-medium text-primary')}>
-                    {option.label}
-                  </span>
-                  {isSelected && (
-                    <IconCheck size={18} className="text-primary" />
-                  )}
+                  <span className={clsx(isSelected && 'font-medium text-primary')}>{option.label}</span>
+                  {isSelected && <IconCheck size={18} className="text-primary" />}
                 </div>
               );
             })

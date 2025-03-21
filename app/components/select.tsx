@@ -136,7 +136,7 @@ export default function Select({
         id={id}
         className={clsx(
           'w-full p-2 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer',
-          'focus-visible:outline-none',
+          'focus-visible:outline-none focus-within:outline-none',
           error && 'border-red-500',
           disabled && 'opacity-50 cursor-not-allowed',
           isFocused || isOpen ? 'border-primary border-2' : 'border-secondary border',

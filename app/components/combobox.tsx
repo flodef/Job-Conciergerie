@@ -25,7 +25,6 @@ export default function Combobox({
   className = '',
   error = false,
   disabled = false,
-  borderColor,
 }: ComboboxProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -131,12 +130,12 @@ export default function Combobox({
     <div className={clsx('relative w-full', className)} ref={comboboxRef}>
       <div
         className={clsx(
-          'w-full p-2 border-2 rounded-lg bg-background text-foreground flex items-center',
-          'focus-within:outline-none',
+          'w-full p-2 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer',
+          'focus-visible:outline-none focus-within:outline-none',
           error && 'border-red-500',
           disabled && 'opacity-50 cursor-not-allowed',
+          isFocused || isOpen ? 'border-primary border-2' : 'border-secondary border',
         )}
-        style={isFocused && borderColor ? { borderColor } : { borderColor: 'rgba(0, 0, 0, 0.1)' }}
       >
         <IconSearch size={18} className="text-foreground/50 mr-2" />
         <input
