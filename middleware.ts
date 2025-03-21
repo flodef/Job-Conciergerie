@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { routeMap } from '@/app/utils/navigation';
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
@@ -48,13 +49,20 @@ export async function middleware(request: NextRequest) {
 
     // Handle redirects based on user type and status
     if (userType === foundUserType) {
-      if (path !== '/missions') {
+      // Get all valid routes except the root
+      const allowedRoutes = Object.values(routeMap).filter(route => route !== '/');
+
+      // If we're on an invalid path, redirect to missions
+      if (!allowedRoutes.includes(path)) {
         return NextResponse.redirect(new URL('/missions', request.url));
       }
+      return NextResponse.next();
     } else {
+      // Not authenticated, redirect to waiting page
       if (path !== '/waiting') {
         return NextResponse.redirect(new URL('/waiting', request.url));
       }
+      return NextResponse.next();
     }
   } catch (error) {
     console.error('Middleware error:', error);

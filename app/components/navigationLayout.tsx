@@ -2,7 +2,8 @@
 
 import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { useBadge } from '@/app/contexts/badgeProvider';
-import { Page, pages, useMenuContext } from '@/app/contexts/menuProvider';
+import { useMenuContext } from '@/app/contexts/menuProvider';
+import { Page, pages } from '@/app/utils/navigation';
 import { IconBriefcase, IconCalendar, IconHome, IconSettings, IconUser } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { ReactNode, useEffect, useState } from 'react';
