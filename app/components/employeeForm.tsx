@@ -9,21 +9,20 @@ import Select from '@/app/components/select';
 import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
-import { Conciergerie, Employee, EmployeeNotificationSettings } from '@/app/types/types';
+import { Employee, EmployeeNotificationSettings } from '@/app/types/types';
 import { useLocalStorage } from '@/app/utils/localStorage';
+import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
-import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 
 type EmployeeFormProps = {
-  conciergeries: Conciergerie[];
   onClose: () => void;
 };
 
-export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormProps) {
-  const { userId, isLoading: authLoading, setSentEmailError } = useAuth();
-  const router = useRouter();
+export default function EmployeeForm({ onClose }: EmployeeFormProps) {
+  const { userId, isLoading: authLoading, setSentEmailError, conciergeries, refreshData } = useAuth();
+  const [isPending, startTransition] = useTransition();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
   const [formData, setFormData] = useLocalStorage<Partial<Employee>>('employee_data', {
@@ -32,7 +31,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
     familyName: '',
     tel: '',
     email: '',
-    conciergerieName: conciergeries[0]?.name || '',
+    conciergerieName: conciergeries?.[0]?.name || '',
     message: '',
     notificationSettings: {
       acceptedMissions: true,
@@ -254,7 +253,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
       if (!employee) throw new Error('Employee not found');
 
       // Send notification email to conciergerie
-      const selectedConciergerie = conciergeries.find(c => c.name === employee.conciergerieName);
+      const selectedConciergerie = conciergeries?.find(c => c.name === employee.conciergerieName);
       if (!selectedConciergerie) throw new Error('Conciergerie not found');
       if (!selectedConciergerie.email) throw new Error('Conciergerie email not found');
 
@@ -266,9 +265,9 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
         employee.tel,
       );
       setSentEmailError(result?.success !== true);
-
-      // Redirect to waiting page
-      router.push('/waiting');
+      startTransition(() => {
+        refreshData(Page.Waiting);
+      });
     } catch (error) {
       setToastMessage({
         type: ToastType.Error,
@@ -281,16 +280,9 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
 
   if (!formData) return null;
 
-  // Show loading spinner while checking auth state
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <LoadingSpinner size="large" text="Chargement..." />
-      </div>
-    );
-  }
+  if (authLoading || isPending) return <LoadingSpinner />;
 
-  if (!conciergeries.length)
+  if (!conciergeries?.length)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
         <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
@@ -299,12 +291,12 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
     );
 
   return (
-    <main className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
+    <div className="min-h-full w-full flex flex-col items-center justify-center bg-background">
       <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
       <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-2">
+      <form onSubmit={handleSubmit} className="w-full px-4 space-y-2">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-1">
             Prénom
@@ -495,6 +487,6 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
           cancelText="Continuer l'édition"
         />
       </form>
-    </main>
+    </div>
   );
 }

@@ -11,12 +11,12 @@ import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
 import { HomeData } from '@/app/types/types';
 import { IconPlus } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function HomesPage() {
   const { homes, isLoading: homesLoading } = useHomes();
   const { setHasUnsavedChanges } = useMenuContext();
-  const { conciergerieName } = useAuth();
+  const { conciergerieName, isLoading: authLoading } = useAuth();
 
   const [selectedHome, setSelectedHome] = useState<HomeData | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -29,17 +29,21 @@ export default function HomesPage() {
   }, [setHasUnsavedChanges]);
 
   // Filter homes by the current conciergerie
-  const filteredHomes = homes
-    .filter(home => home.conciergerieName === conciergerieName)
-    .filter(home => {
-      if (searchTerm.trim() === '') return true;
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        home.title.toLowerCase().includes(searchLower) ||
-        home.description.toLowerCase().includes(searchLower) ||
-        home.objectives.some(objective => objective.toLowerCase().includes(searchLower))
-      );
-    });
+  const filteredHomes = useMemo(
+    () =>
+      homes
+        .filter(home => home.conciergerieName === conciergerieName)
+        .filter(home => {
+          if (searchTerm.trim() === '') return true;
+          const searchLower = searchTerm.toLowerCase();
+          return (
+            home.title.toLowerCase().includes(searchLower) ||
+            home.description.toLowerCase().includes(searchLower) ||
+            home.objectives.some(objective => objective.toLowerCase().includes(searchLower))
+          );
+        }),
+    [homes, conciergerieName, searchTerm],
+  );
 
   const handleHomeClick = (home: HomeData) => {
     setSelectedHome(home);
@@ -67,6 +71,9 @@ export default function HomesPage() {
     setSelectedHome(null);
   };
 
+  if (homesLoading || authLoading)
+    return <LoadingSpinner text={authLoading ? 'Identification...' : 'Chargement des biens...'} />;
+
   return (
     <div>
       {homes.length > 1 && (
@@ -78,11 +85,7 @@ export default function HomesPage() {
         />
       )}
 
-      {homesLoading ? (
-        <div className="min-h-[calc(100dvh-9rem)] flex items-center justify-center bg-background">
-          <LoadingSpinner size="large" text="Chargement des biens..." />
-        </div>
-      ) : filteredHomes.length === 0 && searchTerm === '' ? (
+      {filteredHomes.length === 0 && searchTerm === '' ? (
         <div
           className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8 cursor-pointer"
           onClick={handleAddHome}

@@ -13,26 +13,26 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 type ConciergerieFormProps = {
-  conciergeries: Conciergerie[];
   onClose: () => void;
 };
 
-export default function ConciergerieForm({ conciergeries, onClose }: ConciergerieFormProps) {
+export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const { setPrimaryColor } = useTheme();
   const {
     isLoading: authLoading,
     userId,
     setSentEmailError,
     setConciergerieName: setSelectedConciergerieName,
+    conciergeries,
   } = useAuth();
   const router = useRouter();
 
-  const [conciergerieName, setConciergerieName] = useState(conciergeries.at(0)?.name || '');
+  const [conciergerieName, setConciergerieName] = useState(conciergeries?.at(0)?.name || '');
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const selectedConciergerie = conciergeries.find((c: Conciergerie) => c.name === conciergerieName);
+    const selectedConciergerie = conciergeries?.find((c: Conciergerie) => c.name === conciergerieName);
     const color = getColorValueByName(selectedConciergerie?.colorName);
     setPrimaryColor(color);
   }, [setPrimaryColor, conciergeries, conciergerieName]);
@@ -62,7 +62,7 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
       if (!userId) throw new Error('User ID not found, cannot send verification email');
 
       // Get the selected conciergerie data
-      const selectedConciergerie = conciergeries.find(c => c.name === conciergerieName);
+      const selectedConciergerie = conciergeries?.find(c => c.name === conciergerieName);
       if (!selectedConciergerie) throw new Error('Conciergerie not found');
       if (!selectedConciergerie.email) throw new Error('Conciergerie email not found');
 
@@ -88,16 +88,9 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
     }
   };
 
-  // Show loading spinner while checking auth state
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <LoadingSpinner size="large" text="Chargement..." />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner />;
 
-  if (!conciergeries.length)
+  if (!conciergeries?.length)
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
         <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
@@ -106,7 +99,7 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
     );
 
   return (
-    <main className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
       <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
       <h2 className="text-2xl font-bold mb-4">Conciergerie</h2>
@@ -128,6 +121,6 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
 
         <FormActions onCancel={handleClose} submitText="Valider" submitType="submit" isSubmitting={isSubmitting} />
       </form>
-    </main>
+    </div>
   );
 }

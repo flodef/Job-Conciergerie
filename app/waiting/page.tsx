@@ -129,16 +129,11 @@ export default function WaitingPage() {
   }, [userId, userType, authLoading, handleConciergerie, handleEmployee, router]);
 
   // Show loading spinner while checking localStorage
-  if (isLoading || authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <LoadingSpinner size="large" text="Chargement..." />
-      </div>
-    );
-  }
+  if (isLoading || authLoading)
+    return <LoadingSpinner text={authLoading ? 'Identification...' : 'Chargement des données...'} />;
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
       <div className="w-full max-w-md bg-background overflow-hidden p-6">
@@ -261,6 +256,6 @@ export default function WaitingPage() {
           </>
         ) : null}
       </div>
-    </main>
+    </div>
   );
 }

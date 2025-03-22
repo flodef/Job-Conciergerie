@@ -32,10 +32,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}>
         <ThemeProvider>
-          <AuthProvider>
-            <MenuProvider>
+          <MenuProvider>
+            <AuthProvider>
               <HomesProvider>
                 <MissionsProviderWrapper>
                   <BadgeProvider>
@@ -43,8 +43,8 @@ export default function RootLayout({
                   </BadgeProvider>
                 </MissionsProviderWrapper>
               </HomesProvider>
-            </MenuProvider>
-          </AuthProvider>
+            </AuthProvider>
+          </MenuProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -22,7 +22,7 @@ import { useEffect, useState } from 'react';
 
 export default function Calendar() {
   const { userId, userType, conciergerieName, isLoading: authLoading } = useAuth();
-  const { missions, isLoading, getConciergerieByName } = useMissions();
+  const { missions, isLoading: missionsLoading, getConciergerieByName } = useMissions();
 
   const [acceptedMissions, setAcceptedMissions] = useState<Mission[]>([]);
   const [missionsByDate, setMissionsByDate] = useState<Map<string, Mission[]>>(new Map());
@@ -47,7 +47,7 @@ export default function Calendar() {
       // Fetch conciergerie data for each name
       for (const name of conciergerieNames) {
         if (!newConciergerieMap.has(name)) {
-          const conciergerie = await getConciergerieByName(name);
+          const conciergerie = getConciergerieByName(name);
           if (conciergerie) {
             newConciergerieMap.set(name, conciergerie);
           }
@@ -122,13 +122,8 @@ export default function Calendar() {
     );
   };
 
-  if (authLoading || isLoading) {
-    return (
-      <div className="min-h-[calc(100dvh-9rem)] flex items-center justify-center bg-background">
-        <LoadingSpinner size="large" text="Chargement du calendrier..." />
-      </div>
-    );
-  }
+  if (authLoading || missionsLoading)
+    return <LoadingSpinner text={authLoading ? 'Identification...' : 'Chargement des missions...'} />;
 
   if (acceptedMissions.length === 0) {
     return (

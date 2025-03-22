@@ -135,14 +135,14 @@ export async function updateConciergerieWithUserId(
 ): Promise<{ success: boolean; message?: string }> {
   try {
     if (!conciergerieName) {
-      return { success: false, message: 'Aucune conciergerie sélectionnée' };
+      return { success: false, message: 'No conciergerie selected' };
     }
 
     // Fetch the conciergerie by name
     const conciergerie = await fetchConciergerieByName(conciergerieName);
 
     if (!conciergerie) {
-      return { success: false, message: 'Conciergerie non trouvée' };
+      return { success: false, message: 'Conciergerie not found' };
     }
 
     // If the conciergerie already has the correct ID, we don't need to do anything

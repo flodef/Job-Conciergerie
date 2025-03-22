@@ -1,15 +1,14 @@
-import { fetchEmployeeById, updateEmployeeData } from '@/app/actions/employee';
+import { updateEmployeeData } from '@/app/actions/employee';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { Employee } from '@/app/types/types';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
 import React, { useEffect, useState } from 'react';
 
 const EmployeeSettings: React.FC = () => {
-  const { userId } = useAuth();
-
-  const [isLoading, setIsLoading] = useState(true);
+  const { userId, isLoading: authLoading, userData } = useAuth();
 
   // Validation states
   const [emailError, setEmailError] = useState('');
@@ -33,33 +32,17 @@ const EmployeeSettings: React.FC = () => {
 
   // Load user info and set form values
   useEffect(() => {
-    const loadEmployeeData = async () => {
-      setIsLoading(true);
-      try {
-        const employee = await fetchEmployeeById(userId!);
-        if (employee) {
-          // Set employee data for form
-          setName(employee.firstName + ' ' + employee.familyName);
-          setEmail(employee.email);
-          setTel(employee.tel);
+    const employee = userData as Employee;
 
-          // Store original values for comparison
-          setOriginalEmail(employee.email);
-          setOriginalTel(employee.tel);
-        }
-      } catch (error) {
-        setToastMessage({
-          type: ToastType.Error,
-          message: 'Erreur lors du chargement des données',
-          error,
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // Set employee data for form
+    setName(employee.firstName + ' ' + employee.familyName);
+    setEmail(employee.email);
+    setTel(employee.tel);
 
-    loadEmployeeData();
-  }, [userId]);
+    // Store original values for comparison
+    setOriginalEmail(employee.email);
+    setOriginalTel(employee.tel);
+  }, [userId, userData]);
 
   const hasChanges = () => {
     const emailChanged = email !== originalEmail;
@@ -157,13 +140,7 @@ const EmployeeSettings: React.FC = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-[calc(100dvh-9rem)] flex items-center justify-center bg-background">
-        <LoadingSpinner size="large" text="Chargement..." />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner />;
 
   return (
     <div className="space-y-2">

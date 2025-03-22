@@ -188,13 +188,8 @@ export default function Missions() {
     selectedTakenStatus.length > 0 ||
     selectedZones.length > 0;
 
-  if (missionsLoading || authLoading) {
-    return (
-      <div className="min-h-[calc(100dvh-9rem)] flex items-center justify-center bg-background">
-        <LoadingSpinner size="large" text="Chargement des missions..." />
-      </div>
-    );
-  }
+  if (missionsLoading || authLoading)
+    return <LoadingSpinner text={authLoading ? 'Identification...' : 'Chargement des missions...'} />;
 
   return (
     <div>
