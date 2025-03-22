@@ -15,8 +15,8 @@ import { useEffect, useState } from 'react';
 
 export default function HomesPage() {
   const { homes, isLoading: homesLoading } = useHomes();
-  const { conciergerieData } = useAuth();
   const { setHasUnsavedChanges } = useMenuContext();
+  const { conciergerieName } = useAuth();
 
   const [selectedHome, setSelectedHome] = useState<HomeData | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -30,7 +30,7 @@ export default function HomesPage() {
 
   // Filter homes by the current conciergerie
   const filteredHomes = homes
-    .filter(home => home.conciergerieName === conciergerieData?.name)
+    .filter(home => home.conciergerieName === conciergerieName)
     .filter(home => {
       if (searchTerm.trim() === '') return true;
       const searchLower = searchTerm.toLowerCase();

@@ -1,55 +1,36 @@
 'use client';
 
 import { useAuth } from '@/app/contexts/authProvider';
-import { defaultPrimaryColor, getColorValueByName } from '@/app/utils/color';
+import { Conciergerie } from '@/app/types/types';
+import { defaultPrimaryColor } from '@/app/utils/color';
 import { createContext, ReactNode, useContext, useEffect } from 'react';
 
 type ThemeContextType = {
-  setPrimaryColor: (color: string) => void;
-  resetPrimaryColor: () => void;
+  setPrimaryColor: (color: string | undefined) => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const { conciergerieData, userType } = useAuth();
+  const { userData, userType } = useAuth();
+  const conciergerieData = userData as Conciergerie;
 
-  const setPrimaryColor = (color: string) => {
+  const setPrimaryColor = (color: string | undefined) => {
     if (typeof document !== 'undefined') {
-      document.documentElement.style.setProperty('--color-primary', color);
-    }
-  };
-
-  const resetPrimaryColor = () => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.style.setProperty('--color-primary', defaultPrimaryColor);
+      document.documentElement.style.setProperty('--color-primary', color || defaultPrimaryColor);
     }
   };
 
   // Initialize theme on mount
   useEffect(() => {
     const initializeTheme = async () => {
-      if (userType === 'conciergerie') {
-        // If conciergerie data exists and has a color, set it as primary
-        if (conciergerieData && conciergerieData.color) {
-          setPrimaryColor(conciergerieData.color);
-        }
-        // If no color but has colorName, get the color from colors.json
-        else if (conciergerieData && conciergerieData.colorName) {
-          const colorValue = getColorValueByName(conciergerieData.colorName);
-          if (colorValue) {
-            setPrimaryColor(colorValue);
-          }
-        }
-      } else {
-        setPrimaryColor(defaultPrimaryColor);
-      }
+      setPrimaryColor(userType === 'conciergerie' ? conciergerieData?.color : undefined);
     };
 
     initializeTheme();
   }, [conciergerieData, userType]);
 
-  return <ThemeContext.Provider value={{ setPrimaryColor, resetPrimaryColor }}>{children}</ThemeContext.Provider>;
+  return <ThemeContext.Provider value={{ setPrimaryColor }}>{children}</ThemeContext.Provider>;
 }
 
 // Hook to use the theme context

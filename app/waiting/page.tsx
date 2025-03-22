@@ -1,72 +1,132 @@
 'use client';
 
-import { loadEmail } from '@/app/actions/email';
-import { fetchEmployeeById } from '@/app/actions/employee';
+import { loadEmail, sendConciergerieVerificationEmail, sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import LoadingSpinner from '@/app/components/loadingSpinner';
+import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { Employee } from '@/app/types/types';
+import { useTheme } from '@/app/contexts/themeProvider';
+import { Conciergerie, Employee } from '@/app/types/types';
 import { convertUTCDateToUserTime, getTimeDifference } from '@/app/utils/date';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@tabler/icons-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function WaitingPage() {
-  const { userId, userType, isLoading: authLoading, employeeData, disconnect } = useAuth();
+  const {
+    userId,
+    userType,
+    isLoading: authLoading,
+    disconnect,
+    sentEmailError,
+    setSentEmailError,
+    conciergeries,
+    employees,
+    conciergerieName,
+  } = useAuth();
+  const { setPrimaryColor } = useTheme();
+  const router = useRouter();
+
   const [isLoading, setIsLoading] = useState(true);
   const [employee, setEmployee] = useState<Employee>();
   const [daysWaiting, setDaysWaiting] = useState('');
-  const [isConciergerie, setIsConciergerie] = useState(false);
+  const [conciergerie, setConciergerie] = useState<Conciergerie>();
+  const [toastMessage, setToastMessage] = useState<ToastProps>();
 
   // Hack to make the action server works
   // eslint-disable-next-line
   const load = async () => await loadEmail();
 
+  const handleConciergerie = useCallback(
+    (userId: string) => {
+      const foundConciergerie = conciergeries?.find(c => c.name === conciergerieName);
+      setConciergerie(foundConciergerie);
+      setPrimaryColor(foundConciergerie?.color);
+
+      if (sentEmailError && foundConciergerie) {
+        sendConciergerieVerificationEmail(
+          foundConciergerie.email,
+          foundConciergerie.name,
+          userId,
+          window.location.origin,
+        ).then(result => {
+          if (result?.success !== true) {
+            setToastMessage({
+              type: ToastType.Error,
+              message: "Une erreur est survenue lors de l'envoi de l'email de vérification",
+            });
+          } else {
+            setSentEmailError(undefined);
+          }
+        });
+      }
+      setIsLoading(false);
+    },
+    [conciergeries, conciergerieName, sentEmailError, setSentEmailError, setPrimaryColor],
+  );
+
+  const handleEmployee = useCallback(
+    (userId: string) => {
+      // Check if employee exists in database with this ID
+      const foundEmployee = employees?.find(e => e.id === userId);
+      if (!foundEmployee) return;
+
+      setEmployee(foundEmployee);
+
+      // Calculate time waiting
+      if (foundEmployee.createdAt) {
+        const createdAt = convertUTCDateToUserTime(new Date(foundEmployee.createdAt));
+        setDaysWaiting(getTimeDifference(createdAt, new Date()));
+      }
+
+      // Send notification email to conciergerie
+      if (sentEmailError) {
+        const selectedConciergerie = conciergeries?.find(c => c.name === foundEmployee.conciergerieName);
+        if (!selectedConciergerie) throw new Error('Conciergerie not found');
+        if (!selectedConciergerie.email) throw new Error('Conciergerie email not found');
+
+        sendEmployeeRegistrationEmail(
+          selectedConciergerie.email,
+          selectedConciergerie.name,
+          `${foundEmployee.firstName} ${foundEmployee.familyName}`,
+          foundEmployee.email,
+          foundEmployee.tel,
+        ).then(result => {
+          if (result?.success !== true) {
+            setToastMessage({
+              type: ToastType.Error,
+              message: "Une erreur est survenue lors de l'envoi de l'email de confirmation",
+            });
+          } else {
+            setSentEmailError(undefined);
+          }
+        });
+      }
+
+      setIsLoading(false);
+    },
+    [employees, conciergeries, setSentEmailError, sentEmailError],
+  );
+
   // Use a ref to track if we've already loaded the data to prevent infinite loops
   const hasLoadedDataRef = useRef(false);
-
   useEffect(() => {
-    const loadEmployeeData = async () => {
-      // Wait for auth to be loaded or if we've already loaded the data
-      if (authLoading || !userId || hasLoadedDataRef.current) return;
+    // Wait for auth to be loaded or if we've already loaded the data
+    if (authLoading || hasLoadedDataRef.current) return;
+    if (!userId || !userType) {
+      router.refresh();
+      return;
+    }
 
-      // Mark that we're loading data to prevent infinite loops
-      hasLoadedDataRef.current = true;
+    // Mark that we're loading data to prevent infinite loops
+    hasLoadedDataRef.current = true;
 
-      // Handle conciergerie user type
-      if (userType === 'conciergerie') {
-        setIsConciergerie(true);
-        setIsLoading(false);
-        return;
-      }
-
-      // Handle employee user type
-      if (userType === 'employee') {
-        try {
-          // Check if employee exists in database with this ID
-          const foundEmployee = employeeData || (await fetchEmployeeById(userId));
-
-          if (foundEmployee) {
-            setEmployee(foundEmployee);
-
-            // Calculate time waiting
-            if (foundEmployee.createdAt) {
-              const createdAt = convertUTCDateToUserTime(new Date(foundEmployee.createdAt));
-              setDaysWaiting(getTimeDifference(createdAt, new Date()));
-            }
-          } else {
-            // Employee not found in database with this ID
-            // This shouldn't happen if the form submission worked correctly
-            console.error('Employee not found in database with ID:', userId);
-          }
-        } catch (error) {
-          console.error('Error fetching employee:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadEmployeeData();
-  }, [userId, userType, authLoading, employeeData]);
+    // Handle conciergerie user type
+    const handleUser = {
+      conciergerie: handleConciergerie,
+      employee: handleEmployee,
+    }[userType];
+    handleUser(userId);
+  }, [userId, userType, authLoading, handleConciergerie, handleEmployee, router]);
 
   // Show loading spinner while checking localStorage
   if (isLoading || authLoading) {
@@ -79,12 +139,10 @@ export default function WaitingPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background">
+      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+
       <div className="w-full max-w-md bg-background overflow-hidden p-6">
-        {isLoading || authLoading ? (
-          <div className="flex flex-col items-center justify-center">
-            <LoadingSpinner size="large" text="Chargement..." />
-          </div>
-        ) : isConciergerie ? (
+        {conciergerie ? (
           // Conciergerie waiting page
           <>
             <h1 className="text-2xl font-bold mb-4 text-center">Vérification en cours</h1>
@@ -184,7 +242,7 @@ export default function WaitingPage() {
               </p>
             </div>
           </>
-        ) : (
+        ) : !isLoading ? (
           // Error state
           <>
             <h1 className="text-2xl font-bold mb-4 text-center">Demande non trouvée</h1>
@@ -201,7 +259,7 @@ export default function WaitingPage() {
               </button>
             </div>
           </>
-        )}
+        ) : null}
       </div>
     </main>
   );

@@ -1,5 +1,6 @@
 'use client';
 
+import { useAuth } from '@/app/contexts/authProvider';
 import { Mission } from '@/app/types/types';
 import { IconCancel, IconCheck, IconPencil, IconPlayerPlay, IconTrash } from '@tabler/icons-react';
 
@@ -8,8 +9,6 @@ type MissionActionButtonsProps = {
   isEmployee: boolean;
   isReadOnly: boolean;
   isFromCalendar: boolean;
-  currentEmployeeId?: string;
-  userType: string;
   onEdit: () => void;
   onDelete: () => void;
   onRemoveEmployee: () => void;
@@ -23,8 +22,6 @@ export default function MissionActionButtons({
   isEmployee,
   isReadOnly,
   isFromCalendar,
-  currentEmployeeId,
-  userType,
   onEdit,
   onDelete,
   onRemoveEmployee,
@@ -32,6 +29,8 @@ export default function MissionActionButtons({
   onCompleteMission,
   onClose,
 }: MissionActionButtonsProps) {
+  const { userId, userType } = useAuth();
+
   // Check if the current time is after the mission start time
   const now = new Date();
   const startDate = new Date(mission.startDateTime);
@@ -39,7 +38,7 @@ export default function MissionActionButtons({
   const isStarted = mission.status === 'started';
   const isOwnMission = !isReadOnly;
   const hasEmployeeAssigned = !!mission.employeeId;
-  const isCurrentEmployee = mission.employeeId === currentEmployeeId;
+  const isCurrentEmployee = mission.employeeId === userId;
 
   // No buttons for calendar view if not the right user type
   if (isFromCalendar) {

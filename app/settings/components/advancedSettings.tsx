@@ -3,7 +3,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import React, { useState } from 'react';
 
 const AdvancedSettings: React.FC = () => {
-  const { userType, disconnect } = useAuth();
+  const { userType, disconnect, nuke } = useAuth();
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showNukeConfirmation, setShowNukeConfirmation] = useState(false);
 
@@ -60,13 +60,7 @@ const AdvancedSettings: React.FC = () => {
       <ConfirmationModal
         isOpen={showNukeConfirmation}
         onClose={() => setShowNukeConfirmation(false)}
-        onConfirm={() => {
-          // Clear all data from localStorage
-          localStorage.clear();
-
-          // Force a full page reload to reset the app state
-          window.location.href = '/';
-        }}
+        onConfirm={nuke}
         title="Supprimer toutes les données"
         confirmText="Supprimer tout"
         cancelText="Annuler"

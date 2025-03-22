@@ -19,7 +19,7 @@ type HomeDetailsProps = {
 export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   const { deleteHome, homes: allHomes } = useHomes();
   const { missions, deleteMission } = useMissions();
-  const { userType, conciergerieData } = useAuth();
+  const { userType, conciergerieName } = useAuth();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteWithMissionsModalOpen, setIsDeleteWithMissionsModalOpen] = useState(false);
@@ -31,13 +31,8 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   const isEmployee = userType === 'employee';
 
   useEffect(() => {
-    // Check if the current conciergerie is the one that created the home
-    if (conciergerieData && home.conciergerieName === conciergerieData.name) {
-      setIsReadOnly(false);
-    } else {
-      setIsReadOnly(true);
-    }
-  }, [home, conciergerieData]);
+    setIsReadOnly(home.conciergerieName !== conciergerieName);
+  }, [home, conciergerieName]);
 
   // Find missions associated with this home
   useEffect(() => {
@@ -137,10 +132,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
           <ul className="list-none pl-0 mt-2 space-y-1">
             {home.objectives.map((objective, index) => (
               <li key={index} className="flex items-start">
-                <span
-                  className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 flex-shrink-0 border border-foreground"
-                  style={{ borderColor: 'var(--color-foreground)' }}
-                />
+                <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 flex-shrink-0 border border-foreground" />
                 <span className="text-foreground">{objective}</span>
               </li>
             ))}

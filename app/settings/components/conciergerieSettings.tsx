@@ -1,10 +1,9 @@
-import { fetchConciergeries, updateConciergerieData } from '@/app/actions/conciergerie';
+import { updateConciergerieData } from '@/app/actions/conciergerie';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useTheme } from '@/app/contexts/themeProvider';
 import colorOptions from '@/app/data/colors.json';
-import { Conciergerie } from '@/app/types/types';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
 import React, { useEffect, useState } from 'react';
@@ -15,7 +14,7 @@ type ColorOption = {
 };
 
 const ConciergerieSettings: React.FC = () => {
-  const { userId } = useAuth();
+  const { userId, conciergeries } = useAuth();
   const { setPrimaryColor } = useTheme();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -41,20 +40,13 @@ const ConciergerieSettings: React.FC = () => {
   const [originalTel, setOriginalTel] = useState('');
   const [originalColorName, setOriginalColorName] = useState('');
 
-  // State to store all conciergeries
-  const [allConciergeries, setAllConciergeries] = useState<Conciergerie[]>([]);
-
   // Load user info and set form values
   useEffect(() => {
     const loadConciergerieData = async () => {
       setIsLoading(true);
       try {
-        // Fetch conciergeries from database
-        const conciergeries = await fetchConciergeries();
-        setAllConciergeries(conciergeries);
-
         // Find the conciergerie that matches the name in localStorage
-        const conciergerie = conciergeries.find(c => c.id === userId);
+        const conciergerie = conciergeries?.find(c => c.id === userId);
         if (conciergerie) {
           // Set current form values for conciergerie
           setEmail(conciergerie.email);
@@ -84,15 +76,15 @@ const ConciergerieSettings: React.FC = () => {
     };
 
     loadConciergerieData();
-  }, [setPrimaryColor, userId]);
+  }, [setPrimaryColor, userId, conciergeries]);
 
   // Check if a color is already used by another conciergerie
   const isColorUsed = (colorName: string) => {
     // Find conciergeries that are not the current one
-    const otherConciergeries = allConciergeries.filter(c => c.id !== userId);
+    const otherConciergeries = conciergeries?.filter(c => c.id !== userId);
 
     // Check if any other conciergerie uses this color
-    return otherConciergeries.some(c => c.colorName === colorName);
+    return otherConciergeries?.some(c => c.colorName === colorName);
   };
 
   // Check if form has been modified
@@ -157,14 +149,7 @@ const ConciergerieSettings: React.FC = () => {
     setIsSaving(true);
 
     try {
-      // Update in database if we have an ID
-      if (userId) {
-        await updateConciergerieData(userId, {
-          email,
-          tel,
-          colorName: selectedColor?.name || '',
-        });
-      } else {
+      if (!userId) {
         setToastMessage({
           type: ToastType.Error,
           message: 'Erreur: impossible de mettre à jour la conciergerie (ID manquant)',
@@ -172,6 +157,13 @@ const ConciergerieSettings: React.FC = () => {
         setIsSaving(false);
         return;
       }
+
+      // Update in database if we have an ID
+      await updateConciergerieData(userId, {
+        email,
+        tel,
+        colorName: selectedColor?.name || '',
+      });
 
       // Update theme
       if (selectedColor) {

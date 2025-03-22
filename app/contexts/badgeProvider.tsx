@@ -21,16 +21,13 @@ const missionsCheckKey = 'last_checked_missions';
 const BadgeContext = createContext<BadgeContextType | undefined>(undefined);
 
 export function BadgeProvider({ children }: { children: ReactNode }) {
-  const { userType, conciergerieData } = useAuth();
+  const { userType, conciergerieName } = useAuth();
   const { missions } = useMissions();
 
   const [pendingEmployeesCount, setPendingEmployeesCount] = useState(0);
   const [newMissionsCount, setNewMissionsCount] = useState(0);
   const [todayMissionsCount, setTodayMissionsCount] = useState(0);
   const [startedMissionsCount, setStartedMissionsCount] = useState(0);
-
-  // Get user type and conciergerie data
-  const conciergerieName = conciergerieData?.name || null;
 
   // Load and update pending employees count for conciergerie
   useEffect(() => {

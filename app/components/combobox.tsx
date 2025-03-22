@@ -13,7 +13,6 @@ type ComboboxProps = {
   className?: string;
   error?: boolean;
   disabled?: boolean;
-  borderColor?: string;
 };
 
 export default function Combobox({

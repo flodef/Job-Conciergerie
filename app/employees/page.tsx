@@ -21,23 +21,20 @@ export default function EmployeesList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const { userType, conciergerieData, isLoading: authLoading } = useAuth();
+  const { userType, conciergerieName, isLoading: authLoading } = useAuth();
 
   // Load employees on component mount - must be called before any conditional returns
   useEffect(() => {
     // Skip if still loading
-    if (authLoading || !userType) return;
+    if (authLoading || !userType || !conciergerieName) return;
 
     const allEmployees = getEmployees();
-
-    // Get current conciergerie from auth context
-    const conciergerieName = conciergerieData?.name || null;
 
     // Filter employees by conciergerie
     const filteredEmployees = filterEmployeesByConciergerie(allEmployees, conciergerieName);
 
     setEmployees(sortEmployees(filteredEmployees));
-  }, [conciergerieData?.name, authLoading, userType]);
+  }, [conciergerieName, authLoading, userType]);
 
   // Filter employees by status
   const pendingEmployees = employees.filter(

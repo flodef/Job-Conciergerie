@@ -23,10 +23,10 @@ type MissionFormProps = {
 
 export default function MissionForm({ mission, onClose, onCancel, mode }: MissionFormProps) {
   const { homes, addMission, updateMission, missionExists } = useMissions();
-  const { conciergerieData } = useAuth();
+  const { conciergerieName } = useAuth();
 
   // Filter homes by the current conciergerie
-  const filteredHomes = homes.filter(home => home.conciergerieName === conciergerieData?.name);
+  const filteredHomes = homes.filter(home => home.conciergerieName === conciergerieName);
 
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
   const [tasksState, setTasks] = useState<Task[]>(mission?.tasks || []);

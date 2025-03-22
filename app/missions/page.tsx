@@ -6,7 +6,6 @@ import LoadingSpinner from '@/app/components/loadingSpinner';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { useTheme } from '@/app/contexts/themeProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import MissionFilters from '@/app/missions/components/missionFilters';
@@ -25,8 +24,7 @@ import { useEffect, useMemo, useState } from 'react';
 export default function Missions() {
   const { missions, isLoading: missionsLoading } = useMissions();
   const { homes } = useHomes();
-  const { setPrimaryColor, resetPrimaryColor } = useTheme();
-  const { userType, conciergerieData, isLoading: authLoading } = useAuth();
+  const { userType, isLoading: authLoading } = useAuth();
 
   // Modal states - must be declared before any conditional returns
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -84,18 +82,6 @@ export default function Missions() {
       }
     }
   }, [authLoading, userType]);
-
-  // Set primary color from welcome params - must be called before any conditional returns
-  useEffect(() => {
-    // Skip if still loading
-    if (authLoading || !userType) return;
-
-    if (userType === 'conciergerie' && conciergerieData?.color) {
-      setPrimaryColor(conciergerieData.color);
-    } else {
-      resetPrimaryColor();
-    }
-  }, [setPrimaryColor, resetPrimaryColor, conciergerieData, userType, authLoading]);
 
   // Basic filtered missions (by user type) - must be declared before any conditional returns
   const basicFilteredMissions = useMemo(() => {

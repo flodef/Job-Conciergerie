@@ -16,21 +16,13 @@ type HomeCardProps = {
 export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
   // Get the conciergerie color from the home data
   const { getConciergerieByName } = useMissions();
-  const [conciergerie, setConciergerie] = useState<Conciergerie | null>(null);
+  const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
 
   // Fetch conciergerie data when home changes
   useEffect(() => {
-    const loadConciergerieData = async () => {
-      try {
-        const conciergerieData = await getConciergerieByName(home.conciergerieName);
-        setConciergerie(conciergerieData);
-      } catch (error) {
-        console.error(`Error fetching conciergerie ${home.conciergerieName}:`, error);
-      }
-    };
-
-    loadConciergerieData();
+    const conciergerieData = getConciergerieByName(home.conciergerieName);
+    setConciergerie(conciergerieData);
   }, [home.conciergerieName, getConciergerieByName]);
 
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -68,10 +60,7 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
       <ul className="list-none pl-0 space-y-1 mb-2">
         {home.objectives.slice(0, 3).map((objective, index) => (
           <li key={index} className="flex items-start">
-            <span
-              className="inline-block w-2 h-2 mt-1 mr-2 flex-shrink-0 border border-foreground"
-              style={{ borderColor: 'var(--color-foreground)' }}
-            />
+            <span className="inline-block w-2 h-2 mt-1 mr-2 flex-shrink-0 border border-foreground" />
             <span className="text-xs text-foreground truncate">{objective}</span>
           </li>
         ))}

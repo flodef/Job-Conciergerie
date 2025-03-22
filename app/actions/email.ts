@@ -30,14 +30,10 @@ export async function sendConciergerieVerificationEmail(
   email: string,
   name: string,
   userId: string,
+  baseUrl: string,
 ): Promise<{ success: boolean; error?: unknown }> {
   try {
     // Create the verification URL
-    const baseUrl =
-      process.env.NODE_ENV === 'production'
-        ? 'https://job-conciergerie.vercel.app' // TODO: Replace with your production URL
-        : 'http://localhost:3000';
-
     const verificationUrl = `${baseUrl}/${userId}`;
 
     // Send the email

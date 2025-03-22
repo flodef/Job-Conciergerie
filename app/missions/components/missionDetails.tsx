@@ -46,13 +46,13 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     completeMission,
     setShouldShowAcceptWarning,
     missions,
-    getConciergerieByName,
     getHomeById,
     getEmployeeById,
+    getConciergerieByName,
   } = useMissions();
 
   const [toastMessage, setToastMessage] = useState<ToastProps>();
-  const { userType, employeeData, conciergerieData } = useAuth();
+  const { userId, userType, conciergerieName } = useAuth();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -66,42 +66,24 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [isDeleteWarningModalOpen, setIsDeleteWarningModalOpen] = useState(false);
 
   // Get the conciergerie from the mission data
-  const [conciergerie, setConciergerie] = useState<Conciergerie | null>(null);
+  const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
 
   // Fetch conciergerie data when mission changes
   useEffect(() => {
-    const loadConciergerieData = async () => {
-      try {
-        const conciergerieData = await getConciergerieByName(mission.conciergerieName);
-        setConciergerie(conciergerieData);
-      } catch (error) {
-        console.error(`Error fetching conciergerie ${mission.conciergerieName}:`, error);
-      }
-    };
-
-    loadConciergerieData();
+    const conciergerieData = getConciergerieByName(mission.conciergerieName);
+    setConciergerie(conciergerieData);
   }, [mission.conciergerieName, getConciergerieByName]);
 
   // Get the home data
   const home = getHomeById(mission.homeId);
 
   const isEmployee = userType === 'employee';
+  const isConciergerie = userType === 'conciergerie';
 
   useEffect(() => {
-    // Check if the current conciergerie is the one that created the mission
-    if (isEmployee) {
-      // Employees can never edit missions
-      setIsReadOnly(true);
-    } else if (mission.conciergerieName === conciergerieData?.name) {
-      // Conciergerie can edit their own missions
-      // Always allow editing if mission hasn't been started
-      setIsReadOnly(false);
-    } else {
-      // Default to read-only
-      setIsReadOnly(true);
-    }
-  }, [mission, conciergerieData, isEmployee]);
+    setIsReadOnly(isEmployee || (isConciergerie && mission.conciergerieName !== conciergerieName));
+  }, [mission, conciergerieName, isEmployee, isConciergerie]);
 
   const handleDelete = () => {
     deleteMission(mission.id);
@@ -162,12 +144,9 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   // Check if the employee can accept the mission
   const canAcceptMission = isEmployee && !employee;
 
-  // Get the employee data from localStorage
-  const currentEmployeeId = employeeData?.id;
-
   // Calculate the total points the employee has for each day of the mission
   const [hasExceededPoints] = (() => {
-    if (!canAcceptMission || !currentEmployeeId) return [false, 0];
+    if (!canAcceptMission || !userId) return [false, 0];
 
     // Get the mission points
     const { pointsPerDay } = calculateMissionPoints(mission);
@@ -187,7 +166,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
     // Check each day in the range
     while (currentDate <= lastDate) {
-      const pointsForDay = calculateEmployeePointsForDay(currentEmployeeId, new Date(currentDate), missions);
+      const pointsForDay = calculateEmployeePointsForDay(userId, new Date(currentDate), missions);
 
       // Keep track of the maximum points for any day
       maxPointsForAnyDay = Math.max(maxPointsForAnyDay, pointsForDay);
@@ -426,8 +405,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           isEmployee={isEmployee}
           isReadOnly={isReadOnly}
           isFromCalendar={isFromCalendar}
-          currentEmployeeId={currentEmployeeId || ''}
-          userType={userType || 'employee'}
           onEdit={() => {
             if (mission.employeeId) {
               setIsEditWarningModalOpen(true);
@@ -480,8 +457,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           isEmployee={isEmployee}
           isReadOnly={isReadOnly}
           isFromCalendar={isFromCalendar}
-          currentEmployeeId={currentEmployeeId || ''}
-          userType={userType || 'employee'}
           onEdit={() => {
             if (mission.employeeId) {
               setIsEditWarningModalOpen(true);

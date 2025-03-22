@@ -3,7 +3,6 @@
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { useTheme } from '@/app/contexts/themeProvider';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import { Conciergerie, Mission } from '@/app/types/types';
 import {
@@ -22,8 +21,7 @@ import clsx from 'clsx/lite';
 import { useEffect, useState } from 'react';
 
 export default function Calendar() {
-  const { setPrimaryColor, resetPrimaryColor } = useTheme();
-  const { userType, conciergerieData, employeeData, isLoading: authLoading } = useAuth();
+  const { userId, userType, conciergerieName, isLoading: authLoading } = useAuth();
   const { missions, isLoading, getConciergerieByName } = useMissions();
 
   const [acceptedMissions, setAcceptedMissions] = useState<Mission[]>([]);
@@ -32,49 +30,11 @@ export default function Calendar() {
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
   const [conciergerieMap, setConciergerieMap] = useState<Map<string, Conciergerie>>(new Map());
 
-  const [currentEmployeeId, setCurrentEmployeeId] = useState<string | undefined>(undefined);
-  const [currentConciergerieName, setCurrentConciergerieName] = useState<string | undefined>(undefined);
-  const [isClient, setIsClient] = useState(false);
   const [startedMissionsCount, setStartedMissionsCount] = useState(0);
   const [lateMissionsCount, setLateMissionsCount] = useState(0);
 
   const isEmployee = userType === 'employee';
   const isConciergerie = userType === 'conciergerie';
-
-  // Apply theme color on component mount - must be called before any conditional returns
-  useEffect(() => {
-    // Skip if still loading
-    if (authLoading || !userType) return;
-
-    // Using data directly from auth context instead of localStorage
-    if (userType === 'employee' && employeeData?.conciergerieName) {
-      // For employees, use the color of their conciergerie
-      if (conciergerieData && conciergerieData.color) {
-        setPrimaryColor(conciergerieData.color);
-      } else {
-        resetPrimaryColor();
-      }
-    } else if (userType === 'conciergerie') {
-      // For conciergeries, use their own color
-      if (conciergerieData && conciergerieData.color) {
-        setPrimaryColor(conciergerieData.color);
-      } else {
-        resetPrimaryColor();
-      }
-    } else {
-      resetPrimaryColor();
-    }
-  }, [setPrimaryColor, resetPrimaryColor, userType, conciergerieData, employeeData, authLoading]);
-
-  // First useEffect to handle client-side initialization
-  useEffect(() => {
-    setIsClient(true);
-    if (isEmployee) {
-      setCurrentEmployeeId(employeeData?.id);
-    } else if (isConciergerie) {
-      setCurrentConciergerieName(conciergerieData?.name);
-    }
-  }, [employeeData, conciergerieData, isEmployee, isConciergerie]);
 
   // Load conciergerie data for all missions
   useEffect(() => {
@@ -106,15 +66,15 @@ export default function Calendar() {
 
     let filteredMissions: Mission[] = [];
 
-    if (isEmployee && currentEmployeeId) {
+    if (isEmployee) {
       // For employees: show missions accepted by this employee
       filteredMissions = missions.filter(
-        mission => mission.employeeId === currentEmployeeId && !mission.deleted && mission.status !== 'completed',
+        mission => mission.employeeId === userId && !mission.deleted && mission.status !== 'completed',
       );
-    } else if (isConciergerie && currentConciergerieName) {
+    } else if (isConciergerie) {
       // For conciergeries: show missions from this conciergerie that have been accepted by employees
       filteredMissions = missions.filter(
-        mission => mission.conciergerieName === currentConciergerieName && mission.employeeId && !mission.deleted,
+        mission => mission.conciergerieName === conciergerieName && mission.employeeId && !mission.deleted,
       );
     }
 
@@ -140,7 +100,7 @@ export default function Calendar() {
     // Sort dates
     const dates = Array.from(groupedMissions.keys());
     setSortedDates(sortDates(dates));
-  }, [missions, currentEmployeeId, currentConciergerieName, isEmployee, isConciergerie]);
+  }, [missions, userId, conciergerieName, isEmployee, isConciergerie]);
 
   const handleMissionClick = (mission: Mission) => {
     setSelectedMission(mission);
@@ -162,15 +122,7 @@ export default function Calendar() {
     );
   };
 
-  // Don't render anything until client-side hydration is complete
-  if (!isClient) {
-    return null;
-  }
-
-  if (isEmployee && !currentEmployeeId) return null;
-  if (isConciergerie && !currentConciergerieName) return null;
-
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-[calc(100dvh-9rem)] flex items-center justify-center bg-background">
         <LoadingSpinner size="large" text="Chargement du calendrier..." />
@@ -256,9 +208,9 @@ export default function Calendar() {
                     <span className="text-sm bg-primary/10 px-2 py-1 rounded-full text-nowrap">
                       {missionsForDate.length} mission{missionsForDate.length > 1 ? 's' : ''}
                     </span>
-                    {isEmployee && currentEmployeeId && (
+                    {isEmployee && userId && (
                       <span className="text-sm bg-green-100 text-green-700 px-2 py-1 rounded-full text-nowrap">
-                        {formatPoints(calculateEmployeePointsForDay(currentEmployeeId, date, missions))} pts
+                        {formatPoints(calculateEmployeePointsForDay(userId, date, missions))} pts
                       </span>
                     )}
                   </div>

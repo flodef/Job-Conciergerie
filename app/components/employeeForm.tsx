@@ -9,12 +9,12 @@ import Select from '@/app/components/select';
 import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useTheme } from '@/app/contexts/themeProvider';
 import { Conciergerie, Employee, EmployeeNotificationSettings } from '@/app/types/types';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
-import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 
 type EmployeeFormProps = {
   conciergeries: Conciergerie[];
@@ -22,8 +22,8 @@ type EmployeeFormProps = {
 };
 
 export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormProps) {
-  const { resetPrimaryColor } = useTheme();
-  const { userId, refreshUserData, isLoading: authLoading } = useAuth();
+  const { userId, isLoading: authLoading, setSentEmailError } = useAuth();
+  const router = useRouter();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
   const [formData, setFormData] = useLocalStorage<Partial<Employee>>('employee_data', {
@@ -64,10 +64,6 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
   // Constants for validation
   const MAX_NAME_LENGTH = 30;
   const MAX_MESSAGE_LENGTH = 500;
-
-  useEffect(() => {
-    resetPrimaryColor();
-  }, [resetPrimaryColor]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -251,6 +247,7 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
           type: ToastType.Error,
           message: 'Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.',
         });
+        setIsSubmitting(false);
         return;
       }
 
@@ -261,26 +258,17 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
       if (!selectedConciergerie) throw new Error('Conciergerie not found');
       if (!selectedConciergerie.email) throw new Error('Conciergerie email not found');
 
-      try {
-        const result = await sendEmployeeRegistrationEmail(
-          selectedConciergerie.email,
-          selectedConciergerie.name,
-          `${employee.firstName} ${employee.familyName}`,
-          employee.email,
-          employee.tel,
-        );
-        if (result && !result.success) {
-          console.error('Failed to send notification email to conciergerie:', result.error);
-        }
-      } catch (emailError) {
-        console.error('Error sending notification email:', emailError);
-      }
-
-      // Refresh user data to update the auth context
-      await refreshUserData();
+      const result = await sendEmployeeRegistrationEmail(
+        selectedConciergerie.email,
+        selectedConciergerie.name,
+        `${employee.firstName} ${employee.familyName}`,
+        employee.email,
+        employee.tel,
+      );
+      setSentEmailError(result?.success !== true);
 
       // Redirect to waiting page
-      window.location.href = '/waiting';
+      router.push('/waiting');
     } catch (error) {
       setToastMessage({
         type: ToastType.Error,
@@ -311,10 +299,10 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
     );
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>
-
+    <main className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
       <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+
+      <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>
 
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>
@@ -507,6 +495,6 @@ export default function EmployeeForm({ conciergeries, onClose }: EmployeeFormPro
           cancelText="Continuer l'édition"
         />
       </form>
-    </div>
+    </main>
   );
 }

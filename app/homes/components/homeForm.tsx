@@ -6,7 +6,6 @@ import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import ObjectiveList from '@/app/components/objectiveList';
 import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
-import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import geographicZonesData from '@/app/data/geographicZone.json';
 import { HomeData } from '@/app/types/types';
@@ -23,7 +22,6 @@ type HomeFormProps = {
 
 export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: HomeFormProps) {
   const { addHome, updateHome, homeExists } = useHomes();
-  const { conciergerieData } = useAuth();
 
   // Default mockup image path
   const mockupImagePath = '/home.webp';
@@ -445,7 +443,6 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
               onChange={setGeographicZone}
               placeholder="Sélectionnez une zone géographique..."
               error={isFormSubmitted && !geographicZone}
-              borderColor={conciergerieData?.color}
             />
           </div>
           {isFormSubmitted && !geographicZone && (

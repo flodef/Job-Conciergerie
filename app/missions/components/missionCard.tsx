@@ -13,21 +13,13 @@ type MissionCardProps = {
 };
 
 export default function MissionCard({ mission, onClick, onEdit }: MissionCardProps) {
-  const { getConciergerieByName, getHomeById, getEmployeeById } = useMissions();
-  const [conciergerie, setConciergerie] = useState<Conciergerie | null>(null);
+  const { getHomeById, getEmployeeById, getConciergerieByName } = useMissions();
+  const [conciergerie, setConciergerie] = useState<Conciergerie>();
 
   // Fetch conciergerie data when mission changes
   useEffect(() => {
-    const loadConciergerieData = async () => {
-      try {
-        const conciergerieData = await getConciergerieByName(mission.conciergerieName);
-        setConciergerie(conciergerieData);
-      } catch (error) {
-        console.error(`Error fetching conciergerie ${mission.conciergerieName}:`, error);
-      }
-    };
-
-    loadConciergerieData();
+    const conciergerieData = getConciergerieByName(mission.conciergerieName);
+    setConciergerie(conciergerieData);
   }, [mission.conciergerieName, getConciergerieByName]);
 
   const homeTitle = getHomeById(mission.homeId)?.title || 'Bien inconnu';

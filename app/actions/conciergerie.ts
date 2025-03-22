@@ -8,8 +8,8 @@ import {
   getAllConciergeries,
   getConciergerieById,
   updateConciergerie,
+  updateConciergerieId,
 } from '@/app/utils/db';
-import { neon } from '@neondatabase/serverless';
 import { revalidateTag } from 'next/cache';
 
 /**
@@ -150,15 +150,8 @@ export async function updateConciergerieWithUserId(
       return { success: true, message: 'Conciergerie already has the correct ID' };
     }
 
-    // Initialize neon client
-    const sql = neon(process.env.DATABASE_URL as string);
-
     // Update the conciergerie's ID in the database
-    await sql`
-      UPDATE conciergerie
-      SET id = ${userId}
-      WHERE name = ${conciergerieName}
-    `;
+    await updateConciergerieId(conciergerieName, userId);
 
     // Revalidate cache after update
     revalidateTag('conciergeries');

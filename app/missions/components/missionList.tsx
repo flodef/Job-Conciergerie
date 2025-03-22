@@ -38,7 +38,7 @@ export default function MissionList({
   setIsEditModalOpen,
   sortField,
 }: MissionListProps) {
-  const { conciergerieData } = useAuth();
+  const { conciergerieName } = useAuth();
 
   // Toggle category collapse
   const toggleCategory = (category: string) => {
@@ -127,7 +127,7 @@ export default function MissionList({
                     onClick={() => setSelectedMission(mission.id)}
                     onEdit={() => {
                       setSelectedMission(mission.id);
-                      if (mission.conciergerieName === conciergerieData?.name) setIsEditModalOpen(true);
+                      if (mission.conciergerieName === conciergerieName) setIsEditModalOpen(true);
                     }}
                   />
                 </div>

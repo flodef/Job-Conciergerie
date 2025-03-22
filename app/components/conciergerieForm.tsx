@@ -9,7 +9,8 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useTheme } from '@/app/contexts/themeProvider';
 import { Conciergerie } from '@/app/types/types';
 import { getColorValueByName } from '@/app/utils/color';
-import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 type ConciergerieFormProps = {
   conciergeries: Conciergerie[];
@@ -17,32 +18,27 @@ type ConciergerieFormProps = {
 };
 
 export default function ConciergerieForm({ conciergeries, onClose }: ConciergerieFormProps) {
-  const { setPrimaryColor, resetPrimaryColor } = useTheme();
-  const { selectedConciergerieName, setSelectedConciergerieName, isLoading: authLoading, userId } = useAuth();
+  const { setPrimaryColor } = useTheme();
+  const {
+    isLoading: authLoading,
+    userId,
+    setSentEmailError,
+    setConciergerieName: setSelectedConciergerieName,
+  } = useAuth();
+  const router = useRouter();
 
+  const [conciergerieName, setConciergerieName] = useState(conciergeries.at(0)?.name || '');
   const [toastMessage, setToastMessage] = useState<ToastProps>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const selectedConciergerie = conciergeries.find((c: Conciergerie) => c.name === selectedConciergerieName);
+    const selectedConciergerie = conciergeries.find((c: Conciergerie) => c.name === conciergerieName);
     const color = getColorValueByName(selectedConciergerie?.colorName);
     setPrimaryColor(color);
-  }, [selectedConciergerieName, setPrimaryColor, conciergeries]);
-
-  const selectConciergerie = useCallback(
-    (conciergerieName?: string) => {
-      if (!conciergeries.length) return;
-
-      const selectedConciergerie =
-        conciergeries.find((c: Conciergerie) => c.name === conciergerieName) || conciergeries[0];
-      setSelectedConciergerieName(selectedConciergerie.name);
-    },
-    [conciergeries, setSelectedConciergerieName],
-  );
+  }, [setPrimaryColor, conciergeries, conciergerieName]);
 
   const handleClose = () => {
-    setSelectedConciergerieName(undefined);
-    resetPrimaryColor();
+    setPrimaryColor(undefined);
     onClose();
   };
 
@@ -52,7 +48,7 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
     e.preventDefault();
     setIsFormSubmitted(true);
 
-    if (!selectedConciergerieName) {
+    if (!conciergerieName) {
       setToastMessage({
         type: ToastType.Error,
         message: 'Veuillez sélectionner une conciergerie',
@@ -66,25 +62,22 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
       if (!userId) throw new Error('User ID not found, cannot send verification email');
 
       // Get the selected conciergerie data
-      const selectedConciergerie = conciergeries.find(c => c.name === selectedConciergerieName);
+      const selectedConciergerie = conciergeries.find(c => c.name === conciergerieName);
       if (!selectedConciergerie) throw new Error('Conciergerie not found');
       if (!selectedConciergerie.email) throw new Error('Conciergerie email not found');
 
-      try {
-        const result = await sendConciergerieVerificationEmail(
-          selectedConciergerie.email,
-          selectedConciergerie.name,
-          userId!,
-        );
-        if (result && !result.success) {
-          console.error('Failed to send notification email to conciergerie:', result.error);
-        }
-      } catch (emailError) {
-        console.error('Error sending verification email:', emailError);
-      }
+      const result = await sendConciergerieVerificationEmail(
+        selectedConciergerie.email,
+        selectedConciergerie.name,
+        userId!,
+        window.location.origin,
+      );
+      setSentEmailError(result?.success !== true);
+
+      setSelectedConciergerieName(conciergerieName);
 
       // Redirect to waiting page
-      window.location.href = '/waiting';
+      router.push('/waiting');
     } catch (error) {
       setToastMessage({
         type: ToastType.Error,
@@ -113,28 +106,28 @@ export default function ConciergerieForm({ conciergeries, onClose }: Conciergeri
     );
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
-      <h2 className="text-2xl font-bold mb-4">Conciergerie</h2>
-
+    <main className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
       <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+
+      <h2 className="text-2xl font-bold mb-4">Conciergerie</h2>
 
       <form onSubmit={handleSubmit} className="max-w-64 w-full space-y-4">
         <div>
           <Select
             id="conciergerie"
-            value={selectedConciergerieName || ''}
-            onChange={selectConciergerie}
+            value={conciergerieName}
+            onChange={setConciergerieName}
             options={conciergeries.map(c => c.name)}
             placeholder="Sélectionnez une conciergerie"
-            error={isFormSubmitted && !selectedConciergerieName}
+            error={isFormSubmitted && !conciergerieName}
           />
-          {isFormSubmitted && !selectedConciergerieName && (
+          {isFormSubmitted && !conciergerieName && (
             <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une conciergerie</p>
           )}
         </div>
 
         <FormActions onCancel={handleClose} submitText="Valider" submitType="submit" isSubmitting={isSubmitting} />
       </form>
-    </div>
+    </main>
   );
 }

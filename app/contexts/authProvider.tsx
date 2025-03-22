@@ -1,27 +1,34 @@
 'use client';
 
-import { checkUserExists } from '@/app/actions/auth';
+import { fetchConciergeries } from '@/app/actions/conciergerie';
+import { fetchEmployees } from '@/app/actions/employee';
 import { Conciergerie, Employee } from '@/app/types/types';
+import { deleteCookie, setCookie } from '@/app/utils/cookies';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
-import { setCookie, deleteCookie } from '@/app/utils/cookies';
+import { routeMap } from '@/app/utils/navigation';
+import { useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 // Define the type for the auth context
 export type UserType = 'conciergerie' | 'employee' | undefined;
+export type UserData = Conciergerie | Employee | undefined;
 
 interface AuthContextType {
   userId: string | undefined;
   userType: UserType;
   updateUserType: (userType: UserType) => void;
-  selectedConciergerieName: string | undefined;
-  setSelectedConciergerieName: (name: string | undefined) => void;
-  conciergerieData: Conciergerie | undefined;
-  employeeData: Employee | undefined;
+  conciergerieName: string | undefined;
+  setConciergerieName: (name: string | undefined) => void;
+  sentEmailError: boolean | undefined;
+  setSentEmailError: (sentEmailError: boolean | undefined) => void;
+  userData: UserData;
+  conciergeries: Conciergerie[] | undefined;
+  employees: Employee[] | undefined;
   isLoading: boolean;
-  error: string | undefined;
-  refreshUserData: () => Promise<void>;
+  refreshData: () => Promise<void>;
   disconnect: () => void;
+  nuke: () => void;
 }
 
 // Create the auth context
@@ -29,25 +36,32 @@ const AuthContext = createContext<AuthContextType>({
   userId: undefined,
   userType: undefined,
   updateUserType: () => {},
-  selectedConciergerieName: undefined,
-  setSelectedConciergerieName: () => {},
-  conciergerieData: undefined,
-  employeeData: undefined,
+  conciergerieName: undefined,
+  setConciergerieName: () => {},
+  sentEmailError: undefined,
+  setSentEmailError: () => {},
+  userData: undefined,
+  conciergeries: undefined,
+  employees: undefined,
   isLoading: false,
-  error: undefined,
-  refreshUserData: async () => {},
+  refreshData: async () => {},
   disconnect: () => {},
+  nuke: () => {},
 });
 
 // Auth provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+
   const [userId, setUserId] = useLocalStorage<string>('user_id');
   const [userType, setUserType] = useLocalStorage<UserType>('user_type');
-  const [selectedConciergerieName, setSelectedConciergerieName] = useLocalStorage<string>('selected_conciergerie_name');
-  const [conciergerieData, setConciergerieData] = useState<Conciergerie>();
-  const [employeeData, setEmployeeData] = useState<Employee>();
+  const [conciergerieName, setConciergerieName] = useLocalStorage<string>('conciergerie_name');
+  const [sentEmailError, setSentEmailError] = useLocalStorage<boolean>('sent_email_error');
+
+  const [userData, setUserData] = useState<UserData>();
+  const [conciergeries, setConciergeries] = useState<Conciergerie[]>();
+  const [employees, setEmployees] = useState<Employee[]>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>();
 
   const updateUserId = useCallback(
     (userId: string | undefined) => {
@@ -60,7 +74,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [setUserId],
   );
-
   const updateUserType = useCallback(
     (userType: UserType) => {
       setUserType(userType);
@@ -74,11 +87,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   // Function to check if a user exists in the database
-  const checkUserInDatabase = useCallback(
+  const getDataFromDatabase = useCallback(
     async (id: string) => {
       try {
         setIsLoading(true);
-        setError(undefined);
 
         // Only proceed if we have a valid ID
         if (!id) {
@@ -86,58 +98,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Use the server action to check if the user exists
-        const { userType: foundUserType, userData } = await checkUserExists(id);
+        const conciergeries = await fetchConciergeries();
+        const employees = await fetchEmployees();
 
-        // Update state only if we have a valid user type, otherwise it means the user is still registering
-        if (foundUserType) updateUserType(foundUserType);
+        const employee = employees.find(e => e.id === id);
+        const newUserData = employee || conciergeries.find(c => c.id === id);
+        const isEmployee = !!newUserData && !!employee;
+        const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
+        const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
 
-        setEmployeeData(foundUserType === 'employee' ? (userData as Employee) : undefined);
-        setConciergerieData(foundUserType === 'conciergerie' ? (userData as Conciergerie) : undefined);
+        setConciergeries(conciergeries);
+        setEmployees(employees);
+        updateUserType(newUserType);
+        setUserData(newUserData);
+
+        // Special case where the userId cookie has been manually deleted
+        const allowedRoutes = Object.values(routeMap).filter(route => route !== '/');
+        if (newUserData && !allowedRoutes.includes(window.location.pathname)) {
+          router.refresh();
+        }
       } catch (err) {
-        console.error('Error checking user in database:', err);
-        setError('Error checking user in database');
+        console.error('Error fetching user data from database:', err);
       } finally {
         setIsLoading(false);
       }
     },
-    [updateUserType],
+    [updateUserType, router, userType],
   );
 
   // Function to refresh user data
-  const refreshUserData = async () => {
-    await checkUserInDatabase(userId!);
+  const refreshData = async () => {
+    await getDataFromDatabase(userId!);
   };
 
   // Initialize the auth provider
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const id = userId ?? generateSimpleId();
-        updateUserId(id);
-
-        // Check if the user exists in the database
-        // This will set the userType based on where the ID is found
-        await checkUserInDatabase(id);
-      } catch (err) {
-        console.error('Error initializing auth:', err);
-        setError('Error initializing auth');
-        setIsLoading(false);
-      }
+    const initializeData = async () => {
+      await getDataFromDatabase(id);
     };
 
+    const id = userId ?? generateSimpleId();
+    updateUserId(id);
+
     // Only run this once when the component mounts
-    initializeAuth();
+    initializeData();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const disconnect = () => {
-    // Clear only the user type from localStorage (keep other data)
+    // Clear all data from localStorage
     updateUserId(undefined);
     updateUserType(undefined);
-    setSelectedConciergerieName(undefined);
+    setConciergerieName(undefined);
+    setSentEmailError(undefined);
 
     // Force a full page reload to reset the app state
-    window.location.href = '/';
+    router.push('/');
+  };
+
+  const nuke = () => {
+    // Clear all data from localStorage
+    localStorage.clear();
+
+    // Force a full page reload to reset the app state
+    router.push('/');
   };
 
   return (
@@ -146,14 +169,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userId,
         userType,
         updateUserType,
-        selectedConciergerieName,
-        setSelectedConciergerieName,
-        conciergerieData,
-        employeeData,
+        conciergerieName,
+        setConciergerieName,
+        sentEmailError,
+        setSentEmailError,
+        userData,
+        conciergeries,
+        employees,
         isLoading,
-        error,
-        refreshUserData,
+        refreshData,
         disconnect,
+        nuke,
       }}
     >
       {children}
