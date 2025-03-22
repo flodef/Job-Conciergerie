@@ -2,11 +2,12 @@
 
 import { fetchConciergeries } from '@/app/actions/conciergerie';
 import { fetchEmployees } from '@/app/actions/employee';
+import { useMenuContext } from '@/app/contexts/menuProvider';
 import { Conciergerie, Employee } from '@/app/types/types';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
-import { routeMap } from '@/app/utils/navigation';
+import { navigationRoutes, Page } from '@/app/utils/navigation';
 import { useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
@@ -26,7 +27,7 @@ interface AuthContextType {
   conciergeries: Conciergerie[] | undefined;
   employees: Employee[] | undefined;
   isLoading: boolean;
-  refreshData: () => Promise<void>;
+  refreshData: (redirectPage?: Page) => Promise<void>;
   disconnect: () => void;
   nuke: () => void;
 }
@@ -51,6 +52,8 @@ const AuthContext = createContext<AuthContextType>({
 
 // Auth provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { onMenuChange } = useMenuContext();
+
   const router = useRouter();
 
   const [userId, setUserId] = useLocalStorage<string>('user_id');
@@ -88,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Function to check if a user exists in the database
   const getDataFromDatabase = useCallback(
-    async (id: string) => {
+    async (id: string, redirectPage?: Page) => {
       try {
         setIsLoading(true);
 
@@ -98,37 +101,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        const conciergeries = await fetchConciergeries();
-        const employees = await fetchEmployees();
+        const fetchedConciergeries = await fetchConciergeries();
+        const fetchedEmployees = await fetchEmployees();
 
-        const employee = employees.find(e => e.id === id);
-        const newUserData = employee || conciergeries.find(c => c.id === id);
-        const isEmployee = !!newUserData && !!employee;
+        const foundEmployee = fetchedEmployees.find(e => e.id === id);
+        const newUserData = foundEmployee || fetchedConciergeries.find(c => c.id === id);
+        const isEmployee = !!newUserData && !!foundEmployee;
         const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
         const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
 
-        setConciergeries(conciergeries);
-        setEmployees(employees);
+        console.warn('Loading data from database');
+
+        setConciergeries(fetchedConciergeries);
+        setEmployees(fetchedEmployees);
         updateUserType(newUserType);
         setUserData(newUserData);
 
         // Special case where the userId cookie has been manually deleted
-        const allowedRoutes = Object.values(routeMap).filter(route => route !== '/');
-        if (newUserData && !allowedRoutes.includes(window.location.pathname)) {
+        if (newUserData && !navigationRoutes.includes(window.location.pathname)) {
           router.refresh();
         }
+        if (redirectPage) onMenuChange(redirectPage);
       } catch (err) {
         console.error('Error fetching user data from database:', err);
+        onMenuChange(Page.Error);
       } finally {
         setIsLoading(false);
       }
     },
-    [updateUserType, router, userType],
+    [updateUserType, router, userType, onMenuChange],
   );
 
   // Function to refresh user data
-  const refreshData = async () => {
-    await getDataFromDatabase(userId!);
+  const refreshData = async (redirectPage?: Page) => {
+    await getDataFromDatabase(userId!, redirectPage);
   };
 
   // Initialize the auth provider

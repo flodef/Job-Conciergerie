@@ -3,14 +3,18 @@
 import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { useBadge } from '@/app/contexts/badgeProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { Page, pages } from '@/app/utils/navigation';
+import { navigationRoutes, Page, pages, routeMap } from '@/app/utils/navigation';
 import { IconBriefcase, IconCalendar, IconHome, IconSettings, IconUser } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { ReactNode, useEffect, useState } from 'react';
+import { useHomes } from '../contexts/homesProvider';
+import { useMissions } from '../contexts/missionsProvider';
 
 // Map pages to their respective icons
 const pageSettings: Record<Page, { icon: ReactNode; userType: UserType }> = {
   [Page.Welcome]: { icon: null, userType: undefined },
+  [Page.Waiting]: { icon: null, userType: undefined },
+  [Page.Error]: { icon: null, userType: undefined },
   [Page.Missions]: { icon: <IconBriefcase size={30} />, userType: undefined },
   [Page.Calendar]: { icon: <IconCalendar size={30} />, userType: undefined },
   [Page.Homes]: { icon: <IconHome size={30} />, userType: 'conciergerie' },
@@ -19,11 +23,13 @@ const pageSettings: Record<Page, { icon: ReactNode; userType: UserType }> = {
 };
 
 export default function NavigationLayout({ children }: { children: ReactNode }) {
-  const { isLoading, userType: authUserType } = useAuth();
+  const { userType: authUserType, isLoading: isAuthLoading } = useAuth();
+  const { isLoading: isLoadingMissions } = useMissions();
+  const { isLoading: isLoadingHomes } = useHomes();
   const { currentPage, onMenuChange } = useMenuContext();
 
   const [userType, setUserType] = useState<UserType>();
-  const [isHomePage, setIsHomePage] = useState(false);
+  const [isNavigationPage, setIsNavigationPage] = useState(false);
   const {
     pendingEmployeesCount,
     newMissionsCount,
@@ -33,11 +39,14 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     resetNewMissionsCount,
   } = useBadge();
 
+  const isLoading = isAuthLoading || isLoadingMissions || isLoadingHomes;
+
   useEffect(() => {
     // Check if we're on the homepage or waiting page
-    const path = window.location.pathname;
-    setIsHomePage(path === '/' || path === '/waiting');
-  }, []);
+    const path = currentPage ? routeMap[currentPage] : window.location.pathname;
+    const isNavigationPage = navigationRoutes.includes(path);
+    setIsNavigationPage(isNavigationPage);
+  }, [currentPage]);
 
   // Hack to handle user type change : listen for storage events to detect when user type changes
   useEffect(() => {
@@ -64,15 +73,10 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     onMenuChange(page);
   };
 
-  // Don't show navigation if user is not logged in
-  if (!userType) {
-    return <>{children}</>;
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       {/* Fixed header - hidden on home page */}
-      {!isHomePage && (
+      {isNavigationPage && (
         <header className="max-w-7xl mx-auto h-16 flex items-center justify-center">
           {/* Title */}
           <h1 className="text-2xl font-semibold text-foreground">{currentPage}</h1>
@@ -85,7 +89,11 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
         <div
           className={clsx(
             'bg-background px-4',
-            !isHomePage && !isLoading ? 'min-h-[calc(100dvh-9rem)] pb-24' : 'min-h-screen',
+            isNavigationPage
+              ? !isLoading
+                ? 'min-h-[calc(100dvh-4rem)] pb-20'
+                : 'h-[calc(100dvh-4rem)] pb-20'
+              : 'h-screen',
           )}
         >
           {children}
@@ -93,7 +101,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       </main>
 
       {/* Fixed bottom navigation bar - hidden on home page */}
-      {!isHomePage && (
+      {isNavigationPage && (
         <nav className="fixed bottom-0 left-0 right-0 h-20 bg-background border-t border-secondary z-40">
           <div className="max-w-7xl mx-auto flex justify-around h-full">
             {pages

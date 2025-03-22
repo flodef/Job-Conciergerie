@@ -30,10 +30,8 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
 
   // Initialize currentPage based on URL path when component mounts
   useEffect(() => {
-    console.log('routeMap', window.location.pathname);
     const path = window.location.pathname;
     const page = Object.entries(routeMap).find(([key, route]) => key && route === path)?.[0] as Page | undefined;
-    console.log('page', page);
     if (page) {
       setCurrentPage(page);
     }
@@ -45,9 +43,9 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
 
       setIsMenuOpen(false);
       if (!hasUnsavedChanges) {
+        router.push(routeMap[page]);
         setCurrentPage(page);
         setPendingPage(undefined);
-        router.push(routeMap[page]);
       } else {
         setShouldShowConfirmClose(true);
         setPendingPage(page);

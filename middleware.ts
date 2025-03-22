@@ -1,4 +1,4 @@
-import { routeMap } from '@/app/utils/navigation';
+import { navigationRoutes } from '@/app/utils/navigation';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
       body: JSON.stringify({ userId }),
     });
 
-    if (!response.ok) {
+    if (!response?.ok || response?.status !== 200) {
       throw new Error('Failed to check user status');
     }
 
@@ -49,11 +49,8 @@ export async function middleware(request: NextRequest) {
 
     // Handle redirects based on user type and status
     if (userType === foundUserType) {
-      // Get all valid routes except the root
-      const allowedRoutes = Object.values(routeMap).filter(route => route !== '/');
-
       // If we're on an invalid path, redirect to missions
-      if (!allowedRoutes.includes(path)) {
+      if (!navigationRoutes.includes(path)) {
         return NextResponse.redirect(new URL('/missions', request.url));
       }
       return NextResponse.next();
