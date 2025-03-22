@@ -66,8 +66,9 @@ export async function middleware(request: NextRequest) {
     }
   } catch (error) {
     console.error('Middleware error:', error);
-    if (path !== '/') {
-      return NextResponse.redirect(new URL('/', request.url));
+    // Redirect to error page for database connection issues
+    if (path !== '/error') {
+      return NextResponse.redirect(new URL('/error', request.url));
     }
     return NextResponse.next();
   }
