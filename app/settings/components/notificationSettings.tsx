@@ -1,10 +1,10 @@
-import { fetchConciergerieById, updateConciergerieData } from '@/app/actions/conciergerie';
-import { fetchEmployeeById, updateEmployeeData } from '@/app/actions/employee';
+import { updateConciergerieData } from '@/app/actions/conciergerie';
+import { updateEmployeeData } from '@/app/actions/employee';
 import Switch from '@/app/components/switch';
-import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
-import { useAuth } from '@/app/contexts/authProvider';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/types/types';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 const conciergerieOptions = [
   { label: 'Missions acceptées', key: 'acceptedMissions' as const },
@@ -12,7 +12,6 @@ const conciergerieOptions = [
   { label: 'Missions terminées', key: 'completedMissions' as const },
   { label: 'Missions non démarrées à temps', key: 'missionsEndedWithoutStart' as const },
 ];
-
 const employeeOptions = [
   { label: 'Mission acceptée', key: 'acceptedMissions' as const },
   { label: 'Mission modifiée', key: 'missionChanged' as const },
@@ -26,7 +25,6 @@ const defaultConciergerieSettings: ConciergerieNotificationSettings = {
   completedMissions: true,
   missionsEndedWithoutStart: true,
 };
-
 const defaultEmployeeSettings: EmployeeNotificationSettings = {
   acceptedMissions: true,
   missionChanged: true,
@@ -34,36 +32,25 @@ const defaultEmployeeSettings: EmployeeNotificationSettings = {
   missionsCanceled: true,
 };
 
+const getDefaultSettings = (userType: UserType | undefined) => {
+  return {
+    conciergerie: defaultConciergerieSettings,
+    employee: defaultEmployeeSettings,
+  }[userType || 'employee'];
+};
+
 const NotificationSettings: React.FC = () => {
-  const { userId, userType } = useAuth();
+  const { userId, userType, getUserData, updateUserData } = useAuth();
+
   const [toastMessage, setToastMessage] = useState<Toast>();
   const [settings, setSettings] = useState<ConciergerieNotificationSettings | EmployeeNotificationSettings>(
-    userType === 'conciergerie' ? defaultConciergerieSettings : defaultEmployeeSettings,
+    getUserData()?.notificationSettings || getDefaultSettings(userType),
   );
   const options = userType === 'conciergerie' ? conciergerieOptions : employeeOptions;
 
-  useEffect(() => {
-    const fetchNotificationSettings = async () => {
-      try {
-        if (!userId || !userType) return;
-
-        const notificationSettings = {
-          conciergerie: (await fetchConciergerieById(userId))?.notificationSettings,
-          employee: (await fetchEmployeeById(userId))?.notificationSettings,
-        }[userType];
-
-        if (notificationSettings) {
-          setSettings(notificationSettings);
-        }
-      } catch (error) {
-        console.error('Error fetching notification settings:', error);
-      }
-    };
-
-    fetchNotificationSettings();
-  }, [userType, userId]);
-
   const handleToggle = <T extends ConciergerieNotificationSettings | EmployeeNotificationSettings>(key: keyof T) => {
+    if (!userType) return;
+
     // First update the local state
     const newSettings = {
       ...settings,
@@ -83,23 +70,28 @@ const NotificationSettings: React.FC = () => {
       if (!userType) throw new Error('User type not found');
 
       const updateData = {
-        conciergerie: updateConciergerieData(userId, {
-          notificationSettings: settings as ConciergerieNotificationSettings,
-        }),
-        employee: updateEmployeeData(userId, {
-          notificationSettings: settings as EmployeeNotificationSettings,
-        }),
+        conciergerie: async () => {
+          const data = await updateConciergerieData(userId, {
+            notificationSettings: settings as ConciergerieNotificationSettings,
+          });
+          if (!data) throw new Error('failed to update conciergerie in database');
+          updateUserData(data);
+        },
+        employee: async () => {
+          const data = await updateEmployeeData(userId, {
+            notificationSettings: settings as EmployeeNotificationSettings,
+          });
+          if (!data) throw new Error('failed to update employee in database');
+          updateUserData(data);
+        },
       }[userType];
 
-      const result = await updateData;
-      if (result) {
-        setToastMessage({
-          type: ToastType.Success,
-          message: 'Préférences de notification enregistrées',
-        });
-      } else {
-        throw new Error('Failed to update notification settings');
-      }
+      await updateData();
+
+      setToastMessage({
+        type: ToastType.Success,
+        message: 'Préférences de notification enregistrées',
+      });
     } catch (error) {
       setToastMessage({
         type: ToastType.Error,
