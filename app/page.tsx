@@ -13,7 +13,7 @@ export default function Home() {
   const [showConciergerieForm, setShowConciergerieForm] = useState(false);
 
   const handleUserTypeSelect = useCallback(
-    (type: UserType) => {
+    (type: UserType | undefined) => {
       // Save user type to localStorage
       updateUserType(type);
 

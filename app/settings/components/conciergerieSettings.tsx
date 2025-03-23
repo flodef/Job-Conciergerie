@@ -1,6 +1,6 @@
 import { updateConciergerieData } from '@/app/actions/conciergerie';
 import LoadingSpinner from '@/app/components/loadingSpinner';
-import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useTheme } from '@/app/contexts/themeProvider';
 import colorOptions from '@/app/data/colors.json';
@@ -15,7 +15,7 @@ type ColorOption = {
 };
 
 const ConciergerieSettings: React.FC = () => {
-  const { userId, conciergeries, isLoading: authLoading, userData } = useAuth();
+  const { userId, conciergeries, isLoading: authLoading, getUserData, updateUserData } = useAuth();
   const { setPrimaryColor } = useTheme();
 
   // Validation states
@@ -32,7 +32,7 @@ const ConciergerieSettings: React.FC = () => {
   const [tel, setTel] = useState('');
   const [selectedColor, setSelectedColor] = useState<ColorOption>();
   const [isSaving, setIsSaving] = useState(false);
-  const [toastMessage, setToastMessage] = useState<ToastProps>();
+  const [toastMessage, setToastMessage] = useState<Toast>();
 
   // Track original values for comparison
   const [originalEmail, setOriginalEmail] = useState('');
@@ -42,7 +42,8 @@ const ConciergerieSettings: React.FC = () => {
   // Load user info and set form values
   useEffect(() => {
     // Find the conciergerie that matches the name in localStorage
-    const conciergerie = userData as Conciergerie;
+    const conciergerie = getUserData<Conciergerie>();
+    if (!conciergerie) return;
 
     // Set current form values for conciergerie
     setEmail(conciergerie.email);
@@ -59,7 +60,7 @@ const ConciergerieSettings: React.FC = () => {
 
     // Apply theme color
     setPrimaryColor(conciergerie.color);
-  }, [setPrimaryColor, userId, userData]);
+  }, [setPrimaryColor, userId, getUserData]);
 
   // Check if a color is already used by another conciergerie
   const isColorUsed = (colorName: string) => {
@@ -132,21 +133,17 @@ const ConciergerieSettings: React.FC = () => {
     setIsSaving(true);
 
     try {
-      if (!userId) {
-        setToastMessage({
-          type: ToastType.Error,
-          message: 'Erreur: impossible de mettre à jour la conciergerie (ID manquant)',
-        });
-        setIsSaving(false);
-        return;
-      }
+      if (!userId) throw new Error('missing user ID');
 
       // Update in database if we have an ID
-      await updateConciergerieData(userId, {
+      const updatedConciergerie = await updateConciergerieData(userId, {
         email,
         tel,
         colorName: selectedColor?.name || '',
       });
+      if (!updatedConciergerie) throw new Error('failed to update conciergerie in database');
+
+      updateUserData(updatedConciergerie);
 
       // Update theme
       if (selectedColor) {

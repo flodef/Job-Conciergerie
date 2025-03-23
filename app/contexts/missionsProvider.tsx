@@ -39,7 +39,7 @@ export function MissionsProviderWrapper({ children }: { children: ReactNode }) {
 }
 
 function MissionsProvider({ children }: { children: ReactNode }) {
-  const { userData, conciergerieName, conciergeries } = useAuth();
+  const { getUserData, conciergerieName, conciergeries } = useAuth();
   const { homes } = useHomes();
   const [missions, setMissions] = useState<Mission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,7 +102,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     endDateTime: Date,
     excludeMissionId?: string,
   ): boolean => {
-    if (!userData) return false;
+    if (!getUserData()) return false;
 
     // Sort tasks to ensure consistent comparison
     const sortedTasks = [...tasks].sort((a, b) => a.label.localeCompare(b.label));
@@ -273,7 +273,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const employeeData = userData as Employee;
+    const employeeData = getUserData<Employee>();
     if (!employeeData) {
       console.error('No employee data found in localStorage');
       return;
@@ -328,7 +328,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (missionToStart.employeeId !== userData?.id) {
+    if (missionToStart.employeeId !== getUserData()?.id) {
       console.error('Not authorized to start this mission');
       return;
     }
@@ -364,7 +364,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (missionToComplete.employeeId !== userData?.id) {
+    if (missionToComplete.employeeId !== getUserData()?.id) {
       console.error('Not authorized to complete this mission');
       return;
     }

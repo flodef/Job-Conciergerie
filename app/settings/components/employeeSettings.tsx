@@ -1,6 +1,6 @@
 import { updateEmployeeData } from '@/app/actions/employee';
 import LoadingSpinner from '@/app/components/loadingSpinner';
-import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Employee } from '@/app/types/types';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
@@ -8,7 +8,7 @@ import { clsx } from 'clsx/lite';
 import React, { useEffect, useState } from 'react';
 
 const EmployeeSettings: React.FC = () => {
-  const { userId, isLoading: authLoading, userData } = useAuth();
+  const { userId, isLoading: authLoading, getUserData, updateUserData } = useAuth();
 
   // Validation states
   const [emailError, setEmailError] = useState('');
@@ -24,7 +24,7 @@ const EmployeeSettings: React.FC = () => {
   const [email, setEmail] = useState('');
   const [tel, setTel] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [toastMessage, setToastMessage] = useState<ToastProps>();
+  const [toastMessage, setToastMessage] = useState<Toast>();
 
   // Track original values for comparison
   const [originalEmail, setOriginalEmail] = useState('');
@@ -32,7 +32,8 @@ const EmployeeSettings: React.FC = () => {
 
   // Load user info and set form values
   useEffect(() => {
-    const employee = userData as Employee;
+    const employee = getUserData<Employee>();
+    if (!employee) return;
 
     // Set employee data for form
     setName(employee.firstName + ' ' + employee.familyName);
@@ -42,7 +43,7 @@ const EmployeeSettings: React.FC = () => {
     // Store original values for comparison
     setOriginalEmail(employee.email);
     setOriginalTel(employee.tel);
-  }, [userId, userData]);
+  }, [userId, getUserData]);
 
   const hasChanges = () => {
     const emailChanged = email !== originalEmail;
@@ -104,21 +105,17 @@ const EmployeeSettings: React.FC = () => {
     setIsSaving(true);
 
     try {
-      if (userId) {
-        await updateEmployeeData(userId, {
-          email,
-          tel,
-          message: undefined,
-          conciergerieName: undefined,
-        });
-      } else {
-        setToastMessage({
-          type: ToastType.Error,
-          message: 'Erreur: impossible de mettre à jour l&apos;employé (ID manquant)',
-        });
-        setIsSaving(false);
-        return;
-      }
+      if (!userId) throw new Error('missing user ID');
+
+      const updatedEmployee = await updateEmployeeData(userId, {
+        email,
+        tel,
+        message: undefined,
+        conciergerieName: undefined,
+      });
+      if (!updatedEmployee) throw new Error('failed to update employee in database');
+
+      updateUserData(updatedEmployee);
 
       // Update original values to match current values after save
       setOriginalEmail(email);

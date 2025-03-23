@@ -131,27 +131,17 @@ export async function createConciergerieData(data: Partial<Conciergerie>): Promi
  */
 export async function updateConciergerieWithUserId(
   userId: string,
-  conciergerieName: string,
+  conciergerieId: string,
 ): Promise<{ success: boolean; message?: string }> {
   try {
-    if (!conciergerieName) {
-      return { success: false, message: 'No conciergerie selected' };
-    }
-
-    // Fetch the conciergerie by name
-    const conciergerie = await fetchConciergerieByName(conciergerieName);
-
-    if (!conciergerie) {
-      return { success: false, message: 'Conciergerie not found' };
-    }
+    if (!userId) return { success: false, message: 'No user ID provided' };
+    if (!conciergerieId) return { success: false, message: 'No conciergerie selected' };
 
     // If the conciergerie already has the correct ID, we don't need to do anything
-    if (conciergerie.id === userId) {
-      return { success: true, message: 'Conciergerie already has the correct ID' };
-    }
+    if (conciergerieId === userId) return { success: true, message: 'Conciergerie already has the correct ID' };
 
     // Update the conciergerie's ID in the database
-    await updateConciergerieId(conciergerieName, userId);
+    await updateConciergerieId(conciergerieId, userId);
 
     // Revalidate cache after update
     revalidateTag('conciergeries');
@@ -165,6 +155,8 @@ export async function updateConciergerieWithUserId(
 
 export async function updateConciergerieData(id: string, data: Partial<Conciergerie>): Promise<Conciergerie | null> {
   try {
+    if (!id) return null;
+
     // Convert to DB format
     const dbData: Partial<DbConciergerie> = {
       name: data.name,

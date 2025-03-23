@@ -12,8 +12,8 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const { userData, userType } = useAuth();
-  const conciergerieData = userData as Conciergerie;
+  const { getUserData, userType } = useAuth();
+  const conciergerieData = getUserData<Conciergerie>();
 
   const setPrimaryColor = (color: string | undefined) => {
     if (typeof document !== 'undefined') {

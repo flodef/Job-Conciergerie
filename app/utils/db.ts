@@ -37,7 +37,7 @@ const CACHE_TIME = 60 * 60;
 /**
  * Check if a user exists and what type they are
  */
-export async function getExistingUserType(userId: string): Promise<UserType> {
+export async function getExistingUserType(userId: string): Promise<UserType | null> {
   try {
     const result = await sql`
       SELECT CASE 
@@ -47,10 +47,10 @@ export async function getExistingUserType(userId: string): Promise<UserType> {
       END AS result
     `;
 
-    return result[0].result ? (result[0].result as UserType) : undefined;
+    return result[0].result ? (result[0].result as UserType) : null;
   } catch (error) {
     console.error('Error checking user status:', error);
-    return undefined;
+    return null;
   }
 }
 
@@ -171,20 +171,20 @@ export const updateConciergerie = async (id: string | undefined, data: Partial<D
 /**
  * Update a conciergerie's ID
  */
-export const updateConciergerieId = async (conciergerieName: string, id: string) => {
+export const updateConciergerieId = async (conciergerieId: string, id: string) => {
   try {
-    if (!conciergerieName) throw new Error('No conciergerie name provided');
+    if (!conciergerieId) throw new Error('No conciergerie ID provided');
     if (!id) throw new Error('No ID provided');
 
     const result = await sql`
       UPDATE conciergerie
       SET id = ${id}
-      WHERE name = ${conciergerieName}
+      WHERE id = ${conciergerieId}
     `;
 
     return result.length > 0;
   } catch (error) {
-    console.error(`Error updating conciergerie with name ${conciergerieName}:`, error);
+    console.error(`Error updating conciergerie with id ${conciergerieId}:`, error);
     return false;
   }
 };

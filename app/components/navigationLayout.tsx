@@ -11,7 +11,7 @@ import { useHomes } from '../contexts/homesProvider';
 import { useMissions } from '../contexts/missionsProvider';
 
 // Map pages to their respective icons
-const pageSettings: Record<Page, { icon: ReactNode; userType: UserType }> = {
+const pageSettings: Record<Page, { icon: ReactNode; userType: UserType | undefined }> = {
   [Page.Welcome]: { icon: null, userType: undefined },
   [Page.Waiting]: { icon: null, userType: undefined },
   [Page.Error]: { icon: null, userType: undefined },

@@ -6,23 +6,24 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import Select from '@/app/components/select';
-import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useMenuContext } from '@/app/contexts/menuProvider';
 import { Employee, EmployeeNotificationSettings } from '@/app/types/types';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
-import React, { useState, useTransition } from 'react';
+import React, { useState } from 'react';
 
 type EmployeeFormProps = {
   onClose: () => void;
 };
 
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
-  const { userId, isLoading: authLoading, setSentEmailError, conciergeries, refreshData } = useAuth();
-  const [isPending, startTransition] = useTransition();
+  const { userId, isLoading: authLoading, setSentEmailError, conciergeries, updateUserData } = useAuth();
+  const { onMenuChange } = useMenuContext();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
   const [formData, setFormData] = useLocalStorage<Partial<Employee>>('employee_data', {
@@ -41,7 +42,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     },
   });
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
-  const [toastMessage, setToastMessage] = useState<ToastProps>();
+  const [toastMessage, setToastMessage] = useState<Toast>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormChanged, setIsFormChanged] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -229,6 +230,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     try {
       setIsSubmitting(true);
 
+      if (!userId) throw new Error('User ID not found');
+
       // Create a new employee in the database
       const { employee, alreadyExists } = await createNewEmployee({
         id: userId,
@@ -250,7 +253,9 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         return;
       }
 
-      if (!employee) throw new Error('Employee not found');
+      if (!employee) throw new Error('Employee not created in database');
+
+      updateUserData(employee);
 
       // Send notification email to conciergerie
       const selectedConciergerie = conciergeries?.find(c => c.name === employee.conciergerieName);
@@ -265,9 +270,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         employee.tel,
       );
       setSentEmailError(result?.success !== true);
-      startTransition(() => {
-        refreshData(Page.Waiting);
-      });
+
+      onMenuChange(Page.Waiting);
     } catch (error) {
       setToastMessage({
         type: ToastType.Error,
@@ -280,7 +284,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
   if (!formData) return null;
 
-  if (authLoading || isPending) return <LoadingSpinner />;
+  if (authLoading) return <LoadingSpinner />;
 
   if (!conciergeries?.length)
     return (
@@ -417,8 +421,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             }}
             options={conciergeries.map(c => c.name)}
             placeholder="Sélectionner une conciergerie"
-            error={isFormSubmitted && !formData.conciergerieName}
             disabled={isSubmitting}
+            error={isFormSubmitted && !formData.conciergerieName}
           />
           {isFormSubmitted && !formData.conciergerieName && (
             <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une conciergerie</p>

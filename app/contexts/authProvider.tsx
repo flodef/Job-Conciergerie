@@ -8,26 +8,26 @@ import { deleteCookie, setCookie } from '@/app/utils/cookies';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes, Page } from '@/app/utils/navigation';
-import { useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 // Define the type for the auth context
-export type UserType = 'conciergerie' | 'employee' | undefined;
-export type UserData = Conciergerie | Employee | undefined;
+export type UserType = 'conciergerie' | 'employee';
+export type UserData = Conciergerie | Employee;
 
 interface AuthContextType {
   userId: string | undefined;
-  userType: UserType;
-  updateUserType: (userType: UserType) => void;
+  userType: UserType | undefined;
+  updateUserType: (userType: UserType | undefined) => void;
   conciergerieName: string | undefined;
   setConciergerieName: (name: string | undefined) => void;
   sentEmailError: boolean | undefined;
   setSentEmailError: (sentEmailError: boolean | undefined) => void;
-  userData: UserData;
+  getUserData: <T extends UserData>() => T | undefined;
+  updateUserData: <T extends UserData>(updatedData: T) => void;
   conciergeries: Conciergerie[] | undefined;
   employees: Employee[] | undefined;
   isLoading: boolean;
-  refreshData: (redirectPage?: Page) => Promise<void>;
+  refreshData: () => void;
   disconnect: () => void;
   nuke: () => void;
 }
@@ -41,11 +41,12 @@ const AuthContext = createContext<AuthContextType>({
   setConciergerieName: () => {},
   sentEmailError: undefined,
   setSentEmailError: () => {},
-  userData: undefined,
+  getUserData: () => undefined,
+  updateUserData: () => {},
   conciergeries: undefined,
   employees: undefined,
   isLoading: false,
-  refreshData: async () => {},
+  refreshData: () => {},
   disconnect: () => {},
   nuke: () => {},
 });
@@ -53,8 +54,6 @@ const AuthContext = createContext<AuthContextType>({
 // Auth provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { onMenuChange } = useMenuContext();
-
-  const router = useRouter();
 
   const [userId, setUserId] = useLocalStorage<string>('user_id');
   const [userType, setUserType] = useLocalStorage<UserType>('user_type');
@@ -78,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [setUserId],
   );
   const updateUserType = useCallback(
-    (userType: UserType) => {
+    (userType: UserType | undefined) => {
       setUserType(userType);
       if (userType) {
         setCookie('user_type', userType);
@@ -89,9 +88,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [setUserType],
   );
 
+  const generateId = useCallback(() => {
+    const id = userId ?? generateSimpleId();
+    updateUserId(id);
+    return id;
+  }, [userId, updateUserId]);
+
+  // Function to refresh user data
+  const refreshData = useCallback(async () => {
+    generateId();
+    window.location.reload();
+  }, [generateId]);
+
   // Function to check if a user exists in the database
   const getDataFromDatabase = useCallback(
-    async (id: string, redirectPage?: Page) => {
+    async (id: string) => {
       try {
         setIsLoading(true);
 
@@ -117,11 +128,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateUserType(newUserType);
         setUserData(newUserData);
 
-        // Special case where the userId cookie has been manually deleted
-        if (newUserData && !navigationRoutes.includes(window.location.pathname)) {
-          router.refresh();
-        }
-        if (redirectPage) onMenuChange(redirectPage);
+        // Special case where the userId cookie or the userId in local storage has been manually deleted
+        const path = window.location.pathname;
+        if ((newUserData && !navigationRoutes.includes(path)) || (!newUserData && navigationRoutes.includes(path)))
+          refreshData();
       } catch (err) {
         console.error('Error fetching user data from database:', err);
         onMenuChange(Page.Error);
@@ -129,26 +139,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     },
-    [updateUserType, router, userType, onMenuChange],
+    [updateUserType, userType, onMenuChange, refreshData],
   );
-
-  // Function to refresh user data
-  const refreshData = async (redirectPage?: Page) => {
-    await getDataFromDatabase(userId!, redirectPage);
-  };
 
   // Initialize the auth provider
   useEffect(() => {
-    const initializeData = async () => {
+    const initializeData = async (id: string) => {
       await getDataFromDatabase(id);
     };
 
-    const id = userId ?? generateSimpleId();
-    updateUserId(id);
+    const id = generateId();
 
     // Only run this once when the component mounts
-    initializeData();
+    initializeData(id);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const getUserData = <T extends Employee | Conciergerie>(): T | undefined => {
+    if (userType === 'employee') {
+      return userData as T; // Assumes T is Employee
+    } else if (userType === 'conciergerie') {
+      return userData as T; // Assumes T is Conciergerie
+    }
+    return undefined;
+  };
+
+  const updateUserData = <T extends Employee | Conciergerie>(updatedData: T) => {
+    setUserData(updatedData);
+
+    if (userType === 'employee') {
+      setEmployees(prev => {
+        if (!prev) return [updatedData as Employee];
+        const exists = prev.some(e => e.id === updatedData.id);
+        if (exists) {
+          return prev.map(e => (e.id === updatedData.id ? (updatedData as Employee) : e));
+        }
+        return [...prev, updatedData as Employee];
+      });
+    } else if (userType === 'conciergerie') {
+      setConciergeries(prev => {
+        if (!prev) return [updatedData as Conciergerie];
+        const exists = prev.some(c => c.id === updatedData.id);
+        if (exists) {
+          return prev.map(c => (c.id === updatedData.id ? (updatedData as Conciergerie) : c));
+        }
+        return [...prev, updatedData as Conciergerie];
+      });
+    }
+  };
 
   const disconnect = () => {
     // Clear all data from localStorage
@@ -158,7 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSentEmailError(undefined);
 
     // Force a full page reload to reset the app state
-    router.push('/');
+    refreshData();
   };
 
   const nuke = () => {
@@ -166,7 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.clear();
 
     // Force a full page reload to reset the app state
-    router.push('/');
+    refreshData();
   };
 
   return (
@@ -179,7 +216,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setConciergerieName,
         sentEmailError,
         setSentEmailError,
-        userData,
+        getUserData,
+        updateUserData,
         conciergeries,
         employees,
         isLoading,

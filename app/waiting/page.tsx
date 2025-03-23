@@ -2,7 +2,7 @@
 
 import { loadEmail, sendConciergerieVerificationEmail, sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import LoadingSpinner from '@/app/components/loadingSpinner';
-import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useTheme } from '@/app/contexts/themeProvider';
 import { Conciergerie, Employee } from '@/app/types/types';
@@ -10,18 +10,18 @@ import { convertUTCDateToUserTime, getTimeDifference } from '@/app/utils/date';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { RefreshButton } from '../components/button';
 
 export default function WaitingPage() {
   const {
     userId,
     userType,
     isLoading: authLoading,
-    disconnect,
     sentEmailError,
     setSentEmailError,
+    conciergerieName,
     conciergeries,
     employees,
-    conciergerieName,
   } = useAuth();
   const { setPrimaryColor } = useTheme();
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function WaitingPage() {
   const [employee, setEmployee] = useState<Employee>();
   const [daysWaiting, setDaysWaiting] = useState('');
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
-  const [toastMessage, setToastMessage] = useState<ToastProps>();
+  const [toastMessage, setToastMessage] = useState<Toast>();
 
   // Hack to make the action server works
   // eslint-disable-next-line
@@ -107,7 +107,7 @@ export default function WaitingPage() {
     [employees, conciergeries, setSentEmailError, sentEmailError],
   );
 
-  // Use a ref to track if we've already loaded the data to prevent infinite loops
+  // Use a ref to track if we've already loaded the data to prevenChargement des dont infinite loops
   const hasLoadedDataRef = useRef(false);
   useEffect(() => {
     // Wait for auth to be loaded or if we've already loaded the data
@@ -129,8 +129,7 @@ export default function WaitingPage() {
   }, [userId, userType, authLoading, handleConciergerie, handleEmployee, router]);
 
   // Show loading spinner while checking localStorage
-  if (isLoading || authLoading)
-    return <LoadingSpinner text={authLoading ? 'Identification...' : 'Chargement des données...'} />;
+  if (authLoading) return <LoadingSpinner />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -239,21 +238,14 @@ export default function WaitingPage() {
           </>
         ) : !isLoading ? (
           // Error state
-          <>
+          <div className="h-full flex flex-col items-center justify-center bg-background">
             <h1 className="text-2xl font-bold mb-4 text-center">Demande non trouvée</h1>
-            <p className="mb-4 text-center">
+            <p className="text-center">
               Nous n&apos;avons pas pu trouver votre demande. Veuillez retourner à la page d&apos;accueil et soumettre
               une nouvelle demande.
             </p>
-            <div className="flex justify-center mt-6">
-              <button
-                onClick={disconnect}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                Retour à l&apos;accueil
-              </button>
-            </div>
-          </>
+            <RefreshButton shouldDisconnect />
+          </div>
         ) : null}
       </div>
     </div>

@@ -1,16 +1,18 @@
 'use client';
 
 import { sendConciergerieVerificationEmail } from '@/app/actions/email';
+import { RefreshButton } from '@/app/components/button';
 import FormActions from '@/app/components/formActions';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import Select from '@/app/components/select';
-import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useTheme } from '@/app/contexts/themeProvider';
 import { Conciergerie } from '@/app/types/types';
 import { getColorValueByName } from '@/app/utils/color';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Page } from '../utils/navigation';
+import { useMenuContext } from '@/app/contexts/menuProvider';
 
 type ConciergerieFormProps = {
   onClose: () => void;
@@ -18,6 +20,7 @@ type ConciergerieFormProps = {
 
 export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const { setPrimaryColor } = useTheme();
+  const { onMenuChange } = useMenuContext();
   const {
     isLoading: authLoading,
     userId,
@@ -25,10 +28,9 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     setConciergerieName: setSelectedConciergerieName,
     conciergeries,
   } = useAuth();
-  const router = useRouter();
 
   const [conciergerieName, setConciergerieName] = useState(conciergeries?.at(0)?.name || '');
-  const [toastMessage, setToastMessage] = useState<ToastProps>();
+  const [toastMessage, setToastMessage] = useState<Toast>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -59,7 +61,9 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     try {
       setIsSubmitting(true);
 
-      if (!userId) throw new Error('User ID not found, cannot send verification email');
+      if (!userId) throw new Error('User ID not found');
+
+      setSelectedConciergerieName(conciergerieName);
 
       // Get the selected conciergerie data
       const selectedConciergerie = conciergeries?.find(c => c.name === conciergerieName);
@@ -74,10 +78,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       );
       setSentEmailError(result?.success !== true);
 
-      setSelectedConciergerieName(conciergerieName);
-
-      // Redirect to waiting page
-      router.push('/waiting');
+      onMenuChange(Page.Waiting);
     } catch (error) {
       setToastMessage({
         type: ToastType.Error,
@@ -95,6 +96,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
         <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
         <p className="text-foreground">Aucune conciergerie trouvée !</p>
+        <RefreshButton />
       </div>
     );
 
@@ -112,6 +114,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
             onChange={setConciergerieName}
             options={conciergeries.map(c => c.name)}
             placeholder="Sélectionnez une conciergerie"
+            disabled={isSubmitting}
             error={isFormSubmitted && !conciergerieName}
           />
           {isFormSubmitted && !conciergerieName && (
