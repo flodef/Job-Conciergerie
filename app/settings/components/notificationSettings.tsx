@@ -1,7 +1,7 @@
 import { fetchConciergerieById, updateConciergerieData } from '@/app/actions/conciergerie';
 import { fetchEmployeeById, updateEmployeeData } from '@/app/actions/employee';
 import Switch from '@/app/components/switch';
-import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/types/types';
 import React, { useEffect, useState } from 'react';
@@ -36,7 +36,7 @@ const defaultEmployeeSettings: EmployeeNotificationSettings = {
 
 const NotificationSettings: React.FC = () => {
   const { userId, userType } = useAuth();
-  const [toastMessage, setToastMessage] = useState<ToastProps>();
+  const [toastMessage, setToastMessage] = useState<Toast>();
   const [settings, setSettings] = useState<ConciergerieNotificationSettings | EmployeeNotificationSettings>(
     userType === 'conciergerie' ? defaultConciergerieSettings : defaultEmployeeSettings,
   );

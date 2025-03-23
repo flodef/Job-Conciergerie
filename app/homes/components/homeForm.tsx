@@ -5,7 +5,7 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import ObjectiveList from '@/app/components/objectiveList';
-import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
 import { useHomes } from '@/app/contexts/homesProvider';
 import geographicZonesData from '@/app/data/geographicZone.json';
 import { HomeData } from '@/app/types/types';
@@ -36,7 +36,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const [geographicZones, setGeographicZones] = useState<string[]>([]);
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
-  const [toastMessage, setToastMessage] = useState<ToastProps>();
+  const [toastMessage, setToastMessage] = useState<Toast>();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [initialFormValues, setInitialFormValues] = useState<{
     title: string;

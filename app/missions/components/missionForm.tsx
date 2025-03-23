@@ -5,7 +5,7 @@ import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import MultiSelect from '@/app/components/multiSelect';
 import Select from '@/app/components/select';
-import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Employee, Mission, Task } from '@/app/types/types';
@@ -71,7 +71,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   );
 
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
-  const [toastMessage, setToastMessage] = useState<ToastProps>();
+  const [toastMessage, setToastMessage] = useState<Toast>();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Refs for form elements

@@ -1,42 +1,53 @@
 import { useEffect } from 'react';
 
 export enum ToastType {
-  Success,
-  Error,
-  Warning,
+  Success = 'success',
+  Error = 'error',
+  Warning = 'warning',
 }
 
-export interface ToastProps {
+export interface Toast {
   type: ToastType;
   message: string;
   error?: unknown;
 }
 
 interface ToastMessageProps {
-  toast?: ToastProps;
+  toast: Toast | undefined;
   onClose?: () => void;
 }
 
 export const ToastMessage = ({ toast, onClose }: ToastMessageProps) => {
-  const typeStyles = {
+  const typeStyles: Record<ToastType, string> = {
     [ToastType.Success]: 'bg-green-500 animate-fade-in-up',
     [ToastType.Error]: 'bg-[#fb8c8c] animate-shake',
     [ToastType.Warning]: 'bg-yellow-500 animate-fade-in-up',
   };
-  const typeIcon = {
+
+  const typeIcon: Record<ToastType, string> = {
     [ToastType.Success]: '✅ ',
     [ToastType.Error]: '❌ ',
     [ToastType.Warning]: '⚠️ ',
   };
 
+  // Log errors
   useEffect(() => {
-    if (toast?.error) console.error(toast.message, toast.error);
+    if (toast?.error) {
+      console.error(toast.message, toast.error);
+    }
   }, [toast?.message, toast?.error]);
 
-  // Auto-close the toast after 3 seconds if onClose is provided
-  if (onClose) {
-    setTimeout(onClose, 3000);
-  }
+  // Auto-close after 3 seconds
+  useEffect(() => {
+    if (!toast || !onClose) return;
+
+    const timer = setTimeout(() => {
+      onClose();
+    }, 3000);
+
+    // Cleanup timeout on unmount or toast change
+    return () => clearTimeout(timer);
+  }, [toast, onClose]); // Depend on `toast` to reset timer when it changes
 
   return (
     toast && (

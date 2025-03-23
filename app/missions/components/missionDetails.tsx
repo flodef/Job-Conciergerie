@@ -2,7 +2,7 @@
 
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
-import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeDetails from '@/app/homes/components/homeDetails';
@@ -51,7 +51,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     getConciergerieByName,
   } = useMissions();
 
-  const [toastMessage, setToastMessage] = useState<ToastProps>();
+  const [toastMessage, setToastMessage] = useState<Toast>();
   const { userId, userType, conciergerieName } = useAuth();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

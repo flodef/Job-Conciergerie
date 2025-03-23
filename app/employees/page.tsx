@@ -2,7 +2,7 @@
 
 import FullScreenModal from '@/app/components/fullScreenModal';
 import SearchInput from '@/app/components/searchInput';
-import { ToastMessage, ToastProps, ToastType } from '@/app/components/toastMessage';
+import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import { Employee } from '@/app/types/types';
@@ -19,7 +19,7 @@ import { useEffect, useState } from 'react';
 export default function EmployeesList() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [toastMessage, setToastMessage] = useState<ToastProps>();
+  const [toastMessage, setToastMessage] = useState<Toast>();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const { userType, conciergerieName, isLoading: authLoading } = useAuth();
 
