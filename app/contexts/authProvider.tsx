@@ -24,8 +24,8 @@ interface AuthContextType {
   setSentEmailError: (sentEmailError: boolean | undefined) => void;
   getUserData: <T extends UserData>() => T | undefined;
   updateUserData: <T extends UserData>(updatedData: T) => void;
-  conciergeries: Conciergerie[] | undefined;
-  employees: Employee[] | undefined;
+  conciergeries: Conciergerie[];
+  employees: Employee[];
   isLoading: boolean;
   refreshData: () => void;
   disconnect: () => void;
@@ -43,8 +43,8 @@ const AuthContext = createContext<AuthContextType>({
   setSentEmailError: () => {},
   getUserData: () => undefined,
   updateUserData: () => {},
-  conciergeries: undefined,
-  employees: undefined,
+  conciergeries: [],
+  employees: [],
   isLoading: false,
   refreshData: () => {},
   disconnect: () => {},
@@ -61,8 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [sentEmailError, setSentEmailError] = useLocalStorage<boolean>('sent_email_error');
 
   const [userData, setUserData] = useState<UserData>();
-  const [conciergeries, setConciergeries] = useState<Conciergerie[]>();
-  const [employees, setEmployees] = useState<Employee[]>();
+  const [conciergeries, setConciergeries] = useState<Conciergerie[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const updateUserId = useCallback(
@@ -120,9 +120,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const isEmployee = !!newUserData && !!foundEmployee;
         const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
         const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
+        const newConciergerieName = isConciergerie
+          ? newUserData
+            ? (newUserData as Conciergerie).name
+            : conciergerieName
+          : undefined;
 
         console.warn('Loading data from database');
 
+        setConciergerieName(newConciergerieName);
         setConciergeries(fetchedConciergeries);
         setEmployees(fetchedEmployees);
         updateUserType(newUserType);
@@ -139,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     },
-    [updateUserType, userType, onMenuChange, refreshData],
+    [updateUserType, userType, onMenuChange, refreshData, conciergerieName, setConciergerieName],
   );
 
   // Initialize the auth provider
