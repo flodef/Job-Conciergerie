@@ -1,6 +1,6 @@
 'use client';
 
-import CloseButton from '@/app/components/closeButton';
+import { CloseButton } from '@/app/components/button';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { ReactNode } from 'react';
