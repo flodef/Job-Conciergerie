@@ -1,18 +1,18 @@
 'use client';
 
 import { sendConciergerieVerificationEmail } from '@/app/actions/email';
-import { RefreshButton } from '@/app/components/button';
 import FormActions from '@/app/components/formActions';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import Select from '@/app/components/select';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useTheme } from '@/app/contexts/themeProvider';
+import ErrorPage from '@/app/components/error';
 import { Conciergerie } from '@/app/types/types';
 import { getColorValueByName } from '@/app/utils/color';
 import { useEffect, useState } from 'react';
 import { Page } from '../utils/navigation';
-import { useMenuContext } from '@/app/contexts/menuProvider';
 
 type ConciergerieFormProps = {
   onClose: () => void;
@@ -91,14 +91,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
 
   if (authLoading) return <LoadingSpinner />;
 
-  if (!conciergeries?.length)
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
-        <p className="text-foreground">Aucune conciergerie trouvée !</p>
-        <RefreshButton />
-      </div>
-    );
+  if (!conciergeries?.length) return <ErrorPage message="Aucune conciergerie trouvée !" />;
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">

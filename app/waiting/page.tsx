@@ -2,7 +2,7 @@
 
 import { loadEmail, sendConciergerieVerificationEmail, sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import LoadingSpinner from '@/app/components/loadingSpinner';
-import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useTheme } from '@/app/contexts/themeProvider';
 import { Conciergerie, Employee } from '@/app/types/types';
@@ -10,7 +10,7 @@ import { convertUTCDateToUserTime, getTimeDifference } from '@/app/utils/date';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RefreshButton } from '../components/button';
+import ErrorPage from '../components/error';
 
 export default function WaitingPage() {
   const {
@@ -238,14 +238,11 @@ export default function WaitingPage() {
           </>
         ) : !isLoading ? (
           // Error state
-          <div className="h-full flex flex-col items-center justify-center bg-background">
-            <h1 className="text-2xl font-bold mb-4 text-center">Demande non trouvée</h1>
-            <p className="text-center">
-              Nous n&apos;avons pas pu trouver votre demande. Veuillez retourner à la page d&apos;accueil et soumettre
-              une nouvelle demande.
-            </p>
-            <RefreshButton shouldDisconnect />
-          </div>
+          <ErrorPage
+            shouldDisconnect
+            title="Demande non trouvée"
+            message="Nous n'avons pas pu trouver votre demande. Veuillez retourner à la page d'accueil et soumettre une nouvelle demande."
+          />
         ) : null}
       </div>
     </div>

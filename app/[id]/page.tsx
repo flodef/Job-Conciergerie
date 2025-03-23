@@ -5,9 +5,9 @@ import LoadingSpinner from '@/app/components/loadingSpinner';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
+import ErrorPage from '@/app/components/error';
 import { Page } from '@/app/utils/navigation';
 import { use, useEffect, useState } from 'react';
-import { RefreshButton } from '@/app/components/button';
 
 export default function IdPage({ params }: { params: Promise<{ id: string }> }) {
   const { userId, conciergerieName, isLoading, updateUserData } = useAuth();
@@ -57,12 +57,5 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
 
   if (isLoading) return <LoadingSpinner />;
 
-  return (
-    error && (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <div className="text-red-500 text-2xl text-center">{error}</div>
-        <RefreshButton />
-      </div>
-    )
-  );
+  return error && <ErrorPage message={error} />;
 }
