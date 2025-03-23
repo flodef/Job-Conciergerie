@@ -53,7 +53,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
     };
 
     validateAndUpdateConciergerie();
-  }, [id, userId, conciergerieName, onMenuChange, getConciergerieByName, updateUserData]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) return <LoadingSpinner />;
 
