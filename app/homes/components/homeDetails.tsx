@@ -77,12 +77,33 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
     onClose();
   };
 
+  const footer = !isReadOnly && !isEmployee && (
+    <div className="sticky bottom-0 bg-background border-t border-secondary px-4 py-2 rounded-b-lg">
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => setIsEditMode(true)}
+          className="flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80"
+        >
+          <IconPencil />
+          Modifier
+        </button>
+        <button
+          onClick={handleDeleteClick}
+          className="flex flex-col items-center p-2 w-20 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+        >
+          <IconTrash />
+          Supprimer
+        </button>
+      </div>
+    </div>
+  );
+
   if (isEditMode) {
     return <HomeForm home={home} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" />;
   }
 
   return (
-    <FullScreenModal onClose={onClose} title="Détails du bien">
+    <FullScreenModal title={home.title} onClose={onClose} footer={footer}>
       {selectedImageIndex !== null && home.images && (
         <FullScreenModal
           title={`Photo de ${home.title}`}
@@ -92,11 +113,6 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
       )}
 
       <div className="space-y-2" data-home-details>
-        <div>
-          <h3 className="text-sm font-medium text-light">Titre</h3>
-          <p className="text-foreground font-bold">{home.title}</p>
-        </div>
-
         {home.images && home.images.length > 0 && (
           <div>
             <h3 className="text-sm font-medium text-light mb-2">Photos</h3>
@@ -139,27 +155,6 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
           </ul>
         </div>
       </div>
-
-      {!isReadOnly && !isEmployee && (
-        <div className="sticky bottom-0 bg-background border-t border-secondary py-2">
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={() => setIsEditMode(true)}
-              className="flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80"
-            >
-              <IconPencil />
-              Modifier
-            </button>
-            <button
-              onClick={handleDeleteClick}
-              className="flex flex-col items-center p-2 w-20 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
-            >
-              <IconTrash />
-              Supprimer
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Regular confirmation modal for deletion */}
       <ConfirmationModal

@@ -14,9 +14,6 @@ export default function EmployeeDetails({ employee }: EmployeeDetailsProps) {
   return (
     <div className="space-y-2">
       <div>
-        <h3 className="text-md font-semibold mb-2">
-          {employee.firstName} {employee.familyName}
-        </h3>
         <div className="text-sm text-foreground/70">
           Statut:{' '}
           <span

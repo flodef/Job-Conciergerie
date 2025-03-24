@@ -6,7 +6,7 @@ import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeDetails from '@/app/homes/components/homeDetails';
-import MissionActionButtons from '@/app/missions/components/missionActionButtons';
+import MissionActions from '@/app/missions/components/missionActions';
 import MissionForm from '@/app/missions/components/missionForm';
 import { Conciergerie, Mission } from '@/app/types/types';
 import { getColorValueByName } from '@/app/utils/color';
@@ -183,8 +183,88 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     return [false];
   })();
 
+  const footer = (
+    <>
+      {isFromCalendar ? (
+        <MissionActions
+          mission={mission}
+          isEmployee={isEmployee}
+          isReadOnly={isReadOnly}
+          isFromCalendar={isFromCalendar}
+          onEdit={() => {
+            if (mission.employeeId) {
+              setIsEditWarningModalOpen(true);
+            } else {
+              setIsEditMode(true);
+            }
+          }}
+          onDelete={() => {
+            if (mission.employeeId) {
+              setIsDeleteWarningModalOpen(true);
+            } else {
+              setIsDeleteModalOpen(true);
+            }
+          }}
+          onRemoveEmployee={handleRemoveEmployee}
+          onStartMission={startMission}
+          onCompleteMission={completeMission}
+          onClose={onClose}
+        />
+      ) : (
+        <MissionActions
+          mission={mission}
+          isEmployee={isEmployee}
+          isReadOnly={isReadOnly}
+          isFromCalendar={isFromCalendar}
+          onEdit={() => {
+            if (mission.employeeId) {
+              setIsEditWarningModalOpen(true);
+            } else {
+              setIsEditMode(true);
+            }
+          }}
+          onDelete={() => {
+            if (mission.employeeId) {
+              setIsDeleteWarningModalOpen(true);
+            } else {
+              setIsDeleteModalOpen(true);
+            }
+          }}
+          onRemoveEmployee={handleRemoveEmployee}
+          onStartMission={startMission}
+          onCompleteMission={completeMission}
+          onClose={onClose}
+        />
+      )}
+      {canAcceptMission && (
+        <div className="sticky bottom-0 bg-background border-t border-secondary py-2">
+          <div className="flex justify-end gap-2">
+            {hasExceededPoints && (
+              <div className="flex items-center text-center p-2 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+                <IconAlertTriangle size={16} className="mr-2 w-8 h-8" />
+                Le maximum de 3 points/jour est déjà atteint !
+              </div>
+            )}
+            <button
+              onClick={handleAcceptClick}
+              disabled={hasExceededPoints}
+              className={`flex flex-col items-center p-2 w-20 rounded-lg ${
+                hasExceededPoints
+                  ? 'bg-gray-100 text-gray-400/50 cursor-not-allowed'
+                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+              }`}
+            >
+              <IconCheck />
+              Accepter
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
   return (
-    <FullScreenModal onClose={onClose} title="Détails de la mission">
+    <FullScreenModal onClose={onClose} title="Détails de la mission" footer={footer}>
       <ToastMessage
         toast={toastMessage}
         onClose={() => {
@@ -397,86 +477,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           </div>
         )}
       </div>
-
-      {/* Display action buttons for non-calendar view */}
-      {!isFromCalendar && (
-        <MissionActionButtons
-          mission={mission}
-          isEmployee={isEmployee}
-          isReadOnly={isReadOnly}
-          isFromCalendar={isFromCalendar}
-          onEdit={() => {
-            if (mission.employeeId) {
-              setIsEditWarningModalOpen(true);
-            } else {
-              setIsEditMode(true);
-            }
-          }}
-          onDelete={() => {
-            if (mission.employeeId) {
-              setIsDeleteWarningModalOpen(true);
-            } else {
-              setIsDeleteModalOpen(true);
-            }
-          }}
-          onRemoveEmployee={handleRemoveEmployee}
-          onStartMission={startMission}
-          onCompleteMission={completeMission}
-          onClose={onClose}
-        />
-      )}
-      {canAcceptMission && (
-        <div className="sticky bottom-0 bg-background border-t border-secondary py-2">
-          <div className="flex justify-end gap-2">
-            {hasExceededPoints && (
-              <div className="flex items-center text-center p-2 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
-                <IconAlertTriangle size={16} className="mr-2 w-8 h-8" />
-                Le maximum de 3 points/jour est déjà atteint !
-              </div>
-            )}
-            <button
-              onClick={handleAcceptClick}
-              disabled={hasExceededPoints}
-              className={`flex flex-col items-center p-2 w-20 rounded-lg ${
-                hasExceededPoints
-                  ? 'bg-gray-100 text-gray-400/50 cursor-not-allowed'
-                  : 'bg-green-100 text-green-700 hover:bg-green-200'
-              }`}
-            >
-              <IconCheck />
-              Accepter
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Display action buttons for calendar view */}
-      {isFromCalendar && (
-        <MissionActionButtons
-          mission={mission}
-          isEmployee={isEmployee}
-          isReadOnly={isReadOnly}
-          isFromCalendar={isFromCalendar}
-          onEdit={() => {
-            if (mission.employeeId) {
-              setIsEditWarningModalOpen(true);
-            } else {
-              setIsEditMode(true);
-            }
-          }}
-          onDelete={() => {
-            if (mission.employeeId) {
-              setIsDeleteWarningModalOpen(true);
-            } else {
-              setIsDeleteModalOpen(true);
-            }
-          }}
-          onRemoveEmployee={handleRemoveEmployee}
-          onStartMission={startMission}
-          onCompleteMission={completeMission}
-          onClose={onClose}
-        />
-      )}
 
       <ConfirmationModal
         isOpen={isDeleteModalOpen}

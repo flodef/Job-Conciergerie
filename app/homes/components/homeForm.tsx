@@ -5,7 +5,7 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import ObjectiveList from '@/app/components/objectiveList';
-import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useHomes } from '@/app/contexts/homesProvider';
 import geographicZonesData from '@/app/data/geographicZone.json';
 import { HomeData } from '@/app/types/types';
@@ -100,8 +100,16 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     };
   }, [images]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCancel = () => {
+    if (checkFormChanged()) {
+      setShowConfirmDialog(true);
+    } else {
+      onClose();
+      onCancel?.();
+    }
+  };
+
+  const handleSubmit = () => {
     setIsFormSubmitted(true);
 
     // Check if images are uploaded
@@ -252,6 +260,14 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  const footer = (
+    <FormActions
+      submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+    />
+  );
+
   if (selectedImageIndex !== undefined) {
     return (
       <FullScreenModal
@@ -267,7 +283,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   }
 
   return (
-    <FullScreenModal title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'} onClose={onClose}>
+    <FullScreenModal title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'} onClose={onClose} footer={footer}>
       <ToastMessage
         toast={toastMessage}
         onClose={() => {
@@ -456,19 +472,6 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
             <p className="text-red-500 text-sm mt-1">Veuillez ajouter au moins un point particulier</p>
           )}
         </div>
-
-        <FormActions
-          onCancel={() => {
-            if (checkFormChanged()) {
-              setShowConfirmDialog(true);
-            } else {
-              onClose();
-              onCancel?.();
-            }
-          }}
-          submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
-          submitType="submit"
-        />
 
         <ConfirmationModal
           isOpen={showConfirmDialog}

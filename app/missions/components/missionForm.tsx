@@ -117,8 +117,16 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     return tasksChanged || homeIdChanged || startDateChanged || endDateChanged || prestatairesChanged;
   }, [homeId, tasksState, startDateTime, endDateTime, selectedPrestataires, initialFormValues]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCancel = () => {
+    if (checkFormChanged()) {
+      setShowConfirmDialog(true);
+    } else {
+      onClose();
+      onCancel?.();
+    }
+  };
+
+  const handleSubmit = () => {
     setIsFormSubmitted(true);
 
     // Check if home is selected
@@ -274,8 +282,20 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     }
   };
 
+  const footer = (
+    <FormActions
+      onCancel={handleCancel}
+      onSubmit={handleSubmit}
+      submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
+    />
+  );
+
   return (
-    <FullScreenModal title={mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'} onClose={onClose}>
+    <FullScreenModal
+      title={mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}
+      onClose={onClose}
+      footer={footer}
+    >
       <ToastMessage
         toast={toastMessage}
         onClose={() => {
@@ -405,19 +425,6 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               : 'Seuls les prestataires sélectionnés pourront voir cette mission'}
           </p>
         </div>
-
-        <FormActions
-          onCancel={() => {
-            if (checkFormChanged()) {
-              setShowConfirmDialog(true);
-            } else {
-              onClose();
-              onCancel?.();
-            }
-          }}
-          submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
-          submitType="submit"
-        />
 
         <ConfirmationModal
           isOpen={showConfirmDialog}
