@@ -334,7 +334,7 @@ export const updateEmployeeStatus = async (id: string | undefined, status: Emplo
     if (!id) throw new Error('No ID provided');
     const result = await sql`
       UPDATE employee
-      SET status = ${status}
+      SET status = ${status}, message = null, conciergerie_name = null
       WHERE id = ${id}
       RETURNING id, first_name, family_name, tel, email, message, conciergerie_name, notification_settings, status, created_at
     `;

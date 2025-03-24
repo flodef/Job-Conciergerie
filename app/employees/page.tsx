@@ -1,40 +1,53 @@
 'use client';
 
+import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import SearchInput from '@/app/components/searchInput';
-import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useMenuContext } from '@/app/contexts/menuProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import { Employee } from '@/app/types/types';
-import {
-  filterEmployees,
-  filterEmployeesByConciergerie,
-  getEmployees,
-  sortEmployees,
-  updateEmployeeStatus,
-} from '@/app/utils/employee';
+import { filterEmployees, filterEmployeesByConciergerie, sortEmployees } from '@/app/utils/employee';
+import { Page } from '@/app/utils/navigation';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function EmployeesList() {
+  const {
+    conciergerieName,
+    isLoading: authLoading,
+    employees: authEmployees,
+    fetchDataFromDatabase,
+    updateUserData,
+  } = useAuth();
+  const { currentPage } = useMenuContext();
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState<Toast>();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const { userType, conciergerieName, isLoading: authLoading } = useAuth();
 
-  // Load employees on component mount - must be called before any conditional returns
+  // Filter employees by conciergerie and sort them
   useEffect(() => {
     // Skip if still loading
-    if (authLoading || !userType || !conciergerieName) return;
-
-    const allEmployees = getEmployees();
+    if (authLoading || !conciergerieName) return;
 
     // Filter employees by conciergerie
-    const filteredEmployees = filterEmployeesByConciergerie(allEmployees, conciergerieName);
+    const filteredEmployees = filterEmployeesByConciergerie(authEmployees, conciergerieName);
 
     setEmployees(sortEmployees(filteredEmployees));
-  }, [conciergerieName, authLoading, userType]);
+  }, [conciergerieName, authLoading, authEmployees]);
+
+  // Reload employees when displaying the page
+  const isFetching = useRef(false);
+  useEffect(() => {
+    // Skip if still loading
+    if (authLoading || currentPage !== Page.Employees || isFetching.current) return;
+
+    isFetching.current = true;
+    fetchDataFromDatabase('employee');
+  }, [currentPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filter employees by status
   const pendingEmployees = employees.filter(
@@ -49,25 +62,28 @@ export default function EmployeesList() {
 
   // Handle status change
   const handleStatusChange = (id: string, newStatus: 'accepted' | 'rejected') => {
-    updateEmployeeStatus(id, newStatus);
+    // updateEmployeeStatus(id, newStatus);
+    // TODO: Update mission assignments if status changed to rejected (remove them from the mission)
 
-    // Update local state
-    const updatedEmployees = employees.map(emp =>
-      emp.id === id ? { ...emp, status: newStatus, message: undefined, conciergerieName: undefined } : emp,
-    );
+    updateEmployeeStatusAction(id, newStatus).then(updatedEmployee => {
+      if (updatedEmployee) {
+        // Update local state
+        updateUserData(updatedEmployee, 'employee');
 
-    setEmployees(sortEmployees(updatedEmployees));
-
-    // Show toast
-    const employee = employees.find(emp => emp.id === id);
-    if (employee) {
-      setToastMessage({
-        type: newStatus === 'accepted' ? ToastType.Success : ToastType.Error,
-        message: `${employee.firstName} ${employee.familyName} a été ${
-          newStatus === 'accepted' ? 'accepté' : 'rejeté'
-        }`,
-      });
-    }
+        setToastMessage({
+          type: newStatus === 'accepted' ? ToastType.Success : ToastType.Error,
+          message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été ${
+            newStatus === 'accepted' ? 'accepté' : 'rejeté'
+          }`,
+        });
+      } else {
+        setToastMessage({
+          type: ToastType.Error,
+          message: "Erreur lors de la mise à jour du statut de l'employé",
+        });
+        return;
+      }
+    });
   };
 
   // Handle employee selection
