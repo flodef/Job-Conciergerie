@@ -7,6 +7,7 @@ import AdvancedSettings from '@/app/settings/components/advancedSettings';
 import ConciergerieSettings from '@/app/settings/components/conciergerieSettings';
 import EmployeeSettings from '@/app/settings/components/employeeSettings';
 import NotificationSettings from '@/app/settings/components/notificationSettings';
+import { IconAdjustments, IconBell, IconSettings } from '@tabler/icons-react';
 
 export default function Settings() {
   const { userType, isLoading: authLoading } = useAuth();
@@ -25,14 +26,17 @@ export default function Settings() {
   const accordionItems = [
     {
       title: 'Général',
+      icon: <IconSettings size={20} />,
       content: generalSection,
     },
     {
       title: 'Notifications',
+      icon: <IconBell size={20} />,
       content: notificationsSection,
     },
     {
       title: 'Avancé',
+      icon: <IconAdjustments size={20} />,
       content: advancedSection,
     },
   ];
