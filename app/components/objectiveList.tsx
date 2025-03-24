@@ -81,7 +81,13 @@ export default function ObjectiveList({
             onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                addObjective();
+                // If this is the last objective, add a new one
+                if (index === objectives.length - 1) {
+                  addObjective();
+                } else {
+                  // Otherwise, move focus to the next objective
+                  inputRefs.current[index + 1]?.focus();
+                }
               } else if (e.key === 'Backspace' && objective === '') {
                 deleteObjective(index);
                 e.preventDefault();
