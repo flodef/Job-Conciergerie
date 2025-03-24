@@ -57,8 +57,10 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
 
   // Constants for validation
   const MAX_DESCRIPTION_LENGTH = 500;
+  const MAX_PHOTOS = 9;
   const isFormValid =
     (images.length > 0 || existingImages.length > 0) &&
+    images.length <= MAX_PHOTOS &&
     description.trim() !== '' &&
     objectives.some(objective => objective.trim() !== '') &&
     title.trim() !== '' &&
@@ -187,13 +189,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
 
         if (mode === 'add') {
           // Check for duplicate homes by title before adding
-          if (homeExists(title)) {
-            setToastMessage({
-              type: ToastType.Warning,
-              message: 'Un bien avec ce titre existe déjà',
-            });
-            return;
-          }
+          if (homeExists(title)) throw new Error('Un bien avec ce titre existe déjà');
 
           const result = addHome({
             title,
@@ -203,21 +199,13 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
             geographicZone,
           });
 
-          if (result === false) {
-            setToastMessage({ type: ToastType.Warning, message: 'Un bien avec ce titre existe déjà' });
-            return;
-          }
+          if (result === false) throw new Error('Un bien avec ce titre existe déjà');
 
           setToastMessage({ type: ToastType.Success, message: 'Bien ajouté avec succès !' });
         } else {
           if (home) {
             // For edit mode, only check for duplicates if the title has changed
-            if (title !== home.title) {
-              if (homeExists(title)) {
-                setToastMessage({ type: ToastType.Warning, message: 'Un bien avec ce titre existe déjà' });
-                return;
-              }
-            }
+            if (title !== home.title) if (homeExists(title)) throw new Error('Un bien avec ce titre existe déjà');
 
             updateHome({
               ...home,
@@ -231,7 +219,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           }
         }
       } catch (error) {
-        setToastMessage({ type: ToastType.Error, message: 'Une erreur est survenue', error });
+        setToastMessage({ type: ToastType.Error, message: String(error) });
       }
     }
   };
@@ -240,16 +228,40 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     const newFiles = Array.from(e.target.files || []);
     e.target.value = ''; // Reset obligatoire pour permettre la re-sélection
 
-    const duplicates = newFiles.some(newFile =>
-      images.some(existingFile => existingFile.name === newFile.name && existingFile.size === newFile.size),
+    // Filter out duplicates
+    const nonDuplicateFiles = newFiles.filter(
+      newFile => !images.some(existingFile => existingFile.name === newFile.name && existingFile.size === newFile.size),
     );
 
-    if (duplicates) {
-      setToastMessage({ type: ToastType.Error, message: 'Cette photo existe déjà dans la sélection !' });
-      return;
+    // Track if we found duplicates
+    const hasDuplicates = nonDuplicateFiles.length < newFiles.length;
+
+    // Calculate how many photos we can add without exceeding the limit
+    const currentTotal = existingImages.length + images.length;
+    const remainingSlots = Math.max(0, MAX_PHOTOS - currentTotal);
+    const exceedsLimit = nonDuplicateFiles.length > remainingSlots;
+
+    // Take only as many as we can fit
+    const filesToAdd = nonDuplicateFiles.slice(0, remainingSlots);
+
+    // Add the filtered files
+    if (filesToAdd.length > 0) {
+      setImages(prev => [...prev, ...filesToAdd]);
     }
 
-    setImages(prev => [...prev, ...newFiles]);
+    const message = exceedsLimit
+      ? `Vous ne pouvez pas ajouter plus de ${MAX_PHOTOS} photos au total`
+      : hasDuplicates
+      ? 'Certaines photos existent déjà dans la sélection !'
+      : '';
+
+    // Show appropriate toast message (prioritize the limit message)
+    if (message) {
+      setToastMessage({
+        type: ToastType.Warning,
+        message,
+      });
+    }
   };
 
   const removeExistingImage = (index: number) => {
@@ -377,7 +389,10 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
             <label
               ref={imageUploadRef}
               htmlFor="image-upload"
-              className="aspect-square flex items-center justify-center border-2 border-dashed border-foreground/30 rounded-lg hover:border-foreground/50 cursor-pointer transition-colors"
+              className={clsx(
+                'aspect-square flex items-center justify-center border-2 border-dashed border-foreground/30 rounded-lg hover:border-foreground/50 cursor-pointer transition-colors',
+                images.length >= MAX_PHOTOS && 'hidden',
+              )}
             >
               <span className="text-3xl text-foreground/50">+</span>
             </label>
