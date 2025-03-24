@@ -59,19 +59,19 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     try {
       setIsSubmitting(true);
 
-      if (!userId) throw new Error('User ID not found');
+      if (!userId) throw new Error('Identifiant non trouvé');
 
       setSelectedConciergerieName(conciergerieName);
 
       // Get the selected conciergerie data
       const selectedConciergerie = conciergeries?.find(c => c.name === conciergerieName);
-      if (!selectedConciergerie) throw new Error('Conciergerie not found');
-      if (!selectedConciergerie.email) throw new Error('Conciergerie email not found');
+      if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
+      if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
       const result = await sendConciergerieVerificationEmail(
         selectedConciergerie.email,
         selectedConciergerie.name,
-        userId!,
+        userId,
         window.location.origin,
       );
       setSentEmailError(result?.success !== true);
@@ -80,7 +80,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     } catch (error) {
       setToastMessage({
         type: ToastType.Error,
-        message: 'Une erreur est survenue lors de la mise à jour de la conciergerie',
+        message: String(error),
         error,
       });
       setIsSubmitting(false);

@@ -35,6 +35,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const [geographicZone, setGeographicZone] = useState<string>(home?.geographicZone || '');
   const [geographicZones, setGeographicZones] = useState<string[]>([]);
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [toastMessage, setToastMessage] = useState<Toast>();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -181,6 +182,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
 
     if (isFormValid) {
       try {
+        setIsSubmitting(true);
+
         // Always use the mockup image regardless of what was uploaded
         // Count how many images the user wanted to add
         const imageCount = existingImages.length + images.length;
@@ -198,28 +201,28 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
             images: imageUrls,
             geographicZone,
           });
-
-          if (result === false) throw new Error('Un bien avec ce titre existe déjà');
+          if (!result) throw new Error("Impossible d'ajouter le bien");
 
           setToastMessage({ type: ToastType.Success, message: 'Bien ajouté avec succès !' });
-        } else {
-          if (home) {
-            // For edit mode, only check for duplicates if the title has changed
-            if (title !== home.title) if (homeExists(title)) throw new Error('Un bien avec ce titre existe déjà');
+        } else if (home) {
+          // For edit mode, only check for duplicates if the title has changed
+          if (title !== home.title && homeExists(title)) throw new Error('Un bien avec ce titre existe déjà');
 
-            updateHome({
-              ...home,
-              title,
-              description,
-              objectives: objectives.filter(objective => objective.trim() !== ''),
-              images: imageUrls,
-              geographicZone,
-            });
-            setToastMessage({ type: ToastType.Success, message: 'Bien mis à jour avec succès !' });
-          }
+          const result = updateHome({
+            ...home,
+            title,
+            description,
+            objectives: objectives.filter(objective => objective.trim() !== ''),
+            images: imageUrls,
+            geographicZone,
+          });
+          if (!result) throw new Error('Impossible de mettre à jour le bien');
+
+          setToastMessage({ type: ToastType.Success, message: 'Bien mis à jour avec succès !' });
         }
       } catch (error) {
-        setToastMessage({ type: ToastType.Error, message: String(error) });
+        setToastMessage({ type: ToastType.Error, message: String(error), error });
+        setIsSubmitting(false);
       }
     }
   };
@@ -277,6 +280,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
       submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
       onSubmit={handleSubmit}
       onCancel={handleCancel}
+      isSubmitting={isSubmitting}
+      disabled={!checkFormChanged()}
     />
   );
 

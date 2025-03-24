@@ -67,6 +67,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   );
 
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<Toast>();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
@@ -158,86 +159,65 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     }
 
     if (isFormValid) {
-      const selectedHome = filteredHomes.find(h => h.id === homeId);
+      try {
+        setIsSubmitting(true);
 
-      if (!selectedHome) {
-        setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner un bien valide' });
-        return;
-      }
+        const selectedHome = filteredHomes.find(h => h.id === homeId);
+        if (!selectedHome) throw new Error('Veuillez sélectionner un bien valide');
 
-      // We'll just use the homeId now instead of embedding the full home object
+        // Convert string dates to Date objects
+        const startDate = new Date(startDateTime);
+        const endDate = new Date(endDateTime);
 
-      // Convert string dates to Date objects
-      const startDate = new Date(startDateTime);
-      const endDate = new Date(endDateTime);
+        if (mode === 'add') {
+          // Check if a mission with the same criteria already exists
+          if (
+            missionExists({
+              homeId: selectedHome.id,
+              tasks: tasksState,
+              startDateTime: startDate,
+              endDateTime: endDate,
+            })
+          )
+            throw new Error('Une mission identique existe déjà');
 
-      // Check for duplicate missions
-
-      if (mode === 'add') {
-        // Check if a mission with the same criteria already exists
-        if (
-          missionExists({ homeId: selectedHome.id, tasks: tasksState, startDateTime: startDate, endDateTime: endDate })
-        ) {
-          setToastMessage({
-            type: ToastType.Warning,
-            message: 'Une mission identique existe déjà',
+          const result = addMission({
+            homeId: selectedHome.id,
+            tasks: tasksState,
+            startDateTime: startDate,
+            endDateTime: endDate,
+            allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
           });
-          return;
+          if (!result) throw new Error("Impossible d'ajouter la mission");
+
+          setToastMessage({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
+        } else if (mission) {
+          // Create a new mission object with only the necessary fields
+          // This ensures we don't preserve any fields that should be reset by updateMission
+          const updatedMission: Mission = {
+            id: mission.id,
+            homeId: selectedHome.id,
+            tasks: tasksState,
+            startDateTime: startDate,
+            endDateTime: endDate,
+            modifiedDate: new Date(),
+            conciergerieName: mission.conciergerieName,
+            allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
+            status: mission.status,
+            employeeId: mission.employeeId,
+          };
+
+          // Check if update would create a duplicate (excluding the current mission)
+          if (missionExists(updatedMission, mission.id)) throw new Error('Une mission identique existe déjà');
+
+          const result = updateMission(updatedMission);
+          if (!result) throw new Error('Impossible de mettre à jour la mission');
+
+          setToastMessage({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });
         }
-
-        const result = addMission({
-          homeId: selectedHome.id,
-          tasks: tasksState,
-          startDateTime: startDate,
-          endDateTime: endDate,
-          allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
-        });
-
-        if (result === false) {
-          setToastMessage({
-            type: ToastType.Warning,
-            message: 'Une mission identique existe déjà',
-          });
-          return;
-        }
-
-        setToastMessage({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
-      } else if (mission) {
-        // Create a new mission object with only the necessary fields
-        // This ensures we don't preserve any fields that should be reset by updateMission
-        const updatedMission: Mission = {
-          id: mission.id,
-          homeId: selectedHome.id,
-          tasks: tasksState,
-          startDateTime: startDate,
-          endDateTime: endDate,
-          modifiedDate: new Date(),
-          conciergerieName: mission.conciergerieName,
-          allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
-          status: mission.status,
-          employeeId: mission.employeeId,
-        };
-
-        // Check if update would create a duplicate (excluding the current mission)
-        if (missionExists(updatedMission, mission.id)) {
-          setToastMessage({
-            type: ToastType.Warning,
-            message: 'Une mission identique existe déjà',
-          });
-          return;
-        }
-
-        const result = updateMission(updatedMission);
-
-        if (result === false) {
-          setToastMessage({
-            type: ToastType.Warning,
-            message: 'Une mission identique existe déjà',
-          });
-          return;
-        }
-
-        setToastMessage({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });
+      } catch (error) {
+        setToastMessage({ type: ToastType.Error, message: String(error) });
+        setIsSubmitting(false);
       }
     }
   };
@@ -281,9 +261,11 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
   const footer = (
     <FormActions
-      onCancel={handleCancel}
-      onSubmit={handleSubmit}
       submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+      isSubmitting={isSubmitting}
+      disabled={!checkFormChanged()}
     />
   );
 

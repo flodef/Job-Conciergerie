@@ -244,23 +244,16 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         notificationSettings: formData.notificationSettings as EmployeeNotificationSettings,
       });
 
-      if (alreadyExists) {
-        setToastMessage({
-          type: ToastType.Error,
-          message: 'Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.',
-        });
-        setIsSubmitting(false);
-        return;
-      }
+      if (alreadyExists) throw new Error('Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.');
 
-      if (!employee) throw new Error('Employee not created in database');
+      if (!employee) throw new Error('Employé non créé dans la base de données');
 
       updateUserData(employee);
 
       // Send notification email to conciergerie
       const selectedConciergerie = conciergeries?.find(c => c.name === employee.conciergerieName);
-      if (!selectedConciergerie) throw new Error('Conciergerie not found');
-      if (!selectedConciergerie.email) throw new Error('Conciergerie email not found');
+      if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
+      if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
       const result = await sendEmployeeRegistrationEmail(
         selectedConciergerie.email,
@@ -275,7 +268,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     } catch (error) {
       setToastMessage({
         type: ToastType.Error,
-        message: "Erreur lors de l'enregistrement. Veuillez réessayer.",
+        message: String(error),
         error,
       });
       setIsSubmitting(false);

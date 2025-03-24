@@ -9,7 +9,7 @@ type HomesContextType = {
   homes: HomeData[];
   isLoading: boolean;
   addHome: (home: Omit<HomeData, 'id' | 'modifiedDate' | 'conciergerieName'>) => boolean | void;
-  updateHome: (home: HomeData) => void;
+  updateHome: (home: HomeData) => boolean;
   deleteHome: (id: string) => void;
   homeExists: (title: string) => boolean;
 };
@@ -88,15 +88,17 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   };
 
   const updateHome = (updatedHome: HomeData) => {
-    if (!conciergerieName) return;
+    if (!conciergerieName) return false;
 
     // Only allow updates if the home was created by the current conciergerie
     if (updatedHome.conciergerieName === conciergerieName) {
       setHomes(prev =>
         prev.map(home => (home.id === updatedHome.id ? { ...updatedHome, modifiedDate: new Date() } : home)),
       );
+      return true; // Return true to indicate successful update
     } else {
       console.error('Cannot update home: not created by current conciergerie');
+      return false;
     }
   };
 
