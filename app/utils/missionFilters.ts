@@ -5,9 +5,6 @@ import { Home, Mission } from '@/app/types/types';
  */
 export function filterMissionsByUserType(missions: Mission[], userType: string | undefined): Mission[] {
   return missions.filter(mission => {
-    // Skip deleted missions
-    if (mission.deleted) return false;
-
     // For employee users, show only missions they have access to
     if (userType === 'employee') {
       // Get the current employee ID from localStorage
@@ -17,8 +14,8 @@ export function filterMissionsByUserType(missions: Mission[], userType: string |
       if (!employeeId) return false;
 
       // If the mission has prestataires specified, check if the current employee is in the list
-      if (mission.prestataires?.length) {
-        return mission.prestataires.includes(employeeId);
+      if (mission.allowedEmployees?.length) {
+        return mission.allowedEmployees.includes(employeeId);
       }
 
       // If no prestataires specified, show to all
@@ -53,9 +50,7 @@ export function applyMissionFilters(
 
   return missions.filter(mission => {
     // Filter by conciergerie
-    if (selectedConciergeries.length > 0 && !selectedConciergeries.includes(mission.conciergerieName)) {
-      return false;
-    }
+    if (selectedConciergeries.length > 0 && !selectedConciergeries.includes(mission.conciergerieName)) return false;
 
     // Get mission status information
     const now = new Date();

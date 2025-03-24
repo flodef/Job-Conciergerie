@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
-import { Conciergerie, Employee, HomeData, Mission, MissionStatus, Task } from '@/app/types/types';
+import { Conciergerie, Employee, HomeData, Mission, MissionStatus } from '@/app/types/types';
 import { getEmployees } from '@/app/utils/employee';
 import { generateSimpleId } from '@/app/utils/id';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
@@ -11,7 +11,7 @@ type MissionsContextType = {
   missions: Mission[];
   homes: HomeData[];
   isLoading: boolean;
-  addMission: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => boolean | void;
+  addMission: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>) => boolean | void;
   updateMission: (mission: Mission) => boolean | void;
   deleteMission: (id: string) => void;
   removeEmployee: (id: string) => void;
@@ -24,10 +24,7 @@ type MissionsContextType = {
   shouldShowAcceptWarning: boolean;
   setShouldShowAcceptWarning: (show: boolean) => void;
   missionExists: (
-    homeId: string,
-    tasks: Task[],
-    startDateTime: Date,
-    endDateTime: Date,
+    mission: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>,
     excludeMissionId?: string,
   ) => boolean;
 };
@@ -96,38 +93,29 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   // Check if a mission with the same home, tasks, start date, and end date already exists
   const missionExists = (
-    homeId: string,
-    tasks: Task[],
-    startDateTime: Date,
-    endDateTime: Date,
+    missionData: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>,
     excludeMissionId?: string,
   ): boolean => {
     if (!getUserData()) return false;
 
     // Sort tasks to ensure consistent comparison
-    const sortedTasks = [...tasks].sort((a, b) => a.label.localeCompare(b.label));
+    const sortedTasks = [...missionData.tasks].sort((a, b) => a.label.localeCompare(b.label));
 
     return missions.some(mission => {
       // Skip deleted missions and the mission being edited (if excludeMissionId is provided)
-      if (mission.deleted || (excludeMissionId && mission.id === excludeMissionId)) {
-        return false;
-      }
-
-      // Check if mission belongs to current conciergerie
-      if (mission.conciergerieName !== conciergerieName) {
-        return false;
-      }
+      if (excludeMissionId && mission.id === excludeMissionId) return false;
 
       // Check if home ID matches
-      if (mission.homeId !== homeId) {
-        return false;
-      }
+      if (mission.homeId !== missionData.homeId) return false;
+
+      // Check if mission belongs to current conciergerie
+      if (mission.conciergerieName !== conciergerieName) return false;
 
       // Check if start and end dates match (comparing only date and time, not milliseconds)
       const missionStart = new Date(mission.startDateTime);
       const missionEnd = new Date(mission.endDateTime);
-      const newStart = new Date(startDateTime);
-      const newEnd = new Date(endDateTime);
+      const newStart = new Date(missionData.startDateTime);
+      const newEnd = new Date(missionData.endDateTime);
 
       const startMatches =
         missionStart.getFullYear() === newStart.getFullYear() &&
@@ -167,11 +155,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const addMission = (missionData: Omit<Mission, 'id' | 'modifiedDate' | 'deleted' | 'conciergerieName'>) => {
+  const addMission = (missionData: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>) => {
     if (!conciergerieName) return;
 
     // Check if a mission with the same criteria already exists
-    if (missionExists(missionData.homeId, missionData.tasks, missionData.startDateTime, missionData.endDateTime)) {
+    if (missionExists(missionData)) {
       // Return false to indicate that the mission wasn't added due to duplication
       return false;
     }
@@ -180,7 +168,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       ...missionData,
       id: generateSimpleId(),
       modifiedDate: new Date(),
-      deleted: false,
       conciergerieName,
     };
 
@@ -196,10 +183,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       // Check if this would create a duplicate mission (excluding the current mission being updated)
       if (
         missionExists(
-          updatedMission.homeId,
-          updatedMission.tasks,
-          updatedMission.startDateTime,
-          updatedMission.endDateTime,
+          updatedMission,
           updatedMission.id, // Exclude the current mission from the duplicate check
         )
       ) {

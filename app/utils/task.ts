@@ -93,9 +93,6 @@ export const calculateEmployeePointsForDay = (
     // Only include missions assigned to this employee
     if (mission.employeeId !== employeeId) return false;
 
-    // Skip deleted missions
-    if (mission.deleted) return false;
-
     // Check if the mission spans the target date
     const startDate = new Date(mission.startDateTime);
     const endDate = new Date(mission.endDateTime);

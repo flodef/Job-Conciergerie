@@ -79,13 +79,11 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
           ? (mission: Mission) =>
               mission.conciergerieName === conciergerieName &&
               mission.employeeId && // Has an employee (accepted)
-              new Date(mission.modifiedDate) > lastCheckedDate &&
-              !mission.deleted
+              new Date(mission.modifiedDate) > lastCheckedDate
           : (mission: Mission) =>
               !mission.employeeId && // Not assigned to anyone
               new Date(mission.modifiedDate) > lastCheckedDate &&
-              new Date(mission.endDateTime).getTime() >= new Date().getTime() && // Not expired
-              !mission.deleted;
+              new Date(mission.endDateTime).getTime() >= new Date().getTime(); // Not expired
 
       const newMissions = missions.filter(missionFilter);
       setNewMissionsCount(newMissions.length);
@@ -105,10 +103,17 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
     const countTodayMissions = () => {
       if (!missions.length) return;
 
-      // Simplest and most reliable solution: hardcode the mission ID that we know should be counted for today
-      // Based on our testing, we know that only one mission with ID 'klv2ul9w1vzfzfme06zqh' should be counted
+      // Find missions that are scheduled for today
+      const today = new Date();
       const todayMissions = missions.filter(mission => {
-        return !mission.deleted && mission.id === 'klv2ul9w1vzfzfme06zqh';
+        const missionStart = new Date(mission.startDateTime);
+
+        // Check if mission is scheduled for today (mission day matches today)
+        return (
+          missionStart.getDate() === today.getDate() &&
+          missionStart.getMonth() === today.getMonth() &&
+          missionStart.getFullYear() === today.getFullYear()
+        );
       });
 
       // Set the count of missions for today
@@ -121,11 +126,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
 
       // Filter missions that are from this conciergerie, have an employee assigned, and are in started status
       const startedMissions = missions.filter(
-        mission =>
-          mission.conciergerieName === conciergerieName &&
-          mission.employeeId &&
-          mission.status === 'started' &&
-          !mission.deleted,
+        mission => mission.conciergerieName === conciergerieName && mission.employeeId && mission.status === 'started',
       );
 
       setStartedMissionsCount(startedMissions.length);

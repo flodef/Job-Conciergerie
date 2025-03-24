@@ -68,13 +68,11 @@ export default function Calendar() {
 
     if (isEmployee) {
       // For employees: show missions accepted by this employee
-      filteredMissions = missions.filter(
-        mission => mission.employeeId === userId && !mission.deleted && mission.status !== 'completed',
-      );
+      filteredMissions = missions.filter(mission => mission.employeeId === userId && mission.status !== 'completed');
     } else if (isConciergerie) {
       // For conciergeries: show missions from this conciergerie that have been accepted by employees
       filteredMissions = missions.filter(
-        mission => mission.conciergerieName === conciergerieName && mission.employeeId && !mission.deleted,
+        mission => mission.conciergerieName === conciergerieName && mission.employeeId,
       );
     }
 
