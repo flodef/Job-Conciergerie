@@ -16,15 +16,15 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
   const { getHomeById, getEmployeeById, getConciergerieByName } = useMissions();
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
 
-  // Fetch conciergerie data when mission changes
-  useEffect(() => {
-    const conciergerieData = getConciergerieByName(mission.conciergerieName);
-    setConciergerie(conciergerieData);
-  }, [mission.conciergerieName, getConciergerieByName]);
-
-  const homeTitle = getHomeById(mission.homeId)?.title || 'Bien inconnu';
+  const home = getHomeById(mission.homeId);
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
   const employee = getEmployeeById(mission.employeeId);
+
+  // Fetch conciergerie data when mission changes
+  useEffect(() => {
+    const conciergerieData = getConciergerieByName(home?.conciergerieName || '');
+    setConciergerie(conciergerieData);
+  }, [getConciergerieByName, home?.conciergerieName]);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent the default context menu
@@ -32,6 +32,8 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
       onEdit();
     }
   };
+
+  if (!home) return null;
 
   return (
     <div
@@ -62,7 +64,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         </div>
       )}
 
-      <h3 className="font-medium text-foreground">{homeTitle}</h3>
+      <h3 className="font-medium text-foreground">{`${home.title} (${home.geographicZone})`}</h3>
 
       <div className="flex flex-wrap gap-1 mt-2">
         {mission.tasks.map(task => (

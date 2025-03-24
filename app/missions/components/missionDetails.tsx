@@ -2,7 +2,7 @@
 
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
-import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeDetails from '@/app/homes/components/homeDetails';
@@ -11,20 +11,18 @@ import MissionForm from '@/app/missions/components/missionForm';
 import { Conciergerie, Mission } from '@/app/types/types';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateTime, getTimeDifference } from '@/app/utils/date';
-import {
-  calculateEmployeePointsForDay,
-  calculateMissionPoints,
-  calculateRemainingPointsPerDay,
-  formatPoints,
-  getTaskWithPoints,
-} from '@/app/utils/task';
+import { calculateEmployeePointsForDay, calculateMissionPoints, getTaskWithPoints } from '@/app/utils/task';
 import {
   IconAlertTriangle,
+  IconBuildingStore,
   IconCalculator,
+  IconCalendarEvent,
   IconCheck,
   IconInfoCircle,
+  IconListCheck,
   IconMail,
   IconPhone,
+  IconUser,
   IconZoomScan,
 } from '@tabler/icons-react';
 import Image from 'next/image';
@@ -69,21 +67,21 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
 
-  // Fetch conciergerie data when mission changes
-  useEffect(() => {
-    const conciergerieData = getConciergerieByName(mission.conciergerieName);
-    setConciergerie(conciergerieData);
-  }, [mission.conciergerieName, getConciergerieByName]);
-
   // Get the home data
   const home = getHomeById(mission.homeId);
 
   const isEmployee = userType === 'employee';
   const isConciergerie = userType === 'conciergerie';
 
+  // Fetch conciergerie data when mission changes
   useEffect(() => {
-    setIsReadOnly(isEmployee || (isConciergerie && mission.conciergerieName !== conciergerieName));
-  }, [mission, conciergerieName, isEmployee, isConciergerie]);
+    const conciergerieData = getConciergerieByName(home?.conciergerieName || '');
+    setConciergerie(conciergerieData);
+  }, [getConciergerieByName, home?.conciergerieName]);
+
+  useEffect(() => {
+    setIsReadOnly(isEmployee || (isConciergerie && home?.conciergerieName !== conciergerieName));
+  }, [mission, conciergerieName, isEmployee, isConciergerie, home?.conciergerieName]);
 
   const handleDelete = () => {
     deleteMission(mission.id);
@@ -263,6 +261,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     </>
   );
 
+  if (!home) return;
+
   return (
     <FullScreenModal onClose={onClose} title="Détails de la mission" footer={footer}>
       <ToastMessage
@@ -277,7 +277,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         <FullScreenModal
           imageUrl={selectedImage}
           onClose={() => setSelectedImage(null)}
-          title={`Photo de ${home?.title || 'la mission'}`}
+          title={`Photo de ${home.title}`}
         />
       )}
 
@@ -285,19 +285,18 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         <div>
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-light">Bien</h3>
-              <p className="text-foreground">{home?.title || 'Bien non trouvé'}</p>
+              <p className="text-foreground">{`${home.title} (${home.geographicZone})`}</p>
             </div>
             <button onClick={() => setShowHomeDetails(true)} title="Voir les détails du bien">
               <IconZoomScan size={40} />
             </button>
           </div>
 
-          {home?.images?.length ? (
+          {home.images.length ? (
             <div className="relative aspect-video w-full max-h-32 mt-1 overflow-hidden rounded-lg">
               <Image
                 src={firstHomeImage}
-                alt={`Photo de ${home?.title || 'la mission'}`}
+                alt={`Photo de ${home.title}`}
                 fill
                 sizes="(max-width: 768px) 100vw, 300px"
                 className="object-cover cursor-pointer hover:opacity-80 transition-opacity"
@@ -308,12 +307,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-light">Zone géographique</h3>
-          <p className="text-foreground">{home?.geographicZone || 'Non spécifiée'}</p>
-        </div>
-
-        <div>
-          <h3 className="text-sm font-medium text-light">Tâches</h3>
+          <h3 className="text-sm font-medium text-light flex items-center gap-1">
+            <IconListCheck size={16} />
+            Tâches
+          </h3>
           <div className="flex flex-wrap gap-2 mt-1">
             {mission.tasks.map(task => {
               const taskWithPoints = getTaskWithPoints(task.label);
@@ -337,7 +334,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           </div>
         </div>
 
-        <div>
+        <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-light flex items-center gap-1">
             <IconCalculator size={16} />
             Points de mission
@@ -354,54 +351,29 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
               >
                 <p>
                   <strong>Règle des 3 points par jour :</strong> Pour ne pas dépasser la capacité de travail d&apos;un
-                  prestataire, il est recommandé de ne pas attribuer plus de 3 points de mission par jour.
+                  prestataire, il est impossible d&apos;attribuer plus de 3 points de mission par jour par prestataire.
                 </p>
               </div>
             </div>
           </h3>
-          <div className="mt-1 space-y-1">
-            {(() => {
-              const { totalPoints, pointsPerDay } = calculateMissionPoints(mission);
-              const remainingPointsPerDay = calculateRemainingPointsPerDay(mission);
-
-              return (
-                <>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Total des points:</span>
-                    <span className="font-medium">{formatPoints(totalPoints)} pts</span>
-                  </div>
-                  {/* Only show points per day if mission spans more than 1 day */}
-                  {new Date(mission.endDateTime).getTime() - new Date(mission.startDateTime).getTime() >
-                    24 * 60 * 60 * 1000 && (
-                    <>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm">
-                          Points par jour {remainingPointsPerDay !== pointsPerDay && 'restant'} :{' '}
-                        </span>
-                        <span className="font-medium">
-                          {remainingPointsPerDay !== pointsPerDay
-                            ? formatPoints(remainingPointsPerDay)
-                            : formatPoints(pointsPerDay)}
-                          pts/jour
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </>
-              );
-            })()}
-          </div>
+          <span className="font-medium">{calculateMissionPoints(mission).totalPoints} pts</span>
         </div>
 
         <div className="flex items-center space-x-4">
           <div className="space-y-2">
             <div>
-              <h3 className="text-sm font-medium text-light">Date de début</h3>
+              <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                <IconCalendarEvent size={16} />
+                Date de début
+              </h3>
               <p className="text-foreground">{formatDateTime(mission.startDateTime)}</p>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-light">Date de fin</h3>
+              <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                <IconCalendarEvent size={16} />
+                Date de fin
+              </h3>
               <p className="text-foreground">{formatDateTime(mission.endDateTime)}</p>
             </div>
           </div>
@@ -436,7 +408,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         {/* Only show conciergerie name if not viewed from calendar by a conciergerie */}
         {!(isFromCalendar && userType === 'conciergerie') && (
           <div>
-            <h3 className="text-sm font-medium text-light">Conciergerie</h3>
+            <h3 className="text-sm font-medium text-light flex items-center gap-1">
+              <IconBuildingStore size={16} />
+              Conciergerie
+            </h3>
             <div className="flex items-center gap-3">
               <p className="text-lg font-bold" style={{ color: conciergerieColor }}>
                 {conciergerie?.name || mission.conciergerieName}
@@ -470,7 +445,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
         {employee && !isFromCalendar && (
           <div>
-            <h3 className="text-sm font-medium text-light">Prestataire</h3>
+            <h3 className="text-sm font-medium text-light flex items-center gap-1">
+              <IconUser size={16} />
+              Prestataire
+            </h3>
             <p>
               {employee.firstName} {employee.familyName}
             </p>

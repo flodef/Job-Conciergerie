@@ -30,13 +30,13 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
   const [tasksState, setTasks] = useState<Task[]>(mission?.tasks || []);
-  const [selectedPrestataires, setSelectedPrestataires] = useState<string[]>(mission?.prestataires || []);
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>(mission?.allowedEmployees || []);
   const [initialFormValues, setInitialFormValues] = useState<{
     homeId: string;
     startDateTime: string;
     endDateTime: string;
     tasksState: Task[];
-    selectedPrestataires: string[];
+    selectedEmployees: string[];
   }>();
   // Get current date and time in local timezone
   const now = new Date();
@@ -96,7 +96,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       startDateTime,
       endDateTime,
       tasksState,
-      selectedPrestataires,
+      selectedEmployees,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -111,11 +111,11 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     const homeIdChanged = homeId !== initialFormValues.homeId;
     const startDateChanged = startDateTime !== initialFormValues.startDateTime;
     const endDateChanged = endDateTime !== initialFormValues.endDateTime;
-    const prestatairesChanged =
-      JSON.stringify(selectedPrestataires.sort()) !== JSON.stringify(initialFormValues.selectedPrestataires.sort());
+    const employeesChanged =
+      JSON.stringify(selectedEmployees.sort()) !== JSON.stringify(initialFormValues.selectedEmployees.sort());
 
-    return tasksChanged || homeIdChanged || startDateChanged || endDateChanged || prestatairesChanged;
-  }, [homeId, tasksState, startDateTime, endDateTime, selectedPrestataires, initialFormValues]);
+    return tasksChanged || homeIdChanged || startDateChanged || endDateChanged || employeesChanged;
+  }, [homeId, tasksState, startDateTime, endDateTime, selectedEmployees, initialFormValues]);
 
   const handleCancel = () => {
     if (checkFormChanged()) {
@@ -179,7 +179,9 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
       if (mode === 'add') {
         // Check if a mission with the same criteria already exists
-        if (missionExists(selectedHome.id, tasksState, startDate, endDate)) {
+        if (
+          missionExists({ homeId: selectedHome.id, tasks: tasksState, startDateTime: startDate, endDateTime: endDate })
+        ) {
           setToastMessage({
             type: ToastType.Warning,
             message: 'Une mission identique existe déjà',
@@ -192,7 +194,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
           tasks: tasksState,
           startDateTime: startDate,
           endDateTime: endDate,
-          prestataires: selectedPrestataires.length > 0 ? selectedPrestataires : undefined,
+          allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
         });
 
         if (result === false) {
@@ -213,16 +215,15 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
           tasks: tasksState,
           startDateTime: startDate,
           endDateTime: endDate,
-          conciergerieName: mission.conciergerieName,
           modifiedDate: new Date(),
-          deleted: mission.deleted || false,
-          prestataires: selectedPrestataires.length > 0 ? selectedPrestataires : undefined,
+          conciergerieName: mission.conciergerieName,
+          allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
           status: mission.status,
           employeeId: mission.employeeId,
         };
 
         // Check if update would create a duplicate (excluding the current mission)
-        if (missionExists(selectedHome.id, tasksState, startDate, endDate, mission.id)) {
+        if (missionExists(updatedMission, mission.id)) {
           setToastMessage({
             type: ToastType.Warning,
             message: 'Une mission identique existe déjà',
@@ -414,8 +415,8 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
           {/* Add debugging in useEffect instead of inline */}
           <MultiSelect
             id="prestataires-select"
-            values={selectedPrestataires}
-            onChange={setSelectedPrestataires}
+            values={selectedEmployees}
+            onChange={setSelectedEmployees}
             options={prestataires.map(emp => ({
               value: emp.id,
               label: `${emp.firstName} ${emp.familyName}`,
@@ -423,7 +424,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             allOption={true}
           />
           <p className="text-sm text-foreground/70 mt-1">
-            {selectedPrestataires.length === 0
+            {selectedEmployees.length === 0
               ? 'Tous les prestataires pourront voir cette mission'
               : 'Seuls les prestataires sélectionnés pourront voir cette mission'}
           </p>

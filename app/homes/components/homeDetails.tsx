@@ -7,7 +7,7 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import { HomeData } from '@/app/types/types';
-import { IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconPencil, IconTrash, IconFileDescription, IconListCheck } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
@@ -78,23 +78,21 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   };
 
   const footer = !isReadOnly && !isEmployee && (
-    <div className="sticky bottom-0 bg-background border-t border-secondary px-4 py-2 rounded-b-lg">
-      <div className="flex justify-end gap-2">
-        <button
-          onClick={() => setIsEditMode(true)}
-          className="flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80"
-        >
-          <IconPencil />
-          Modifier
-        </button>
-        <button
-          onClick={handleDeleteClick}
-          className="flex flex-col items-center p-2 w-20 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
-        >
-          <IconTrash />
-          Supprimer
-        </button>
-      </div>
+    <div className="flex justify-end gap-2 bg-background border-t border-secondary px-2 py-2 rounded-b-lg">
+      <button
+        onClick={() => setIsEditMode(true)}
+        className="flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80"
+      >
+        <IconPencil />
+        Modifier
+      </button>
+      <button
+        onClick={handleDeleteClick}
+        className="flex flex-col items-center p-2 w-20 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+      >
+        <IconTrash />
+        Supprimer
+      </button>
     </div>
   );
 
@@ -103,7 +101,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   }
 
   return (
-    <FullScreenModal title={home.title} onClose={onClose} footer={footer}>
+    <FullScreenModal title={`${home.title} (${home.geographicZone})`} onClose={onClose} footer={footer}>
       {selectedImageIndex !== null && home.images && (
         <FullScreenModal
           title={`Photo de ${home.title}`}
@@ -115,7 +113,6 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
       <div className="space-y-2" data-home-details>
         {home.images && home.images.length > 0 && (
           <div>
-            <h3 className="text-sm font-medium text-light mb-2">Photos</h3>
             <div className="grid grid-cols-3 gap-2">
               {home.images.map((image, index) => (
                 <div key={index} className="relative aspect-square">
@@ -134,18 +131,19 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
         )}
 
         <div>
-          <h3 className="text-sm font-medium text-light">Description</h3>
+          <h3 className="text-sm font-medium text-light flex items-center gap-1">
+            <IconFileDescription size={16} />
+            Description
+          </h3>
           <p className="text-foreground whitespace-pre-wrap">{home.description}</p>
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-light">Zone géographique</h3>
-          <p className="text-foreground">{home.geographicZone || 'Non spécifiée'}</p>
-        </div>
-
-        <div>
-          <h3 className="text-sm font-medium text-light">Objectifs</h3>
-          <ul className="list-none pl-0 mt-2 space-y-1">
+          <h3 className="text-sm font-medium text-light flex items-center gap-1">
+            <IconListCheck size={16} />
+            Objectifs
+          </h3>
+          <ul className="list-none pl-0 mt-1 space-y-1">
             {home.objectives.map((objective, index) => (
               <li key={index} className="flex items-start">
                 <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 flex-shrink-0 border border-foreground" />

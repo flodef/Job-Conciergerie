@@ -3,7 +3,6 @@
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Conciergerie, HomeData } from '@/app/types/types';
 import { getColorValueByName } from '@/app/utils/color';
-import { formatDateTime } from '@/app/utils/date';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
@@ -40,7 +39,9 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
       style={{ borderLeft: `6px solid ${conciergerieColor}` }}
     >
       <div className="flex justify-between items-center mb-2">
-        <h3 className="font-medium text-foreground">{home.title}</h3>
+        <h3 className="text-xl font-medium text-foreground">
+          {home.title} ({home.geographicZone})
+        </h3>
       </div>
 
       {home.images && home.images.length > 0 && (
@@ -54,26 +55,6 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
           />
         </div>
       )}
-
-      <p className="text-sm text-light line-clamp-2 mb-2">{home.description}</p>
-
-      <ul className="list-none pl-0 space-y-1 mb-2">
-        {home.objectives.slice(0, 3).map((objective, index) => (
-          <li key={index} className="flex items-start">
-            <span className="inline-block w-2 h-2 mt-1 mr-2 flex-shrink-0 border border-foreground" />
-            <span className="text-xs text-foreground truncate">{objective}</span>
-          </li>
-        ))}
-        {home.objectives.length > 3 && (
-          <li className="text-xs text-light ml-4">+{home.objectives.length - 3} autres points</li>
-        )}
-      </ul>
-
-      <div className="mt-3 text-sm text-light">
-        <div className="flex justify-between items-center">
-          <span>Modifié le {formatDateTime(home.modifiedDate)}</span>
-        </div>
-      </div>
     </div>
   );
 }

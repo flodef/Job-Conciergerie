@@ -413,6 +413,25 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
 
         <div>
           <label className="text-base font-medium text-foreground">
+            <h2 className="mb-2">Zone géographique</h2>
+          </label>
+          <div ref={comboboxRef}>
+            <Combobox
+              id="geographic-zone"
+              options={geographicZones}
+              value={geographicZone}
+              onChange={setGeographicZone}
+              placeholder="Sélectionnez une zone géographique..."
+              error={isFormSubmitted && !geographicZone}
+            />
+          </div>
+          {isFormSubmitted && !geographicZone && (
+            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une zone géographique</p>
+          )}
+        </div>
+
+        <div>
+          <label className="text-base font-medium text-foreground">
             <h2 className="mb-2">Description</h2>
           </label>
           <div className="relative">
@@ -448,25 +467,6 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
               </div>
             )}
           </div>
-        </div>
-
-        <div>
-          <label className="text-base font-medium text-foreground">
-            <h2 className="mb-2">Zone géographique</h2>
-          </label>
-          <div ref={comboboxRef}>
-            <Combobox
-              id="geographic-zone"
-              options={geographicZones}
-              value={geographicZone}
-              onChange={setGeographicZone}
-              placeholder="Sélectionnez une zone géographique..."
-              error={isFormSubmitted && !geographicZone}
-            />
-          </div>
-          {isFormSubmitted && !geographicZone && (
-            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une zone géographique</p>
-          )}
         </div>
 
         <div ref={taskListRef}>
