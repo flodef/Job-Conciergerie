@@ -1,6 +1,7 @@
 'use client';
 
 import { updateEmployeeStatusAction } from '@/app/actions/employee';
+import Accordion from '@/app/components/accordion';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import SearchInput from '@/app/components/searchInput';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
@@ -11,7 +12,7 @@ import { Employee } from '@/app/types/types';
 import { filterEmployees, filterEmployeesByConciergerie, sortEmployees } from '@/app/utils/employee';
 import { Page } from '@/app/utils/navigation';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
-import { useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 
 export default function EmployeesList() {
   const {
@@ -62,7 +63,6 @@ export default function EmployeesList() {
 
   // Handle status change
   const handleStatusChange = (id: string, newStatus: 'accepted' | 'rejected') => {
-    // updateEmployeeStatus(id, newStatus);
     // TODO: Update mission assignments if status changed to rejected (remove them from the mission)
 
     updateEmployeeStatusAction(id, newStatus).then(updatedEmployee => {
@@ -96,6 +96,41 @@ export default function EmployeesList() {
     setSelectedEmployee(null);
   };
 
+  // Helper function to render employee table for each status
+  const renderEmployeeTable = (employees: Employee[], emptyMessage: string): ReactNode => {
+    if (employees.length === 0) return <p className="text-foreground/60 italic">Aucun prestataire {emptyMessage}</p>;
+
+    return (
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-secondary">
+          <thead className="bg-secondary/10">
+            <tr>
+              <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
+                Nom
+              </th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
+                Contact
+              </th>
+              <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-background divide-y divide-secondary">
+            {employees.map(employee => (
+              <EmployeeRow
+                key={employee.id}
+                employee={employee}
+                onStatusChange={handleStatusChange}
+                onClick={() => handleEmployeeClick(employee)}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   return (
     <div>
       <SearchInput
@@ -104,126 +139,27 @@ export default function EmployeesList() {
         onChange={e => setSearchTerm(e.target.value)}
       />
 
-      <div className="space-y-8 w-full">
-        {/* Pending employees */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <IconUser size={20} />
-            <h2 className="text-lg font-semibold">En attente ({pendingEmployees.length})</h2>
-          </div>
-
-          {pendingEmployees.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-secondary">
-                <thead className="bg-secondary/10">
-                  <tr>
-                    <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
-                      Nom
-                    </th>
-                    <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
-                      Contact
-                    </th>
-                    <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-background divide-y divide-secondary">
-                  {pendingEmployees.map(employee => (
-                    <EmployeeRow
-                      key={employee.id}
-                      employee={employee}
-                      onStatusChange={handleStatusChange}
-                      onClick={() => handleEmployeeClick(employee)}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-foreground/60 italic">Aucun prestataire en attente</p>
-          )}
-        </div>
-
-        {/* Accepted employees */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <IconUserCheck size={20} />
-            <h2 className="text-lg font-semibold">Acceptés ({acceptedEmployees.length})</h2>
-          </div>
-
-          {acceptedEmployees.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-secondary">
-                <thead className="bg-secondary/10">
-                  <tr>
-                    <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
-                      Nom
-                    </th>
-                    <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
-                      Contact
-                    </th>
-                    <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-background divide-y divide-secondary">
-                  {acceptedEmployees.map(employee => (
-                    <EmployeeRow
-                      key={employee.id}
-                      employee={employee}
-                      onStatusChange={handleStatusChange}
-                      onClick={() => handleEmployeeClick(employee)}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-foreground/60 italic">Aucun prestataire accepté</p>
-          )}
-        </div>
-
-        {/* Rejected employees */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            <IconUserX size={20} />
-            <h2 className="text-lg font-semibold">Rejetés ({rejectedEmployees.length})</h2>
-          </div>
-
-          {rejectedEmployees.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-secondary">
-                <thead className="bg-secondary/10">
-                  <tr>
-                    <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
-                      Nom
-                    </th>
-                    <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
-                      Contact
-                    </th>
-                    <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-background divide-y divide-secondary">
-                  {rejectedEmployees.map(employee => (
-                    <EmployeeRow
-                      key={employee.id}
-                      employee={employee}
-                      onStatusChange={handleStatusChange}
-                      onClick={() => handleEmployeeClick(employee)}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-foreground/60 italic">Aucun prestataire rejeté</p>
-          )}
-        </div>
+      {/* Render employee tables in an accordion */}
+      <div className="w-full">
+        <Accordion
+          items={[
+            {
+              title: `En attente (${pendingEmployees.length})`,
+              icon: <IconUser size={20} />,
+              content: renderEmployeeTable(pendingEmployees, 'en attente'),
+            },
+            {
+              title: `Acceptés (${acceptedEmployees.length})`,
+              icon: <IconUserCheck size={20} />,
+              content: renderEmployeeTable(acceptedEmployees, 'accepté'),
+            },
+            {
+              title: `Rejetés (${rejectedEmployees.length})`,
+              icon: <IconUserX size={20} />,
+              content: renderEmployeeTable(rejectedEmployees, 'rejeté'),
+            },
+          ]}
+        />
       </div>
 
       <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
@@ -250,14 +186,14 @@ function EmployeeRow({
 }) {
   return (
     <tr className="hover:bg-secondary/5 cursor-pointer transition-colors" onClick={onClick}>
-      <td className="px-1 py-1 justify-items-center">
+      <td className="px-1 py-1">
         <div className="flex flex-col text-sm font-medium text-foreground text-wrap max-w-28">
           <div>
             {employee.firstName} {employee.familyName}
           </div>
         </div>
       </td>
-      <td className="px-1 py-1 whitespace-nowrap justify-items-center">
+      <td className="px-1 py-1 whitespace-nowrap">
         <div className="flex flex-col text-sm font-medium text-foreground truncate max-w-28">
           <div>{employee.email}</div>
           <div>{employee.tel}</div>
