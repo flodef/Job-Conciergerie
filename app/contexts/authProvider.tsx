@@ -23,7 +23,8 @@ interface AuthContextType {
   sentEmailError: boolean | undefined;
   setSentEmailError: (sentEmailError: boolean | undefined) => void;
   getUserData: <T extends UserData>() => T | undefined;
-  updateUserData: <T extends UserData>(updatedData: T) => void;
+  updateUserData: <T extends UserData>(updatedData: T, updateType?: UserType) => void;
+  fetchDataFromDatabase: (fetchType?: UserType) => void;
   conciergeries: Conciergerie[];
   employees: Employee[];
   isLoading: boolean;
@@ -43,6 +44,7 @@ const AuthContext = createContext<AuthContextType>({
   setSentEmailError: () => {},
   getUserData: () => undefined,
   updateUserData: () => {},
+  fetchDataFromDatabase: () => {},
   conciergeries: [],
   employees: [],
   isLoading: false,
@@ -100,20 +102,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.reload();
   }, [generateId]);
 
-  // Function to check if a user exists in the database
-  const getDataFromDatabase = useCallback(
-    async (id: string) => {
+  // Function to fetch data from the database and store it in the context
+  const fetchDataFromDatabase = useCallback(
+    async (fetchType?: UserType) => {
       try {
-        setIsLoading(true);
+        const id = generateId();
 
-        // Only proceed if we have a valid ID
-        if (!id) {
-          updateUserType(undefined);
-          return;
-        }
-
-        const fetchedConciergeries = await fetchConciergeries();
-        const fetchedEmployees = await fetchEmployees();
+        const fetchedConciergeries =
+          !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : conciergeries;
+        const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
 
         const foundEmployee = fetchedEmployees.find(e => e.id === id);
         const newUserData = foundEmployee || fetchedConciergeries.find(c => c.id === id);
@@ -141,23 +138,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.error('Error fetching user data from database:', err);
         onMenuChange(Page.Error);
-      } finally {
-        setIsLoading(false);
       }
     },
-    [updateUserType, userType, onMenuChange, refreshData, conciergerieName, setConciergerieName],
+    [
+      generateId,
+      updateUserType,
+      userType,
+      onMenuChange,
+      refreshData,
+      conciergerieName,
+      setConciergerieName,
+      conciergeries,
+      employees,
+    ],
   );
 
   // Initialize the auth provider
   useEffect(() => {
-    const initializeData = async (id: string) => {
-      await getDataFromDatabase(id);
-    };
-
-    const id = generateId();
-
+    setIsLoading(true);
     // Only run this once when the component mounts
-    initializeData(id);
+    fetchDataFromDatabase().then(() => {
+      setIsLoading(false);
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getUserData = <T extends Employee | Conciergerie>(): T | undefined => {
@@ -169,10 +171,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return undefined;
   };
 
-  const updateUserData = <T extends Employee | Conciergerie>(updatedData: T) => {
-    setUserData(updatedData);
+  const updateUserData = <T extends Employee | Conciergerie>(updatedData: T, updateType = userType) => {
+    // Update user data only if the update type matches the current user type (meaning we are updating the current user)
+    if (updateType === userType) setUserData(updatedData);
 
-    if (userType === 'employee') {
+    // Update employees or conciergeries list
+    if (updateType === 'employee') {
       setEmployees(prev => {
         if (!prev) return [updatedData as Employee];
         const exists = prev.some(e => e.id === updatedData.id);
@@ -181,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         return [...prev, updatedData as Employee];
       });
-    } else if (userType === 'conciergerie') {
+    } else if (updateType === 'conciergerie') {
       setConciergeries(prev => {
         if (!prev) return [updatedData as Conciergerie];
         const exists = prev.some(c => c.id === updatedData.id);
@@ -224,6 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSentEmailError,
         getUserData,
         updateUserData,
+        fetchDataFromDatabase,
         conciergeries,
         employees,
         isLoading,
