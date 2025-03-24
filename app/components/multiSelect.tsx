@@ -3,6 +3,7 @@
 import { clsx } from 'clsx/lite';
 import { useEffect, useRef, useState } from 'react';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
+import { shouldOpenUpward } from '../utils/dropdownPosition';
 
 type MultiSelectOption = {
   value: string;
@@ -104,10 +105,12 @@ export default function MultiSelect({
           if (!disabled) {
             // Check position before opening
             if (!isOpen && selectRef.current) {
-              const rect = selectRef.current.getBoundingClientRect();
-              const bottomSpace = window.innerHeight - rect.bottom;
-              const dropdownHeight = Math.min(allOptions.length * 36, 240); // Estimate height (36px per item, max 240px)
-              setOpenUpward(bottomSpace < dropdownHeight + 8); // Add some padding
+              setOpenUpward(
+                shouldOpenUpward({
+                  elementRef: selectRef.current,
+                  itemCount: allOptions.length,
+                }),
+              );
             }
             setIsOpen(!isOpen);
           }
@@ -134,8 +137,8 @@ export default function MultiSelect({
         <div
           id={`${id}-options`}
           className={clsx(
-            'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-60 overflow-auto',
-            openUpward ? 'bottom-full mb-1' : 'top-full mt-1'
+            'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
+            openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
           )}
           role="listbox"
           aria-multiselectable="true"

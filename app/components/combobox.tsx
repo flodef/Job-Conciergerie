@@ -3,6 +3,7 @@
 import { clsx } from 'clsx/lite';
 import { useEffect, useRef, useState } from 'react';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
+import { shouldOpenUpward } from '../utils/dropdownPosition';
 
 type ComboboxProps = {
   id: string;
@@ -115,10 +116,12 @@ export default function Combobox({
 
   const checkPosition = () => {
     if (comboboxRef.current) {
-      const rect = comboboxRef.current.getBoundingClientRect();
-      const bottomSpace = window.innerHeight - rect.bottom;
-      const dropdownHeight = Math.min(filteredOptions.length * 36, 240); // Estimate height (36px per item, max 240px)
-      setOpenUpward(bottomSpace < dropdownHeight + 8); // Add some padding
+      setOpenUpward(
+        shouldOpenUpward({
+          elementRef: comboboxRef.current,
+          itemCount: filteredOptions.length,
+        }),
+      );
     }
   };
 
@@ -186,8 +189,8 @@ export default function Combobox({
         <div
           ref={optionsRef}
           className={clsx(
-            'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-60 overflow-auto',
-            openUpward ? 'bottom-full mb-1' : 'top-full mt-1'
+            'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
+            openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
           )}
         >
           {filteredOptions.length === 0 ? (
