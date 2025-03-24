@@ -26,3 +26,6 @@ export const routeMap: Record<Page, string> = {
 export const navigationRoutes = Object.values(routeMap).filter(
   route => route !== '/' && route !== '/waiting' && route !== '/error',
 );
+export const navigationPages: Page[] = Object.entries(routeMap)
+  .filter(([, route]) => navigationRoutes.includes(route))
+  .map(([page]) => page as Page);

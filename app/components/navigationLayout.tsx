@@ -2,13 +2,13 @@
 
 import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { useBadge } from '@/app/contexts/badgeProvider';
+import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { navigationRoutes, Page, pages, routeMap } from '@/app/utils/navigation';
+import { useMissions } from '@/app/contexts/missionsProvider';
+import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/navigation';
 import { IconBriefcase, IconCalendar, IconHome, IconSettings, IconUser } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { ReactNode, useEffect, useState } from 'react';
-import { useHomes } from '../contexts/homesProvider';
-import { useMissions } from '../contexts/missionsProvider';
 
 // Map pages to their respective icons
 const pageSettings: Record<Page, { icon: ReactNode; userType: UserType | undefined }> = {
@@ -77,7 +77,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     <div className="min-h-screen flex flex-col">
       {/* Fixed header - hidden on home page */}
       {isNavigationPage && (
-        <header className="max-w-7xl mx-auto h-16 flex items-center justify-center">
+        <header className="sticky top-0 max-w-7xl mx-auto h-16 flex items-center justify-center">
           {/* Title */}
           <h1 className="text-2xl font-semibold text-foreground">{currentPage}</h1>
         </header>
@@ -104,7 +104,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {isNavigationPage && (
         <nav className="fixed bottom-0 left-0 right-0 h-20 bg-background border-t border-secondary z-40">
           <div className="max-w-7xl mx-auto flex justify-around h-full">
-            {pages
+            {navigationPages
               .filter(page => {
                 // Skip Welcome page in navigation
                 if (page === Page.Welcome) return false;
