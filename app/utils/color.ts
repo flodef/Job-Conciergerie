@@ -16,3 +16,9 @@ export const getColorValueByName = (colorName: string | undefined): string => {
   const colorOption = colorOptions.find(color => color.name === colorName);
   return colorOption?.value || defaultPrimaryColor;
 };
+
+export const setPrimaryColor = (color: string | undefined) => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.style.setProperty('--color-primary', color || defaultPrimaryColor);
+  }
+};

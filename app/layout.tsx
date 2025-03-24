@@ -4,7 +4,6 @@ import { BadgeProvider } from '@/app/contexts/badgeProvider';
 import { HomesProvider } from '@/app/contexts/homesProvider';
 import { MenuProvider } from '@/app/contexts/menuProvider';
 import { MissionsProviderWrapper } from '@/app/contexts/missionsProvider';
-import { ThemeProvider } from '@/app/contexts/themeProvider';
 import '@/app/globals.css';
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
@@ -33,19 +32,17 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}>
-        <ThemeProvider>
-          <MenuProvider>
-            <AuthProvider>
-              <HomesProvider>
-                <MissionsProviderWrapper>
-                  <BadgeProvider>
-                    <NavigationLayout>{children}</NavigationLayout>
-                  </BadgeProvider>
-                </MissionsProviderWrapper>
-              </HomesProvider>
-            </AuthProvider>
-          </MenuProvider>
-        </ThemeProvider>
+        <MenuProvider>
+          <AuthProvider>
+            <HomesProvider>
+              <MissionsProviderWrapper>
+                <BadgeProvider>
+                  <NavigationLayout>{children}</NavigationLayout>
+                </BadgeProvider>
+              </MissionsProviderWrapper>
+            </HomesProvider>
+          </AuthProvider>
+        </MenuProvider>
       </body>
     </html>
   );

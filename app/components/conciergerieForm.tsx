@@ -1,25 +1,23 @@
 'use client';
 
 import { sendConciergerieVerificationEmail } from '@/app/actions/email';
+import ErrorPage from '@/app/components/error';
 import FormActions from '@/app/components/formActions';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import Select from '@/app/components/select';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { useTheme } from '@/app/contexts/themeProvider';
-import ErrorPage from '@/app/components/error';
 import { Conciergerie } from '@/app/types/types';
-import { getColorValueByName } from '@/app/utils/color';
+import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
+import { Page } from '@/app/utils/navigation';
 import { useEffect, useState } from 'react';
-import { Page } from '../utils/navigation';
 
 type ConciergerieFormProps = {
   onClose: () => void;
 };
 
 export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
-  const { setPrimaryColor } = useTheme();
   const { onMenuChange } = useMenuContext();
   const {
     isLoading: authLoading,
@@ -37,7 +35,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     const selectedConciergerie = conciergeries?.find((c: Conciergerie) => c.name === conciergerieName);
     const color = getColorValueByName(selectedConciergerie?.colorName);
     setPrimaryColor(color);
-  }, [setPrimaryColor, conciergeries, conciergerieName]);
+  }, [conciergeries, conciergerieName]);
 
   const handleClose = () => {
     setPrimaryColor(undefined);

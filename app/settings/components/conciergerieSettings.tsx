@@ -2,9 +2,9 @@ import { updateConciergerieData } from '@/app/actions/conciergerie';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useTheme } from '@/app/contexts/themeProvider';
 import colorOptions from '@/app/data/colors.json';
 import { Conciergerie } from '@/app/types/types';
+import { setPrimaryColor } from '@/app/utils/color';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
 import React, { useEffect, useState } from 'react';
@@ -16,7 +16,6 @@ type ColorOption = {
 
 const ConciergerieSettings: React.FC = () => {
   const { userId, conciergeries, isLoading: authLoading, getUserData, updateUserData } = useAuth();
-  const { setPrimaryColor } = useTheme();
 
   // Validation states
   const [emailError, setEmailError] = useState('');
@@ -60,7 +59,7 @@ const ConciergerieSettings: React.FC = () => {
 
     // Apply theme color
     setPrimaryColor(conciergerie.color);
-  }, [setPrimaryColor, userId, getUserData]);
+  }, [userId, getUserData]);
 
   // Check if a color is already used by another conciergerie
   const isColorUsed = (colorName: string) => {

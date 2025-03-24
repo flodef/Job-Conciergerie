@@ -1,16 +1,16 @@
 'use client';
 
 import { loadEmail, sendConciergerieVerificationEmail, sendEmployeeRegistrationEmail } from '@/app/actions/email';
+import ErrorPage from '@/app/components/error';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useTheme } from '@/app/contexts/themeProvider';
 import { Conciergerie, Employee } from '@/app/types/types';
+import { setPrimaryColor } from '@/app/utils/color';
 import { convertUTCDateToUserTime, getTimeDifference } from '@/app/utils/date';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import ErrorPage from '../components/error';
 
 export default function WaitingPage() {
   const {
@@ -23,7 +23,6 @@ export default function WaitingPage() {
     conciergeries,
     employees,
   } = useAuth();
-  const { setPrimaryColor } = useTheme();
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +60,7 @@ export default function WaitingPage() {
       }
       setIsLoading(false);
     },
-    [conciergeries, conciergerieName, sentEmailError, setSentEmailError, setPrimaryColor],
+    [conciergeries, conciergerieName, sentEmailError, setSentEmailError],
   );
 
   const handleEmployee = useCallback(

@@ -4,6 +4,7 @@ import { fetchConciergeries } from '@/app/actions/conciergerie';
 import { fetchEmployees } from '@/app/actions/employee';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { Conciergerie, Employee } from '@/app/types/types';
+import { setPrimaryColor } from '@/app/utils/color';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
@@ -122,6 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ? (newUserData as Conciergerie).name
             : conciergerieName
           : undefined;
+        const newPrimaryColor = fetchedConciergeries.find(c => c.name === newConciergerieName)?.color;
 
         console.warn('Loading data from database');
 
@@ -130,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setEmployees(fetchedEmployees);
         updateUserType(newUserType);
         setUserData(newUserData);
+        setPrimaryColor(newPrimaryColor);
 
         // Special case where the userId cookie or the userId in local storage has been manually deleted
         const path = window.location.pathname;
