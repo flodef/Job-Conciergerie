@@ -288,7 +288,10 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
         toast={toastMessage}
         onClose={() => {
           setToastMessage(undefined);
-          if (toastMessage?.type === ToastType.Success) onClose();
+          if (toastMessage?.type === ToastType.Success) {
+            onClose();
+            onCancel?.();
+          }
         }}
       />
 

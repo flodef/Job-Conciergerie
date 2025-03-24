@@ -469,7 +469,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             }
           }}
           submitText="Valider"
-          submitType="submit"
           isSubmitting={isSubmitting}
         />
 

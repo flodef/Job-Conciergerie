@@ -115,7 +115,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
           )}
         </div>
 
-        <FormActions onCancel={handleClose} submitText="Valider" submitType="submit" isSubmitting={isSubmitting} />
+        <FormActions onCancel={handleClose} submitText="Valider" isSubmitting={isSubmitting} />
       </form>
     </div>
   );

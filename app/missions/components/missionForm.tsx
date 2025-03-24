@@ -300,7 +300,10 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         toast={toastMessage}
         onClose={() => {
           setToastMessage(undefined);
-          if (toastMessage?.type === ToastType.Success) onClose();
+          if (toastMessage?.type === ToastType.Success) {
+            onClose();
+            onCancel?.();
+          }
         }}
       />
 
