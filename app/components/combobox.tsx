@@ -29,6 +29,7 @@ export default function Combobox({
   const [searchTerm, setSearchTerm] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isFocused, setIsFocused] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const comboboxRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
@@ -112,8 +113,18 @@ export default function Combobox({
     setHighlightedIndex(-1);
   };
 
+  const checkPosition = () => {
+    if (comboboxRef.current) {
+      const rect = comboboxRef.current.getBoundingClientRect();
+      const bottomSpace = window.innerHeight - rect.bottom;
+      const dropdownHeight = Math.min(filteredOptions.length * 36, 240); // Estimate height (36px per item, max 240px)
+      setOpenUpward(bottomSpace < dropdownHeight + 8); // Add some padding
+    }
+  };
+
   const handleInputClick = () => {
     if (!disabled) {
+      checkPosition();
       setIsOpen(true);
       if (inputRef.current) {
         inputRef.current.focus();
@@ -148,6 +159,7 @@ export default function Combobox({
           onClick={handleInputClick}
           onFocus={() => {
             setIsFocused(true);
+            checkPosition();
             setIsOpen(true);
             // Select the first option when focusing
             if (filteredOptions.length > 0) {
@@ -173,7 +185,10 @@ export default function Combobox({
       {isOpen && !disabled && (
         <div
           ref={optionsRef}
-          className="absolute z-50 w-full mt-1 bg-background border border-foreground/20 rounded-lg shadow-lg max-h-60 overflow-auto"
+          className={clsx(
+            'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-60 overflow-auto',
+            openUpward ? 'bottom-full mb-1' : 'top-full mt-1'
+          )}
         >
           {filteredOptions.length === 0 ? (
             <div className="p-2 text-foreground/50 text-center">Aucun résultat</div>

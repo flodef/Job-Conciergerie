@@ -32,6 +32,7 @@ export default function MultiSelect({
 }: MultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
 
   // Add "All" option if enabled and ensure options are properly processed
@@ -99,7 +100,18 @@ export default function MultiSelect({
           disabled && 'opacity-50 cursor-not-allowed',
           isFocused || isOpen ? 'border-primary border-2' : 'border-secondary border',
         )}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!disabled) {
+            // Check position before opening
+            if (!isOpen && selectRef.current) {
+              const rect = selectRef.current.getBoundingClientRect();
+              const bottomSpace = window.innerHeight - rect.bottom;
+              const dropdownHeight = Math.min(allOptions.length * 36, 240); // Estimate height (36px per item, max 240px)
+              setOpenUpward(bottomSpace < dropdownHeight + 8); // Add some padding
+            }
+            setIsOpen(!isOpen);
+          }
+        }}
         tabIndex={disabled ? -1 : 0}
         onFocus={() => setIsFocused(true)}
         onBlur={() => {
@@ -121,7 +133,10 @@ export default function MultiSelect({
       {isOpen && !disabled && (
         <div
           id={`${id}-options`}
-          className="absolute z-50 w-full mt-1 bg-background border border-foreground/20 rounded-lg shadow-lg max-h-60 overflow-auto"
+          className={clsx(
+            'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-60 overflow-auto',
+            openUpward ? 'bottom-full mb-1' : 'top-full mt-1'
+          )}
           role="listbox"
           aria-multiselectable="true"
         >

@@ -33,6 +33,7 @@ export default function Select({
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isFocused, setIsFocused] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
 
@@ -141,7 +142,18 @@ export default function Select({
           disabled && 'opacity-50 cursor-not-allowed',
           isFocused || isOpen ? 'border-primary border-2' : 'border-secondary border',
         )}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!disabled) {
+            // Check position before opening
+            if (!isOpen && selectRef.current) {
+              const rect = selectRef.current.getBoundingClientRect();
+              const bottomSpace = window.innerHeight - rect.bottom;
+              const dropdownHeight = Math.min(options.length * 36, 240); // Estimate height (36px per item, max 240px)
+              setOpenUpward(bottomSpace < dropdownHeight + 8); // Add some padding
+            }
+            setIsOpen(!isOpen);
+          }
+        }}
         tabIndex={disabled ? -1 : 0}
         onFocus={() => setIsFocused(true)}
         onBlur={() => {
@@ -164,7 +176,10 @@ export default function Select({
         <div
           id={`${id}-options`}
           ref={optionsRef}
-          className="absolute z-50 w-full mt-1 bg-background border border-foreground/20 rounded-lg shadow-lg max-h-60 overflow-auto"
+          className={clsx(
+            'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-60 overflow-auto',
+            openUpward ? 'bottom-full mb-1' : 'top-full mt-1'
+          )}
           role="listbox"
         >
           {options.map((option: string | SelectOption, index: number) => {
