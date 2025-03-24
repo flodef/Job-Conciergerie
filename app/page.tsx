@@ -45,7 +45,7 @@ export default function Home() {
   if (authLoading) return <LoadingSpinner />;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background py-2">
+    <div className="min-h-screen flex items-center justify-center bg-background pt-2">
       <div className="w-full max-w-md bg-background overflow-hidden">
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
           <UserTypeSelection onSelect={handleUserTypeSelect} />
