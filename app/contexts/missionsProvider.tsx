@@ -3,7 +3,6 @@
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { Conciergerie, Employee, HomeData, Mission, MissionStatus } from '@/app/types/types';
-import { getEmployees } from '@/app/utils/employee';
 import { generateSimpleId } from '@/app/utils/id';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
@@ -36,7 +35,7 @@ export function MissionsProviderWrapper({ children }: { children: ReactNode }) {
 }
 
 function MissionsProvider({ children }: { children: ReactNode }) {
-  const { getUserData, conciergerieName, conciergeries } = useAuth();
+  const { getUserData, conciergerieName, conciergeries, employees } = useAuth();
   const { homes } = useHomes();
   const [missions, setMissions] = useState<Mission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -378,7 +377,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   // Helper function to get an employee by ID
   const getEmployeeById = (id: string | undefined): Employee | undefined => {
-    return id ? getEmployees().find(emp => emp.id === id) : undefined;
+    return id ? employees.find(emp => emp.id === id) : undefined;
   };
 
   return (

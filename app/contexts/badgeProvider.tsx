@@ -1,9 +1,8 @@
 'use client';
 
+import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission } from '@/app/types/types';
-import { getEmployees } from '@/app/utils/employee';
-import { useAuth } from '@/app/contexts/authProvider';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 type BadgeContextType = {
@@ -21,7 +20,7 @@ const missionsCheckKey = 'last_checked_missions';
 const BadgeContext = createContext<BadgeContextType | undefined>(undefined);
 
 export function BadgeProvider({ children }: { children: ReactNode }) {
-  const { userType, conciergerieName } = useAuth();
+  const { userType, conciergerieName, employees: allEmployees } = useAuth();
   const { missions } = useMissions();
 
   const [pendingEmployeesCount, setPendingEmployeesCount] = useState(0);
@@ -34,8 +33,6 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
     if (userType === 'conciergerie') {
       // Function to count pending employees
       const countPendingEmployees = () => {
-        const allEmployees = getEmployees();
-
         // Filter employees by conciergerie and pending status
         const pendingEmployees = allEmployees.filter(
           emp =>
@@ -62,7 +59,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
 
       return () => clearInterval(interval);
     }
-  }, [userType, conciergerieName]);
+  }, [userType, conciergerieName, allEmployees]);
 
   // Load and update new missions count
   useEffect(() => {

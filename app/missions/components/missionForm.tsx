@@ -5,11 +5,10 @@ import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import MultiSelect from '@/app/components/multiSelect';
 import Select from '@/app/components/select';
-import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { Employee, Mission, Task } from '@/app/types/types';
-import { getEmployees } from '@/app/utils/employee';
+import { Mission, Task } from '@/app/types/types';
 import { getTasksWithPoints } from '@/app/utils/task';
 import { clsx } from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -23,7 +22,7 @@ type MissionFormProps = {
 
 export default function MissionForm({ mission, onClose, onCancel, mode }: MissionFormProps) {
   const { homes, addMission, updateMission, missionExists } = useMissions();
-  const { conciergerieName } = useAuth();
+  const { conciergerieName, employees: allEmployees } = useAuth();
 
   // Filter homes by the current conciergerie
   const filteredHomes = homes.filter(home => home.conciergerieName === conciergerieName);
@@ -49,15 +48,12 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     }
   }, []);
 
-  // Get prestataires (employees with accepted status) using useMemo
+  // Get employees with accepted status using useMemo
   // This avoids the infinite loop issue by not using state + useEffect
-  const prestataires = useMemo(() => {
-    // Get all employees from localStorage
-    const allEmployees = getEmployees();
-
+  const employees = useMemo(() => {
     // Filter to only include accepted employees for the current conciergerie
-    return allEmployees.filter((emp: Employee) => emp.status === 'accepted');
-  }, []);
+    return allEmployees.filter(emp => emp.status === 'accepted');
+  }, [allEmployees]);
 
   // Initialize start and end date/time
   const [startDateTime, setStartDateTime] = useState<string>(
@@ -417,7 +413,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             id="prestataires-select"
             values={selectedEmployees}
             onChange={setSelectedEmployees}
-            options={prestataires.map(emp => ({
+            options={employees.map(emp => ({
               value: emp.id,
               label: `${emp.firstName} ${emp.familyName}`,
             }))}

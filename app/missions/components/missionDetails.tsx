@@ -22,7 +22,8 @@ import {
   IconListCheck,
   IconMail,
   IconPhone,
-  IconUser,
+  IconUserCheck,
+  IconUsersGroup,
   IconZoomScan,
 } from '@tabler/icons-react';
 import Image from 'next/image';
@@ -406,7 +407,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         </div>
 
         {/* Only show conciergerie name if not viewed from calendar by a conciergerie */}
-        {!(isFromCalendar && userType === 'conciergerie') && (
+        {!(isFromCalendar && isConciergerie) && conciergerie?.name !== conciergerieName && (
           <div>
             <h3 className="text-sm font-medium text-light flex items-center gap-1">
               <IconBuildingStore size={16} />
@@ -443,10 +444,20 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           </div>
         )}
 
-        {employee && !isFromCalendar && (
-          <div>
+        {!isFromCalendar && isConciergerie && (
+          <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-light flex items-center gap-1">
-              <IconUser size={16} />
+              <IconUsersGroup size={16} />
+              Prestataires autorisés
+            </h3>
+            <p>{mission.allowedEmployees?.length || 'Tous'}</p>
+          </div>
+        )}
+
+        {employee && !isFromCalendar && (
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-light flex items-center gap-1">
+              <IconUserCheck size={16} />
               Prestataire
             </h3>
             <p>
