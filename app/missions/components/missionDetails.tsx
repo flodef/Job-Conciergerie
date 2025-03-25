@@ -3,6 +3,7 @@
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeDetails from '@/app/homes/components/homeDetails';
@@ -18,7 +19,6 @@ import {
   IconCalculator,
   IconCalendarEvent,
   IconCheck,
-  IconInfoCircle,
   IconListCheck,
   IconMail,
   IconPhone,
@@ -339,23 +339,12 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           <h3 className="text-sm font-medium text-light flex items-center gap-1">
             <IconCalculator size={16} />
             Points de mission
-            <div className="relative inline-block">
-              <IconInfoCircle
-                size={16}
-                className="text-light cursor-help ml-1"
-                onMouseOver={() => document.getElementById('points-tooltip')?.classList.remove('hidden')}
-                onMouseOut={() => document.getElementById('points-tooltip')?.classList.add('hidden')}
-              />
-              <div
-                id="points-tooltip"
-                className="hidden absolute z-10 w-64 p-2 bg-background border border-secondary rounded-md shadow-lg text-xs -left-28 top-6"
-              >
-                <p>
-                  <strong>Règle des 3 points par jour :</strong> Pour ne pas dépasser la capacité de travail d&apos;un
-                  prestataire, il est impossible d&apos;attribuer plus de 3 points de mission par jour par prestataire.
-                </p>
-              </div>
-            </div>
+            <Tooltip>
+              <p>
+                <strong>Règle des 3 points par jour :</strong> Pour ne pas dépasser la capacité de travail d&apos;un
+                prestataire, il est impossible d&apos;attribuer plus de 3 points de mission par jour par prestataire.
+              </p>
+            </Tooltip>
           </h3>
           <span className="font-medium">{calculateMissionPoints(mission).totalPoints} pts</span>
         </div>
@@ -450,7 +439,23 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
               <IconUsersGroup size={16} />
               Prestataires autorisés
             </h3>
-            <p>{mission.allowedEmployees?.length || 'Tous'}</p>
+            <div className="flex items-center gap-1">
+              <p>{mission.allowedEmployees?.length || 'Tous'}</p>
+              {!!mission.allowedEmployees?.length && (
+                <Tooltip>
+                  <ul className="list-disc pl-4">
+                    {mission.allowedEmployees?.map(employeeId => {
+                      const employee = getEmployeeById(employeeId);
+                      return (
+                        <li key={employeeId}>
+                          {employee ? `${employee.firstName} ${employee.familyName}` : employeeId}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </Tooltip>
+              )}
+            </div>
           </div>
         )}
 
