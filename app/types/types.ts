@@ -38,6 +38,7 @@ export interface Employee {
   familyName: string;
   tel: string;
   email: string;
+  geographicZone: string; // Geographic zone where the employee is located
   conciergerieName?: string;
   message?: string;
   notificationSettings?: EmployeeNotificationSettings;

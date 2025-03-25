@@ -7,7 +7,7 @@ import FullScreenModal from '@/app/components/fullScreenModal';
 import ObjectiveList from '@/app/components/objectiveList';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useHomes } from '@/app/contexts/homesProvider';
-import geographicZonesData from '@/app/data/geographicZone.json';
+import geographicZones from '@/app/data/geographicZone.json';
 import { ErrorField, HomeData } from '@/app/types/types';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
@@ -33,7 +33,6 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const [existingImages, setExistingImages] = useState<string[]>(home?.images || []);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [geographicZone, setGeographicZone] = useState<string>(home?.geographicZone || '');
-  const [geographicZones, setGeographicZones] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [toastMessage, setToastMessage] = useState<Toast>();
@@ -68,8 +67,6 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
 
   // Load geographic zones from JSON file
   useEffect(() => {
-    setGeographicZones(geographicZonesData);
-
     // Save initial form state for comparison
     setInitialFormValues({
       title,

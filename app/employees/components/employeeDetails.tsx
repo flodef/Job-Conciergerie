@@ -2,7 +2,7 @@
 
 import { Employee } from '@/app/types/types';
 import { formatDate } from '@/app/utils/date';
-import { IconMail, IconPhone } from '@tabler/icons-react';
+import { IconMail, IconMapPin, IconPhone } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
 
 type EmployeeDetailsProps = {
@@ -46,6 +46,10 @@ export default function EmployeeDetails({ employee }: EmployeeDetailsProps) {
               <a href={`tel:${employee.tel}`} className="text-foreground hover:underline truncate">
                 {employee.tel}
               </a>
+            </div>
+            <div className="flex items-center gap-2">
+              <IconMapPin size={25} className="text-foreground/70" />
+              <span className="text-foreground truncate">{employee.geographicZone}</span>
             </div>
           </div>
         </div>

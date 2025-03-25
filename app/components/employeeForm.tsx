@@ -2,6 +2,7 @@
 
 import { sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import { createNewEmployee } from '@/app/actions/employee';
+import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import LoadingSpinner from '@/app/components/loadingSpinner';
@@ -10,12 +11,13 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { defaultEmployeeSettings } from '@/app/utils/notifications';
 import { ChangeEventField, Employee, EmployeeNotificationSettings, ErrorField } from '@/app/types/types';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
+import { defaultEmployeeSettings } from '@/app/utils/notifications';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
+import geographicZones from '@/app/data/geographicZone.json';
 import React, { useRef, useState } from 'react';
 
 type EmployeeFormProps = {
@@ -33,6 +35,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     familyName: '',
     tel: '',
     email: '',
+    geographicZone: '',
     conciergerieName: conciergeries?.[0]?.name || '',
     message: '',
     notificationSettings: defaultEmployeeSettings,
@@ -47,6 +50,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const [familyNameError, setFamilyNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [geographicZoneError, setGeographicZoneError] = useState('');
   const [conciergerieNameError, setConciergerieNameError] = useState('');
   const [messageError, setMessageError] = useState('');
 
@@ -55,6 +59,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const familyNameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
+  const geographicZoneRef = useRef<HTMLInputElement>(null);
   const conciergerieNameRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
 
@@ -66,21 +71,35 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     const { name, value } = e.target;
 
     // Validate as user types
-    if (name === 'firstName')
-      setFirstNameError(
-        value.length > MAX_NAME_LENGTH ? `Le prénom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères` : '',
-      );
-    else if (name === 'familyName')
-      setFamilyNameError(
-        value.length > MAX_NAME_LENGTH ? `Le nom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères` : '',
-      );
-    else if (name === 'email') setEmailError(value && !emailRegex.test(value) ? 'Format d&apos;email invalide' : '');
-    else if (name === 'tel')
-      setPhoneError(value && !frenchPhoneRegex.test(value) ? 'Format de numéro de téléphone invalide' : '');
-    else if (name === 'message')
-      setMessageError(
-        value.length > MAX_MESSAGE_LENGTH ? `Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères` : '',
-      );
+    switch (name) {
+      case 'firstName':
+        setFirstNameError(
+          value.length > MAX_NAME_LENGTH ? `Le prénom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères` : '',
+        );
+        break;
+      case 'familyName':
+        setFamilyNameError(
+          value.length > MAX_NAME_LENGTH ? `Le nom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères` : '',
+        );
+        break;
+      case 'email':
+        setEmailError(value && !emailRegex.test(value) ? 'Format d&apos;email invalide' : '');
+        break;
+      case 'tel':
+        setPhoneError(value && !frenchPhoneRegex.test(value) ? 'Format de numéro de téléphone invalide' : '');
+        break;
+      case 'geographicZone':
+        setGeographicZoneError(!value.trim() ? 'Un lieu de vie est requis' : '');
+        break;
+      case 'conciergerieName':
+        setConciergerieNameError(!value.trim() ? 'Un nom de conciergerie est requis' : '');
+        break;
+      case 'message':
+        setMessageError(
+          value.length > MAX_MESSAGE_LENGTH ? `Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères` : '',
+        );
+        break;
+    }
 
     // Mark form as changed
     setIsFormChanged(true);
@@ -148,6 +167,12 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         fieldRef: phoneRef,
         func: setPhoneError,
       };
+    else if (!formData.geographicZone?.trim())
+      error = {
+        message: 'Veuillez entrer un lieu de vie',
+        fieldRef: geographicZoneRef,
+        func: setGeographicZoneError,
+      };
     else if (!formData.conciergerieName?.trim())
       error = {
         message: 'Veuillez sélectionner une conciergerie',
@@ -179,6 +204,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         familyName: formData.familyName || '',
         tel: formData.tel || '',
         email: formData.email || '',
+        geographicZone: formData.geographicZone || '',
         message: formData.message,
         conciergerieName: formData.conciergerieName,
         notificationSettings: formData.notificationSettings as EmployeeNotificationSettings,
@@ -326,6 +352,23 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         </div>
 
         <div>
+          <label className="text-base font-medium text-foreground">
+            <h2 className="mb-2">Lieu de vie</h2>
+          </label>
+          <Combobox
+            id="geographic-zone"
+            ref={geographicZoneRef}
+            options={geographicZones}
+            value={formData.geographicZone || ''}
+            onChange={e => handleChange({ target: { name: 'geographicZone', value: e } })}
+            disabled={isSubmitting}
+            placeholder="Sélectionnez un lieu de vie..."
+            error={!!geographicZoneError}
+          />
+          {!!geographicZoneError && <p className="text-red-500 text-sm mt-1">{geographicZoneError}</p>}
+        </div>
+
+        <div>
           <label htmlFor="conciergerie" className="flex items-center text-sm font-medium text-foreground mb-1">
             <span>Conciergerie</span>
             <Tooltip>
@@ -336,9 +379,9 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           <Select
             id="conciergerie"
             ref={conciergerieNameRef}
+            options={conciergeries.map(c => c.name)}
             value={formData.conciergerieName || ''}
             onChange={e => handleChange({ target: { name: 'conciergerie', value: e } })}
-            options={conciergeries.map(c => c.name)}
             disabled={isSubmitting}
             placeholder="Sélectionner une conciergerie"
             error={!!conciergerieNameError}

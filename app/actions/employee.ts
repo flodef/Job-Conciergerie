@@ -62,6 +62,7 @@ export async function createNewEmployee(data: {
   familyName: string;
   tel: string;
   email: string;
+  geographicZone: string;
   message?: string;
   conciergerieName?: string;
   notificationSettings?: EmployeeNotificationSettings;
@@ -81,6 +82,7 @@ export async function createNewEmployee(data: {
       family_name: data.familyName,
       tel: data.tel,
       email: data.email,
+      geographic_zone: data.geographicZone,
       message: data.message,
       conciergerie_name: data.conciergerieName,
       notification_settings: data.notificationSettings,
@@ -131,6 +133,7 @@ export async function updateEmployeeData(
   data: {
     tel?: string;
     email?: string;
+    geographicZone?: string;
     message?: string;
     conciergerieName?: string;
     notificationSettings?: EmployeeNotificationSettings;
@@ -141,6 +144,7 @@ export async function updateEmployeeData(
     const dbData: Partial<DbEmployee> = {
       tel: data.tel,
       email: data.email,
+      geographic_zone: data.geographicZone,
       message: data.message,
       conciergerie_name: data.conciergerieName,
       notification_settings: data.notificationSettings,

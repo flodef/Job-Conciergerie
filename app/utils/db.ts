@@ -5,30 +5,6 @@ import { defaultConciergerieSettings, defaultEmployeeSettings } from '@/app/util
 import { neon } from '@neondatabase/serverless';
 import { unstable_cache } from 'next/cache';
 
-// Type definition for database conciergerie
-export interface DbConciergerie {
-  id: string;
-  name: string;
-  email: string;
-  tel: string;
-  color_name: string;
-  notification_settings?: ConciergerieNotificationSettings;
-}
-
-// Type definition for database employee
-export interface DbEmployee {
-  id: string;
-  first_name: string;
-  family_name: string;
-  tel: string;
-  email: string;
-  message?: string;
-  conciergerie_name?: string;
-  notification_settings?: EmployeeNotificationSettings;
-  status: EmployeeStatus;
-  created_at: string;
-}
-
 // Initialize neon client
 const sql = neon(process.env.DATABASE_URL as string);
 
@@ -53,6 +29,16 @@ export async function getExistingUserType(userId: string): Promise<UserType | nu
     console.error('Error checking user status:', error);
     return null;
   }
+}
+
+// Type definition for database conciergerie
+export interface DbConciergerie {
+  id: string;
+  name: string;
+  email: string;
+  tel: string;
+  color_name: string;
+  notification_settings?: ConciergerieNotificationSettings;
 }
 
 /**
@@ -185,6 +171,21 @@ export const updateConciergerieId = async (conciergerieId: string, id: string) =
   }
 };
 
+// Type definition for database employee
+export interface DbEmployee {
+  id: string;
+  first_name: string;
+  family_name: string;
+  tel: string;
+  email: string;
+  geographic_zone: string;
+  message?: string;
+  conciergerie_name?: string;
+  notification_settings?: EmployeeNotificationSettings;
+  status: EmployeeStatus;
+  created_at: string;
+}
+
 /**
  * Format a database employee to match the application's expected format
  */
@@ -195,6 +196,7 @@ function formatEmployee(dbEmployee: DbEmployee) {
     familyName: dbEmployee.family_name,
     tel: dbEmployee.tel,
     email: dbEmployee.email,
+    geographicZone: dbEmployee.geographic_zone,
     message: dbEmployee.message || '',
     conciergerieName: dbEmployee.conciergerie_name || '',
     status: dbEmployee.status,
@@ -210,7 +212,7 @@ function formatEmployee(dbEmployee: DbEmployee) {
 export const getAllEmployees = async () => {
   try {
     const result = await sql`
-        SELECT id, first_name, family_name, tel, email, message, conciergerie_name, notification_settings, status, created_at
+        SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
         FROM employee
         ORDER BY created_at DESC
       `;
@@ -229,7 +231,7 @@ export const getEmployeeById = async (id?: string) => {
   try {
     if (!id) throw new Error('No ID provided');
     const result = await sql`
-      SELECT id, first_name, family_name, tel, email, message, conciergerie_name, notification_settings, status, created_at
+      SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
       FROM employee
       WHERE id = ${id}
     `;
@@ -248,7 +250,7 @@ export const getEmployeesByConciergerie = unstable_cache(
   async (conciergerieName: string) => {
     try {
       const result = await sql`
-        SELECT id, first_name, family_name, tel, email, message, conciergerie_name, notification_settings, status, created_at
+        SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
         FROM employee
         WHERE conciergerie_name = ${conciergerieName}
         ORDER BY created_at DESC
@@ -300,14 +302,12 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
 
     const result = await sql`
       INSERT INTO employee (
-        id, first_name, family_name, tel, email, message, conciergerie_name, notification_settings, status
+        id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status
       ) VALUES (
-        ${data.id}, ${data.first_name}, ${data.family_name}, ${data.tel}, ${data.email}, 
-        ${data.message || null}, ${data.conciergerie_name || null}, ${notificationSettings}::jsonb, ${
-      data.status || 'pending'
-    }
+        ${data.id}, ${data.first_name}, ${data.family_name}, ${data.tel}, ${data.email}, ${data.geographic_zone},
+        ${data.message || null}, ${data.conciergerie_name}, ${notificationSettings}::jsonb, ${data.status || 'pending'}
       )
-      RETURNING id, first_name, family_name, tel, email, message, conciergerie_name, notification_settings, status, created_at
+      RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
 
     return result.length > 0 ? formatEmployee(result[0] as unknown as DbEmployee) : null;
@@ -327,7 +327,7 @@ export const updateEmployeeStatus = async (id: string | undefined, status: Emplo
       UPDATE employee
       SET status = ${status}, message = null, conciergerie_name = null
       WHERE id = ${id}
-      RETURNING id, first_name, family_name, tel, email, message, conciergerie_name, notification_settings, status, created_at
+      RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
 
     return result.length > 0 ? formatEmployee(result[0] as unknown as DbEmployee) : null;
@@ -351,11 +351,12 @@ export const updateEmployeeSettings = async (id: string | undefined, data: Parti
       SET 
         tel = COALESCE(${data.tel}, tel),
         email = COALESCE(${data.email}, email),
+        geographic_zone = COALESCE(${data.geographic_zone}, geographic_zone),
         message = COALESCE(${data.message}, message),
         conciergerie_name = COALESCE(${data.conciergerie_name}, conciergerie_name),
         notification_settings = COALESCE(${notificationSettings}::jsonb, notification_settings)
       WHERE id = ${id}
-      RETURNING id, first_name, family_name, tel, email, message, conciergerie_name, notification_settings, status, created_at
+      RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
 
     return result.length > 0 ? formatEmployee(result[0] as unknown as DbEmployee) : null;
