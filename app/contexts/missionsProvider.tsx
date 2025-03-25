@@ -216,19 +216,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     // Only allow deletion if the mission was created by the current conciergerie
     if (missionToDelete && missionToDelete.conciergerieName === conciergerieName) {
-      setMissions(prev =>
-        prev.map(mission =>
-          mission.id === id
-            ? {
-                ...mission,
-                deleted: true,
-                employeeId: undefined,
-                status: undefined,
-                modifiedDate: new Date(),
-              }
-            : mission,
-        ),
-      );
+      setMissions(prev => prev.filter(mission => mission.id !== id));
     } else {
       console.error('Cannot delete mission: not created by current conciergerie');
     }
@@ -258,30 +246,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     const employeeData = getUserData<Employee>();
     if (!employeeData) {
-      console.error('No employee data found in localStorage');
+      console.error('No employee data found');
       return;
     }
 
-    // Create an employee object from the employee data in localStorage
-    const employee: Employee = {
-      id: employeeData.id,
-      firstName: employeeData.firstName,
-      familyName: employeeData.familyName,
-      tel: employeeData.tel,
-      email: employeeData.email,
-      conciergerieName: employeeData.conciergerieName,
-      message: employeeData.message,
-      status: 'accepted', // Default to accepted since they're viewing missions
-      createdAt: new Date().toISOString(), // Use current date as fallback
-      notificationSettings: employeeData.notificationSettings || {
-        acceptedMissions: true,
-        missionChanged: true,
-        missionDeleted: true,
-        missionsCanceled: true,
-      },
-    };
-
-    if (!employee.id) {
+    if (!employeeData.id) {
       console.error('Employee ID is missing');
       return;
     }
@@ -291,7 +260,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         mission.id === id
           ? {
               ...mission,
-              employeeId: employee.id,
+              employeeId: employeeData.id,
               status: 'pending' as MissionStatus,
               modifiedDate: new Date(),
             }
