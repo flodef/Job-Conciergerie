@@ -8,7 +8,7 @@ import Select from '@/app/components/select';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { Mission, Task } from '@/app/types/types';
+import { ErrorField, Mission, Task } from '@/app/types/types';
 import { getTasksWithPoints } from '@/app/utils/task';
 import { clsx } from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -66,10 +66,15 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       : localISOString(new Date(now.getTime() + 60 * 60 * 1000)), // For end date/time, add 1 hour to now when adding a new mission
   );
 
-  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<Toast>();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  // Validation states
+  const [homeIdError, setHomeIdError] = useState('');
+  const [tasksError, setTasksError] = useState('');
+  const [startDateTimeError, setStartDateTimeError] = useState('');
+  const [endDateTimeError, setEndDateTimeError] = useState('');
 
   // Refs for form elements
   const homeSelectRef = useRef<HTMLDivElement>(null);
@@ -97,8 +102,6 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const isFormValid = homeId !== '' && tasksState.length > 0 && startDateTime !== '' && endDateTime !== '';
-
   // Check if form has been modified
   const checkFormChanged = useCallback(() => {
     if (!initialFormValues) return false;
@@ -124,101 +127,98 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   };
 
   const handleSubmit = () => {
-    setIsFormSubmitted(true);
+    let error: ErrorField | undefined;
 
-    // Check if home is selected
-    if (!homeId) {
-      setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner un bien' });
-      homeSelectRef.current?.querySelector('select')?.focus();
-      return;
-    }
+    if (!homeId.trim())
+      error = {
+        message: 'Veuillez sélectionner un bien',
+        fieldRef: homeSelectRef,
+        func: setHomeIdError,
+      };
+    else if (tasksState.length === 0)
+      error = {
+        message: 'Veuillez sélectionner au moins une tâche',
+        fieldRef: taskRef,
+        func: setTasksError,
+      };
+    else if (!startDateTime)
+      error = {
+        message: 'Veuillez sélectionner une date de début',
+        fieldRef: startDateRef,
+        func: setStartDateTimeError,
+      };
+    else if (!endDateTime)
+      error = {
+        message: 'Veuillez sélectionner une date de fin',
+        fieldRef: endDateRef,
+        func: setEndDateTimeError,
+      };
 
-    // Check if tasks are selected
-    if (tasksState.length === 0) {
-      setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner au moins une tâche' });
-      // Focus on the first task button
-      const firstTaskButton = taskRef.current?.querySelector('button');
-      if (firstTaskButton) {
-        firstTaskButton.focus();
+    try {
+      setIsSubmitting(true);
+
+      if (error) {
+        error.fieldRef.current?.focus();
+        error.func(error.message);
+        throw new Error(error.message);
       }
-      return;
-    }
 
-    // Check if start date is selected
-    if (!startDateTime) {
-      setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner une date de début' });
-      startDateRef.current?.focus();
-      return;
-    }
+      const selectedHome = filteredHomes.find(h => h.id === homeId);
+      if (!selectedHome) throw new Error('Veuillez sélectionner un bien valide');
 
-    // Check if end date is selected
-    if (!endDateTime) {
-      setToastMessage({ type: ToastType.Error, message: 'Veuillez sélectionner une date de fin' });
-      endDateRef.current?.focus();
-      return;
-    }
+      // Convert string dates to Date objects
+      const startDate = new Date(startDateTime);
+      const endDate = new Date(endDateTime);
 
-    if (isFormValid) {
-      try {
-        setIsSubmitting(true);
-
-        const selectedHome = filteredHomes.find(h => h.id === homeId);
-        if (!selectedHome) throw new Error('Veuillez sélectionner un bien valide');
-
-        // Convert string dates to Date objects
-        const startDate = new Date(startDateTime);
-        const endDate = new Date(endDateTime);
-
-        if (mode === 'add') {
-          // Check if a mission with the same criteria already exists
-          if (
-            missionExists({
-              homeId: selectedHome.id,
-              tasks: tasksState,
-              startDateTime: startDate,
-              endDateTime: endDate,
-            })
-          )
-            throw new Error('Une mission identique existe déjà');
-
-          const result = addMission({
+      if (mode === 'add') {
+        // Check if a mission with the same criteria already exists
+        if (
+          missionExists({
             homeId: selectedHome.id,
             tasks: tasksState,
             startDateTime: startDate,
             endDateTime: endDate,
-            allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
-          });
-          if (!result) throw new Error("Impossible d'ajouter la mission");
+          })
+        )
+          throw new Error('Une mission identique existe déjà');
 
-          setToastMessage({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
-        } else if (mission) {
-          // Create a new mission object with only the necessary fields
-          // This ensures we don't preserve any fields that should be reset by updateMission
-          const updatedMission: Mission = {
-            id: mission.id,
-            homeId: selectedHome.id,
-            tasks: tasksState,
-            startDateTime: startDate,
-            endDateTime: endDate,
-            modifiedDate: new Date(),
-            conciergerieName: mission.conciergerieName,
-            allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
-            status: mission.status,
-            employeeId: mission.employeeId,
-          };
+        const result = addMission({
+          homeId: selectedHome.id,
+          tasks: tasksState,
+          startDateTime: startDate,
+          endDateTime: endDate,
+          allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
+        });
+        if (!result) throw new Error("Impossible d'ajouter la mission");
 
-          // Check if update would create a duplicate (excluding the current mission)
-          if (missionExists(updatedMission, mission.id)) throw new Error('Une mission identique existe déjà');
+        setToastMessage({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
+      } else if (mission) {
+        // Create a new mission object with only the necessary fields
+        // This ensures we don't preserve any fields that should be reset by updateMission
+        const updatedMission: Mission = {
+          id: mission.id,
+          homeId: selectedHome.id,
+          tasks: tasksState,
+          startDateTime: startDate,
+          endDateTime: endDate,
+          modifiedDate: new Date(),
+          conciergerieName: mission.conciergerieName,
+          allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
+          status: mission.status,
+          employeeId: mission.employeeId,
+        };
 
-          const result = updateMission(updatedMission);
-          if (!result) throw new Error('Impossible de mettre à jour la mission');
+        // Check if update would create a duplicate (excluding the current mission)
+        if (missionExists(updatedMission, mission.id)) throw new Error('Une mission identique existe déjà');
 
-          setToastMessage({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });
-        }
-      } catch (error) {
-        setToastMessage({ type: ToastType.Error, message: String(error) });
-        setIsSubmitting(false);
+        const result = updateMission(updatedMission);
+        if (!result) throw new Error('Impossible de mettre à jour la mission');
+
+        setToastMessage({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });
       }
+    } catch (error) {
+      setToastMessage({ type: ToastType.Error, message: String(error), error });
+      setIsSubmitting(false);
     }
   };
 
@@ -242,6 +242,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStartDate = e.target.value;
     setStartDateTime(newStartDate);
+    setStartDateTimeError('');
 
     // Create a new Date object from the selected start date
     const startDate = new Date(newStartDate);
@@ -289,22 +290,22 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>
           <label className="block text-sm font-medium mb-2">Bien</label>
-          <div ref={homeSelectRef}>
-            <Select
-              id="home-select"
-              value={homeId}
-              onChange={(value: string) => {
-                setHomeId(value);
-              }}
-              options={filteredHomes.map(home => ({
-                value: home.id,
-                label: home.title,
-              }))}
-              placeholder="Sélectionner un bien"
-              error={isFormSubmitted && !homeId}
-            />
-          </div>
-          {isFormSubmitted && !homeId && <p className="text-red-500 text-sm mt-1">Veuillez sélectionner un bien</p>}
+          <Select
+            id="home-select"
+            ref={homeSelectRef}
+            value={homeId}
+            onChange={(value: string) => {
+              setHomeId(value);
+              setHomeIdError('');
+            }}
+            options={filteredHomes.map(home => ({
+              value: home.id,
+              label: home.title,
+            }))}
+            placeholder="Sélectionner un bien"
+            error={!!homeIdError}
+          />
+          {!!homeIdError && <p className="text-red-500 text-sm mt-1">{homeIdError}</p>}
         </div>
 
         <div>
@@ -337,9 +338,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               </button>
             ))}
           </div>
-          {isFormSubmitted && tasksState.length === 0 && (
-            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner au moins une tâche</p>
-          )}
+          {!!tasksError && <p className="text-red-500 text-sm mt-1">{tasksError}</p>}
         </div>
 
         <div>
@@ -352,14 +351,13 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             min={nowString}
             onChange={handleStartDateChange}
             className={clsx(
-              'w-full p-2 border rounded-lg bg-background',
-              'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && !startDateTime ? 'border-red-500' : 'border-secondary',
+              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
+              startDateTimeError
+                ? 'border-red-500 focus-visible:outline-red-500 border-2'
+                : 'border-secondary focus-visible:outline-primary border',
             )}
           />
-          {isFormSubmitted && !startDateTime && (
-            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une date et heure de début</p>
-          )}
+          {!!startDateTimeError && <p className="text-red-500 text-sm mt-1">{startDateTimeError}</p>}
         </div>
 
         <div>
@@ -376,16 +374,18 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               minEndDate.setHours(minEndDate.getHours() + 1);
               return localISOString(minEndDate);
             })()}
-            onChange={e => setEndDateTime(e.target.value)}
+            onChange={e => {
+              setEndDateTime(e.target.value);
+              setEndDateTimeError('');
+            }}
             className={clsx(
-              'w-full p-2 border rounded-lg bg-background',
-              'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && !endDateTime ? 'border-red-500' : 'border-secondary',
+              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
+              endDateTimeError
+                ? 'border-red-500 focus-visible:outline-red-500 border-2'
+                : 'border-secondary focus-visible:outline-primary border',
             )}
           />
-          {isFormSubmitted && !endDateTime && (
-            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une date et heure de fin</p>
-          )}
+          {!!endDateTimeError && <p className="text-red-500 text-sm mt-1">{endDateTimeError}</p>}
         </div>
 
         <div>

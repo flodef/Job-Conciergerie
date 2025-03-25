@@ -3,7 +3,7 @@ import LoadingSpinner from '@/app/components/loadingSpinner';
 import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import colorOptions from '@/app/data/colors.json';
-import { Conciergerie } from '@/app/types/types';
+import { Conciergerie, ErrorField } from '@/app/types/types';
 import { setPrimaryColor } from '@/app/utils/color';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
@@ -20,7 +20,6 @@ const ConciergerieSettings: React.FC = () => {
   // Validation states
   const [emailError, setEmailError] = useState('');
   const [phoneError, setPhoneError] = useState('');
-  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
 
   // References for form fields
   const emailRef = React.useRef<HTMLInputElement>(null);
@@ -80,59 +79,31 @@ const ConciergerieSettings: React.FC = () => {
 
   // Handle form submission
   const handleSave = async () => {
-    setIsFormSubmitted(true);
+    let error: ErrorField | undefined;
 
-    // Validate required fields
-    if (!email) {
-      setToastMessage({
-        type: ToastType.Error,
-        message: 'Veuillez remplir tous les champs obligatoires',
-      });
-      // Focus on email field
-      emailRef.current?.focus();
-      return;
-    }
-
-    // Validate required phone number
-    if (!tel) {
-      setPhoneError('Veuillez entrer un numéro de téléphone');
-      setToastMessage({
-        type: ToastType.Error,
-        message: 'Veuillez remplir tous les champs obligatoires',
-      });
-      // Focus on phone field
-      phoneRef.current?.focus();
-      return;
-    }
-
-    // Validate email format
-    if (!emailRegex.test(email)) {
-      setEmailError("Format d'email invalide");
-      setToastMessage({
-        type: ToastType.Error,
-        message: "Veuillez corriger le format de l'email",
-      });
-      // Focus on email field
-      emailRef.current?.focus();
-      return;
-    }
-
-    // Validate phone format
-    if (!frenchPhoneRegex.test(tel)) {
-      setPhoneError('Format de numéro de téléphone invalide');
-      setToastMessage({
-        type: ToastType.Error,
+    if (!email.trim())
+      error = { message: 'Veuillez entrer une adresse email', fieldRef: emailRef, func: setEmailError };
+    else if (!tel.trim())
+      error = { message: 'Veuillez entrer un numéro de téléphone', fieldRef: phoneRef, func: setPhoneError };
+    else if (!emailRegex.test(email))
+      error = { message: "Veuillez corriger le format de l'email", fieldRef: emailRef, func: setEmailError };
+    else if (!frenchPhoneRegex.test(tel))
+      error = {
         message: 'Veuillez corriger le format du numéro de téléphone',
-      });
-      // Focus on phone field
-      phoneRef.current?.focus();
-      return;
-    }
-
-    setIsSaving(true);
+        fieldRef: phoneRef,
+        func: setPhoneError,
+      };
 
     try {
-      if (!userId) throw new Error('missing user ID');
+      setIsSaving(true);
+
+      if (error) {
+        error.fieldRef?.current?.focus();
+        error.func(error.message);
+        throw new Error(error.message);
+      }
+
+      if (!userId) throw new Error("L'identifiant n'est pas défini");
 
       // Update in database if we have an ID
       const updatedConciergerie = await updateConciergerieData(userId, {
@@ -140,7 +111,7 @@ const ConciergerieSettings: React.FC = () => {
         tel,
         colorName: selectedColor?.name || '',
       });
-      if (!updatedConciergerie) throw new Error('failed to update conciergerie in database');
+      if (!updatedConciergerie) throw new Error('Paramètres non mis à jour dans la base de données');
 
       updateUserData(updatedConciergerie);
 
@@ -164,7 +135,7 @@ const ConciergerieSettings: React.FC = () => {
     } catch (error) {
       setToastMessage({
         type: ToastType.Error,
-        message: 'Erreur lors de l&apos;enregistrement',
+        message: String(error),
         error,
       });
     } finally {
@@ -190,29 +161,18 @@ const ConciergerieSettings: React.FC = () => {
           onChange={e => {
             const newValue = e.target.value;
             setEmail(newValue);
-            if (newValue && !emailRegex.test(newValue)) {
-              setEmailError("Format d'email invalide");
-            } else {
-              setEmailError('');
-            }
+            setEmailError(newValue && !emailRegex.test(newValue) ? "Format d'email invalide" : '');
           }}
           className={clsx(
-            'w-full p-2 border rounded-md',
-            'border-foreground/20',
-            'focus:outline-none focus:ring-2',
-            (isFormSubmitted && !email) || emailError ? 'border-red-500' : '',
+            'w-full px-3 py-2 rounded-lg bg-background text-foreground',
+            emailError
+              ? 'border-red-500 focus-visible:outline-red-500 border-2'
+              : 'border-secondary focus-visible:outline-primary border',
           )}
-          style={
-            {
-              '--tw-ring-color': selectedColor?.value || '',
-            } as React.CSSProperties
-          }
+          disabled={isSaving}
+          placeholder="jean.dupont@example.com"
         />
-        {isFormSubmitted && !email ? (
-          <p className="text-red-500 text-sm mt-1">Veuillez entrer une adresse email</p>
-        ) : emailError ? (
-          <p className="text-red-500 text-sm mt-1">{emailError}</p>
-        ) : null}
+        {emailError ? <p className="text-red-500 text-sm mt-1">{emailError}</p> : null}
       </div>
 
       <div>
@@ -227,30 +187,18 @@ const ConciergerieSettings: React.FC = () => {
           onChange={e => {
             const newValue = e.target.value;
             setTel(newValue);
-            if (newValue && !frenchPhoneRegex.test(newValue)) {
-              setPhoneError('Format de numéro de téléphone invalide');
-            } else {
-              setPhoneError('');
-            }
+            setPhoneError(newValue && !frenchPhoneRegex.test(newValue) ? 'Format de numéro de téléphone invalide' : '');
           }}
           className={clsx(
-            'w-full p-2 border rounded-md',
-            'border-foreground/20',
-            'focus:outline-none focus:ring-2',
-            (isFormSubmitted && !tel) || phoneError ? 'border-red-500' : '',
+            'w-full px-3 py-2 rounded-lg bg-background text-foreground',
+            phoneError
+              ? 'border-red-500 focus-visible:outline-red-500 border-2'
+              : 'border-secondary focus-visible:outline-primary border',
           )}
-          placeholder="Ex: 06 12 34 56 78"
-          style={
-            {
-              '--tw-ring-color': selectedColor?.value || '',
-            } as React.CSSProperties
-          }
+          disabled={isSaving}
+          placeholder="06 12 34 56 78"
         />
-        {isFormSubmitted && !tel ? (
-          <p className="text-red-500 text-sm mt-1">Veuillez entrer un numéro de téléphone</p>
-        ) : phoneError ? (
-          <p className="text-red-500 text-sm mt-1">{phoneError}</p>
-        ) : null}
+        {phoneError ? <p className="text-red-500 text-sm mt-1">{phoneError}</p> : null}
       </div>
 
       <div>
@@ -269,7 +217,7 @@ const ConciergerieSettings: React.FC = () => {
                     setSelectedColor(color);
                   }
                 }}
-                disabled={isUsed && !isSelected}
+                disabled={(isUsed && !isSelected) || isSaving}
                 className={`
                   relative flex flex-col items-center space-y-1 p-2 border rounded-md transition-all
                   ${isSelected ? 'ring-2 ring-primary border-primary' : 'border-secondary'}

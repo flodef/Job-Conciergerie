@@ -8,7 +8,7 @@ import ObjectiveList from '@/app/components/objectiveList';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useHomes } from '@/app/contexts/homesProvider';
 import geographicZonesData from '@/app/data/geographicZone.json';
-import { HomeData } from '@/app/types/types';
+import { ErrorField, HomeData } from '@/app/types/types';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -17,7 +17,7 @@ type HomeFormProps = {
   onClose: () => void;
   onCancel?: () => void;
   home?: HomeData;
-  mode?: 'add' | 'edit';
+  mode: 'add' | 'edit';
 };
 
 export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: HomeFormProps) {
@@ -34,7 +34,6 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [geographicZone, setGeographicZone] = useState<string>(home?.geographicZone || '');
   const [geographicZones, setGeographicZones] = useState<string[]>([]);
-  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [toastMessage, setToastMessage] = useState<Toast>();
@@ -44,28 +43,28 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     description: string;
     objectives: string[];
     geographicZone: string;
+    images: string[];
   }>();
 
   // Validation states
-  const [descriptionError, setDescriptionError] = useState<string | null>(null);
+  const [titleError, setTitleError] = useState('');
+  const [descriptionError, setDescriptionError] = useState('');
+  const [geographicZoneError, setGeographicZoneError] = useState('');
+  const [objectivesError, setObjectivesError] = useState('');
+  const [imagesError, setImagesError] = useState('');
 
   // Refs for form elements
   const titleInputRef = useRef<HTMLInputElement>(null);
   const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const comboboxRef = useRef<HTMLDivElement>(null);
-  const taskListRef = useRef<HTMLDivElement>(null);
-  const imageUploadRef = useRef<HTMLLabelElement>(null);
+  const geographicZoneRef = useRef<HTMLInputElement>(null);
+  const objectivesRef = useRef<HTMLInputElement>(null);
+  const imagesRef = useRef<HTMLInputElement>(null);
 
   // Constants for validation
+  const MAX_TITLE_LENGTH = 30;
+  const MAX_OBJECTIVES = 10;
   const MAX_DESCRIPTION_LENGTH = 500;
   const MAX_PHOTOS = 9;
-  const isFormValid =
-    (images.length > 0 || existingImages.length > 0) &&
-    images.length <= MAX_PHOTOS &&
-    description.trim() !== '' &&
-    objectives.some(objective => objective.trim() !== '') &&
-    title.trim() !== '' &&
-    geographicZone.trim() !== '';
 
   // Load geographic zones from JSON file
   useEffect(() => {
@@ -77,6 +76,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
       description,
       objectives: [...objectives],
       geographicZone,
+      images: [...existingImages],
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -88,11 +88,12 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     const titleChanged = title !== initialFormValues.title;
     const descriptionChanged = description !== initialFormValues.description;
     const objectivesChanged = JSON.stringify(objectives) !== JSON.stringify(initialFormValues.objectives);
-    const imagesChanged = images.length > 0;
+    const imagesChanged =
+      images.length > 0 || JSON.stringify(existingImages) !== JSON.stringify(initialFormValues.images);
     const geographicZoneChanged = geographicZone !== initialFormValues.geographicZone;
 
     return titleChanged || descriptionChanged || objectivesChanged || imagesChanged || geographicZoneChanged;
-  }, [title, description, objectives, images, geographicZone, initialFormValues]);
+  }, [title, description, objectives, images, existingImages, geographicZone, initialFormValues]);
 
   useEffect(() => {
     const urls = images.map(image => URL.createObjectURL(image));
@@ -113,117 +114,99 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   };
 
   const handleSubmit = () => {
-    setIsFormSubmitted(true);
+    let error: ErrorField | undefined;
 
-    // Check if images are uploaded
-    if (images.length === 0 && existingImages.length === 0) {
-      setToastMessage({
-        type: ToastType.Error,
+    if (images.length === 0 && existingImages.length === 0)
+      error = {
         message: 'Veuillez ajouter au moins une photo',
-      });
-      imageUploadRef.current?.focus();
-      return;
-    }
-
-    // Check description length
-    if (description.length > MAX_DESCRIPTION_LENGTH) {
-      setDescriptionError(`La description ne peut pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`);
-      setToastMessage({
-        type: ToastType.Error,
-        message: `La description ne peut pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`,
-      });
-      descriptionTextareaRef.current?.focus();
-      return;
-    }
-
-    // Check if title is empty
-    if (!title.trim()) {
-      setToastMessage({
-        type: ToastType.Error,
+        fieldRef: imagesRef,
+        func: setImagesError,
+      };
+    else if (!title.trim())
+      error = {
         message: 'Veuillez saisir un titre',
-      });
-      titleInputRef.current?.focus();
-      return;
-    }
-
-    // Check if description is empty
-    if (!description.trim()) {
-      setToastMessage({
-        type: ToastType.Error,
-        message: 'Veuillez remplir la description',
-      });
-      descriptionTextareaRef.current?.focus();
-      return;
-    }
-
-    // Check if at least one objective is added
-    if (!objectives.some(objective => objective.trim() !== '')) {
-      setToastMessage({
-        type: ToastType.Error,
-        message: 'Veuillez ajouter au moins un objectif',
-      });
-      // Focus on the first objective input
-      const firstObjectiveInput = taskListRef.current?.querySelector('input');
-      if (firstObjectiveInput) {
-        firstObjectiveInput.focus();
-      }
-      return;
-    }
-
-    // Check if geographic zone is empty
-    if (!geographicZone) {
-      setToastMessage({
-        type: ToastType.Error,
+        fieldRef: titleInputRef,
+        func: setTitleError,
+      };
+    else if (title.length > MAX_TITLE_LENGTH)
+      error = {
+        message: `Le titre ne peut pas dépasser ${MAX_TITLE_LENGTH} caractères`,
+        fieldRef: titleInputRef,
+        func: setTitleError,
+      };
+    else if (!geographicZone.trim())
+      error = {
         message: 'Veuillez sélectionner une zone géographique',
-      });
-      comboboxRef.current?.querySelector('input')?.focus();
-      return;
-    }
+        fieldRef: geographicZoneRef,
+        func: setGeographicZoneError,
+      };
+    else if (!description.trim())
+      error = {
+        message: 'Veuillez remplir la description',
+        fieldRef: descriptionTextareaRef,
+        func: setDescriptionError,
+      };
+    else if (description.length > MAX_DESCRIPTION_LENGTH)
+      error = {
+        message: `La description ne peut pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`,
+        fieldRef: descriptionTextareaRef,
+        func: setDescriptionError,
+      };
+    else if (!objectives.some(objective => objective.trim() !== ''))
+      error = {
+        message: 'Veuillez ajouter au moins un objectif',
+        fieldRef: objectivesRef,
+        func: setObjectivesError,
+      };
 
-    if (isFormValid) {
-      try {
-        setIsSubmitting(true);
+    try {
+      setIsSubmitting(true);
 
-        // Always use the mockup image regardless of what was uploaded
-        // Count how many images the user wanted to add
-        const imageCount = existingImages.length + images.length;
-        // Create an array with the mockup image repeated for each image the user wanted to add
-        const imageUrls = Array(Math.max(1, imageCount)).fill(mockupImagePath);
-
-        if (mode === 'add') {
-          // Check for duplicate homes by title before adding
-          if (homeExists(title)) throw new Error('Un bien avec ce titre existe déjà');
-
-          const result = addHome({
-            title,
-            description,
-            objectives: objectives.filter(objective => objective.trim() !== ''),
-            images: imageUrls,
-            geographicZone,
-          });
-          if (!result) throw new Error("Impossible d'ajouter le bien");
-
-          setToastMessage({ type: ToastType.Success, message: 'Bien ajouté avec succès !' });
-        } else if (home) {
-          // For edit mode, only check for duplicates if the title has changed
-          if (title !== home.title && homeExists(title)) throw new Error('Un bien avec ce titre existe déjà');
-
-          const result = updateHome({
-            ...home,
-            title,
-            description,
-            objectives: objectives.filter(objective => objective.trim() !== ''),
-            images: imageUrls,
-            geographicZone,
-          });
-          if (!result) throw new Error('Impossible de mettre à jour le bien');
-
-          setToastMessage({ type: ToastType.Success, message: 'Bien mis à jour avec succès !' });
-        }
-      } catch (error) {
-        setToastMessage({ type: ToastType.Error, message: String(error), error });
-        setIsSubmitting(false);
+      if (error) {
+        error.fieldRef.current?.focus();
+        error.func(error.message);
+        throw new Error(error.message);
       }
+
+      // Always use the mockup image regardless of what was uploaded
+      // Count how many images the user wanted to add
+      const imageCount = existingImages.length + images.length;
+      // Create an array with the mockup image repeated for each image the user wanted to add
+      const imageUrls = Array(Math.max(1, imageCount)).fill(mockupImagePath);
+
+      if (mode === 'add') {
+        // Check for duplicate homes by title before adding
+        if (homeExists(title)) throw new Error('Un bien avec ce titre existe déjà');
+
+        const result = addHome({
+          title,
+          description,
+          objectives: objectives.filter(objective => objective.trim() !== ''),
+          images: imageUrls,
+          geographicZone,
+        });
+        if (!result) throw new Error("Impossible d'ajouter le bien");
+
+        setToastMessage({ type: ToastType.Success, message: 'Bien ajouté avec succès !' });
+      } else if (home) {
+        // For edit mode, only check for duplicates if the title has changed
+        if (title !== home.title && homeExists(title)) throw new Error('Un bien avec ce titre existe déjà');
+
+        const result = updateHome({
+          ...home,
+          title,
+          description,
+          objectives: objectives.filter(objective => objective.trim() !== ''),
+          images: imageUrls,
+          geographicZone,
+        });
+        if (!result) throw new Error('Impossible de mettre à jour le bien');
+
+        setToastMessage({ type: ToastType.Success, message: 'Bien mis à jour avec succès !' });
+      }
+    } catch (error) {
+      setToastMessage({ type: ToastType.Error, message: String(error), error });
+      setIsSubmitting(false);
     }
   };
 
@@ -250,6 +233,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     // Add the filtered files
     if (filesToAdd.length > 0) {
       setImages(prev => [...prev, ...filesToAdd]);
+      setImagesError('');
     }
 
     const message = exceedsLimit
@@ -317,7 +301,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           <label className="text-base font-medium text-foreground">
             <div className="flex justify-between items-center mb-2">
               <h2 className="text-base font-medium text-foreground">Photos</h2>
-              {(existingImages.length > 0 || previewUrls.length > 0) && (
+              {(existingImages.length > 1 || previewUrls.length > 1) && (
                 <button
                   type="button"
                   onClick={() => {
@@ -329,17 +313,11 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
                   Tout supprimer
                 </button>
               )}
+              {/* Hack to focus the input when there is an error */}
+              <input ref={imagesRef} type="text" className="h-0 w-0" />
             </div>
           </label>
-          <div
-            className={clsx(
-              'grid grid-cols-3 gap-4',
-              isFormSubmitted &&
-                existingImages.length === 0 &&
-                images.length === 0 &&
-                'border border-red-500 rounded-lg p-2',
-            )}
-          >
+          <div className={clsx('grid grid-cols-3 gap-4', !!imagesError && 'border border-red-500 rounded-lg p-2')}>
             {/* Existing images */}
             {existingImages.map((url, index) => (
               <div key={`existing-${index}`} className="relative aspect-square">
@@ -392,7 +370,6 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
               id="image-upload"
             />
             <label
-              ref={imageUploadRef}
               htmlFor="image-upload"
               className={clsx(
                 'aspect-square flex items-center justify-center border-2 border-dashed border-foreground/30 rounded-lg hover:border-foreground/50 cursor-pointer transition-colors',
@@ -402,9 +379,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
               <span className="text-3xl text-foreground/50">+</span>
             </label>
           </div>
-          {isFormSubmitted && existingImages.length === 0 && images.length === 0 && (
-            <p className="text-red-500 text-sm mt-1">Veuillez ajouter au moins une photo</p>
-          )}
+          {!!imagesError && <p className="text-red-500 text-sm mt-1">{imagesError}</p>}
           <p className="text-xs text-light mt-2 text-center">
             Note: Les images sont remplacées par une image par défaut lors de l&apos;enregistrement
           </p>
@@ -418,36 +393,44 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
             type="text"
             ref={titleInputRef}
             value={title}
-            onChange={e => setTitle(e.target.value)}
+            onChange={e => {
+              const newValue = e.target.value;
+              if (newValue.length > MAX_TITLE_LENGTH) {
+                setTitleError(`Le titre ne peut pas dépasser ${MAX_TITLE_LENGTH} caractères`);
+                setTitle(newValue.slice(0, MAX_TITLE_LENGTH));
+              } else {
+                setTitleError('');
+                setTitle(newValue);
+              }
+            }}
             className={clsx(
-              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-              'border-foreground/20 focus-visible:outline-primary',
-              isFormSubmitted && title.trim() === '' && 'border-red-500',
+              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
+              titleError
+                ? 'border-red-500 focus-visible:outline-red-500 border-2'
+                : 'border-secondary focus-visible:outline-primary border',
             )}
             placeholder="Entrez le titre du bien..."
           />
-          {isFormSubmitted && title.trim() === '' && (
-            <p className="text-red-500 text-sm mt-1">Veuillez entrer un titre</p>
-          )}
+          {!!titleError && <p className="text-red-500 text-sm mt-1">{titleError}</p>}
         </div>
 
         <div>
           <label className="text-base font-medium text-foreground">
             <h2 className="mb-2">Zone géographique</h2>
           </label>
-          <div ref={comboboxRef}>
-            <Combobox
-              id="geographic-zone"
-              options={geographicZones}
-              value={geographicZone}
-              onChange={setGeographicZone}
-              placeholder="Sélectionnez une zone géographique..."
-              error={isFormSubmitted && !geographicZone}
-            />
-          </div>
-          {isFormSubmitted && !geographicZone && (
-            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une zone géographique</p>
-          )}
+          <Combobox
+            id="geographic-zone"
+            ref={geographicZoneRef}
+            options={geographicZones}
+            value={geographicZone}
+            onChange={e => {
+              setGeographicZone(e);
+              setGeographicZoneError('');
+            }}
+            placeholder="Sélectionnez une zone géographique..."
+            error={!!geographicZoneError}
+          />
+          {!!geographicZoneError && <p className="text-red-500 text-sm mt-1">{geographicZoneError}</p>}
         </div>
 
         <div>
@@ -464,22 +447,21 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
                   setDescriptionError(`La description ne peut pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`);
                   setDescription(newValue.slice(0, MAX_DESCRIPTION_LENGTH));
                 } else {
-                  setDescriptionError(null);
+                  setDescriptionError('');
                   setDescription(newValue);
                 }
               }}
               className={clsx(
-                'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-                'border-foreground/20 focus-visible:outline-primary',
-                (isFormSubmitted && description.trim() === '') || descriptionError ? 'border-red-500' : '',
+                'w-full px-3 py-2 rounded-lg bg-background text-foreground',
+                descriptionError
+                  ? 'border-red-500 focus-visible:outline-red-500 border-2'
+                  : 'border-secondary focus-visible:outline-primary border',
               )}
               rows={4}
               placeholder="Décrivez les caractéristiques du bien..."
               maxLength={MAX_DESCRIPTION_LENGTH}
             />
-            {isFormSubmitted && description.trim() === '' ? (
-              <p className="text-red-500 text-sm mt-1">Veuillez remplir la description</p>
-            ) : descriptionError ? (
+            {!!descriptionError ? (
               <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
             ) : (
               <div className="text-right text-sm text-foreground/50 -mt-1.5">
@@ -489,12 +471,16 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           </div>
         </div>
 
-        <div ref={taskListRef}>
-          <ObjectiveList objectives={objectives} setObjectives={setObjectives} />
-          {isFormSubmitted && !objectives.some(o => o.trim() !== '') && (
-            <p className="text-red-500 text-sm mt-1">Veuillez ajouter au moins un point particulier</p>
-          )}
-        </div>
+        <ObjectiveList
+          ref={objectivesRef}
+          objectives={objectives}
+          setObjectives={e => {
+            setObjectives(e);
+            setObjectivesError('');
+          }}
+          maxObjectives={MAX_OBJECTIVES}
+        />
+        {!!objectivesError && <p className="text-red-500 text-sm mt-1">{objectivesError}</p>}
 
         <ConfirmationModal
           isOpen={showConfirmDialog}

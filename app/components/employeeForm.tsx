@@ -6,16 +6,17 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import Select from '@/app/components/select';
-import { ToastMessage, Toast, ToastType } from '@/app/components/toastMessage';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { Employee, EmployeeNotificationSettings } from '@/app/types/types';
+import { defaultEmployeeSettings } from '@/app/utils/notifications';
+import { ChangeEventField, Employee, EmployeeNotificationSettings, ErrorField } from '@/app/types/types';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 type EmployeeFormProps = {
   onClose: () => void;
@@ -34,72 +35,52 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     email: '',
     conciergerieName: conciergeries?.[0]?.name || '',
     message: '',
-    notificationSettings: {
-      acceptedMissions: true,
-      missionChanged: true,
-      missionDeleted: true,
-      missionsCanceled: true,
-    },
+    notificationSettings: defaultEmployeeSettings,
   });
-  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [toastMessage, setToastMessage] = useState<Toast>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormChanged, setIsFormChanged] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Validation states
-  const [firstNameError, setFirstNameError] = useState<string | null>(null);
-  const [familyNameError, setFamilyNameError] = useState<string | null>(null);
-  const [emailError, setEmailError] = useState<string | null>(null);
-  const [phoneError, setPhoneError] = useState<string | null>(null);
-  const [messageError, setMessageError] = useState<string | null>(null);
+  const [firstNameError, setFirstNameError] = useState('');
+  const [familyNameError, setFamilyNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [conciergerieNameError, setConciergerieNameError] = useState('');
+  const [messageError, setMessageError] = useState('');
 
   // References for form fields
-  const firstNameRef = React.useRef<HTMLInputElement>(null);
-  const familyNameRef = React.useRef<HTMLInputElement>(null);
-  const emailRef = React.useRef<HTMLInputElement>(null);
-  const phoneRef = React.useRef<HTMLInputElement>(null);
-  const messageRef = React.useRef<HTMLTextAreaElement>(null);
+  const firstNameRef = useRef<HTMLInputElement>(null);
+  const familyNameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const conciergerieNameRef = useRef<HTMLDivElement>(null);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
 
   // Constants for validation
   const MAX_NAME_LENGTH = 30;
   const MAX_MESSAGE_LENGTH = 500;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEventField) => {
     const { name, value } = e.target;
 
     // Validate as user types
-    if (name === 'firstName') {
-      if (value.length > MAX_NAME_LENGTH) {
-        setFirstNameError(`Le prénom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`);
-      } else {
-        setFirstNameError(null);
-      }
-    } else if (name === 'familyName') {
-      if (value.length > MAX_NAME_LENGTH) {
-        setFamilyNameError(`Le nom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`);
-      } else {
-        setFamilyNameError(null);
-      }
-    } else if (name === 'email') {
-      if (value && !emailRegex.test(value)) {
-        setEmailError('Format d&apos;email invalide');
-      } else {
-        setEmailError(null);
-      }
-    } else if (name === 'tel') {
-      if (value && !frenchPhoneRegex.test(value)) {
-        setPhoneError('Format de numéro de téléphone invalide');
-      } else {
-        setPhoneError(null);
-      }
-    } else if (name === 'message') {
-      if (value.length > MAX_MESSAGE_LENGTH) {
-        setMessageError(`Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères`);
-      } else {
-        setMessageError(null);
-      }
-    }
+    if (name === 'firstName')
+      setFirstNameError(
+        value.length > MAX_NAME_LENGTH ? `Le prénom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères` : '',
+      );
+    else if (name === 'familyName')
+      setFamilyNameError(
+        value.length > MAX_NAME_LENGTH ? `Le nom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères` : '',
+      );
+    else if (name === 'email') setEmailError(value && !emailRegex.test(value) ? 'Format d&apos;email invalide' : '');
+    else if (name === 'tel')
+      setPhoneError(value && !frenchPhoneRegex.test(value) ? 'Format de numéro de téléphone invalide' : '');
+    else if (name === 'message')
+      setMessageError(
+        value.length > MAX_MESSAGE_LENGTH ? `Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères` : '',
+      );
 
     // Mark form as changed
     setIsFormChanged(true);
@@ -113,124 +94,83 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsFormSubmitted(true);
 
     if (!formData) return;
 
+    let error: ErrorField | undefined;
+
     // Check if all required fields are filled
-    if (!formData.firstName) {
-      setToastMessage({
-        type: ToastType.Error,
-        message: 'Veuillez remplir tous les champs obligatoires',
-      });
-      firstNameRef.current?.focus();
-      return;
-    }
-
-    // Validate first name length
-    if (formData.firstName.length > MAX_NAME_LENGTH) {
-      setFirstNameError(`Le prénom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`);
-      setToastMessage({
-        type: ToastType.Error,
+    if (!formData.firstName?.trim())
+      error = {
+        message: 'Veuillez entrer un prénom',
+        fieldRef: firstNameRef,
+        func: setFirstNameError,
+      };
+    else if (formData.firstName.length > MAX_NAME_LENGTH)
+      error = {
         message: `Le prénom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`,
-      });
-      firstNameRef.current?.focus();
-      return;
-    }
-
-    if (!formData.familyName) {
-      setToastMessage({
-        type: ToastType.Error,
-        message: 'Veuillez remplir tous les champs obligatoires',
-      });
-      familyNameRef.current?.focus();
-      return;
-    }
-
-    // Validate family name length
-    if (formData.familyName.length > MAX_NAME_LENGTH) {
-      setFamilyNameError(`Le nom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`);
-      setToastMessage({
-        type: ToastType.Error,
+        fieldRef: firstNameRef,
+        func: setFirstNameError,
+      };
+    else if (!formData.familyName?.trim())
+      error = {
+        message: 'Veuillez entrer un nom',
+        fieldRef: familyNameRef,
+        func: setFamilyNameError,
+      };
+    else if (formData.familyName.length > MAX_NAME_LENGTH)
+      error = {
         message: `Le nom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`,
-      });
-      familyNameRef.current?.focus();
-      return;
-    }
-
-    if (!formData.email) {
-      setToastMessage({
-        type: ToastType.Error,
-        message: 'Veuillez remplir tous les champs obligatoires',
-      });
-      emailRef.current?.focus();
-      return;
-    }
-
-    if (!formData.tel) {
-      setPhoneError('Veuillez entrer un numéro de téléphone');
-      setToastMessage({
-        type: ToastType.Error,
-        message: 'Veuillez remplir tous les champs obligatoires',
-      });
-      phoneRef.current?.focus();
-      return;
-    }
-
-    if (!formData.conciergerieName) {
-      setToastMessage({
-        type: ToastType.Error,
-        message: 'Veuillez sélectionner une conciergerie',
-      });
-      return;
-    }
-
-    // Validate email format
-    if (!emailRegex.test(formData.email)) {
-      setEmailError("Format d'email invalide");
-      setToastMessage({
-        type: ToastType.Error,
+        fieldRef: familyNameRef,
+        func: setFamilyNameError,
+      };
+    else if (!formData.email?.trim())
+      error = {
+        message: 'Veuillez entrer une adresse email',
+        fieldRef: emailRef,
+        func: setEmailError,
+      };
+    else if (!formData.tel?.trim())
+      error = {
+        message: 'Veuillez entrer un numéro de téléphone',
+        fieldRef: phoneRef,
+        func: setPhoneError,
+      };
+    else if (!emailRegex.test(formData.email))
+      error = {
         message: "Veuillez corriger le format de l'email",
-      });
-      emailRef.current?.focus();
-      return;
-    }
-
-    // Validate phone format
-    if (!frenchPhoneRegex.test(formData.tel)) {
-      setPhoneError('Format de numéro de téléphone invalide');
-      setToastMessage({
-        type: ToastType.Error,
+        fieldRef: emailRef,
+        func: setEmailError,
+      };
+    else if (!frenchPhoneRegex.test(formData.tel))
+      error = {
         message: 'Veuillez corriger le format du numéro de téléphone',
-      });
-      phoneRef.current?.focus();
-      return;
-    }
-
-    // Validate message length
-    if (formData.message && formData.message.length > MAX_MESSAGE_LENGTH) {
-      setMessageError(`Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères`);
-      setToastMessage({
-        type: ToastType.Error,
+        fieldRef: phoneRef,
+        func: setPhoneError,
+      };
+    else if (!formData.conciergerieName?.trim())
+      error = {
+        message: 'Veuillez sélectionner une conciergerie',
+        fieldRef: conciergerieNameRef,
+        func: setConciergerieNameError,
+      };
+    else if (formData.message && formData.message.length > MAX_MESSAGE_LENGTH)
+      error = {
         message: `Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères`,
-      });
-      messageRef.current?.focus();
-      return;
-    }
-
-    if (!userId) {
-      setToastMessage({
-        type: ToastType.Error,
-        message: "Une erreur est survenue lors de la création de l'employé",
-        error: 'No User ID',
-      });
-      return;
-    }
+        fieldRef: messageRef,
+        func: setMessageError,
+      };
 
     try {
       setIsSubmitting(true);
 
-      if (!userId) throw new Error('User ID not found');
+      if (error) {
+        error.fieldRef.current?.focus();
+        error.func(error.message);
+        throw new Error(error.message);
+      }
+
+      if (!userId) throw new Error("L'identifiant n'est pas défini");
 
       // Create a new employee in the database
       const { employee, alreadyExists } = await createNewEmployee({
@@ -245,7 +185,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       });
 
       if (alreadyExists) throw new Error('Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.');
-
       if (!employee) throw new Error('Employé non créé dans la base de données');
 
       updateUserData(employee);
@@ -306,18 +245,15 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             value={formData.firstName}
             onChange={handleChange}
             className={clsx(
-              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-              'border-foreground/20 focus-visible:outline-primary',
-              (isFormSubmitted && !formData.firstName) || firstNameError ? 'border-red-500' : '',
+              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
+              firstNameError
+                ? 'border-red-500 focus-visible:outline-red-500 border-2'
+                : 'border-secondary focus-visible:outline-primary border',
             )}
             disabled={isSubmitting}
             placeholder="Jean"
           />
-          {isFormSubmitted && !formData.firstName ? (
-            <p className="text-red-500 text-sm mt-1">Veuillez entrer votre prénom</p>
-          ) : firstNameError ? (
-            <p className="text-red-500 text-sm mt-1">{firstNameError}</p>
-          ) : null}
+          {!!firstNameError && <p className="text-red-500 text-sm mt-1">{firstNameError}</p>}
         </div>
 
         <div>
@@ -332,18 +268,15 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             value={formData.familyName}
             onChange={handleChange}
             className={clsx(
-              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-              'border-foreground/20 focus-visible:outline-primary',
-              (isFormSubmitted && !formData.familyName) || familyNameError ? 'border-red-500' : '',
+              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
+              familyNameError
+                ? 'border-red-500 focus-visible:outline-red-500 border-2'
+                : 'border-secondary focus-visible:outline-primary border',
             )}
             disabled={isSubmitting}
             placeholder="Dupont"
           />
-          {isFormSubmitted && !formData.familyName ? (
-            <p className="text-red-500 text-sm mt-1">Veuillez entrer votre nom</p>
-          ) : familyNameError ? (
-            <p className="text-red-500 text-sm mt-1">{familyNameError}</p>
-          ) : null}
+          {!!familyNameError && <p className="text-red-500 text-sm mt-1">{familyNameError}</p>}
         </div>
 
         <div>
@@ -358,18 +291,15 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             value={formData.tel}
             onChange={handleChange}
             className={clsx(
-              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-              'border-foreground/20 focus-visible:outline-primary',
-              (isFormSubmitted && !formData.tel) || phoneError ? 'border-red-500' : '',
+              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
+              phoneError
+                ? 'border-red-500 focus-visible:outline-red-500 border-2'
+                : 'border-secondary focus-visible:outline-primary border',
             )}
             disabled={isSubmitting}
             placeholder="06 12 34 56 78"
           />
-          {isFormSubmitted && !formData.tel ? (
-            <p className="text-red-500 text-sm mt-1">Veuillez entrer votre numéro de téléphone</p>
-          ) : phoneError ? (
-            <p className="text-red-500 text-sm mt-1">{phoneError}</p>
-          ) : null}
+          {!!phoneError && <p className="text-red-500 text-sm mt-1">{phoneError}</p>}
         </div>
 
         <div>
@@ -384,42 +314,36 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             value={formData.email}
             onChange={handleChange}
             className={clsx(
-              'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-              'border-foreground/20 focus-visible:outline-primary',
-              (isFormSubmitted && !formData.email) || emailError ? 'border-red-500' : '',
+              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
+              emailError
+                ? 'border-red-500 focus-visible:outline-red-500 border-2'
+                : 'border-secondary focus-visible:outline-primary border',
             )}
             disabled={isSubmitting}
             placeholder="jean.dupont@example.com"
           />
-          {isFormSubmitted && !formData.email ? (
-            <p className="text-red-500 text-sm mt-1">Veuillez entrer votre adresse email</p>
-          ) : emailError ? (
-            <p className="text-red-500 text-sm mt-1">{emailError}</p>
-          ) : null}
+          {!!emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
         </div>
 
         <div>
           <label htmlFor="conciergerie" className="flex items-center text-sm font-medium text-foreground mb-1">
             <span>Conciergerie</span>
-            <Tooltip text="C'est la conciergerie par laquelle vous avez connu ce site, qui recevra votre candidature et qui validera votre inscription." />
+            <Tooltip>
+              C&apos;est la conciergerie par laquelle vous avez connu ce site, qui recevra votre candidature et qui
+              validera votre inscription.
+            </Tooltip>
           </label>
           <Select
             id="conciergerie"
+            ref={conciergerieNameRef}
             value={formData.conciergerieName || ''}
-            onChange={(value: string) => {
-              setFormData({
-                ...formData,
-                conciergerieName: value,
-              });
-            }}
+            onChange={e => handleChange({ target: { name: 'conciergerie', value: e } })}
             options={conciergeries.map(c => c.name)}
-            placeholder="Sélectionner une conciergerie"
             disabled={isSubmitting}
-            error={isFormSubmitted && !formData.conciergerieName}
+            placeholder="Sélectionner une conciergerie"
+            error={!!conciergerieNameError}
           />
-          {isFormSubmitted && !formData.conciergerieName && (
-            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une conciergerie</p>
-          )}
+          {!!conciergerieNameError && <p className="text-red-500 text-sm mt-1">{conciergerieNameError}</p>}
         </div>
 
         <div>
@@ -434,9 +358,10 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
               value={formData.message}
               onChange={handleChange}
               className={clsx(
-                'w-full px-3 py-2 border rounded-lg bg-background text-foreground',
-                'border-foreground/20 focus-visible:outline-primary',
-                messageError && 'border-red-500',
+                'w-full px-3 py-2 rounded-lg bg-background text-foreground',
+                messageError
+                  ? 'border-red-500 focus-visible:outline-red-500 border-2'
+                  : 'border-secondary focus-visible:outline-primary border',
               )}
               rows={4}
               disabled={isSubmitting}

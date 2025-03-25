@@ -8,10 +8,10 @@ import Select from '@/app/components/select';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { Conciergerie } from '@/app/types/types';
+import { Conciergerie, ErrorField } from '@/app/types/types';
 import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
 import { Page } from '@/app/utils/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type ConciergerieFormProps = {
   onClose: () => void;
@@ -26,6 +26,9 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     setConciergerieName: setSelectedConciergerieName,
     conciergeries,
   } = useAuth();
+
+  const conciergerieNameRef = useRef<HTMLDivElement>(null);
+  const [conciergerieNameError, setConciergerieNameError] = useState('');
 
   const [conciergerieName, setConciergerieName] = useState(conciergeries?.at(0)?.name || '');
   const [toastMessage, setToastMessage] = useState<Toast>();
@@ -42,24 +45,28 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     onClose();
   };
 
-  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsFormSubmitted(true);
 
-    if (!conciergerieName) {
-      setToastMessage({
-        type: ToastType.Error,
+    let error: ErrorField | undefined;
+
+    if (!conciergerieName?.trim())
+      error = {
         message: 'Veuillez sélectionner une conciergerie',
-      });
-      return;
-    }
+        fieldRef: conciergerieNameRef,
+        func: setConciergerieNameError,
+      };
 
     try {
       setIsSubmitting(true);
 
-      if (!userId) throw new Error('Identifiant non trouvé');
+      if (error) {
+        error.fieldRef.current?.focus();
+        error.func(error.message);
+        throw new Error(error.message);
+      }
+
+      if (!userId) throw new Error("L'identifiant n'est pas défini");
 
       setSelectedConciergerieName(conciergerieName);
 
@@ -101,16 +108,15 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
         <div>
           <Select
             id="conciergerie"
+            ref={conciergerieNameRef}
             value={conciergerieName}
             onChange={setConciergerieName}
             options={conciergeries.map(c => c.name)}
-            placeholder="Sélectionnez une conciergerie"
             disabled={isSubmitting}
-            error={isFormSubmitted && !conciergerieName}
+            placeholder="Sélectionnez une conciergerie"
+            error={!!conciergerieNameError}
           />
-          {isFormSubmitted && !conciergerieName && (
-            <p className="text-red-500 text-sm mt-1">Veuillez sélectionner une conciergerie</p>
-          )}
+          {!!conciergerieNameError && <p className="text-red-500 text-sm mt-1">{conciergerieNameError}</p>}
         </div>
 
         <FormActions onCancel={handleClose} submitText="Valider" isSubmitting={isSubmitting} />
