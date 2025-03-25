@@ -1,9 +1,10 @@
 'use client';
 
 import { clsx } from 'clsx/lite';
+import { Size } from '@/app/types/types';
 
 type LoadingSpinnerProps = {
-  size?: 'small' | 'medium' | 'large';
+  size?: Size;
   text?: string;
   fullPage?: boolean;
   className?: string;
