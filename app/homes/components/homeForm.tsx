@@ -110,6 +110,14 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     }
   };
 
+  // Check for duplicate objectives in the list
+  const hasDuplicateObjectives = () => {
+    // Get all non-empty objectives
+    const nonEmptyObjectives = objectives.filter(obj => obj.trim() !== '').map(obj => obj.trim().toLowerCase());
+    // Check for duplicates
+    return new Set(nonEmptyObjectives).size !== nonEmptyObjectives.length;
+  };
+
   const handleSubmit = () => {
     let error: ErrorField | undefined;
 
@@ -152,6 +160,12 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     else if (!objectives.some(objective => objective.trim() !== ''))
       error = {
         message: 'Veuillez ajouter au moins un objectif',
+        fieldRef: objectivesRef,
+        func: setObjectivesError,
+      };
+    else if (hasDuplicateObjectives())
+      error = {
+        message: 'Des objectifs identiques ont été détectés',
         fieldRef: objectivesRef,
         func: setObjectivesError,
       };
