@@ -1,7 +1,7 @@
 'use client';
 
-import clsx from 'clsx/lite';
-import { useEffect, useRef, forwardRef, ForwardedRef, useImperativeHandle, useState } from 'react';
+import { inputFieldClassName } from '@/app/utils/className';
+import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type ObjectiveListProps = {
   objectives: string[];
@@ -13,7 +13,7 @@ const ObjectiveList = forwardRef(
   ({ objectives, setObjectives, maxObjectives }: ObjectiveListProps, forwardedRef: ForwardedRef<HTMLInputElement>) => {
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const prevObjectivesLength = useRef(objectives.length);
-    const [errorMessages, setErrorMessages] = useState<(string | null)[]>([]);
+    const [errorMessages, setErrorMessages] = useState<string[]>([]);
     const [errorIndex, setErrorIndex] = useState(0);
 
     useEffect(() => {
@@ -66,7 +66,7 @@ const ObjectiveList = forwardRef(
 
       // If we reach here, we can add a new objective
       setObjectives([...objectives, '']);
-      setErrorMessages([...errorMessages, null]);
+      setErrorMessages([...errorMessages, '']);
       setErrorIndex(0);
     };
 
@@ -79,7 +79,7 @@ const ObjectiveList = forwardRef(
       // Check for duplicates when editing otherwise clear error
       const hasDuplicate = isDuplicate(valeur, index);
       const newErrors = [...errorMessages];
-      newErrors[index] = hasDuplicate ? 'Cet objectif existe déjà' : null;
+      newErrors[index] = hasDuplicate ? 'Cet objectif existe déjà' : '';
       setErrorMessages(newErrors);
       setErrorIndex(hasDuplicate ? index : 0);
     };
@@ -164,12 +164,7 @@ const ObjectiveList = forwardRef(
                 ref={el => {
                   if (el) inputRefs.current[index] = el;
                 }}
-                className={clsx(
-                  'flex-1 px-3 py-2 rounded-lg bg-background text-foreground',
-                  errorMessages[index]
-                    ? 'border-red-500 focus-visible:outline-red-500 border-2'
-                    : 'border-foreground/20 focus-visible:outline-primary border',
-                )}
+                className={inputFieldClassName(errorMessages[index])}
               />
               {(objectives.length > 1 || objective !== '') && (
                 <button

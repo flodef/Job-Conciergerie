@@ -1,9 +1,10 @@
 'use client';
 
-import { clsx } from 'clsx/lite';
-import { forwardRef, useEffect, useRef, useState, ForwardedRef, useImperativeHandle } from 'react';
+import { selectClassName } from '@/app/utils/className';
+import { shouldOpenUpward } from '@/app/utils/dropdownPosition';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
-import { shouldOpenUpward } from '../utils/dropdownPosition';
+import { clsx } from 'clsx/lite';
+import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type ComboboxProps = {
   id: string;
@@ -148,15 +149,7 @@ const Combobox = forwardRef(
 
     return (
       <div className={clsx('relative w-full', className)} ref={comboboxRef}>
-        <div
-          className={clsx(
-            'w-full p-2 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer',
-            'focus-visible:outline-none focus-within:outline-none',
-            error && 'border-red-500',
-            disabled && 'opacity-50 cursor-not-allowed',
-            !disabled && (isFocused || isOpen) ? 'border-primary border-2' : 'border-secondary border',
-          )}
-        >
+        <div className={selectClassName(error, disabled, isFocused, isOpen)}>
           <IconSearch size={18} className="text-foreground/50 mr-2" />
           <input
             id={id}

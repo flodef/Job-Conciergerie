@@ -1,5 +1,6 @@
 'use client';
 
+import { inputClassName } from '@/app/utils/className';
 import { IconSearch } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
 import { ChangeEvent } from 'react';
@@ -21,13 +22,7 @@ export default function SearchInput({
 }: SearchInputProps) {
   return (
     <div className={clsx('relative mb-4', className)}>
-      <input
-        type="text"
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        className="w-full p-2 pl-10 border border-secondary rounded-md focus:ring-primary focus:border-primary"
-      />
+      <input type="text" placeholder={placeholder} value={value} onChange={onChange} className={inputClassName()} />
       <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/50" size={18} />
       {value && onClear && (
         <button onClick={onClear} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-foreground/50">

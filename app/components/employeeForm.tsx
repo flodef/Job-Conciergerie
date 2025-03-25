@@ -11,13 +11,13 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
+import geographicZones from '@/app/data/geographicZone.json';
 import { ChangeEventField, Employee, EmployeeNotificationSettings, ErrorField } from '@/app/types/types';
+import { inputFieldClassName } from '@/app/utils/className';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { defaultEmployeeSettings } from '@/app/utils/notifications';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
-import { clsx } from 'clsx/lite';
-import geographicZones from '@/app/data/geographicZone.json';
 import React, { useRef, useState } from 'react';
 
 type EmployeeFormProps = {
@@ -270,12 +270,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             ref={firstNameRef}
             value={formData.firstName}
             onChange={handleChange}
-            className={clsx(
-              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
-              firstNameError
-                ? 'border-red-500 focus-visible:outline-red-500 border-2'
-                : 'border-secondary focus-visible:outline-primary border',
-            )}
+            className={inputFieldClassName(firstNameError)}
             disabled={isSubmitting}
             placeholder="Jean"
           />
@@ -293,12 +288,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             ref={familyNameRef}
             value={formData.familyName}
             onChange={handleChange}
-            className={clsx(
-              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
-              familyNameError
-                ? 'border-red-500 focus-visible:outline-red-500 border-2'
-                : 'border-secondary focus-visible:outline-primary border',
-            )}
+            className={inputFieldClassName(familyNameError)}
             disabled={isSubmitting}
             placeholder="Dupont"
           />
@@ -316,12 +306,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             ref={phoneRef}
             value={formData.tel}
             onChange={handleChange}
-            className={clsx(
-              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
-              phoneError
-                ? 'border-red-500 focus-visible:outline-red-500 border-2'
-                : 'border-secondary focus-visible:outline-primary border',
-            )}
+            className={inputFieldClassName(phoneError)}
             disabled={isSubmitting}
             placeholder="06 12 34 56 78"
           />
@@ -339,12 +324,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             ref={emailRef}
             value={formData.email}
             onChange={handleChange}
-            className={clsx(
-              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
-              emailError
-                ? 'border-red-500 focus-visible:outline-red-500 border-2'
-                : 'border-secondary focus-visible:outline-primary border',
-            )}
+            className={inputFieldClassName(emailError)}
             disabled={isSubmitting}
             placeholder="jean.dupont@example.com"
           />
@@ -400,12 +380,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
               ref={messageRef}
               value={formData.message}
               onChange={handleChange}
-              className={clsx(
-                'w-full px-3 py-2 rounded-lg bg-background text-foreground',
-                messageError
-                  ? 'border-red-500 focus-visible:outline-red-500 border-2'
-                  : 'border-secondary focus-visible:outline-primary border',
-              )}
+              className={inputFieldClassName(messageError)}
               rows={4}
               disabled={isSubmitting}
               maxLength={MAX_MESSAGE_LENGTH}

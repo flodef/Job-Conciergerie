@@ -9,6 +9,7 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useHomes } from '@/app/contexts/homesProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { ErrorField, HomeData } from '@/app/types/types';
+import { inputFieldClassName } from '@/app/utils/className';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -414,12 +415,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
                 setTitle(newValue);
               }
             }}
-            className={clsx(
-              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
-              titleError
-                ? 'border-red-500 focus-visible:outline-red-500 border-2'
-                : 'border-secondary focus-visible:outline-primary border',
-            )}
+            className={inputFieldClassName(titleError)}
             placeholder="Entrez le titre du bien..."
           />
           {!!titleError && <p className="text-red-500 text-sm mt-1">{titleError}</p>}
@@ -462,12 +458,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
                   setDescription(newValue);
                 }
               }}
-              className={clsx(
-                'w-full px-3 py-2 rounded-lg bg-background text-foreground',
-                descriptionError
-                  ? 'border-red-500 focus-visible:outline-red-500 border-2'
-                  : 'border-secondary focus-visible:outline-primary border',
-              )}
+              className={inputFieldClassName(descriptionError)}
               rows={4}
               placeholder="Décrivez les caractéristiques du bien..."
               maxLength={MAX_DESCRIPTION_LENGTH}

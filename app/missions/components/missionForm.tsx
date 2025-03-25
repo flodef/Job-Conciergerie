@@ -9,6 +9,7 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { ErrorField, Mission, Task } from '@/app/types/types';
+import { inputFieldClassName } from '@/app/utils/className';
 import { getTasksWithPoints } from '@/app/utils/task';
 import { clsx } from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -388,12 +389,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             min={nowString}
             onChange={handleStartDateChange}
             disabled={isSubmitting || cannotEdit}
-            className={clsx(
-              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
-              startDateTimeError
-                ? 'border-red-500 focus-visible:outline-red-500 border-2'
-                : 'border-secondary focus-visible:outline-primary border',
-            )}
+            className={inputFieldClassName(startDateTimeError)}
           />
           {!!startDateTimeError && <p className="text-red-500 text-sm mt-1">{startDateTimeError}</p>}
         </div>
@@ -417,12 +413,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               setEndDateTimeError('');
             }}
             disabled={isSubmitting || cannotEdit}
-            className={clsx(
-              'w-full px-3 py-2 rounded-lg bg-background text-foreground',
-              endDateTimeError
-                ? 'border-red-500 focus-visible:outline-red-500 border-2'
-                : 'border-secondary focus-visible:outline-primary border',
-            )}
+            className={inputFieldClassName(endDateTimeError)}
           />
           {!!endDateTimeError && <p className="text-red-500 text-sm mt-1">{endDateTimeError}</p>}
         </div>

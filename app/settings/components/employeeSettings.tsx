@@ -5,8 +5,8 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { Employee, ErrorField } from '@/app/types/types';
+import { inputFieldClassName } from '@/app/utils/className';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
-import { clsx } from 'clsx/lite';
 import React, { useEffect, useState } from 'react';
 
 const EmployeeSettings: React.FC = () => {
@@ -163,12 +163,7 @@ const EmployeeSettings: React.FC = () => {
             setEmail(newValue);
             setEmailError(newValue && !emailRegex.test(newValue) ? 'Format d&apos;email invalide' : '');
           }}
-          className={clsx(
-            'w-full px-3 py-2 rounded-lg bg-background text-foreground',
-            emailError
-              ? 'border-red-500 focus-visible:outline-red-500 border-2'
-              : 'border-secondary focus-visible:outline-primary border',
-          )}
+          className={inputFieldClassName(emailError)}
           disabled={isSaving}
           placeholder="jean.dupont@example.com"
         />
@@ -189,12 +184,7 @@ const EmployeeSettings: React.FC = () => {
             setTel(newValue);
             setPhoneError(newValue && !frenchPhoneRegex.test(newValue) ? 'Format de numéro de téléphone invalide' : '');
           }}
-          className={clsx(
-            'w-full px-3 py-2 rounded-lg bg-background text-foreground',
-            phoneError
-              ? 'border-red-500 focus-visible:outline-red-500 border-2'
-              : 'border-secondary focus-visible:outline-primary border',
-          )}
+          className={inputFieldClassName(phoneError)}
           disabled={isSaving}
           placeholder="06 12 34 56 78"
         />

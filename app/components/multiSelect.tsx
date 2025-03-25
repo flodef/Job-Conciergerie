@@ -1,9 +1,10 @@
 'use client';
 
-import { clsx } from 'clsx/lite';
-import { useEffect, useRef, useState, forwardRef, ForwardedRef, useImperativeHandle } from 'react';
+import { selectClassName } from '@/app/utils/className';
+import { shouldOpenUpward } from '@/app/utils/dropdownPosition';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
-import { shouldOpenUpward } from '../utils/dropdownPosition';
+import { clsx } from 'clsx/lite';
+import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type MultiSelectOption = {
   value: string;
@@ -101,13 +102,7 @@ const MultiSelect = forwardRef(
       <div className={clsx('relative w-full', className)} ref={selectRef}>
         <div
           id={id}
-          className={clsx(
-            'w-full p-2 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer',
-            'focus-visible:outline-none focus-within:outline-none',
-            error && 'border-red-500',
-            disabled && 'opacity-50 cursor-not-allowed',
-            !disabled && (isFocused || isOpen) ? 'border-primary border-2' : 'border-secondary border',
-          )}
+          className={selectClassName(error, disabled, isFocused, isOpen)}
           onClick={() => {
             if (!disabled) {
               // Check position before opening
