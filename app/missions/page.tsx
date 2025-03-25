@@ -271,6 +271,9 @@ export default function Missions() {
             setIsAddHomeModalOpen(false);
             setIsAddModalOpen(true);
           }}
+          onCancel={() => {
+            setIsAddModalOpen(false);
+          }}
           mode="add"
         />
       )}
