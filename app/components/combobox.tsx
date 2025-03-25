@@ -154,7 +154,7 @@ const Combobox = forwardRef(
             'focus-visible:outline-none focus-within:outline-none',
             error && 'border-red-500',
             disabled && 'opacity-50 cursor-not-allowed',
-            isFocused || isOpen ? 'border-primary border-2' : 'border-secondary border',
+            !disabled && (isFocused || isOpen) ? 'border-primary border-2' : 'border-secondary border',
           )}
         >
           <IconSearch size={18} className="text-foreground/50 mr-2" />
