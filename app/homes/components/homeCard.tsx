@@ -38,11 +38,7 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
       onContextMenu={handleContextMenu}
       style={{ borderLeft: `6px solid ${conciergerieColor}` }}
     >
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-xl font-medium text-foreground">
-          {home.title} ({home.geographicZone})
-        </h3>
-      </div>
+      <h3 className="text-xl font-medium text-foreground overflow-hidden max-w-full">{`${home.title} (${home.geographicZone})`}</h3>
 
       {home.images && home.images.length > 0 && (
         <div className="relative aspect-video w-full overflow-hidden rounded-lg">

@@ -45,7 +45,7 @@ export default function FullScreenModal({
         <div className="relative bg-background rounded-lg shadow-lg max-w-md w-full flex flex-col max-h-[90vh]">
           {/* Fixed header with title and close button */}
           <div className="sticky top-0 z-10 bg-background p-4 border-b border-secondary flex justify-between items-center rounded-t-lg">
-            <h2 className="text-xl font-bold">{title}</h2>
+            <h2 className="text-xl font-bold overflow-hidden">{title}</h2>
             <CloseButton onClose={onClose} />
           </div>
 
