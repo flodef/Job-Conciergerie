@@ -1,6 +1,7 @@
 import { UserType } from '@/app/contexts/authProvider';
 import { ConciergerieNotificationSettings, EmployeeNotificationSettings, EmployeeStatus } from '@/app/types/types';
 import { getColorValueByName } from '@/app/utils/color';
+import { defaultConciergerieSettings, defaultEmployeeSettings } from '@/app/utils/notifications';
 import { neon } from '@neondatabase/serverless';
 import { unstable_cache } from 'next/cache';
 
@@ -65,12 +66,7 @@ function formatConciergerie(dbConciergerie: DbConciergerie) {
     tel: dbConciergerie.tel,
     colorName: dbConciergerie.color_name,
     color: getColorValueByName(dbConciergerie.color_name),
-    notificationSettings: dbConciergerie.notification_settings || {
-      acceptedMissions: true,
-      startedMissions: true,
-      completedMissions: true,
-      missionsEndedWithoutStart: true,
-    },
+    notificationSettings: dbConciergerie.notification_settings || defaultConciergerieSettings,
   };
 }
 
@@ -202,12 +198,7 @@ function formatEmployee(dbEmployee: DbEmployee) {
     message: dbEmployee.message || '',
     conciergerieName: dbEmployee.conciergerie_name || '',
     status: dbEmployee.status,
-    notificationSettings: dbEmployee.notification_settings || {
-      acceptedMissions: true,
-      missionChanged: true,
-      missionDeleted: true,
-      missionsCanceled: true,
-    },
+    notificationSettings: dbEmployee.notification_settings || defaultEmployeeSettings,
     createdAt: dbEmployee.created_at,
   };
 }

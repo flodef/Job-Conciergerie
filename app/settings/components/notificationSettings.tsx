@@ -4,6 +4,7 @@ import Switch from '@/app/components/switch';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/types/types';
+import { defaultConciergerieSettings, defaultEmployeeSettings } from '@/app/utils/notifications';
 import React, { useState } from 'react';
 
 const conciergerieOptions = [
@@ -18,19 +19,6 @@ const employeeOptions = [
   { label: 'Mission supprimée', key: 'missionDeleted' as const },
   { label: 'Mission annulée', key: 'missionsCanceled' as const },
 ];
-
-const defaultConciergerieSettings: ConciergerieNotificationSettings = {
-  acceptedMissions: true,
-  startedMissions: true,
-  completedMissions: true,
-  missionsEndedWithoutStart: true,
-};
-const defaultEmployeeSettings: EmployeeNotificationSettings = {
-  acceptedMissions: true,
-  missionChanged: true,
-  missionDeleted: true,
-  missionsCanceled: true,
-};
 
 const getDefaultSettings = (userType: UserType | undefined) => {
   return {
