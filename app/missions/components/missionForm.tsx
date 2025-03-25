@@ -27,6 +27,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   // Filter homes by the current conciergerie
   const filteredHomes = homes.filter(home => home.conciergerieName === conciergerieName);
 
+  // Initialize form values
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
   const [tasksState, setTasks] = useState<Task[]>(mission?.tasks || []);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>(mission?.allowedEmployees || []);
@@ -37,6 +38,9 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     tasksState: Task[];
     selectedEmployees: string[];
   }>();
+
+  const [cannotEdit, setCannotEdit] = useState(false);
+
   // Get current date and time in local timezone
   const now = new Date();
   const localISOString = useCallback((date: Date) => {
@@ -81,6 +85,27 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   const taskRef = useRef<HTMLDivElement>(null);
   const startDateRef = useRef<HTMLInputElement>(null);
   const endDateRef = useRef<HTMLInputElement>(null);
+
+  // Check if mission can be edited
+  useEffect(() => {
+    if (mode === 'edit' && mission) {
+      const currentTime = new Date();
+      const missionEndTime = new Date(mission.endDateTime);
+
+      // Cannot edit mission if end date is in the past AND mission status is not pending or null
+      const message =
+        missionEndTime < currentTime
+          ? 'Cette mission ne peut pas être modifiée car elle est déjà terminée'
+          : mission.status === 'started' || mission.status === 'completed'
+          ? 'Cette mission ne peut pas être modifiée car elle est déjà commencée ou terminée.'
+          : '';
+
+      if (message) {
+        setCannotEdit(true);
+        setToastMessage({ type: ToastType.Warning, message });
+      }
+    }
+  }, [mission, mode]);
 
   // Set up French locale for date inputs
   useEffect(() => {
@@ -241,6 +266,16 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   // Handle start date change and update end date if needed
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStartDate = e.target.value;
+
+    // Validate the selected date is not in the past
+    const selectedDate = new Date(newStartDate);
+    const currentDate = new Date();
+
+    if (selectedDate < currentDate) {
+      setStartDateTimeError('La date de début ne peut pas être antérieure à la date actuelle');
+      return;
+    }
+
     setStartDateTime(newStartDate);
     setStartDateTimeError('');
 
@@ -302,6 +337,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               value: home.id,
               label: home.title,
             }))}
+            disabled={isSubmitting || cannotEdit}
             placeholder="Sélectionner un bien"
             error={!!homeIdError}
           />
@@ -316,6 +352,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
                 type="button"
                 key={task.label}
                 onClick={() => toggleTask(task)}
+                disabled={isSubmitting || cannotEdit}
                 className={clsx(
                   'p-2 border rounded-lg text-sm flex justify-between items-center',
                   'border-foreground/20 focus-visible:outline-primary',
@@ -350,6 +387,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             value={startDateTime}
             min={nowString}
             onChange={handleStartDateChange}
+            disabled={isSubmitting || cannotEdit}
             className={clsx(
               'w-full px-3 py-2 rounded-lg bg-background text-foreground',
               startDateTimeError
@@ -378,6 +416,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               setEndDateTime(e.target.value);
               setEndDateTimeError('');
             }}
+            disabled={isSubmitting || cannotEdit}
             className={clsx(
               'w-full px-3 py-2 rounded-lg bg-background text-foreground',
               endDateTimeError
@@ -400,6 +439,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               label: `${emp.firstName} ${emp.familyName}`,
             }))}
             allOption={true}
+            disabled={isSubmitting || cannotEdit}
           />
           <p className="text-sm text-foreground/70 mt-1">
             {selectedEmployees.length === 0
@@ -411,9 +451,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         <ConfirmationModal
           isOpen={showConfirmDialog}
           onClose={() => setShowConfirmDialog(false)}
-          onConfirm={() => {
-            onClose();
-          }}
+          onConfirm={onClose}
           title="Modifications non enregistrées"
           message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
           confirmText="Quitter sans enregistrer"
