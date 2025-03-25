@@ -1,7 +1,7 @@
 'use client';
 
 import { clsx } from 'clsx/lite';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, forwardRef, ForwardedRef, useImperativeHandle } from 'react';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { shouldOpenUpward } from '../utils/dropdownPosition';
 
@@ -21,20 +21,26 @@ type MultiSelectProps = {
   allOption?: boolean; // Whether to include an "All" option
 };
 
-export default function MultiSelect({
-  id,
-  values,
-  onChange,
-  options,
-  className = '',
-  error = false,
-  disabled = false,
-  allOption = true,
-}: MultiSelectProps) {
+const MultiSelect = forwardRef((
+  {
+    id,
+    values,
+    onChange,
+    options,
+    className = '',
+    error = false,
+    disabled = false,
+    allOption = true,
+  }: MultiSelectProps,
+  forwardedRef: ForwardedRef<HTMLDivElement>
+) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
+  
+  // Forward the selectRef to the parent component
+  useImperativeHandle(forwardedRef, () => selectRef.current as HTMLDivElement);
 
   // Add "All" option if enabled and ensure options are properly processed
   const processedOptions = options || [];
@@ -171,4 +177,9 @@ export default function MultiSelect({
       )}
     </div>
   );
-}
+});
+
+// Add display name for better debugging
+MultiSelect.displayName = 'MultiSelect';
+
+export default MultiSelect;

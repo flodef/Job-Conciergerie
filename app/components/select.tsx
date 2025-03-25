@@ -1,9 +1,9 @@
 'use client';
 
-import { clsx } from 'clsx/lite';
-import { useEffect, useRef, useState } from 'react';
+import { shouldOpenUpward } from '@/app/utils/dropdownPosition';
 import { IconChevronDown } from '@tabler/icons-react';
-import { shouldOpenUpward } from '../utils/dropdownPosition';
+import { clsx } from 'clsx/lite';
+import { useEffect, useRef, useState, forwardRef, ForwardedRef, useImperativeHandle } from 'react';
 
 type SelectOption = {
   value: string;
@@ -21,22 +21,28 @@ type SelectProps = {
   disabled?: boolean;
 };
 
-export default function Select({
-  id,
-  value,
-  onChange,
-  options,
-  placeholder = 'Sélectionner une option',
-  className = '',
-  error = false,
-  disabled = false,
-}: SelectProps) {
+const Select = forwardRef((
+  {
+    id,
+    value,
+    onChange,
+    options,
+    placeholder = 'Sélectionner une option',
+    className = '',
+    error = false,
+    disabled = false,
+  }: SelectProps,
+  forwardedRef: ForwardedRef<HTMLDivElement>
+) => {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [isFocused, setIsFocused] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef<HTMLDivElement>(null);
+  
+  // Forward the selectRef to the parent component
+  useImperativeHandle(forwardedRef, () => selectRef.current as HTMLDivElement);
 
   // Close the dropdown when clicking outside
   useEffect(() => {
@@ -139,7 +145,7 @@ export default function Select({
         className={clsx(
           'w-full p-2 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer',
           'focus-visible:outline-none focus-within:outline-none',
-          error && 'border-red-500',
+          error && 'border-red-500 focus-visible:outline-red-500 border-2',
           disabled && 'opacity-50 cursor-not-allowed',
           isFocused || isOpen ? 'border-primary border-2' : 'border-secondary border',
         )}
@@ -210,4 +216,9 @@ export default function Select({
       )}
     </div>
   );
-}
+});
+
+// Add display name for better debugging
+Select.displayName = 'Select';
+
+export default Select;
