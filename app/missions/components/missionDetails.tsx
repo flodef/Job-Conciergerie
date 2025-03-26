@@ -12,7 +12,7 @@ import MissionForm from '@/app/missions/components/missionForm';
 import { Conciergerie, Mission } from '@/app/types/types';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateTime, getTimeDifference } from '@/app/utils/date';
-import { calculateEmployeePointsForDay, calculateMissionPoints, getTaskWithPoints } from '@/app/utils/task';
+import { calculateEmployeePointsForDay, calculateMissionPoints, getTaskPoints } from '@/app/utils/task';
 import {
   IconAlertTriangle,
   IconBuildingStore,
@@ -315,19 +315,19 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           </h3>
           <div className="flex flex-wrap gap-2 mt-1">
             {mission.tasks.map(task => {
-              const taskWithPoints = getTaskWithPoints(task.label);
+              const points = getTaskPoints(task);
               return (
                 <span
-                  key={task.label}
+                  key={task}
                   className="px-2 py-1 rounded-lg text-sm text-background flex items-center gap-1"
                   style={{
                     backgroundColor: `${conciergerieColor}`,
                   }}
                 >
-                  <span>{task.label}</span>
-                  {taskWithPoints && (
+                  <span>{task}</span>
+                  {points && (
                     <span className="ml-1 px-1.5 py-0.5 bg-background/20 rounded-full text-xs">
-                      {taskWithPoints.points} pt{taskWithPoints.points !== 1 ? 's' : ''}
+                      {points} pt{points !== 1 ? 's' : ''}
                     </span>
                   )}
                 </span>

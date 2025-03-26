@@ -1,12 +1,8 @@
-export enum TaskType {
+export enum Task {
   Cleaning = 'Ménage',
   Gardening = 'Jardinage',
   Arrival = 'Arrivée',
   Departure = 'Départ',
-}
-export interface Task {
-  label: TaskType;
-  points: number;
 }
 
 export interface Home {

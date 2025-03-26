@@ -84,11 +84,11 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
       <div className="flex flex-wrap gap-1 mt-2">
         {mission.tasks.map(task => (
           <span
-            key={mission.id + task.label}
+            key={mission.id + task}
             className="px-2 py-0.5 text-background font-bold rounded-full text-xs"
             style={{ backgroundColor: conciergerieColor }}
           >
-            {task.label}
+            {task}
           </span>
         ))}
       </div>

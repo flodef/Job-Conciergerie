@@ -8,9 +8,9 @@ import Select from '@/app/components/select';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { ErrorField, HomeData, Mission, Task, TaskType } from '@/app/types/types';
+import { ErrorField, HomeData, Mission, Task } from '@/app/types/types';
 import { errorClassName, inputFieldClassName, labelClassName } from '@/app/utils/className';
-import { getTasksWithPoints } from '@/app/utils/task';
+import { getTaskPoints } from '@/app/utils/task';
 import { clsx } from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -25,11 +25,11 @@ type MissionFormProps = {
 const calculateMissionHours = (home: HomeData, tasks: Task[]): number => {
   return tasks.reduce((acc, task) => {
     const hours = {
-      [TaskType.Cleaning]: home.hoursOfCleaning,
-      [TaskType.Gardening]: home.hoursOfGardening,
-      [TaskType.Arrival]: 0.5,
-      [TaskType.Departure]: 0.5,
-    }[task.label];
+      [Task.Cleaning]: home.hoursOfCleaning,
+      [Task.Gardening]: home.hoursOfGardening,
+      [Task.Arrival]: 0.5,
+      [Task.Departure]: 0.5,
+    }[task];
 
     return acc + hours;
   }, 0);
@@ -269,12 +269,12 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   };
 
   const toggleTask = (task: Task) => {
-    // Check if the task is already in the array by comparing labels
-    const taskExists = tasksState.some(t => t.label === task.label);
+    // Check if the task is already in the array
+    const taskExists = tasksState.includes(task);
 
     if (taskExists) {
       // Remove the task if it exists
-      setTasks(tasksState.filter(t => t.label !== task.label));
+      setTasks(tasksState.filter(t => t !== task));
     } else {
       // Add the task if it doesn't exist
       setTasks([...tasksState, task]);
@@ -372,33 +372,34 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             Tâches
           </label>
           <div ref={taskRef} className="grid grid-cols-2 gap-2">
-            {getTasksWithPoints().map(task => (
-              <button
-                type="button"
-                key={task.label}
-                onClick={() => toggleTask(task)}
-                disabled={isSubmitting || cannotEdit}
-                className={clsx(
-                  'p-2 border rounded-lg text-sm flex justify-between items-center',
-                  'border-foreground/20 focus-visible:outline-primary',
-                  tasksState.some(t => t.label === task.label)
-                    ? 'bg-primary text-background border-primary'
-                    : 'bg-background text-foreground border-secondary',
-                )}
-              >
-                <span>{task.label}</span>
-                <span
+            {Object.values(Task).map(task => {
+              const points = getTaskPoints(task);
+              return (
+                <button
+                  type="button"
+                  key={task}
+                  onClick={() => toggleTask(task)}
+                  disabled={isSubmitting || cannotEdit}
                   className={clsx(
-                    'px-1.5 py-0.5 rounded-full text-xs',
-                    tasksState.some(t => t.label === task.label)
-                      ? 'bg-background/20 text-background'
-                      : 'bg-primary/10 text-primary',
+                    'p-2 border rounded-lg text-sm flex justify-between items-center',
+                    'border-foreground/20 focus-visible:outline-primary',
+                    tasksState.includes(task)
+                      ? 'bg-primary text-background border-primary'
+                      : 'bg-background text-foreground border-secondary',
                   )}
                 >
-                  {task.points} pt{task.points !== 1 ? 's' : ''}
-                </span>
-              </button>
-            ))}
+                  <span>{task}</span>
+                  <span
+                    className={clsx(
+                      'px-1.5 py-0.5 rounded-full text-xs',
+                      tasksState.includes(task) ? 'bg-background/20 text-background' : 'bg-primary/10 text-primary',
+                    )}
+                  >
+                    {points} pt{points !== 1 ? 's' : ''}
+                  </span>
+                </button>
+              );
+            })}
           </div>
           {!!tasksError && <p className={errorClassName()}>tasksError</p>}
         </div>

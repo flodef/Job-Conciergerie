@@ -3,22 +3,16 @@
 import tasksData from '@/app/data/tasks.json';
 import { Mission, MissionPoints, Task } from '@/app/types/types';
 
-// Get all objectives with their points
-export const getTasksWithPoints = (): Task[] => {
-  return tasksData as Task[];
-};
-
-// Get a specific objective with its points
-export const getTaskWithPoints = (label: string): Task | undefined => {
-  return getTasksWithPoints().find(obj => obj.label === label);
+// Get points for a specific task
+export const getTaskPoints = (task: Task) => {
+  return tasksData.find(t => t.label === task)?.points ?? 0;
 };
 
 // Calculate total points for a set of objectives
 export const calculateTotalPoints = (tasks: Task[]): number => {
-  return tasks.reduce((total, task) => {
-    const taskWithPoints = getTaskWithPoints(task.label);
-    return total + (taskWithPoints?.points || 0);
-  }, 0);
+  if (tasks.length === 0) return 0;
+
+  return tasks.reduce((total, task) => total + getTaskPoints(task), 0);
 };
 
 // Calculate mission points including points per day

@@ -15,7 +15,7 @@ import {
 } from '@/app/utils/calendar';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
-import { calculateEmployeePointsForDay, calculateMissionPoints, formatPoints } from '@/app/utils/task';
+import { calculateEmployeePointsForDay, calculateMissionPoints, formatPoints, getTaskPoints } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { useEffect, useState } from 'react';
@@ -259,13 +259,13 @@ export default function Calendar() {
                       <div className="flex flex-wrap gap-1 mt-2 mb-2">
                         {mission.tasks.map(task => (
                           <span
-                            key={mission.id + task.label}
+                            key={mission.id + task}
                             className="px-2 py-0.5 text-background rounded-full text-xs flex items-center gap-1"
                             style={{ backgroundColor: conciergerieColor }}
                           >
-                            <span>{task.label}</span>
+                            <span>{task}</span>
                             <span className="ml-1 px-1 py-0.5 bg-background/20 rounded-full text-xs">
-                              {task.points} pt
+                              {getTaskPoints(task)} pt
                             </span>
                           </span>
                         ))}

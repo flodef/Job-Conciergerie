@@ -98,7 +98,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     if (!getUserData()) return false;
 
     // Sort tasks to ensure consistent comparison
-    const sortedTasks = [...missionData.tasks].sort((a, b) => a.label.localeCompare(b.label));
+    const sortedTasks = [...missionData.tasks].sort((a, b) => a.localeCompare(b));
 
     return missions.some(mission => {
       // Skip deleted missions and the mission being edited (if excludeMissionId is provided)
@@ -140,11 +140,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       }
 
       // Sort mission tasks for consistent comparison
-      const missionSortedTasks = [...mission.tasks].sort((a, b) => a.label.localeCompare(b.label));
+      const missionSortedTasks = [...mission.tasks].sort((a, b) => a.localeCompare(b));
 
       // Check if all tasks match
       for (let i = 0; i < sortedTasks.length; i++) {
-        if (sortedTasks[i].label !== missionSortedTasks[i].label) {
+        if (sortedTasks[i] !== missionSortedTasks[i]) {
           return false;
         }
       }
