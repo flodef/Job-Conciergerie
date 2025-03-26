@@ -13,12 +13,12 @@ type SelectOption = {
 
 type SelectProps = {
   id: string;
-  value: string;
+  value: string | number;
   onChange: (value: string) => void;
-  options: string[] | SelectOption[];
+  options: string[] | number[] | SelectOption[];
   placeholder?: string;
   className?: string;
-  error?: boolean;
+  error?: boolean | string;
   disabled?: boolean;
 };
 
@@ -82,7 +82,7 @@ const Select = forwardRef(
           e.preventDefault();
           const selectedOption = options[highlightedIndex];
           const value = typeof selectedOption === 'object' ? selectedOption.value : selectedOption;
-          onChange(value);
+          onChange(value.toString());
           setIsOpen(false);
         }
       };
@@ -111,8 +111,8 @@ const Select = forwardRef(
       }
     }, [isOpen, options, value]);
 
-    const handleSelect = (option: string) => {
-      onChange(option);
+    const handleSelect = (option: string | number) => {
+      onChange(option.toString());
       setIsOpen(false);
       // Keep focus state after selection
       setIsFocused(true);
@@ -187,7 +187,7 @@ const Select = forwardRef(
             )}
             role="listbox"
           >
-            {options.map((option: string | SelectOption, index: number) => {
+            {options.map((option: string | number | SelectOption, index: number) => {
               const optionValue = typeof option === 'object' ? option.value : option;
               const optionLabel = typeof option === 'object' ? option.label : option;
 

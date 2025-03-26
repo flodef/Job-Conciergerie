@@ -114,7 +114,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
             options={conciergeries.map(c => c.name)}
             disabled={isSubmitting}
             placeholder="Sélectionnez une conciergerie"
-            error={!!conciergerieNameError}
+            error={conciergerieNameError}
           />
           {!!conciergerieNameError && <p className="text-red-500 text-sm mt-1">{conciergerieNameError}</p>}
         </div>

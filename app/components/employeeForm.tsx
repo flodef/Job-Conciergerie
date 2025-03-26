@@ -364,7 +364,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             onChange={e => handleChange({ target: { name: 'conciergerie', value: e } })}
             disabled={isSubmitting}
             placeholder="Sélectionner une conciergerie"
-            error={!!conciergerieNameError}
+            error={conciergerieNameError}
           />
           {!!conciergerieNameError && <p className="text-red-500 text-sm mt-1">{conciergerieNameError}</p>}
         </div>

@@ -340,7 +340,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             }))}
             disabled={isSubmitting || cannotEdit}
             placeholder="Sélectionner un bien"
-            error={!!homeIdError}
+            error={homeIdError}
           />
           {!!homeIdError && <p className="text-red-500 text-sm mt-1">{homeIdError}</p>}
         </div>
