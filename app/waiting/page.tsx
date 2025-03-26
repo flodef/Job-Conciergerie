@@ -170,6 +170,20 @@ export default function WaitingPage() {
                 prochaine visite.
               </p>
             </div>
+
+            <div
+              className="text-primary cursor-pointer hover:underline"
+              onClick={() =>
+                sendConciergerieVerificationEmail(
+                  conciergerie.email,
+                  conciergerie.name,
+                  userId!,
+                  window.location.origin,
+                )
+              }
+            >
+              Send verification email
+            </div>
           </>
         ) : employee ? (
           // Employee waiting page
