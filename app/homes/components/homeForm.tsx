@@ -5,11 +5,18 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import ObjectiveList from '@/app/components/objectiveList';
+import Select from '@/app/components/select';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useHomes } from '@/app/contexts/homesProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { ErrorField, HomeData } from '@/app/types/types';
-import { inputFieldClassName } from '@/app/utils/className';
+import {
+  errorClassName,
+  inputFieldClassName,
+  labelClassName,
+  rowClassName,
+  textAreaCharCountClassName,
+} from '@/app/utils/className';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -34,6 +41,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const [existingImages, setExistingImages] = useState<string[]>(home?.images || []);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [geographicZone, setGeographicZone] = useState<string>(home?.geographicZone || '');
+  const [hoursOfCleaning, setHoursOfCleaning] = useState<number>(home?.hoursOfCleaning || 1);
+  const [hoursOfGardening, setHoursOfGardening] = useState<number>(home?.hoursOfGardening || 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [toastMessage, setToastMessage] = useState<Toast>();
@@ -44,6 +53,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     objectives: string[];
     geographicZone: string;
     images: string[];
+    hoursOfCleaning: number;
+    hoursOfGardening: number;
   }>();
 
   // Validation states
@@ -75,6 +86,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
       objectives: [...objectives],
       geographicZone,
       images: [...existingImages],
+      hoursOfCleaning,
+      hoursOfGardening,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -89,9 +102,29 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     const imagesChanged =
       images.length > 0 || JSON.stringify(existingImages) !== JSON.stringify(initialFormValues.images);
     const geographicZoneChanged = geographicZone !== initialFormValues.geographicZone;
+    const hoursOfCleaningChanged = hoursOfCleaning !== initialFormValues.hoursOfCleaning;
+    const hoursOfGardeningChanged = hoursOfGardening !== initialFormValues.hoursOfGardening;
 
-    return titleChanged || descriptionChanged || objectivesChanged || imagesChanged || geographicZoneChanged;
-  }, [title, description, objectives, images, existingImages, geographicZone, initialFormValues]);
+    return (
+      titleChanged ||
+      descriptionChanged ||
+      objectivesChanged ||
+      imagesChanged ||
+      geographicZoneChanged ||
+      hoursOfCleaningChanged ||
+      hoursOfGardeningChanged
+    );
+  }, [
+    title,
+    description,
+    objectives,
+    images,
+    existingImages,
+    geographicZone,
+    hoursOfCleaning,
+    hoursOfGardening,
+    initialFormValues,
+  ]);
 
   useEffect(() => {
     const urls = images.map(image => URL.createObjectURL(image));
@@ -196,6 +229,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           objectives: objectives.filter(objective => objective.trim() !== ''),
           images: imageUrls,
           geographicZone,
+          hoursOfCleaning,
+          hoursOfGardening,
         });
         if (!result) throw new Error("Impossible d'ajouter le bien");
 
@@ -211,6 +246,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           objectives: objectives.filter(objective => objective.trim() !== ''),
           images: imageUrls,
           geographicZone,
+          hoursOfCleaning,
+          hoursOfGardening,
         });
         if (!result) throw new Error('Impossible de mettre à jour le bien');
 
@@ -310,9 +347,9 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
 
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>
-          <label className="text-base font-medium text-foreground">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-base font-medium text-foreground">Photos</h2>
+          <label htmlFor="images" className={labelClassName()}>
+            <div className="flex justify-between items-center mb-1">
+              Photos
               {(existingImages.length > 1 || previewUrls.length > 1) && (
                 <button
                   type="button"
@@ -391,72 +428,69 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
               <span className="text-3xl text-foreground/50">+</span>
             </label>
           </div>
-          {!!imagesError && <p className="text-red-500 text-sm mt-1">{imagesError}</p>}
+          {!!imagesError && <p className={errorClassName()}>{imagesError}</p>}
           <p className="text-xs text-light mt-2 text-center">
             Note: Les images sont remplacées par une image par défaut lors de l&apos;enregistrement
           </p>
         </div>
 
         <div>
-          <label className="text-base font-medium text-foreground">
-            <h2 className="mb-2">Titre</h2>
+          <label htmlFor="title" className={labelClassName()}>
+            Titre
           </label>
           <input
             type="text"
             ref={titleInputRef}
             value={title}
             onChange={e => {
-              const newValue = e.target.value;
-              if (newValue.length > MAX_TITLE_LENGTH) {
-                setTitleError(`Le titre ne peut pas dépasser ${MAX_TITLE_LENGTH} caractères`);
-                setTitle(newValue.slice(0, MAX_TITLE_LENGTH));
-              } else {
-                setTitleError('');
-                setTitle(newValue);
-              }
+              setTitle(e.target.value.slice(0, MAX_TITLE_LENGTH));
+              setTitleError(
+                e.target.value.length > MAX_TITLE_LENGTH
+                  ? `Le titre ne peut pas dépasser ${MAX_TITLE_LENGTH} caractères`
+                  : '',
+              );
             }}
             className={inputFieldClassName(titleError)}
             placeholder="Entrez le titre du bien..."
           />
-          {!!titleError && <p className="text-red-500 text-sm mt-1">{titleError}</p>}
+          {!!titleError && <p className={errorClassName()}>titleError</p>}
         </div>
 
-        <div>
-          <label className="text-base font-medium text-foreground">
-            <h2 className="mb-2">Zone géographique</h2>
+        <div className={rowClassName()}>
+          <label htmlFor="geographic-zone" className={labelClassName()}>
+            Zone
           </label>
           <Combobox
             id="geographic-zone"
             ref={geographicZoneRef}
+            className="max-w-2/3"
             options={geographicZones}
             value={geographicZone}
             onChange={e => {
               setGeographicZone(e);
               setGeographicZoneError('');
             }}
-            placeholder="Sélectionnez une zone géographique..."
+            placeholder="Sélectionnez zone"
             error={!!geographicZoneError}
           />
-          {!!geographicZoneError && <p className="text-red-500 text-sm mt-1">{geographicZoneError}</p>}
+          {!!geographicZoneError && <p className={errorClassName()}>geographicZoneError</p>}
         </div>
 
         <div>
-          <label className="text-base font-medium text-foreground">
-            <h2 className="mb-2">Description</h2>
+          <label htmlFor="description" className={labelClassName()}>
+            Description
           </label>
           <div className="relative">
             <textarea
               ref={descriptionTextareaRef}
               value={description}
               onChange={e => {
-                const newValue = e.target.value;
-                if (newValue.length > MAX_DESCRIPTION_LENGTH) {
-                  setDescriptionError(`La description ne peut pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`);
-                  setDescription(newValue.slice(0, MAX_DESCRIPTION_LENGTH));
-                } else {
-                  setDescriptionError('');
-                  setDescription(newValue);
-                }
+                setDescription(e.target.value.slice(0, MAX_DESCRIPTION_LENGTH));
+                setDescriptionError(
+                  e.target.value.length > MAX_DESCRIPTION_LENGTH
+                    ? `La description ne peut pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`
+                    : '',
+                );
               }}
               className={inputFieldClassName(descriptionError)}
               rows={4}
@@ -464,13 +498,43 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
               maxLength={MAX_DESCRIPTION_LENGTH}
             />
             {!!descriptionError ? (
-              <p className="text-red-500 text-sm mt-1">{descriptionError}</p>
+              <p className={errorClassName()}>descriptionError</p>
             ) : (
-              <div className="text-right text-sm text-foreground/50 -mt-1.5">
+              <div className={textAreaCharCountClassName()}>
                 {description.length}/{MAX_DESCRIPTION_LENGTH}
               </div>
             )}
           </div>
+        </div>
+
+        <div className={rowClassName()}>
+          <label htmlFor="hours-of-cleaning" className={labelClassName()}>
+            Heures de ménage
+          </label>
+          <Select
+            id="hours-of-cleaning"
+            className="max-w-1/3"
+            value={hoursOfCleaning}
+            onChange={value => setHoursOfCleaning(Number(value))}
+            options={[1, 2, 3, 4, 5]}
+            disabled={isSubmitting}
+            placeholder="Nombre d'heures"
+          />
+        </div>
+
+        <div className={rowClassName()}>
+          <label htmlFor="hours-of-gardening" className={labelClassName()}>
+            Heures de jardinage
+          </label>
+          <Select
+            id="hours-of-gardening"
+            value={hoursOfGardening}
+            className="max-w-1/3"
+            onChange={value => setHoursOfGardening(Number(value))}
+            options={[1, 2, 3, 4, 5]}
+            disabled={isSubmitting}
+            placeholder="Nombre d'heures"
+          />
         </div>
 
         <ObjectiveList
@@ -482,7 +546,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           }}
           maxObjectives={MAX_OBJECTIVES}
         />
-        {!!objectivesError && <p className="text-red-500 text-sm mt-1">{objectivesError}</p>}
+        {!!objectivesError && <p className={errorClassName()}>objectivesError</p>}
 
         <ConfirmationModal
           isOpen={showConfirmDialog}

@@ -1,5 +1,11 @@
+export enum TaskType {
+  Cleaning = 'Ménage',
+  Gardening = 'Jardinage',
+  Arrival = 'Arrivée',
+  Departure = 'Départ',
+}
 export interface Task {
-  label: string;
+  label: TaskType;
   points: number;
 }
 
@@ -10,6 +16,8 @@ export interface Home {
   objectives: string[];
   images: string[]; // URLs to images
   geographicZone: string; // Geographic zone where the home is located
+  hoursOfCleaning: number; // Hours of cleaning required
+  hoursOfGardening: number; // Hours of gardening required
 }
 
 export interface HomeData extends Home {
@@ -72,6 +80,7 @@ export interface Mission {
   conciergerieName: string; // Reference to the conciergerie by name
   status?: MissionStatus; // Default is 'pending' if not specified
   allowedEmployees?: string[]; // List of prestataire IDs who can see this mission, empty or undefined means all
+  hours: number; // Total hours for the mission based on tasks and home specifications
 }
 
 export interface MissionPoints {
