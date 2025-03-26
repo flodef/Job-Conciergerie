@@ -159,8 +159,7 @@ const ObjectiveList = forwardRef(
                     e.preventDefault();
                   }
                 }}
-                // className="flex-1 px-3 py-2 border rounded-lg bg-background text-foreground border-foreground/20 focus:ring-2 focus:ring-foreground/50"
-                placeholder="Description de la tâche"
+                placeholder="Description de l'objectif"
                 ref={el => {
                   if (el) inputRefs.current[index] = el;
                 }}

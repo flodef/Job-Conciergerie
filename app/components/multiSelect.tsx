@@ -145,7 +145,6 @@ const MultiSelect = forwardRef(
             role="listbox"
             aria-multiselectable="true"
           >
-            {/* Log options for debugging */}
             {allOptions.length === 0 ? (
               <div className="p-2 text-foreground/50 text-center">Aucune option disponible</div>
             ) : (
