@@ -82,7 +82,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
         userId,
         window.location.origin,
       );
-      setSentEmailError(result?.success !== true);
+      setSentEmailError(result?.success !== true ? true : undefined);
 
       onMenuChange(Page.Waiting);
     } catch (error) {
