@@ -5,7 +5,7 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { Employee, ErrorField } from '@/app/types/types';
-import { inputFieldClassName } from '@/app/utils/className';
+import { errorClassName, inputFieldClassName, labelClassName } from '@/app/utils/className';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
@@ -145,12 +145,12 @@ const EmployeeSettings: React.FC = () => {
       <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
       <div>
-        <p className="text-sm text-foreground/70 mb-1">Nom</p>
+        <p className={labelClassName()}>Nom</p>
         <p className="font-medium">{name}</p>
       </div>
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-foreground/70 mb-1">
+        <label htmlFor="email" className={labelClassName()}>
           Email
         </label>
         <input
@@ -167,11 +167,11 @@ const EmployeeSettings: React.FC = () => {
           disabled={isSaving}
           placeholder="jean.dupont@example.com"
         />
-        {emailError ? <p className="text-red-500 text-sm mt-1">{emailError}</p> : null}
+        {emailError ? <p className={errorClassName()}>emailError</p> : null}
       </div>
 
       <div>
-        <label htmlFor="tel" className="block text-sm font-medium text-foreground/70 mb-1">
+        <label htmlFor="tel" className={labelClassName()}>
           Téléphone
         </label>
         <input
@@ -188,12 +188,12 @@ const EmployeeSettings: React.FC = () => {
           disabled={isSaving}
           placeholder="06 12 34 56 78"
         />
-        {phoneError ? <p className="text-red-500 text-sm mt-1">{phoneError}</p> : null}
+        {phoneError ? <p className={errorClassName()}>phoneError</p> : null}
       </div>
 
       <div>
-        <label className="text-base font-medium text-foreground">
-          <h2 className="mb-2">Lieu de vie</h2>
+        <label htmlFor="geographic-zone" className={labelClassName()}>
+          Lieu de vie
         </label>
         <Combobox
           id="geographic-zone"
@@ -208,7 +208,7 @@ const EmployeeSettings: React.FC = () => {
           placeholder="Sélectionnez un lieu de vie..."
           error={!!geographicZoneError}
         />
-        {!!geographicZoneError && <p className="text-red-500 text-sm mt-1">{geographicZoneError}</p>}
+        {!!geographicZoneError && <p className={errorClassName()}>geographicZoneError</p>}
       </div>
 
       <div className="flex justify-center pt-2">

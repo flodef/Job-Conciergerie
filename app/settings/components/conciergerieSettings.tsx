@@ -4,7 +4,7 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import colorOptions from '@/app/data/colors.json';
 import { Conciergerie, ErrorField } from '@/app/types/types';
-import { inputFieldClassName } from '@/app/utils/className';
+import { errorClassName, inputFieldClassName, labelClassName } from '@/app/utils/className';
 import { setPrimaryColor } from '@/app/utils/color';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
@@ -150,7 +150,7 @@ const ConciergerieSettings: React.FC = () => {
       <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-foreground/70 mb-1">
+        <label htmlFor="email" className={labelClassName()}>
           Email
         </label>
         <input
@@ -167,11 +167,11 @@ const ConciergerieSettings: React.FC = () => {
           disabled={isSaving}
           placeholder="jean.dupont@example.com"
         />
-        {emailError ? <p className="text-red-500 text-sm mt-1">{emailError}</p> : null}
+        {emailError ? <p className={errorClassName()}>emailError</p> : null}
       </div>
 
       <div>
-        <label htmlFor="tel" className="block text-sm font-medium text-foreground/70 mb-1">
+        <label htmlFor="tel" className={labelClassName()}>
           Téléphone
         </label>
         <input
@@ -188,11 +188,13 @@ const ConciergerieSettings: React.FC = () => {
           disabled={isSaving}
           placeholder="06 12 34 56 78"
         />
-        {phoneError ? <p className="text-red-500 text-sm mt-1">{phoneError}</p> : null}
+        {phoneError ? <p className={errorClassName()}>phoneError</p> : null}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground/70 mb-2">Couleur</label>
+        <label htmlFor="color" className={labelClassName()}>
+          Couleur
+        </label>
         <div className="grid grid-cols-3 gap-3">
           {colorOptions.map(color => {
             const isUsed = isColorUsed(color.name);

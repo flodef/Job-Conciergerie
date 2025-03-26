@@ -11,7 +11,11 @@ export const selectClassName = (error: boolean | string, disabled: boolean, isFo
 
 export const rowClassName = () => 'flex flex-row justify-between my-4 gap-4 items-center';
 
-export const labelClassName = () => 'text-base font-medium text-foreground';
+export const labelClassName = () => 'text-base font-medium text-foreground mb-1';
+
+export const errorClassName = () => 'text-red-500 text-sm mt-1';
+
+export const textAreaCharCountClassName = () => 'text-right text-sm text-foreground/50 -mt-1.5';
 
 export const inputFieldClassName = (error: boolean | string) =>
   clsx(

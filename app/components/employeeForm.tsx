@@ -13,7 +13,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { ChangeEventField, Employee, EmployeeNotificationSettings, ErrorField } from '@/app/types/types';
-import { inputFieldClassName } from '@/app/utils/className';
+import { errorClassName, inputFieldClassName, labelClassName, textAreaCharCountClassName } from '@/app/utils/className';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { defaultEmployeeSettings } from '@/app/utils/notifications';
@@ -260,7 +260,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
       <form onSubmit={handleSubmit} className="w-full px-4 space-y-2">
         <div>
-          <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-1">
+          <label htmlFor="firstName" className={labelClassName()}>
             Prénom
           </label>
           <input
@@ -274,11 +274,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             disabled={isSubmitting}
             placeholder="Jean"
           />
-          {!!firstNameError && <p className="text-red-500 text-sm mt-1">{firstNameError}</p>}
+          {!!firstNameError && <p className={errorClassName()}>firstNameError</p>}
         </div>
 
         <div>
-          <label htmlFor="familyName" className="block text-sm font-medium text-foreground mb-1">
+          <label htmlFor="familyName" className={labelClassName()}>
             Nom
           </label>
           <input
@@ -292,11 +292,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             disabled={isSubmitting}
             placeholder="Dupont"
           />
-          {!!familyNameError && <p className="text-red-500 text-sm mt-1">{familyNameError}</p>}
+          {!!familyNameError && <p className={errorClassName()}>familyNameError</p>}
         </div>
 
         <div>
-          <label htmlFor="tel" className="block text-sm font-medium text-foreground mb-1">
+          <label htmlFor="tel" className={labelClassName()}>
             Téléphone
           </label>
           <input
@@ -310,11 +310,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             disabled={isSubmitting}
             placeholder="06 12 34 56 78"
           />
-          {!!phoneError && <p className="text-red-500 text-sm mt-1">{phoneError}</p>}
+          {!!phoneError && <p className={errorClassName()}>phoneError</p>}
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
+          <label htmlFor="email" className={labelClassName()}>
             Email
           </label>
           <input
@@ -328,13 +328,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             disabled={isSubmitting}
             placeholder="jean.dupont@example.com"
           />
-          {!!emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
+          {!!emailError && <p className={errorClassName()}>emailError</p>}
         </div>
 
         <div>
-          <label className="text-base font-medium text-foreground">
-            <h2 className="mb-2">Lieu de vie</h2>
-          </label>
+          <label className={labelClassName()}>Lieu de vie</label>
           <Combobox
             id="geographic-zone"
             ref={geographicZoneRef}
@@ -345,12 +343,12 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             placeholder="Sélectionnez un lieu de vie..."
             error={!!geographicZoneError}
           />
-          {!!geographicZoneError && <p className="text-red-500 text-sm mt-1">{geographicZoneError}</p>}
+          {!!geographicZoneError && <p className={errorClassName()}>geographicZoneError</p>}
         </div>
 
         <div>
-          <label htmlFor="conciergerie" className="flex items-center text-sm font-medium text-foreground mb-1">
-            <span>Conciergerie</span>
+          <label htmlFor="conciergerie" className={labelClassName()}>
+            Conciergerie
             <Tooltip>
               C&apos;est la conciergerie par laquelle vous avez connu ce site, qui recevra votre candidature et qui
               validera votre inscription.
@@ -366,11 +364,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             placeholder="Sélectionner une conciergerie"
             error={conciergerieNameError}
           />
-          {!!conciergerieNameError && <p className="text-red-500 text-sm mt-1">{conciergerieNameError}</p>}
+          {!!conciergerieNameError && <p className={errorClassName()}>conciergerieNameError</p>}
         </div>
 
         <div>
-          <label htmlFor="message" className="block text-sm font-medium text-foreground mb-1">
+          <label htmlFor="message" className={labelClassName()}>
             Message (facultatif)
           </label>
           <div className="relative">
@@ -387,9 +385,9 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
               placeholder="Exemple : Nous nous sommes rencontrés lors de l'événement Machin à Trucville."
             />
             {messageError ? (
-              <p className="text-red-500 text-sm mt-1">{messageError}</p>
+              <p className={errorClassName()}>messageError</p>
             ) : (
-              <div className="text-right text-sm text-foreground/50 -mt-1.5">
+              <div className={textAreaCharCountClassName()}>
                 {formData.message?.length || 0}/{MAX_MESSAGE_LENGTH}
               </div>
             )}
