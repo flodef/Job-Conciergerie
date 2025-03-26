@@ -174,12 +174,15 @@ export default function WaitingPage() {
             <div
               className="text-primary cursor-pointer hover:underline"
               onClick={() =>
-                sendConciergerieVerificationEmail(
-                  conciergerie.email,
-                  conciergerie.name,
-                  userId!,
-                  window.location.origin,
-                )
+                fetch('/api/email', {
+                  method: 'POST',
+                  body: JSON.stringify({
+                    email: conciergerie.email,
+                    name: conciergerie.name,
+                    userId: userId!,
+                    baseUrl: window.location.origin,
+                  }),
+                })
               }
             >
               Send verification email
