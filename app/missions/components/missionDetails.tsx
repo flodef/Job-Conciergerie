@@ -22,6 +22,7 @@ import {
   IconListCheck,
   IconMail,
   IconPhone,
+  IconStopwatch,
   IconUserCheck,
   IconUsersGroup,
   IconZoomScan,
@@ -347,6 +348,14 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             </Tooltip>
           </h3>
           <span className="font-medium">{calculateMissionPoints(mission).totalPoints} pts</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-light flex items-center gap-1">
+            <IconStopwatch size={16} />
+            Nombre d&apos;heures estimées
+          </h3>
+          <span className="font-medium">{mission.hours} heures</span>
         </div>
 
         <div className="flex items-center space-x-4">

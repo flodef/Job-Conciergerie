@@ -44,6 +44,21 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
       onContextMenu={handleContextMenu}
       style={{ borderLeft: `6px solid ${conciergerieColor}` }}
     >
+      <div
+        className="absolute top-0 right-0 w-14 h-14 flex items-center justify-center overflow-hidden"
+        aria-label={`${mission.hours} heures`}
+      >
+        <div
+          className="absolute top-0 right-0 w-0 h-0 border-t-[56px] border-l-[56px] border-t-[conciergerieColor] border-l-transparent"
+          style={{
+            borderTopColor: conciergerieColor, // Fallback for Tailwind dynamic color
+            borderLeftColor: 'transparent',
+          }}
+        ></div>
+        <span className="absolute top-2 right-1 w-7 text-xs text-center font-bold text-background z-10">
+          {mission.hours}h
+        </span>
+      </div>
       {/* Diagonal label for taken missions */}
       {employee && (
         <div
@@ -70,7 +85,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         {mission.tasks.map(task => (
           <span
             key={mission.id + task.label}
-            className="px-2 py-0.5 text-background rounded-full text-xs"
+            className="px-2 py-0.5 text-background font-bold rounded-full text-xs"
             style={{ backgroundColor: conciergerieColor }}
           >
             {task.label}

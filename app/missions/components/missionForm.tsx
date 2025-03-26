@@ -8,8 +8,8 @@ import Select from '@/app/components/select';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { ErrorField, Mission, Task } from '@/app/types/types';
-import { inputFieldClassName } from '@/app/utils/className';
+import { ErrorField, HomeData, Mission, Task, TaskType } from '@/app/types/types';
+import { errorClassName, inputFieldClassName, labelClassName } from '@/app/utils/className';
 import { getTasksWithPoints } from '@/app/utils/task';
 import { clsx } from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,6 +19,20 @@ type MissionFormProps = {
   onClose: () => void;
   onCancel?: () => void;
   mode: 'add' | 'edit';
+};
+
+// Calculate total hours for a mission based on selected tasks and home specifications
+const calculateMissionHours = (home: HomeData, tasks: Task[]): number => {
+  return tasks.reduce((acc, task) => {
+    const hours = {
+      [TaskType.Cleaning]: home.hoursOfCleaning,
+      [TaskType.Gardening]: home.hoursOfGardening,
+      [TaskType.Arrival]: 0.5,
+      [TaskType.Departure]: 0.5,
+    }[task.label];
+
+    return acc + hours;
+  }, 0);
 };
 
 export default function MissionForm({ mission, onClose, onCancel, mode }: MissionFormProps) {
@@ -196,6 +210,9 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       const startDate = new Date(startDateTime);
       const endDate = new Date(endDateTime);
 
+      // Calculate the total hours based on tasks and home specifications
+      const totalHours = calculateMissionHours(selectedHome, tasksState);
+
       if (mode === 'add') {
         // Check if a mission with the same criteria already exists
         if (
@@ -214,6 +231,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
           startDateTime: startDate,
           endDateTime: endDate,
           allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
+          hours: totalHours,
         });
         if (!result) throw new Error("Impossible d'ajouter la mission");
 
@@ -221,6 +239,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       } else if (mission) {
         // Create a new mission object with only the necessary fields
         // This ensures we don't preserve any fields that should be reset by updateMission
+
         const updatedMission: Mission = {
           id: mission.id,
           homeId: selectedHome.id,
@@ -232,6 +251,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
           allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
           status: mission.status,
           employeeId: mission.employeeId,
+          hours: totalHours,
         };
 
         // Check if update would create a duplicate (excluding the current mission)
@@ -325,7 +345,9 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>
-          <label className="block text-sm font-medium mb-2">Bien</label>
+          <label htmlFor="home-select" className={labelClassName()}>
+            Bien
+          </label>
           <Select
             id="home-select"
             ref={homeSelectRef}
@@ -342,11 +364,13 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             placeholder="Sélectionner un bien"
             error={homeIdError}
           />
-          {!!homeIdError && <p className="text-red-500 text-sm mt-1">{homeIdError}</p>}
+          {!!homeIdError && <p className={errorClassName()}>homeIdError</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Tâches</label>
+          <label htmlFor="task-select" className={labelClassName()}>
+            Tâches
+          </label>
           <div ref={taskRef} className="grid grid-cols-2 gap-2">
             {getTasksWithPoints().map(task => (
               <button
@@ -376,11 +400,13 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               </button>
             ))}
           </div>
-          {!!tasksError && <p className="text-red-500 text-sm mt-1">{tasksError}</p>}
+          {!!tasksError && <p className={errorClassName()}>tasksError</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Date et heure de début</label>
+          <label htmlFor="start-date" className={labelClassName()}>
+            Date et heure de début
+          </label>
           <input
             type="datetime-local"
             lang="fr"
@@ -388,14 +414,16 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             value={startDateTime}
             min={nowString}
             onChange={handleStartDateChange}
-            disabled={isSubmitting || cannotEdit}
             className={inputFieldClassName(startDateTimeError)}
+            disabled={isSubmitting || cannotEdit}
           />
-          {!!startDateTimeError && <p className="text-red-500 text-sm mt-1">{startDateTimeError}</p>}
+          {!!startDateTimeError && <p className={errorClassName()}>startDateTimeError</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Date et heure de fin</label>
+          <label htmlFor="end-date" className={labelClassName()}>
+            Date et heure de fin
+          </label>
           <input
             type="datetime-local"
             lang="fr"
@@ -412,14 +440,16 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               setEndDateTime(e.target.value);
               setEndDateTimeError('');
             }}
-            disabled={isSubmitting || cannotEdit}
             className={inputFieldClassName(endDateTimeError)}
+            disabled={isSubmitting || cannotEdit}
           />
-          {!!endDateTimeError && <p className="text-red-500 text-sm mt-1">{endDateTimeError}</p>}
+          {!!endDateTimeError && <p className={errorClassName()}>endDateTimeError</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Prestataires</label>
+          <label htmlFor="prestataires-select" className={labelClassName()}>
+            Prestataires
+          </label>
           {/* Add debugging in useEffect instead of inline */}
           <MultiSelect
             id="prestataires-select"

@@ -23,7 +23,7 @@ type MissionsContextType = {
   shouldShowAcceptWarning: boolean;
   setShouldShowAcceptWarning: (show: boolean) => void;
   missionExists: (
-    mission: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>,
+    mission: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName' | 'hours'>,
     excludeMissionId?: string,
   ) => boolean;
 };
@@ -92,7 +92,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   // Check if a mission with the same home, tasks, start date, and end date already exists
   const missionExists = (
-    missionData: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>,
+    missionData: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName' | 'hours'>,
     excludeMissionId?: string,
   ): boolean => {
     if (!getUserData()) return false;
