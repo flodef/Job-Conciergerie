@@ -76,13 +76,8 @@ export default function HomesPage() {
 
   return (
     <div>
-      {homes.length > 1 && (
-        <SearchInput
-          placeholder="Rechercher un bien..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          onClear={() => setSearchTerm('')}
-        />
+      {filteredHomes.length > 1 && (
+        <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
       )}
 
       {filteredHomes.length === 0 && searchTerm === '' ? (

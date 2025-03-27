@@ -134,11 +134,9 @@ export default function EmployeesList() {
 
   return (
     <div>
-      <SearchInput
-        placeholder="Rechercher un prestataire..."
-        value={searchTerm}
-        onChange={e => setSearchTerm(e.target.value)}
-      />
+      {employees.length > 1 && (
+        <SearchInput placeholder="Rechercher un prestataire..." value={searchTerm} onChange={setSearchTerm} />
+      )}
 
       {/* Render employee tables in an accordion */}
       <div className="w-full">
