@@ -2,15 +2,20 @@
 
 import { inputFieldClassName } from '@/app/utils/className';
 import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { getMaxLength, inputLengthRegex } from '@/app/utils/regex';
 
 type ObjectiveListProps = {
   objectives: string[];
   setObjectives: React.Dispatch<React.SetStateAction<string[]>>;
   maxObjectives: number;
+  disabled?: boolean;
 };
 
 const ObjectiveList = forwardRef(
-  ({ objectives, setObjectives, maxObjectives }: ObjectiveListProps, forwardedRef: ForwardedRef<HTMLInputElement>) => {
+  (
+    { objectives, setObjectives, maxObjectives, disabled }: ObjectiveListProps,
+    forwardedRef: ForwardedRef<HTMLInputElement>,
+  ) => {
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const prevObjectivesLength = useRef(objectives.length);
     const [errorMessages, setErrorMessages] = useState<string[]>([]);
@@ -71,6 +76,20 @@ const ObjectiveList = forwardRef(
     };
 
     const editObjective = (index: number, valeur: string) => {
+      let timeout: NodeJS.Timeout | undefined;
+      if (!inputLengthRegex.test(valeur)) {
+        const newErrors = [...errorMessages];
+        const maxLength = getMaxLength(inputLengthRegex);
+        newErrors[index] = `L'objectif ne peut pas dépasser ${maxLength} caractères`;
+        setErrorMessages(newErrors);
+        setErrorIndex(index);
+        timeout = setTimeout(() => {
+          setErrorMessages([...errorMessages, '']);
+          setErrorIndex(0);
+        }, 3000);
+        return;
+      }
+
       // Always update the objective text - we'll check for duplicates on submit/add
       const newObjectives = [...objectives];
       newObjectives[index] = valeur;
@@ -82,6 +101,10 @@ const ObjectiveList = forwardRef(
       newErrors[index] = hasDuplicate ? 'Cet objectif existe déjà' : '';
       setErrorMessages(newErrors);
       setErrorIndex(hasDuplicate ? index : 0);
+
+      return () => {
+        clearTimeout(timeout);
+      };
     };
 
     const deleteObjective = (index: number) => {
@@ -125,8 +148,9 @@ const ObjectiveList = forwardRef(
             objectives.length < maxObjectives && (
               <button
                 type="button"
-                onClick={addObjective}
                 className="text-sm bg-foreground/10 text-foreground px-3 rounded-md hover:bg-foreground/20 transition-colors"
+                onClick={addObjective}
+                disabled={disabled}
               >
                 + Ajouter
               </button>
@@ -163,14 +187,16 @@ const ObjectiveList = forwardRef(
                 ref={el => {
                   if (el) inputRefs.current[index] = el;
                 }}
+                disabled={disabled}
                 className={inputFieldClassName(errorMessages[index])}
               />
               {(objectives.length > 1 || objective !== '') && (
                 <button
                   type="button"
                   onClick={() => deleteObjective(index)}
-                  className="text-red-500 hover:text-red-600 px-3 text-3xl rounded-md"
+                  className="text-red-500 hover:text-red-600 pl-1.5 text-3xl rounded-md"
                   aria-label="Supprimer"
+                  disabled={disabled}
                 >
                   ×
                 </button>

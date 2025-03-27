@@ -8,7 +8,6 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { Conciergerie, ErrorField } from '@/app/types/types';
-import { errorClassName } from '@/app/utils/className';
 import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
 import { Page } from '@/app/utils/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -106,19 +105,16 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       <h2 className="text-2xl font-bold mb-4">Conciergerie</h2>
 
       <form onSubmit={handleSubmit} className="max-w-64 w-full space-y-4">
-        <div>
-          <Select
-            id="conciergerie"
-            ref={conciergerieNameRef}
-            value={conciergerieName}
-            onChange={setConciergerieName}
-            options={conciergeries.map(c => c.name)}
-            disabled={isSubmitting}
-            placeholder="Sélectionnez une conciergerie"
-            error={conciergerieNameError}
-          />
-          {!!conciergerieNameError && <p className={errorClassName}>{conciergerieNameError}</p>}
-        </div>
+        <Select
+          id="conciergerie"
+          ref={conciergerieNameRef}
+          value={conciergerieName}
+          onChange={setConciergerieName}
+          options={conciergeries.map(c => c.name)}
+          disabled={isSubmitting}
+          placeholder="Sélectionnez une conciergerie"
+          error={conciergerieNameError}
+        />
 
         <FormActions onCancel={handleClose} submitText="Valider" isSubmitting={isSubmitting} />
       </form>

@@ -17,6 +17,8 @@ import {
   rowClassName,
   textAreaCharCountClassName,
 } from '@/app/utils/className';
+import { handleChange } from '@/app/utils/form';
+import { inputLengthRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -440,18 +442,15 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           </label>
           <input
             type="text"
+            id="title"
+            name="Titre"
             ref={titleInputRef}
             value={title}
-            onChange={e => {
-              setTitle(e.target.value.slice(0, MAX_TITLE_LENGTH));
-              setTitleError(
-                e.target.value.length > MAX_TITLE_LENGTH
-                  ? `Le titre ne peut pas dépasser ${MAX_TITLE_LENGTH} caractères`
-                  : '',
-              );
-            }}
+            onChange={e => handleChange(e, setTitle, setTitleError, inputLengthRegex)}
             className={inputFieldClassName(titleError)}
+            disabled={isSubmitting}
             placeholder="Entrez le titre du bien..."
+            required
           />
           {!!titleError && <p className={errorClassName}>{titleError}</p>}
         </div>
@@ -466,14 +465,11 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
             className="max-w-2/3"
             options={geographicZones}
             value={geographicZone}
-            onChange={e => {
-              setGeographicZone(e);
-              setGeographicZoneError('');
-            }}
+            onChange={e => handleChange(e, setGeographicZone, setGeographicZoneError)}
             placeholder="Sélectionnez zone"
-            error={!!geographicZoneError}
+            disabled={isSubmitting}
+            error={geographicZoneError}
           />
-          {!!geographicZoneError && <p className={errorClassName}>{geographicZoneError}</p>}
         </div>
 
         <div>
@@ -484,18 +480,13 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
             <textarea
               ref={descriptionTextareaRef}
               value={description}
-              onChange={e => {
-                setDescription(e.target.value.slice(0, MAX_DESCRIPTION_LENGTH));
-                setDescriptionError(
-                  e.target.value.length > MAX_DESCRIPTION_LENGTH
-                    ? `La description ne peut pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`
-                    : '',
-                );
-              }}
+              onChange={e => handleChange(e, setDescription, setDescriptionError)}
               className={inputFieldClassName(descriptionError)}
+              required
               rows={4}
               placeholder="Décrivez les caractéristiques du bien..."
               maxLength={MAX_DESCRIPTION_LENGTH}
+              disabled={isSubmitting}
             />
             {descriptionError ? (
               <p className={errorClassName}>{descriptionError}</p>
@@ -545,6 +536,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
             setObjectivesError('');
           }}
           maxObjectives={MAX_OBJECTIVES}
+          disabled={isSubmitting}
         />
         {!!objectivesError && <p className={errorClassName}>{objectivesError}</p>}
 

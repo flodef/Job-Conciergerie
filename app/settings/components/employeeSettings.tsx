@@ -6,6 +6,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { Employee, ErrorField } from '@/app/types/types';
 import { errorClassName, inputFieldClassName, labelClassName } from '@/app/utils/className';
+import { handleChange } from '@/app/utils/form';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
@@ -156,16 +157,14 @@ const EmployeeSettings: React.FC = () => {
         <input
           type="email"
           id="email"
+          name="Email"
           ref={emailRef}
           value={email}
-          onChange={e => {
-            const newValue = e.target.value;
-            setEmail(newValue);
-            setEmailError(newValue && !emailRegex.test(newValue) ? 'Format d&apos;email invalide' : '');
-          }}
+          onChange={e => handleChange(e, setEmail, setEmailError, emailRegex)}
           className={inputFieldClassName(emailError)}
           disabled={isSaving}
           placeholder="jean.dupont@example.com"
+          required
         />
         {!!emailError && <p className={errorClassName}>{emailError}</p>}
       </div>
@@ -177,16 +176,14 @@ const EmployeeSettings: React.FC = () => {
         <input
           type="tel"
           id="tel"
+          name="Téléphone"
           ref={phoneRef}
           value={tel}
-          onChange={e => {
-            const newValue = e.target.value;
-            setTel(newValue);
-            setPhoneError(newValue && !frenchPhoneRegex.test(newValue) ? 'Format de numéro de téléphone invalide' : '');
-          }}
+          onChange={e => handleChange(e, setTel, setPhoneError, frenchPhoneRegex)}
           className={inputFieldClassName(phoneError)}
           disabled={isSaving}
           placeholder="06 12 34 56 78"
+          required
         />
         {!!phoneError && <p className={errorClassName}>{phoneError}</p>}
       </div>
@@ -200,15 +197,11 @@ const EmployeeSettings: React.FC = () => {
           ref={geographicZoneRef}
           options={geographicZones}
           value={geographicZone}
-          onChange={newValue => {
-            setGeographicZone(newValue);
-            setGeographicZoneError(!newValue.trim() ? 'Un lieu de vie est requis' : '');
-          }}
+          onChange={e => handleChange(e, setGeographicZone, setGeographicZoneError)}
           disabled={isSaving}
           placeholder="Sélectionnez un lieu de vie..."
-          error={!!geographicZoneError}
+          error={geographicZoneError}
         />
-        {!!geographicZoneError && <p className={errorClassName}>{geographicZoneError}</p>}
       </div>
 
       <div className="flex justify-center pt-2">

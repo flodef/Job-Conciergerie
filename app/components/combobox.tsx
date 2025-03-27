@@ -1,6 +1,6 @@
 'use client';
 
-import { selectClassName } from '@/app/utils/className';
+import { errorClassName, selectClassName } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/dropdownPosition';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
@@ -13,8 +13,8 @@ type ComboboxProps = {
   options: string[];
   placeholder?: string;
   className?: string;
-  error?: boolean;
-  disabled?: boolean;
+  error?: boolean | string;
+  disabled: boolean;
 };
 
 const Combobox = forwardRef(
@@ -148,72 +148,75 @@ const Combobox = forwardRef(
     };
 
     return (
-      <div className={clsx('relative w-full', className)} ref={comboboxRef}>
-        <div className={selectClassName(error, disabled, isFocused, isOpen)}>
-          <IconSearch size={18} className="text-foreground/50 mr-2" />
-          <input
-            id={id}
-            ref={inputRef}
-            type="text"
-            className="flex-grow w-full bg-transparent outline-none text-foreground"
-            placeholder={value || placeholder}
-            value={isOpen ? searchTerm : value}
-            onChange={handleInputChange}
-            onClick={handleInputClick}
-            onFocus={() => {
-              checkPosition();
-              setIsFocused(true);
-              setIsOpen(true);
-            }} // Add focus when the component gains focus
-            onBlur={() => {
-              setIsFocused(false);
-              setIsOpen(false);
-            }} // Remove focus when the component loses focus
-            autoComplete="off"
-            disabled={disabled}
-          />
-          <button
-            type="button"
-            onClick={() => !disabled && setIsOpen(!isOpen)}
-            className="focus:outline-none"
-            tabIndex={-1}
-          >
-            <IconChevronDown
-              size={18}
-              className={clsx('transition-transform duration-200', isOpen && 'transform rotate-180')}
+      <>
+        <div className={clsx('relative w-full', className)} ref={comboboxRef}>
+          <div className={selectClassName(error, disabled, isFocused, isOpen)}>
+            <IconSearch size={18} className="text-foreground/50 mr-2" />
+            <input
+              id={id}
+              ref={inputRef}
+              type="text"
+              className="flex-grow w-full bg-transparent outline-none text-foreground"
+              placeholder={value || placeholder}
+              value={isOpen ? searchTerm : value}
+              onChange={handleInputChange}
+              onClick={handleInputClick}
+              onFocus={() => {
+                checkPosition();
+                setIsFocused(true);
+                setIsOpen(true);
+              }} // Add focus when the component gains focus
+              onBlur={() => {
+                setIsFocused(false);
+                setIsOpen(false);
+              }} // Remove focus when the component loses focus
+              autoComplete="off"
+              disabled={disabled}
             />
-          </button>
-        </div>
-
-        {isOpen && !disabled && (
-          <div
-            ref={optionsRef}
-            className={clsx(
-              'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
-              openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
-            )}
-          >
-            {filteredOptions.length === 0 ? (
-              <div className="p-2 text-foreground/50 text-center">Aucun résultat</div>
-            ) : (
-              filteredOptions.map((option, index) => (
-                <div
-                  key={option}
-                  className={clsx(
-                    'p-2 cursor-pointer hover:bg-primary/10',
-                    highlightedIndex === index && 'bg-primary/10',
-                    option === value && 'font-medium text-primary bg-primary/10',
-                  )}
-                  onClick={() => handleSelect(option)}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                >
-                  {option}
-                </div>
-              ))
-            )}
+            <button
+              type="button"
+              onClick={() => !disabled && setIsOpen(!isOpen)}
+              className="focus:outline-none"
+              tabIndex={-1}
+            >
+              <IconChevronDown
+                size={18}
+                className={clsx('transition-transform duration-200', isOpen && 'transform rotate-180')}
+              />
+            </button>
           </div>
-        )}
-      </div>
+
+          {isOpen && !disabled && (
+            <div
+              ref={optionsRef}
+              className={clsx(
+                'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
+                openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
+              )}
+            >
+              {filteredOptions.length === 0 ? (
+                <div className="p-2 text-foreground/50 text-center">Aucun résultat</div>
+              ) : (
+                filteredOptions.map((option, index) => (
+                  <div
+                    key={option}
+                    className={clsx(
+                      'p-2 cursor-pointer hover:bg-primary/10',
+                      highlightedIndex === index && 'bg-primary/10',
+                      option === value && 'font-medium text-primary bg-primary/10',
+                    )}
+                    onClick={() => handleSelect(option)}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                  >
+                    {option}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+        {error && <p className={errorClassName}>{error}</p>}
+      </>
     );
   },
 );

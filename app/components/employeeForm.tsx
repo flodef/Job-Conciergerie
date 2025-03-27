@@ -1,5 +1,6 @@
 'use client';
 
+import { sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import { createNewEmployee } from '@/app/actions/employee';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
@@ -13,11 +14,11 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { ChangeEventField, Employee, EmployeeNotificationSettings, ErrorField } from '@/app/types/types';
 import { errorClassName, inputFieldClassName, labelClassName, textAreaCharCountClassName } from '@/app/utils/className';
-import { sendEmployeeRegistrationEmail } from '@/app/actions/email';
+import { handleChange } from '@/app/utils/form';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { defaultEmployeeSettings } from '@/app/utils/notifications';
-import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
+import { emailRegex, frenchPhoneRegex, inputLengthRegex } from '@/app/utils/regex';
 import React, { useRef, useState } from 'react';
 
 type EmployeeFormProps = {
@@ -67,47 +68,12 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const MAX_NAME_LENGTH = 30;
   const MAX_MESSAGE_LENGTH = 500;
 
-  const handleChange = (e: ChangeEventField) => {
+  const handleFormChange = (e: ChangeEventField) => {
     const { name, value } = e.target;
-
-    // Validate as user types
-    switch (name) {
-      case 'firstName':
-        setFirstNameError(
-          value.length > MAX_NAME_LENGTH ? `Le prénom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères` : '',
-        );
-        break;
-      case 'familyName':
-        setFamilyNameError(
-          value.length > MAX_NAME_LENGTH ? `Le nom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères` : '',
-        );
-        break;
-      case 'email':
-        setEmailError(value && !emailRegex.test(value) ? 'Format d&apos;email invalide' : '');
-        break;
-      case 'tel':
-        setPhoneError(value && !frenchPhoneRegex.test(value) ? 'Format de numéro de téléphone invalide' : '');
-        break;
-      case 'geographicZone':
-        setGeographicZoneError(!value.trim() ? 'Un lieu de vie est requis' : '');
-        break;
-      case 'conciergerieName':
-        setConciergerieNameError(!value.trim() ? 'Un nom de conciergerie est requis' : '');
-        break;
-      case 'message':
-        setMessageError(
-          value.length > MAX_MESSAGE_LENGTH ? `Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères` : '',
-        );
-        break;
-    }
-
-    // Mark form as changed
     setIsFormChanged(true);
-
-    // Update form data
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'message' ? value.slice(0, MAX_MESSAGE_LENGTH) : value,
+      [name]: value,
     }));
   };
 
@@ -268,13 +234,14 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           <input
             type="text"
             id="firstName"
-            name="firstName"
+            name="Prénom"
             ref={firstNameRef}
             value={formData.firstName}
-            onChange={handleChange}
+            onChange={e => handleChange(e, () => handleFormChange(e), setFirstNameError, inputLengthRegex)}
             className={inputFieldClassName(firstNameError)}
             disabled={isSubmitting}
             placeholder="Jean"
+            required
           />
           {!!firstNameError && <p className={errorClassName}>{firstNameError}</p>}
         </div>
@@ -286,13 +253,14 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           <input
             type="text"
             id="familyName"
-            name="familyName"
+            name="Nom"
             ref={familyNameRef}
             value={formData.familyName}
-            onChange={handleChange}
+            onChange={e => handleChange(e, () => handleFormChange(e), setFamilyNameError, inputLengthRegex)}
             className={inputFieldClassName(familyNameError)}
             disabled={isSubmitting}
             placeholder="Dupont"
+            required
           />
           {!!familyNameError && <p className={errorClassName}>{familyNameError}</p>}
         </div>
@@ -304,13 +272,14 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           <input
             type="tel"
             id="tel"
-            name="tel"
+            name="Téléphone"
             ref={phoneRef}
             value={formData.tel}
-            onChange={handleChange}
+            onChange={e => handleChange(e, () => handleFormChange(e), setPhoneError, frenchPhoneRegex)}
             className={inputFieldClassName(phoneError)}
             disabled={isSubmitting}
             placeholder="06 12 34 56 78"
+            required
           />
           {!!phoneError && <p className={errorClassName}>{phoneError}</p>}
         </div>
@@ -322,13 +291,14 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           <input
             type="email"
             id="email"
-            name="email"
+            name="Email"
             ref={emailRef}
             value={formData.email}
-            onChange={handleChange}
+            onChange={e => handleChange(e, () => handleFormChange(e), setEmailError, emailRegex)}
             className={inputFieldClassName(emailError)}
             disabled={isSubmitting}
             placeholder="jean.dupont@example.com"
+            required
           />
           {!!emailError && <p className={errorClassName}>{emailError}</p>}
         </div>
@@ -340,12 +310,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             ref={geographicZoneRef}
             options={geographicZones}
             value={formData.geographicZone || ''}
-            onChange={e => handleChange({ target: { name: 'geographicZone', value: e } })}
+            onChange={e => handleFormChange({ target: { name: 'geographicZone', value: e } })}
             disabled={isSubmitting}
             placeholder="Sélectionnez un lieu de vie..."
-            error={!!geographicZoneError}
+            error={geographicZoneError}
           />
-          {!!geographicZoneError && <p className={errorClassName}>{geographicZoneError}</p>}
         </div>
 
         <div>
@@ -361,12 +330,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             ref={conciergerieNameRef}
             options={conciergeries.map(c => c.name)}
             value={formData.conciergerieName || ''}
-            onChange={e => handleChange({ target: { name: 'conciergerie', value: e } })}
+            onChange={e => handleFormChange({ target: { name: 'conciergerie', value: e } })}
             disabled={isSubmitting}
             placeholder="Sélectionner une conciergerie"
             error={conciergerieNameError}
           />
-          {!!conciergerieNameError && <p className={errorClassName}>{conciergerieNameError}</p>}
         </div>
 
         <div>
@@ -376,10 +344,10 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           <div className="relative">
             <textarea
               id="message"
-              name="message"
+              name="Message"
               ref={messageRef}
               value={formData.message}
-              onChange={handleChange}
+              onChange={e => handleChange(e, () => handleFormChange(e), setMessageError)}
               className={inputFieldClassName(messageError)}
               rows={4}
               disabled={isSubmitting}

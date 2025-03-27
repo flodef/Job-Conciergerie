@@ -17,8 +17,8 @@ type MultiSelectProps = {
   onChange: (values: string[]) => void;
   options: MultiSelectOption[];
   className?: string;
-  error?: boolean;
-  disabled?: boolean;
+  error?: boolean | string;
+  disabled: boolean;
   allOption?: boolean; // Whether to include an "All" option
 };
 

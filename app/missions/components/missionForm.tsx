@@ -10,6 +10,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { ErrorField, HomeData, Mission, Task } from '@/app/types/types';
 import { errorClassName, inputFieldClassName, labelClassName } from '@/app/utils/className';
+import { handleChange } from '@/app/utils/form';
 import { getTaskPoints } from '@/app/utils/task';
 import { clsx } from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -352,10 +353,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             id="home-select"
             ref={homeSelectRef}
             value={homeId}
-            onChange={(value: string) => {
-              setHomeId(value);
-              setHomeIdError('');
-            }}
+            onChange={value => handleChange(value, setHomeId, setHomeIdError)}
             options={filteredHomes.map(home => ({
               value: home.id,
               label: home.title,
@@ -364,7 +362,6 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             placeholder="Sélectionner un bien"
             error={homeIdError}
           />
-          {!!homeIdError && <p className={errorClassName}>{homeIdError}</p>}
         </div>
 
         <div>
@@ -437,10 +434,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               minEndDate.setHours(minEndDate.getHours() + 1);
               return localISOString(minEndDate);
             })()}
-            onChange={e => {
-              setEndDateTime(e.target.value);
-              setEndDateTimeError('');
-            }}
+            onChange={e => handleChange(e, setEndDateTime, setEndDateTimeError)}
             className={inputFieldClassName(endDateTimeError)}
             disabled={isSubmitting || cannotEdit}
           />
@@ -451,7 +445,6 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
           <label htmlFor="prestataires-select" className={labelClassName}>
             Prestataires
           </label>
-          {/* Add debugging in useEffect instead of inline */}
           <MultiSelect
             id="prestataires-select"
             values={selectedEmployees}
@@ -460,8 +453,8 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               value: emp.id,
               label: `${emp.firstName} ${emp.familyName}`,
             }))}
-            allOption={true}
             disabled={isSubmitting || cannotEdit}
+            allOption
           />
           <p className="text-sm text-foreground/70 mt-1">
             {selectedEmployees.length === 0

@@ -4,7 +4,7 @@ import { shouldOpenUpward } from '@/app/utils/dropdownPosition';
 import { IconChevronDown } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
 import { useEffect, useRef, useState, forwardRef, ForwardedRef, useImperativeHandle } from 'react';
-import { selectClassName } from '@/app/utils/className';
+import { errorClassName, selectClassName } from '@/app/utils/className';
 
 type SelectOption = {
   value: string;
@@ -19,7 +19,7 @@ type SelectProps = {
   placeholder?: string;
   className?: string;
   error?: boolean | string;
-  disabled?: boolean;
+  disabled: boolean;
 };
 
 const Select = forwardRef(
@@ -156,72 +156,75 @@ const Select = forwardRef(
     };
 
     return (
-      <div className={clsx('relative w-full', className)} ref={selectRef}>
-        <div
-          id={id}
-          className={selectClassName(error, disabled, isFocused, isOpen)}
-          onClick={() => {
-            if (!disabled) {
-              checkPosition();
-              setIsOpen(!isOpen);
-            }
-          }}
-          tabIndex={disabled ? -1 : 0}
-          onFocus={() => {
-            checkPosition();
-            setIsFocused(true);
-            setIsOpen(true);
-          }} // Add focus when the component gains focus
-          onBlur={() => {
-            setIsFocused(false);
-            setIsOpen(false);
-          }} // Remove focus when the component loses focus
-          role="combobox"
-          aria-expanded={isOpen}
-          aria-haspopup="listbox"
-          aria-controls={`${id}-options`}
-        >
-          <span className={clsx(!value && 'text-foreground/50')}>{displayValue}</span>
-          <IconChevronDown
-            size={18}
-            className={clsx('transition-transform duration-200', isOpen && 'transform rotate-180')}
-          />
-        </div>
-
-        {isOpen && !disabled && (
+      <>
+        <div className={clsx('relative w-full', className)} ref={selectRef}>
           <div
-            id={`${id}-options`}
-            ref={optionsRef}
-            className={clsx(
-              'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
-              openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
-            )}
-            role="listbox"
+            id={id}
+            className={selectClassName(error, disabled, isFocused, isOpen)}
+            onClick={() => {
+              if (!disabled) {
+                checkPosition();
+                setIsOpen(!isOpen);
+              }
+            }}
+            tabIndex={disabled ? -1 : 0}
+            onFocus={() => {
+              checkPosition();
+              setIsFocused(true);
+              setIsOpen(true);
+            }} // Add focus when the component gains focus
+            onBlur={() => {
+              setIsFocused(false);
+              setIsOpen(false);
+            }} // Remove focus when the component loses focus
+            role="combobox"
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            aria-controls={`${id}-options`}
           >
-            {options.map((option: string | number | SelectOption, index: number) => {
-              const optionValue = typeof option === 'object' ? option.value : option;
-              const optionLabel = typeof option === 'object' ? option.label : option;
-
-              return (
-                <div
-                  key={optionValue}
-                  className={clsx(
-                    'p-2 cursor-pointer hover:bg-primary/10',
-                    highlightedIndex === index && 'bg-primary/10',
-                    optionValue === value && 'font-medium text-primary bg-primary/10',
-                  )}
-                  onClick={() => handleSelect(optionValue)}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                  role="option"
-                  aria-selected={optionValue === value}
-                >
-                  {optionLabel}
-                </div>
-              );
-            })}
+            <span className={clsx(!value && 'text-foreground/50')}>{displayValue}</span>
+            <IconChevronDown
+              size={18}
+              className={clsx('transition-transform duration-200', isOpen && 'transform rotate-180')}
+            />
           </div>
-        )}
-      </div>
+
+          {isOpen && !disabled && (
+            <div
+              id={`${id}-options`}
+              ref={optionsRef}
+              className={clsx(
+                'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
+                openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
+              )}
+              role="listbox"
+            >
+              {options.map((option: string | number | SelectOption, index: number) => {
+                const optionValue = typeof option === 'object' ? option.value : option;
+                const optionLabel = typeof option === 'object' ? option.label : option;
+
+                return (
+                  <div
+                    key={optionValue}
+                    className={clsx(
+                      'p-2 cursor-pointer hover:bg-primary/10',
+                      highlightedIndex === index && 'bg-primary/10',
+                      optionValue === value && 'font-medium text-primary bg-primary/10',
+                    )}
+                    onClick={() => handleSelect(optionValue)}
+                    onMouseEnter={() => setHighlightedIndex(index)}
+                    role="option"
+                    aria-selected={optionValue === value}
+                  >
+                    {optionLabel}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        {!!error && <p className={errorClassName}>{error}</p>}
+      </>
     );
   },
 );

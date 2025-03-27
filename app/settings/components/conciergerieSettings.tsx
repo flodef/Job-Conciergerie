@@ -6,6 +6,7 @@ import colorOptions from '@/app/data/colors.json';
 import { Conciergerie, ErrorField } from '@/app/types/types';
 import { errorClassName, inputFieldClassName, labelClassName } from '@/app/utils/className';
 import { setPrimaryColor } from '@/app/utils/color';
+import { handleChange } from '@/app/utils/form';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
@@ -156,16 +157,14 @@ const ConciergerieSettings: React.FC = () => {
         <input
           type="email"
           id="email"
+          name="Email"
           ref={emailRef}
           value={email}
-          onChange={e => {
-            const newValue = e.target.value;
-            setEmail(newValue);
-            setEmailError(newValue && !emailRegex.test(newValue) ? "Format d'email invalide" : '');
-          }}
+          onChange={e => handleChange(e, setEmail, setEmailError, emailRegex)}
           className={inputFieldClassName(emailError)}
           disabled={isSaving}
           placeholder="jean.dupont@example.com"
+          required
         />
         {!!emailError && <p className={errorClassName}>{emailError}</p>}
       </div>
@@ -177,16 +176,14 @@ const ConciergerieSettings: React.FC = () => {
         <input
           type="tel"
           id="tel"
+          name="Téléphone"
           ref={phoneRef}
           value={tel}
-          onChange={e => {
-            const newValue = e.target.value;
-            setTel(newValue);
-            setPhoneError(newValue && !frenchPhoneRegex.test(newValue) ? 'Format de numéro de téléphone invalide' : '');
-          }}
+          onChange={e => handleChange(e, setTel, setPhoneError, frenchPhoneRegex)}
           className={inputFieldClassName(phoneError)}
           disabled={isSaving}
           placeholder="06 12 34 56 78"
+          required
         />
         {!!phoneError && <p className={errorClassName}>{phoneError}</p>}
       </div>
