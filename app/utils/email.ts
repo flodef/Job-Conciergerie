@@ -20,10 +20,10 @@ export async function sendEmail(email: Email): Promise<boolean> {
     const result = await response.json();
     if (result.error) throw new Error(result.error);
 
-    return result.success; // Assume result has a `success` boolean field
+    return result.success;
   } catch (error) {
     console.error('Error sending email:', error);
-    return false; // Return false on failure
+    return false;
   }
 }
 

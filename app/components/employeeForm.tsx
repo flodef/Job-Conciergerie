@@ -227,7 +227,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         employee.email,
         employee.tel,
       );
-      setSentEmailError(isEmailSent || undefined);
+      setSentEmailError(!isEmailSent || undefined);
 
       onMenuChange(Page.Waiting);
     } catch (error) {
