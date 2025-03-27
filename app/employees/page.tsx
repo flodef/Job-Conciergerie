@@ -98,7 +98,8 @@ export default function EmployeesList() {
 
   // Helper function to render employee table for each status
   const renderEmployeeTable = (employees: Employee[], emptyMessage: string): ReactNode => {
-    if (employees.length === 0) return <p className="text-foreground/60 italic">Aucun prestataire {emptyMessage}</p>;
+    if (employees.length === 0)
+      return <p className="text-light text-center italic">Aucun prestataire {emptyMessage}</p>;
 
     return (
       <div className="overflow-x-auto">
@@ -188,21 +189,21 @@ function EmployeeRow({
   onClick: () => void;
 }) {
   return (
-    <tr className="hover:bg-secondary/5 cursor-pointer transition-colors" onClick={onClick}>
-      <td className="px-1 py-1">
-        <div className="flex flex-col text-sm font-medium text-foreground text-wrap max-w-28">
+    <tr className="hover:bg-secondary/5 cursor-pointer transition-colors overflow-x-hidden" onClick={onClick}>
+      <td className="px-1 py-1 pl-0">
+        <div className="flex flex-col text-sm font-medium text-foreground truncate text-wrap max-w-28 sm:max-w-full">
           <div>
             {employee.firstName} {employee.familyName}
           </div>
         </div>
       </td>
       <td className="px-1 py-1 whitespace-nowrap">
-        <div className="flex flex-col text-sm font-medium text-foreground truncate max-w-28">
+        <div className="flex flex-col text-sm font-medium text-foreground truncate max-w-28 sm:max-w-full">
           <div>{employee.email}</div>
           <div>{employee.tel}</div>
         </div>
       </td>
-      <td className="px-1 py-1 whitespace-nowrap justify-items-center text-sm font-medium">
+      <td className="px-1 py-1 pr-0 whitespace-nowrap justify-items-center text-sm font-medium">
         <div className="flex space-x-2 justify-center" onClick={e => e.stopPropagation()}>
           {employee.status !== 'accepted' && (
             <button
