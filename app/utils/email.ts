@@ -7,7 +7,6 @@ export type Email = {
 /**
  * Send an email
  */
-// eslint-disable-next-line
 export async function sendEmail(email: Email): Promise<boolean> {
   try {
     const response = await fetch('/api/email', {

@@ -39,6 +39,7 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
 
   const onMenuChange = useCallback(
     (page = defaultPage) => {
+      console.log('onMenuChange', page, currentPage, hasUnsavedChanges);
       if (page === currentPage) return;
 
       setIsMenuOpen(false);
