@@ -117,7 +117,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
             placeholder="Sélectionnez une conciergerie"
             error={conciergerieNameError}
           />
-          {!!conciergerieNameError && <p className={errorClassName()}>conciergerieNameError</p>}
+          {!!conciergerieNameError && <p className={errorClassName}>{conciergerieNameError}</p>}
         </div>
 
         <FormActions onCancel={handleClose} submitText="Valider" isSubmitting={isSubmitting} />

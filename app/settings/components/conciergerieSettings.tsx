@@ -150,7 +150,7 @@ const ConciergerieSettings: React.FC = () => {
       <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
       <div>
-        <label htmlFor="email" className={labelClassName()}>
+        <label htmlFor="email" className={labelClassName}>
           Email
         </label>
         <input
@@ -167,11 +167,11 @@ const ConciergerieSettings: React.FC = () => {
           disabled={isSaving}
           placeholder="jean.dupont@example.com"
         />
-        {emailError ? <p className={errorClassName()}>emailError</p> : null}
+        {!!emailError && <p className={errorClassName}>{emailError}</p>}
       </div>
 
       <div>
-        <label htmlFor="tel" className={labelClassName()}>
+        <label htmlFor="tel" className={labelClassName}>
           Téléphone
         </label>
         <input
@@ -188,11 +188,11 @@ const ConciergerieSettings: React.FC = () => {
           disabled={isSaving}
           placeholder="06 12 34 56 78"
         />
-        {phoneError ? <p className={errorClassName()}>phoneError</p> : null}
+        {!!phoneError && <p className={errorClassName}>{phoneError}</p>}
       </div>
 
       <div>
-        <label htmlFor="color" className={labelClassName()}>
+        <label htmlFor="color" className={labelClassName}>
           Couleur
         </label>
         <div className="grid grid-cols-3 gap-3">

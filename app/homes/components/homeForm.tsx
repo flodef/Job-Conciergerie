@@ -347,7 +347,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
 
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>
-          <label htmlFor="images" className={labelClassName()}>
+          <label htmlFor="images" className={labelClassName}>
             <div className="flex justify-between items-center mb-1">
               Photos
               {(existingImages.length > 1 || previewUrls.length > 1) && (
@@ -428,14 +428,14 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
               <span className="text-3xl text-foreground/50">+</span>
             </label>
           </div>
-          {!!imagesError && <p className={errorClassName()}>{imagesError}</p>}
+          {!!imagesError && <p className={errorClassName}>{imagesError}</p>}
           <p className="text-xs text-light mt-2 text-center">
             Note: Les images sont remplacées par une image par défaut lors de l&apos;enregistrement
           </p>
         </div>
 
         <div>
-          <label htmlFor="title" className={labelClassName()}>
+          <label htmlFor="title" className={labelClassName}>
             Titre
           </label>
           <input
@@ -453,11 +453,11 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
             className={inputFieldClassName(titleError)}
             placeholder="Entrez le titre du bien..."
           />
-          {!!titleError && <p className={errorClassName()}>titleError</p>}
+          {!!titleError && <p className={errorClassName}>{titleError}</p>}
         </div>
 
-        <div className={rowClassName()}>
-          <label htmlFor="geographic-zone" className={labelClassName()}>
+        <div className={rowClassName}>
+          <label htmlFor="geographic-zone" className={labelClassName}>
             Zone
           </label>
           <Combobox
@@ -473,11 +473,11 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
             placeholder="Sélectionnez zone"
             error={!!geographicZoneError}
           />
-          {!!geographicZoneError && <p className={errorClassName()}>geographicZoneError</p>}
+          {!!geographicZoneError && <p className={errorClassName}>{geographicZoneError}</p>}
         </div>
 
         <div>
-          <label htmlFor="description" className={labelClassName()}>
+          <label htmlFor="description" className={labelClassName}>
             Description
           </label>
           <div className="relative">
@@ -497,18 +497,18 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
               placeholder="Décrivez les caractéristiques du bien..."
               maxLength={MAX_DESCRIPTION_LENGTH}
             />
-            {!!descriptionError ? (
-              <p className={errorClassName()}>descriptionError</p>
+            {descriptionError ? (
+              <p className={errorClassName}>{descriptionError}</p>
             ) : (
-              <div className={textAreaCharCountClassName()}>
+              <div className={textAreaCharCountClassName}>
                 {description.length}/{MAX_DESCRIPTION_LENGTH}
               </div>
             )}
           </div>
         </div>
 
-        <div className={rowClassName()}>
-          <label htmlFor="hours-of-cleaning" className={labelClassName()}>
+        <div className={rowClassName}>
+          <label htmlFor="hours-of-cleaning" className={labelClassName}>
             Heures de ménage
           </label>
           <Select
@@ -522,8 +522,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           />
         </div>
 
-        <div className={rowClassName()}>
-          <label htmlFor="hours-of-gardening" className={labelClassName()}>
+        <div className={rowClassName}>
+          <label htmlFor="hours-of-gardening" className={labelClassName}>
             Heures de jardinage
           </label>
           <Select
@@ -546,7 +546,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           }}
           maxObjectives={MAX_OBJECTIVES}
         />
-        {!!objectivesError && <p className={errorClassName()}>objectivesError</p>}
+        {!!objectivesError && <p className={errorClassName}>{objectivesError}</p>}
 
         <ConfirmationModal
           isOpen={showConfirmDialog}

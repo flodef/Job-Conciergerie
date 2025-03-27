@@ -345,7 +345,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>
-          <label htmlFor="home-select" className={labelClassName()}>
+          <label htmlFor="home-select" className={labelClassName}>
             Bien
           </label>
           <Select
@@ -364,11 +364,11 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             placeholder="Sélectionner un bien"
             error={homeIdError}
           />
-          {!!homeIdError && <p className={errorClassName()}>homeIdError</p>}
+          {!!homeIdError && <p className={errorClassName}>{homeIdError}</p>}
         </div>
 
         <div>
-          <label htmlFor="task-select" className={labelClassName()}>
+          <label htmlFor="task-select" className={labelClassName}>
             Tâches
           </label>
           <div ref={taskRef} className="grid grid-cols-2 gap-2">
@@ -401,11 +401,11 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               );
             })}
           </div>
-          {!!tasksError && <p className={errorClassName()}>tasksError</p>}
+          {!!tasksError && <p className={errorClassName}>{tasksError}</p>}
         </div>
 
         <div>
-          <label htmlFor="start-date" className={labelClassName()}>
+          <label htmlFor="start-date" className={labelClassName}>
             Date et heure de début
           </label>
           <input
@@ -418,11 +418,11 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             className={inputFieldClassName(startDateTimeError)}
             disabled={isSubmitting || cannotEdit}
           />
-          {!!startDateTimeError && <p className={errorClassName()}>startDateTimeError</p>}
+          {!!startDateTimeError && <p className={errorClassName}>{startDateTimeError}</p>}
         </div>
 
         <div>
-          <label htmlFor="end-date" className={labelClassName()}>
+          <label htmlFor="end-date" className={labelClassName}>
             Date et heure de fin
           </label>
           <input
@@ -444,11 +444,11 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             className={inputFieldClassName(endDateTimeError)}
             disabled={isSubmitting || cannotEdit}
           />
-          {!!endDateTimeError && <p className={errorClassName()}>endDateTimeError</p>}
+          {!!endDateTimeError && <p className={errorClassName}>{endDateTimeError}</p>}
         </div>
 
         <div>
-          <label htmlFor="prestataires-select" className={labelClassName()}>
+          <label htmlFor="prestataires-select" className={labelClassName}>
             Prestataires
           </label>
           {/* Add debugging in useEffect instead of inline */}

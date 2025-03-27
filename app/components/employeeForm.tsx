@@ -260,7 +260,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
       <form onSubmit={handleSubmit} className="w-full px-4 space-y-2">
         <div>
-          <label htmlFor="firstName" className={labelClassName()}>
+          <label htmlFor="firstName" className={labelClassName}>
             Prénom
           </label>
           <input
@@ -274,11 +274,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             disabled={isSubmitting}
             placeholder="Jean"
           />
-          {!!firstNameError && <p className={errorClassName()}>firstNameError</p>}
+          {!!firstNameError && <p className={errorClassName}>{firstNameError}</p>}
         </div>
 
         <div>
-          <label htmlFor="familyName" className={labelClassName()}>
+          <label htmlFor="familyName" className={labelClassName}>
             Nom
           </label>
           <input
@@ -292,11 +292,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             disabled={isSubmitting}
             placeholder="Dupont"
           />
-          {!!familyNameError && <p className={errorClassName()}>familyNameError</p>}
+          {!!familyNameError && <p className={errorClassName}>{familyNameError}</p>}
         </div>
 
         <div>
-          <label htmlFor="tel" className={labelClassName()}>
+          <label htmlFor="tel" className={labelClassName}>
             Téléphone
           </label>
           <input
@@ -310,11 +310,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             disabled={isSubmitting}
             placeholder="06 12 34 56 78"
           />
-          {!!phoneError && <p className={errorClassName()}>phoneError</p>}
+          {!!phoneError && <p className={errorClassName}>{phoneError}</p>}
         </div>
 
         <div>
-          <label htmlFor="email" className={labelClassName()}>
+          <label htmlFor="email" className={labelClassName}>
             Email
           </label>
           <input
@@ -328,11 +328,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             disabled={isSubmitting}
             placeholder="jean.dupont@example.com"
           />
-          {!!emailError && <p className={errorClassName()}>emailError</p>}
+          {!!emailError && <p className={errorClassName}>{emailError}</p>}
         </div>
 
         <div>
-          <label className={labelClassName()}>Lieu de vie</label>
+          <label className={labelClassName}>Lieu de vie</label>
           <Combobox
             id="geographic-zone"
             ref={geographicZoneRef}
@@ -343,11 +343,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             placeholder="Sélectionnez un lieu de vie..."
             error={!!geographicZoneError}
           />
-          {!!geographicZoneError && <p className={errorClassName()}>geographicZoneError</p>}
+          {!!geographicZoneError && <p className={errorClassName}>{geographicZoneError}</p>}
         </div>
 
         <div>
-          <label htmlFor="conciergerie" className={labelClassName()}>
+          <label htmlFor="conciergerie" className={labelClassName}>
             Conciergerie
             <Tooltip>
               C&apos;est la conciergerie par laquelle vous avez connu ce site, qui recevra votre candidature et qui
@@ -364,11 +364,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
             placeholder="Sélectionner une conciergerie"
             error={conciergerieNameError}
           />
-          {!!conciergerieNameError && <p className={errorClassName()}>conciergerieNameError</p>}
+          {!!conciergerieNameError && <p className={errorClassName}>{conciergerieNameError}</p>}
         </div>
 
         <div>
-          <label htmlFor="message" className={labelClassName()}>
+          <label htmlFor="message" className={labelClassName}>
             Message (facultatif)
           </label>
           <div className="relative">
@@ -385,9 +385,9 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
               placeholder="Exemple : Nous nous sommes rencontrés lors de l'événement Machin à Trucville."
             />
             {messageError ? (
-              <p className={errorClassName()}>messageError</p>
+              <p className={errorClassName}>{messageError}</p>
             ) : (
-              <div className={textAreaCharCountClassName()}>
+              <div className={textAreaCharCountClassName}>
                 {formData.message?.length || 0}/{MAX_MESSAGE_LENGTH}
               </div>
             )}

@@ -145,12 +145,12 @@ const EmployeeSettings: React.FC = () => {
       <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
       <div>
-        <p className={labelClassName()}>Nom</p>
+        <p className={labelClassName}>Nom</p>
         <p className="font-medium">{name}</p>
       </div>
 
       <div>
-        <label htmlFor="email" className={labelClassName()}>
+        <label htmlFor="email" className={labelClassName}>
           Email
         </label>
         <input
@@ -167,11 +167,11 @@ const EmployeeSettings: React.FC = () => {
           disabled={isSaving}
           placeholder="jean.dupont@example.com"
         />
-        {emailError ? <p className={errorClassName()}>emailError</p> : null}
+        {!!emailError && <p className={errorClassName}>{emailError}</p>}
       </div>
 
       <div>
-        <label htmlFor="tel" className={labelClassName()}>
+        <label htmlFor="tel" className={labelClassName}>
           Téléphone
         </label>
         <input
@@ -188,11 +188,11 @@ const EmployeeSettings: React.FC = () => {
           disabled={isSaving}
           placeholder="06 12 34 56 78"
         />
-        {phoneError ? <p className={errorClassName()}>phoneError</p> : null}
+        {!!phoneError && <p className={errorClassName}>{phoneError}</p>}
       </div>
 
       <div>
-        <label htmlFor="geographic-zone" className={labelClassName()}>
+        <label htmlFor="geographic-zone" className={labelClassName}>
           Lieu de vie
         </label>
         <Combobox
@@ -208,7 +208,7 @@ const EmployeeSettings: React.FC = () => {
           placeholder="Sélectionnez un lieu de vie..."
           error={!!geographicZoneError}
         />
-        {!!geographicZoneError && <p className={errorClassName()}>geographicZoneError</p>}
+        {!!geographicZoneError && <p className={errorClassName}>{geographicZoneError}</p>}
       </div>
 
       <div className="flex justify-center pt-2">
