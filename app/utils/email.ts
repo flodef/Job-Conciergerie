@@ -18,6 +18,8 @@ export async function sendEmail(email: Email): Promise<boolean> {
     });
 
     const result = await response.json();
+    if (result.error) throw new Error(result.error);
+
     return result.success; // Assume result has a `success` boolean field
   } catch (error) {
     console.error('Error sending email:', error);
