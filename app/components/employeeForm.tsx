@@ -13,7 +13,7 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { ChangeEventField, Employee, EmployeeNotificationSettings, ErrorField } from '@/app/types/types';
 import { errorClassName, inputFieldClassName, labelClassName, textAreaCharCountClassName } from '@/app/utils/className';
-import { sendEmployeeRegistrationEmail } from '@/app/utils/email';
+import { sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { defaultEmployeeSettings } from '@/app/utils/notifications';
@@ -226,6 +226,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         `${employee.firstName} ${employee.familyName}`,
         employee.email,
         employee.tel,
+        employee.geographicZone,
+        employee.message,
       );
       setSentEmailError(!isEmailSent || undefined);
 

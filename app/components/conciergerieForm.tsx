@@ -10,9 +10,9 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import { Conciergerie, ErrorField } from '@/app/types/types';
 import { errorClassName } from '@/app/utils/className';
 import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
-import { sendConciergerieVerificationEmail } from '@/app/utils/email';
 import { Page } from '@/app/utils/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { sendConciergerieVerificationEmail } from '../actions/email';
 
 type ConciergerieFormProps = {
   onClose: () => void;

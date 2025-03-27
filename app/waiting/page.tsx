@@ -7,7 +7,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee } from '@/app/types/types';
 import { setPrimaryColor } from '@/app/utils/color';
 import { convertUTCDateToUserTime, getTimeDifference } from '@/app/utils/date';
-import { sendConciergerieVerificationEmail, sendEmployeeRegistrationEmail } from '@/app/utils/email';
+import { sendConciergerieVerificationEmail, sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -85,6 +85,8 @@ export default function WaitingPage() {
           `${foundEmployee.firstName} ${foundEmployee.familyName}`,
           foundEmployee.email,
           foundEmployee.tel,
+          foundEmployee.geographicZone,
+          foundEmployee.message,
         ).then(isEmailSent => {
           if (!isEmailSent) {
             setToastMessage({

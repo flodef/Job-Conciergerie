@@ -13,32 +13,41 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-/**
- * Load email
- */
-export async function loadEmail() {
-  return;
+interface Email {
+  to: string;
+  subject: string;
+  html: string;
+}
+
+export async function sendEmail(email: Email): Promise<boolean> {
+  try {
+    await transporter.sendMail({
+      ...email,
+      from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return false;
+  }
 }
 
 /**
  * Send a verification email to a conciergerie
  */
 export async function sendConciergerieVerificationEmail(
-  email: string,
+  emailAddress: string,
   name: string,
   userId: string,
   baseUrl: string,
-): Promise<{ success: boolean; error?: unknown }> {
-  try {
-    // Create the verification URL
-    const verificationUrl = `${baseUrl}/${userId}`;
+): Promise<boolean> {
+  const verificationUrl = (baseUrl.includes('localhost') ? baseUrl : 'https://job-conciergerie.fr') + `/${userId}`;
 
-    // Send the email
-    await transporter.sendMail({
-      from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
-      to: email,
-      subject: 'Vérification de votre compte conciergerie',
-      html: `
+  return await sendEmail({
+    to: emailAddress,
+    subject: 'Vérification de votre compte conciergerie',
+    html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333;">Vérification de votre compte conciergerie</h2>
           <p>Bonjour ${name},</p>
@@ -55,13 +64,7 @@ export async function sendConciergerieVerificationEmail(
           <p>Merci,<br>L'équipe Job Conciergerie</p>
         </div>
       `,
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error sending verification email:', error);
-    return { success: false, error };
-  }
+  });
 }
 
 /**
@@ -73,14 +76,13 @@ export async function sendEmployeeRegistrationEmail(
   employeeName: string,
   employeeEmail: string,
   employeePhone: string,
-): Promise<{ success: boolean; error?: unknown }> {
-  try {
-    // Send the email
-    await transporter.sendMail({
-      from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
-      to: conciergerieEmail,
-      subject: "Nouvelle demande d'inscription employé",
-      html: `
+  employeeZone: string,
+  employeeMessage: string | undefined,
+): Promise<boolean> {
+  return await sendEmail({
+    to: conciergerieEmail,
+    subject: "Nouvelle demande d'inscription employé",
+    html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333;">Nouvelle demande d'inscription employé</h2>
           <p>Bonjour ${conciergieName},</p>
@@ -90,16 +92,12 @@ export async function sendEmployeeRegistrationEmail(
             <li><strong>Nom :</strong> ${employeeName}</li>
             <li><strong>Email :</strong> ${employeeEmail}</li>
             <li><strong>Téléphone :</strong> ${employeePhone}</li>
+            <li><strong>Lieu de vie :</strong> ${employeeZone}</li>
+            ${employeeMessage && `<li><strong>Message :</strong> ${employeeMessage}</li>`}
           </ul>
           <p>Vous pouvez vous connecter à votre espace conciergerie pour accepter ou refuser cette demande.</p>
           <p>Merci,<br>L'équipe Job Conciergerie</p>
         </div>
       `,
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error sending employee registration email:', error);
-    return { success: false, error };
-  }
+  });
 }
