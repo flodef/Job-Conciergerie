@@ -37,8 +37,8 @@ export async function sendConciergerieVerificationEmail(
   baseUrl: string,
 ): Promise<boolean> {
   // Create the verification URL
-  const verificationUrl = `${baseUrl}/${userId}`;
-  console.log(verificationUrl);
+  const verificationUrl = `https://google.fr/${userId}`;
+  console.log(verificationUrl, baseUrl);
 
   return await sendEmail({
     to: email,
