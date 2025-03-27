@@ -45,7 +45,10 @@ export async function sendConciergerieVerificationEmail(
     subject: 'Vérification de votre compte conciergerie',
     html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        Hey
+          <h2 style="color: #333;">Vérification de votre compte conciergerie</h2>
+          <p>Bonjour ${name},</p>
+          <p>Nous avons reçu une demande d'inscription pour votre conciergerie sur notre plateforme Job Conciergerie.</p>
+          <p>Pour vérifier votre compte et accéder à votre espace, veuillez cliquer sur le lien ci-dessous :</p>
         </div>
         `,
     // html: `
