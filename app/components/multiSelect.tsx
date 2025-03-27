@@ -98,6 +98,17 @@ const MultiSelect = forwardRef(
       return `${values.length} sélectionnés`;
     };
 
+    const checkPosition = () => {
+      if (selectRef.current) {
+        setOpenUpward(
+          shouldOpenUpward({
+            elementRef: selectRef.current,
+            itemCount: processedOptions.length,
+          }),
+        );
+      }
+    };
+
     return (
       <div className={clsx('relative w-full', className)} ref={selectRef}>
         <div
@@ -105,24 +116,20 @@ const MultiSelect = forwardRef(
           className={selectClassName(error, disabled, isFocused, isOpen)}
           onClick={() => {
             if (!disabled) {
-              // Check position before opening
-              if (!isOpen && selectRef.current) {
-                setOpenUpward(
-                  shouldOpenUpward({
-                    elementRef: selectRef.current,
-                    itemCount: allOptions.length,
-                  }),
-                );
-              }
+              checkPosition();
               setIsOpen(!isOpen);
             }
           }}
           tabIndex={disabled ? -1 : 0}
-          onFocus={() => setIsFocused(true)}
+          onFocus={() => {
+            checkPosition();
+            setIsFocused(true);
+            setIsOpen(true);
+          }} // Add focus when the component gains focus
           onBlur={() => {
-            // Remove focus when the component loses focus
             setIsFocused(false);
-          }}
+            setIsOpen(false);
+          }} // Remove focus when the component loses focus
           role="combobox"
           aria-expanded={isOpen}
           aria-haspopup="listbox"

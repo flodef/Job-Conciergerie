@@ -64,26 +64,30 @@ const Select = forwardRef(
 
     // Handle keyboard navigation
     useEffect(() => {
-      if (!isOpen) return;
-
+      if (disabled || !isOpen) return;
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') {
-          setIsOpen(false);
-          return;
-        }
-
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          setHighlightedIndex(prev => (prev < options.length - 1 ? prev + 1 : prev));
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          setHighlightedIndex(prev => (prev > 0 ? prev - 1 : 0));
-        } else if (e.key === 'Enter' && highlightedIndex >= 0) {
-          e.preventDefault();
-          const selectedOption = options[highlightedIndex];
-          const value = typeof selectedOption === 'object' ? selectedOption.value : selectedOption;
-          onChange(value.toString());
-          setIsOpen(false);
+        switch (e.key) {
+          case 'Escape':
+            e.preventDefault();
+            setIsOpen(false);
+            break;
+          case 'ArrowDown':
+            e.preventDefault();
+            setHighlightedIndex(prev => (prev < options.length - 1 ? prev + 1 : prev));
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            setHighlightedIndex(prev => (prev > 0 ? prev - 1 : 0));
+            break;
+          case 'Enter':
+            e.preventDefault();
+            if (highlightedIndex >= 0) {
+              const selectedOption = options[highlightedIndex];
+              const value = typeof selectedOption === 'object' ? selectedOption.value : selectedOption;
+              onChange(value.toString());
+              setIsOpen(false);
+            }
+            break;
         }
       };
 
@@ -91,7 +95,7 @@ const Select = forwardRef(
       return () => {
         document.removeEventListener('keydown', handleKeyDown);
       };
-    }, [isOpen, highlightedIndex, options, onChange]);
+    }, [isOpen, highlightedIndex, options, onChange, disabled]);
 
     // Scroll to highlighted option
     useEffect(() => {
@@ -140,6 +144,17 @@ const Select = forwardRef(
       return value;
     })();
 
+    const checkPosition = () => {
+      if (selectRef.current) {
+        setOpenUpward(
+          shouldOpenUpward({
+            elementRef: selectRef.current,
+            itemCount: options.length,
+          }),
+        );
+      }
+    };
+
     return (
       <div className={clsx('relative w-full', className)} ref={selectRef}>
         <div
@@ -147,24 +162,20 @@ const Select = forwardRef(
           className={selectClassName(error, disabled, isFocused, isOpen)}
           onClick={() => {
             if (!disabled) {
-              // Check position before opening
-              if (!isOpen && selectRef.current) {
-                setOpenUpward(
-                  shouldOpenUpward({
-                    elementRef: selectRef.current,
-                    itemCount: options.length,
-                  }),
-                );
-              }
+              checkPosition();
               setIsOpen(!isOpen);
             }
           }}
           tabIndex={disabled ? -1 : 0}
-          onFocus={() => setIsFocused(true)}
+          onFocus={() => {
+            checkPosition();
+            setIsFocused(true);
+            setIsOpen(true);
+          }} // Add focus when the component gains focus
           onBlur={() => {
-            // Remove focus when the component loses focus
             setIsFocused(false);
-          }}
+            setIsOpen(false);
+          }} // Remove focus when the component loses focus
           role="combobox"
           aria-expanded={isOpen}
           aria-haspopup="listbox"

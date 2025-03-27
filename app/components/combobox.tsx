@@ -122,17 +122,6 @@ const Combobox = forwardRef(
       setHighlightedIndex(-1);
     };
 
-    const checkPosition = () => {
-      if (comboboxRef.current) {
-        setOpenUpward(
-          shouldOpenUpward({
-            elementRef: comboboxRef.current,
-            itemCount: filteredOptions.length,
-          }),
-        );
-      }
-    };
-
     const handleInputClick = () => {
       if (!disabled) {
         checkPosition();
@@ -144,6 +133,17 @@ const Combobox = forwardRef(
         if (filteredOptions.length > 0) {
           setHighlightedIndex(0);
         }
+      }
+    };
+
+    const checkPosition = () => {
+      if (comboboxRef.current) {
+        setOpenUpward(
+          shouldOpenUpward({
+            elementRef: comboboxRef.current,
+            itemCount: filteredOptions.length,
+          }),
+        );
       }
     };
 
@@ -161,14 +161,14 @@ const Combobox = forwardRef(
             onChange={handleInputChange}
             onClick={handleInputClick}
             onFocus={() => {
-              setIsFocused(true);
               checkPosition();
+              setIsFocused(true);
               setIsOpen(true);
-              // Select the first option when focusing
-              if (filteredOptions.length > 0) {
-                setHighlightedIndex(0);
-              }
-            }}
+            }} // Add focus when the component gains focus
+            onBlur={() => {
+              setIsFocused(false);
+              setIsOpen(false);
+            }} // Remove focus when the component loses focus
             autoComplete="off"
             disabled={disabled}
           />
