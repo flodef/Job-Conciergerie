@@ -15,7 +15,7 @@ export async function sendEmail(email: Email): Promise<boolean> {
       headers: {
         'Content-Type': 'application/json',
       },
-      //   body: JSON.stringify(email), // Send the email object directly, no nesting
+      body: JSON.stringify(email), // Send the email object directly, no nesting
     });
 
     const result = await response.json();

@@ -82,8 +82,10 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
         userId,
         window.location.origin,
       );
+      console.log('Email sent:', isEmailSent);
       setSentEmailError(!isEmailSent || undefined);
 
+      console.log('onMenuChange');
       onMenuChange(Page.Waiting);
     } catch (error) {
       setToastMessage({
