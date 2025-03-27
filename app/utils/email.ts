@@ -49,6 +49,10 @@ export async function sendConciergerieVerificationEmail(
           <p>Bonjour ${name},</p>
           <p>Nous avons reçu une demande d'inscription pour votre conciergerie sur notre plateforme Job Conciergerie.</p>
           <p>Pour vérifier votre compte et accéder à votre espace, veuillez cliquer sur le lien ci-dessous :</p>
+          <p>Ou copiez ce lien dans votre navigateur :</p>
+          <p>${verificationUrl}</p>
+          <p>Si vous n'avez pas demandé cette inscription, vous pouvez ignorer cet email.</p>
+          <p>Merci,<br>L'équipe Job Conciergerie</p>
         </div>
         `,
     // html: `
