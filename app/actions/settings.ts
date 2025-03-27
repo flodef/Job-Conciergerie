@@ -1,7 +1,8 @@
 'use server';
 
+import { getConciergerieById } from '@/app/db/conciergerieDb';
+import { getEmployeeById } from '@/app/db/employeeDb';
 import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/types/types';
-import { getConciergerieById, getEmployeeById } from '@/app/utils/db';
 
 /**
  * Fetch notification settings for a conciergerie by ID

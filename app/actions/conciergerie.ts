@@ -9,7 +9,7 @@ import {
   getConciergerieById,
   updateConciergerie,
   updateConciergerieId,
-} from '@/app/utils/db';
+} from '@/app/db/conciergerieDb';
 import { revalidateTag } from 'next/cache';
 
 /**

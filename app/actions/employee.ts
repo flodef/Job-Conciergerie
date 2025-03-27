@@ -1,6 +1,5 @@
 'use server';
 
-import { Employee, EmployeeNotificationSettings, EmployeeStatus } from '@/app/types/types';
 import {
   DbEmployee,
   createEmployee,
@@ -10,7 +9,8 @@ import {
   getEmployeesByConciergerie,
   updateEmployeeSettings,
   updateEmployeeStatus,
-} from '@/app/utils/db';
+} from '@/app/db/employeeDb';
+import { Employee, EmployeeNotificationSettings, EmployeeStatus } from '@/app/types/types';
 import { revalidateTag } from 'next/cache';
 
 /**

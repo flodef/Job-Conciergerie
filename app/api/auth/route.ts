@@ -1,4 +1,4 @@
-import { getExistingUserType } from '@/app/utils/db';
+import { getExistingUserType } from '@/app/db/db';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
