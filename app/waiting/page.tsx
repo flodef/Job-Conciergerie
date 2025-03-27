@@ -104,15 +104,11 @@ export default function WaitingPage() {
     [employees, conciergeries, setSentEmailError, sentEmailError],
   );
 
-  // Use a ref to track if we've already loaded the data to prevenChargement des dont infinite loops
+  // Use a ref to track if we've already loaded the data to prevent infinite loops
   const hasLoadedDataRef = useRef(false);
   useEffect(() => {
     // Wait for auth to be loaded or if we've already loaded the data
-    if (authLoading || hasLoadedDataRef.current) return;
-    if (!userId || !userType) {
-      router.refresh();
-      return;
-    }
+    if (authLoading || hasLoadedDataRef.current || !userId || !userType) return;
 
     // Mark that we're loading data to prevent infinite loops
     hasLoadedDataRef.current = true;
@@ -125,8 +121,8 @@ export default function WaitingPage() {
     handleUser(userId);
   }, [userId, userType, authLoading, handleConciergerie, handleEmployee, router]);
 
-  // Show loading spinner while checking localStorage
   if (authLoading) return <LoadingSpinner />;
+  if (!userId || !userType) return <ErrorPage />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
