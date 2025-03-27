@@ -39,9 +39,6 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
 
   const onMenuChange = useCallback(
     (page = defaultPage) => {
-      console.log('onMenuChange', page, currentPage, hasUnsavedChanges);
-      if (page === currentPage) return;
-
       setIsMenuOpen(false);
       if (!hasUnsavedChanges) {
         router.push(routeMap[page]);
@@ -52,7 +49,7 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
         setPendingPage(page);
       }
     },
-    [currentPage, hasUnsavedChanges, router, setPendingPage],
+    [hasUnsavedChanges, router, setPendingPage],
   );
 
   useEffect(() => {

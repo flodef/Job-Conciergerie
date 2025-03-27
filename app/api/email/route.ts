@@ -17,13 +17,12 @@ export async function POST(request: Request) {
   try {
     // Send email
     const email: Email = await request.json();
-    console.log('Email received:', email);
 
     await transporter.sendMail({
       from: `Job Conciergerie <${process.env.SMTP_FROM_EMAIL}>`,
       to: email.to,
       subject: email.subject,
-      text: 'email.html',
+      text: email.html,
     });
 
     return NextResponse.json({ success: true });
