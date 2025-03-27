@@ -7,6 +7,7 @@ export type Email = {
 /**
  * Send an email
  */
+// eslint-disable-next-line
 export async function sendEmail(email: Email): Promise<boolean> {
   try {
     const response = await fetch('/api/email', {
@@ -14,13 +15,13 @@ export async function sendEmail(email: Email): Promise<boolean> {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(email), // Send the email object directly, no nesting
+      //   body: JSON.stringify(email), // Send the email object directly, no nesting
     });
 
     const result = await response.json();
     if (result.error) throw new Error(result.error);
 
-    return result.success;
+    return true;
   } catch (error) {
     console.error('Error sending email:', error);
     return false;

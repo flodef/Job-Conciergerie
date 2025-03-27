@@ -17,11 +17,10 @@ export async function POST(request: Request) {
 
     // Send email
     await transporter.sendMail({
-      from: `CMD Breizh <${process.env.SMTP_FROM_EMAIL}>`,
+      from: `Job Conciergerie <${process.env.SMTP_FROM_EMAIL}>`,
       to: 'flo@fims.fi',
       subject: 'Contact depuis le site web',
-      text: 'textContent',
-      html: `<pre>${'textContent'}</pre>`,
+      text: 'test',
     });
 
     return NextResponse.json({ success: true });
