@@ -1,6 +1,5 @@
 'use client';
 
-import { loadEmail, sendConciergerieVerificationEmail, sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import ErrorPage from '@/app/components/error';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
@@ -8,6 +7,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee } from '@/app/types/types';
 import { setPrimaryColor } from '@/app/utils/color';
 import { convertUTCDateToUserTime, getTimeDifference } from '@/app/utils/date';
+import { sendConciergerieVerificationEmail, sendEmployeeRegistrationEmail } from '@/app/utils/email';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -31,10 +31,6 @@ export default function WaitingPage() {
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const [toastMessage, setToastMessage] = useState<Toast>();
 
-  // Hack to make the action server works
-  // eslint-disable-next-line
-  const load = async () => await loadEmail();
-
   const handleConciergerie = useCallback(
     (userId: string) => {
       const foundConciergerie = conciergeries?.find(c => c.name === conciergerieName);
@@ -47,8 +43,8 @@ export default function WaitingPage() {
           foundConciergerie.name,
           userId,
           window.location.origin,
-        ).then(result => {
-          if (result?.success !== true) {
+        ).then(isEmailSent => {
+          if (!isEmailSent) {
             setToastMessage({
               type: ToastType.Error,
               message: "Une erreur est survenue lors de l'envoi de l'email de vérification",
@@ -89,8 +85,8 @@ export default function WaitingPage() {
           `${foundEmployee.firstName} ${foundEmployee.familyName}`,
           foundEmployee.email,
           foundEmployee.tel,
-        ).then(result => {
-          if (result?.success !== true) {
+        ).then(isEmailSent => {
+          if (!isEmailSent) {
             setToastMessage({
               type: ToastType.Error,
               message: "Une erreur est survenue lors de l'envoi de l'email de confirmation",
@@ -169,23 +165,6 @@ export default function WaitingPage() {
                 Une fois votre compte vérifié, vous pourrez accéder directement à l&apos;application lors de votre
                 prochaine visite.
               </p>
-            </div>
-
-            <div
-              className="text-primary cursor-pointer hover:underline"
-              onClick={() =>
-                fetch('/api/email', {
-                  method: 'POST',
-                  body: JSON.stringify({
-                    email: conciergerie.email,
-                    name: conciergerie.name,
-                    userId: userId!,
-                    baseUrl: window.location.origin,
-                  }),
-                })
-              }
-            >
-              Send verification email
             </div>
           </>
         ) : employee ? (

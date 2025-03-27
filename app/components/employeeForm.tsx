@@ -1,6 +1,5 @@
 'use client';
 
-import { sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import { createNewEmployee } from '@/app/actions/employee';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
@@ -14,6 +13,7 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { ChangeEventField, Employee, EmployeeNotificationSettings, ErrorField } from '@/app/types/types';
 import { errorClassName, inputFieldClassName, labelClassName, textAreaCharCountClassName } from '@/app/utils/className';
+import { sendEmployeeRegistrationEmail } from '@/app/utils/email';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { defaultEmployeeSettings } from '@/app/utils/notifications';
@@ -220,14 +220,14 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
-      const result = await sendEmployeeRegistrationEmail(
+      const isEmailSent = await sendEmployeeRegistrationEmail(
         selectedConciergerie.email,
         selectedConciergerie.name,
         `${employee.firstName} ${employee.familyName}`,
         employee.email,
         employee.tel,
       );
-      setSentEmailError(result?.success !== true ? true : undefined);
+      setSentEmailError(isEmailSent || undefined);
 
       onMenuChange(Page.Waiting);
     } catch (error) {

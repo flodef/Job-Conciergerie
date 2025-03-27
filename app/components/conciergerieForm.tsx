@@ -1,6 +1,5 @@
 'use client';
 
-import { sendConciergerieVerificationEmail } from '@/app/actions/email';
 import ErrorPage from '@/app/components/error';
 import FormActions from '@/app/components/formActions';
 import LoadingSpinner from '@/app/components/loadingSpinner';
@@ -11,6 +10,7 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import { Conciergerie, ErrorField } from '@/app/types/types';
 import { errorClassName } from '@/app/utils/className';
 import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
+import { sendConciergerieVerificationEmail } from '@/app/utils/email';
 import { Page } from '@/app/utils/navigation';
 import { useEffect, useRef, useState } from 'react';
 
@@ -76,13 +76,13 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
-      const result = await sendConciergerieVerificationEmail(
+      const isEmailSent = await sendConciergerieVerificationEmail(
         selectedConciergerie.email,
         selectedConciergerie.name,
         userId,
         window.location.origin,
       );
-      setSentEmailError(result?.success !== true ? true : undefined);
+      setSentEmailError(isEmailSent || undefined);
 
       onMenuChange(Page.Waiting);
     } catch (error) {
