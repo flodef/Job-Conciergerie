@@ -1,7 +1,6 @@
+import { sql } from '@/app/db/db';
 import { EmployeeNotificationSettings, EmployeeStatus } from '@/app/types/types';
-import { CACHE_TIME, sql } from '@/app/db/db';
 import { defaultEmployeeSettings } from '@/app/utils/notifications';
-import { unstable_cache } from 'next/cache';
 
 // Type definition for database employee
 export interface DbEmployee {
@@ -55,48 +54,6 @@ export const getAllEmployees = async () => {
     return [];
   }
 };
-
-/**
- * Get a single employee by ID
- */
-export const getEmployeeById = async (id?: string) => {
-  try {
-    if (!id) throw new Error('No ID provided');
-    const result = await sql`
-      SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
-      FROM employee
-      WHERE id = ${id}
-    `;
-
-    return result.length > 0 ? formatEmployee(result[0] as unknown as DbEmployee) : null;
-  } catch (error) {
-    console.error(`Error fetching employee with ID ${id}:`, error);
-    return null;
-  }
-};
-
-/**
- * Get employees by conciergerie name
- */
-export const getEmployeesByConciergerie = unstable_cache(
-  async (conciergerieName: string) => {
-    try {
-      const result = await sql`
-        SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
-        FROM employee
-        WHERE conciergerie_name = ${conciergerieName}
-        ORDER BY created_at DESC
-      `;
-
-      return result.map(row => formatEmployee(row as unknown as DbEmployee));
-    } catch (error) {
-      console.error(`Error fetching employees for conciergerie ${conciergerieName}:`, error);
-      return [];
-    }
-  },
-  ['employees_by_conciergerie'],
-  { revalidate: CACHE_TIME },
-);
 
 /**
  * Check if an employee already exists with the same name, phone, or email

@@ -50,8 +50,6 @@ export interface Employee {
   createdAt: string;
 }
 
-// EmployeeWithStatus is now merged into Employee type
-
 export interface Conciergerie {
   id: string;
   name: string;

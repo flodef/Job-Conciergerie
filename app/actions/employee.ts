@@ -5,8 +5,6 @@ import {
   createEmployee,
   employeeExists,
   getAllEmployees,
-  getEmployeeById,
-  getEmployeesByConciergerie,
   updateEmployeeSettings,
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
@@ -23,32 +21,6 @@ export async function fetchEmployees(): Promise<Employee[]> {
     return employees;
   } catch (error) {
     console.error('Error fetching employees:', error);
-    return [];
-  }
-}
-
-/**
- * Fetch an employee by id
- */
-export async function fetchEmployeeById(id: string): Promise<Employee | null> {
-  try {
-    const employee = await getEmployeeById(id);
-    return employee;
-  } catch (error) {
-    console.error(`Error fetching employee by ID ${id}:`, error);
-    return null;
-  }
-}
-
-/**
- * Fetch employees by conciergerie name
- */
-export async function fetchEmployeesByConciergerie(conciergerieName: string): Promise<Employee[]> {
-  try {
-    const employees = await getEmployeesByConciergerie(conciergerieName);
-    return employees;
-  } catch (error) {
-    console.error(`Error fetching employees for conciergerie ${conciergerieName}:`, error);
     return [];
   }
 }

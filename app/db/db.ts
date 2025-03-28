@@ -4,9 +4,6 @@ import { neon } from '@neondatabase/serverless';
 // Initialize neon client
 export const sql = neon(process.env.DATABASE_URL as string);
 
-// Cache time: 1 hour in seconds
-export const CACHE_TIME = 60 * 60;
-
 /**
  * Check if a user exists and what type they are
  */

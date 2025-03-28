@@ -1,8 +1,7 @@
-import { CACHE_TIME, sql } from '@/app/db/db';
+import { sql } from '@/app/db/db';
 import { ConciergerieNotificationSettings } from '@/app/types/types';
 import { getColorValueByName } from '@/app/utils/color';
 import { defaultConciergerieSettings } from '@/app/utils/notifications';
-import { unstable_cache } from 'next/cache';
 
 // Type definition for database conciergerie
 export interface DbConciergerie {
@@ -44,53 +43,6 @@ export const getAllConciergeries = async () => {
   } catch (error) {
     console.error('Error fetching conciergeries:', error);
     return [];
-  }
-};
-
-/**
- * Get a single conciergerie by ID
- */
-export const getConciergerieById = unstable_cache(
-  async (id?: string) => {
-    try {
-      if (!id) throw new Error('No ID provided');
-      const result = await sql`
-        SELECT id, name, email, tel, color_name, notification_settings
-        FROM conciergerie
-        WHERE id = ${id}
-      `;
-
-      return result.length > 0 ? formatConciergerie(result[0] as unknown as DbConciergerie) : null;
-    } catch (error) {
-      console.error(`Error fetching conciergerie with ID ${id}:`, error);
-      return null;
-    }
-  },
-  ['conciergerie'],
-  { revalidate: CACHE_TIME },
-);
-
-/**
- * Create a new conciergerie
- */
-export const createConciergerie = async (data: Omit<DbConciergerie, 'id'>) => {
-  try {
-    // Convert notification_settings to JSONB if present
-    const notificationSettings = data.notification_settings ? JSON.stringify(data.notification_settings) : null;
-
-    const result = await sql`
-      INSERT INTO conciergerie (
-        name, email, tel, color_name, notification_settings
-      ) VALUES (
-        ${data.name}, ${data.email}, ${data.tel}, ${data.color_name}, ${notificationSettings}::jsonb
-      )
-      RETURNING id, name, email, tel, color_name, notification_settings
-    `;
-
-    return result.length > 0 ? formatConciergerie(result[0] as unknown as DbConciergerie) : null;
-  } catch (error) {
-    console.error('Error creating conciergerie:', error);
-    return null;
   }
 };
 
