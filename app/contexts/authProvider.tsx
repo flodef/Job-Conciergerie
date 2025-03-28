@@ -136,7 +136,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Special case where the userId cookie or the userId in local storage has been manually deleted
         const path = window.location.pathname;
-        if ((newUserData && !navigationRoutes.includes(path)) || (!newUserData && navigationRoutes.includes(path)))
+        if (
+          (newUserData && !navigationRoutes.includes(path) && userType === 'conciergerie') ||
+          (!newUserData && navigationRoutes.includes(path))
+        )
           refreshData();
       } catch (err) {
         console.error('Error fetching user data from database:', err);
