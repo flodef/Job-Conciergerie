@@ -1,26 +1,31 @@
 'use client';
 
-import { errorClassName, selectClassName } from '@/app/utils/className';
+import Label from '@/app/components/label';
+import { errorClassName, rowClassName, selectClassName } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/dropdownPosition';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
-import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type ComboboxProps = {
   id: string;
-  value: string;
+  label: ReactNode;
+  value: string | number | undefined;
   onChange: (value: string) => void;
   options: string[];
   placeholder?: string;
   className?: string;
   error?: boolean | string;
   disabled: boolean;
+  required?: boolean;
+  row?: boolean;
 };
 
 const Combobox = forwardRef(
   (
     {
       id,
+      label,
       value,
       onChange,
       options,
@@ -28,6 +33,8 @@ const Combobox = forwardRef(
       className = '',
       error = false,
       disabled = false,
+      required = false,
+      row = false,
     }: ComboboxProps,
     forwardedRef: ForwardedRef<HTMLInputElement>,
   ) => {
@@ -122,20 +129,6 @@ const Combobox = forwardRef(
       setHighlightedIndex(-1);
     };
 
-    const handleInputClick = () => {
-      if (!disabled) {
-        checkPosition();
-        setIsOpen(true);
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-        // Select the first option when opening the dropdown
-        if (filteredOptions.length > 0) {
-          setHighlightedIndex(0);
-        }
-      }
-    };
-
     const checkPosition = () => {
       if (comboboxRef.current) {
         setOpenUpward(
@@ -148,7 +141,10 @@ const Combobox = forwardRef(
     };
 
     return (
-      <>
+      <div className={row ? rowClassName : ''}>
+        <Label id={id} required={required}>
+          {label}
+        </Label>
         <div className={clsx('relative w-full', className)} ref={comboboxRef}>
           <div className={selectClassName(error, disabled, isFocused, isOpen)}>
             <IconSearch size={18} className="text-foreground/50 mr-2" />
@@ -157,19 +153,18 @@ const Combobox = forwardRef(
               ref={inputRef}
               type="text"
               className="flex-grow w-full bg-transparent outline-none text-foreground"
-              placeholder={value || placeholder}
+              placeholder={value?.toString() || placeholder}
               value={isOpen ? searchTerm : value}
               onChange={handleInputChange}
-              onClick={handleInputClick}
-              onFocus={() => {
-                checkPosition();
-                setIsFocused(true);
-                setIsOpen(true);
-              }} // Add focus when the component gains focus
-              onBlur={() => {
-                setIsFocused(false);
-                setIsOpen(false);
-              }} // Remove focus when the component loses focus
+              onClick={() => {
+                if (!disabled) {
+                  checkPosition();
+                  setIsOpen(!isOpen);
+                  setIsFocused(true);
+                }
+              }}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               autoComplete="off"
               disabled={disabled}
             />
@@ -216,12 +211,11 @@ const Combobox = forwardRef(
           )}
         </div>
         {error && <p className={errorClassName}>{error}</p>}
-      </>
+      </div>
     );
   },
 );
 
-// Add display name for better debugging
 Combobox.displayName = 'Combobox';
 
 export default Combobox;

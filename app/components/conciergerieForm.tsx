@@ -107,6 +107,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       <form onSubmit={handleSubmit} className="max-w-64 w-full space-y-4">
         <Select
           id="conciergerie"
+          label=""
           ref={conciergerieNameRef}
           value={conciergerieName}
           onChange={setConciergerieName}
@@ -114,6 +115,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
           disabled={isSubmitting}
           placeholder="Sélectionnez une conciergerie"
           error={conciergerieNameError}
+          required
         />
 
         <FormActions onCancel={handleClose} submitText="Valider" isSubmitting={isSubmitting} />

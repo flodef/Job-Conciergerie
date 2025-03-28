@@ -1,10 +1,11 @@
 'use client';
 
+import Label from '@/app/components/label';
+import { errorClassName, rowClassName, selectClassName } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/dropdownPosition';
 import { IconChevronDown } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
-import { useEffect, useRef, useState, forwardRef, ForwardedRef, useImperativeHandle } from 'react';
-import { errorClassName, selectClassName } from '@/app/utils/className';
+import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type SelectOption = {
   value: string;
@@ -13,6 +14,7 @@ type SelectOption = {
 
 type SelectProps = {
   id: string;
+  label: ReactNode;
   value: string | number;
   onChange: (value: string) => void;
   options: string[] | number[] | SelectOption[];
@@ -20,12 +22,15 @@ type SelectProps = {
   className?: string;
   error?: boolean | string;
   disabled: boolean;
+  required?: boolean;
+  row?: boolean;
 };
 
 const Select = forwardRef(
   (
     {
       id,
+      label,
       value,
       onChange,
       options,
@@ -33,6 +38,8 @@ const Select = forwardRef(
       className = '',
       error = false,
       disabled = false,
+      required = false,
+      row = false,
     }: SelectProps,
     forwardedRef: ForwardedRef<HTMLDivElement>,
   ) => {
@@ -156,27 +163,24 @@ const Select = forwardRef(
     };
 
     return (
-      <>
+      <div className={row ? rowClassName : ''}>
+        <Label id={id} required={required}>
+          {label}
+        </Label>
         <div className={clsx('relative w-full', className)} ref={selectRef}>
           <div
             id={id}
+            tabIndex={disabled ? -1 : 0}
             className={selectClassName(error, disabled, isFocused, isOpen)}
             onClick={() => {
               if (!disabled) {
                 checkPosition();
                 setIsOpen(!isOpen);
+                setIsFocused(true);
               }
             }}
-            tabIndex={disabled ? -1 : 0}
-            onFocus={() => {
-              checkPosition();
-              setIsFocused(true);
-              setIsOpen(true);
-            }} // Add focus when the component gains focus
-            onBlur={() => {
-              setIsFocused(false);
-              setIsOpen(false);
-            }} // Remove focus when the component loses focus
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             role="combobox"
             aria-expanded={isOpen}
             aria-haspopup="listbox"
@@ -223,8 +227,8 @@ const Select = forwardRef(
             </div>
           )}
         </div>
-        {!!error && <p className={errorClassName}>{error}</p>}
-      </>
+        {error && <p className={errorClassName}>{error}</p>}
+      </div>
     );
   },
 );

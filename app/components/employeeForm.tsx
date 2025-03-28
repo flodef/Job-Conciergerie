@@ -5,20 +5,20 @@ import { createNewEmployee } from '@/app/actions/employee';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
+import Input from '@/app/components/input';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import Select from '@/app/components/select';
+import TextArea from '@/app/components/textArea';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import geographicZones from '@/app/data/geographicZone.json';
-import { ChangeEventField, Employee, EmployeeNotificationSettings, ErrorField } from '@/app/types/types';
-import { errorClassName, inputFieldClassName, labelClassName, textAreaCharCountClassName } from '@/app/utils/className';
-import { handleChange } from '@/app/utils/form';
+import { Employee, EmployeeNotificationSettings, ErrorField } from '@/app/types/types';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { defaultEmployeeSettings } from '@/app/utils/notifications';
-import { emailRegex, frenchPhoneRegex, inputLengthRegex } from '@/app/utils/regex';
+import { emailRegex, frenchPhoneRegex, getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
 import React, { useRef, useState } from 'react';
 
 type EmployeeFormProps = {
@@ -64,12 +64,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const conciergerieNameRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
 
-  // Constants for validation
-  const MAX_NAME_LENGTH = 30;
-  const MAX_MESSAGE_LENGTH = 500;
-
-  const handleFormChange = (e: ChangeEventField) => {
-    const { name, value } = e.target;
+  const handleFormChange = (name: string, value: string) => {
     setIsFormChanged(true);
     setFormData(prev => ({
       ...prev,
@@ -91,9 +86,9 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         fieldRef: firstNameRef,
         func: setFirstNameError,
       };
-    else if (formData.firstName.length > MAX_NAME_LENGTH)
+    else if (formData.firstName.length > getMaxLength(inputLengthRegex))
       error = {
-        message: `Le prénom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`,
+        message: `Le prénom ne peut pas dépasser ${getMaxLength(inputLengthRegex)} caractères`,
         fieldRef: firstNameRef,
         func: setFirstNameError,
       };
@@ -103,9 +98,9 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         fieldRef: familyNameRef,
         func: setFamilyNameError,
       };
-    else if (formData.familyName.length > MAX_NAME_LENGTH)
+    else if (formData.familyName.length > getMaxLength(inputLengthRegex))
       error = {
-        message: `Le nom ne peut pas dépasser ${MAX_NAME_LENGTH} caractères`,
+        message: `Le nom ne peut pas dépasser ${getMaxLength(inputLengthRegex)} caractères`,
         fieldRef: familyNameRef,
         func: setFamilyNameError,
       };
@@ -145,9 +140,9 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         fieldRef: conciergerieNameRef,
         func: setConciergerieNameError,
       };
-    else if (formData.message && formData.message.length > MAX_MESSAGE_LENGTH)
+    else if (formData.message && formData.message.length > getMaxLength(messageLengthRegex))
       error = {
-        message: `Le message ne peut pas dépasser ${MAX_MESSAGE_LENGTH} caractères`,
+        message: `Le message ne peut pas dépasser ${getMaxLength(messageLengthRegex)} caractères`,
         fieldRef: messageRef,
         func: setMessageError,
       };
@@ -227,142 +222,103 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>
 
       <form onSubmit={handleSubmit} className="w-full px-4 space-y-2">
-        <div>
-          <label htmlFor="firstName" className={labelClassName}>
-            Prénom
-          </label>
-          <input
-            type="text"
-            id="firstName"
-            name="Prénom"
-            ref={firstNameRef}
-            value={formData.firstName}
-            onChange={e => handleChange(e, () => handleFormChange(e), setFirstNameError, inputLengthRegex)}
-            className={inputFieldClassName(firstNameError)}
-            disabled={isSubmitting}
-            placeholder="Jean"
-            required
-          />
-          {!!firstNameError && <p className={errorClassName}>{firstNameError}</p>}
-        </div>
+        <Input
+          id="firstName"
+          label="Prénom"
+          ref={firstNameRef}
+          value={formData.firstName}
+          onChange={e => handleFormChange('firstName', e)}
+          error={firstNameError}
+          onError={setFirstNameError}
+          disabled={isSubmitting}
+          placeholder="Jean"
+          required
+        />
 
-        <div>
-          <label htmlFor="familyName" className={labelClassName}>
-            Nom
-          </label>
-          <input
-            type="text"
-            id="familyName"
-            name="Nom"
-            ref={familyNameRef}
-            value={formData.familyName}
-            onChange={e => handleChange(e, () => handleFormChange(e), setFamilyNameError, inputLengthRegex)}
-            className={inputFieldClassName(familyNameError)}
-            disabled={isSubmitting}
-            placeholder="Dupont"
-            required
-          />
-          {!!familyNameError && <p className={errorClassName}>{familyNameError}</p>}
-        </div>
+        <Input
+          id="familyName"
+          label="Nom"
+          ref={familyNameRef}
+          value={formData.familyName}
+          onChange={e => handleFormChange('familyName', e)}
+          error={familyNameError}
+          onError={setFamilyNameError}
+          disabled={isSubmitting}
+          placeholder="Dupont"
+          required
+        />
 
-        <div>
-          <label htmlFor="tel" className={labelClassName}>
-            Téléphone
-          </label>
-          <input
-            type="tel"
-            id="tel"
-            name="Téléphone"
-            ref={phoneRef}
-            value={formData.tel}
-            onChange={e => handleChange(e, () => handleFormChange(e), setPhoneError, frenchPhoneRegex)}
-            className={inputFieldClassName(phoneError)}
-            disabled={isSubmitting}
-            placeholder="06 12 34 56 78"
-            required
-          />
-          {!!phoneError && <p className={errorClassName}>{phoneError}</p>}
-        </div>
+        <Input
+          id="tel"
+          label="Téléphone"
+          ref={phoneRef}
+          value={formData.tel}
+          onChange={e => handleFormChange('tel', e)}
+          error={phoneError}
+          onError={setPhoneError}
+          disabled={isSubmitting}
+          placeholder="06 12 34 56 78"
+          required
+        />
 
-        <div>
-          <label htmlFor="email" className={labelClassName}>
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="Email"
-            ref={emailRef}
-            value={formData.email}
-            onChange={e => handleChange(e, () => handleFormChange(e), setEmailError, emailRegex)}
-            className={inputFieldClassName(emailError)}
-            disabled={isSubmitting}
-            placeholder="jean.dupont@example.com"
-            required
-          />
-          {!!emailError && <p className={errorClassName}>{emailError}</p>}
-        </div>
+        <Input
+          id="email"
+          label="Email"
+          ref={emailRef}
+          value={formData.email}
+          onChange={e => handleFormChange('email', e)}
+          error={emailError}
+          onError={setEmailError}
+          disabled={isSubmitting}
+          placeholder="jean.dupont@example.com"
+          required
+        />
 
-        <div>
-          <label className={labelClassName}>Lieu de vie</label>
-          <Combobox
-            id="geographic-zone"
-            ref={geographicZoneRef}
-            options={geographicZones}
-            value={formData.geographicZone || ''}
-            onChange={e => handleFormChange({ target: { name: 'geographicZone', value: e } })}
-            disabled={isSubmitting}
-            placeholder="Sélectionnez un lieu de vie..."
-            error={geographicZoneError}
-          />
-        </div>
+        <Combobox
+          id="geographic-zone"
+          label="Lieu de vie"
+          ref={geographicZoneRef}
+          options={geographicZones}
+          value={formData.geographicZone || ''}
+          onChange={e => handleFormChange('geographicZone', e)}
+          disabled={isSubmitting}
+          placeholder="Sélectionnez un lieu de vie..."
+          error={geographicZoneError}
+          required
+        />
 
-        <div>
-          <label htmlFor="conciergerie" className={labelClassName}>
-            Conciergerie
-            <Tooltip>
-              C&apos;est la conciergerie par laquelle vous avez connu ce site, qui recevra votre candidature et qui
-              validera votre inscription.
-            </Tooltip>
-          </label>
-          <Select
-            id="conciergerie"
-            ref={conciergerieNameRef}
-            options={conciergeries.map(c => c.name)}
-            value={formData.conciergerieName || ''}
-            onChange={e => handleFormChange({ target: { name: 'conciergerie', value: e } })}
-            disabled={isSubmitting}
-            placeholder="Sélectionner une conciergerie"
-            error={conciergerieNameError}
-          />
-        </div>
+        <Select
+          id="conciergerie"
+          label={
+            <div className="flex items-center">
+              Conciergerie
+              <Tooltip>
+                C&apos;est la conciergerie par laquelle vous avez connu ce site, qui recevra votre candidature et qui
+                validera votre inscription.
+              </Tooltip>
+            </div>
+          }
+          ref={conciergerieNameRef}
+          options={conciergeries.map(c => c.name)}
+          value={formData.conciergerieName || ''}
+          onChange={e => handleFormChange('conciergerieName', e)}
+          disabled={isSubmitting}
+          placeholder="Sélectionner une conciergerie"
+          error={conciergerieNameError}
+          required
+        />
 
-        <div>
-          <label htmlFor="message" className={labelClassName}>
-            Message (facultatif)
-          </label>
-          <div className="relative">
-            <textarea
-              id="message"
-              name="Message"
-              ref={messageRef}
-              value={formData.message}
-              onChange={e => handleChange(e, () => handleFormChange(e), setMessageError)}
-              className={inputFieldClassName(messageError)}
-              rows={4}
-              disabled={isSubmitting}
-              maxLength={MAX_MESSAGE_LENGTH}
-              placeholder="Exemple : Nous nous sommes rencontrés lors de l'événement Machin à Trucville."
-            />
-            {messageError ? (
-              <p className={errorClassName}>{messageError}</p>
-            ) : (
-              <div className={textAreaCharCountClassName}>
-                {formData.message?.length || 0}/{MAX_MESSAGE_LENGTH}
-              </div>
-            )}
-          </div>
-        </div>
+        <TextArea
+          id="message"
+          label="Message"
+          ref={messageRef}
+          value={formData.message}
+          onChange={value => handleFormChange('message', value)}
+          error={messageError}
+          onError={setMessageError}
+          disabled={isSubmitting}
+          placeholder="Exemple : Nous nous sommes rencontrés lors de l'événement Machin à Trucville."
+        />
 
         <FormActions
           onCancel={() => {

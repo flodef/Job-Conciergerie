@@ -4,21 +4,18 @@ import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
+import Input from '@/app/components/input';
+import Label from '@/app/components/label';
 import ObjectiveList from '@/app/components/objectiveList';
 import Select from '@/app/components/select';
+import TextArea from '@/app/components/textArea';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useHomes } from '@/app/contexts/homesProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { ErrorField, HomeData } from '@/app/types/types';
-import {
-  errorClassName,
-  inputFieldClassName,
-  labelClassName,
-  rowClassName,
-  textAreaCharCountClassName,
-} from '@/app/utils/className';
+import { errorClassName } from '@/app/utils/className';
 import { handleChange } from '@/app/utils/form';
-import { inputLengthRegex } from '@/app/utils/regex';
+import { getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -67,16 +64,14 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const [imagesError, setImagesError] = useState('');
 
   // Refs for form elements
-  const titleInputRef = useRef<HTMLInputElement>(null);
-  const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const geographicZoneRef = useRef<HTMLInputElement>(null);
   const objectivesRef = useRef<HTMLInputElement>(null);
   const imagesRef = useRef<HTMLInputElement>(null);
 
   // Constants for validation
-  const MAX_TITLE_LENGTH = 30;
   const MAX_OBJECTIVES = 10;
-  const MAX_DESCRIPTION_LENGTH = 500;
   const MAX_PHOTOS = 9;
 
   // Load geographic zones from JSON file
@@ -166,13 +161,13 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     else if (!title.trim())
       error = {
         message: 'Veuillez saisir un titre',
-        fieldRef: titleInputRef,
+        fieldRef: titleRef,
         func: setTitleError,
       };
-    else if (title.length > MAX_TITLE_LENGTH)
+    else if (title.length > getMaxLength(inputLengthRegex))
       error = {
-        message: `Le titre ne peut pas dépasser ${MAX_TITLE_LENGTH} caractères`,
-        fieldRef: titleInputRef,
+        message: `Le titre ne peut pas dépasser ${getMaxLength(inputLengthRegex)} caractères`,
+        fieldRef: titleRef,
         func: setTitleError,
       };
     else if (!geographicZone.trim())
@@ -184,13 +179,13 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     else if (!description.trim())
       error = {
         message: 'Veuillez remplir la description',
-        fieldRef: descriptionTextareaRef,
+        fieldRef: descriptionRef,
         func: setDescriptionError,
       };
-    else if (description.length > MAX_DESCRIPTION_LENGTH)
+    else if (description.length > getMaxLength(messageLengthRegex))
       error = {
-        message: `La description ne peut pas dépasser ${MAX_DESCRIPTION_LENGTH} caractères`,
-        fieldRef: descriptionTextareaRef,
+        message: `La description ne peut pas dépasser ${getMaxLength(messageLengthRegex)} caractères`,
+        fieldRef: descriptionRef,
         func: setDescriptionError,
       };
     else if (!objectives.some(objective => objective.trim() !== ''))
@@ -349,7 +344,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
 
       <form onSubmit={handleSubmit} className="space-y-2">
         <div>
-          <label htmlFor="images" className={labelClassName}>
+          <Label id="images" required>
             <div className="flex justify-between items-center mb-1">
               Photos
               {(existingImages.length > 1 || previewUrls.length > 1) && (
@@ -367,8 +362,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
               {/* Hack to focus the input when there is an error */}
               <input ref={imagesRef} type="text" className="h-0 w-0" />
             </div>
-          </label>
-          <div className={clsx('grid grid-cols-3 gap-4', !!imagesError && 'border border-red-500 rounded-lg p-2')}>
+          </Label>
+          <div className={clsx('grid grid-cols-3 gap-4', imagesError && 'border border-red-500 rounded-lg p-2')}>
             {/* Existing images */}
             {existingImages.map((url, index) => (
               <div key={`existing-${index}`} className="relative aspect-square">
@@ -430,103 +425,78 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
               <span className="text-3xl text-foreground/50">+</span>
             </label>
           </div>
-          {!!imagesError && <p className={errorClassName}>{imagesError}</p>}
+          {imagesError && <p className={errorClassName}>{imagesError}</p>}
           <p className="text-xs text-light mt-2 text-center">
             Note: Les images sont remplacées par une image par défaut lors de l&apos;enregistrement
           </p>
         </div>
 
-        <div>
-          <label htmlFor="title" className={labelClassName}>
-            Titre
-          </label>
-          <input
-            type="text"
-            id="title"
-            name="Titre"
-            ref={titleInputRef}
-            value={title}
-            onChange={e => handleChange(e, setTitle, setTitleError, inputLengthRegex)}
-            className={inputFieldClassName(titleError)}
-            disabled={isSubmitting}
-            placeholder="Entrez le titre du bien..."
-            required
-          />
-          {!!titleError && <p className={errorClassName}>{titleError}</p>}
-        </div>
+        <Input
+          id="title"
+          label="Titre"
+          ref={titleRef}
+          value={title}
+          onChange={setTitle}
+          error={titleError}
+          onError={setTitleError}
+          disabled={isSubmitting}
+          placeholder="Entrez le titre du bien..."
+          required
+        />
 
-        <div className={rowClassName}>
-          <label htmlFor="geographic-zone" className={labelClassName}>
-            Zone
-          </label>
-          <Combobox
-            id="geographic-zone"
-            ref={geographicZoneRef}
-            className="max-w-2/3"
-            options={geographicZones}
-            value={geographicZone}
-            onChange={e => handleChange(e, setGeographicZone, setGeographicZoneError)}
-            placeholder="Sélectionnez zone"
-            disabled={isSubmitting}
-            error={geographicZoneError}
-          />
-        </div>
+        <Combobox
+          id="geographic-zone"
+          label="Zone"
+          ref={geographicZoneRef}
+          className="max-w-2/3"
+          options={geographicZones}
+          value={geographicZone}
+          onChange={e => handleChange(e, setGeographicZone, setGeographicZoneError)}
+          placeholder="Sélectionnez zone"
+          disabled={isSubmitting}
+          error={geographicZoneError}
+          required
+          row
+        />
 
-        <div>
-          <label htmlFor="description" className={labelClassName}>
-            Description
-          </label>
-          <div className="relative">
-            <textarea
-              ref={descriptionTextareaRef}
-              value={description}
-              onChange={e => handleChange(e, setDescription, setDescriptionError)}
-              className={inputFieldClassName(descriptionError)}
-              required
-              rows={4}
-              placeholder="Décrivez les caractéristiques du bien..."
-              maxLength={MAX_DESCRIPTION_LENGTH}
-              disabled={isSubmitting}
-            />
-            {descriptionError ? (
-              <p className={errorClassName}>{descriptionError}</p>
-            ) : (
-              <div className={textAreaCharCountClassName}>
-                {description.length}/{MAX_DESCRIPTION_LENGTH}
-              </div>
-            )}
-          </div>
-        </div>
+        <TextArea
+          id="description"
+          label="Description"
+          ref={descriptionRef}
+          value={description}
+          onChange={setDescription}
+          error={descriptionError}
+          onError={setDescriptionError}
+          disabled={isSubmitting}
+          placeholder="Décrivez les caractéristiques du bien..."
+          required
+        />
 
-        <div className={rowClassName}>
-          <label htmlFor="hours-of-cleaning" className={labelClassName}>
-            Heures de ménage
-          </label>
-          <Select
-            id="hours-of-cleaning"
-            className="max-w-1/3"
-            value={hoursOfCleaning}
-            onChange={value => setHoursOfCleaning(Number(value))}
-            options={[1, 2, 3, 4, 5]}
-            disabled={isSubmitting}
-            placeholder="Nombre d'heures"
-          />
-        </div>
+        <Select
+          id="hours-of-cleaning"
+          label="Heures de ménage"
+          className="max-w-1/3"
+          value={hoursOfCleaning}
+          onChange={value => setHoursOfCleaning(Number(value))}
+          options={[1, 2, 3, 4, 5]}
+          disabled={isSubmitting}
+          placeholder="Nombre d'heures"
+          required
+          row
+        />
 
-        <div className={rowClassName}>
-          <label htmlFor="hours-of-gardening" className={labelClassName}>
-            Heures de jardinage
-          </label>
-          <Select
-            id="hours-of-gardening"
-            value={hoursOfGardening}
-            className="max-w-1/3"
-            onChange={value => setHoursOfGardening(Number(value))}
-            options={[1, 2, 3, 4, 5]}
-            disabled={isSubmitting}
-            placeholder="Nombre d'heures"
-          />
-        </div>
+        <Select
+          id="hours-of-gardening"
+          label="Heures de jardinage"
+          value={hoursOfGardening}
+          className="max-w-1/3"
+          onChange={value => setHoursOfGardening(Number(value))}
+          options={[1, 2, 3, 4, 5]}
+          disabled={isSubmitting}
+          placeholder="Nombre d'heures"
+          required
+          row
+        />
 
         <ObjectiveList
           ref={objectivesRef}
@@ -537,8 +507,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           }}
           maxObjectives={MAX_OBJECTIVES}
           disabled={isSubmitting}
+          error={objectivesError}
         />
-        {!!objectivesError && <p className={errorClassName}>{objectivesError}</p>}
 
         <ConfirmationModal
           isOpen={showConfirmDialog}

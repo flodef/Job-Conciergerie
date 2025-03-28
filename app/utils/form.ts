@@ -9,21 +9,21 @@ export const handleChange = (
 ) => {
   const { name, value, required } = typeof e === 'string' ? { name: '', value: e } : e.target;
 
-  let timeout: NodeJS.Timeout | undefined;
+  const setValue = (value: string, error: string) => {
+    setError(!value.trim() && required ? `${name} est requis` : error);
+    set(value);
+  };
+
   if (regex && !regex.test(value)) {
     const maxLength = getMaxLength(regex);
     if (maxLength) {
       setError(`${name} ne peut pas dépasser ${maxLength} caractères`);
-      timeout = setTimeout(() => setError(''), 3000);
+      const timeout = setTimeout(() => setError(''), 3000);
+      return () => clearTimeout(timeout);
     } else {
-      setError(`Format de ${name} invalide`);
+      setValue(value, `Format de ${name} invalide`);
     }
   } else {
-    set(value);
-    setError(!value.trim() && required ? `${name} est requis` : '');
+    setValue(value, '');
   }
-
-  return () => {
-    clearTimeout(timeout);
-  };
 };

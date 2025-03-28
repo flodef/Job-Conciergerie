@@ -5,7 +5,7 @@ import { RefreshButton } from '@/app/components/button';
 export default function ErrorPage({
   shouldDisconnect = false,
   title = 'Un problème est survenu',
-  message = 'Nous n&apos;avons pas pu accéder à la base de données. Veuillez réessayer dans quelques instants.',
+  message = "Nous n'avons pas pu accéder à la base de données. Veuillez réessayer dans quelques instants.",
 }: {
   shouldDisconnect?: boolean;
   title?: string;

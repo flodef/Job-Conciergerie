@@ -1,6 +1,6 @@
 'use client';
 
-import { inputFieldClassName } from '@/app/utils/className';
+import { errorClassName, inputFieldClassName } from '@/app/utils/className';
 import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { getMaxLength, inputLengthRegex } from '@/app/utils/regex';
 
@@ -8,12 +8,13 @@ type ObjectiveListProps = {
   objectives: string[];
   setObjectives: React.Dispatch<React.SetStateAction<string[]>>;
   maxObjectives: number;
+  error?: string;
   disabled?: boolean;
 };
 
 const ObjectiveList = forwardRef(
   (
-    { objectives, setObjectives, maxObjectives, disabled }: ObjectiveListProps,
+    { objectives, setObjectives, maxObjectives, error, disabled }: ObjectiveListProps,
     forwardedRef: ForwardedRef<HTMLInputElement>,
   ) => {
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -76,18 +77,17 @@ const ObjectiveList = forwardRef(
     };
 
     const editObjective = (index: number, valeur: string) => {
-      let timeout: NodeJS.Timeout | undefined;
       if (!inputLengthRegex.test(valeur)) {
         const newErrors = [...errorMessages];
         const maxLength = getMaxLength(inputLengthRegex);
         newErrors[index] = `L'objectif ne peut pas dépasser ${maxLength} caractères`;
         setErrorMessages(newErrors);
         setErrorIndex(index);
-        timeout = setTimeout(() => {
+        const timeout = setTimeout(() => {
           setErrorMessages([...errorMessages, '']);
           setErrorIndex(0);
         }, 3000);
-        return;
+        return () => clearTimeout(timeout);
       }
 
       // Always update the objective text - we'll check for duplicates on submit/add
@@ -101,10 +101,6 @@ const ObjectiveList = forwardRef(
       newErrors[index] = hasDuplicate ? 'Cet objectif existe déjà' : '';
       setErrorMessages(newErrors);
       setErrorIndex(hasDuplicate ? index : 0);
-
-      return () => {
-        clearTimeout(timeout);
-      };
     };
 
     const deleteObjective = (index: number) => {
@@ -205,6 +201,7 @@ const ObjectiveList = forwardRef(
             {errorMessages[index] && <p className="text-red-500 text-sm mt-1 ml-1">{errorMessages[index]}</p>}
           </div>
         ))}
+        {error && <p className={errorClassName}>{error}</p>}
       </div>
     );
   },

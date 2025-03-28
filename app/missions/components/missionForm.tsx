@@ -1,18 +1,17 @@
 'use client';
 
 import ConfirmationModal from '@/app/components/confirmationModal';
+import DateTimeInput from '@/app/components/dateTimeInput';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import MultiSelect from '@/app/components/multiSelect';
 import Select from '@/app/components/select';
+import TaskSelector from '@/app/components/taskSelector';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { ErrorField, HomeData, Mission, Task } from '@/app/types/types';
-import { errorClassName, inputFieldClassName, labelClassName } from '@/app/utils/className';
 import { handleChange } from '@/app/utils/form';
-import { getTaskPoints } from '@/app/utils/task';
-import { clsx } from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type MissionFormProps = {
@@ -188,6 +187,12 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         fieldRef: startDateRef,
         func: setStartDateTimeError,
       };
+    else if (startDateTime < localISOString(new Date()))
+      error = {
+        message: 'La date de début ne peut pas être antérieure à la date actuelle',
+        fieldRef: startDateRef,
+        func: setStartDateTimeError,
+      };
     else if (!endDateTime)
       error = {
         message: 'Veuillez sélectionner une date de fin',
@@ -269,40 +274,27 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     }
   };
 
-  const toggleTask = (task: Task) => {
-    // Check if the task is already in the array
-    const taskExists = tasksState.includes(task);
-
-    if (taskExists) {
-      // Remove the task if it exists
-      setTasks(tasksState.filter(t => t !== task));
-    } else {
-      // Add the task if it doesn't exist
-      setTasks([...tasksState, task]);
-    }
-  };
-
   // Get current date/time for min attribute
   const nowString = localISOString(now);
 
   // Handle start date change and update end date if needed
-  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newStartDate = e.target.value;
-
+  const handleStartDateChange = (value: string) => {
     // Validate the selected date is not in the past
-    const selectedDate = new Date(newStartDate);
+    const selectedDate = new Date(value);
     const currentDate = new Date();
 
     if (selectedDate < currentDate) {
+      setStartDateTime(nowString);
       setStartDateTimeError('La date de début ne peut pas être antérieure à la date actuelle');
-      return;
+      const timeout = setTimeout(() => setStartDateTimeError(''), 3000);
+      return () => clearTimeout(timeout);
     }
 
-    setStartDateTime(newStartDate);
+    setStartDateTime(value);
     setStartDateTimeError('');
 
     // Create a new Date object from the selected start date
-    const startDate = new Date(newStartDate);
+    const startDate = new Date(value);
 
     // Add 1 hour to the start date for the minimum end date
     const minEndDate = new Date(startDate);
@@ -345,108 +337,70 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       />
 
       <form onSubmit={handleSubmit} className="space-y-2">
-        <div>
-          <label htmlFor="home-select" className={labelClassName}>
-            Bien
-          </label>
-          <Select
-            id="home-select"
-            ref={homeSelectRef}
-            value={homeId}
-            onChange={value => handleChange(value, setHomeId, setHomeIdError)}
-            options={filteredHomes.map(home => ({
-              value: home.id,
-              label: home.title,
-            }))}
-            disabled={isSubmitting || cannotEdit}
-            placeholder="Sélectionner un bien"
-            error={homeIdError}
-          />
-        </div>
+        <Select
+          id="home-select"
+          label="Bien"
+          ref={homeSelectRef}
+          value={homeId}
+          onChange={value => handleChange(value, setHomeId, setHomeIdError)}
+          options={filteredHomes.map(home => ({
+            value: home.id,
+            label: home.title,
+          }))}
+          disabled={isSubmitting || cannotEdit}
+          placeholder="Sélectionner un bien"
+          error={homeIdError}
+          required
+        />
+
+        <TaskSelector
+          id="task-select"
+          label="Tâches"
+          ref={taskRef}
+          selectedTasks={tasksState}
+          onTasksChange={setTasks}
+          error={tasksError}
+          setError={setTasksError}
+          disabled={isSubmitting || cannotEdit}
+          required
+        />
+
+        <DateTimeInput
+          id="start-date"
+          label="Date et heure de début"
+          ref={startDateRef}
+          value={startDateTime}
+          onChange={handleStartDateChange}
+          error={startDateTimeError}
+          onError={setStartDateTimeError}
+          min={nowString}
+          disabled={isSubmitting || cannotEdit}
+          required
+        />
+
+        <DateTimeInput
+          id="end-date"
+          label="Date et heure de fin"
+          ref={endDateRef}
+          value={endDateTime}
+          onChange={setEndDateTime}
+          error={endDateTimeError}
+          onError={setEndDateTimeError}
+          min={(() => {
+            // Calculate minimum end date (start date + 1 hour)
+            const startDate = new Date(startDateTime);
+            const minEndDate = new Date(startDate);
+            minEndDate.setHours(minEndDate.getHours() + 1);
+            return localISOString(minEndDate);
+          })()}
+          disabled={isSubmitting || cannotEdit}
+          required
+        />
 
         <div>
-          <label htmlFor="task-select" className={labelClassName}>
-            Tâches
-          </label>
-          <div ref={taskRef} className="grid grid-cols-2 gap-2">
-            {Object.values(Task).map(task => {
-              const points = getTaskPoints(task);
-              return (
-                <button
-                  type="button"
-                  key={task}
-                  onClick={() => toggleTask(task)}
-                  disabled={isSubmitting || cannotEdit}
-                  className={clsx(
-                    'p-2 border rounded-lg text-sm flex justify-between items-center',
-                    'border-foreground/20 focus-visible:outline-primary',
-                    tasksState.includes(task)
-                      ? 'bg-primary text-background border-primary'
-                      : 'bg-background text-foreground border-secondary',
-                  )}
-                >
-                  <span>{task}</span>
-                  <span
-                    className={clsx(
-                      'px-1.5 py-0.5 rounded-full text-xs',
-                      tasksState.includes(task) ? 'bg-background/20 text-background' : 'bg-primary/10 text-primary',
-                    )}
-                  >
-                    {points} pt{points !== 1 ? 's' : ''}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          {!!tasksError && <p className={errorClassName}>{tasksError}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="start-date" className={labelClassName}>
-            Date et heure de début
-          </label>
-          <input
-            type="datetime-local"
-            lang="fr"
-            ref={startDateRef}
-            value={startDateTime}
-            min={nowString}
-            onChange={handleStartDateChange}
-            className={inputFieldClassName(startDateTimeError)}
-            disabled={isSubmitting || cannotEdit}
-          />
-          {!!startDateTimeError && <p className={errorClassName}>{startDateTimeError}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="end-date" className={labelClassName}>
-            Date et heure de fin
-          </label>
-          <input
-            type="datetime-local"
-            lang="fr"
-            ref={endDateRef}
-            value={endDateTime}
-            min={(() => {
-              // Calculate minimum end date (start date + 1 hour)
-              const startDate = new Date(startDateTime);
-              const minEndDate = new Date(startDate);
-              minEndDate.setHours(minEndDate.getHours() + 1);
-              return localISOString(minEndDate);
-            })()}
-            onChange={e => handleChange(e, setEndDateTime, setEndDateTimeError)}
-            className={inputFieldClassName(endDateTimeError)}
-            disabled={isSubmitting || cannotEdit}
-          />
-          {!!endDateTimeError && <p className={errorClassName}>{endDateTimeError}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="prestataires-select" className={labelClassName}>
-            Prestataires
-          </label>
           <MultiSelect
             id="prestataires-select"
+            label="Prestataires"
             values={selectedEmployees}
             onChange={setSelectedEmployees}
             options={employees.map(emp => ({
@@ -454,9 +408,10 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               label: `${emp.firstName} ${emp.familyName}`,
             }))}
             disabled={isSubmitting || cannotEdit}
+            required
             allOption
           />
-          <p className="text-sm text-foreground/70 mt-1">
+          <p className="text-sm text-light mt-1">
             {selectedEmployees.length === 0
               ? 'Tous les prestataires pourront voir cette mission'
               : 'Seuls les prestataires sélectionnés pourront voir cette mission'}

@@ -1,12 +1,12 @@
 import { updateConciergerieData } from '@/app/actions/conciergerie';
+import ColorPicker from '@/app/components/colorPicker';
+import Input from '@/app/components/input';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import colorOptions from '@/app/data/colors.json';
 import { Conciergerie, ErrorField } from '@/app/types/types';
-import { errorClassName, inputFieldClassName, labelClassName } from '@/app/utils/className';
 import { setPrimaryColor } from '@/app/utils/color';
-import { handleChange } from '@/app/utils/form';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
@@ -16,7 +16,7 @@ type ColorOption = {
 };
 
 const ConciergerieSettings: React.FC = () => {
-  const { userId, conciergeries, isLoading: authLoading, getUserData, updateUserData } = useAuth();
+  const { userId, isLoading: authLoading, getUserData, updateUserData } = useAuth();
 
   // Validation states
   const [emailError, setEmailError] = useState('');
@@ -29,7 +29,7 @@ const ConciergerieSettings: React.FC = () => {
   // Form state for editable fields
   const [email, setEmail] = useState('');
   const [tel, setTel] = useState('');
-  const [selectedColor, setSelectedColor] = useState<ColorOption>();
+  const [selectedColor, setSelectedColor] = useState<ColorOption | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState<Toast>();
 
@@ -54,21 +54,12 @@ const ConciergerieSettings: React.FC = () => {
     setOriginalColorName(conciergerie.colorName);
 
     // Find matching color from our options
-    const matchingColor = colorOptions.find(color => color.name === conciergerie.colorName);
+    const matchingColor = colorOptions.find(color => color.name === conciergerie.colorName) || null;
     setSelectedColor(matchingColor);
 
     // Apply theme color
     setPrimaryColor(conciergerie.color);
   }, [userId, getUserData]);
-
-  // Check if a color is already used by another conciergerie
-  const isColorUsed = (colorName: string) => {
-    // Find conciergeries that are not the current one
-    const otherConciergeries = conciergeries?.filter(c => c.id !== userId);
-
-    // Check if any other conciergerie uses this color
-    return otherConciergeries?.some(c => c.colorName === colorName);
-  };
 
   // Check if form has been modified
   const hasChanges = () => {
@@ -150,99 +141,40 @@ const ConciergerieSettings: React.FC = () => {
     <div className="space-y-2">
       <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
-      <div>
-        <label htmlFor="email" className={labelClassName}>
-          Email
-        </label>
-        <input
-          type="email"
-          id="email"
-          name="Email"
-          ref={emailRef}
-          value={email}
-          onChange={e => handleChange(e, setEmail, setEmailError, emailRegex)}
-          className={inputFieldClassName(emailError)}
-          disabled={isSaving}
-          placeholder="jean.dupont@example.com"
-          required
-        />
-        {!!emailError && <p className={errorClassName}>{emailError}</p>}
-      </div>
+      <Input
+        id="email"
+        label="Email"
+        ref={emailRef}
+        value={email}
+        onChange={setEmail}
+        error={emailError}
+        onError={setEmailError}
+        disabled={isSaving}
+        placeholder="jean.dupont@example.com"
+        required
+      />
 
-      <div>
-        <label htmlFor="tel" className={labelClassName}>
-          Téléphone
-        </label>
-        <input
-          type="tel"
-          id="tel"
-          name="Téléphone"
-          ref={phoneRef}
-          value={tel}
-          onChange={e => handleChange(e, setTel, setPhoneError, frenchPhoneRegex)}
-          className={inputFieldClassName(phoneError)}
-          disabled={isSaving}
-          placeholder="06 12 34 56 78"
-          required
-        />
-        {!!phoneError && <p className={errorClassName}>{phoneError}</p>}
-      </div>
+      <Input
+        id="tel"
+        label="Téléphone"
+        ref={phoneRef}
+        value={tel}
+        onChange={setTel}
+        error={phoneError}
+        onError={setPhoneError}
+        disabled={isSaving}
+        placeholder="06 12 34 56 78"
+        required
+      />
 
-      <div>
-        <label htmlFor="color" className={labelClassName}>
-          Couleur
-        </label>
-        <div className="grid grid-cols-3 gap-3">
-          {colorOptions.map(color => {
-            const isUsed = isColorUsed(color.name);
-            const isSelected = selectedColor?.name === color.name;
-
-            return (
-              <button
-                key={color.name}
-                type="button"
-                onClick={() => {
-                  if (!isUsed || isSelected) {
-                    setSelectedColor(color);
-                  }
-                }}
-                disabled={(isUsed && !isSelected) || isSaving}
-                className={`
-                  relative flex flex-col items-center space-y-1 p-2 border rounded-md transition-all
-                  ${isSelected ? 'ring-2 ring-primary border-primary' : 'border-secondary'}
-                  ${isUsed && !isSelected ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary/10'}
-                `}
-                title={
-                  isUsed && !isSelected ? 'Cette couleur est déjà utilisée par une autre conciergerie' : color.name
-                }
-              >
-                <div className="w-6 h-6 rounded-full" style={{ backgroundColor: color.value }} />
-                <span>{color.name}</span>
-
-                {/* Diagonal "utilisée" label for used colors */}
-                {isUsed && !isSelected && (
-                  <div
-                    className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center"
-                    aria-hidden="true"
-                  >
-                    <div
-                      className="absolute text-sm font-bold text-foreground/80 bg-background/70 px-1 py-0.5 uppercase tracking-wider whitespace-nowrap"
-                      style={{
-                        transform: 'rotate(45deg) scale(0.9)',
-                        transformOrigin: 'center',
-                        width: '140%',
-                        textAlign: 'center',
-                      }}
-                    >
-                      UTILISÉE
-                    </div>
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <ColorPicker
+        id="color"
+        label="Couleur"
+        colorOptions={colorOptions}
+        selectedColor={selectedColor}
+        onColorChange={setSelectedColor}
+        disabled={isSaving}
+      />
 
       <div className="flex justify-center pt-2">
         <button

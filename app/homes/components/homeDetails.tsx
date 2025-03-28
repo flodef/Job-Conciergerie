@@ -135,7 +135,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
             <IconFileDescription size={16} />
             Description
           </h3>
-          <p className="text-foreground whitespace-pre-wrap">{home.description}</p>
+          <p className="text-foreground whitespace-pre-wrap truncate">{home.description}</p>
         </div>
 
         <div>

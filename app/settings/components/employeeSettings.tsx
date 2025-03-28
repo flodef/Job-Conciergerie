@@ -1,11 +1,12 @@
 import { updateEmployeeData } from '@/app/actions/employee';
 import Combobox from '@/app/components/combobox';
+import Input from '@/app/components/input';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { Employee, ErrorField } from '@/app/types/types';
-import { errorClassName, inputFieldClassName, labelClassName } from '@/app/utils/className';
+import { labelClassName } from '@/app/utils/className';
 import { handleChange } from '@/app/utils/form';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
@@ -150,59 +151,44 @@ const EmployeeSettings: React.FC = () => {
         <p className="font-medium">{name}</p>
       </div>
 
-      <div>
-        <label htmlFor="email" className={labelClassName}>
-          Email
-        </label>
-        <input
-          type="email"
-          id="email"
-          name="Email"
-          ref={emailRef}
-          value={email}
-          onChange={e => handleChange(e, setEmail, setEmailError, emailRegex)}
-          className={inputFieldClassName(emailError)}
-          disabled={isSaving}
-          placeholder="jean.dupont@example.com"
-          required
-        />
-        {!!emailError && <p className={errorClassName}>{emailError}</p>}
-      </div>
+      <Input
+        id="email"
+        label="Email"
+        ref={emailRef}
+        value={email}
+        onChange={setEmail}
+        error={emailError}
+        onError={setEmailError}
+        disabled={isSaving}
+        placeholder="jean.dupont@example.com"
+        required
+      />
 
-      <div>
-        <label htmlFor="tel" className={labelClassName}>
-          Téléphone
-        </label>
-        <input
-          type="tel"
-          id="tel"
-          name="Téléphone"
-          ref={phoneRef}
-          value={tel}
-          onChange={e => handleChange(e, setTel, setPhoneError, frenchPhoneRegex)}
-          className={inputFieldClassName(phoneError)}
-          disabled={isSaving}
-          placeholder="06 12 34 56 78"
-          required
-        />
-        {!!phoneError && <p className={errorClassName}>{phoneError}</p>}
-      </div>
+      <Input
+        id="tel"
+        label="Téléphone"
+        ref={phoneRef}
+        value={tel}
+        onChange={setTel}
+        error={phoneError}
+        onError={setPhoneError}
+        disabled={isSaving}
+        placeholder="06 12 34 56 78"
+        required
+      />
 
-      <div>
-        <label htmlFor="geographic-zone" className={labelClassName}>
-          Lieu de vie
-        </label>
-        <Combobox
-          id="geographic-zone"
-          ref={geographicZoneRef}
-          options={geographicZones}
-          value={geographicZone}
-          onChange={e => handleChange(e, setGeographicZone, setGeographicZoneError)}
-          disabled={isSaving}
-          placeholder="Sélectionnez un lieu de vie..."
-          error={geographicZoneError}
-        />
-      </div>
+      <Combobox
+        id="geographic-zone"
+        label="Lieu de vie"
+        ref={geographicZoneRef}
+        options={geographicZones}
+        value={geographicZone}
+        onChange={e => handleChange(e, setGeographicZone, setGeographicZoneError)}
+        disabled={isSaving}
+        placeholder="Sélectionnez un lieu de vie..."
+        error={geographicZoneError}
+        required
+      />
 
       <div className="flex justify-center pt-2">
         <button

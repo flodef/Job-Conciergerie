@@ -76,7 +76,7 @@ export default function HomesPage() {
 
   return (
     <div>
-      {filteredHomes.length > 1 && (
+      {homes.length > 1 && (
         <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
       )}
 

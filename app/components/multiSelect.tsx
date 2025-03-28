@@ -1,10 +1,11 @@
 'use client';
 
-import { selectClassName } from '@/app/utils/className';
+import Label from '@/app/components/label';
+import { errorClassName, rowClassName, selectClassName } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/dropdownPosition';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
-import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type MultiSelectOption = {
   value: string;
@@ -13,26 +14,32 @@ type MultiSelectOption = {
 
 type MultiSelectProps = {
   id: string;
-  values: string[];
+  label: ReactNode;
+  values: string[] | number[];
   onChange: (values: string[]) => void;
   options: MultiSelectOption[];
   className?: string;
   error?: boolean | string;
   disabled: boolean;
+  required?: boolean;
   allOption?: boolean; // Whether to include an "All" option
+  row?: boolean;
 };
 
 const MultiSelect = forwardRef(
   (
     {
       id,
+      label,
       values,
       onChange,
       options,
       className = '',
       error = false,
       disabled = false,
+      required = false,
       allOption = true,
+      row = false,
     }: MultiSelectProps,
     forwardedRef: ForwardedRef<HTMLDivElement>,
   ) => {
@@ -80,7 +87,7 @@ const MultiSelect = forwardRef(
           newValues.push(optionValue);
         }
 
-        onChange(newValues);
+        onChange(newValues.map(v => v.toString()));
       }
     };
 
@@ -110,73 +117,74 @@ const MultiSelect = forwardRef(
     };
 
     return (
-      <div className={clsx('relative w-full', className)} ref={selectRef}>
-        <div
-          id={id}
-          className={selectClassName(error, disabled, isFocused, isOpen)}
-          onClick={() => {
-            if (!disabled) {
-              checkPosition();
-              setIsOpen(!isOpen);
-            }
-          }}
-          tabIndex={disabled ? -1 : 0}
-          onFocus={() => {
-            checkPosition();
-            setIsFocused(true);
-            setIsOpen(true);
-          }} // Add focus when the component gains focus
-          onBlur={() => {
-            setIsFocused(false);
-            setIsOpen(false);
-          }} // Remove focus when the component loses focus
-          role="combobox"
-          aria-expanded={isOpen}
-          aria-haspopup="listbox"
-          aria-controls={`${id}-options`}
-        >
-          <span className={clsx(values.length === 0 && 'text-foreground/50')}>{displayValue()}</span>
-          <IconChevronDown
-            size={18}
-            className={clsx('transition-transform duration-200', isOpen && 'transform rotate-180')}
-          />
-        </div>
-
-        {isOpen && !disabled && (
+      <div className={row ? rowClassName : ''}>
+        <Label id={id} required={required}>
+          {label}
+        </Label>
+        <div className={clsx('relative w-full', className)} ref={selectRef}>
           <div
-            id={`${id}-options`}
-            className={clsx(
-              'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
-              openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
-            )}
-            role="listbox"
-            aria-multiselectable="true"
+            id={id}
+            tabIndex={disabled ? -1 : 0}
+            className={selectClassName(error, disabled, isFocused, isOpen)}
+            onClick={() => {
+              if (!disabled) {
+                checkPosition();
+                setIsOpen(!isOpen);
+                setIsFocused(true);
+              }
+            }}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            role="combobox"
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            aria-controls={`${id}-options`}
           >
-            {allOptions.length === 0 ? (
-              <div className="p-2 text-foreground/50 text-center">Aucune option disponible</div>
-            ) : (
-              allOptions.map(option => {
-                const isSelected = option.value === 'all' ? values.length === 0 : values.includes(option.value);
-
-                return (
-                  <div
-                    key={option.value}
-                    className={clsx(
-                      'p-2 cursor-pointer hover:bg-primary/10 flex items-center justify-between',
-                      isSelected && 'bg-primary/10',
-                    )}
-                    onClick={() => toggleOption(option.value)}
-                    role="option"
-                    aria-selected={isSelected}
-                  >
-                    <span className={clsx(isSelected && 'font-medium text-primary')}>{option.label}</span>
-                    {isSelected && <IconCheck size={18} className="text-primary" />}
-                  </div>
-                );
-              })
-            )}
+            <span className={clsx(values.length === 0 && 'text-foreground/50')}>{displayValue()}</span>
+            <IconChevronDown
+              size={18}
+              className={clsx('transition-transform duration-200', isOpen && 'transform rotate-180')}
+            />
           </div>
-        )}
+
+          {isOpen && !disabled && (
+            <div
+              id={`${id}-options`}
+              className={clsx(
+                'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
+                openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
+              )}
+              role="listbox"
+              aria-multiselectable="true"
+            >
+              {allOptions.length === 0 ? (
+                <div className="p-2 text-foreground/50 text-center">Aucune option disponible</div>
+              ) : (
+                allOptions.map(option => {
+                  const isSelected =
+                    option.value === 'all' ? values.length === 0 : values.map(v => v.toString()).includes(option.value);
+
+                  return (
+                    <div
+                      key={option.value}
+                      className={clsx(
+                        'p-2 cursor-pointer hover:bg-primary/10 flex items-center justify-between',
+                        isSelected && 'bg-primary/10',
+                      )}
+                      onClick={() => toggleOption(option.value)}
+                      role="option"
+                      aria-selected={isSelected}
+                    >
+                      <span className={clsx(isSelected && 'font-medium text-primary')}>{option.label}</span>
+                      {isSelected && <IconCheck size={18} className="text-primary" />}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+        </div>
+        {error && <p className={errorClassName}>{error}</p>}
       </div>
     );
   },
