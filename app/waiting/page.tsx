@@ -38,21 +38,17 @@ export default function WaitingPage() {
       setPrimaryColor(foundConciergerie?.color);
 
       if (sentEmailError && foundConciergerie) {
-        sendConciergerieVerificationEmail(
-          foundConciergerie.email,
-          foundConciergerie.name,
-          userId,
-          window.location.origin,
-        ).then(isEmailSent => {
-          if (!isEmailSent) {
+        sendConciergerieVerificationEmail(foundConciergerie, userId)
+          .then(isEmailSent => {
+            if (!isEmailSent) throw new Error();
+            setSentEmailError(undefined);
+          })
+          .catch(() => {
             setToastMessage({
               type: ToastType.Error,
               message: "Une erreur est survenue lors de l'envoi de l'email de vérification",
             });
-          } else {
-            setSentEmailError(undefined);
-          }
-        });
+          });
       }
       setIsLoading(false);
     },
@@ -79,24 +75,17 @@ export default function WaitingPage() {
         if (!selectedConciergerie) throw new Error('Conciergerie not found');
         if (!selectedConciergerie.email) throw new Error('Conciergerie email not found');
 
-        sendEmployeeRegistrationEmail(
-          selectedConciergerie.email,
-          selectedConciergerie.name,
-          `${foundEmployee.firstName} ${foundEmployee.familyName}`,
-          foundEmployee.email,
-          foundEmployee.tel,
-          foundEmployee.geographicZone,
-          foundEmployee.message,
-        ).then(isEmailSent => {
-          if (!isEmailSent) {
+        sendEmployeeRegistrationEmail(selectedConciergerie, foundEmployee)
+          .then(isEmailSent => {
+            if (!isEmailSent) throw new Error();
+            setSentEmailError(undefined);
+          })
+          .catch(() => {
             setToastMessage({
               type: ToastType.Error,
               message: "Une erreur est survenue lors de l'envoi de l'email de confirmation",
             });
-          } else {
-            setSentEmailError(undefined);
-          }
-        });
+          });
       }
 
       setIsLoading(false);

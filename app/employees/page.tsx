@@ -2,17 +2,20 @@
 
 import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import Accordion from '@/app/components/accordion';
+import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import SearchInput from '@/app/components/searchInput';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
+import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import { Employee } from '@/app/types/types';
 import { filterEmployees, filterEmployeesByConciergerie, sortEmployees } from '@/app/utils/employee';
 import { Page } from '@/app/utils/navigation';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
+import { sendEmployeeAcceptanceEmail } from '@/app/actions/email';
 
 export default function EmployeesList() {
   const {
@@ -23,11 +26,16 @@ export default function EmployeesList() {
     updateUserData,
   } = useAuth();
   const { currentPage } = useMenuContext();
+  const { missions } = useMissions();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState<Toast>();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+
+  // Confirmation modal state
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [employeeToReject, setEmployeeToReject] = useState<Employee | null>(null);
 
   // Filter employees by conciergerie and sort them
   useEffect(() => {
@@ -61,14 +69,46 @@ export default function EmployeesList() {
     emp => emp.status === 'rejected' && (searchTerm ? filterEmployees([emp], searchTerm).length > 0 : true),
   );
 
+  // Count missions assigned to an employee
+  const countEmployeeMissions = (employeeId: string): number => {
+    return missions.filter(mission => mission.employeeId === employeeId).length;
+  };
+
   // Handle status change
   const handleStatusChange = (id: string, newStatus: 'accepted' | 'rejected') => {
-    // TODO: Update mission assignments if status changed to rejected (remove them from the mission)
+    const employee = employees.find(emp => emp.id === id);
+    if (!employee) return;
 
-    updateEmployeeStatusAction(id, newStatus).then(updatedEmployee => {
-      if (updatedEmployee) {
+    // For rejection, show confirmation modal first
+    if (newStatus === 'rejected') {
+      setEmployeeToReject(employee);
+      setIsRejectModalOpen(true);
+    } else {
+      updateEmployeeStatus(employee, newStatus);
+    }
+  };
+
+  const updateEmployeeStatus = (employee: Employee, newStatus: 'accepted' | 'rejected') => {
+    // For acceptance, proceed directly
+    updateEmployeeStatusAction(employee.id, newStatus)
+      .then(updatedEmployee => {
+        if (!updatedEmployee) throw new Error("L'employé à modifier n'a pas été trouvé");
+
         // Update local state
         updateUserData(updatedEmployee, 'employee');
+
+        sendEmployeeAcceptanceEmail(
+          employee,
+          conciergerieName || '',
+          countEmployeeMissions(employee.id),
+          newStatus === 'accepted',
+        )
+          .then(isEmailSent => {
+            if (!isEmailSent) throw new Error();
+          })
+          .catch(() => {
+            throw new Error('Email non envoyé');
+          });
 
         setToastMessage({
           type: newStatus === 'accepted' ? ToastType.Success : ToastType.Error,
@@ -76,14 +116,28 @@ export default function EmployeesList() {
             newStatus === 'accepted' ? 'accepté' : 'rejeté'
           }`,
         });
-      } else {
+      })
+      .catch(error => {
         setToastMessage({
           type: ToastType.Error,
-          message: "Erreur lors de la mise à jour du statut de l'employé",
+          message: error.toString(),
+          error,
         });
-        return;
-      }
-    });
+      });
+  };
+
+  // Handle confirmation of employee rejection
+  const handleConfirmRejection = () => {
+    if (employeeToReject) {
+      updateEmployeeStatus(employeeToReject, 'rejected');
+      handleDeleteRejection();
+    }
+  };
+
+  // Handle cancellation of employee rejection
+  const handleDeleteRejection = () => {
+    setIsRejectModalOpen(false);
+    setEmployeeToReject(null);
   };
 
   // Handle employee selection
@@ -172,6 +226,26 @@ export default function EmployeesList() {
           <EmployeeDetails employee={selectedEmployee} onClose={closeEmployeeDetails} />
         </FullScreenModal>
       )}
+
+      {/* Confirmation modal for employee rejection */}
+      <ConfirmationModal
+        isOpen={isRejectModalOpen}
+        onConfirm={handleConfirmRejection}
+        onCancel={handleDeleteRejection}
+        title="Confirmer le rejet de l'employé"
+        message={
+          employeeToReject
+            ? `Vous êtes sur le point de rejeter ${employeeToReject.firstName} ${employeeToReject.familyName}.${
+                countEmployeeMissions(employeeToReject.id) > 0
+                  ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employeeToReject.id)} mission(s).`
+                  : ''
+              } Il ne pourra plus accéder à l'application.`
+            : ''
+        }
+        confirmText="Rejeter"
+        cancelText="Annuler"
+        isDangerous={true}
+      />
     </div>
   );
 }

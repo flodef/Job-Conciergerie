@@ -181,15 +181,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
-      const isEmailSent = await sendEmployeeRegistrationEmail(
-        selectedConciergerie.email,
-        selectedConciergerie.name,
-        `${employee.firstName} ${employee.familyName}`,
-        employee.email,
-        employee.tel,
-        employee.geographicZone,
-        employee.message,
-      );
+      const isEmailSent = await sendEmployeeRegistrationEmail(selectedConciergerie, employee);
       setSentEmailError(!isEmailSent || undefined);
 
       onMenuChange(Page.Waiting);
