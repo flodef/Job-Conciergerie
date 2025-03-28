@@ -1,13 +1,13 @@
 'use client';
 
+import { sendConciergerieVerificationEmail, sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import ErrorPage from '@/app/components/error';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee } from '@/app/types/types';
 import { setPrimaryColor } from '@/app/utils/color';
-import { convertUTCDateToUserTime, getTimeDifference } from '@/app/utils/date';
-import { sendConciergerieVerificationEmail, sendEmployeeRegistrationEmail } from '@/app/actions/email';
+import { getTimeDifference } from '@/app/utils/date';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -69,8 +69,8 @@ export default function WaitingPage() {
 
       // Calculate time waiting
       if (foundEmployee.createdAt) {
-        const createdAt = convertUTCDateToUserTime(new Date(foundEmployee.createdAt));
-        setDaysWaiting(getTimeDifference(createdAt, new Date()));
+        const timeDifference = getTimeDifference(new Date(foundEmployee.createdAt), new Date());
+        setDaysWaiting(timeDifference);
       }
 
       // Send notification email to conciergerie

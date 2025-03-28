@@ -29,19 +29,6 @@ export const formatDateTime = (date: Date): string => {
 };
 
 /**
- * Convert a UTC date to the user's local time
- */
-export const convertUTCDateToUserTime = (date: Date): Date => {
-  const userOffsetMinutes = new Date().getTimezoneOffset(); // Browser's offset in minutes
-  const userOffsetHours = -userOffsetMinutes / 60; // Convert to hours (negative because getTimezoneOffset is opposite)
-
-  // Create a new date object with the user's offset
-  const userDate = new Date(date);
-  userDate.setHours(userDate.getHours() + userOffsetHours);
-  return userDate;
-};
-
-/**
  * Calculate the time difference between two dates in a human-readable format
  * Consistent with mission points calculation (counting both start and end days)
  */
