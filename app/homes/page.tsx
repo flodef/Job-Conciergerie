@@ -3,6 +3,7 @@
 import FloatingActionButton from '@/app/components/floatingActionButton';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import SearchInput from '@/app/components/searchInput';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
@@ -10,18 +11,37 @@ import HomeCard from '@/app/homes/components/homeCard';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
 import { Home } from '@/app/types/dataTypes';
+import { Page } from '@/app/utils/navigation';
 import { IconPlus } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function HomesPage() {
-  const { homes, isLoading: homesLoading } = useHomes();
-  const { setHasUnsavedChanges } = useMenuContext();
+  const { homes, isLoading: homesLoading, fetchHomes } = useHomes();
+  const { currentPage, setHasUnsavedChanges } = useMenuContext();
   const { conciergerieName, isLoading: authLoading } = useAuth();
 
   const [selectedHome, setSelectedHome] = useState<Home | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [toastMessage, setToastMessage] = useState<Toast>();
+
+  // Reload employees when displaying the page
+  const isFetching = useRef(false);
+  useEffect(() => {
+    // Skip if still loading
+    if (currentPage !== Page.Homes || isFetching.current) return;
+
+    isFetching.current = true;
+    fetchHomes().then(isSuccess => {
+      if (!isSuccess) {
+        setToastMessage({
+          type: ToastType.Error,
+          message: 'Erreur lors du chargement des biens',
+        });
+      }
+    });
+  }, [currentPage, fetchHomes]);
 
   // Reset unsaved changes when navigating to this page - must be called before any conditional returns
   useEffect(() => {
@@ -76,6 +96,8 @@ export default function HomesPage() {
 
   return (
     <div>
+      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+
       {homes.length > 1 && (
         <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
       )}

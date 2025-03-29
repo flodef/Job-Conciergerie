@@ -55,7 +55,14 @@ export default function EmployeesList() {
     if (authLoading || currentPage !== Page.Employees || isFetching.current) return;
 
     isFetching.current = true;
-    fetchDataFromDatabase('employee');
+    fetchDataFromDatabase('employee').then(isSuccess => {
+      if (!isSuccess) {
+        setToastMessage({
+          type: ToastType.Error,
+          message: 'Erreur lors du chargement des employés',
+        });
+      }
+    });
   }, [currentPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filter employees by status
@@ -188,6 +195,8 @@ export default function EmployeesList() {
 
   return (
     <div>
+      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+
       {employees.length > 1 && (
         <SearchInput placeholder="Rechercher un prestataire..." value={searchTerm} onChange={setSearchTerm} />
       )}
@@ -214,8 +223,6 @@ export default function EmployeesList() {
           ]}
         />
       </div>
-
-      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
       {/* Employee details modal */}
       {selectedEmployee && (

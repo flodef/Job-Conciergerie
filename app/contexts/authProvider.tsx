@@ -25,7 +25,7 @@ interface AuthContextType {
   setSentEmailError: (sentEmailError: boolean | undefined) => void;
   getUserData: <T extends UserData>() => T | undefined;
   updateUserData: <T extends UserData>(updatedData: T, updateType?: UserType) => void;
-  fetchDataFromDatabase: (fetchType?: UserType) => void;
+  fetchDataFromDatabase: (fetchType?: UserType) => Promise<boolean>;
   conciergeries: Conciergerie[];
   employees: Employee[];
   isLoading: boolean;
@@ -45,7 +45,7 @@ const AuthContext = createContext<AuthContextType>({
   setSentEmailError: () => {},
   getUserData: () => undefined,
   updateUserData: () => {},
-  fetchDataFromDatabase: () => {},
+  fetchDataFromDatabase: () => Promise.resolve(false),
   conciergeries: [],
   employees: [],
   isLoading: false,
@@ -141,9 +141,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           (!newUserData && navigationRoutes.includes(path))
         )
           refreshData();
+
+        return true;
       } catch (err) {
         console.error('Error fetching user data from database:', err);
         onMenuChange(Page.Error);
+        return false;
       }
     },
     [

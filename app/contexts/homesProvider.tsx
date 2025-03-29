@@ -4,11 +4,12 @@ import { createNewHome, deleteHomeData, fetchHomesByConciergerieName, updateHome
 import { useAuth } from '@/app/contexts/authProvider';
 import { Home } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useContext, useState } from 'react';
 
 type HomesContextType = {
   homes: Home[];
   isLoading: boolean;
+  fetchHomes: () => Promise<boolean>;
   addHome: (home: Omit<Home, 'id' | 'conciergerieName'>) => Promise<boolean | void>;
   updateHome: (home: Home) => Promise<boolean>;
   deleteHome: (id: string) => Promise<boolean>;
@@ -24,22 +25,21 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // Load homes from localStorage on initial render
-  useEffect(() => {
-    const loadHomes = async () => {
-      setIsLoading(true);
+  const fetchHomes = async () => {
+    setIsLoading(true);
 
-      try {
-        const fetchedHomes = await fetchHomesByConciergerieName(conciergerieName);
-        setHomes(fetchedHomes);
-      } catch (error) {
-        console.error('Failed to fetch homes from database', error);
-      }
-
+    try {
+      console.warn('Loading homes from database...');
+      const fetchedHomes = await fetchHomesByConciergerieName(conciergerieName);
+      setHomes(fetchedHomes);
+      return true;
+    } catch (error) {
+      console.error('Failed to fetch homes from database', error);
+      return false;
+    } finally {
       setIsLoading(false);
-    };
-
-    loadHomes();
-  }, [conciergerieName]);
+    }
+  };
 
   // Check if a home with the same title already exists for the current conciergerie
   const homeExists = (title: string): boolean => {
@@ -111,6 +111,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
       value={{
         homes,
         isLoading,
+        fetchHomes,
         addHome,
         updateHome,
         deleteHome,
