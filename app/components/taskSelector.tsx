@@ -1,5 +1,5 @@
 import Label from '@/app/components/label';
-import { Task } from '@/app/types/types';
+import { Task } from '@/app/types/dataTypes';
 import { errorClassName, rowClassName } from '@/app/utils/className';
 import { getTaskPoints } from '@/app/utils/task';
 import { clsx } from 'clsx/lite';

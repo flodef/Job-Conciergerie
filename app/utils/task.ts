@@ -1,7 +1,7 @@
 'use client';
 
 import tasksData from '@/app/data/tasks.json';
-import { Mission, MissionPoints, Task } from '@/app/types/types';
+import { Mission, MissionPoints, Task } from '@/app/types/dataTypes';
 
 // Get points for a specific task
 export const getTaskPoints = (task: Task) => {

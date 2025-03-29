@@ -1,4 +1,4 @@
-import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/types/types';
+import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/types/dataTypes';
 
 export const defaultConciergerieSettings: ConciergerieNotificationSettings = {
   acceptedMissions: true,

@@ -8,7 +8,7 @@ import {
   updateEmployeeSettings,
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
-import { Employee, EmployeeNotificationSettings, EmployeeStatus } from '@/app/types/types';
+import { Employee, EmployeeNotificationSettings, EmployeeStatus } from '@/app/types/dataTypes';
 import { revalidateTag } from 'next/cache';
 
 /**

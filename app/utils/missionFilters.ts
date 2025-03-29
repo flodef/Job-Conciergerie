@@ -1,4 +1,4 @@
-import { Home, Mission } from '@/app/types/types';
+import { Home, Mission } from '@/app/types/dataTypes';
 
 /**
  * Filter missions based on user type

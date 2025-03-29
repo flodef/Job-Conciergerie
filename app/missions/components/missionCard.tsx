@@ -1,7 +1,7 @@
 'use client';
 
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { Conciergerie, Mission } from '@/app/types/types';
+import { Conciergerie, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
 import { useEffect, useState } from 'react';

@@ -1,5 +1,5 @@
 import { sql } from '@/app/db/db';
-import { EmployeeNotificationSettings, EmployeeStatus } from '@/app/types/types';
+import { EmployeeNotificationSettings, EmployeeStatus } from '@/app/types/dataTypes';
 import { defaultEmployeeSettings } from '@/app/utils/notifications';
 
 // Type definition for database employee
@@ -48,7 +48,7 @@ export const getAllEmployees = async () => {
         ORDER BY created_at DESC
       `;
 
-    return result.map(row => formatEmployee(row as unknown as DbEmployee));
+    return result.map(row => formatEmployee(row as DbEmployee));
   } catch (error) {
     console.error('Error fetching employees:', error);
     return [];
@@ -99,7 +99,7 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
 
-    return result.length > 0 ? formatEmployee(result[0] as unknown as DbEmployee) : null;
+    return result.length > 0 ? formatEmployee(result[0] as DbEmployee) : null;
   } catch (error) {
     console.error('Error creating employee:', error);
     return null;
@@ -119,7 +119,7 @@ export const updateEmployeeStatus = async (id: string | undefined, status: Emplo
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
 
-    return result.length > 0 ? formatEmployee(result[0] as unknown as DbEmployee) : null;
+    return result.length > 0 ? formatEmployee(result[0] as DbEmployee) : null;
   } catch (error) {
     console.error(`Error updating employee status for ID ${id}:`, error);
     return null;
@@ -148,7 +148,7 @@ export const updateEmployeeSettings = async (id: string | undefined, data: Parti
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
 
-    return result.length > 0 ? formatEmployee(result[0] as unknown as DbEmployee) : null;
+    return result.length > 0 ? formatEmployee(result[0] as DbEmployee) : null;
   } catch (error) {
     console.error(`Error updating employee settings for ID ${id}:`, error);
     return null;

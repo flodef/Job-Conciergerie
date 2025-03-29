@@ -4,7 +4,7 @@ import LoadingSpinner from '@/app/components/loadingSpinner';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import MissionDetails from '@/app/missions/components/missionDetails';
-import { Conciergerie, Mission } from '@/app/types/types';
+import { Conciergerie, Mission } from '@/app/types/dataTypes';
 import {
   formatCalendarDate,
   formatMissionTimeForCalendar,

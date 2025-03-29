@@ -9,7 +9,7 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import MissionActions from '@/app/missions/components/missionActions';
 import MissionForm from '@/app/missions/components/missionForm';
-import { Conciergerie, Mission } from '@/app/types/types';
+import { Conciergerie, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateTime, getTimeDifference } from '@/app/utils/date';
 import { calculateEmployeePointsForDay, calculateMissionPoints, getTaskPoints } from '@/app/utils/task';

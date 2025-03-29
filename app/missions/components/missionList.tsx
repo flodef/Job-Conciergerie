@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/app/contexts/authProvider';
 import MissionCard from '@/app/missions/components/missionCard';
-import { Mission, MissionSortField } from '@/app/types/types';
+import { Mission, MissionSortField } from '@/app/types/dataTypes';
 import {
   IconBriefcase,
   IconCalendar,

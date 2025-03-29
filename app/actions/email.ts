@@ -1,7 +1,7 @@
 'use server';
 
 import nodemailer from 'nodemailer';
-import { Conciergerie, Employee } from '@/app/types/types';
+import { Conciergerie, Employee } from '@/app/types/dataTypes';
 
 // Configure nodemailer transporter
 const transporter = nodemailer.createTransport({

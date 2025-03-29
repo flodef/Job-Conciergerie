@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { Mission } from '@/app/types/types';
+import { Mission } from '@/app/types/dataTypes';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 type BadgeContextType = {

@@ -12,7 +12,7 @@ import MissionFilters from '@/app/missions/components/missionFilters';
 import MissionForm from '@/app/missions/components/missionForm';
 import MissionList from '@/app/missions/components/missionList';
 import MissionSortControls from '@/app/missions/components/missionSortControls';
-import { Mission, MissionSortField } from '@/app/types/types';
+import { Mission, MissionSortField } from '@/app/types/dataTypes';
 import {
   applyMissionFilters,
   filterMissionsByUserType,

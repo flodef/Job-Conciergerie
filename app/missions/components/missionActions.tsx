@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/app/contexts/authProvider';
-import { Mission } from '@/app/types/types';
+import { Mission } from '@/app/types/dataTypes';
 import { IconCancel, IconCheck, IconPencil, IconPlayerPlay, IconTrash } from '@tabler/icons-react';
 
 type MissionActionsProps = {

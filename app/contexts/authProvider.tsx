@@ -3,7 +3,7 @@
 import { fetchConciergeries } from '@/app/actions/conciergerie';
 import { fetchEmployees } from '@/app/actions/employee';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { Conciergerie, Employee } from '@/app/types/types';
+import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
 import { generateSimpleId } from '@/app/utils/id';

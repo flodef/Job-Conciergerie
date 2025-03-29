@@ -10,7 +10,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
-import { Employee } from '@/app/types/types';
+import { Employee } from '@/app/types/dataTypes';
 import { filterEmployees, filterEmployeesByConciergerie, sortEmployees } from '@/app/utils/employee';
 import { Page } from '@/app/utils/navigation';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';

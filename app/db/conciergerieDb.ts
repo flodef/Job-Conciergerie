@@ -1,5 +1,5 @@
 import { sql } from '@/app/db/db';
-import { ConciergerieNotificationSettings } from '@/app/types/types';
+import { ConciergerieNotificationSettings } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { defaultConciergerieSettings } from '@/app/utils/notifications';
 
@@ -39,7 +39,7 @@ export const getAllConciergeries = async () => {
         FROM conciergerie
       `;
 
-    return result.map(row => formatConciergerie(row as unknown as DbConciergerie));
+    return result.map(row => formatConciergerie(row as DbConciergerie));
   } catch (error) {
     console.error('Error fetching conciergeries:', error);
     return [];
@@ -68,7 +68,7 @@ export const updateConciergerie = async (id: string | undefined, data: Partial<D
       RETURNING id, name, email, tel, color_name, notification_settings
     `;
 
-    return result.length > 0 ? formatConciergerie(result[0] as unknown as DbConciergerie) : null;
+    return result.length > 0 ? formatConciergerie(result[0] as DbConciergerie) : null;
   } catch (error) {
     console.error(`Error updating conciergerie with ID ${id}:`, error);
     return null;

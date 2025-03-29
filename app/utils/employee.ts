@@ -1,4 +1,4 @@
-import { Employee, EmployeeStatus } from '@/app/types/types';
+import { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 
 // Sort employees by status (pending first, then accepted, then rejected)
 // and then alphabetically by name

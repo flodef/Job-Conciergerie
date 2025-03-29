@@ -1,6 +1,6 @@
 'use client';
 
-import { Employee } from '@/app/types/types';
+import { Employee } from '@/app/types/dataTypes';
 import { formatDate } from '@/app/utils/date';
 import { IconMail, IconMapPin, IconPhone } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';

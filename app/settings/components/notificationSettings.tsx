@@ -3,7 +3,7 @@ import { updateEmployeeData } from '@/app/actions/employee';
 import Switch from '@/app/components/switch';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
-import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/types/types';
+import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/types/dataTypes';
 import { defaultConciergerieSettings, defaultEmployeeSettings } from '@/app/utils/notifications';
 import React, { useState } from 'react';
 
