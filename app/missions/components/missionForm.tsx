@@ -10,7 +10,8 @@ import TaskSelector from '@/app/components/taskSelector';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { ErrorField, HomeData, Mission, Task } from '@/app/types/types';
+import { Home, Mission, Task } from '@/app/types/dataTypes';
+import { ErrorField } from '@/app/types/types';
 import { handleChange } from '@/app/utils/form';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -22,7 +23,7 @@ type MissionFormProps = {
 };
 
 // Calculate total hours for a mission based on selected tasks and home specifications
-const calculateMissionHours = (home: HomeData, tasks: Task[]): number => {
+const calculateMissionHours = (home: Home, tasks: Task[]): number => {
   return tasks.reduce((acc, task) => {
     const hours = {
       [Task.Cleaning]: home.hoursOfCleaning,

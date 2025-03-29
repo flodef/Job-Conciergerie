@@ -6,13 +6,13 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeForm from '@/app/homes/components/homeForm';
-import { HomeData } from '@/app/types/types';
+import { Home } from '@/app/types/dataTypes';
 import { IconPencil, IconTrash, IconFileDescription, IconListCheck } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 type HomeDetailsProps = {
-  home: HomeData;
+  home: Home;
   onClose: () => void;
 };
 

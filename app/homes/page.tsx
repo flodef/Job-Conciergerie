@@ -9,7 +9,7 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import HomeCard from '@/app/homes/components/homeCard';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
-import { HomeData } from '@/app/types/types';
+import { Home } from '@/app/types/dataTypes';
 import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -18,7 +18,7 @@ export default function HomesPage() {
   const { setHasUnsavedChanges } = useMenuContext();
   const { conciergerieName, isLoading: authLoading } = useAuth();
 
-  const [selectedHome, setSelectedHome] = useState<HomeData | null>(null);
+  const [selectedHome, setSelectedHome] = useState<Home | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,11 +45,11 @@ export default function HomesPage() {
     [homes, conciergerieName, searchTerm],
   );
 
-  const handleHomeClick = (home: HomeData) => {
+  const handleHomeClick = (home: Home) => {
     setSelectedHome(home);
   };
 
-  const handleHomeEdit = (home: HomeData) => {
+  const handleHomeEdit = (home: Home) => {
     setSelectedHome(home);
     setIsEditModalOpen(true);
   };

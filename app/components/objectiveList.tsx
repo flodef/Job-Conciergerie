@@ -131,7 +131,7 @@ const ObjectiveList = forwardRef(
               if (inputRefs.current[index]) inputRefs.current[index].focus();
             }, 0);
           },
-        } as unknown as HTMLInputElement;
+        } as HTMLInputElement;
       }
       return inputRefs.current[index];
     });

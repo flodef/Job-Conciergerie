@@ -1,15 +1,15 @@
 'use client';
 
 import { useAuth } from '@/app/contexts/authProvider';
-import { HomeData } from '@/app/types/types';
+import { Home } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 type HomesContextType = {
-  homes: HomeData[];
+  homes: Home[];
   isLoading: boolean;
-  addHome: (home: Omit<HomeData, 'id' | 'modifiedDate' | 'conciergerieName'>) => boolean | void;
-  updateHome: (home: HomeData) => boolean;
+  addHome: (home: Omit<Home, 'id' | 'conciergerieName'>) => boolean | void;
+  updateHome: (home: Home) => boolean;
   deleteHome: (id: string) => void;
   homeExists: (title: string) => boolean;
 };
@@ -19,7 +19,7 @@ const HomesContext = createContext<HomesContextType | undefined>(undefined);
 export function HomesProvider({ children }: { children: ReactNode }) {
   const { conciergerieName } = useAuth();
 
-  const [homes, setHomes] = useState<HomeData[]>([]);
+  const [homes, setHomes] = useState<Home[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load homes from localStorage on initial render
@@ -34,13 +34,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
       const savedHomes = localStorage.getItem('homes');
       if (savedHomes) {
         try {
-          const parsedHomes = JSON.parse(savedHomes);
-          // Convert string dates back to Date objects
-          const homesWithDates = parsedHomes.map((home: HomeData) => ({
-            ...home,
-            modifiedDate: new Date(home.modifiedDate),
-          }));
-          setHomes(homesWithDates);
+          setHomes(JSON.parse(savedHomes));
         } catch (error) {
           console.error('Failed to parse homes from localStorage', error);
         }
@@ -67,7 +61,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const addHome = (homeData: Omit<HomeData, 'id' | 'modifiedDate' | 'conciergerieName'>) => {
+  const addHome = (homeData: Omit<Home, 'id' | 'conciergerieName'>) => {
     if (!conciergerieName) return;
 
     // Check if a home with the same title already exists
@@ -76,10 +70,9 @@ export function HomesProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    const newHome: HomeData = {
+    const newHome: Home = {
       ...homeData,
       id: generateSimpleId(),
-      modifiedDate: new Date(),
       conciergerieName,
     };
 
@@ -87,14 +80,12 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     return true; // Return true to indicate successful addition
   };
 
-  const updateHome = (updatedHome: HomeData) => {
+  const updateHome = (updatedHome: Home) => {
     if (!conciergerieName) return false;
 
     // Only allow updates if the home was created by the current conciergerie
     if (updatedHome.conciergerieName === conciergerieName) {
-      setHomes(prev =>
-        prev.map(home => (home.id === updatedHome.id ? { ...updatedHome, modifiedDate: new Date() } : home)),
-      );
+      setHomes(prev => prev.map(home => (home.id === updatedHome.id ? { ...updatedHome } : home)));
       return true; // Return true to indicate successful update
     } else {
       console.error('Cannot update home: not created by current conciergerie');

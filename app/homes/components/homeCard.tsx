@@ -1,13 +1,13 @@
 'use client';
 
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { Conciergerie, HomeData } from '@/app/types/types';
+import { Conciergerie, Home } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 type HomeCardProps = {
-  home: HomeData;
+  home: Home;
   onClick: () => void;
   onEdit: () => void;
 };

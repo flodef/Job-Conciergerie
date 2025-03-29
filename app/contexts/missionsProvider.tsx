@@ -2,13 +2,13 @@
 
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
-import { Conciergerie, Employee, HomeData, Mission, MissionStatus } from '@/app/types/types';
+import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 type MissionsContextType = {
   missions: Mission[];
-  homes: HomeData[];
+  homes: Home[];
   isLoading: boolean;
   addMission: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>) => boolean | void;
   updateMission: (mission: Mission) => boolean | void;
@@ -18,7 +18,7 @@ type MissionsContextType = {
   startMission: (id: string) => void;
   completeMission: (id: string) => void;
   getConciergerieByName: (name: string) => Conciergerie | undefined;
-  getHomeById: (id: string) => HomeData | undefined;
+  getHomeById: (id: string) => Home | undefined;
   getEmployeeById: (id: string | undefined) => Employee | undefined;
   shouldShowAcceptWarning: boolean;
   setShouldShowAcceptWarning: (show: boolean) => void;
@@ -58,7 +58,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
             ...mission,
             startDateTime: new Date(mission.startDateTime),
             endDateTime: new Date(mission.endDateTime),
-            modifiedDate: new Date(mission.modifiedDate),
           }));
           setMissions(missionsWithDates);
         } catch (error) {
@@ -166,8 +165,8 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const newMission: Mission = {
       ...missionData,
       id: generateSimpleId(),
-      modifiedDate: new Date(),
       conciergerieName,
+      modifiedDate: new Date(),
     };
 
     setMissions(prev => [...prev, newMission]);
@@ -340,7 +339,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   };
 
   // Helper function to get a home by ID
-  const getHomeById = (id: string): HomeData | undefined => {
+  const getHomeById = (id: string): Home | undefined => {
     return homes.find(home => home.id === id);
   };
 

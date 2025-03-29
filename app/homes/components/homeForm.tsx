@@ -12,7 +12,8 @@ import TextArea from '@/app/components/textArea';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useHomes } from '@/app/contexts/homesProvider';
 import geographicZones from '@/app/data/geographicZone.json';
-import { ErrorField, HomeData } from '@/app/types/types';
+import { Home } from '@/app/types/dataTypes';
+import { ErrorField } from '@/app/types/types';
 import { errorClassName } from '@/app/utils/className';
 import { handleChange } from '@/app/utils/form';
 import { getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -23,7 +24,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 type HomeFormProps = {
   onClose: () => void;
   onCancel?: () => void;
-  home?: HomeData;
+  home?: Home;
   mode: 'add' | 'edit';
 };
 
