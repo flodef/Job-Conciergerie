@@ -11,7 +11,6 @@ export interface DbHome {
   geographic_zone: string;
   hours_of_cleaning: number;
   hours_of_gardening: number;
-  modified_date: Date;
   conciergerie_name: string;
 }
 
@@ -38,9 +37,8 @@ function formatHome(dbHome: DbHome): Home {
 export const getAllHomes = async () => {
   try {
     const result = await sql`
-      SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, modified_date, conciergerie_name
-      FROM home
-      ORDER BY modified_date DESC
+      SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name
+      FROM homes
     `;
 
     return result.map(row => formatHome(row as DbHome));
@@ -56,8 +54,8 @@ export const getAllHomes = async () => {
 export const getHomeById = async (id: string) => {
   try {
     const result = await sql`
-      SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, modified_date, conciergerie_name
-      FROM home
+      SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name
+      FROM homes
       WHERE id = ${id}
     `;
 
@@ -74,10 +72,9 @@ export const getHomeById = async (id: string) => {
 export const getHomesByConciergerieName = async (conciergerieName: string) => {
   try {
     const result = await sql`
-      SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, modified_date, conciergerie_name
-      FROM home
+      SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name
+      FROM homes
       WHERE conciergerie_name = ${conciergerieName}
-      ORDER BY modified_date DESC
     `;
 
     return result.map(row => formatHome(row as DbHome));
@@ -90,20 +87,16 @@ export const getHomesByConciergerieName = async (conciergerieName: string) => {
 /**
  * Create a new home
  */
-export const createHome = async (data: Omit<DbHome, 'modified_date'>) => {
+export const createHome = async (data: DbHome) => {
   try {
-    // Convert arrays to JSONB
-    const objectives = JSON.stringify(data.objectives);
-    const images = JSON.stringify(data.images);
-
     const result = await sql`
-      INSERT INTO home (
+      INSERT INTO homes (
         id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name
       ) VALUES (
-        ${data.id}, ${data.title}, ${data.description}, ${objectives}::jsonb, ${images}::jsonb, 
+        ${data.id}, ${data.title}, ${data.description}, ${data.objectives}, ${data.images}, 
         ${data.geographic_zone}, ${data.hours_of_cleaning}, ${data.hours_of_gardening}, ${data.conciergerie_name}
       )
-      RETURNING id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, modified_date, conciergerie_name
+      RETURNING id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name
     `;
 
     return result.length > 0 ? formatHome(result[0] as DbHome) : null;
@@ -116,7 +109,7 @@ export const createHome = async (data: Omit<DbHome, 'modified_date'>) => {
 /**
  * Update a home
  */
-export const updateHome = async (id: string, data: Partial<Omit<DbHome, 'id' | 'modified_date'>>) => {
+export const updateHome = async (id: string, data: Partial<Omit<DbHome, 'id'>>) => {
   try {
     // Prepare update fields
     const fields = [];
@@ -126,37 +119,30 @@ export const updateHome = async (id: string, data: Partial<Omit<DbHome, 'id' | '
       fields.push(`title = $${values.length + 1}`);
       values.push(data.title);
     }
-
     if (data.description !== undefined) {
       fields.push(`description = $${values.length + 1}`);
       values.push(data.description);
     }
-
     if (data.objectives !== undefined) {
-      fields.push(`objectives = $${values.length + 1}::jsonb`);
-      values.push(JSON.stringify(data.objectives));
+      fields.push(`objectives = $${values.length + 1}`);
+      values.push(data.objectives);
     }
-
     if (data.images !== undefined) {
-      fields.push(`images = $${values.length + 1}::jsonb`);
-      values.push(JSON.stringify(data.images));
+      fields.push(`images = $${values.length + 1}`);
+      values.push(data.images);
     }
-
     if (data.geographic_zone !== undefined) {
       fields.push(`geographic_zone = $${values.length + 1}`);
       values.push(data.geographic_zone);
     }
-
     if (data.hours_of_cleaning !== undefined) {
       fields.push(`hours_of_cleaning = $${values.length + 1}`);
       values.push(data.hours_of_cleaning);
     }
-
     if (data.hours_of_gardening !== undefined) {
       fields.push(`hours_of_gardening = $${values.length + 1}`);
       values.push(data.hours_of_gardening);
     }
-
     if (data.conciergerie_name !== undefined) {
       fields.push(`conciergerie_name = $${values.length + 1}`);
       values.push(data.conciergerie_name);
@@ -164,15 +150,12 @@ export const updateHome = async (id: string, data: Partial<Omit<DbHome, 'id' | '
 
     if (fields.length === 0) return null; // Nothing to update
 
-    // Add modified_date update
-    fields.push('modified_date = NOW()');
-
     // Build and execute query
     const query = `
-      UPDATE home
+      UPDATE homes
       SET ${fields.join(', ')}
       WHERE id = $${values.length + 1}
-      RETURNING id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, modified_date, conciergerie_name
+      RETURNING id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name
     `;
     values.push(id);
 
@@ -191,7 +174,7 @@ export const updateHome = async (id: string, data: Partial<Omit<DbHome, 'id' | '
 export const deleteHome = async (id: string) => {
   try {
     const result = await sql`
-      DELETE FROM home
+      DELETE FROM homes
       WHERE id = ${id}
       RETURNING id
     `;

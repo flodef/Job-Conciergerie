@@ -98,7 +98,7 @@ export default function HomesPage() {
           <p className="text-foreground/60">Aucun bien ne correspond à votre recherche</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           {filteredHomes.map(home => (
             <HomeCard
               key={home.id}

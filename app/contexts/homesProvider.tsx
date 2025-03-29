@@ -1,5 +1,6 @@
 'use client';
 
+import { createNewHome, deleteHomeData, fetchHomesByConciergerieName, updateHomeData } from '@/app/actions/home';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Home } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
@@ -8,9 +9,9 @@ import { createContext, ReactNode, useContext, useEffect, useState } from 'react
 type HomesContextType = {
   homes: Home[];
   isLoading: boolean;
-  addHome: (home: Omit<Home, 'id' | 'conciergerieName'>) => boolean | void;
-  updateHome: (home: Home) => boolean;
-  deleteHome: (id: string) => void;
+  addHome: (home: Omit<Home, 'id' | 'conciergerieName'>) => Promise<boolean | void>;
+  updateHome: (home: Home) => Promise<boolean>;
+  deleteHome: (id: string) => Promise<boolean>;
   homeExists: (title: string) => boolean;
 };
 
@@ -27,31 +28,18 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     const loadHomes = async () => {
       setIsLoading(true);
 
-      // Simulate a small delay to ensure localStorage is properly loaded
-      // and to show the loading state for a better user experience
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      const savedHomes = localStorage.getItem('homes');
-      if (savedHomes) {
-        try {
-          setHomes(JSON.parse(savedHomes));
-        } catch (error) {
-          console.error('Failed to parse homes from localStorage', error);
-        }
+      try {
+        const fetchedHomes = await fetchHomesByConciergerieName(conciergerieName);
+        setHomes(fetchedHomes);
+      } catch (error) {
+        console.error('Failed to fetch homes from database', error);
       }
 
       setIsLoading(false);
     };
 
     loadHomes();
-  }, []);
-
-  // Save homes to localStorage whenever they change
-  useEffect(() => {
-    if (homes.length > 0) {
-      localStorage.setItem('homes', JSON.stringify(homes));
-    }
-  }, [homes]);
+  }, [conciergerieName]);
 
   // Check if a home with the same title already exists for the current conciergerie
   const homeExists = (title: string): boolean => {
@@ -61,7 +49,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const addHome = (homeData: Omit<Home, 'id' | 'conciergerieName'>) => {
+  const addHome = async (homeData: Omit<Home, 'id' | 'conciergerieName'>) => {
     if (!conciergerieName) return;
 
     // Check if a home with the same title already exists
@@ -76,15 +64,22 @@ export function HomesProvider({ children }: { children: ReactNode }) {
       conciergerieName,
     };
 
-    setHomes(prev => [...prev, newHome]);
+    const createdHome = await createNewHome(newHome);
+    if (!createdHome) return;
+
+    setHomes(prev => [...prev, createdHome]);
+
     return true; // Return true to indicate successful addition
   };
 
-  const updateHome = (updatedHome: Home) => {
+  const updateHome = async (updatedHome: Home) => {
     if (!conciergerieName) return false;
 
     // Only allow updates if the home was created by the current conciergerie
     if (updatedHome.conciergerieName === conciergerieName) {
+      const updated = await updateHomeData(updatedHome.id, updatedHome);
+      if (!updated) return false;
+
       setHomes(prev => prev.map(home => (home.id === updatedHome.id ? { ...updatedHome } : home)));
       return true; // Return true to indicate successful update
     } else {
@@ -93,19 +88,21 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const deleteHome = (id: string) => {
+  const deleteHome = async (id: string) => {
     const homeToDelete = homes.find(h => h.id === id);
 
     // Only allow deletion if the home was created by the current conciergerie
     if (homeToDelete && homeToDelete.conciergerieName === conciergerieName) {
+      // Delete the home from the database
+      const deleted = await deleteHomeData(id);
+      if (!deleted) return false;
+
       // Remove the home from the array
       setHomes(prev => prev.filter(home => home.id !== id));
-
-      // Update localStorage immediately to ensure the deletion is persisted
-      const updatedHomes = homes.filter(home => home.id !== id);
-      localStorage.setItem('homes', JSON.stringify(updatedHomes));
+      return true; // Return true to indicate successful deletion
     } else {
       console.error('Cannot delete home: not created by current conciergerie');
+      return false;
     }
   };
 

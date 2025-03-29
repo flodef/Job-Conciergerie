@@ -41,7 +41,8 @@ export async function fetchHomeById(id: string): Promise<Home | null> {
 /**
  * Fetch homes by conciergerie name
  */
-export async function fetchHomesByConciergerieName(conciergerieName: string): Promise<Home[]> {
+export async function fetchHomesByConciergerieName(conciergerieName: string | undefined): Promise<Home[]> {
+  if (!conciergerieName) return [];
   try {
     const homes = await getHomesByConciergerieName(conciergerieName);
     return homes;
@@ -112,16 +113,16 @@ export async function updateHomeData(
 ): Promise<Home | null> {
   try {
     // Convert to DB format
-    const dbData: Partial<Omit<DbHome, 'id' | 'modified_date'>> = {};
-
-    if (data.title !== undefined) dbData.title = data.title;
-    if (data.description !== undefined) dbData.description = data.description;
-    if (data.objectives !== undefined) dbData.objectives = data.objectives;
-    if (data.images !== undefined) dbData.images = data.images;
-    if (data.geographicZone !== undefined) dbData.geographic_zone = data.geographicZone;
-    if (data.hoursOfCleaning !== undefined) dbData.hours_of_cleaning = data.hoursOfCleaning;
-    if (data.hoursOfGardening !== undefined) dbData.hours_of_gardening = data.hoursOfGardening;
-    if (data.conciergerieName !== undefined) dbData.conciergerie_name = data.conciergerieName;
+    const dbData: Partial<Omit<DbHome, 'id'>> = {
+      title: data.title,
+      description: data.description,
+      objectives: data.objectives,
+      images: data.images,
+      geographic_zone: data.geographicZone,
+      hours_of_cleaning: data.hoursOfCleaning,
+      hours_of_gardening: data.hoursOfGardening,
+      conciergerie_name: data.conciergerieName,
+    };
 
     const updated = await updateHome(id, dbData);
 

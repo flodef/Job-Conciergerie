@@ -150,7 +150,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     return new Set(nonEmptyObjectives).size !== nonEmptyObjectives.length;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     let error: ErrorField | undefined;
 
     if (images.length === 0 && existingImages.length === 0)
@@ -221,7 +221,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
         // Check for duplicate homes by title before adding
         if (homeExists(title)) throw new Error('Un bien avec ce titre existe déjà');
 
-        const result = addHome({
+        const result = await addHome({
           title,
           description,
           objectives: objectives.filter(objective => objective.trim() !== ''),
@@ -237,7 +237,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
         // For edit mode, only check for duplicates if the title has changed
         if (title !== home.title && homeExists(title)) throw new Error('Un bien avec ce titre existe déjà');
 
-        const result = updateHome({
+        const result = await updateHome({
           ...home,
           title,
           description,
