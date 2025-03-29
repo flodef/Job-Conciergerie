@@ -38,17 +38,16 @@ export default function WaitingPage() {
       setPrimaryColor(foundConciergerie?.color);
 
       if (sentEmailError && foundConciergerie) {
-        sendConciergerieVerificationEmail(foundConciergerie, userId)
-          .then(isEmailSent => {
-            if (!isEmailSent) throw new Error();
+        sendConciergerieVerificationEmail(foundConciergerie, userId).then(isEmailSent => {
+          if (isEmailSent) {
             setSentEmailError(undefined);
-          })
-          .catch(() => {
+          } else {
             setToastMessage({
               type: ToastType.Error,
               message: "Une erreur est survenue lors de l'envoi de l'email de vérification",
             });
-          });
+          }
+        });
       }
       setIsLoading(false);
     },
@@ -75,17 +74,16 @@ export default function WaitingPage() {
         if (!selectedConciergerie) throw new Error('Conciergerie not found');
         if (!selectedConciergerie.email) throw new Error('Conciergerie email not found');
 
-        sendEmployeeRegistrationEmail(selectedConciergerie, foundEmployee)
-          .then(isEmailSent => {
-            if (!isEmailSent) throw new Error();
+        sendEmployeeRegistrationEmail(selectedConciergerie, foundEmployee).then(isEmailSent => {
+          if (isEmailSent) {
             setSentEmailError(undefined);
-          })
-          .catch(() => {
+          } else {
             setToastMessage({
               type: ToastType.Error,
               message: "Une erreur est survenue lors de l'envoi de l'email de confirmation",
             });
-          });
+          }
+        });
       }
 
       setIsLoading(false);
