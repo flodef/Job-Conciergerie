@@ -3,7 +3,6 @@
 import { sendConciergerieVerificationEmail } from '@/app/actions/email';
 import ErrorPage from '@/app/components/error';
 import FormActions from '@/app/components/formActions';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import Select from '@/app/components/select';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
@@ -20,13 +19,7 @@ type ConciergerieFormProps = {
 
 export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const { onMenuChange } = useMenuContext();
-  const {
-    isLoading: authLoading,
-    userId,
-    setSentEmailError,
-    setConciergerieName: setSelectedConciergerieName,
-    conciergeries,
-  } = useAuth();
+  const { userId, setSentEmailError, setConciergerieName: setSelectedConciergerieName, conciergeries } = useAuth();
 
   const conciergerieNameRef = useRef<HTMLDivElement>(null);
   const [conciergerieNameError, setConciergerieNameError] = useState('');
@@ -89,8 +82,6 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       setIsSubmitting(false);
     }
   };
-
-  if (authLoading) return <LoadingSpinner />;
 
   if (!conciergeries?.length) return <ErrorPage message="Aucune conciergerie trouvée !" />;
 

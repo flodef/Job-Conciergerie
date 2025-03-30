@@ -2,7 +2,6 @@ import { updateConciergerieData } from '@/app/actions/conciergerie';
 import { Button } from '@/app/components/button';
 import ColorPicker from '@/app/components/colorPicker';
 import Input from '@/app/components/input';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import colorOptions from '@/app/data/colors.json';
@@ -18,7 +17,7 @@ type ColorOption = {
 };
 
 const ConciergerieSettings: React.FC = () => {
-  const { userId, isLoading: authLoading, conciergeries, getUserData, updateUserData } = useAuth();
+  const { userId, conciergeries, getUserData, updateUserData } = useAuth();
 
   // Validation states
   const [emailError, setEmailError] = useState('');
@@ -148,8 +147,6 @@ const ConciergerieSettings: React.FC = () => {
       setIsSaving(false);
     }
   };
-
-  if (authLoading) return <LoadingSpinner />;
 
   return (
     <div className="space-y-2">

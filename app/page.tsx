@@ -2,7 +2,6 @@
 
 import ConciergerieForm from '@/app/components/conciergerieForm';
 import EmployeeForm from '@/app/components/employeeForm';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import UserTypeSelection from '@/app/components/userTypeSelection';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { useCallback, useEffect, useState } from 'react';
@@ -40,9 +39,6 @@ export default function Home() {
     setShowEmployeeForm(false);
     setShowConciergerieForm(false);
   };
-
-  // Show loading spinner while checking auth state or registration status
-  if (authLoading) return <LoadingSpinner />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background pt-2">

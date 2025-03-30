@@ -1,7 +1,6 @@
 'use client';
 
 import FloatingActionButton from '@/app/components/floatingActionButton';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import SearchInput from '@/app/components/searchInput';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
@@ -16,7 +15,7 @@ import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function HomesPage() {
-  const { myHomes, isLoading: homesLoading, fetchHomes } = useHomes();
+  const { myHomes, fetchHomes } = useHomes();
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
   const { isLoading: authLoading } = useAuth();
 
@@ -88,9 +87,6 @@ export default function HomesPage() {
     setIsEditModalOpen(false);
     setSelectedHome(null);
   };
-
-  if (homesLoading || authLoading)
-    return <LoadingSpinner text={authLoading ? 'Identification...' : 'Chargement des biens...'} />;
 
   return (
     <div>

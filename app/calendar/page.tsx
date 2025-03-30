@@ -1,6 +1,5 @@
 'use client';
 
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
@@ -25,7 +24,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function Calendar() {
   const { userId, userType, conciergerieName, conciergeries, isLoading: authLoading } = useAuth();
-  const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
+  const { missions, fetchMissions } = useMissions();
   const { currentPage } = useMenuContext();
 
   const [toastMessage, setToastMessage] = useState<Toast>();
@@ -117,9 +116,6 @@ export default function Calendar() {
       new Date(mission.endDateTime) < new Date()
     );
   };
-
-  if (authLoading || missionsLoading)
-    return <LoadingSpinner text={authLoading ? 'Identification...' : 'Chargement des missions...'} />;
 
   if (acceptedMissions.length === 0) {
     return (

@@ -2,7 +2,6 @@
 
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FloatingActionButton from '@/app/components/floatingActionButton';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
@@ -79,7 +78,6 @@ export default function Missions() {
 
   // Load saved filters from localStorage on component mount - must be called before any conditional returns
   useEffect(() => {
-    // Skip if still loading
     if (authLoading || !savedFilters) return;
 
     // Initialize filter states with saved values
@@ -190,9 +188,6 @@ export default function Missions() {
     selectedStatuses.length > 0 ||
     selectedTakenStatus.length > 0 ||
     selectedZones.length > 0;
-
-  if (missionsLoading || authLoading)
-    return <LoadingSpinner text={authLoading ? 'Identification...' : 'Chargement des missions...'} />;
 
   return (
     <div>

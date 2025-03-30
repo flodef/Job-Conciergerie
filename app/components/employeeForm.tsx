@@ -6,7 +6,6 @@ import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import Input from '@/app/components/input';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import Select from '@/app/components/select';
 import TextArea from '@/app/components/textArea';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
@@ -28,7 +27,7 @@ type EmployeeFormProps = {
 };
 
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
-  const { userId, isLoading: authLoading, setSentEmailError, conciergeries, updateUserData, employees } = useAuth();
+  const { userId, setSentEmailError, conciergeries, updateUserData, employees } = useAuth();
   const { onMenuChange } = useMenuContext();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
@@ -208,8 +207,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   };
 
   if (!formData) return null;
-
-  if (authLoading) return <LoadingSpinner />;
 
   if (!conciergeries?.length)
     return (

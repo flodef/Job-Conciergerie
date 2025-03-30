@@ -1,5 +1,6 @@
 'use client';
 
+import LoadingSpinner from '@/app/components/loadingSpinner';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { useBadge } from '@/app/contexts/badgeProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
@@ -40,6 +41,13 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   } = useBadge();
 
   const isLoading = isAuthLoading || isLoadingMissions || isLoadingHomes;
+  const loadingText = isLoadingMissions
+    ? 'Chargement des missions...'
+    : isLoadingHomes
+    ? 'Chargement des biens...'
+    : !isLoading
+    ? 'Redirection en cours...'
+    : undefined;
 
   useEffect(() => {
     // Check if we're on the homepage or waiting page
@@ -76,7 +84,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Fixed header - hidden on home page */}
-      {isNavigationPage && (
+      {isNavigationPage && !!userType && (
         <header className="sticky top-0 max-w-7xl mx-auto h-16 flex items-center justify-center">
           {/* Title */}
           <h1 className="text-2xl font-semibold text-foreground">{currentPage}</h1>
@@ -89,19 +97,19 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
         <div
           className={clsx(
             'bg-background px-4',
-            isNavigationPage
+            isNavigationPage && !!userType
               ? !isLoading
                 ? 'min-h-[calc(100dvh-4rem)] pb-20'
                 : 'h-[calc(100dvh-4rem)] pb-20'
               : 'h-screen',
           )}
         >
-          {children}
+          {isLoading || (isNavigationPage && !userType) ? <LoadingSpinner text={loadingText} /> : children}
         </div>
       </main>
 
       {/* Fixed bottom navigation bar - hidden on home page */}
-      {isNavigationPage && (
+      {isNavigationPage && !!userType && (
         <nav className="fixed bottom-0 left-0 right-0 h-20 bg-background border-t border-secondary z-40">
           <div className="max-w-7xl mx-auto flex justify-around h-full">
             {navigationPages

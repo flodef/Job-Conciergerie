@@ -2,7 +2,6 @@
 
 import { sendConciergerieVerificationEmail, sendEmployeeRegistrationEmail } from '@/app/actions/email';
 import ErrorPage from '@/app/components/error';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
@@ -108,7 +107,6 @@ export default function WaitingPage() {
     handleUser(userId);
   }, [userId, userType, authLoading, handleConciergerie, handleEmployee, router]);
 
-  if (authLoading) return <LoadingSpinner />;
   if (!userId || !userType) return <ErrorPage />;
 
   return (

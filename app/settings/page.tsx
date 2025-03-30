@@ -1,7 +1,6 @@
 'use client';
 
 import Accordion from '@/app/components/accordion';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import { useAuth } from '@/app/contexts/authProvider';
 import AdvancedSettings from '@/app/settings/components/advancedSettings';
 import ConciergerieSettings from '@/app/settings/components/conciergerieSettings';
@@ -10,7 +9,7 @@ import NotificationSettings from '@/app/settings/components/notificationSettings
 import { IconAdjustments, IconBell, IconSettings } from '@tabler/icons-react';
 
 export default function Settings() {
-  const { userType, isLoading: authLoading } = useAuth();
+  const { userType } = useAuth();
 
   // Sections content
   const generalSection = {
@@ -41,15 +40,9 @@ export default function Settings() {
     },
   ];
 
-  if (authLoading) return <LoadingSpinner />;
-
-  return userType ? (
+  return (
     <div className="max-w-2xl mx-auto">
       <Accordion items={accordionItems} />
-    </div>
-  ) : (
-    <div className="h-full flex items-center justify-center bg-background">
-      <p className="text-foreground/70">Aucune information utilisateur disponible.</p>
     </div>
   );
 }

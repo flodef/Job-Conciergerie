@@ -2,7 +2,6 @@ import { updateEmployeeData } from '@/app/actions/employee';
 import { Button } from '@/app/components/button';
 import Combobox from '@/app/components/combobox';
 import Input from '@/app/components/input';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import geographicZones from '@/app/data/geographicZone.json';
@@ -14,7 +13,7 @@ import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
 const EmployeeSettings: React.FC = () => {
-  const { userId, isLoading: authLoading, employees, getUserData, updateUserData } = useAuth();
+  const { userId, employees, getUserData, updateUserData } = useAuth();
 
   // Validation states
   const [emailError, setEmailError] = useState('');
@@ -150,8 +149,6 @@ const EmployeeSettings: React.FC = () => {
       setIsSaving(false);
     }
   };
-
-  if (authLoading) return <LoadingSpinner />;
 
   return (
     <div className="space-y-2">
