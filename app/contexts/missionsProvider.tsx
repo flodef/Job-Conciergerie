@@ -43,7 +43,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   const fetchMissions = async () => {
     console.warn('Loading missions from database...');
 
-    setIsLoading(true);
+    setIsLoading(missions.length === 0);
     let isSuccess = false;
     if (await fetchHomes()) {
       const fetchedMissions = await fetchAllMissions();
@@ -133,7 +133,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     )
       return false;
 
-    return await setMissionData(updatedMission.id, updatedMission);
+    return await setMissionData(updatedMission.id, { ...updatedMission, employeeId: undefined, status: undefined });
   };
 
   const deleteMission = async (id: string) => {

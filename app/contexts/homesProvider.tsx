@@ -34,7 +34,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   const fetchHomes = async () => {
     console.warn('Loading homes from database...');
 
-    setIsLoading(true);
+    setIsLoading(homes.length === 0);
     const fetchedHomes = await fetchAllHomes();
     if (fetchedHomes) setHomes(fetchedHomes);
 
