@@ -16,6 +16,7 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { Employee, EmployeeNotificationSettings } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
+import { employeeExists } from '@/app/utils/employee';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { defaultEmployeeSettings } from '@/app/utils/notifications';
@@ -27,7 +28,7 @@ type EmployeeFormProps = {
 };
 
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
-  const { userId, isLoading: authLoading, setSentEmailError, conciergeries, updateUserData } = useAuth();
+  const { userId, isLoading: authLoading, setSentEmailError, conciergeries, updateUserData, employees } = useAuth();
   const { onMenuChange } = useMenuContext();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
@@ -159,8 +160,20 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
       if (!userId) throw new Error("L'identifiant n'est pas défini");
 
+      // Check if employee already exists with the same name, phone, or email
+      if (
+        employeeExists(
+          employees,
+          formData.firstName || '',
+          formData.familyName || '',
+          formData.tel || '',
+          formData.email || '',
+        )
+      )
+        throw new Error('Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.');
+
       // Create a new employee in the database
-      const { employee, alreadyExists } = await createNewEmployee({
+      const employee = await createNewEmployee({
         id: userId,
         firstName: formData.firstName || '',
         familyName: formData.familyName || '',
@@ -171,14 +184,12 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         conciergerieName: formData.conciergerieName,
         notificationSettings: formData.notificationSettings as EmployeeNotificationSettings,
       });
-
-      if (alreadyExists) throw new Error('Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.');
       if (!employee) throw new Error('Employé non créé dans la base de données');
 
       updateUserData(employee);
 
       // Send notification email to conciergerie
-      const selectedConciergerie = conciergeries?.find(c => c.name === employee.conciergerieName);
+      const selectedConciergerie = conciergeries.find(c => c.name === employee.conciergerieName);
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 

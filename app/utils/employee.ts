@@ -1,5 +1,22 @@
 import { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 
+// Check if a home with the same title already exists for the current conciergerie
+export function employeeExists(
+  employees: Employee[],
+  firstName: string,
+  familyName: string,
+  tel: string,
+  email: string,
+): boolean {
+  return employees.some(
+    employee =>
+      employee.firstName === firstName &&
+      employee.familyName === familyName &&
+      employee.tel === tel &&
+      employee.email === email,
+  );
+}
+
 // Sort employees by status (pending first, then accepted, then rejected)
 // and then alphabetically by name
 export function sortEmployees(employees: Employee[]): Employee[] {
