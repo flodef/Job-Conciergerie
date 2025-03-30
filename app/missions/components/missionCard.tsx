@@ -1,9 +1,11 @@
 'use client';
 
-import { useMissions } from '@/app/contexts/missionsProvider';
+import { useAuth } from '@/app/contexts/authProvider';
+import { useHomes } from '@/app/contexts/homesProvider';
 import { Conciergerie, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
+import { formatNumber } from '@/app/utils/task';
 import { useEffect, useState } from 'react';
 
 type MissionCardProps = {
@@ -13,18 +15,19 @@ type MissionCardProps = {
 };
 
 export default function MissionCard({ mission, onClick, onEdit }: MissionCardProps) {
-  const { getHomeById, getEmployeeById, getConciergerieByName } = useMissions();
+  const { employees, conciergeries } = useAuth();
+  const { homes } = useHomes();
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
 
-  const home = getHomeById(mission.homeId);
+  const home = homes.find(h => h.id === mission.homeId);
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
-  const employee = getEmployeeById(mission.employeeId);
+  const employee = employees.find(e => e.id === mission.employeeId);
 
   // Fetch conciergerie data when mission changes
   useEffect(() => {
-    const conciergerieData = getConciergerieByName(home?.conciergerieName || '');
+    const conciergerieData = conciergeries.find(c => c.name === home?.conciergerieName);
     setConciergerie(conciergerieData);
-  }, [getConciergerieByName, home?.conciergerieName]);
+  }, [conciergeries, home?.conciergerieName]);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent the default context menu
@@ -49,14 +52,14 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         aria-label={`${mission.hours} heures`}
       >
         <div
-          className="absolute top-0 right-0 w-0 h-0 border-t-[56px] border-l-[56px] border-t-[conciergerieColor] border-l-transparent"
+          className="absolute top-0 right-0 w-0 h-0 border-t-[56px] border-l-[56px] border-t-[conciergerieColor] border-l-transparent rounded-tr-lg"
           style={{
             borderTopColor: conciergerieColor, // Fallback for Tailwind dynamic color
             borderLeftColor: 'transparent',
           }}
         ></div>
         <span className="absolute top-2 right-1 w-7 text-xs text-center font-bold text-background z-10">
-          {mission.hours}h
+          {formatNumber(mission.hours)}h
         </span>
       </div>
       {/* Diagonal label for taken missions */}

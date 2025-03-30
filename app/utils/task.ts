@@ -1,7 +1,7 @@
 'use client';
 
 import tasksData from '@/app/data/tasks.json';
-import { Mission, MissionPoints, Task } from '@/app/types/dataTypes';
+import { Home, Mission, MissionPoints, Task } from '@/app/types/dataTypes';
 
 // Get points for a specific task
 export const getTaskPoints = (task: Task) => {
@@ -113,15 +113,26 @@ export const calculateEmployeePointsForDay = (
 };
 
 /**
- * Formats points to display with minimal decimals
+ * Calculate total hours for a mission based on selected tasks and home specifications
+ */
+export const calculateMissionHours = (home: Home, tasks: Task[]): number => {
+  return tasks.reduce((acc, task) => {
+    const hours = {
+      [Task.Cleaning]: home.hoursOfCleaning,
+      [Task.Gardening]: home.hoursOfGardening,
+      [Task.Arrival]: 0.5,
+      [Task.Departure]: 0.5,
+    }[task];
+
+    return acc + hours;
+  }, 0);
+};
+
+/**
+ * Formats a number to display with minimal decimals
  * e.g., 3.0 becomes 3, and 1.666 becomes 1.7
  */
-export const formatPoints = (points: number): string => {
-  // If the number is an integer (no decimal part)
-  if (Number.isInteger(points)) {
-    return points.toString();
-  }
-
-  // Otherwise, round to 1 decimal place and remove trailing zeros
-  return parseFloat(points.toFixed(1)).toString();
+export const formatNumber = (number: number | string): string => {
+  const num = Number(number);
+  return Number.isInteger(num) ? num.toString() : parseFloat(num.toFixed(1)).toString();
 };
