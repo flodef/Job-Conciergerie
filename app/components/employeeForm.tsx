@@ -13,12 +13,11 @@ import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import geographicZones from '@/app/data/geographicZone.json';
-import { Employee, EmployeeNotificationSettings } from '@/app/types/dataTypes';
+import { Employee } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import { employeeExists } from '@/app/utils/employee';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
-import { defaultEmployeeSettings } from '@/app/utils/notifications';
 import { emailRegex, frenchPhoneRegex, getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
 import React, { useRef, useState } from 'react';
 
@@ -31,8 +30,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const { onMenuChange } = useMenuContext();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
-  const [formData, setFormData] = useLocalStorage<Partial<Employee>>('employee_data', {
-    id: '',
+  const [formData, setFormData] = useLocalStorage<Omit<Employee, 'id' | 'status' | 'createdAt'>>('employee_data', {
     firstName: '',
     familyName: '',
     tel: '',
@@ -40,7 +38,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     geographicZone: '',
     conciergerieName: conciergeries?.[0]?.name || '',
     message: '',
-    notificationSettings: defaultEmployeeSettings,
   });
   const [toastMessage, setToastMessage] = useState<Toast>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -68,7 +65,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const handleFormChange = (name: string, value: string) => {
     setIsFormChanged(true);
     setFormData(prev => ({
-      ...prev,
+      ...prev!,
       [name]: value,
     }));
   };
@@ -173,15 +170,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
       // Create a new employee in the database
       const employee = await createNewEmployee({
+        ...formData,
         id: userId,
-        firstName: formData.firstName || '',
-        familyName: formData.familyName || '',
-        tel: formData.tel || '',
-        email: formData.email || '',
-        geographicZone: formData.geographicZone || '',
-        message: formData.message,
-        conciergerieName: formData.conciergerieName,
-        notificationSettings: formData.notificationSettings as EmployeeNotificationSettings,
       });
       if (!employee) throw new Error('Employé non créé dans la base de données');
 
