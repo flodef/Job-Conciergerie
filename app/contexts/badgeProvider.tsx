@@ -3,6 +3,7 @@
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission } from '@/app/types/dataTypes';
+import { useLocalStorage } from '@/app/utils/localStorage';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 type BadgeContextType = {
@@ -15,13 +16,14 @@ type BadgeContextType = {
 };
 
 const checkingInterval = 60; // 1 minute
-const employeesCheckKey = 'last_checked_employees';
-const missionsCheckKey = 'last_checked_missions';
 const BadgeContext = createContext<BadgeContextType | undefined>(undefined);
 
 export function BadgeProvider({ children }: { children: ReactNode }) {
   const { userType, conciergerieName, employees: allEmployees } = useAuth();
   const { missions } = useMissions();
+
+  const [employeesLastChecked, setEmployeesLastChecked] = useLocalStorage('last_checked_employees', '');
+  const [missionsLastChecked, setMissionsLastChecked] = useLocalStorage('last_checked_missions', '');
 
   const [pendingEmployeesCount, setPendingEmployeesCount] = useState(0);
   const [newMissionsCount, setNewMissionsCount] = useState(0);
@@ -39,18 +41,10 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
             emp.status === 'pending' && emp.conciergerieName?.toLowerCase() === (conciergerieName?.toLowerCase() || ''),
         );
 
-        // Get the last checked timestamp from localStorage
-        const lastChecked = localStorage.getItem(employeesCheckKey);
-
         // If we have a last checked timestamp, only count employees created after that time
-        if (lastChecked) {
-          const lastCheckedDate = new Date(lastChecked);
-          const newPendingEmployees = pendingEmployees.filter(emp => new Date(emp.createdAt) > lastCheckedDate);
-          setPendingEmployeesCount(newPendingEmployees.length);
-        } else {
-          // If no last checked timestamp, count all pending employees
-          setPendingEmployeesCount(pendingEmployees.length);
-        }
+        const lastCheckedDate = new Date(employeesLastChecked ?? 0);
+        const newPendingEmployees = pendingEmployees.filter(emp => new Date(emp.createdAt) > lastCheckedDate);
+        setPendingEmployeesCount(newPendingEmployees.length);
       };
 
       // Count pending employees on mount and set up interval to check periodically
@@ -59,7 +53,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
 
       return () => clearInterval(interval);
     }
-  }, [userType, conciergerieName, allEmployees]);
+  }, [userType, conciergerieName, allEmployees, employeesLastChecked]);
 
   // Load and update new missions count
   useEffect(() => {
@@ -68,8 +62,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
       if (!missions.length) return;
 
       // Get the last checked timestamp from localStorage
-      const lastChecked = localStorage.getItem(missionsCheckKey) ?? 0;
-      const lastCheckedDate = new Date(lastChecked);
+      const lastCheckedDate = new Date(missionsLastChecked ?? 0);
 
       const missionFilter =
         userType === 'conciergerie'
@@ -93,7 +86,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
     const interval = setInterval(countNewMissions, checkingInterval * 1000);
 
     return () => clearInterval(interval);
-  }, [missions, userType, conciergerieName]);
+  }, [missions, userType, conciergerieName, missionsLastChecked]);
 
   // Count missions for today
   useEffect(() => {
@@ -145,12 +138,12 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
   // Reset functions
   const resetPendingEmployeesCount = () => {
     setPendingEmployeesCount(0);
-    localStorage.setItem(employeesCheckKey, new Date().toISOString());
+    setEmployeesLastChecked(new Date().toISOString());
   };
 
   const resetNewMissionsCount = () => {
     setNewMissionsCount(0);
-    localStorage.setItem(missionsCheckKey, new Date().toISOString());
+    setMissionsLastChecked(new Date().toISOString());
   };
 
   return (

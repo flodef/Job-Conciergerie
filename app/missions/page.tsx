@@ -3,28 +3,35 @@
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FloatingActionButton from '@/app/components/floatingActionButton';
 import LoadingSpinner from '@/app/components/loadingSpinner';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
+import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import MissionDetails from '@/app/missions/components/missionDetails';
-import MissionFilters from '@/app/missions/components/missionFilters';
+import MissionFilters, { MissionFiltersType } from '@/app/missions/components/missionFilters';
 import MissionForm from '@/app/missions/components/missionForm';
 import MissionList from '@/app/missions/components/missionList';
 import MissionSortControls from '@/app/missions/components/missionSortControls';
 import { Mission, MissionSortField } from '@/app/types/dataTypes';
+import { useLocalStorage } from '@/app/utils/localStorage';
 import {
   applyMissionFilters,
   filterMissionsByUserType,
   groupMissionsByCategory,
   sortMissions,
 } from '@/app/utils/missionFilters';
-import { useEffect, useMemo, useState } from 'react';
+import { Page } from '@/app/utils/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function Missions() {
-  const { missions, isLoading: missionsLoading } = useMissions();
+  const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
   const { homes } = useHomes();
-  const { userType, isLoading: authLoading } = useAuth();
+  const { userType, isLoading: authLoading, getUserData } = useAuth();
+  const { currentPage } = useMenuContext();
+
+  const [toastMessage, setToastMessage] = useState<Toast>();
 
   // Modal states - must be declared before any conditional returns
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -46,52 +53,51 @@ export default function Missions() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Store for saved filter values - must be declared before any conditional returns
-  const [savedFilters, setSavedFilters] = useState<{
-    conciergeries: string[];
-    statuses: string[];
-    takenStatus: string[];
-    zones: string[];
-  }>({
+  const [savedFilters, setSavedFilters] = useLocalStorage<MissionFiltersType>('mission_filters', {
     conciergeries: [],
     statuses: ['current'],
     takenStatus: ['notTaken'],
     zones: [],
   });
 
-  // We don't need the redirect hook anymore since middleware handles it
-  // Also don't need to check auth status again since middleware already did
+  // Reload missions when displaying the page
+  const isFetching = useRef(false);
+  useEffect(() => {
+    // Skip if still loading
+    if (authLoading || currentPage !== Page.Missions || isFetching.current) return;
+
+    isFetching.current = true;
+
+    fetchMissions().then(isSuccess => {
+      if (!isSuccess)
+        setToastMessage({
+          type: ToastType.Error,
+          message: 'Erreur lors du chargement des missions',
+        });
+    });
+  }, [currentPage, authLoading, fetchMissions]);
 
   // Load saved filters from localStorage on component mount - must be called before any conditional returns
   useEffect(() => {
     // Skip if still loading
-    if (authLoading || !userType) return;
+    if (authLoading || !savedFilters) return;
 
-    const savedFiltersStr = localStorage.getItem('mission_filters');
-    if (savedFiltersStr) {
-      try {
-        const savedFiltersData = JSON.parse(savedFiltersStr);
-        setSavedFilters(savedFiltersData);
-
-        // Initialize filter states with saved values
-        setSelectedConciergeries(savedFiltersData.conciergeries || []);
-        setSelectedStatuses(savedFiltersData.statuses || ['current']);
-        setSelectedTakenStatus(savedFiltersData.takenStatus || ['notTaken']);
-        setSelectedZones(savedFiltersData.zones || []);
-      } catch (error) {
-        console.error('Error parsing saved filters:', error);
-      }
-    }
-  }, [authLoading, userType]);
+    // Initialize filter states with saved values
+    setSelectedConciergeries(savedFilters.conciergeries || []);
+    setSelectedStatuses(savedFilters.statuses || ['current']);
+    setSelectedTakenStatus(savedFilters.takenStatus || ['notTaken']);
+    setSelectedZones(savedFilters.zones || []);
+  }, [authLoading, savedFilters]);
 
   // Basic filtered missions (by user type) - must be declared before any conditional returns
   const basicFilteredMissions = useMemo(() => {
-    if (authLoading || !userType) return [];
-    return filterMissionsByUserType(missions, userType);
-  }, [missions, userType, authLoading]);
+    if (missionsLoading) return [];
+    return filterMissionsByUserType(missions, userType, getUserData());
+  }, [missions, userType, missionsLoading, getUserData]);
 
   // Apply additional filters (conciergerie, status, zones) - must be declared before any conditional returns
   const filteredMissions = useMemo(() => {
-    if (authLoading || !userType) return [];
+    if (missionsLoading) return [];
     return applyMissionFilters(
       basicFilteredMissions,
       selectedConciergeries,
@@ -107,25 +113,24 @@ export default function Missions() {
     selectedTakenStatus,
     selectedZones,
     homes,
-    authLoading,
-    userType,
+    missionsLoading,
   ]);
 
   // Sort missions - must be declared before any conditional returns
   const sortedMissions = useMemo(() => {
-    if (authLoading || !userType) return [];
+    if (missionsLoading) return [];
     return sortMissions(filteredMissions, sortField, sortDirection, homes);
-  }, [filteredMissions, sortField, sortDirection, homes, authLoading, userType]);
+  }, [filteredMissions, sortField, sortDirection, homes, missionsLoading]);
 
   // Group missions by category - must be declared before any conditional returns
   const groupedMissions = useMemo(() => {
-    if (authLoading || !userType) return {};
+    if (missionsLoading) return {};
     return groupMissionsByCategory(sortedMissions, sortField, homes);
-  }, [sortedMissions, sortField, homes, authLoading, userType]);
+  }, [sortedMissions, sortField, homes, missionsLoading]);
 
   // Get available conciergeries for filtering - must be declared before any conditional returns
   const availableConciergeries = useMemo(() => {
-    if (authLoading || !userType) return [];
+    if (missionsLoading) return [];
     const conciergeries = new Set<string>();
     basicFilteredMissions.forEach(mission => {
       if (mission.conciergerieName) {
@@ -133,11 +138,11 @@ export default function Missions() {
       }
     });
     return Array.from(conciergeries).sort();
-  }, [basicFilteredMissions, authLoading, userType]);
+  }, [basicFilteredMissions, missionsLoading]);
 
   // Get available geographic zones for filtering - must be declared before any conditional returns
   const availableZones = useMemo(() => {
-    if (authLoading || !userType) return [];
+    if (missionsLoading) return [];
     const zones = new Set<string>();
     basicFilteredMissions.forEach(mission => {
       const home = homes.find(h => h.id === mission.homeId);
@@ -146,18 +151,16 @@ export default function Missions() {
       }
     });
     return Array.from(zones).sort();
-  }, [basicFilteredMissions, homes, authLoading, userType]);
+  }, [basicFilteredMissions, homes, missionsLoading]);
 
   // Function to save current filter values to localStorage
   const saveFiltersToLocalStorage = () => {
-    const filtersToSave = {
+    setSavedFilters({
       conciergeries: selectedConciergeries,
       statuses: selectedStatuses,
       takenStatus: selectedTakenStatus,
       zones: selectedZones,
-    };
-    localStorage.setItem('mission_filters', JSON.stringify(filtersToSave));
-    setSavedFilters(filtersToSave);
+    });
   };
 
   // Change sort field
@@ -193,6 +196,8 @@ export default function Missions() {
 
   return (
     <div>
+      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+
       {/* Sort controls and filter toggle */}
       <MissionSortControls
         sortField={sortField}
