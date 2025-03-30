@@ -1,4 +1,5 @@
 import { updateConciergerieData } from '@/app/actions/conciergerie';
+import { Button } from '@/app/components/button';
 import ColorPicker from '@/app/components/colorPicker';
 import Input from '@/app/components/input';
 import LoadingSpinner from '@/app/components/loadingSpinner';
@@ -17,7 +18,7 @@ type ColorOption = {
 };
 
 const ConciergerieSettings: React.FC = () => {
-  const { userId, isLoading: authLoading, getUserData, updateUserData } = useAuth();
+  const { userId, isLoading: authLoading, conciergeries, getUserData, updateUserData } = useAuth();
 
   // Validation states
   const [emailError, setEmailError] = useState('');
@@ -83,6 +84,18 @@ const ConciergerieSettings: React.FC = () => {
     else if (!frenchPhoneRegex.test(tel))
       error = {
         message: 'Veuillez corriger le format du numéro de téléphone',
+        fieldRef: phoneRef,
+        func: setPhoneError,
+      };
+    else if (originalEmail !== email && conciergeries.some(e => e.email === email))
+      error = {
+        message: "L'adresse email est déjà utilisée",
+        fieldRef: emailRef,
+        func: setEmailError,
+      };
+    else if (originalTel !== tel && conciergeries.some(e => e.tel === tel))
+      error = {
+        message: 'Le numéro de téléphone est déjà utilisé',
         fieldRef: phoneRef,
         func: setPhoneError,
       };
@@ -178,15 +191,9 @@ const ConciergerieSettings: React.FC = () => {
       />
 
       <div className="flex justify-center pt-2">
-        <button
-          onClick={handleSave}
-          disabled={isSaving || !hasChanges()}
-          className={`px-4 py-2 text-white rounded-md transition-colors ${
-            hasChanges() ? 'bg-primary hover:bg-primary/80' : 'bg-primary/50 cursor-not-allowed'
-          }`}
-        >
-          {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
-        </button>
+        <Button onClick={handleSave} disabled={!hasChanges()} loading={isSaving} loadingText="Enregistrement...">
+          Enregistrer les modifications
+        </Button>
       </div>
     </div>
   );
