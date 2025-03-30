@@ -1,3 +1,4 @@
+import { Button } from '@/app/components/button';
 import clsx from 'clsx/lite';
 
 type FormActionsProps = {
@@ -30,33 +31,18 @@ export default function FormActions({
         className,
       )}
     >
-      <button
-        type="button"
-        onClick={onCancel}
-        className="px-4 py-2 bg-secondary text-foreground rounded-lg hover:bg-secondary/80"
-        disabled={isSubmitting}
-      >
+      <Button onClick={onCancel} style="secondary" disabled={isSubmitting}>
         {cancelText}
-      </button>
-      <button
+      </Button>
+      <Button
         type={submitType}
-        onClick={onSubmit}
-        className={clsx(
-          'px-4 py-2 rounded-lg flex items-center justify-center',
-          isDangerous ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-primary hover:bg-primary/90 text-background',
-          (isSubmitting || disabled) && 'opacity-50 cursor-not-allowed',
-        )}
-        disabled={isSubmitting || disabled}
+        onClick={onSubmit || (() => {})}
+        style={isDangerous ? 'dangerous' : 'primary'}
+        disabled={disabled}
+        loading={isSubmitting}
       >
-        {isSubmitting && !disabled ? (
-          <>
-            <span className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin mr-2"></span>
-            Traitement...
-          </>
-        ) : (
-          submitText
-        )}
-      </button>
+        {submitText}
+      </Button>
     </div>
   );
 }
