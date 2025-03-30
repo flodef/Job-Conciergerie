@@ -10,9 +10,10 @@ import TaskSelector from '@/app/components/taskSelector';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { Home, Mission, Task } from '@/app/types/dataTypes';
+import { Mission, Task } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import { handleChange } from '@/app/utils/form';
+import { calculateMissionHours } from '@/app/utils/task';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type MissionFormProps = {
@@ -20,20 +21,6 @@ type MissionFormProps = {
   onClose: () => void;
   onCancel?: () => void;
   mode: 'add' | 'edit';
-};
-
-// Calculate total hours for a mission based on selected tasks and home specifications
-const calculateMissionHours = (home: Home, tasks: Task[]): number => {
-  return tasks.reduce((acc, task) => {
-    const hours = {
-      [Task.Cleaning]: home.hoursOfCleaning,
-      [Task.Gardening]: home.hoursOfGardening,
-      [Task.Arrival]: 0.5,
-      [Task.Departure]: 0.5,
-    }[task];
-
-    return acc + hours;
-  }, 0);
 };
 
 export default function MissionForm({ mission, onClose, onCancel, mode }: MissionFormProps) {
@@ -60,6 +47,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   // Get current date and time in local timezone
   const now = new Date();
   const localISOString = useCallback((date: Date) => {
+    // Should use a try/catch block to handle invalid dates
     try {
       const offset = date.getTimezoneOffset() * 60000;
       return new Date(date.getTime() - offset).toISOString().slice(0, 16);
@@ -167,7 +155,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     let error: ErrorField | undefined;
 
     if (!homeId.trim())
@@ -232,7 +220,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         )
           throw new Error('Une mission identique existe déjà');
 
-        const result = addMission({
+        const result = await addMission({
           homeId: selectedHome.id,
           tasks: tasksState,
           startDateTime: startDate,
@@ -244,27 +232,21 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
         setToastMessage({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
       } else if (mission) {
-        // Create a new mission object with only the necessary fields
-        // This ensures we don't preserve any fields that should be reset by updateMission
-
         const updatedMission: Mission = {
-          id: mission.id,
+          ...mission,
           homeId: selectedHome.id,
           tasks: tasksState,
           startDateTime: startDate,
           endDateTime: endDate,
           modifiedDate: new Date(),
-          conciergerieName: mission.conciergerieName,
           allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
-          status: mission.status,
-          employeeId: mission.employeeId,
           hours: totalHours,
         };
 
-        // Check if update would create a duplicate (excluding the current mission)
-        if (missionExists(updatedMission, mission.id)) throw new Error('Une mission identique existe déjà');
+        // Check if update would create a duplicate
+        if (missionExists(updatedMission)) throw new Error('Une mission identique existe déjà');
 
-        const result = updateMission(updatedMission);
+        const result = await updateMission(updatedMission);
         if (!result) throw new Error('Impossible de mettre à jour la mission');
 
         setToastMessage({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });

@@ -16,32 +16,32 @@ import { IconPlus } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function HomesPage() {
-  const { homes, isLoading: homesLoading, fetchHomes } = useHomes();
+  const { myHomes, isLoading: homesLoading, fetchHomes } = useHomes();
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
-  const { conciergerieName, isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading } = useAuth();
 
+  const [toastMessage, setToastMessage] = useState<Toast>();
   const [selectedHome, setSelectedHome] = useState<Home | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [toastMessage, setToastMessage] = useState<Toast>();
 
   // Reload employees when displaying the page
   const isFetching = useRef(false);
   useEffect(() => {
     // Skip if still loading
-    if (currentPage !== Page.Homes || isFetching.current) return;
+    if (authLoading || currentPage !== Page.Homes || isFetching.current) return;
 
     isFetching.current = true;
+
     fetchHomes().then(isSuccess => {
-      if (!isSuccess) {
+      if (!isSuccess)
         setToastMessage({
           type: ToastType.Error,
           message: 'Erreur lors du chargement des biens',
         });
-      }
     });
-  }, [currentPage, fetchHomes]);
+  }, [currentPage, authLoading, fetchHomes]);
 
   // Reset unsaved changes when navigating to this page - must be called before any conditional returns
   useEffect(() => {
@@ -51,18 +51,16 @@ export default function HomesPage() {
   // Filter homes by the current conciergerie
   const filteredHomes = useMemo(
     () =>
-      homes
-        .filter(home => home.conciergerieName === conciergerieName)
-        .filter(home => {
-          if (searchTerm.trim() === '') return true;
-          const searchLower = searchTerm.toLowerCase();
-          return (
-            home.title.toLowerCase().includes(searchLower) ||
-            home.description.toLowerCase().includes(searchLower) ||
-            home.objectives.some(objective => objective.toLowerCase().includes(searchLower))
-          );
-        }),
-    [homes, conciergerieName, searchTerm],
+      myHomes.filter(home => {
+        if (searchTerm.trim() === '') return true;
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          home.title.toLowerCase().includes(searchLower) ||
+          home.description.toLowerCase().includes(searchLower) ||
+          home.objectives.some(objective => objective.toLowerCase().includes(searchLower))
+        );
+      }),
+    [myHomes, searchTerm],
   );
 
   const handleHomeClick = (home: Home) => {
@@ -98,7 +96,7 @@ export default function HomesPage() {
     <div>
       <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
 
-      {homes.length > 1 && (
+      {myHomes.length > 1 && (
         <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
       )}
 

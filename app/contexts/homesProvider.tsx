@@ -1,16 +1,17 @@
 'use client';
 
-import { createNewHome, deleteHomeData, fetchHomesByConciergerieName, updateHomeData } from '@/app/actions/home';
+import { createNewHome, deleteHomeData, fetchAllHomes, updateHomeData } from '@/app/actions/home';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Home } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useContext, useMemo, useState } from 'react';
 
 type HomesContextType = {
-  homes: Home[];
   isLoading: boolean;
+  homes: Home[];
+  myHomes: Home[];
   fetchHomes: () => Promise<boolean>;
-  addHome: (home: Omit<Home, 'id' | 'conciergerieName'>) => Promise<boolean | void>;
+  addHome: (home: Omit<Home, 'id' | 'conciergerieName'>) => Promise<boolean>;
   updateHome: (home: Home) => Promise<boolean>;
   deleteHome: (id: string) => Promise<boolean>;
   homeExists: (title: string) => boolean;
@@ -21,24 +22,24 @@ const HomesContext = createContext<HomesContextType | undefined>(undefined);
 export function HomesProvider({ children }: { children: ReactNode }) {
   const { conciergerieName } = useAuth();
 
+  const [isLoading, setIsLoading] = useState(false);
   const [homes, setHomes] = useState<Home[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const myHomes = useMemo(
+    () => homes.filter(home => home.conciergerieName === conciergerieName),
+    [homes, conciergerieName],
+  );
 
   // Load homes from localStorage on initial render
   const fetchHomes = async () => {
-    setIsLoading(true);
+    console.warn('Loading homes from database...');
 
-    try {
-      console.warn('Loading homes from database...');
-      const fetchedHomes = await fetchHomesByConciergerieName(conciergerieName);
-      setHomes(fetchedHomes);
-      return true;
-    } catch (error) {
-      console.error('Failed to fetch homes from database', error);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
+    setIsLoading(true);
+    const fetchedHomes = await fetchAllHomes();
+    if (fetchedHomes) setHomes(fetchedHomes);
+
+    setIsLoading(false);
+    return !!fetchedHomes;
   };
 
   // Check if a home with the same title already exists for the current conciergerie
@@ -50,13 +51,8 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   };
 
   const addHome = async (homeData: Omit<Home, 'id' | 'conciergerieName'>) => {
-    if (!conciergerieName) return;
-
     // Check if a home with the same title already exists
-    if (homeExists(homeData.title)) {
-      // Return false to indicate that the home wasn't added due to duplication
-      return false;
-    }
+    if (!conciergerieName || homeExists(homeData.title)) return false;
 
     const newHome: Home = {
       ...homeData,
@@ -65,52 +61,46 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     };
 
     const createdHome = await createNewHome(newHome);
-    if (!createdHome) return;
+    if (!createdHome) return false;
 
     setHomes(prev => [...prev, createdHome]);
-
-    return true; // Return true to indicate successful addition
+    return true;
   };
 
   const updateHome = async (updatedHome: Home) => {
-    if (!conciergerieName) return false;
-
-    // Only allow updates if the home was created by the current conciergerie
-    if (updatedHome.conciergerieName === conciergerieName) {
-      const updated = await updateHomeData(updatedHome.id, updatedHome);
-      if (!updated) return false;
-
-      setHomes(prev => prev.map(home => (home.id === updatedHome.id ? { ...updatedHome } : home)));
-      return true; // Return true to indicate successful update
-    } else {
-      console.error('Cannot update home: not created by current conciergerie');
+    if (
+      !conciergerieName ||
+      !updatedHome.id ||
+      updatedHome.conciergerieName !== conciergerieName ||
+      homeExists(updatedHome.title)
+    )
       return false;
-    }
+
+    const updated = await updateHomeData(updatedHome.id, updatedHome);
+    if (!updated) return false;
+
+    setHomes(prev => prev.map(home => (home.id === updatedHome.id ? { ...updated } : home)));
+    return true;
   };
 
   const deleteHome = async (id: string) => {
-    const homeToDelete = homes.find(h => h.id === id);
+    const homeToDelete = homes.find(h => h.id === id && h.conciergerieName === conciergerieName);
 
-    // Only allow deletion if the home was created by the current conciergerie
-    if (homeToDelete && homeToDelete.conciergerieName === conciergerieName) {
-      // Delete the home from the database
-      const deleted = await deleteHomeData(id);
-      if (!deleted) return false;
+    if (!homeToDelete) return false;
 
-      // Remove the home from the array
-      setHomes(prev => prev.filter(home => home.id !== id));
-      return true; // Return true to indicate successful deletion
-    } else {
-      console.error('Cannot delete home: not created by current conciergerie');
-      return false;
-    }
+    const deleted = await deleteHomeData(id);
+    if (!deleted) return false;
+
+    setHomes(prev => prev.filter(home => home.id !== id));
+    return true;
   };
 
   return (
     <HomesContext.Provider
       value={{
-        homes,
         isLoading,
+        homes,
+        myHomes,
         fetchHomes,
         addHome,
         updateHome,

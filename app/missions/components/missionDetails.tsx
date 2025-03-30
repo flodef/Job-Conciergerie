@@ -5,14 +5,15 @@ import FullScreenModal from '@/app/components/fullScreenModal';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import MissionActions from '@/app/missions/components/missionActions';
 import MissionForm from '@/app/missions/components/missionForm';
 import { Conciergerie, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
-import { formatDateTime, getTimeDifference } from '@/app/utils/date';
-import { calculateEmployeePointsForDay, calculateMissionPoints, getTaskPoints } from '@/app/utils/task';
+import { formatDateTime, getDateRangeDifference } from '@/app/utils/date';
+import { calculateEmployeePointsForDay, calculateMissionPoints, formatNumber, getTaskPoints } from '@/app/utils/task';
 import {
   IconAlertTriangle,
   IconBuildingStore,
@@ -38,22 +39,19 @@ type MissionDetailsProps = {
 
 export default function MissionDetails({ mission, onClose, isFromCalendar = false }: MissionDetailsProps) {
   const {
-    deleteMission,
-    removeEmployee,
+    missions,
     shouldShowAcceptWarning,
+    deleteMission,
+    cancelMission,
     acceptMission,
     startMission,
     completeMission,
     setShouldShowAcceptWarning,
-    missions,
-    getHomeById,
-    getEmployeeById,
-    getConciergerieByName,
   } = useMissions();
+  const { userId, userType, conciergerieName, conciergeries, employees } = useAuth();
+  const { homes } = useHomes();
 
   const [toastMessage, setToastMessage] = useState<Toast>();
-  const { userId, userType, conciergerieName } = useAuth();
-
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
@@ -70,33 +68,41 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
 
   // Get the home data
-  const home = getHomeById(mission.homeId);
+  const home = homes.find(h => h.id === mission.homeId);
 
   const isEmployee = userType === 'employee';
   const isConciergerie = userType === 'conciergerie';
 
   // Fetch conciergerie data when mission changes
   useEffect(() => {
-    const conciergerieData = getConciergerieByName(home?.conciergerieName || '');
+    const conciergerieData = conciergeries.find(c => c.name === home?.conciergerieName);
     setConciergerie(conciergerieData);
-  }, [getConciergerieByName, home?.conciergerieName]);
+  }, [conciergeries, home?.conciergerieName]);
 
   useEffect(() => {
     setIsReadOnly(isEmployee || (isConciergerie && home?.conciergerieName !== conciergerieName));
   }, [mission, conciergerieName, isEmployee, isConciergerie, home?.conciergerieName]);
 
   const handleDelete = () => {
-    deleteMission(mission.id);
-    setIsDeleteModalOpen(false);
-    onClose();
+    deleteMission(mission.id).then(isSuccess => {
+      setToastMessage({
+        type: isSuccess ? ToastType.Success : ToastType.Error,
+        message: isSuccess ? 'Mission supprimée !' : 'Erreur lors de la suppression de la mission',
+      });
+      if (isSuccess) setIsDeleteModalOpen(false);
+    });
   };
 
-  const handleRemoveEmployee = () => {
-    removeEmployee(mission.id);
-    onClose();
+  const handleCancel = () => {
+    cancelMission(mission.id).then(isSuccess => {
+      setToastMessage({
+        type: isSuccess ? ToastType.Success : ToastType.Error,
+        message: isSuccess ? 'Mission annulée !' : "Erreur lors de l'annulation de la mission",
+      });
+    });
   };
 
-  const handleAcceptClick = () => {
+  const handleAccept = () => {
     if (shouldShowAcceptWarning) {
       setIsAcceptModalOpen(true);
     } else {
@@ -105,11 +111,14 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   };
 
   const handleConfirmAccept = () => {
-    acceptMission(mission.id);
-    setIsConfirmationModalOpen(false);
-    setToastMessage({
-      type: ToastType.Success,
-      message: 'Mission acceptée ! Retrouvez-la dans votre calendrier.',
+    acceptMission(mission.id).then(isSuccess => {
+      setToastMessage({
+        type: isSuccess ? ToastType.Success : ToastType.Error,
+        message: isSuccess
+          ? 'Mission acceptée ! Retrouvez-la dans votre calendrier.'
+          : "Erreur lors de l'acceptation de la mission",
+      });
+      if (isSuccess) setIsConfirmationModalOpen(false);
     });
   };
 
@@ -120,11 +129,36 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     }
 
     // Accept the mission
-    acceptMission(mission.id);
-    setIsAcceptModalOpen(false);
-    setToastMessage({
-      type: ToastType.Success,
-      message: 'Mission acceptée ! Retrouvez-la dans votre calendrier.',
+    acceptMission(mission.id).then(isSuccess => {
+      setToastMessage({
+        type: isSuccess ? ToastType.Success : ToastType.Error,
+        message: isSuccess
+          ? 'Mission acceptée ! Retrouvez-la dans votre calendrier.'
+          : "Erreur lors de l'acceptation de la mission",
+      });
+      if (isSuccess) setIsAcceptModalOpen(false);
+    });
+  };
+
+  const handleStart = () => {
+    startMission(mission.id).then(isSuccess => {
+      setToastMessage({
+        type: isSuccess ? ToastType.Success : ToastType.Error,
+        message: isSuccess
+          ? 'Mission démarrée ! Retrouvez-la dans votre calendrier.'
+          : 'Erreur lors du démarrage de la mission',
+      });
+    });
+  };
+
+  const handleComplete = () => {
+    completeMission(mission.id).then(isSuccess => {
+      setToastMessage({
+        type: isSuccess ? ToastType.Success : ToastType.Error,
+        message: isSuccess
+          ? 'Mission terminée ! Retrouvez-la dans votre calendrier.'
+          : 'Erreur lors du terminage de la mission',
+      });
     });
   };
 
@@ -134,12 +168,12 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   if (showHomeDetails && home) {
     // Get the original home from the homes context to ensure we have all images
-    const originalHome = getHomeById(mission.homeId) || home;
+    const originalHome = homes.find(h => h.id === mission.homeId) || home;
     return <HomeDetails home={originalHome} onClose={() => setShowHomeDetails(false)} />;
   }
 
   const firstHomeImage = home?.images?.length ? home.images[0] : '';
-  const employee = getEmployeeById(mission.employeeId);
+  const employee = employees.find(e => e.id === mission.employeeId);
 
   // Check if the employee can accept the mission
   const canAcceptMission = isEmployee && !employee;
@@ -185,57 +219,23 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const footer = (
     <>
-      {isFromCalendar ? (
-        <MissionActions
-          mission={mission}
-          isEmployee={isEmployee}
-          isReadOnly={isReadOnly}
-          isFromCalendar={isFromCalendar}
-          onEdit={() => {
-            if (mission.employeeId) {
-              setIsEditWarningModalOpen(true);
-            } else {
-              setIsEditMode(true);
-            }
-          }}
-          onDelete={() => {
-            if (mission.employeeId) {
-              setIsDeleteWarningModalOpen(true);
-            } else {
-              setIsDeleteModalOpen(true);
-            }
-          }}
-          onRemoveEmployee={handleRemoveEmployee}
-          onStartMission={startMission}
-          onCompleteMission={completeMission}
-          onClose={onClose}
-        />
-      ) : (
-        <MissionActions
-          mission={mission}
-          isEmployee={isEmployee}
-          isReadOnly={isReadOnly}
-          isFromCalendar={isFromCalendar}
-          onEdit={() => {
-            if (mission.employeeId) {
-              setIsEditWarningModalOpen(true);
-            } else {
-              setIsEditMode(true);
-            }
-          }}
-          onDelete={() => {
-            if (mission.employeeId) {
-              setIsDeleteWarningModalOpen(true);
-            } else {
-              setIsDeleteModalOpen(true);
-            }
-          }}
-          onRemoveEmployee={handleRemoveEmployee}
-          onStartMission={startMission}
-          onCompleteMission={completeMission}
-          onClose={onClose}
-        />
-      )}
+      <MissionActions
+        mission={mission}
+        isReadOnly={isReadOnly}
+        isFromCalendar={isFromCalendar}
+        onEdit={() => {
+          if (mission.employeeId) setIsEditWarningModalOpen(true);
+          else setIsEditMode(true);
+        }}
+        onDelete={() => {
+          if (mission.employeeId) setIsDeleteWarningModalOpen(true);
+          else setIsDeleteModalOpen(true);
+        }}
+        onRemoveEmployee={handleCancel}
+        onStartMission={handleStart}
+        onCompleteMission={handleComplete}
+        onClose={onClose}
+      />
       {canAcceptMission && (
         <div className="sticky bottom-0 bg-background border-t border-secondary py-2">
           <div className="flex justify-end gap-2">
@@ -246,7 +246,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
               </div>
             )}
             <button
-              onClick={handleAcceptClick}
+              onClick={handleAccept}
               disabled={hasExceededPoints}
               className={`flex flex-col items-center p-2 w-20 rounded-lg ${
                 hasExceededPoints
@@ -347,7 +347,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
               </p>
             </Tooltip>
           </h3>
-          <span className="font-medium">{calculateMissionPoints(mission).totalPoints} pts</span>
+          <span className="font-medium">{calculateMissionPoints(mission).totalPoints} points</span>
         </div>
 
         <div className="flex items-center justify-between">
@@ -355,7 +355,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             <IconStopwatch size={16} />
             Nombre d&apos;heures estimées
           </h3>
-          <span className="font-medium">{mission.hours} heures</span>
+          <span className="font-medium">{formatNumber(mission.hours)} heures</span>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -396,7 +396,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     // Otherwise show total duration
                     return hasEnded
                       ? 'Mission terminée'
-                      : getTimeDifference(hasStarted ? now : startDate, endDate) + (hasStarted ? ' restant' : '');
+                      : getDateRangeDifference(hasStarted ? now : startDate, endDate) + (hasStarted ? ' restant' : '');
                   })()}
                 </div>
               </div>
@@ -454,7 +454,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                 <Tooltip>
                   <ul className="list-disc pl-4">
                     {mission.allowedEmployees?.map(employeeId => {
-                      const employee = getEmployeeById(employeeId);
+                      const employee = employees.find(e => e.id === employeeId);
                       return (
                         <li key={employeeId}>
                           {employee ? `${employee.firstName} ${employee.familyName}` : employeeId}
