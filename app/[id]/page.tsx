@@ -2,11 +2,10 @@
 
 import { updateConciergerieWithUserId } from '@/app/actions/conciergerie';
 import ErrorPage from '@/app/components/error';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { Page } from '@/app/utils/navigation';
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 
 export default function IdPage({ params }: { params: Promise<{ id: string }> }) {
   const { userId, conciergerieName, conciergeries, isLoading, updateUserData } = useAuth();
@@ -17,9 +16,12 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
   const { id } = unwrappedParams;
   const [error, setError] = useState('');
 
+  const isFetching = useRef(false);
   useEffect(() => {
     const validateAndUpdateConciergerie = async () => {
       try {
+        isFetching.current = true;
+
         // Check if the ID in the URL matches the ID in localStorage AND that there is a conciergerie name in localStorage
         if (!userId || userId !== id || !conciergerieName)
           throw new Error('Identifiant non trouvée ou incorrect. Veuillez vous reconnecter.');
@@ -45,10 +47,8 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
       }
     };
 
-    if (!isLoading) validateAndUpdateConciergerie();
+    if (!isLoading && !isFetching.current) validateAndUpdateConciergerie();
   }, [id, conciergerieName, conciergeries, isLoading, userId, updateUserData, onMenuChange]);
-
-  if (isLoading) return <LoadingSpinner />;
 
   return error && <ErrorPage message={error} />;
 }
