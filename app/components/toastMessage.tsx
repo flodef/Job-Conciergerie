@@ -51,7 +51,7 @@ export const ToastMessage = ({ toast, onClose }: ToastMessageProps) => {
 
   return (
     toast && (
-      <div className={`fixed z-50 top-4 inset-x-2 text-black text-center py-2 rounded-lg ${typeStyles[toast.type]}`}>
+      <div className={`fixed z-[100] top-4 inset-x-2 text-black text-center py-2 rounded-lg ${typeStyles[toast.type]}`}>
         {typeIcon[toast.type]}
         {toast.message}
       </div>
