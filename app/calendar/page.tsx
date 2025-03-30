@@ -1,10 +1,12 @@
 'use client';
 
 import LoadingSpinner from '@/app/components/loadingSpinner';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import MissionDetails from '@/app/missions/components/missionDetails';
-import { Conciergerie, Mission } from '@/app/types/dataTypes';
+import { Mission } from '@/app/types/dataTypes';
 import {
   formatCalendarDate,
   formatMissionTimeForCalendar,
@@ -15,20 +17,23 @@ import {
 } from '@/app/utils/calendar';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
+import { Page } from '@/app/utils/navigation';
 import { calculateEmployeePointsForDay, calculateMissionPoints, formatNumber, getTaskPoints } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Calendar() {
   const { userId, userType, conciergerieName, conciergeries, isLoading: authLoading } = useAuth();
-  const { missions, isLoading: missionsLoading } = useMissions();
+  const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
+  const { currentPage } = useMenuContext();
+
+  const [toastMessage, setToastMessage] = useState<Toast>();
 
   const [acceptedMissions, setAcceptedMissions] = useState<Mission[]>([]);
   const [missionsByDate, setMissionsByDate] = useState<Map<string, Mission[]>>(new Map());
   const [sortedDates, setSortedDates] = useState<string[]>([]);
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
-  const [conciergerieMap, setConciergerieMap] = useState<Map<string, Conciergerie>>(new Map());
 
   const [startedMissionsCount, setStartedMissionsCount] = useState(0);
   const [lateMissionsCount, setLateMissionsCount] = useState(0);
@@ -36,29 +41,22 @@ export default function Calendar() {
   const isEmployee = userType === 'employee';
   const isConciergerie = userType === 'conciergerie';
 
-  // Load conciergerie data for all missions
+  // Reload missions when displaying the page
+  const isFetching = useRef(false);
   useEffect(() => {
-    const loadConciergerieData = async () => {
-      const newConciergerieMap = new Map<string, Conciergerie>();
+    // Skip if still loading
+    if (authLoading || currentPage !== Page.Calendar || isFetching.current) return;
 
-      // Get unique conciergerie names from missions
-      const conciergerieNames = [...new Set(missions.map(mission => mission.conciergerieName))];
+    isFetching.current = true;
 
-      // Fetch conciergerie data for each name
-      for (const name of conciergerieNames) {
-        if (!newConciergerieMap.has(name)) {
-          const conciergerie = conciergeries.find(c => c.name === name);
-          if (conciergerie) {
-            newConciergerieMap.set(name, conciergerie);
-          }
-        }
-      }
-
-      setConciergerieMap(newConciergerieMap);
-    };
-
-    loadConciergerieData();
-  }, [missions, conciergeries]);
+    fetchMissions().then(isSuccess => {
+      if (!isSuccess)
+        setToastMessage({
+          type: ToastType.Error,
+          message: 'Erreur lors du chargement des missions',
+        });
+    });
+  }, [currentPage, authLoading, fetchMissions]);
 
   // Second useEffect to handle mission filtering after we have the user identity
   useEffect(() => {
@@ -145,6 +143,8 @@ export default function Calendar() {
 
   return (
     <div className="pb-20">
+      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+
       {/* Badge for started missions */}
       <div className="sticky top-0 z-20 bg-background space-y-2 mb-4">
         {startedMissionsCount > 0 && (
@@ -212,7 +212,7 @@ export default function Calendar() {
 
               <div className="divide-y divide-secondary/30">
                 {missionsForDate.map(mission => {
-                  const conciergerie = conciergerieMap.get(mission.conciergerieName);
+                  const conciergerie = conciergeries.find(c => c.name === mission.conciergerieName);
                   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
                   const { totalPoints } = calculateMissionPoints(mission);
 
