@@ -87,6 +87,7 @@ export const updateConciergerieId = async (conciergerieId: string, id: string) =
       UPDATE conciergeries
       SET id = ${id}
       WHERE id = ${conciergerieId}
+      RETURNING 1
     `;
 
     return result.length > 0;

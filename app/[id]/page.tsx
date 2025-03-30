@@ -31,7 +31,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
         // If the ID fetched is not the one in the localStorage, update it in the database
         if (conciergerie.id !== userId) {
           const result = await updateConciergerieWithUserId(id, conciergerie.id);
-          if (!result) throw new Error();
+          if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
           updateUserData({
             ...conciergerie,
             id: userId,
@@ -45,8 +45,8 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
       }
     };
 
-    validateAndUpdateConciergerie();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!isLoading) validateAndUpdateConciergerie();
+  }, [id, conciergerieName, conciergeries, isLoading, userId, updateUserData, onMenuChange]);
 
   if (isLoading) return <LoadingSpinner />;
 

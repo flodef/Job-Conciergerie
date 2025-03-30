@@ -8,16 +8,8 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Skip middleware for API routes, static files, and direct user ID access
-  if (
-    path.startsWith('/_next') ||
-    path.startsWith('/api') ||
-    path.includes('.') ||
-    path === '/favicon.ico' ||
-    // Skip if path matches a user ID pattern (20-22 characters alphanumeric string)
-    /^\/[a-z0-9]{20,22}$/.test(path)
-  ) {
+  if (path.startsWith('/_next') || path.startsWith('/api') || path.includes('.') || path === '/favicon.ico')
     return NextResponse.next();
-  }
 
   // Get the user ID and user type from cookies
   const userId = request.cookies.get('user_id')?.value;
@@ -25,9 +17,8 @@ export async function middleware(request: NextRequest) {
 
   // If no user ID or user type, redirect to home page
   if (!userId || !userType) {
-    if (path !== '/') {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
+    if (path !== '/') return NextResponse.redirect(new URL('/', request.url));
+
     return NextResponse.next();
   }
 
@@ -41,32 +32,29 @@ export async function middleware(request: NextRequest) {
       body: JSON.stringify({ userId }),
     });
 
-    if (!response?.ok || response?.status !== 200) {
-      throw new Error('Failed to check user status');
-    }
+    if (!response?.ok || response?.status !== 200) throw new Error('Failed to check user status');
 
     const { userType: foundUserType } = await response.json();
 
     // Handle redirects based on user type and status
     if (userType === foundUserType) {
       // If we're on an invalid path, redirect to missions
-      if (!navigationRoutes.includes(path)) {
-        return NextResponse.redirect(new URL('/missions', request.url));
-      }
+      if (!navigationRoutes.includes(path)) return NextResponse.redirect(new URL('/missions', request.url));
+
       return NextResponse.next();
     } else {
-      // Not authenticated, redirect to waiting page
-      if (path !== '/waiting') {
+      // Skip if path matches a user ID pattern (20-22 characters alphanumeric string)
+      if (!/^\/[a-z0-9]{20,22}$/.test(path) && path !== '/waiting')
+        // Not authenticated, redirect to waiting page
         return NextResponse.redirect(new URL('/waiting', request.url));
-      }
+
       return NextResponse.next();
     }
   } catch (error) {
     console.error('Middleware error:', error);
     // Redirect to error page for database connection issues
-    if (path !== '/error') {
-      return NextResponse.redirect(new URL('/error', request.url));
-    }
+    if (path !== '/error') return NextResponse.redirect(new URL('/error', request.url));
+
     return NextResponse.next();
   }
 }
