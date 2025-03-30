@@ -6,7 +6,6 @@ import { IconCancel, IconCheck, IconPencil, IconPlayerPlay, IconTrash } from '@t
 
 type MissionActionsProps = {
   mission: Mission;
-  isEmployee: boolean;
   isReadOnly: boolean;
   isFromCalendar: boolean;
   onEdit: () => void;
@@ -19,7 +18,6 @@ type MissionActionsProps = {
 
 export default function MissionActions({
   mission,
-  isEmployee,
   isReadOnly,
   isFromCalendar,
   onEdit,
@@ -39,6 +37,7 @@ export default function MissionActions({
   const isOwnMission = !isReadOnly;
   const hasEmployeeAssigned = !!mission.employeeId;
   const isCurrentEmployee = mission.employeeId === userId;
+  const isEmployee = userType === 'employee';
 
   // No buttons for calendar view if not the right user type
   if (isFromCalendar) {

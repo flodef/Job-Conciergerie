@@ -15,14 +15,14 @@ import {
 } from '@/app/utils/calendar';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
-import { calculateEmployeePointsForDay, calculateMissionPoints, formatPoints, getTaskPoints } from '@/app/utils/task';
+import { calculateEmployeePointsForDay, calculateMissionPoints, formatNumber, getTaskPoints } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { useEffect, useState } from 'react';
 
 export default function Calendar() {
-  const { userId, userType, conciergerieName, isLoading: authLoading } = useAuth();
-  const { missions, isLoading: missionsLoading, getConciergerieByName } = useMissions();
+  const { userId, userType, conciergerieName, conciergeries, isLoading: authLoading } = useAuth();
+  const { missions, isLoading: missionsLoading } = useMissions();
 
   const [acceptedMissions, setAcceptedMissions] = useState<Mission[]>([]);
   const [missionsByDate, setMissionsByDate] = useState<Map<string, Mission[]>>(new Map());
@@ -47,7 +47,7 @@ export default function Calendar() {
       // Fetch conciergerie data for each name
       for (const name of conciergerieNames) {
         if (!newConciergerieMap.has(name)) {
-          const conciergerie = getConciergerieByName(name);
+          const conciergerie = conciergeries.find(c => c.name === name);
           if (conciergerie) {
             newConciergerieMap.set(name, conciergerie);
           }
@@ -58,7 +58,7 @@ export default function Calendar() {
     };
 
     loadConciergerieData();
-  }, [missions, getConciergerieByName]);
+  }, [missions, conciergeries]);
 
   // Second useEffect to handle mission filtering after we have the user identity
   useEffect(() => {
@@ -203,7 +203,7 @@ export default function Calendar() {
                     </span>
                     {isEmployee && userId && (
                       <span className="text-sm bg-green-100 text-green-700 px-2 py-1 rounded-full text-nowrap">
-                        {formatPoints(calculateEmployeePointsForDay(userId, date, missions))} pts
+                        {formatNumber(calculateEmployeePointsForDay(userId, date, missions))} pts
                       </span>
                     )}
                   </div>
@@ -274,7 +274,7 @@ export default function Calendar() {
                       <div className="flex flex-col justify-between text-sm">
                         <div className="flex items-center">
                           <span className="text-light text-nowrap">Points :&nbsp;</span>
-                          <span className="font-medium">{formatPoints(totalPoints)}</span>
+                          <span className="font-medium">{formatNumber(totalPoints)}</span>
                         </div>
                         <div className="flex items-center">
                           <span className="text-light text-nowrap">Durée :&nbsp;</span>

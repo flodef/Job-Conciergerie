@@ -55,6 +55,7 @@ export default function EmployeesList() {
     if (authLoading || currentPage !== Page.Employees || isFetching.current) return;
 
     isFetching.current = true;
+
     fetchDataFromDatabase('employee').then(isSuccess => {
       if (!isSuccess) {
         setToastMessage({

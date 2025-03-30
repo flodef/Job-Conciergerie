@@ -33,7 +33,7 @@ export default function WaitingPage() {
 
   const handleConciergerie = useCallback(
     (userId: string) => {
-      const foundConciergerie = conciergeries?.find(c => c.name === conciergerieName);
+      const foundConciergerie = conciergeries.find(c => c.name === conciergerieName);
       setConciergerie(foundConciergerie);
       setPrimaryColor(foundConciergerie?.color);
 
@@ -70,7 +70,7 @@ export default function WaitingPage() {
 
       // Send notification email to conciergerie
       if (sentEmailError) {
-        const selectedConciergerie = conciergeries?.find(c => c.name === foundEmployee.conciergerieName);
+        const selectedConciergerie = conciergeries.find(c => c.name === foundEmployee.conciergerieName);
         if (!selectedConciergerie) throw new Error('Conciergerie not found');
         if (!selectedConciergerie.email) throw new Error('Conciergerie email not found');
 

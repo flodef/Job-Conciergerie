@@ -7,7 +7,6 @@ export async function POST(request: NextRequest) {
 
     if (!userId) return NextResponse.json({ userType: null }, { status: 200 });
 
-    // Check if user exists in the database
     const userType = await getExistingUserType(userId);
 
     return NextResponse.json({ userType }, { status: 200 });

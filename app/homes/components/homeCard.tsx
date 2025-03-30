@@ -1,6 +1,6 @@
 'use client';
 
-import { useMissions } from '@/app/contexts/missionsProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Home } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import Image from 'next/image';
@@ -14,15 +14,15 @@ type HomeCardProps = {
 
 export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
   // Get the conciergerie color from the home data
-  const { getConciergerieByName } = useMissions();
+  const { conciergeries } = useAuth();
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
 
   // Fetch conciergerie data when home changes
   useEffect(() => {
-    const conciergerieData = getConciergerieByName(home.conciergerieName);
+    const conciergerieData = conciergeries.find(c => c.name === home.conciergerieName);
     setConciergerie(conciergerieData);
-  }, [home.conciergerieName, getConciergerieByName]);
+  }, [home.conciergerieName, conciergeries]);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent the default context menu

@@ -1,5 +1,6 @@
 'use client';
 
+import { sendConciergerieVerificationEmail } from '@/app/actions/email';
 import ErrorPage from '@/app/components/error';
 import FormActions from '@/app/components/formActions';
 import LoadingSpinner from '@/app/components/loadingSpinner';
@@ -12,7 +13,6 @@ import { ErrorField } from '@/app/types/types';
 import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
 import { Page } from '@/app/utils/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { sendConciergerieVerificationEmail } from '../actions/email';
 
 type ConciergerieFormProps = {
   onClose: () => void;
@@ -36,7 +36,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const selectedConciergerie = conciergeries?.find((c: Conciergerie) => c.name === conciergerieName);
+    const selectedConciergerie = conciergeries.find((c: Conciergerie) => c.name === conciergerieName);
     const color = getColorValueByName(selectedConciergerie?.colorName);
     setPrimaryColor(color);
   }, [conciergeries, conciergerieName]);
@@ -72,7 +72,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       setSelectedConciergerieName(conciergerieName);
 
       // Get the selected conciergerie data
-      const selectedConciergerie = conciergeries?.find(c => c.name === conciergerieName);
+      const selectedConciergerie = conciergeries.find(c => c.name === conciergerieName);
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
