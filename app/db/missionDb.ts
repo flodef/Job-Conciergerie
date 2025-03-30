@@ -42,14 +42,14 @@ export const getAllMissions = async () => {
   try {
     const result = await sql`
       SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
-      FROM mission
+      FROM missions
       ORDER BY start_date_time ASC
     `;
 
     return result.map(row => formatMission(row as DbMission));
   } catch (error) {
     console.error('Error fetching missions:', error);
-    return [];
+    return null;
   }
 };
 
@@ -60,7 +60,7 @@ export const getMissionById = async (id: string) => {
   try {
     const result = await sql`
       SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
-      FROM mission
+      FROM missions
       WHERE id = ${id}
     `;
 
@@ -78,7 +78,7 @@ export const getMissionsByHomeId = async (homeId: string) => {
   try {
     const result = await sql`
       SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
-      FROM mission
+      FROM missions
       WHERE home_id = ${homeId}
       ORDER BY start_date_time ASC
     `;
@@ -97,7 +97,7 @@ export const getMissionsByConciergerieName = async (conciergerieName: string) =>
   try {
     const result = await sql`
       SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
-      FROM mission
+      FROM missions
       WHERE conciergerie_name = ${conciergerieName}
       ORDER BY start_date_time ASC
     `;
@@ -116,7 +116,7 @@ export const getMissionsByEmployeeId = async (employeeId: string) => {
   try {
     const result = await sql`
       SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
-      FROM mission
+      FROM missions
       WHERE employee_id = ${employeeId}
       ORDER BY start_date_time ASC
     `;
@@ -136,13 +136,13 @@ export const getAvailableMissionsForEmployee = async (employeeId: string) => {
   try {
     const result = await sql`
       SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
-      FROM mission
+      FROM missions
       WHERE 
         (employee_id IS NULL OR employee_id = ${employeeId})
         AND (
           allowed_employees IS NULL 
-          OR allowed_employees = '[]'::jsonb 
-          OR allowed_employees @> ${JSON.stringify([employeeId])}::jsonb
+          OR allowed_employees = '[]'
+          OR allowed_employees @> ${[employeeId]}
         )
       ORDER BY start_date_time ASC
     `;
@@ -159,17 +159,13 @@ export const getAvailableMissionsForEmployee = async (employeeId: string) => {
  */
 export const createMission = async (data: Omit<DbMission, 'modified_date'>) => {
   try {
-    // Convert arrays to JSONB
-    const tasks = JSON.stringify(data.tasks);
-    const allowedEmployees = data.allowed_employees ? JSON.stringify(data.allowed_employees) : null;
-
     const result = await sql`
-      INSERT INTO mission (
+      INSERT INTO missions (
         id, home_id, tasks, start_date_time, end_date_time, employee_id, conciergerie_name, status, allowed_employees, hours
       ) VALUES (
-        ${data.id}, ${data.home_id}, ${tasks}::jsonb, ${data.start_date_time}, ${data.end_date_time}, 
-        ${data.employee_id || null}, ${data.conciergerie_name}, ${data.status || 'pending'}, 
-        ${allowedEmployees}::jsonb, ${data.hours}
+        ${data.id}, ${data.home_id}, ${data.tasks}, ${data.start_date_time}, ${data.end_date_time}, 
+        ${data.employee_id || null}, ${data.conciergerie_name}, ${data.status}, 
+        ${data.allowed_employees}, ${data.hours}
       )
       RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
     `;
@@ -194,42 +190,34 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
       fields.push(`home_id = $${values.length + 1}`);
       values.push(data.home_id);
     }
-
     if (data.tasks !== undefined) {
-      fields.push(`tasks = $${values.length + 1}::jsonb`);
-      values.push(JSON.stringify(data.tasks));
+      fields.push(`tasks = $${values.length + 1}`);
+      values.push(data.tasks);
     }
-
     if (data.start_date_time !== undefined) {
       fields.push(`start_date_time = $${values.length + 1}`);
       values.push(data.start_date_time);
     }
-
     if (data.end_date_time !== undefined) {
       fields.push(`end_date_time = $${values.length + 1}`);
       values.push(data.end_date_time);
     }
-
     if (data.employee_id !== undefined) {
       fields.push(`employee_id = $${values.length + 1}`);
       values.push(data.employee_id === null ? null : data.employee_id);
     }
-
     if (data.conciergerie_name !== undefined) {
       fields.push(`conciergerie_name = $${values.length + 1}`);
       values.push(data.conciergerie_name);
     }
-
     if (data.status !== undefined) {
       fields.push(`status = $${values.length + 1}`);
       values.push(data.status);
     }
-
     if (data.allowed_employees !== undefined) {
-      fields.push(`allowed_employees = $${values.length + 1}::jsonb`);
-      values.push(JSON.stringify(data.allowed_employees));
+      fields.push(`allowed_employees = $${values.length + 1}`);
+      values.push(data.allowed_employees);
     }
-
     if (data.hours !== undefined) {
       fields.push(`hours = $${values.length + 1}`);
       values.push(data.hours);
@@ -237,12 +225,9 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
 
     if (fields.length === 0) return null; // Nothing to update
 
-    // Add modified_date update
-    fields.push(`modified_date = NOW()`);
-
     // Build and execute query
     const query = `
-      UPDATE mission 
+      UPDATE missions 
       SET ${fields.join(', ')} 
       WHERE id = $${values.length + 1}
       RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours`;
@@ -263,7 +248,7 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
 export const updateMissionStatus = async (id: string, status: MissionStatus) => {
   try {
     const result = await sql`
-      UPDATE mission
+      UPDATE missions
       SET status = ${status}, modified_date = NOW()
       WHERE id = ${id}
       RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
@@ -282,7 +267,7 @@ export const updateMissionStatus = async (id: string, status: MissionStatus) => 
 export const assignEmployeeToMission = async (missionId: string, employeeId: string) => {
   try {
     const result = await sql`
-      UPDATE mission
+      UPDATE missions
       SET employee_id = ${employeeId}, modified_date = NOW()
       WHERE id = ${missionId}
       RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
@@ -301,7 +286,7 @@ export const assignEmployeeToMission = async (missionId: string, employeeId: str
 export const deleteMission = async (id: string) => {
   try {
     const result = await sql`
-      DELETE FROM mission
+      DELETE FROM missions
       WHERE id = ${id}
       RETURNING id
     `;

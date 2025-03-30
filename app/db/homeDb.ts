@@ -44,43 +44,7 @@ export const getAllHomes = async () => {
     return result.map(row => formatHome(row as DbHome));
   } catch (error) {
     console.error('Error fetching homes:', error);
-    return [];
-  }
-};
-
-/**
- * Fetch a single home by ID
- */
-export const getHomeById = async (id: string) => {
-  try {
-    const result = await sql`
-      SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name
-      FROM homes
-      WHERE id = ${id}
-    `;
-
-    return result.length > 0 ? formatHome(result[0] as DbHome) : null;
-  } catch (error) {
-    console.error(`Error fetching home with ID ${id}:`, error);
     return null;
-  }
-};
-
-/**
- * Get homes by conciergerie name
- */
-export const getHomesByConciergerieName = async (conciergerieName: string) => {
-  try {
-    const result = await sql`
-      SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name
-      FROM homes
-      WHERE conciergerie_name = ${conciergerieName}
-    `;
-
-    return result.map(row => formatHome(row as DbHome));
-  } catch (error) {
-    console.error(`Error fetching homes for conciergerie ${conciergerieName}:`, error);
-    return [];
   }
 };
 

@@ -44,40 +44,14 @@ export const getAllEmployees = async () => {
   try {
     const result = await sql`
         SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
-        FROM employee
+        FROM employees
         ORDER BY created_at DESC
       `;
 
     return result.map(row => formatEmployee(row as DbEmployee));
   } catch (error) {
     console.error('Error fetching employees:', error);
-    return [];
-  }
-};
-
-/**
- * Check if an employee already exists with the same name, phone, or email
- */
-export const employeeExists = async (
-  firstName: string,
-  familyName: string,
-  tel: string,
-  email: string,
-): Promise<boolean> => {
-  try {
-    const result = await sql`
-      SELECT id FROM employee
-      WHERE 
-        (LOWER(first_name) = LOWER(${firstName}) AND LOWER(family_name) = LOWER(${familyName}))
-        OR tel = ${tel}
-        OR LOWER(email) = LOWER(${email})
-      LIMIT 1
-    `;
-
-    return result.length > 0;
-  } catch (error) {
-    console.error('Error checking if employee exists:', error);
-    return false;
+    return null;
   }
 };
 
@@ -90,7 +64,7 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
     const notificationSettings = data.notification_settings ? JSON.stringify(data.notification_settings) : null;
 
     const result = await sql`
-      INSERT INTO employee (
+      INSERT INTO employees (
         id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status
       ) VALUES (
         ${data.id}, ${data.first_name}, ${data.family_name}, ${data.tel}, ${data.email}, ${data.geographic_zone},
@@ -113,8 +87,8 @@ export const updateEmployeeStatus = async (id: string | undefined, status: Emplo
   try {
     if (!id) throw new Error('No ID provided');
     const result = await sql`
-      UPDATE employee
-      SET status = ${status}, message = null, conciergerie_name = null
+      UPDATE employees
+      SET status = ${status}
       WHERE id = ${id}
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
@@ -136,7 +110,7 @@ export const updateEmployeeSettings = async (id: string | undefined, data: Parti
     const notificationSettings = data.notification_settings ? JSON.stringify(data.notification_settings) : null;
 
     const result = await sql`
-      UPDATE employee
+      UPDATE employees
       SET 
         tel = COALESCE(${data.tel}, tel),
         email = COALESCE(${data.email}, email),

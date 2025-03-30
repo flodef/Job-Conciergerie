@@ -36,13 +36,13 @@ export const getAllConciergeries = async () => {
   try {
     const result = await sql`
         SELECT id, name, email, tel, color_name, notification_settings
-        FROM conciergerie
+        FROM conciergeries
       `;
 
     return result.map(row => formatConciergerie(row as DbConciergerie));
   } catch (error) {
     console.error('Error fetching conciergeries:', error);
-    return [];
+    return null;
   }
 };
 
@@ -57,7 +57,7 @@ export const updateConciergerie = async (id: string | undefined, data: Partial<D
     const notificationSettings = data.notification_settings ? JSON.stringify(data.notification_settings) : null;
 
     const result = await sql`
-      UPDATE conciergerie
+      UPDATE conciergeries
       SET 
         name = COALESCE(${data.name}, name),
         email = COALESCE(${data.email}, email),
@@ -84,7 +84,7 @@ export const updateConciergerieId = async (conciergerieId: string, id: string) =
     if (!id) throw new Error('No ID provided');
 
     const result = await sql`
-      UPDATE conciergerie
+      UPDATE conciergeries
       SET id = ${id}
       WHERE id = ${conciergerieId}
     `;
