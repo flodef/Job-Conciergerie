@@ -2,13 +2,12 @@
 
 import { fetchConciergeries } from '@/app/actions/conciergerie';
 import { fetchEmployees } from '@/app/actions/employee';
-import { useMenuContext } from '@/app/contexts/menuProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
-import { navigationRoutes, Page } from '@/app/utils/navigation';
+import { navigationRoutes } from '@/app/utils/navigation';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 // Define the type for the auth context
@@ -56,8 +55,6 @@ const AuthContext = createContext<AuthContextType>({
 
 // Auth provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { onMenuChange } = useMenuContext();
-
   const [userId, setUserId] = useLocalStorage<string>('user_id');
   const [userType, setUserType] = useLocalStorage<UserType>('user_type');
   const [conciergerieName, setConciergerieName] = useLocalStorage<string>('conciergerie_name');
@@ -106,54 +103,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Function to fetch data from the database and store it in the context
   const fetchDataFromDatabase = useCallback(
     async (fetchType?: UserType) => {
-      try {
-        const id = generateId();
+      const id = generateId();
 
-        const fetchedConciergeries =
-          !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : conciergeries;
-        const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
+      const fetchedConciergeries =
+        !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : conciergeries;
+      const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
 
-        const foundEmployee = fetchedEmployees.find(e => e.id === id);
-        const newUserData = foundEmployee || fetchedConciergeries.find(c => c.id === id);
-        const isEmployee = !!newUserData && !!foundEmployee;
-        const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
-        const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
-        const newConciergerieName = isConciergerie
-          ? newUserData
-            ? (newUserData as Conciergerie).name
-            : conciergerieName
-          : undefined;
-        const newPrimaryColor = fetchedConciergeries.find(c => c.name === newConciergerieName)?.color;
+      const foundEmployee = fetchedEmployees?.find(e => e.id === id);
+      const newUserData = foundEmployee || fetchedConciergeries?.find(c => c.id === id);
+      const isEmployee = !!newUserData && !!foundEmployee;
+      const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
+      const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
+      const newConciergerieName = isConciergerie
+        ? newUserData
+          ? (newUserData as Conciergerie).name
+          : conciergerieName
+        : undefined;
+      const newPrimaryColor = fetchedConciergeries?.find(c => c.name === newConciergerieName)?.color;
 
-        console.warn('Loading data from database');
+      console.warn('Loading data from database');
 
-        setConciergerieName(newConciergerieName);
-        setConciergeries(fetchedConciergeries);
-        setEmployees(fetchedEmployees);
-        updateUserType(newUserType);
-        setUserData(newUserData);
-        setPrimaryColor(newPrimaryColor);
+      setConciergerieName(newConciergerieName);
+      setConciergeries(fetchedConciergeries ?? []);
+      setEmployees(fetchedEmployees ?? []);
+      updateUserType(newUserType);
+      setUserData(newUserData);
+      setPrimaryColor(newPrimaryColor);
 
-        // Special case where the userId cookie or the userId in local storage has been manually deleted
-        const path = window.location.pathname;
-        if (
-          (newUserData && !navigationRoutes.includes(path) && userType === 'conciergerie') ||
-          (!newUserData && navigationRoutes.includes(path))
-        )
-          refreshData();
+      // Special case where the userId cookie or the userId in local storage has been manually deleted
+      const path = window.location.pathname;
+      if (
+        (newUserData && !navigationRoutes.includes(path) && userType === 'conciergerie') ||
+        (!newUserData && navigationRoutes.includes(path))
+      )
+        refreshData();
 
-        return true;
-      } catch (err) {
-        console.error('Error fetching user data from database:', err);
-        onMenuChange(Page.Error);
-        return false;
-      }
+      return true;
     },
     [
       generateId,
       updateUserType,
       userType,
-      onMenuChange,
       refreshData,
       conciergerieName,
       setConciergerieName,
