@@ -25,8 +25,8 @@ function formatHome(dbHome: DbHome): Home {
     objectives: dbHome.objectives,
     images: dbHome.images,
     geographicZone: dbHome.geographic_zone,
-    hoursOfCleaning: dbHome.hours_of_cleaning,
-    hoursOfGardening: dbHome.hours_of_gardening,
+    hoursOfCleaning: Number(dbHome.hours_of_cleaning),
+    hoursOfGardening: Number(dbHome.hours_of_gardening),
     conciergerieName: dbHome.conciergerie_name,
   };
 }

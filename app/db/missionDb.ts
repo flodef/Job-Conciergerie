@@ -31,7 +31,7 @@ function formatMission(dbMission: DbMission): Mission {
     conciergerieName: dbMission.conciergerie_name,
     status: dbMission.status,
     allowedEmployees: dbMission.allowed_employees,
-    hours: dbMission.hours,
+    hours: Number(dbMission.hours),
   };
 }
 
