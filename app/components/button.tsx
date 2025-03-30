@@ -1,8 +1,50 @@
 'use client';
 
+import { useAuth } from '@/app/contexts/authProvider';
+import { buttonClassName, spinningClassName } from '@/app/utils/className';
 import { IconX } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
-import { useAuth } from '@/app/contexts/authProvider';
+
+export type ButtonStyle = 'primary' | 'secondary' | 'dangerous';
+export type ButtonType = 'button' | 'submit' | 'reset';
+
+export function Button({
+  onClick,
+  type = 'button',
+  style = 'primary',
+  className = '',
+  children,
+  disabled = false,
+  loading = false,
+  loadingText = 'Traitement...',
+}: {
+  onClick: () => void;
+  type?: ButtonType;
+  style?: ButtonStyle;
+  className?: string;
+  children: React.ReactNode;
+  disabled?: boolean;
+  loading?: boolean;
+  loadingText?: string;
+}) {
+  return (
+    <button
+      className={clsx(buttonClassName(style), className)}
+      onClick={onClick}
+      disabled={disabled || loading}
+      type={type}
+    >
+      {loading && !disabled ? (
+        <>
+          <span className={spinningClassName}></span>
+          {loadingText}
+        </>
+      ) : (
+        children
+      )}
+    </button>
+  );
+}
 
 export function RefreshButton({
   shouldDisconnect = false,
@@ -14,12 +56,12 @@ export function RefreshButton({
   const { refreshData, disconnect } = useAuth();
 
   return (
-    <button
-      className={clsx('mt-4 px-4 py-2 bg-primary text-white rounded-md hover:opacity-90 transition-opacity', className)}
+    <Button
+      className={clsx('mt-4 justify-self-center', className)}
       onClick={shouldDisconnect ? disconnect : refreshData}
     >
       Réessayer
-    </button>
+    </Button>
   );
 }
 
