@@ -44,7 +44,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     } else {
       // Skip if path matches a user ID pattern (20-22 characters alphanumeric string)
-      if (!/^\/[a-z0-9]{20,22}$/.test(path) && path !== '/waiting')
+      if (!/^\/?[0-9a-z]{2,26}$/.test(path) && path !== '/waiting')
         // Not authenticated, redirect to waiting page
         return NextResponse.redirect(new URL('/waiting', request.url));
 
