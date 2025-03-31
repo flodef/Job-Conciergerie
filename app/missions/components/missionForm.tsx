@@ -12,6 +12,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission, Task } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
+import { adjustMissionDateTime, getMissionDateTime, localISOString, minimumMissionTime } from '@/app/utils/date';
 import { handleChange } from '@/app/utils/form';
 import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -44,18 +45,6 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
   const [cannotEdit, setCannotEdit] = useState(false);
 
-  // Get current date and time in local timezone
-  const now = new Date();
-  const localISOString = useCallback((date: Date) => {
-    // Should use a try/catch block to handle invalid dates
-    try {
-      const offset = date.getTimezoneOffset() * 60000;
-      return new Date(date.getTime() - offset).toISOString().slice(0, 16);
-    } catch {
-      return '';
-    }
-  }, []);
-
   // Get employees with accepted status using useMemo
   // This avoids the infinite loop issue by not using state + useEffect
   const employees = useMemo(() => {
@@ -64,15 +53,9 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   }, [allEmployees]);
 
   // Initialize start and end date/time
-  const [startDateTime, setStartDateTime] = useState<string>(
-    mission?.startDateTime ? localISOString(mission.startDateTime) : localISOString(now),
-  );
-
-  const [endDateTime, setEndDateTime] = useState<string>(
-    mission?.endDateTime
-      ? localISOString(mission.endDateTime)
-      : localISOString(new Date(now.getTime() + 60 * 60 * 1000)), // For end date/time, add 1 hour to now when adding a new mission
-  );
+  const { startDateTime: start, endDateTime: end } = getMissionDateTime(mission);
+  const [startDateTime, setStartDateTime] = useState<string>(start);
+  const [endDateTime, setEndDateTime] = useState<string>(end);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState<Toast>();
@@ -176,12 +159,6 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         fieldRef: startDateRef,
         func: setStartDateTimeError,
       };
-    else if (startDateTime < localISOString(new Date()))
-      error = {
-        message: 'La date de début ne peut pas être antérieure à la date actuelle',
-        fieldRef: startDateRef,
-        func: setStartDateTimeError,
-      };
     else if (!endDateTime)
       error = {
         message: 'Veuillez sélectionner une date de fin',
@@ -202,8 +179,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       if (!selectedHome) throw new Error('Veuillez sélectionner un bien valide');
 
       // Convert string dates to Date objects
-      const startDate = new Date(startDateTime);
-      const endDate = new Date(endDateTime);
+      const { startDateTime: startDate, endDateTime: endDate } = adjustMissionDateTime(startDateTime, endDateTime);
 
       // Calculate the total hours and available tasks based on tasks and home specifications
       const totalHours = calculateMissionHours(selectedHome, tasks);
@@ -259,7 +235,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   };
 
   // Get current date/time for min attribute
-  const nowString = localISOString(now);
+  const nowString = localISOString(new Date());
 
   // Handle start date change and update end date if needed
   const handleStartDateChange = (value: string) => {
@@ -280,9 +256,9 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     // Create a new Date object from the selected start date
     const startDate = new Date(value);
 
-    // Add 1 hour to the start date for the minimum end date
+    // Add minimum mission time to the start date for the minimum end date
     const minEndDate = new Date(startDate);
-    minEndDate.setHours(minEndDate.getHours() + 1);
+    minEndDate.setHours(minEndDate.getHours() + minimumMissionTime);
 
     // Format the minimum end date as an ISO string for the input
     const minEndDateString = localISOString(minEndDate);

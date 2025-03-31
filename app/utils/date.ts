@@ -1,3 +1,53 @@
+import { Mission } from '@/app/types/dataTypes';
+
+export const minimumMissionTime: number = 1; // minimum mission time in hours
+
+// Get current date and time in local timezone
+export const localISOString = (date: Date) => {
+  // Should use a try/catch block to handle invalid dates
+  try {
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * Get the start and end date time for a mission
+ * @param mission The mission to get the date time for
+ * @returns An object containing the start and end date time
+ */
+export const getMissionDateTime = (mission?: Mission): { startDateTime: string; endDateTime: string } => {
+  const start = mission?.startDateTime || new Date();
+  const end = mission?.endDateTime || new Date(start.getTime() + minimumMissionTime * 60 * 60 * 1000);
+  return {
+    startDateTime: localISOString(start),
+    endDateTime: localISOString(end),
+  };
+};
+
+/**
+ * Adjust the start and end date time for a mission
+ * @param start The start date time
+ * @param end The end date time
+ * @returns An object containing the adjusted start and end date time
+ */
+export const adjustMissionDateTime = (start: string, end: string): { startDateTime: Date; endDateTime: Date } => {
+  const now = new Date();
+  const missionTime = minimumMissionTime * 60 * 60 * 1000;
+  let s = new Date(start);
+  let e = new Date(end);
+
+  if (s < now) s = now;
+  if (e.getTime() < s.getTime() + missionTime) e = new Date(s.getTime() + missionTime);
+
+  return {
+    startDateTime: s,
+    endDateTime: e,
+  };
+};
+
 /**
  * Format a date for display in French format (DD/MM/YYYY)
  */
