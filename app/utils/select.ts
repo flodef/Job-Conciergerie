@@ -11,10 +11,24 @@ interface PositionCheckParams {
   padding?: number;
 }
 
+/**
+ * Generate an array of numbers from start to end with a given step
+ * @param start The starting number
+ * @param end The ending number
+ * @param step The step size (default: 1)
+ * @returns An array of numbers from start to end with the given step
+ */
 export function range(start: number, end: number, step = 1): number[] {
+  if (step === 0) step = start <= end ? 1 : -1; // Avoid infinite loop
   return Array.from({ length: (end - start) / step + 1 }, (_, i) => start + i * step);
 }
 
+/**
+ * Determine if a dropdown should open upward based on available space
+ * This accounts for both window boundaries and scrollable parent containers (like modals)
+ * @param params Configuration object for dropdown position check
+ * @returns True if the dropdown should open upward, false otherwise
+ */
 export function shouldOpenUpward({
   elementRef,
   itemCount,
