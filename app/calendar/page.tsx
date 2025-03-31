@@ -131,40 +131,40 @@ export default function Calendar() {
   }
 
   return (
-    <div className="pb-20">
+    <div>
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-
       {/* Badge for started missions */}
-      <div className="sticky top-0 z-20 bg-background space-y-2 mb-4">
-        {startedMissionsCount > 0 && (
-          <div className="p-2 border border-blue-200 rounded-lg flex items-center justify-between">
-            <div className="flex items-center">
-              <IconPlayerPlay className="text-blue-500 mr-2" />
-              <span>
-                <span className="font-medium">{startedMissionsCount}</span> mission{startedMissionsCount > 1 ? 's' : ''}{' '}
-                en cours
-              </span>
+      {startedMissionsCount + lateMissionsCount > 0 && (
+        <div className="sticky top-0 z-20 bg-background space-y-2 mb-4">
+          {startedMissionsCount > 0 && (
+            <div className="p-2 border border-blue-200 rounded-lg flex items-center justify-between">
+              <div className="flex items-center">
+                <IconPlayerPlay className="text-blue-500 mr-2" />
+                <span>
+                  <span className="font-medium">{startedMissionsCount}</span> mission
+                  {startedMissionsCount > 1 ? 's' : ''} en cours
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {lateMissionsCount > 0 && (
-          <div className="p-2 border border-red-200 bg-red-50 dark:bg-red-950/10 rounded-lg flex items-center justify-between">
-            <div className="flex items-center">
-              <IconAlertTriangle className="text-red-500 mr-2" />
-              <span>
-                <span className="font-medium">{lateMissionsCount}</span> mission{lateMissionsCount > 1 ? 's' : ''} en
-                retard non terminée{lateMissionsCount > 1 ? 's' : ''}
-              </span>
+          {lateMissionsCount > 0 && (
+            <div className="p-2 border border-red-200 bg-red-50 dark:bg-red-950/10 rounded-lg flex items-center justify-between">
+              <div className="flex items-center">
+                <IconAlertTriangle className="text-red-500 mr-2" />
+                <span>
+                  <span className="font-medium">{lateMissionsCount}</span> mission{lateMissionsCount > 1 ? 's' : ''} en
+                  retard non terminée{lateMissionsCount > 1 ? 's' : ''}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
       {selectedMission && (
         <MissionDetails mission={selectedMission} onClose={handleCloseDetails} isFromCalendar={true} />
       )}
-
-      <div className="space-y-6">
+      <div className="space-y-4 pb-4">
         {sortedDates.map(dateStr => {
           // Create a date object from the date string (which is in YYYY-MM-DD format)
           // Parse the parts manually to ensure we're using local time
