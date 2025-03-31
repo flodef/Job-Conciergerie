@@ -39,7 +39,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     conciergerieName: conciergeries?.[0]?.name || '',
     message: '',
   });
-  const [toastMessage, setToastMessage] = useState<Toast>();
+  const [toast, setToast] = useState<Toast>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormChanged, setIsFormChanged] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -187,7 +187,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
       onMenuChange(Page.Waiting);
     } catch (error) {
-      setToastMessage({
+      setToast({
         type: ToastType.Error,
         message: String(error),
         error,
@@ -208,7 +208,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
   return (
     <div className="min-h-full w-full flex flex-col items-center justify-center bg-background">
-      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>
 

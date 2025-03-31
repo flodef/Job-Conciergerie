@@ -27,7 +27,7 @@ export default function Calendar() {
   const { missions, fetchMissions } = useMissions();
   const { currentPage } = useMenuContext();
 
-  const [toastMessage, setToastMessage] = useState<Toast>();
+  const [toast, setToast] = useState<Toast>();
 
   const [acceptedMissions, setAcceptedMissions] = useState<Mission[]>([]);
   const [missionsByDate, setMissionsByDate] = useState<Map<string, Mission[]>>(new Map());
@@ -50,7 +50,7 @@ export default function Calendar() {
 
     fetchMissions().then(isSuccess => {
       if (!isSuccess)
-        setToastMessage({
+        setToast({
           type: ToastType.Error,
           message: 'Erreur lors du chargement des missions',
         });
@@ -139,7 +139,7 @@ export default function Calendar() {
 
   return (
     <div className="pb-20">
-      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       {/* Badge for started missions */}
       <div className="sticky top-0 z-20 bg-background space-y-2 mb-4">

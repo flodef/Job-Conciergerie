@@ -32,7 +32,7 @@ const ConciergerieSettings: React.FC = () => {
   const [tel, setTel] = useState('');
   const [selectedColor, setSelectedColor] = useState<ColorOption | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [toastMessage, setToastMessage] = useState<Toast>();
+  const [toast, setToast] = useState<Toast>();
 
   // Track original values for comparison
   const [originalEmail, setOriginalEmail] = useState('');
@@ -133,12 +133,12 @@ const ConciergerieSettings: React.FC = () => {
       }
 
       // Show success toast
-      setToastMessage({
+      setToast({
         type: ToastType.Success,
         message: 'Modifications enregistrées avec succès',
       });
     } catch (error) {
-      setToastMessage({
+      setToast({
         type: ToastType.Error,
         message: String(error),
         error,
@@ -150,7 +150,7 @@ const ConciergerieSettings: React.FC = () => {
 
   return (
     <div className="space-y-2">
-      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       <Input
         id="email"

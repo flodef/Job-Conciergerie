@@ -19,7 +19,7 @@ export default function HomesPage() {
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
   const { isLoading: authLoading } = useAuth();
 
-  const [toastMessage, setToastMessage] = useState<Toast>();
+  const [toast, setToast] = useState<Toast>();
   const [selectedHome, setSelectedHome] = useState<Home | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -35,7 +35,7 @@ export default function HomesPage() {
 
     fetchHomes().then(isSuccess => {
       if (!isSuccess)
-        setToastMessage({
+        setToast({
           type: ToastType.Error,
           message: 'Erreur lors du chargement des biens',
         });
@@ -90,7 +90,7 @@ export default function HomesPage() {
 
   return (
     <div>
-      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       {myHomes.length > 1 && (
         <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />

@@ -75,7 +75,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<Toast>();
+  const [toast, setToast] = useState<Toast>();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Validation states
@@ -106,7 +106,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
       if (message) {
         setCannotEdit(true);
-        setToastMessage({ type: ToastType.Warning, message });
+        setToast({ type: ToastType.Warning, message });
       }
     }
   }, [mission, mode]);
@@ -230,7 +230,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         });
         if (!result) throw new Error("Impossible d'ajouter la mission");
 
-        setToastMessage({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
+        setToast({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
       } else if (mission) {
         const updatedMission: Mission = {
           ...mission,
@@ -249,10 +249,10 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         const result = await updateMission(updatedMission);
         if (!result) throw new Error('Impossible de mettre à jour la mission');
 
-        setToastMessage({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });
+        setToast({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });
       }
     } catch (error) {
-      setToastMessage({ type: ToastType.Error, message: String(error), error });
+      setToast({ type: ToastType.Error, message: String(error), error });
       setIsSubmitting(false);
     }
   };
@@ -309,10 +309,10 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       footer={footer}
     >
       <ToastMessage
-        toast={toastMessage}
+        toast={toast}
         onClose={() => {
-          setToastMessage(undefined);
-          if (toastMessage?.type === ToastType.Success) {
+          setToast(undefined);
+          if (toast?.type === ToastType.Success) {
             onClose();
             onCancel?.();
           }

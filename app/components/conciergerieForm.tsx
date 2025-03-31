@@ -25,7 +25,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const [conciergerieNameError, setConciergerieNameError] = useState('');
 
   const [conciergerieName, setConciergerieName] = useState(conciergeries?.at(0)?.name || '');
-  const [toastMessage, setToastMessage] = useState<Toast>();
+  const [toast, setToast] = useState<Toast>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
 
       onMenuChange(Page.Waiting);
     } catch (error) {
-      setToastMessage({
+      setToast({
         type: ToastType.Error,
         message: String(error),
         error,
@@ -87,7 +87,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
-      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       <h2 className="text-2xl font-bold mb-4">Conciergerie</h2>
 

@@ -30,7 +30,7 @@ const getDefaultSettings = (userType: UserType | undefined) => {
 const NotificationSettings: React.FC = () => {
   const { userId, userType, getUserData, updateUserData } = useAuth();
 
-  const [toastMessage, setToastMessage] = useState<Toast>();
+  const [toast, setToast] = useState<Toast>();
   const [settings, setSettings] = useState<ConciergerieNotificationSettings | EmployeeNotificationSettings>(
     getUserData()?.notificationSettings || getDefaultSettings(userType),
   );
@@ -76,12 +76,12 @@ const NotificationSettings: React.FC = () => {
 
       await updateData();
 
-      setToastMessage({
+      setToast({
         type: ToastType.Success,
         message: 'Préférences de notification enregistrées',
       });
     } catch (error) {
-      setToastMessage({
+      setToast({
         type: ToastType.Error,
         message: "Erreur lors de l'enregistrement des préférences",
         error,
@@ -93,7 +93,7 @@ const NotificationSettings: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       <div className="space-y-1">
         <h3 className="text-sm font-medium mb-2">Recevoir un email lorsque :</h3>

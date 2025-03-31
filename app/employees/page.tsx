@@ -30,7 +30,7 @@ export default function EmployeesList() {
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [toastMessage, setToastMessage] = useState<Toast>();
+  const [toast, setToast] = useState<Toast>();
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
   // Confirmation modal state
@@ -58,7 +58,7 @@ export default function EmployeesList() {
 
     fetchDataFromDatabase('employee').then(isSuccess => {
       if (!isSuccess) {
-        setToastMessage({
+        setToast({
           type: ToastType.Error,
           message: 'Erreur lors du chargement des employés',
         });
@@ -118,7 +118,7 @@ export default function EmployeesList() {
             throw new Error('Email non envoyé');
           });
 
-        setToastMessage({
+        setToast({
           type: newStatus === 'accepted' ? ToastType.Success : ToastType.Error,
           message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été ${
             newStatus === 'accepted' ? 'accepté' : 'rejeté'
@@ -126,7 +126,7 @@ export default function EmployeesList() {
         });
       })
       .catch(error => {
-        setToastMessage({
+        setToast({
           type: ToastType.Error,
           message: error.toString(),
           error,
@@ -196,7 +196,7 @@ export default function EmployeesList() {
 
   return (
     <div>
-      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       {employees.length > 1 && (
         <SearchInput placeholder="Rechercher un prestataire..." value={searchTerm} onChange={setSearchTerm} />

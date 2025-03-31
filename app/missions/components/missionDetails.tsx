@@ -51,7 +51,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const { userId, userType, conciergerieName, conciergeries, employees } = useAuth();
   const { homes } = useHomes();
 
-  const [toastMessage, setToastMessage] = useState<Toast>();
+  const [toast, setToast] = useState<Toast>();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
@@ -85,7 +85,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const handleDelete = () => {
     deleteMission(mission.id).then(isSuccess => {
-      setToastMessage({
+      setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Mission supprimée !' : 'Erreur lors de la suppression de la mission',
       });
@@ -95,7 +95,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const handleCancel = () => {
     cancelMission(mission.id).then(isSuccess => {
-      setToastMessage({
+      setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Mission annulée !' : "Erreur lors de l'annulation de la mission",
       });
@@ -112,7 +112,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const handleConfirmAccept = () => {
     acceptMission(mission.id).then(isSuccess => {
-      setToastMessage({
+      setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess
           ? 'Mission acceptée ! Retrouvez-la dans votre calendrier.'
@@ -130,7 +130,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
     // Accept the mission
     acceptMission(mission.id).then(isSuccess => {
-      setToastMessage({
+      setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess
           ? 'Mission acceptée ! Retrouvez-la dans votre calendrier.'
@@ -142,7 +142,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const handleStart = () => {
     startMission(mission.id).then(isSuccess => {
-      setToastMessage({
+      setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess
           ? 'Mission démarrée ! Retrouvez-la dans votre calendrier.'
@@ -153,7 +153,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const handleComplete = () => {
     completeMission(mission.id).then(isSuccess => {
-      setToastMessage({
+      setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess
           ? 'Mission terminée ! Retrouvez-la dans votre calendrier.'
@@ -268,10 +268,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   return (
     <FullScreenModal onClose={onClose} title="Détails de la mission" footer={footer}>
       <ToastMessage
-        toast={toastMessage}
+        toast={toast}
         onClose={() => {
-          setToastMessage(undefined);
-          if (toastMessage?.type === ToastType.Success) onClose();
+          setToast(undefined);
+          if (toast?.type === ToastType.Success) onClose();
         }}
       />
 

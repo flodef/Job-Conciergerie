@@ -30,7 +30,7 @@ export default function Missions() {
   const { userType, isLoading: authLoading, getUserData } = useAuth();
   const { currentPage } = useMenuContext();
 
-  const [toastMessage, setToastMessage] = useState<Toast>();
+  const [toast, setToast] = useState<Toast>();
 
   // Modal states - must be declared before any conditional returns
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -69,7 +69,7 @@ export default function Missions() {
 
     fetchMissions().then(isSuccess => {
       if (!isSuccess)
-        setToastMessage({
+        setToast({
           type: ToastType.Error,
           message: 'Erreur lors du chargement des missions',
         });
@@ -191,7 +191,7 @@ export default function Missions() {
 
   return (
     <div>
-      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       {/* Sort controls and filter toggle */}
       <MissionSortControls

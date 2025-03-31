@@ -28,7 +28,7 @@ export default function WaitingPage() {
   const [employee, setEmployee] = useState<Employee>();
   const [daysWaiting, setDaysWaiting] = useState('');
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
-  const [toastMessage, setToastMessage] = useState<Toast>();
+  const [toast, setToast] = useState<Toast>();
 
   const handleConciergerie = useCallback(
     (userId: string) => {
@@ -41,7 +41,7 @@ export default function WaitingPage() {
           if (isEmailSent) {
             setSentEmailError(undefined);
           } else {
-            setToastMessage({
+            setToast({
               type: ToastType.Error,
               message: "Une erreur est survenue lors de l'envoi de l'email de vérification",
             });
@@ -77,7 +77,7 @@ export default function WaitingPage() {
           if (isEmailSent) {
             setSentEmailError(undefined);
           } else {
-            setToastMessage({
+            setToast({
               type: ToastType.Error,
               message: "Une erreur est survenue lors de l'envoi de l'email de confirmation",
             });
@@ -111,7 +111,7 @@ export default function WaitingPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <ToastMessage toast={toastMessage} onClose={() => setToastMessage(undefined)} />
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       <div className="w-full max-w-md bg-background overflow-hidden p-6">
         {conciergerie ? (
