@@ -6,16 +6,9 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import { Mission } from '@/app/types/dataTypes';
-import {
-  formatCalendarDate,
-  formatMissionTimeForCalendar,
-  groupMissionsByDate,
-  isPastDate,
-  isToday,
-  sortDates,
-} from '@/app/utils/calendar';
+import { formatCalendarDate, formatMissionTimeForCalendar, groupMissionsByDate } from '@/app/utils/calendar';
 import { getColorValueByName } from '@/app/utils/color';
-import { formatDateRange } from '@/app/utils/date';
+import { formatDateRange, isPastDate, isToday, sortDates } from '@/app/utils/date';
 import { Page } from '@/app/utils/navigation';
 import { calculateEmployeePointsForDay, calculateMissionPoints, formatNumber, getTaskPoints } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';

@@ -10,7 +10,7 @@ export const formatDate = (date: Date): string => {
 };
 
 /**
- * Format a time for display in French format (HH:MM)
+ * Format a time for display in French format HH:MM (e.g., "14:30")
  */
 export const formatTime = (date: Date): string => {
   return new Date(date).toLocaleTimeString('fr-FR', {
@@ -26,6 +26,65 @@ export const formatDateTime = (date: Date): string => {
   const dateStr = formatDate(date);
   const timeStr = formatTime(date);
   return `${dateStr} à ${timeStr}`;
+};
+
+// Sort dates in ascending order
+export const sortDates = (dates: string[]): string[] => {
+  return dates.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+};
+
+// Check if a date is today
+export const isToday = (date: Date): boolean => {
+  const today = new Date();
+  return (
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
+  );
+};
+
+// Check if a date is in the past
+export const isPastDate = (date: Date): boolean => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const compareDate = new Date(date);
+  compareDate.setHours(0, 0, 0, 0);
+  return compareDate < today;
+};
+
+// Get all dates between start and end date (inclusive)
+export const getDatesInRange = (startDate: Date, endDate: Date): Date[] => {
+  const dates: Date[] = [];
+
+  // Create a new date object to avoid modifying the original
+  // Use local year, month, day to create a date at midnight local time
+  const currentDate = new Date();
+  currentDate.setFullYear(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  currentDate.setHours(0, 0, 0, 0);
+
+  // Create a new date object for the end date using local time
+  const lastDate = new Date();
+  lastDate.setFullYear(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+  lastDate.setHours(0, 0, 0, 0);
+
+  // Loop through each day and add it to the array
+  while (currentDate <= lastDate) {
+    dates.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return dates;
+};
+
+/**
+ * Convert a date to local date string in YYYY-MM-DD format
+ * This handles timezone correctly by using local time
+ */
+export const toLocalDateString = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 /**
