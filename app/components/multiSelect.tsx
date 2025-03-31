@@ -2,7 +2,7 @@
 
 import Label from '@/app/components/label';
 import { errorClassName, rowClassName, selectClassName } from '@/app/utils/className';
-import { shouldOpenUpward } from '@/app/utils/dropdownPosition';
+import { shouldOpenUpward } from '@/app/utils/select';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
 import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';

@@ -2,7 +2,7 @@
 
 import Label from '@/app/components/label';
 import { errorClassName, rowClassName, selectClassName } from '@/app/utils/className';
-import { shouldOpenUpward } from '@/app/utils/dropdownPosition';
+import { shouldOpenUpward } from '@/app/utils/select';
 import { IconChevronDown } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
 import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
@@ -139,7 +139,7 @@ const Select = forwardRef(
 
     // Determine the display value based on the selected value
     const displayValue = (() => {
-      if (!value) return placeholder;
+      if (!value.toString().trim()) return placeholder;
 
       // If options are objects with value and label
       if (typeof options[0] === 'object') {

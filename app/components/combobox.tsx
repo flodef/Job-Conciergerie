@@ -2,7 +2,7 @@
 
 import Label from '@/app/components/label';
 import { errorClassName, rowClassName, selectClassName } from '@/app/utils/className';
-import { shouldOpenUpward } from '@/app/utils/dropdownPosition';
+import { shouldOpenUpward } from '@/app/utils/select';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
 import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
@@ -153,7 +153,7 @@ const Combobox = forwardRef(
               ref={inputRef}
               type="text"
               className="flex-grow w-full bg-transparent outline-none text-foreground"
-              placeholder={value?.toString() || placeholder}
+              placeholder={value?.toString().trim() || placeholder}
               value={isOpen ? searchTerm : value}
               onChange={handleInputChange}
               onClick={() => {

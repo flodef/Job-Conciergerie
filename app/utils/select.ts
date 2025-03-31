@@ -11,6 +11,10 @@ interface PositionCheckParams {
   padding?: number;
 }
 
+export function range(start: number, end: number, step = 1): number[] {
+  return Array.from({ length: (end - start) / step + 1 }, (_, i) => start + i * step);
+}
+
 export function shouldOpenUpward({
   elementRef,
   itemCount,
