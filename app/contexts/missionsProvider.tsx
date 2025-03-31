@@ -23,7 +23,7 @@ type MissionsContextType = {
   completeMission: (id: string) => Promise<boolean>;
   shouldShowAcceptWarning: boolean | undefined;
   setShouldShowAcceptWarning: (show: boolean) => void;
-  missionExists: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName' | 'hours'>) => boolean;
+  missionExists: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName' | 'hours'>, id?: string) => boolean;
 };
 
 const MissionsContext = createContext<MissionsContextType | undefined>(undefined);
@@ -58,11 +58,17 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   };
 
   // Check if a mission with the same home, tasks, start date, and end date already exists
-  const missionExists = (missionData: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName' | 'hours'>): boolean => {
+  const missionExists = (
+    missionData: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName' | 'hours'>,
+    id?: string,
+  ): boolean => {
     // Sort tasks to ensure consistent comparison
     const sortedTasks = [...missionData.tasks].sort((a, b) => a.localeCompare(b));
 
     return missions.some(mission => {
+      // Skip the current mission if id is provided (meaning it's an update)
+      if (id && mission.id === id) return false;
+
       // Check if home ID matches
       if (mission.homeId !== missionData.homeId) return false;
 
@@ -129,7 +135,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       !conciergerieName ||
       !updatedMission.id ||
       updatedMission.conciergerieName !== conciergerieName ||
-      missionExists(updatedMission)
+      missionExists(updatedMission, updatedMission.id)
     )
       return false;
 

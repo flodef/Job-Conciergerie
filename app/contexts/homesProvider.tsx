@@ -14,7 +14,7 @@ type HomesContextType = {
   addHome: (home: Omit<Home, 'id' | 'conciergerieName'>) => Promise<boolean>;
   updateHome: (home: Home) => Promise<boolean>;
   deleteHome: (id: string) => Promise<boolean>;
-  homeExists: (title: string) => boolean;
+  homeExists: (title: string, id?: string) => boolean;
 };
 
 const HomesContext = createContext<HomesContextType | undefined>(undefined);
@@ -43,10 +43,12 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   };
 
   // Check if a home with the same title already exists for the current conciergerie
-  const homeExists = (title: string): boolean => {
+  const homeExists = (title: string, id?: string): boolean => {
     return homes.some(
       home =>
-        home.conciergerieName === conciergerieName && home.title.trim().toLowerCase() === title.trim().toLowerCase(),
+        home.conciergerieName === conciergerieName &&
+        (id ? home.id !== id : true) &&
+        home.title.trim().toLowerCase() === title.trim().toLowerCase(),
     );
   };
 
@@ -72,7 +74,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
       !conciergerieName ||
       !updatedHome.id ||
       updatedHome.conciergerieName !== conciergerieName ||
-      homeExists(updatedHome.title)
+      homeExists(updatedHome.title, updatedHome.id)
     )
       return false;
 
