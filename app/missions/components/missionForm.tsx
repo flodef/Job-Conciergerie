@@ -13,7 +13,7 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission, Task } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import { handleChange } from '@/app/utils/form';
-import { calculateMissionHours } from '@/app/utils/task';
+import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type MissionFormProps = {
@@ -32,13 +32,13 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
   // Initialize form values
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
-  const [tasksState, setTasks] = useState<Task[]>(mission?.tasks || []);
+  const [tasks, setTasks] = useState<Task[]>(mission?.tasks || []);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>(mission?.allowedEmployees || []);
   const [initialFormValues, setInitialFormValues] = useState<{
     homeId: string;
     startDateTime: string;
     endDateTime: string;
-    tasksState: Task[];
+    tasks: Task[];
     selectedEmployees: string[];
   }>();
 
@@ -126,7 +126,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       homeId,
       startDateTime,
       endDateTime,
-      tasksState,
+      tasks,
       selectedEmployees,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -136,7 +136,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     if (!initialFormValues) return false;
 
     // Check if any field has been filled in compared to initial state
-    const tasksChanged = JSON.stringify(tasksState) !== JSON.stringify(initialFormValues.tasksState);
+    const tasksChanged = JSON.stringify(tasks) !== JSON.stringify(initialFormValues.tasks);
     const homeIdChanged = homeId !== initialFormValues.homeId;
     const startDateChanged = startDateTime !== initialFormValues.startDateTime;
     const endDateChanged = endDateTime !== initialFormValues.endDateTime;
@@ -144,7 +144,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       JSON.stringify(selectedEmployees.sort()) !== JSON.stringify(initialFormValues.selectedEmployees.sort());
 
     return tasksChanged || homeIdChanged || startDateChanged || endDateChanged || employeesChanged;
-  }, [homeId, tasksState, startDateTime, endDateTime, selectedEmployees, initialFormValues]);
+  }, [homeId, tasks, startDateTime, endDateTime, selectedEmployees, initialFormValues]);
 
   const handleCancel = () => {
     if (checkFormChanged()) {
@@ -164,7 +164,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         fieldRef: homeSelectRef,
         func: setHomeIdError,
       };
-    else if (tasksState.length === 0)
+    else if (tasks.length === 0)
       error = {
         message: 'Veuillez sélectionner au moins une tâche',
         fieldRef: taskRef,
@@ -205,15 +205,16 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       const startDate = new Date(startDateTime);
       const endDate = new Date(endDateTime);
 
-      // Calculate the total hours based on tasks and home specifications
-      const totalHours = calculateMissionHours(selectedHome, tasksState);
+      // Calculate the total hours and available tasks based on tasks and home specifications
+      const totalHours = calculateMissionHours(selectedHome, tasks);
+      const availableTasks = getAvailableTasks(selectedHome, tasks);
 
       if (mode === 'add') {
         // Check if a mission with the same criteria already exists
         if (
           missionExists({
             homeId: selectedHome.id,
-            tasks: tasksState,
+            tasks: availableTasks,
             startDateTime: startDate,
             endDateTime: endDate,
           })
@@ -222,7 +223,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
         const result = await addMission({
           homeId: selectedHome.id,
-          tasks: tasksState,
+          tasks: availableTasks,
           startDateTime: startDate,
           endDateTime: endDate,
           allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
@@ -235,7 +236,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         const updatedMission: Mission = {
           ...mission,
           homeId: selectedHome.id,
-          tasks: tasksState,
+          tasks: availableTasks,
           startDateTime: startDate,
           endDateTime: endDate,
           modifiedDate: new Date(),
@@ -244,7 +245,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         };
 
         // Check if update would create a duplicate
-        if (missionExists(updatedMission)) throw new Error('Une mission identique existe déjà');
+        if (missionExists(updatedMission, mission.id)) throw new Error('Une mission identique existe déjà');
 
         const result = await updateMission(updatedMission);
         if (!result) throw new Error('Impossible de mettre à jour la mission');
@@ -340,7 +341,8 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
           id="task-select"
           label="Tâches"
           ref={taskRef}
-          selectedTasks={tasksState}
+          availableTasks={getAvailableTasks(filteredHomes.find(h => h.id === homeId)!, Object.values(Task))}
+          selectedTasks={tasks}
           onTasksChange={setTasks}
           error={tasksError}
           setError={setTasksError}

@@ -8,6 +8,7 @@ import { ForwardRefRenderFunction, ReactNode, forwardRef } from 'react';
 interface TaskSelectorProps {
   id: string;
   label: ReactNode;
+  availableTasks: Task[];
   selectedTasks: Task[];
   onTasksChange: (tasks: Task[]) => void;
   error: string;
@@ -19,7 +20,19 @@ interface TaskSelectorProps {
 }
 
 const TaskSelectorComponent: ForwardRefRenderFunction<HTMLDivElement, TaskSelectorProps> = (
-  { id, label, selectedTasks, onTasksChange, error, setError, disabled, required = false, className = '', row = false },
+  {
+    id,
+    label,
+    availableTasks,
+    selectedTasks,
+    onTasksChange,
+    error,
+    setError,
+    disabled,
+    required = false,
+    className = '',
+    row = false,
+  },
   ref,
 ) => {
   const toggleTask = (task: Task) => {
@@ -37,7 +50,7 @@ const TaskSelectorComponent: ForwardRefRenderFunction<HTMLDivElement, TaskSelect
         {label}
       </Label>
       <div ref={ref} className="grid grid-cols-2 gap-2">
-        {Object.values(Task).map(task => {
+        {availableTasks.map(task => {
           const points = getTaskPoints(task);
           return (
             <button

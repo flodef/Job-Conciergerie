@@ -17,6 +17,7 @@ import { ErrorField } from '@/app/types/types';
 import { errorClassName } from '@/app/utils/className';
 import { handleChange } from '@/app/utils/form';
 import { getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
+import { range } from '@/app/utils/select';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -42,7 +43,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [geographicZone, setGeographicZone] = useState<string>(home?.geographicZone || '');
   const [hoursOfCleaning, setHoursOfCleaning] = useState<number>(home?.hoursOfCleaning || 1);
-  const [hoursOfGardening, setHoursOfGardening] = useState<number>(home?.hoursOfGardening || 1);
+  const [hoursOfGardening, setHoursOfGardening] = useState<number>(home?.hoursOfGardening || 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [toastMessage, setToastMessage] = useState<Toast>();
@@ -235,7 +236,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
         setToastMessage({ type: ToastType.Success, message: 'Bien ajouté avec succès !' });
       } else if (home) {
         // For edit mode, only check for duplicates if the title has changed
-        if (title !== home.title && homeExists(title)) throw new Error('Un bien avec ce titre existe déjà');
+        if (title !== home.title && homeExists(title, home.id)) throw new Error('Un bien avec ce titre existe déjà');
 
         const result = await updateHome({
           ...home,
@@ -479,7 +480,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           className="max-w-1/3"
           value={hoursOfCleaning}
           onChange={value => setHoursOfCleaning(Number(value))}
-          options={[1, 2, 3, 4, 5]}
+          options={range(1, 5)}
           disabled={isSubmitting}
           placeholder="Nombre d'heures"
           required
@@ -492,7 +493,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           value={hoursOfGardening}
           className="max-w-1/3"
           onChange={value => setHoursOfGardening(Number(value))}
-          options={[1, 2, 3, 4, 5]}
+          options={range(0, 5)}
           disabled={isSubmitting}
           placeholder="Nombre d'heures"
           required

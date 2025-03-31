@@ -112,20 +112,28 @@ export const calculateEmployeePointsForDay = (
   }, 0);
 };
 
+export const getAvailableTasks = (home: Home, tasks = Object.values(Task)): Task[] => {
+  return tasks.filter(task => getTaskHours(home, task) > 0);
+};
+
 /**
  * Calculate total hours for a mission based on selected tasks and home specifications
  */
 export const calculateMissionHours = (home: Home, tasks: Task[]): number => {
-  return tasks.reduce((acc, task) => {
-    const hours = {
-      [Task.Cleaning]: home.hoursOfCleaning,
-      [Task.Gardening]: home.hoursOfGardening,
-      [Task.Arrival]: 0.5,
-      [Task.Departure]: 0.5,
-    }[task];
+  return tasks.reduce((acc, task) => acc + getTaskHours(home, task), 0);
+};
 
-    return acc + hours;
-  }, 0);
+/**
+ * Get hours for a specific task
+ */
+export const getTaskHours = (home: Home, task: Task): number => {
+  const hours = {
+    [Task.Cleaning]: home.hoursOfCleaning,
+    [Task.Gardening]: home.hoursOfGardening,
+    [Task.Arrival]: 0.5,
+    [Task.Departure]: 0.5,
+  }[task];
+  return hours;
 };
 
 /**
