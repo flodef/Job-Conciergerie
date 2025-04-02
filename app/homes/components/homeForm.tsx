@@ -4,8 +4,8 @@ import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
+import ImageUploader from '@/app/components/imageUploader';
 import Input from '@/app/components/input';
-import Label from '@/app/components/label';
 import ObjectiveList from '@/app/components/objectiveList';
 import Select from '@/app/components/select';
 import TextArea from '@/app/components/textArea';
@@ -14,12 +14,10 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { Home } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
-import { errorClassName } from '@/app/utils/className';
 import { handleChange } from '@/app/utils/form';
+import { getIPFSImageUrl } from '@/app/utils/ipfs';
 import { getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
 import { range } from '@/app/utils/select';
-import { clsx } from 'clsx/lite';
-import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 type HomeFormProps = {
@@ -32,28 +30,25 @@ type HomeFormProps = {
 export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: HomeFormProps) {
   const { addHome, updateHome, homeExists } = useHomes();
 
-  // Default mockup image path
-  const mockupImagePath = '/home.webp';
+  const imageUploaderRef = useRef<{ uploadAllPendingImages: () => Promise<string[] | null> }>(null);
+  const [hasPendingImages, setHasPendingImages] = useState(false);
 
   const [title, setTitle] = useState(home?.title || '');
   const [description, setDescription] = useState(home?.description || '');
   const [objectives, setObjectives] = useState<string[]>(home?.objectives || ['']);
-  const [images, setImages] = useState<File[]>([]);
-  const [existingImages, setExistingImages] = useState<string[]>(home?.images || []);
-  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>(home?.images || []);
   const [geographicZone, setGeographicZone] = useState<string>(home?.geographicZone || '');
   const [hoursOfCleaning, setHoursOfCleaning] = useState<number>(home?.hoursOfCleaning || 1);
   const [hoursOfGardening, setHoursOfGardening] = useState<number>(home?.hoursOfGardening || 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
-  const [toastMessage, setToastMessage] = useState<Toast>();
+  const [toast, setToast] = useState<Toast>();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [initialFormValues, setInitialFormValues] = useState<{
     title: string;
     description: string;
     objectives: string[];
     geographicZone: string;
-    images: string[];
     hoursOfCleaning: number;
     hoursOfGardening: number;
   }>();
@@ -84,7 +79,6 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
       description,
       objectives: [...objectives],
       geographicZone,
-      images: [...existingImages],
       hoursOfCleaning,
       hoursOfGardening,
     });
@@ -98,8 +92,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     const titleChanged = title !== initialFormValues.title;
     const descriptionChanged = description !== initialFormValues.description;
     const objectivesChanged = JSON.stringify(objectives) !== JSON.stringify(initialFormValues.objectives);
-    const imagesChanged =
-      images.length > 0 || JSON.stringify(existingImages) !== JSON.stringify(initialFormValues.images);
+    const imagesChanged = hasPendingImages;
     const geographicZoneChanged = geographicZone !== initialFormValues.geographicZone;
     const hoursOfCleaningChanged = hoursOfCleaning !== initialFormValues.hoursOfCleaning;
     const hoursOfGardeningChanged = hoursOfGardening !== initialFormValues.hoursOfGardening;
@@ -117,22 +110,12 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     title,
     description,
     objectives,
-    images,
-    existingImages,
+    hasPendingImages,
     geographicZone,
     hoursOfCleaning,
     hoursOfGardening,
     initialFormValues,
   ]);
-
-  useEffect(() => {
-    const urls = images.map(image => URL.createObjectURL(image));
-    setPreviewUrls(urls);
-
-    return () => {
-      urls.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [images]);
 
   const handleCancel = () => {
     if (checkFormChanged()) {
@@ -154,7 +137,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const handleSubmit = async () => {
     let error: ErrorField | undefined;
 
-    if (images.length === 0 && existingImages.length === 0)
+    // Check if we have either uploaded images or pending local images
+    if (images.length === 0 && !hasPendingImages)
       error = {
         message: 'Veuillez ajouter au moins une photo',
         fieldRef: imagesRef,
@@ -212,11 +196,9 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
         throw new Error(error.message);
       }
 
-      // Always use the mockup image regardless of what was uploaded
-      // Count how many images the user wanted to add
-      const imageCount = existingImages.length + images.length;
-      // Create an array with the mockup image repeated for each image the user wanted to add
-      const imageUrls = Array(Math.max(1, imageCount)).fill(mockupImagePath);
+      // Upload all pending images first
+      const imageCIDs = (await imageUploaderRef.current?.uploadAllPendingImages()) || [];
+      if (!imageCIDs.length) throw new Error('Échec du téléversement des images');
 
       if (mode === 'add') {
         // Check for duplicate homes by title before adding
@@ -226,14 +208,14 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           title,
           description,
           objectives: objectives.filter(objective => objective.trim() !== ''),
-          images: imageUrls,
+          images: imageCIDs, // Use the CIDs from the upload
           geographicZone,
           hoursOfCleaning,
           hoursOfGardening,
         });
         if (!result) throw new Error("Impossible d'ajouter le bien");
 
-        setToastMessage({ type: ToastType.Success, message: 'Bien ajouté avec succès !' });
+        setToast({ type: ToastType.Success, message: 'Bien ajouté avec succès !' });
       } else if (home) {
         // For edit mode, only check for duplicates if the title has changed
         if (title !== home.title && homeExists(title, home.id)) throw new Error('Un bien avec ce titre existe déjà');
@@ -243,68 +225,19 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           title,
           description,
           objectives: objectives.filter(objective => objective.trim() !== ''),
-          images: imageUrls,
+          images: imageCIDs,
           geographicZone,
           hoursOfCleaning,
           hoursOfGardening,
         });
         if (!result) throw new Error('Impossible de mettre à jour le bien');
 
-        setToastMessage({ type: ToastType.Success, message: 'Bien mis à jour avec succès !' });
+        setToast({ type: ToastType.Success, message: 'Bien mis à jour avec succès !' });
       }
     } catch (error) {
-      setToastMessage({ type: ToastType.Error, message: String(error), error });
+      setToast({ type: ToastType.Error, message: String(error), error });
       setIsSubmitting(false);
     }
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFiles = Array.from(e.target.files || []);
-    e.target.value = ''; // Reset obligatoire pour permettre la re-sélection
-
-    // Filter out duplicates
-    const nonDuplicateFiles = newFiles.filter(
-      newFile => !images.some(existingFile => existingFile.name === newFile.name && existingFile.size === newFile.size),
-    );
-
-    // Track if we found duplicates
-    const hasDuplicates = nonDuplicateFiles.length < newFiles.length;
-
-    // Calculate how many photos we can add without exceeding the limit
-    const currentTotal = existingImages.length + images.length;
-    const remainingSlots = Math.max(0, MAX_PHOTOS - currentTotal);
-    const exceedsLimit = nonDuplicateFiles.length > remainingSlots;
-
-    // Take only as many as we can fit
-    const filesToAdd = nonDuplicateFiles.slice(0, remainingSlots);
-
-    // Add the filtered files
-    if (filesToAdd.length > 0) {
-      setImages(prev => [...prev, ...filesToAdd]);
-      setImagesError('');
-    }
-
-    const message = exceedsLimit
-      ? `Vous ne pouvez pas ajouter plus de ${MAX_PHOTOS} photos au total`
-      : hasDuplicates
-      ? 'Certaines photos existent déjà dans la sélection !'
-      : '';
-
-    // Show appropriate toast message (prioritize the limit message)
-    if (message) {
-      setToastMessage({
-        type: ToastType.Warning,
-        message,
-      });
-    }
-  };
-
-  const removeExistingImage = (index: number) => {
-    setExistingImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const removeNewImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const footer = (
@@ -317,15 +250,11 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     />
   );
 
-  if (selectedImageIndex !== undefined) {
+  if (selectedImageIndex !== undefined && selectedImageIndex < images.length) {
     return (
       <FullScreenModal
         title={`Photo de ${title}`}
-        imageUrl={
-          selectedImageIndex < existingImages.length
-            ? mockupImagePath // Use mockup for existing images
-            : previewUrls[selectedImageIndex - existingImages.length] // Use preview for new images (UI only)
-        }
+        imageUrl={getIPFSImageUrl(images[selectedImageIndex])}
         onClose={() => setSelectedImageIndex(undefined)}
       />
     );
@@ -334,10 +263,10 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   return (
     <FullScreenModal title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'} onClose={onClose} footer={footer}>
       <ToastMessage
-        toast={toastMessage}
+        toast={toast}
         onClose={() => {
-          setToastMessage(undefined);
-          if (toastMessage?.type === ToastType.Success) {
+          setToast(undefined);
+          if (toast?.type === ToastType.Success) {
             onClose();
             onCancel?.();
           }
@@ -345,93 +274,19 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
       />
 
       <form onSubmit={handleSubmit} className="space-y-2">
-        <div>
-          <Label id="images" required>
-            <div className="flex justify-between items-center mb-1">
-              Photos
-              {(existingImages.length > 1 || previewUrls.length > 1) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImages([]);
-                    setExistingImages([]);
-                  }}
-                  className="text-sm text-red-500 hover:text-red-600"
-                >
-                  Tout supprimer
-                </button>
-              )}
-              {/* Hack to focus the input when there is an error */}
-              <input ref={imagesRef} type="text" className="h-0 w-0" />
-            </div>
-          </Label>
-          <div className={clsx('grid grid-cols-3 gap-4', imagesError && 'border border-red-500 rounded-lg p-2')}>
-            {/* Existing images */}
-            {existingImages.map((url, index) => (
-              <div key={`existing-${index}`} className="relative aspect-square">
-                <Image
-                  src={mockupImagePath} // Always use mockup for display
-                  alt={`Prévisualisation ${index + 1}`}
-                  width={100}
-                  height={100}
-                  className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setSelectedImageIndex(index)}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeExistingImage(index)}
-                  className="absolute p-3 -top-2 -right-2 bg-red-500 text-lg text-background rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-
-            {/* New images */}
-            {previewUrls.map((url, index) => (
-              <div key={`new-${index}`} className="relative aspect-square">
-                <Image
-                  src={url} // Use preview URL for UI only
-                  alt={`Prévisualisation ${existingImages.length + index + 1}`}
-                  width={100}
-                  height={100}
-                  className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setSelectedImageIndex(existingImages.length + index)}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeNewImage(index)}
-                  className="absolute p-3 -top-2 -right-2 bg-red-500 text-lg text-background rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-
-            {/* Upload button */}
-            <input
-              type="file"
-              multiple
-              onChange={handleImageUpload}
-              className="hidden"
-              accept="image/*"
-              id="image-upload"
-            />
-            <label
-              htmlFor="image-upload"
-              className={clsx(
-                'aspect-square flex items-center justify-center border-2 border-dashed border-foreground/30 rounded-lg hover:border-foreground/50 cursor-pointer transition-colors',
-                images.length >= MAX_PHOTOS && 'hidden',
-              )}
-            >
-              <span className="text-3xl text-foreground/50">+</span>
-            </label>
-          </div>
-          {imagesError && <p className={errorClassName}>{imagesError}</p>}
-          <p className="text-xs text-light mt-2 text-center">
-            Note: Les images sont remplacées par une image par défaut lors de l&apos;enregistrement
-          </p>
-        </div>
+        <ImageUploader
+          id="images"
+          label="Photos"
+          ref={imageUploaderRef}
+          imageIds={images}
+          onImageIdsChange={setImages}
+          onPendingImagesChange={setHasPendingImages}
+          maxImages={MAX_PHOTOS}
+          error={imagesError}
+          onError={setImagesError}
+          disabled={isSubmitting}
+          required
+        />
 
         <Input
           id="title"

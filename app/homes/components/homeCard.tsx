@@ -3,6 +3,7 @@
 import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Home } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
+import { fallbackImage, getIPFSImageUrl } from '@/app/utils/ipfs';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
@@ -43,11 +44,15 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
       {home.images && home.images.length > 0 && (
         <div className="relative aspect-video w-full overflow-hidden rounded-lg">
           <Image
-            src={home.images[0]}
-            alt={home.title}
+            src={getIPFSImageUrl(home.images[0])}
+            alt={`Photo de ${home.title}`}
             fill
             sizes="(max-width: 768px) 100vw, 300px"
-            className="object-cover"
+            className="object-cover rounded-md"
+            onError={e => {
+              // Fallback to mockup
+              (e.target as HTMLImageElement).src = fallbackImage;
+            }}
           />
         </div>
       )}

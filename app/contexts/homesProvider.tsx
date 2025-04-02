@@ -1,6 +1,7 @@
 'use client';
 
 import { createNewHome, deleteHomeData, fetchAllHomes, updateHomeData } from '@/app/actions/home';
+import { deleteFileFromIPFS } from '@/app/actions/ipfs';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Home } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
@@ -92,6 +93,8 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
     const deleted = await deleteHomeData(id);
     if (!deleted) return false;
+
+    homeToDelete.images.forEach(async img => await deleteFileFromIPFS(img));
 
     setHomes(prev => prev.filter(home => home.id !== id));
     return true;

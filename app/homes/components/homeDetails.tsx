@@ -7,7 +7,8 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import { Home } from '@/app/types/dataTypes';
-import { IconPencil, IconTrash, IconFileDescription, IconListCheck } from '@tabler/icons-react';
+import { fallbackImage, getIPFSImageUrl } from '@/app/utils/ipfs';
+import { IconFileDescription, IconListCheck, IconPencil, IconTrash } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
@@ -105,7 +106,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
       {selectedImageIndex !== null && home.images && (
         <FullScreenModal
           title={`Photo de ${home.title}`}
-          imageUrl={home.images[selectedImageIndex]}
+          imageUrl={getIPFSImageUrl(home.images[selectedImageIndex])}
           onClose={() => setSelectedImageIndex(null)}
         />
       )}
@@ -114,15 +115,19 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
         {home.images && home.images.length > 0 && (
           <div>
             <div className="grid grid-cols-3 gap-2">
-              {home.images.map((image, index) => (
+              {home.images.map((cidWithId, index) => (
                 <div key={index} className="relative aspect-square">
                   <Image
-                    src={image}
+                    src={getIPFSImageUrl(cidWithId)}
                     alt={`Photo ${index + 1}`}
                     fill
                     sizes="(max-width: 768px) 33vw, 150px"
                     className="object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={() => setSelectedImageIndex(index)}
+                    onError={e => {
+                      // Fallback to mockup
+                      (e.target as HTMLImageElement).src = fallbackImage;
+                    }}
                   />
                 </div>
               ))}

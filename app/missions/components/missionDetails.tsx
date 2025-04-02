@@ -13,6 +13,7 @@ import MissionForm from '@/app/missions/components/missionForm';
 import { Conciergerie, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateTime, getDateRangeDifference } from '@/app/utils/date';
+import { getIPFSImageUrl } from '@/app/utils/ipfs';
 import { calculateEmployeePointsForDay, calculateMissionPoints, formatNumber, getTaskPoints } from '@/app/utils/task';
 import {
   IconAlertTriangle,
@@ -277,9 +278,9 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
       {selectedImage && (
         <FullScreenModal
-          imageUrl={selectedImage}
-          onClose={() => setSelectedImage(null)}
           title={`Photo de ${home.title}`}
+          imageUrl={getIPFSImageUrl(selectedImage)}
+          onClose={() => setSelectedImage(null)}
         />
       )}
 

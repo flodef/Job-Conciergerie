@@ -1,5 +1,7 @@
 'use server';
 
+import { extractID, getIpfsFileName } from '@/app/utils/ipfs';
+
 // Constants
 const IPFS_JWT = process.env.IPFS_JWT;
 const IPFS_API_URL = process.env.NEXT_PUBLIC_IPFS_API_URL;
@@ -11,7 +13,7 @@ const PUBLIC_URL = process.env.NEXT_PUBLIC_IPFS_PUBLIC_URL;
  * @param file File to upload
  * @returns Promise<string> CID and file ID joined with a slash
  */
-export async function uploadFileToIPFS(file: File): Promise<string> {
+export async function uploadFileToIPFS(file: File): Promise<string | null> {
   if (!IPFS_JWT || !IPFS_API_URL) {
     console.error('IPFS environment variables not configured');
     throw new Error('IPFS environment variables not configured');
@@ -19,89 +21,53 @@ export async function uploadFileToIPFS(file: File): Promise<string> {
 
   try {
     const formData = new FormData();
-    formData.append('file', file, file.name);
+    formData.append('file', file, getIpfsFileName());
     formData.append('network', 'public');
 
-    const res = await fetch(IPFS_API_URL, {
+    const request = await fetch(IPFS_API_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${IPFS_JWT}`,
+        'Upload-Length': file.size.toString(), // Required for v3
       },
       body: formData,
     });
 
-    if (!res.ok) {
-      const errorBody = await res.text();
-      console.error(`IPFS upload error (${res.status}):`, errorBody);
-      throw new Error(`IPFS upload failed: ${res.statusText}`);
+    if (!request.ok) {
+      const errorBody = await request.text();
+      console.error(`IPFS upload error (${request.status}):`, errorBody);
+      throw new Error(`IPFS upload failed: ${request.statusText}`);
     }
 
-    const result = await res.json();
+    const result = await request.json();
 
     if (!result.data || !result.data.cid || !result.data.id) {
       console.error('Pinata response missing data.cid or data.id:', result);
-      throw new Error('Failed to get CID or ID from Pinata response');
+      return null;
     }
 
     // Return combined CID/ID format that can be split later
     return `${result.data.cid}/${result.data.id}`;
   } catch (error) {
     console.error('Error in uploadFileToIPFS:', error);
-    const errorMessage = error instanceof Error ? error.message : 'IPFS upload failed';
-    throw new Error(errorMessage);
+    return null;
   }
-}
-
-/**
- * Utility to get image URL from a CID/ID string
- * @param cidIdString The combined CID/ID string (format: "cid/id")
- * @returns The URL to access the image
- */
-export function getIPFSImageUrl(cidIdString: string): string {
-  const gatewayDomain = process.env.NEXT_PUBLIC_GATEWAY_DOMAIN;
-
-  if (!gatewayDomain) {
-    console.warn('Gateway domain not configured, using fallback image');
-    return '/home.webp'; // Fallback image
-  }
-
-  // Extract the CID from the combined string (format: "cid/id")
-  const cid = extractCID(cidIdString);
-  if (!cid) {
-    console.warn('Invalid CID/ID format', cidIdString);
-    return '/home.webp'; // Fallback image
-  }
-
-  return `https://${gatewayDomain.replace('https://', '').replace(/\/$/, '')}/ipfs/${cid}`;
-}
-
-/**
- * Utility to extract just the CID part from a CID/ID string
- */
-export function extractCID(cidIdString: string): string {
-  return cidIdString.split('/')[0] || '';
-}
-
-/**
- * Utility to extract just the ID part from a CID/ID string
- */
-export function extractID(cidIdString: string): string {
-  const parts = cidIdString.split('/');
-  return parts.length > 1 ? parts[1] : '';
 }
 
 /**
  * Delete a file from IPFS via Pinata
  * @param fileId The ID of the file to delete
  */
-export async function deleteFileFromIPFS(fileId: string): Promise<void> {
+export async function deleteFileFromIPFS(fileId: string): Promise<boolean> {
   if (!IPFS_JWT || !PUBLIC_URL) {
     console.error('IPFS environment variables not configured');
-    throw new Error('IPFS environment variables not configured');
+    return false;
   }
 
+  const id = extractID(fileId);
+
   try {
-    const res = await fetch(`${PUBLIC_URL}${fileId}`, {
+    const res = await fetch(`${PUBLIC_URL}${id}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${IPFS_JWT}`,
@@ -111,11 +77,11 @@ export async function deleteFileFromIPFS(fileId: string): Promise<void> {
     if (!res.ok) {
       const errorBody = await res.text();
       console.error(`IPFS delete error (${res.status}):`, errorBody);
-      throw new Error(`IPFS delete failed: ${res.statusText}`);
+      return false;
     }
+    return true;
   } catch (error) {
     console.error('Error in deleteFileFromIPFS:', error);
-    const errorMessage = error instanceof Error ? error.message : 'IPFS delete failed';
-    throw new Error(errorMessage);
+    return false;
   }
 }
