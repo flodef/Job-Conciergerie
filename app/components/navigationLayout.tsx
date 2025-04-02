@@ -46,8 +46,8 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     : isLoadingHomes
     ? 'Chargement des biens...'
     : !isLoading
-    ? 'Redirection en cours...'
-    : undefined;
+    ? 'Redirection...'
+    : 'Identification...';
 
   useEffect(() => {
     // Check if we're on the homepage or waiting page

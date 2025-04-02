@@ -10,12 +10,7 @@ type LoadingSpinnerProps = {
   className?: string;
 };
 
-export default function LoadingSpinner({
-  size = 'large',
-  text = 'Identification...',
-  fullPage = true,
-  className,
-}: LoadingSpinnerProps) {
+export default function LoadingSpinner({ size = 'large', text, fullPage = true, className }: LoadingSpinnerProps) {
   const sizeClasses = {
     small: 'w-4 h-4 border-2',
     medium: 'w-8 h-8 border-3',
