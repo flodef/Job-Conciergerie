@@ -56,10 +56,7 @@ export function RefreshButton({
   const { refreshData, disconnect } = useAuth();
 
   return (
-    <Button
-      className={clsx('mt-4 justify-self-center', className)}
-      onClick={shouldDisconnect ? disconnect : refreshData}
-    >
+    <Button className={clsx('mt-4 mx-auto', className)} onClick={shouldDisconnect ? disconnect : refreshData}>
       Réessayer
     </Button>
   );
