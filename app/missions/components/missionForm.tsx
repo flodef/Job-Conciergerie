@@ -129,13 +129,19 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     return tasksChanged || homeIdChanged || startDateChanged || endDateChanged || employeesChanged;
   }, [homeId, tasks, startDateTime, endDateTime, selectedEmployees, initialFormValues]);
 
+  const closeAndCancel = () => {
+    onClose();
+    onCancel?.();
+  };
+
   const handleCancel = () => {
-    if (checkFormChanged()) {
-      setShowConfirmDialog(true);
-    } else {
-      onClose();
-      onCancel?.();
-    }
+    if (checkFormChanged()) setShowConfirmDialog(true);
+    else closeAndCancel();
+  };
+
+  const handleClose = () => {
+    if (checkFormChanged()) setShowConfirmDialog(true);
+    else onClose();
   };
 
   const handleSubmit = async () => {
@@ -282,17 +288,14 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   return (
     <FullScreenModal
       title={mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}
-      onClose={onClose}
+      onClose={handleClose}
       footer={footer}
     >
       <ToastMessage
         toast={toast}
         onClose={() => {
           setToast(undefined);
-          if (toast?.type === ToastType.Success) {
-            onClose();
-            onCancel?.();
-          }
+          if (toast?.type === ToastType.Success) closeAndCancel();
         }}
       />
 

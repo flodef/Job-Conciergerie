@@ -451,7 +451,7 @@ const ImageUploader = React.forwardRef<
         {/* Fullscreen modal */}
         {fullscreenImageUrl && (
           <FullScreenModal
-            title={'Aperçu de l&apos;image'}
+            title={"Aperçu de l'image"}
             imageUrl={fullscreenImageUrl}
             onClose={() => setFullscreenImageUrl(undefined)}
           />

@@ -121,13 +121,19 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     initialFormValues,
   ]);
 
+  const closeAndCancel = () => {
+    onClose();
+    onCancel?.();
+  };
+
   const handleCancel = () => {
-    if (checkFormChanged()) {
-      setShowConfirmDialog(true);
-    } else {
-      onClose();
-      onCancel?.();
-    }
+    if (checkFormChanged()) setShowConfirmDialog(true);
+    else closeAndCancel();
+  };
+
+  const handleClose = () => {
+    if (checkFormChanged()) setShowConfirmDialog(true);
+    else onClose();
   };
 
   // Check for duplicate objectives in the list
@@ -265,15 +271,16 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   }
 
   return (
-    <FullScreenModal title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'} onClose={onClose} footer={footer}>
+    <FullScreenModal
+      title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'}
+      onClose={handleClose}
+      footer={footer}
+    >
       <ToastMessage
         toast={toast}
         onClose={() => {
           setToast(undefined);
-          if (toast?.type === ToastType.Success) {
-            onClose();
-            onCancel?.();
-          }
+          if (toast?.type === ToastType.Success) closeAndCancel();
         }}
       />
 
