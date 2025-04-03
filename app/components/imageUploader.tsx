@@ -335,7 +335,7 @@ const ImageUploader = React.forwardRef<
         </div>
         <div className={clsx('grid grid-cols-3 gap-4', error && 'border border-red-500 rounded-lg p-2')}>
           {/* Existing committed images */}
-          {imageIds.map((cidWithId, index) => {
+          {[...new Set(imageIds)].map((cidWithId, index) => {
             const url = getIPFSImageUrl(cidWithId);
             return (
               <div key={`committed-${cidWithId}-${index}`} className="relative aspect-square">

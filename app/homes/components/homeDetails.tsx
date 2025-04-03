@@ -112,10 +112,10 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
       )}
 
       <div className="space-y-2" data-home-details>
-        {home.images && home.images.length > 0 && (
+        {home.images.length > 0 && (
           <div>
             <div className="grid grid-cols-3 gap-2">
-              {home.images.map((cidWithId, index) => (
+              {[...new Set(home.images)].map((cidWithId, index) => (
                 <div key={index} className="relative aspect-square">
                   <Image
                     src={getIPFSImageUrl(cidWithId)}
