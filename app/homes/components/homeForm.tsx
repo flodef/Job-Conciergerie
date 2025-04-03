@@ -10,6 +10,7 @@ import ObjectiveList from '@/app/components/objectiveList';
 import Select from '@/app/components/select';
 import TextArea from '@/app/components/textArea';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { Home } from '@/app/types/dataTypes';
@@ -29,8 +30,11 @@ type HomeFormProps = {
 
 export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: HomeFormProps) {
   const { addHome, updateHome, homeExists } = useHomes();
+  const { conciergerieName } = useAuth();
 
-  const imageUploaderRef = useRef<{ uploadAllPendingImages: () => Promise<string[] | null> }>(null);
+  const imageUploaderRef = useRef<{
+    uploadAllPendingImages: (conciergerieName: string, houseTitle: string) => Promise<string[] | null>;
+  }>(null);
   const [hasPendingImages, setHasPendingImages] = useState(false);
 
   const [title, setTitle] = useState(home?.title || '');
@@ -197,7 +201,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
       }
 
       // Upload all pending images first
-      const imageCIDs = (await imageUploaderRef.current?.uploadAllPendingImages()) || [];
+      const imageCIDs = (await imageUploaderRef.current?.uploadAllPendingImages(conciergerieName || '', title)) || [];
       if (!imageCIDs.length) throw new Error('Échec du téléversement des images');
 
       if (mode === 'add') {
@@ -278,6 +282,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           id="images"
           label="Photos"
           ref={imageUploaderRef}
+          imagesRef={imagesRef}
           imageIds={images}
           onImageIdsChange={setImages}
           onPendingImagesChange={setHasPendingImages}

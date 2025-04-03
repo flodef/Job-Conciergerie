@@ -24,6 +24,7 @@ interface LocalImage {
 
 export interface ImageUploaderProps {
   id: string;
+  imagesRef: React.RefObject<HTMLInputElement | null>;
   imageIds: string[];
   onImageIdsChange: (cids: string[]) => void;
   onPendingImagesChange: (hasPendingImages: boolean) => void; // Notify parent about pending local images
@@ -36,10 +37,14 @@ export interface ImageUploaderProps {
   className?: string;
 }
 
-const ImageUploader = React.forwardRef<{ uploadAllPendingImages: () => Promise<string[] | null> }, ImageUploaderProps>(
+const ImageUploader = React.forwardRef<
+  { uploadAllPendingImages: (conciergerieName: string, houseTitle: string) => Promise<string[] | null> },
+  ImageUploaderProps
+>(
   (
     {
       id,
+      imagesRef,
       imageIds,
       onImageIdsChange,
       onPendingImagesChange,
@@ -53,23 +58,30 @@ const ImageUploader = React.forwardRef<{ uploadAllPendingImages: () => Promise<s
     },
     ref,
   ) => {
-    const imagesRef = useRef<HTMLInputElement>(null);
+    const inputFocusRef = useRef<HTMLInputElement>(null);
+    const uploadButtonRef = useRef<HTMLInputElement>(null);
 
     const [toast, setToast] = useState<Toast>();
 
     const [localImages, setLocalImages] = useState<LocalImage[]>([]);
     const [fullscreenImageUrl, setFullscreenImageUrl] = useState<string | undefined>();
     const [imageIdsToRemove, setImageIdsToRemove] = useState<string[]>([]);
+    const [hasChanged, setHasChanged] = useState(false);
+
+    useEffect(() => {
+      if (imagesRef && inputFocusRef.current) {
+        imagesRef.current = inputFocusRef.current; // Link the parent's ref to the input
+      }
+    }, [imagesRef]);
 
     // Notify parent about pending local images
     useEffect(() => {
-      // Only call if the prop is provided
       onPendingImagesChange(localImages.length > 0);
     }, [localImages.length, onPendingImagesChange]);
 
     // Expose method to upload all pending images
     React.useImperativeHandle(ref, () => ({
-      async uploadAllPendingImages() {
+      async uploadAllPendingImages(conciergerieName: string, houseTitle: string) {
         imageIdsToRemove.forEach(async img => {
           // Upload with progress tracking
           const result = await deleteFileFromIPFS(img);
@@ -94,8 +106,9 @@ const ImageUploader = React.forwardRef<{ uploadAllPendingImages: () => Promise<s
           // Skip already failed images
           if (image.uploadStatus === 'success') continue;
 
+          const fileName = `${conciergerieName}-${houseTitle}`;
           const compressedBlob = await compressImage(image.file);
-          const file = new File([compressedBlob], image.file.name, {
+          const file = new File([compressedBlob], fileName, {
             type: compressedBlob.type,
           });
 
@@ -182,6 +195,8 @@ const ImageUploader = React.forwardRef<{ uploadAllPendingImages: () => Promise<s
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (!files) return;
+
+      setHasChanged(true);
 
       // Convert FileList to array
       const newFiles = Array.from(files);
@@ -272,6 +287,7 @@ const ImageUploader = React.forwardRef<{ uploadAllPendingImages: () => Promise<s
 
       // Notify parent about pending local images
       onPendingImagesChange(newCids.length + localImages.length > 0);
+      setHasChanged(true);
     };
 
     const handleDeleteLocal = (id: string) => {
@@ -283,6 +299,7 @@ const ImageUploader = React.forwardRef<{ uploadAllPendingImages: () => Promise<s
         }
         return prev.filter(img => img.id !== id);
       });
+      setHasChanged(true);
     };
 
     const deleteAll = () => {
@@ -291,8 +308,9 @@ const ImageUploader = React.forwardRef<{ uploadAllPendingImages: () => Promise<s
     };
 
     useEffect(() => {
-      if (required && imageIds.length + localImages.length === 0) onError('Veuillez ajouter au moins une photo');
-    }, [imageIds, localImages, required, onError]);
+      if (required && hasChanged && imageIds.length + localImages.length === 0)
+        onError('Veuillez ajouter au moins une photo');
+    }, [imageIds, localImages, required, onError, hasChanged]);
 
     // Calculate total images
     const totalImages = imageIds.length + localImages.length;
@@ -311,7 +329,7 @@ const ImageUploader = React.forwardRef<{ uploadAllPendingImages: () => Promise<s
                 </button>
               )}
               {/* Hack to focus the input when there is an error */}
-              {/* <input ref={imagesRef} type="text" className="h-0 w-0" /> */}
+              <input ref={inputFocusRef} type="text" className="h-0 w-0" />
             </div>
           </div>
         </div>
@@ -407,7 +425,7 @@ const ImageUploader = React.forwardRef<{ uploadAllPendingImages: () => Promise<s
             <>
               <button
                 type="button"
-                onClick={() => imagesRef.current?.click()}
+                onClick={() => uploadButtonRef.current?.click()}
                 className={clsx(
                   'aspect-square border-2 border-dashed border-secondary rounded-lg flex flex-col items-center justify-center text-foreground/50 hover:border-primary hover:text-primary transition-colors',
                 )}
@@ -416,7 +434,7 @@ const ImageUploader = React.forwardRef<{ uploadAllPendingImages: () => Promise<s
                 <IconPhotoPlus size={26} />
               </button>
               <input
-                ref={imagesRef}
+                ref={uploadButtonRef}
                 id={id}
                 type="file"
                 multiple

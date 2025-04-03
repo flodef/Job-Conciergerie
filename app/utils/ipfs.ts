@@ -1,5 +1,3 @@
-import { toLocalDateString } from './date';
-
 export const fallbackImage = process.env.NEXT_PUBLIC_FALLBACK_IMAGE_URL || '/home.webp';
 
 /**
@@ -41,5 +39,5 @@ export function extractID(cidIdString: string): string {
 }
 
 export function getIpfsFileName(): string {
-  return `JobConciergerie_${toLocalDateString(new Date())}`;
+  return `JobConciergerie_${Date.now()}`;
 }
