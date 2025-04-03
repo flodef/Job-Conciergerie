@@ -1,6 +1,6 @@
 'use server';
 
-import { extractID, getIpfsFileName } from '@/app/utils/ipfs';
+import { extractID } from '@/app/utils/ipfs';
 
 // Constants
 const IPFS_JWT = process.env.IPFS_JWT;
@@ -21,7 +21,7 @@ export async function uploadFileToIPFS(file: File): Promise<string | null> {
 
   try {
     const formData = new FormData();
-    formData.append('file', file, getIpfsFileName());
+    formData.append('file', file, file.name);
     formData.append('network', 'public');
 
     const request = await fetch(IPFS_API_URL, {
