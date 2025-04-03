@@ -9,6 +9,8 @@ export const inputClassName =
   'w-full p-2 pl-10 border-2 border-secondary rounded-md focus:ring-primary focus:border-primary focus-visible:outline-none focus-within:outline-none';
 export const spinningClassName =
   'w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin mr-2';
+export const secondaryButtonClassName = 'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1';
+export const rightSideButtonClassName = secondaryButtonClassName + ' bg-foreground/10 text-foreground self-end mb-1.5';
 
 export const buttonClassName = (type: ButtonStyle) =>
   clsx(
@@ -30,4 +32,12 @@ export const inputFieldClassName = (error: boolean | string) =>
   clsx(
     'w-full px-3 py-2 rounded-lg bg-background text-foreground border-2',
     error ? 'border-red-500 focus-visible:outline-red-500' : 'border-secondary focus-visible:outline-primary',
+  );
+export const filterButtonClassName = (shouldAppear: boolean) =>
+  clsx(
+    rightSideButtonClassName,
+    'transition-all duration-500 ease-in-out',
+    shouldAppear
+      ? 'bg-foreground/10 text-foreground w-[115px]'
+      : 'bg-foreground/5 text-foreground/40 w-0 px-[0px] overflow-hidden',
   );

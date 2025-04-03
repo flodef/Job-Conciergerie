@@ -31,7 +31,7 @@ export function applyMissionFilters(
   missions: Mission[],
   selectedConciergeries: string[],
   selectedStatuses: string[],
-  selectedTakenStatus: string[],
+  selectedMissionStatuses: string[],
   selectedZones: string[],
   homes: Home[],
 ): Mission[] {
@@ -39,7 +39,7 @@ export function applyMissionFilters(
   if (
     selectedConciergeries.length === 0 &&
     selectedStatuses.length === 0 &&
-    selectedTakenStatus.length === 0 &&
+    selectedMissionStatuses.length === 0 &&
     selectedZones.length === 0
   ) {
     return missions;
@@ -54,7 +54,6 @@ export function applyMissionFilters(
     const missionEndDate = new Date(mission.endDateTime);
     const isCurrent = missionEndDate >= now;
     const isArchived = missionEndDate < now;
-    const isTaken = !!mission.employeeId;
 
     // Filter by time period status (current/archived)
     if (selectedStatuses.length > 0) {
@@ -73,18 +72,26 @@ export function applyMissionFilters(
       }
     }
 
-    // Filter by taken status
-    if (selectedTakenStatus.length > 0) {
-      // If both taken and notTaken are selected or none are selected, show all missions
-      const showAllTakenStatuses =
-        selectedTakenStatus.length === 0 ||
-        (selectedTakenStatus.includes('taken') && selectedTakenStatus.includes('notTaken'));
+    // Filter by mission status
+    if (selectedMissionStatuses.length > 0) {
+      // Check if the mission matches the selected status filter
+      // 'available' means no employee is assigned (employeeId is empty)
+      // 'pending', 'started', 'completed' match the actual mission status
+      
+      // If all statuses are selected or none are selected, show all missions
+      const showAllMissionStatuses = selectedMissionStatuses.length === 0;
 
-      if (!showAllTakenStatuses) {
-        const matchesTakenStatus =
-          (selectedTakenStatus.includes('taken') && isTaken) || (selectedTakenStatus.includes('notTaken') && !isTaken);
+      if (!showAllMissionStatuses) {
+        const isAvailable = !mission.employeeId;
+        
+        const matchesMissionStatus = (
+          (selectedMissionStatuses.includes('available') && isAvailable) ||
+          (selectedMissionStatuses.includes('pending') && mission.status === 'pending') ||
+          (selectedMissionStatuses.includes('started') && mission.status === 'started') ||
+          (selectedMissionStatuses.includes('completed') && mission.status === 'completed')
+        );
 
-        if (!matchesTakenStatus) {
+        if (!matchesMissionStatus) {
           return false;
         }
       }

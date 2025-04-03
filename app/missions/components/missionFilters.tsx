@@ -1,5 +1,7 @@
 'use client';
 
+import MultiSelect from '@/app/components/multiSelect';
+import { filterButtonClassName, rowClassName, secondaryButtonClassName } from '@/app/utils/className';
 import { IconDeviceFloppy, IconX } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import React from 'react';
@@ -7,7 +9,7 @@ import React from 'react';
 export type MissionFiltersType = {
   conciergeries: string[];
   statuses: string[];
-  takenStatus: string[];
+  missionStatuses: string[];
   zones: string[];
 };
 
@@ -18,8 +20,8 @@ interface MissionFiltersProps {
   setSelectedConciergeries: React.Dispatch<React.SetStateAction<string[]>>;
   selectedStatuses: string[];
   setSelectedStatuses: React.Dispatch<React.SetStateAction<string[]>>;
-  selectedTakenStatus: string[];
-  setSelectedTakenStatus: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedMissionStatuses: string[];
+  setSelectedMissionStatuses: React.Dispatch<React.SetStateAction<string[]>>;
   selectedZones: string[];
   setSelectedZones: React.Dispatch<React.SetStateAction<string[]>>;
   saveFiltersToLocalStorage?: () => void;
@@ -33,8 +35,8 @@ export default function MissionFilters({
   setSelectedConciergeries,
   selectedStatuses,
   setSelectedStatuses,
-  selectedTakenStatus,
-  setSelectedTakenStatus,
+  selectedMissionStatuses,
+  setSelectedMissionStatuses,
   selectedZones,
   setSelectedZones,
   saveFiltersToLocalStorage,
@@ -58,10 +60,10 @@ export default function MissionFilters({
     return compareArrays(selectedStatuses, savedFilters.statuses);
   }, [selectedStatuses, savedFilters]);
 
-  const takenStatusChanged = React.useMemo(() => {
+  const missionStatusesChanged = React.useMemo(() => {
     if (!savedFilters) return false;
-    return compareArrays(selectedTakenStatus, savedFilters.takenStatus);
-  }, [selectedTakenStatus, savedFilters]);
+    return compareArrays(selectedMissionStatuses, savedFilters.missionStatuses);
+  }, [selectedMissionStatuses, savedFilters]);
 
   const zonesChanged = React.useMemo(() => {
     if (!savedFilters) return false;
@@ -70,156 +72,104 @@ export default function MissionFilters({
 
   // Check if any filters have been changed from saved values
   const filtersChanged = React.useMemo(() => {
-    return conciergeriesChanged || statusesChanged || takenStatusChanged || zonesChanged;
-  }, [conciergeriesChanged, statusesChanged, takenStatusChanged, zonesChanged]);
+    return conciergeriesChanged || statusesChanged || missionStatusesChanged || zonesChanged;
+  }, [conciergeriesChanged, statusesChanged, missionStatusesChanged, zonesChanged]);
   return (
     <div className="px-4 pb-4 bg-background rounded-lg shadow-md flex flex-col gap-2">
       {/* Conciergeries filter */}
       {availableConciergeries.length > 0 && (
-        <div>
-          <h3 className="text-sm font-medium mb-2">Conciergeries</h3>
-          <div className="flex flex-wrap gap-2">
-            {availableConciergeries.map(conciergerie => (
-              <button
-                key={conciergerie}
-                onClick={() => {
-                  setSelectedConciergeries(prev =>
-                    prev.includes(conciergerie) ? prev.filter(c => c !== conciergerie) : [...prev, conciergerie],
-                  );
-                }}
-                className={clsx(
-                  'px-3 py-1.5 rounded-lg text-sm',
-                  selectedConciergeries.includes(conciergerie)
-                    ? 'bg-primary text-background'
-                    : 'bg-foreground/10 text-foreground',
-                )}
-              >
-                {conciergerie}
-              </button>
-            ))}
-            {conciergeriesChanged && (
-              <button
-                onClick={() => setSelectedConciergeries(savedFilters?.conciergeries || [])}
-                className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
-              >
-                <IconX size={14} /> Réinitialiser
-              </button>
-            )}
-          </div>
+        <div className={clsx(rowClassName, 'my-[0px]')}>
+          <MultiSelect
+            id="conciergeries-filter"
+            label="Conciergeries"
+            values={selectedConciergeries}
+            onChange={setSelectedConciergeries}
+            options={availableConciergeries.map(conciergerie => ({
+              value: conciergerie,
+              label: conciergerie,
+            }))}
+            disabled={false}
+            required
+          />
+          <button
+            onClick={() => setSelectedConciergeries(savedFilters?.conciergeries || [])}
+            className={filterButtonClassName(conciergeriesChanged)}
+            disabled={!conciergeriesChanged}
+          >
+            <IconX size={14} /> Réinitialiser
+          </button>
         </div>
       )}
 
       {/* Time period filter */}
-      <div>
-        <h3 className="text-sm font-medium mb-2">Période</h3>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => {
-              setSelectedStatuses(prev =>
-                prev.includes('current') ? prev.filter(s => s !== 'current') : [...prev, 'current'],
-              );
-            }}
-            className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm',
-              selectedStatuses.includes('current') ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
-            )}
-          >
-            Actuelles
-          </button>
-          <button
-            onClick={() => {
-              setSelectedStatuses(prev =>
-                prev.includes('archived') ? prev.filter(s => s !== 'archived') : [...prev, 'archived'],
-              );
-            }}
-            className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm',
-              selectedStatuses.includes('archived') ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
-            )}
-          >
-            Archivées
-          </button>
-          {statusesChanged && (
-            <button
-              onClick={() => setSelectedStatuses(savedFilters?.statuses || ['current'])}
-              className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
-            >
-              <IconX size={14} /> Réinitialiser
-            </button>
-          )}
-        </div>
+      <div className={clsx(rowClassName, 'my-[0px]')}>
+        <MultiSelect
+          id="time-period-filter"
+          label="Période"
+          values={selectedStatuses}
+          onChange={setSelectedStatuses}
+          options={[
+            { value: 'current', label: 'Actuelles' },
+            { value: 'archived', label: 'Archivées' },
+          ]}
+          disabled={false}
+          required
+        />
+        <button
+          onClick={() => setSelectedStatuses(savedFilters?.statuses || ['current'])}
+          className={filterButtonClassName(statusesChanged)}
+          disabled={!statusesChanged}
+        >
+          <IconX size={14} /> Réinitialiser
+        </button>
       </div>
 
-      {/* Taken status filter */}
-      <div>
-        <h3 className="text-sm font-medium mb-2">Statut</h3>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => {
-              setSelectedTakenStatus(prev =>
-                prev.includes('taken') ? prev.filter(s => s !== 'taken') : [...prev, 'taken'],
-              );
-            }}
-            className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm',
-              selectedTakenStatus.includes('taken') ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
-            )}
-          >
-            Prises
-          </button>
-          <button
-            onClick={() => {
-              setSelectedTakenStatus(prev =>
-                prev.includes('notTaken') ? prev.filter(s => s !== 'notTaken') : [...prev, 'notTaken'],
-              );
-            }}
-            className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm',
-              selectedTakenStatus.includes('notTaken')
-                ? 'bg-primary text-background'
-                : 'bg-foreground/10 text-foreground',
-            )}
-          >
-            Disponibles
-          </button>
-          {takenStatusChanged && (
-            <button
-              onClick={() => setSelectedTakenStatus(savedFilters?.takenStatus || ['notTaken'])}
-              className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
-            >
-              <IconX size={14} /> Réinitialiser
-            </button>
-          )}
-        </div>
+      {/* Mission status filter */}
+      <div className={clsx(rowClassName, 'my-[0px]')}>
+        <MultiSelect
+          id="mission-status-filter"
+          label="Statut"
+          values={selectedMissionStatuses}
+          onChange={setSelectedMissionStatuses}
+          options={[
+            { value: 'available', label: 'Disponibles' },
+            { value: 'pending', label: 'En attente' },
+            { value: 'started', label: 'Démarrées' },
+            { value: 'completed', label: 'Terminées' },
+          ]}
+          disabled={false}
+          required
+        />
+        <button
+          onClick={() => setSelectedMissionStatuses(savedFilters?.missionStatuses || ['available'])}
+          className={filterButtonClassName(missionStatusesChanged)}
+          disabled={!missionStatusesChanged}
+        >
+          <IconX size={14} /> Réinitialiser
+        </button>
       </div>
 
       {/* Geographic zones filter */}
-      <div>
-        <h3 className="text-sm font-medium mb-2">Zones géographiques</h3>
-        <div className="flex flex-wrap gap-2">
-          {availableZones.map(zone => (
-            <button
-              key={zone}
-              onClick={() => {
-                setSelectedZones(prev => (prev.includes(zone) ? prev.filter(z => z !== zone) : [...prev, zone]));
-              }}
-              className={clsx(
-                'px-3 py-1.5 rounded-lg text-sm',
-                selectedZones.includes(zone) ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
-              )}
-            >
-              {zone}
-            </button>
-          ))}
-          {zonesChanged && (
-            <button
-              onClick={() => setSelectedZones(savedFilters?.zones || [])}
-              className="px-3 py-1.5 rounded-lg text-sm bg-foreground/10 text-foreground flex items-center gap-1"
-            >
-              <IconX size={14} /> Réinitialiser
-            </button>
-          )}
-        </div>
+      <div className={clsx(rowClassName, 'my-[0px]')}>
+        <MultiSelect
+          id="zones-filter"
+          label="Zones géographiques"
+          values={selectedZones}
+          onChange={setSelectedZones}
+          options={availableZones.map(zone => ({
+            value: zone,
+            label: zone,
+          }))}
+          disabled={false}
+          required
+        />
+        <button
+          onClick={() => setSelectedZones(savedFilters?.zones || [])}
+          className={filterButtonClassName(zonesChanged)}
+          disabled={!zonesChanged}
+        >
+          <IconX size={14} /> Réinitialiser
+        </button>
       </div>
 
       {/* Save and Reset all filters buttons */}
@@ -231,7 +181,7 @@ export default function MissionFilters({
             onClick={saveFiltersToLocalStorage}
             disabled={!filtersChanged}
             className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1',
+              secondaryButtonClassName,
               filtersChanged ? 'bg-primary text-background' : 'bg-foreground/5 text-foreground/40 cursor-not-allowed',
             )}
           >
@@ -245,12 +195,12 @@ export default function MissionFilters({
           onClick={() => {
             setSelectedConciergeries(savedFilters?.conciergeries || []);
             setSelectedStatuses(savedFilters?.statuses || ['current']);
-            setSelectedTakenStatus(savedFilters?.takenStatus || ['notTaken']);
+            setSelectedMissionStatuses(savedFilters?.missionStatuses || ['available']);
             setSelectedZones(savedFilters?.zones || []);
           }}
           disabled={!filtersChanged}
           className={clsx(
-            'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1',
+            secondaryButtonClassName,
             filtersChanged
               ? 'bg-foreground/10 text-foreground'
               : 'bg-foreground/5 text-foreground/40 cursor-not-allowed',

@@ -47,7 +47,7 @@ export default function Missions() {
   // Filter states - must be declared before any conditional returns
   const [selectedConciergeries, setSelectedConciergeries] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['current']);
-  const [selectedTakenStatus, setSelectedTakenStatus] = useState<string[]>(['notTaken']);
+  const [selectedMissionStatuses, setSelectedMissionStatuses] = useState<string[]>(['available']);
   const [selectedZones, setSelectedZones] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -55,7 +55,7 @@ export default function Missions() {
   const [savedFilters, setSavedFilters] = useLocalStorage<MissionFiltersType>('mission_filters', {
     conciergeries: [],
     statuses: ['current'],
-    takenStatus: ['notTaken'],
+    missionStatuses: ['available'],
     zones: [],
   });
 
@@ -83,7 +83,7 @@ export default function Missions() {
     // Initialize filter states with saved values
     setSelectedConciergeries(savedFilters.conciergeries || []);
     setSelectedStatuses(savedFilters.statuses || ['current']);
-    setSelectedTakenStatus(savedFilters.takenStatus || ['notTaken']);
+    setSelectedMissionStatuses(savedFilters.missionStatuses || ['available']);
     setSelectedZones(savedFilters.zones || []);
   }, [authLoading, savedFilters]);
 
@@ -100,7 +100,7 @@ export default function Missions() {
       basicFilteredMissions,
       selectedConciergeries,
       selectedStatuses,
-      selectedTakenStatus,
+      selectedMissionStatuses,
       selectedZones,
       homes,
     );
@@ -108,7 +108,7 @@ export default function Missions() {
     basicFilteredMissions,
     selectedConciergeries,
     selectedStatuses,
-    selectedTakenStatus,
+    selectedMissionStatuses,
     selectedZones,
     homes,
     missionsLoading,
@@ -156,7 +156,7 @@ export default function Missions() {
     setSavedFilters({
       conciergeries: selectedConciergeries,
       statuses: selectedStatuses,
-      takenStatus: selectedTakenStatus,
+      missionStatuses: selectedMissionStatuses,
       zones: selectedZones,
     });
   };
@@ -186,7 +186,7 @@ export default function Missions() {
   const hasActiveFilters =
     selectedConciergeries.length > 0 ||
     selectedStatuses.length > 0 ||
-    selectedTakenStatus.length > 0 ||
+    selectedMissionStatuses.length > 0 ||
     selectedZones.length > 0;
 
   return (
@@ -214,8 +214,8 @@ export default function Missions() {
             setSelectedConciergeries={setSelectedConciergeries}
             selectedStatuses={selectedStatuses}
             setSelectedStatuses={setSelectedStatuses}
-            selectedTakenStatus={selectedTakenStatus}
-            setSelectedTakenStatus={setSelectedTakenStatus}
+            selectedMissionStatuses={selectedMissionStatuses}
+            setSelectedMissionStatuses={setSelectedMissionStatuses}
             selectedZones={selectedZones}
             setSelectedZones={setSelectedZones}
             saveFiltersToLocalStorage={saveFiltersToLocalStorage}

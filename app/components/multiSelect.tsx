@@ -117,7 +117,7 @@ const MultiSelect = forwardRef(
     };
 
     return (
-      <div className={row ? rowClassName : ''}>
+      <div className={row ? rowClassName : 'w-full'}>
         <Label id={id} required={required}>
           {label}
         </Label>
