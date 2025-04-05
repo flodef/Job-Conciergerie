@@ -76,20 +76,19 @@ export function applyMissionFilters(
     if (selectedMissionStatuses.length > 0) {
       // Check if the mission matches the selected status filter
       // 'available' means no employee is assigned (employeeId is empty)
-      // 'pending', 'started', 'completed' match the actual mission status
-      
+      // 'accepted', 'started', 'completed' match the actual mission status
+
       // If all statuses are selected or none are selected, show all missions
       const showAllMissionStatuses = selectedMissionStatuses.length === 0;
 
       if (!showAllMissionStatuses) {
         const isAvailable = !mission.employeeId;
-        
-        const matchesMissionStatus = (
+
+        const matchesMissionStatus =
           (selectedMissionStatuses.includes('available') && isAvailable) ||
-          (selectedMissionStatuses.includes('pending') && mission.status === 'pending') ||
+          (selectedMissionStatuses.includes('accepted') && mission.status === 'accepted') ||
           (selectedMissionStatuses.includes('started') && mission.status === 'started') ||
-          (selectedMissionStatuses.includes('completed') && mission.status === 'completed')
-        );
+          (selectedMissionStatuses.includes('completed') && mission.status === 'completed');
 
         if (!matchesMissionStatus) {
           return false;

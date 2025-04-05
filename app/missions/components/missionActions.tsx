@@ -46,7 +46,7 @@ export default function MissionActions({
       return (
         <div className="flex justify-end gap-2 bg-background border-t border-secondary px-2 py-2 rounded-b-lg">
           {/* Start button - only visible if mission has not started yet and start time has passed */}
-          {(!mission.status || mission.status === 'pending') && hasStartTimePassed && (
+          {(!mission.status || mission.status === 'accepted') && hasStartTimePassed && (
             <button
               onClick={() => {
                 onStartMission(mission.id);

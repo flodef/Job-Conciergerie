@@ -1,10 +1,10 @@
 'use client';
 
-import { createNewMission, deleteMissionData, updateMissionData } from '@/app/actions/mission';
+import { sendMissionStatusChangeEmail } from '@/app/actions/email';
+import { createNewMission, deleteMissionData, fetchAllMissions, updateMissionData } from '@/app/actions/mission';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
-import { fetchAllMissions } from '@/app/actions/mission';
-import { Employee, Home, Mission } from '@/app/types/dataTypes';
+import { Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { createContext, ReactNode, useContext, useState } from 'react';
@@ -33,7 +33,7 @@ export function MissionsProviderWrapper({ children }: { children: ReactNode }) {
 }
 
 function MissionsProvider({ children }: { children: ReactNode }) {
-  const { getUserData, conciergerieName } = useAuth();
+  const { getUserData, conciergeries, conciergerieName, employees } = useAuth();
   const { homes, fetchHomes } = useHomes();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -162,6 +162,31 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     return await setMissionData(id, { ...missionToCancel, employeeId: undefined, status: undefined });
   };
 
+  /**
+   * Send a notification email for a mission status change if the conciergerie has the appropriate notification setting enabled
+   */
+  const sendMissionStatusNotification = (mission: Mission, employeeId: string, status: MissionStatus) => {
+    // Get all conciergeries to find the one that owns this mission
+    const conciergerie = conciergeries?.find(c => c.name === mission.conciergerieName);
+
+    // Determine which notification setting to check based on status
+    const notificationSetting = {
+      accepted: 'acceptedMissions',
+      started: 'startedMissions',
+      completed: 'completedMissions',
+    }[status] as 'acceptedMissions' | 'startedMissions' | 'completedMissions';
+
+    // Only proceed if we found the conciergerie and it has the appropriate notification setting enabled
+    if (!conciergerie || !conciergerie.notificationSettings?.[notificationSetting]) return;
+
+    // Get the home and employee data for this mission
+    const home = homes.find(h => h.id === mission.homeId);
+    const employee = employees.find(e => e.id === employeeId);
+
+    // If we have all the required data, send the notification email
+    if (home && employee) sendMissionStatusChangeEmail(mission, home, employee, conciergerie, status);
+  };
+
   const acceptMission = async (id: string) => {
     const missionToAccept = missions.find(m => m.id === id);
     if (!missionToAccept) return false;
@@ -169,30 +194,45 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const employeeData = getUserData<Employee>();
     if (!employeeData?.id) return false;
 
-    return await setMissionData(id, { ...missionToAccept, employeeId: employeeData.id, status: 'pending' });
+    const success = await setMissionData(id, { ...missionToAccept, employeeId: employeeData.id, status: 'accepted' });
+
+    // If successful, send notification
+    if (success) sendMissionStatusNotification(missionToAccept, employeeData.id, 'accepted');
+
+    return success;
   };
 
   const startMission = async (id: string) => {
     const missionToStart = missions.find(m => m.id === id);
     // Check if mission has been accepted by current employee
-    if (!missionToStart || missionToStart.employeeId !== getUserData()?.id) return false;
+    if (!missionToStart || !missionToStart.employeeId || missionToStart.employeeId !== getUserData()?.id) return false;
 
-    // Only allow starting if the mission is pending and the start time has passed
+    // Only allow starting if the mission is accepted and the start time has passed
     if (new Date() < new Date(missionToStart.startDateTime)) return false;
 
-    return await setMissionData(id, { ...missionToStart, status: 'started' });
+    const success = await setMissionData(id, { ...missionToStart, status: 'started' });
+
+    // If successful, send notification
+    if (success) sendMissionStatusNotification(missionToStart, missionToStart.employeeId, 'started');
+
+    return success;
   };
 
   const completeMission = async (id: string) => {
-    // Check if mission status has been updated (mission is pending or started)
+    // Check if mission status has been updated (mission is accepted or started)
     const missionToComplete = missions.find(m => m.id === id && m.status);
-    if (!missionToComplete) return false;
+    if (!missionToComplete || !missionToComplete.employeeId) return false;
 
     // Check if mission belongs to current employee or conciergerie is trying to complete the mission for the employee
     if (missionToComplete.employeeId !== getUserData()?.id && missionToComplete.conciergerieName !== conciergerieName)
       return false;
 
-    return await setMissionData(id, { ...missionToComplete, status: 'completed' });
+    const success = await setMissionData(id, { ...missionToComplete, status: 'completed' });
+
+    // If successful, send notification
+    if (success) sendMissionStatusNotification(missionToComplete, missionToComplete.employeeId, 'completed');
+
+    return success;
   };
 
   const setMissionData = async (id: string, mission: Mission) => {

@@ -74,7 +74,7 @@ export default function Calendar() {
     const lateCount = filteredMissions.filter(
       mission =>
         mission.employeeId &&
-        (!mission.status || mission.status === 'pending') &&
+        (!mission.status || mission.status === 'accepted') &&
         new Date(mission.endDateTime) < new Date(),
     ).length;
     setLateMissionsCount(lateCount);
@@ -105,7 +105,7 @@ export default function Calendar() {
     // Mission end date is in the past
     return (
       mission.employeeId &&
-      (!mission.status || mission.status === 'pending') &&
+      (!mission.status || mission.status === 'accepted') &&
       new Date(mission.endDateTime) < new Date()
     );
   };

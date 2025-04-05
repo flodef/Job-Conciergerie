@@ -133,7 +133,7 @@ export default function MissionFilters({
           onChange={setSelectedMissionStatuses}
           options={[
             { value: 'available', label: 'Disponibles' },
-            { value: 'pending', label: 'En attente' },
+            { value: 'accepted', label: 'Acceptées' },
             { value: 'started', label: 'Démarrées' },
             { value: 'completed', label: 'Terminées' },
           ]}

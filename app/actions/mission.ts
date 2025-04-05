@@ -42,7 +42,7 @@ export async function createNewMission(data: {
     end_date_time: data.endDateTime,
     employee_id: data.employeeId,
     conciergerie_name: data.conciergerieName,
-    status: data.status || 'pending',
+    status: data.status || 'accepted',
     allowed_employees: data.allowedEmployees,
     hours: data.hours,
   };

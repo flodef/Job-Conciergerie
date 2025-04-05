@@ -1,7 +1,8 @@
 'use server';
 
+import { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
+import { formatDate, formatTime } from '@/app/utils/date';
 import nodemailer from 'nodemailer';
-import { Conciergerie, Employee } from '@/app/types/dataTypes';
 
 // Configure nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -20,7 +21,7 @@ interface Email {
   html: string;
 }
 
-export async function sendEmail(email: Email): Promise<boolean> {
+async function sendEmail(email: Email): Promise<boolean> {
   try {
     await transporter.sendMail({
       ...email,
@@ -136,5 +137,75 @@ export async function sendEmployeeAcceptanceEmail(
           <p>Cordialement,<br>L&apos;équipe Job Conciergerie</p>
         </div>
       `,
+  });
+}
+
+/**
+ * Send notification email to a conciergerie about a mission status change
+ */
+export async function sendMissionStatusChangeEmail(
+  mission: Mission,
+  home: Home,
+  employee: Employee,
+  conciergerie: Conciergerie,
+  status: 'accepted' | 'started' | 'completed',
+): Promise<boolean> {
+  // Format dates
+  const startDate = formatDate(mission.startDateTime);
+  const startTime = formatTime(mission.startDateTime);
+  const endDate = formatDate(mission.endDateTime);
+  const endTime = formatTime(mission.endDateTime);
+
+  // Determine status message
+  let statusMessage = '';
+  let statusAction = '';
+
+  switch (status) {
+    case 'accepted':
+      statusMessage = 'a été acceptée';
+      statusAction = 'accepté';
+      break;
+    case 'started':
+      statusMessage = 'a été démarrée';
+      statusAction = 'démarré';
+      break;
+    case 'completed':
+      statusMessage = 'a été terminée';
+      statusAction = 'terminé';
+      break;
+  }
+
+  // Generate email content
+  return await sendEmail({
+    to: conciergerie.email,
+    subject: `Mission ${statusAction}e - ${home.title}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Statut de mission mis à jour</h2>
+        <p>Bonjour ${conciergerie.name},</p>
+        <p>Une mission pour <strong>${home.title}</strong> ${statusMessage} par ${employee.firstName} ${
+      employee.familyName
+    }.</p>
+        
+        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
+          <h3 style="margin-top: 0; color: #4F46E5;">Détails de la mission</h3>
+          <p><strong>Bien:</strong> ${home.title}</p>
+          <p><strong>Date de début:</strong> ${startDate} à ${startTime}</p>
+          <p><strong>Date de fin:</strong> ${endDate} à ${endTime}</p>
+          <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
+          <p><strong>Employé:</strong> ${employee.firstName} ${employee.familyName}</p>
+          <p><strong>Statut:</strong> ${employee.firstName} a ${statusAction} cette mission</p>
+        </div>
+        
+        <p>Vous pouvez consulter les détails complets de cette mission dans votre espace conciergerie.</p>
+        <p>
+          <a href="${baseUrl}/missions" style="display: inline-block; background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Voir mes missions
+          </a>
+        </p>
+        
+        <p>Cordialement,<br>L&apos;équipe Job Conciergerie</p>
+      </div>
+    `,
   });
 }

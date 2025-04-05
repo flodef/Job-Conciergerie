@@ -79,7 +79,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       const currentTime = new Date();
       const missionEndTime = new Date(mission.endDateTime);
 
-      // Cannot edit mission if end date is in the past AND mission status is not pending or null
+      // Cannot edit mission if end date is in the past AND mission status is not accepted or null
       const message =
         missionEndTime < currentTime
           ? 'Cette mission ne peut pas être modifiée car elle est déjà terminée'
