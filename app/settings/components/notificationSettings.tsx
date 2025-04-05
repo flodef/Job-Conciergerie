@@ -3,15 +3,19 @@ import { updateEmployeeData } from '@/app/actions/employee';
 import Switch from '@/app/components/switch';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
-import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/types/dataTypes';
-import { defaultConciergerieSettings, defaultEmployeeSettings } from '@/app/utils/notifications';
+import {
+  ConciergerieNotificationSettings,
+  defaultConciergerieSettings,
+  defaultEmployeeSettings,
+  EmployeeNotificationSettings,
+} from '@/app/utils/notifications';
 import React, { useState } from 'react';
 
 const conciergerieOptions = [
   { label: 'Missions acceptées', key: 'acceptedMissions' as const },
   { label: 'Missions démarrées', key: 'startedMissions' as const },
   { label: 'Missions terminées', key: 'completedMissions' as const },
-  { label: 'Missions non démarrées à temps', key: 'missionsEndedWithoutStart' as const },
+  { label: 'Missions non terminées à temps', key: 'missionsEndedWithoutCompletion' as const },
 ];
 const employeeOptions = [
   { label: 'Mission acceptée', key: 'acceptedMissions' as const },

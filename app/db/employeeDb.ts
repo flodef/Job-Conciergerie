@@ -1,6 +1,6 @@
 import { sql } from '@/app/db/db';
-import { EmployeeNotificationSettings, EmployeeStatus } from '@/app/types/dataTypes';
-import { defaultEmployeeSettings } from '@/app/utils/notifications';
+import { EmployeeStatus } from '@/app/types/dataTypes';
+import { defaultEmployeeSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
 
 // Type definition for database employee
 export interface DbEmployee {

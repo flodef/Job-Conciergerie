@@ -7,7 +7,8 @@ import {
   updateEmployeeSettings,
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
-import { Employee, EmployeeNotificationSettings, EmployeeStatus } from '@/app/types/dataTypes';
+import { Employee, EmployeeStatus } from '@/app/types/dataTypes';
+import { EmployeeNotificationSettings } from '@/app/utils/notifications';
 
 /**
  * Fetch all employees from the database with caching

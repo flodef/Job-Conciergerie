@@ -1,3 +1,5 @@
+import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
+
 export interface Conciergerie {
   id: string;
   name: string;
@@ -6,12 +8,6 @@ export interface Conciergerie {
   email: string;
   tel: string;
   notificationSettings?: ConciergerieNotificationSettings;
-}
-export interface ConciergerieNotificationSettings {
-  acceptedMissions: boolean;
-  startedMissions: boolean;
-  completedMissions: boolean;
-  missionsEndedWithoutStart: boolean;
 }
 
 export type EmployeeStatus = 'pending' | 'accepted' | 'rejected';
@@ -27,12 +23,6 @@ export interface Employee {
   notificationSettings?: EmployeeNotificationSettings;
   status: EmployeeStatus;
   createdAt: string;
-}
-export interface EmployeeNotificationSettings {
-  acceptedMissions: boolean;
-  missionChanged: boolean;
-  missionDeleted: boolean;
-  missionsCanceled: boolean;
 }
 
 export interface Home {
