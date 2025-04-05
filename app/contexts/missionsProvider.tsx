@@ -1,6 +1,6 @@
 'use client';
 
-import { sendMissionStatusChangeEmail } from '@/app/actions/email';
+import { sendLateCompletionEmail, sendMissionStatusChangeEmail } from '@/app/actions/email';
 import { createNewMission, deleteMissionData, fetchAllMissions, updateMissionData } from '@/app/actions/mission';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
@@ -13,6 +13,7 @@ type MissionsContextType = {
   isLoading: boolean;
   missions: Mission[];
   homes: Home[];
+  getLateMissions: (missions: Mission[]) => Mission[];
   fetchMissions: () => Promise<boolean>;
   addMission: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>) => Promise<boolean>;
   updateMission: (mission: Mission) => Promise<boolean>;
@@ -50,11 +51,55 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       if (fetchedMissions) {
         setMissions(fetchedMissions);
         isSuccess = true;
+
+        // Check for late missions and notify conciergeries if needed
+        checkForLateMissions(fetchedMissions);
       }
     }
 
     setIsLoading(false);
     return isSuccess;
+  };
+
+  const getLateMissions = (missions: Mission[]) => {
+    const now = new Date();
+    return missions.filter(
+      mission => mission.employeeId && mission.status !== 'completed' && new Date(mission.endDateTime) < now,
+    );
+  };
+
+  /**
+   * Checks for missions that haven't been completed on time and sends notifications
+   * to the conciergeries that have the missionsEndedWithoutCompletion setting enabled
+   */
+  const checkForLateMissions = async (missions: Mission[]) => {
+    const lateMissions = getLateMissions(missions);
+    if (lateMissions.length === 0) return;
+
+    // Group late missions by conciergerie to avoid sending multiple emails to the same conciergerie
+    const missionsByConciergerieMap = new Map<string, Mission[]>();
+
+    lateMissions.forEach(mission => {
+      const existing = missionsByConciergerieMap.get(mission.conciergerieName) || [];
+      missionsByConciergerieMap.set(mission.conciergerieName, [...existing, mission]);
+    });
+
+    // For each conciergerie with late missions
+    for (const [conciergerieName, conciergerieMissions] of missionsByConciergerieMap.entries()) {
+      // Find the conciergerie object
+      const conciergerie = conciergeries?.find(c => c.name === conciergerieName);
+
+      // Only send notifications if the conciergerie has the setting enabled
+      if (!conciergerie || !conciergerie.notificationSettings?.missionsEndedWithoutCompletion) continue;
+
+      // Send a notification for each late mission
+      for (const mission of conciergerieMissions) {
+        const home = homes.find(h => h.id === mission.homeId);
+        const employee = employees.find(e => e.id === mission.employeeId);
+
+        if (home && employee) sendLateCompletionEmail(mission, home, employee, conciergerie);
+      }
+    }
   };
 
   // Check if a mission with the same home, tasks, start date, and end date already exists
@@ -249,6 +294,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         isLoading,
         missions,
         homes,
+        getLateMissions,
         fetchMissions,
         addMission,
         updateMission,

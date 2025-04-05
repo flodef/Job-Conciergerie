@@ -17,7 +17,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function Calendar() {
   const { userId, userType, conciergerieName, conciergeries, isLoading: authLoading } = useAuth();
-  const { missions, fetchMissions } = useMissions();
+  const { missions, fetchMissions, getLateMissions } = useMissions();
   const { currentPage } = useMenuContext();
 
   const [toast, setToast] = useState<Toast>();
@@ -71,12 +71,7 @@ export default function Calendar() {
     setStartedMissionsCount(startedCount);
 
     // Count late missions (ended without being started)
-    const lateCount = filteredMissions.filter(
-      mission =>
-        mission.employeeId &&
-        (!mission.status || mission.status === 'accepted') &&
-        new Date(mission.endDateTime) < new Date(),
-    ).length;
+    const lateCount = getLateMissions(filteredMissions).length;
     setLateMissionsCount(lateCount);
 
     setAcceptedMissions(filteredMissions);
@@ -88,7 +83,7 @@ export default function Calendar() {
     // Sort dates
     const dates = Array.from(groupedMissions.keys());
     setSortedDates(sortDates(dates));
-  }, [missions, userId, conciergerieName, isEmployee, isConciergerie]);
+  }, [missions, userId, conciergerieName, isEmployee, isConciergerie, getLateMissions]);
 
   const handleMissionClick = (mission: Mission) => {
     setSelectedMission(mission);

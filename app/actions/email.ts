@@ -1,7 +1,7 @@
 'use server';
 
 import { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
-import { formatDate, formatTime } from '@/app/utils/date';
+import { formatDateTime } from '@/app/utils/date';
 import nodemailer from 'nodemailer';
 
 // Configure nodemailer transporter
@@ -151,10 +151,8 @@ export async function sendMissionStatusChangeEmail(
   status: 'accepted' | 'started' | 'completed',
 ): Promise<boolean> {
   // Format dates
-  const startDate = formatDate(mission.startDateTime);
-  const startTime = formatTime(mission.startDateTime);
-  const endDate = formatDate(mission.endDateTime);
-  const endTime = formatTime(mission.endDateTime);
+  const startDate = formatDateTime(mission.startDateTime);
+  const endDate = formatDateTime(mission.endDateTime);
 
   // Determine status message
   let statusMessage = '';
@@ -190,8 +188,8 @@ export async function sendMissionStatusChangeEmail(
         <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
           <h3 style="margin-top: 0; color: #4F46E5;">Détails de la mission</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
-          <p><strong>Date de début:</strong> ${startDate} à ${startTime}</p>
-          <p><strong>Date de fin:</strong> ${endDate} à ${endTime}</p>
+          <p><strong>Date de début:</strong> ${startDate}</p>
+          <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
           <p><strong>Employé:</strong> ${employee.firstName} ${employee.familyName}</p>
           <p><strong>Statut:</strong> ${employee.firstName} a ${statusAction} cette mission</p>
@@ -200,6 +198,67 @@ export async function sendMissionStatusChangeEmail(
         <p>Vous pouvez consulter les détails complets de cette mission dans votre espace conciergerie.</p>
         <p>
           <a href="${baseUrl}/missions" style="display: inline-block; background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Voir mes missions
+          </a>
+        </p>
+        
+        <p>Cordialement,<br>L&apos;équipe Job Conciergerie</p>
+      </div>
+    `,
+  });
+}
+
+/**
+ * Send notification for missions that haven't been completed on time
+ */
+export async function sendLateCompletionEmail(
+  mission: Mission,
+  home: Home,
+  employee: Employee,
+  conciergerie: Conciergerie,
+): Promise<boolean> {
+  // Format dates
+  const startDate = formatDateTime(mission.startDateTime);
+  const endDate = formatDateTime(mission.endDateTime);
+
+  // Get current mission status label
+  const statusLabel = {
+    accepted: 'acceptée mais non démarrée',
+    started: 'démarrée mais non terminée',
+    completed: 'terminée',
+  }[mission.status || 'accepted'];
+
+  // Calculate how many days late
+  const now = new Date();
+  const endDateTime = new Date(mission.endDateTime);
+  const daysLate = Math.floor((now.getTime() - endDateTime.getTime()) / (1000 * 60 * 60 * 24));
+  const daysLateText = daysLate === 0 ? "aujourd'hui" : daysLate === 1 ? 'hier' : `il y a ${daysLate} jours`;
+
+  // Generate email content
+  return await sendEmail({
+    to: conciergerie.email,
+    subject: `⚠️ Mission non terminée à temps - ${home.title}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #d32f2f;">Mission non terminée à temps</h2>
+        <p>Bonjour ${conciergerie.name},</p>
+        <p>Une mission pour <strong>${
+          home.title
+        }</strong> n'a pas été terminée à temps. La date de fin était prévue pour ${endDate} (${daysLateText}).</p>
+        
+        <div style="background-color: #fff8f8; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #d32f2f;">
+          <h3 style="margin-top: 0; color: #d32f2f;">Détails de la mission</h3>
+          <p><strong>Bien:</strong> ${home.title}</p>
+          <p><strong>Date de début:</strong> ${startDate}</p>
+          <p><strong>Date de fin:</strong> ${endDate}</p>
+          <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
+          <p><strong>Employé:</strong> ${employee.firstName} ${employee.familyName}</p>
+          <p><strong>Statut actuel:</strong> ${statusLabel}</p>
+        </div>
+        
+        <p>Vous pouvez vérifier l'état de cette mission ou contacter l'employé via votre espace conciergerie.</p>
+        <p>
+          <a href="${baseUrl}/calendar" style="display: inline-block; background-color: #d32f2f; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
             Voir mes missions
           </a>
         </p>
