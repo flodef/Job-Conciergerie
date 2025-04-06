@@ -13,7 +13,7 @@ import { Page } from '@/app/utils/navigation';
 import { calculateEmployeePointsForDay, calculateMissionPoints, formatNumber, getTaskPoints } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function Calendar() {
   const { userId, userType, conciergerieName, conciergeries, isLoading: authLoading } = useAuth();
@@ -29,6 +29,8 @@ export default function Calendar() {
 
   const [startedMissionsCount, setStartedMissionsCount] = useState(0);
   const [lateMissionsCount, setLateMissionsCount] = useState(0);
+
+  const lateMissions = useMemo(() => getLateMissions(acceptedMissions), [acceptedMissions, getLateMissions]);
 
   const isEmployee = userType === 'employee';
   const isConciergerie = userType === 'conciergerie';
@@ -54,17 +56,12 @@ export default function Calendar() {
   useEffect(() => {
     if (!isEmployee && !isConciergerie) return;
 
-    let filteredMissions: Mission[] = [];
-
-    if (isEmployee) {
-      // For employees: show missions accepted by this employee
-      filteredMissions = missions.filter(mission => mission.employeeId === userId && mission.status !== 'completed');
-    } else if (isConciergerie) {
-      // For conciergeries: show missions from this conciergerie that have been accepted by employees
-      filteredMissions = missions.filter(
-        mission => mission.conciergerieName === conciergerieName && mission.employeeId,
-      );
-    }
+    const filteredMissions = missions.filter(
+      mission =>
+        mission.status &&
+        mission.status !== 'completed' &&
+        (isEmployee ? mission.employeeId === userId : mission.conciergerieName === conciergerieName),
+    );
 
     // Count started missions
     const startedCount = filteredMissions.filter(mission => mission.status === 'started').length;
@@ -91,18 +88,6 @@ export default function Calendar() {
 
   const handleCloseDetails = () => {
     setSelectedMission(null);
-  };
-
-  // Check if a mission is ended without being started
-  const isEndedWithoutStarting = (mission: Mission) => {
-    // Mission is accepted (has employeeId)
-    // Mission is not started (status is not 'started' or 'completed')
-    // Mission end date is in the past
-    return (
-      mission.employeeId &&
-      (!mission.status || mission.status === 'accepted') &&
-      new Date(mission.endDateTime) < new Date()
-    );
   };
 
   if (acceptedMissions.length === 0) {
@@ -209,7 +194,7 @@ export default function Calendar() {
                       )}
                       onClick={() => handleMissionClick(mission)}
                     >
-                      {isEndedWithoutStarting(mission) && (
+                      {lateMissions.includes(mission) && (
                         <div
                           className="absolute text-sm font-bold text-white bg-red-500/80 px-1 py-0.5 uppercase tracking-wider whitespace-nowrap z-10"
                           style={{
