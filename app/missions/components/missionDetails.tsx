@@ -10,6 +10,7 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import MissionActions from '@/app/missions/components/missionActions';
 import MissionForm from '@/app/missions/components/missionForm';
+import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import { Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateTime, getDateRangeDifference } from '@/app/utils/date';
@@ -21,6 +22,7 @@ import {
   IconCalculator,
   IconCalendarEvent,
   IconCheck,
+  IconInfoCircle,
   IconListCheck,
   IconMail,
   IconPhone,
@@ -62,6 +64,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [isEditWarningModalOpen, setIsEditWarningModalOpen] = useState(false);
   const [isDeleteWarningModalOpen, setIsDeleteWarningModalOpen] = useState(false);
+  const [isEmployeeDetailsModalOpen, setIsEmployeeDetailsModalOpen] = useState(false);
 
   // Get the conciergerie from the mission data
   const conciergerie = useMemo(
@@ -465,12 +468,26 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
               <IconUserCheck size={16} />
               Prestataire
             </h3>
-            <p>
+            <p
+              onClick={() => setIsEmployeeDetailsModalOpen(true)}
+              className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
+            >
+              <IconInfoCircle size={18} />
               {employee.firstName} {employee.familyName}
             </p>
           </div>
         )}
       </div>
+
+      {/* Employee details modal */}
+      {isEmployeeDetailsModalOpen && employee && (
+        <FullScreenModal
+          onClose={() => setIsEmployeeDetailsModalOpen(false)}
+          title={`${employee.firstName} ${employee.familyName}`}
+        >
+          <EmployeeDetails employee={employee} onClose={() => setIsEmployeeDetailsModalOpen(false)} />
+        </FullScreenModal>
+      )}
 
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
