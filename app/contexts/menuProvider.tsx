@@ -30,11 +30,21 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
 
   // Initialize currentPage based on URL path when component mounts
   useEffect(() => {
-    const path = window.location.pathname;
-    const page = Object.entries(routeMap).find(([key, route]) => key && route === path)?.[0] as Page | undefined;
-    if (page) {
-      setCurrentPage(page);
-    }
+    // Function to update currentPage based on pathname
+    const updateCurrentPage = () => {
+      const path = window.location.pathname;
+      const page = Object.entries(routeMap).find(([key, route]) => key && route === path)?.[0] as Page | undefined;
+      if (page) setCurrentPage(page);
+    };
+
+    // Run once on mount
+    updateCurrentPage();
+
+    // Add event listener for popstate (history navigation)
+    window.addEventListener('popstate', updateCurrentPage);
+    return () => {
+      window.removeEventListener('popstate', updateCurrentPage);
+    };
   }, []);
 
   const onMenuChange = useCallback(
@@ -42,7 +52,6 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
       setIsMenuOpen(false);
       if (!hasUnsavedChanges) {
         router.push(routeMap[page]);
-        setCurrentPage(page);
         setPendingPage(undefined);
       } else {
         setShouldShowConfirmClose(true);
