@@ -10,7 +10,7 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import MissionActions from '@/app/missions/components/missionActions';
 import MissionForm from '@/app/missions/components/missionForm';
-import { Conciergerie, Mission } from '@/app/types/dataTypes';
+import { Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateTime, getDateRangeDifference } from '@/app/utils/date';
 import { getIPFSImageUrl } from '@/app/utils/ipfs';
@@ -30,7 +30,7 @@ import {
   IconZoomScan,
 } from '@tabler/icons-react';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 type MissionDetailsProps = {
   mission: Mission;
@@ -55,7 +55,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [toast, setToast] = useState<Toast>();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [isReadOnly, setIsReadOnly] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showHomeDetails, setShowHomeDetails] = useState(false);
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
@@ -65,7 +64,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [isDeleteWarningModalOpen, setIsDeleteWarningModalOpen] = useState(false);
 
   // Get the conciergerie from the mission data
-  const [conciergerie, setConciergerie] = useState<Conciergerie>();
+  const conciergerie = useMemo(
+    () => conciergeries.find(c => c.name === mission.conciergerieName),
+    [conciergeries, mission.conciergerieName],
+  );
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
 
   // Get the home data
@@ -73,16 +75,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const isEmployee = userType === 'employee';
   const isConciergerie = userType === 'conciergerie';
-
-  // Fetch conciergerie data when mission changes
-  useEffect(() => {
-    const conciergerieData = conciergeries.find(c => c.name === home?.conciergerieName);
-    setConciergerie(conciergerieData);
-  }, [conciergeries, home?.conciergerieName]);
-
-  useEffect(() => {
-    setIsReadOnly(isEmployee || (isConciergerie && home?.conciergerieName !== conciergerieName));
-  }, [mission, conciergerieName, isEmployee, isConciergerie, home?.conciergerieName]);
 
   const handleDelete = () => {
     deleteMission(mission.id).then(isSuccess => {
@@ -222,8 +214,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     <>
       <MissionActions
         mission={mission}
-        isReadOnly={isReadOnly}
-        isFromCalendar={isFromCalendar}
         onEdit={() => {
           if (mission.employeeId) setIsEditWarningModalOpen(true);
           else setIsEditMode(true);
