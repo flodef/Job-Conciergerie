@@ -217,7 +217,6 @@ export default function WaitingPage() {
         ) : !isLoading ? (
           // Error state
           <ErrorPage
-            shouldDisconnect
             title="Demande non trouvée"
             message="Nous n'avons pas pu trouver votre demande. Veuillez retourner à la page d'accueil et soumettre une nouvelle demande."
           />

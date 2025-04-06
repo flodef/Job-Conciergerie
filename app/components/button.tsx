@@ -5,7 +5,7 @@ import { buttonClassName, spinningClassName } from '@/app/utils/className';
 import { IconX } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 
-export type ButtonStyle = 'primary' | 'secondary' | 'dangerous';
+export type ButtonStyle = 'primary' | 'secondary' | 'dangerous' | 'inferno';
 export type ButtonType = 'button' | 'submit' | 'reset';
 
 export function Button({
@@ -56,8 +56,12 @@ export function RefreshButton({
   const { refreshData, disconnect } = useAuth();
 
   return (
-    <Button className={clsx('mt-4 mx-auto', className)} onClick={shouldDisconnect ? disconnect : refreshData}>
-      Réessayer
+    <Button
+      className={clsx('mt-4 mx-auto', className)}
+      style={shouldDisconnect ? 'dangerous' : 'primary'}
+      onClick={shouldDisconnect ? disconnect : refreshData}
+    >
+      {shouldDisconnect ? 'Se déconnecter' : 'Réessayer'}
     </Button>
   );
 }
