@@ -18,6 +18,7 @@ export const buttonClassName = (type: ButtonStyle) =>
     type === 'primary' && 'text-background bg-primary hover:bg-primary/80 disabled:bg-primary/50',
     type === 'secondary' && 'text-foreground bg-secondary hover:bg-secondary/80 disabled:bg-secondary/50',
     type === 'dangerous' && 'text-background bg-red-500 hover:bg-red-600 disabled:bg-red-500/50',
+    type === 'inferno' && 'text-background bg-red-700 hover:bg-red-800 disabled:bg-red-700/50',
   );
 export const selectClassName = (error: boolean | string, disabled: boolean, isFocused: boolean, isOpen: boolean) =>
   clsx(
@@ -27,7 +28,6 @@ export const selectClassName = (error: boolean | string, disabled: boolean, isFo
     disabled && 'opacity-50 cursor-not-allowed',
     !disabled && (isFocused || isOpen) ? 'border-primary' : 'border-secondary',
   );
-
 export const inputFieldClassName = (error: boolean | string) =>
   clsx(
     'w-full px-3 py-2 rounded-lg bg-background text-foreground border-2',

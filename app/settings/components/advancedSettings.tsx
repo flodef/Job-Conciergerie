@@ -1,5 +1,6 @@
 import ConfirmationModal from '@/app/components/confirmationModal';
 import { useAuth } from '@/app/contexts/authProvider';
+import { buttonClassName } from '@/app/utils/className';
 import React, { useState } from 'react';
 
 const AdvancedSettings: React.FC = () => {
@@ -11,10 +12,7 @@ const AdvancedSettings: React.FC = () => {
     <div className="space-y-2">
       <div className="flex flex-col space-y-4 text-center">
         <div>
-          <button
-            onClick={() => setShowConfirmation(true)}
-            className="px-4 py-2 bg-red-500/90 hover:bg-red-500 text-white rounded-md transition-colors"
-          >
+          <button onClick={() => setShowConfirmation(true)} className={buttonClassName('dangerous')}>
             Réinitialiser mes données
           </button>
           <p className="text-sm text-foreground/70 mt-2">
@@ -25,10 +23,7 @@ const AdvancedSettings: React.FC = () => {
         {/* Nuke button - only for conciergerie */}
         {userType === 'conciergerie' && (
           <div className="mt-4">
-            <button
-              onClick={() => setShowNukeConfirmation(true)}
-              className="px-4 py-2 bg-red-700/90 hover:bg-red-700 text-white rounded-md transition-colors"
-            >
+            <button onClick={() => setShowNukeConfirmation(true)} className={buttonClassName('inferno')}>
               Supprimer toutes les données
             </button>
             <p className="text-sm text-foreground/70 mt-2">
