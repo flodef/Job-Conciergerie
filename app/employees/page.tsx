@@ -10,7 +10,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
-import { Employee } from '@/app/types/dataTypes';
+import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { filterEmployees, filterEmployeesByConciergerie, sortEmployees } from '@/app/utils/employee';
 import { Page } from '@/app/utils/navigation';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
@@ -23,6 +23,7 @@ export default function EmployeesList() {
     isLoading: authLoading,
     employees: authEmployees,
     fetchDataFromDatabase,
+    getUserData,
     updateUserData,
   } = useAuth();
   const { currentPage } = useMenuContext();
@@ -105,9 +106,12 @@ export default function EmployeesList() {
         // Update local state
         updateUserData(updatedEmployee, 'employee');
 
+        const conciergerie = getUserData<Conciergerie>();
+        if (!conciergerie) throw new Error('Conciergerie non trouvée');
+
         sendEmployeeAcceptanceEmail(
           employee,
-          conciergerieName || '',
+          conciergerie,
           countEmployeeMissions(employee.id),
           newStatus === 'accepted',
         )

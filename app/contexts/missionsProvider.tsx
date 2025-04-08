@@ -146,8 +146,9 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     if (!success) return false;
 
     // If successful and there's an employee assigned who has notifications enabled, send email
-    if (employee?.notificationSettings?.missionChanged && home && changes.length > 0)
-      await sendMissionUpdatedToEmployeeEmail(updatedMission, home, employee, conciergerieName, changes);
+    const conciergerie = conciergeries?.find(c => c.name === updatedMission.conciergerieName);
+    if (employee?.notificationSettings?.missionChanged && home && changes.length > 0 && conciergerie)
+      await sendMissionUpdatedToEmployeeEmail(updatedMission, home, employee, conciergerie, changes);
 
     return true;
   };
@@ -165,10 +166,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     // Check if we need to notify an employee about the deletion
     const employee = employees.find(e => e.id === missionToDelete.employeeId);
     const home = homes.find(h => h.id === missionToDelete.homeId);
+    const conciergerie = conciergeries?.find(c => c.name === missionToDelete.conciergerieName);
 
     // Notify employee before deleting the mission
-    if (employee?.notificationSettings?.missionDeleted && home && conciergerieName)
-      sendMissionRemovedToEmployeeEmail(missionToDelete, home, employee, conciergerieName, 'deleted');
+    if (employee?.notificationSettings?.missionDeleted && home && conciergerie)
+      sendMissionRemovedToEmployeeEmail(missionToDelete, home, employee, conciergerie, 'deleted');
 
     return true;
   };
@@ -184,10 +186,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     // Check if we need to notify an employee about the cancellation
     const employee = employees.find(e => e.id === missionToCancel.employeeId);
     const home = homes.find(h => h.id === missionToCancel.homeId);
+    const conciergerie = conciergeries?.find(c => c.name === missionToCancel.conciergerieName);
 
     // Send notification to employee about cancellation
-    if (employee?.notificationSettings?.missionsCanceled && home && conciergerieName)
-      sendMissionRemovedToEmployeeEmail(missionToCancel, home, employee, conciergerieName, 'canceled');
+    if (employee?.notificationSettings?.missionsCanceled && home && conciergerie)
+      sendMissionRemovedToEmployeeEmail(missionToCancel, home, employee, conciergerie, 'canceled');
 
     return true;
   };
@@ -207,10 +210,10 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     // Send confirmation email to the employee
     const home = homes.find(h => h.id === missionToAccept.homeId);
-    const conciergerieName = missionToAccept.conciergerieName;
+    const conciergerie = conciergeries?.find(c => c.name === missionToAccept.conciergerieName);
     const employee = employees.find(e => e.id === employeeData.id);
-    if (home && conciergerieName && employee?.notificationSettings?.acceptedMissions)
-      sendMissionAcceptanceToEmployeeEmail(missionToAccept, home, employee, conciergerieName);
+    if (employee?.notificationSettings?.acceptedMissions && home && conciergerie)
+      sendMissionAcceptanceToEmployeeEmail(missionToAccept, home, employee, conciergerie);
 
     return true;
   };

@@ -17,6 +17,7 @@ const transporter = nodemailer.createTransport({
 
 interface Email {
   to: string;
+  from?: string;
   subject: string;
   html: string;
 }
@@ -25,7 +26,7 @@ async function sendEmail(email: Email): Promise<boolean> {
   try {
     await transporter.sendMail({
       ...email,
-      from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
+      from: `"Job Conciergerie" <${email.from || process.env.SMTP_FROM_EMAIL}>`,
     });
 
     return true;
@@ -98,13 +99,14 @@ export async function sendEmployeeRegistrationEmail(conciergerie: Conciergerie, 
  */
 export async function sendEmployeeAcceptanceEmail(
   employee: Employee,
-  conciergerieName: string,
+  conciergerie: Conciergerie,
   missionsCount: number,
   isAccepted: boolean,
 ): Promise<boolean> {
   const wasAccepted = employee.status === 'accepted';
   return await sendEmail({
     to: employee.email,
+    from: conciergerie.email,
     subject: 'Information concernant votre inscription à Job Conciergerie',
     html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -114,7 +116,7 @@ export async function sendEmployeeAcceptanceEmail(
           <p>Bonjour ${employee.firstName} ${employee.familyName},</p>
           <p>Nous vous informons que votre inscription a été ${
             isAccepted ? 'retenue' : wasAccepted ? 'arrêtée' : 'refusée'
-          } par la conciergerie ${conciergerieName}.</p>
+          } par la conciergerie ${conciergerie.name}.</p>
           ${
             missionsCount > 0
               ? `<p>Vos ${missionsCount} mission${missionsCount > 1 ? 's' : ''} ont été annulée${
@@ -276,7 +278,7 @@ export async function sendMissionAcceptanceToEmployeeEmail(
   mission: Mission,
   home: Home,
   employee: Employee,
-  conciergerieName: string,
+  conciergerie: Conciergerie,
 ): Promise<boolean> {
   // Format dates
   const startDate = formatDateTime(mission.startDateTime);
@@ -288,6 +290,7 @@ export async function sendMissionAcceptanceToEmployeeEmail(
   // Generate email content
   return await sendEmail({
     to: employee.email,
+    from: conciergerie.email,
     subject: `🔔 Confirmation de mission - ${home.title}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -298,7 +301,7 @@ export async function sendMissionAcceptanceToEmployeeEmail(
         <div style="background-color: #f5f7ff; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #4F46E5;">
           <h3 style="margin-top: 0; color: #4F46E5;">Récapitulatif de la mission</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
-          <p><strong>Conciergerie:</strong> ${conciergerieName}</p>
+          <p><strong>Conciergerie:</strong> ${conciergerie.name}</p>
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Durée estimée:</strong> ${hours}</p>
@@ -333,7 +336,7 @@ export async function sendMissionUpdatedToEmployeeEmail(
   mission: Mission,
   home: Home,
   employee: Employee,
-  conciergerieName: string,
+  conciergerie: Conciergerie,
   changes: string[],
 ): Promise<boolean> {
   // Format dates
@@ -346,14 +349,15 @@ export async function sendMissionUpdatedToEmployeeEmail(
   // Generate email content
   return await sendEmail({
     to: employee.email,
+    from: conciergerie.email,
     subject: `🔄 Mise à jour de mission - ${home.title}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #d97706;">Mise à jour de mission</h2>
         <p>Bonjour ${employee.firstName},</p>
-        <p>Une mission que vous avez acceptée pour <strong>${
-          home.title
-        }</strong> a été modifiée par la conciergerie ${conciergerieName}.</p>
+        <p>Une mission que vous avez acceptée pour <strong>${home.title}</strong> a été modifiée par la conciergerie ${
+      conciergerie.name
+    }.</p>
         
         <div style="background-color: #fffbeb; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #d97706;">
           <h3 style="margin-top: 0; color: #d97706;">Modifications apportées</h3>
@@ -365,7 +369,7 @@ export async function sendMissionUpdatedToEmployeeEmail(
         <div style="background-color: #f9fafb; padding: 15px; border-radius: 5px; margin: 15px 0;">
           <h3 style="margin-top: 0; color: #4b5563;">Détails mis à jour de la mission</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
-          <p><strong>Conciergerie:</strong> ${conciergerieName}</p>
+          <p><strong>Conciergerie:</strong> ${conciergerie.name}</p>
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Durée estimée:</strong> ${hours}</p>
@@ -395,7 +399,7 @@ export async function sendMissionRemovedToEmployeeEmail(
   mission: Mission,
   home: Home,
   employee: Employee,
-  conciergerieName: string,
+  conciergerie: Conciergerie,
   type: 'deleted' | 'canceled',
 ): Promise<boolean> {
   // Format dates
@@ -425,6 +429,7 @@ export async function sendMissionRemovedToEmployeeEmail(
   // Generate email content
   return await sendEmail({
     to: employee.email,
+    from: conciergerie.email,
     subject: `${config.emoji} ${config.title} - ${home.title}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -432,14 +437,14 @@ export async function sendMissionRemovedToEmployeeEmail(
         <p>Bonjour ${employee.firstName},</p>
         <p>Nous vous informons que la mission pour <strong>${home.title}</strong> a été ${
       config.action
-    } par la conciergerie ${conciergerieName}.</p>
+    } par la conciergerie ${conciergerie.name}.</p>
         
         <div style="background-color: ${
           config.bgColor
         }; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid ${config.color};">
           <h3 style="margin-top: 0; color: ${config.color};">Détails de la mission ${config.action}</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
-          <p><strong>Conciergerie:</strong> ${conciergerieName}</p>
+          <p><strong>Conciergerie:</strong> ${conciergerie.name}</p>
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
