@@ -10,7 +10,7 @@ export const getMinMaxLength = (regex: RegExp) => {
   const regexStr = regex.source; // Get the regex as a string, e.g., "^.{0,32}$"
 
   // Check if the regex matches the exact pattern "^.{X,Y}$" or "^.{X}$"
-  const simpleLengthPattern = /^\^\.\{(\d+,\d+|\d+)\}\$$/;
+  const simpleLengthPattern = /^\^(?:\.|[\s\S])\{(\d+,\d+|\d+)\}\$$/;
   const match = regexStr.match(simpleLengthPattern);
 
   if (match) {
