@@ -52,6 +52,7 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
       setIsMenuOpen(false);
       if (!hasUnsavedChanges) {
         router.push(routeMap[page]);
+        setCurrentPage(page);
         setPendingPage(undefined);
       } else {
         setShouldShowConfirmClose(true);
