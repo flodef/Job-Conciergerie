@@ -1,10 +1,14 @@
 'use client';
 
+import Label from '@/app/components/label';
 import { errorClassName, inputFieldClassName } from '@/app/utils/className';
-import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { getMaxLength, inputLengthRegex } from '@/app/utils/regex';
+import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type ObjectiveListProps = {
+  id: string;
+  label: string;
+  ref?: ForwardedRef<HTMLInputElement>;
   objectives: string[];
   setObjectives: React.Dispatch<React.SetStateAction<string[]>>;
   maxObjectives: number;
@@ -14,7 +18,7 @@ type ObjectiveListProps = {
 
 const ObjectiveList = forwardRef(
   (
-    { objectives, setObjectives, maxObjectives, error, disabled }: ObjectiveListProps,
+    { id, label, objectives, setObjectives, maxObjectives, error, disabled }: ObjectiveListProps,
     forwardedRef: ForwardedRef<HTMLInputElement>,
   ) => {
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -137,9 +141,11 @@ const ObjectiveList = forwardRef(
     });
 
     return (
-      <div className="space-y-2">
+      <div id={id} className="space-y-2">
         <div className="flex justify-between items-center mb-2">
-          <h2 className="text-base font-medium text-foreground">Objectifs</h2>
+          <Label id={id} required={true}>
+            {label}
+          </Label>
           {(objectives.length === 0 || objectives[objectives.length - 1]?.trim() !== '') &&
             objectives.length < maxObjectives && (
               <button

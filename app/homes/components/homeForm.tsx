@@ -347,7 +347,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           className="max-w-1/3"
           value={hoursOfCleaning}
           onChange={value => setHoursOfCleaning(Number(value))}
-          options={range(1, 5)}
+          options={range(0.5, 4, 0.5)}
           disabled={isSubmitting}
           placeholder="Nombre d'heures"
           required
@@ -360,7 +360,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           value={hoursOfGardening}
           className="max-w-1/3"
           onChange={value => setHoursOfGardening(Number(value))}
-          options={range(0, 5)}
+          options={range(0, 4, 0.5)}
           disabled={isSubmitting}
           placeholder="Nombre d'heures"
           required
@@ -368,6 +368,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
         />
 
         <ObjectiveList
+          id="objectives"
+          label="Objectifs"
           ref={objectivesRef}
           objectives={objectives}
           setObjectives={e => {
