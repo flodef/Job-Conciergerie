@@ -369,7 +369,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
 
         <ObjectiveList
           id="objectives"
-          label="Objectifs"
+          label="Points particuliers"
           ref={objectivesRef}
           objectives={objectives}
           setObjectives={e => {
