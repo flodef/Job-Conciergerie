@@ -68,7 +68,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const titleRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const geographicZoneRef = useRef<HTMLInputElement>(null);
-  const objectivesRef = useRef<HTMLInputElement>(null);
+  const objectivesRef = useRef<HTMLTextAreaElement>(null);
   const imagesRef = useRef<HTMLInputElement>(null);
 
   // Constants for validation

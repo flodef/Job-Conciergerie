@@ -152,7 +152,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
             {home.objectives.map((objective, index) => (
               <li key={index} className="flex items-start">
                 <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 flex-shrink-0 border border-foreground" />
-                <span className="text-foreground">{objective}</span>
+                <span className="text-foreground overflow-hidden">{objective}</span>
               </li>
             ))}
           </ul>

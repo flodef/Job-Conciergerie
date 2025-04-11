@@ -2,13 +2,13 @@
 
 import Label from '@/app/components/label';
 import { errorClassName, inputFieldClassName } from '@/app/utils/className';
-import { getMaxLength, inputLengthRegex } from '@/app/utils/regex';
+import { getMaxLength, objectiveLengthRegex } from '@/app/utils/regex';
 import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type ObjectiveListProps = {
   id: string;
   label: string;
-  ref?: ForwardedRef<HTMLInputElement>;
+  ref?: ForwardedRef<HTMLTextAreaElement>;
   objectives: string[];
   setObjectives: React.Dispatch<React.SetStateAction<string[]>>;
   maxObjectives: number;
@@ -19,9 +19,9 @@ type ObjectiveListProps = {
 const ObjectiveList = forwardRef(
   (
     { id, label, objectives, setObjectives, maxObjectives, error, disabled }: ObjectiveListProps,
-    forwardedRef: ForwardedRef<HTMLInputElement>,
+    forwardedRef: ForwardedRef<HTMLTextAreaElement>,
   ) => {
-    const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
     const prevObjectivesLength = useRef(objectives.length);
     const [errorMessages, setErrorMessages] = useState<string[]>([]);
     const [errorIndex, setErrorIndex] = useState(0);
@@ -81,9 +81,9 @@ const ObjectiveList = forwardRef(
     };
 
     const editObjective = (index: number, valeur: string) => {
-      if (!inputLengthRegex.test(valeur)) {
+      if (!objectiveLengthRegex.test(valeur)) {
         const newErrors = [...errorMessages];
-        const maxLength = getMaxLength(inputLengthRegex);
+        const maxLength = getMaxLength(objectiveLengthRegex);
         newErrors[index] = `L'objectif ne peut pas dépasser ${maxLength} caractères`;
         setErrorMessages(newErrors);
         setErrorIndex(index);
@@ -126,7 +126,7 @@ const ObjectiveList = forwardRef(
       // When the ref is accessed and the last inputRef is null, we need to handle that case
       // This is a workaround for TypeScript type checking with forwardRef
       if (!inputRefs.current[index]) {
-        // Return a minimal implementation of HTMLInputElement when null
+        // Return a minimal implementation of HTMLTextAreaElement when null
         return {
           focus: () => {
             // Try to focus the last input when it becomes available
@@ -135,7 +135,7 @@ const ObjectiveList = forwardRef(
               if (inputRefs.current[index]) inputRefs.current[index].focus();
             }, 0);
           },
-        } as HTMLInputElement;
+        } as HTMLTextAreaElement;
       }
       return inputRefs.current[index];
     });
@@ -166,8 +166,7 @@ const ObjectiveList = forwardRef(
             className="flex flex-col w-full transition-all animate-in fade-in slide-in-from-bottom-4 duration-200"
           >
             <div className="flex gap-2 items-center w-full">
-              <input
-                type="text"
+              <textarea
                 value={objective}
                 onChange={e => editObjective(index, e.target.value)}
                 onKeyDown={e => {
@@ -189,6 +188,7 @@ const ObjectiveList = forwardRef(
                 ref={el => {
                   if (el) inputRefs.current[index] = el;
                 }}
+                rows={1}
                 disabled={disabled}
                 className={inputFieldClassName(errorMessages[index])}
               />
