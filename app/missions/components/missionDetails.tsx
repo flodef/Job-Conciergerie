@@ -291,12 +291,13 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           {home.images.length ? (
             <div className="relative aspect-video w-full max-h-32 mt-1 overflow-hidden rounded-lg">
               <Image
-                src={firstHomeImage}
+                src={getIPFSImageUrl(firstHomeImage)}
                 alt={`Photo de ${home.title}`}
                 fill
                 sizes="(max-width: 768px) 100vw, 300px"
                 className="object-cover cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => setSelectedImage(firstHomeImage)}
+                priority
               />
             </div>
           ) : null}
