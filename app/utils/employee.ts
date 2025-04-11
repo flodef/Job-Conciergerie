@@ -10,9 +10,8 @@ export function employeeExists(
 ): boolean {
   return employees.some(
     employee =>
-      employee.firstName === firstName &&
-      employee.familyName === familyName &&
-      employee.tel === tel &&
+      (employee.firstName === firstName && employee.familyName === familyName) ||
+      employee.tel === tel ||
       employee.email === email,
   );
 }
