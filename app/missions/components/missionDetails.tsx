@@ -10,6 +10,7 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import MissionActions from '@/app/missions/components/missionActions';
+import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
 import { Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
@@ -62,6 +63,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [isEditWarningModalOpen, setIsEditWarningModalOpen] = useState(false);
   const [isDeleteWarningModalOpen, setIsDeleteWarningModalOpen] = useState(false);
   const [isEmployeeDetailsModalOpen, setIsEmployeeDetailsModalOpen] = useState(false);
+  const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
 
   // Get the conciergerie from the mission data
   const conciergerie = useMemo(
@@ -139,12 +141,16 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   };
 
   const handleComplete = () => {
+    // Open the completion modal instead of immediately completing the mission
+    setIsCompletionModalOpen(true);
+  };
+
+  const handleConfirmComplete = () => {
+    // This function will be called after the objectives have been checked
     completeMission(mission.id).then(isSuccess => {
       setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
-        message: isSuccess
-          ? 'Mission terminée ! Retrouvez-la dans votre calendrier.'
-          : 'Erreur lors du terminage de la mission',
+        message: isSuccess ? 'Mission terminée ! Félicitations !' : 'Erreur lors de la validation de la mission',
       });
     });
   };
@@ -176,7 +182,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
       onAcceptMission={handleAccept}
       onStartMission={handleStart}
       onCompleteMission={handleComplete}
-      onClose={onClose}
     />
   );
 
@@ -405,12 +410,15 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
       {/* Employee details modal */}
       {isEmployeeDetailsModalOpen && employee && (
-        <FullScreenModal
-          onClose={() => setIsEmployeeDetailsModalOpen(false)}
-          title={`${employee.firstName} ${employee.familyName}`}
-        >
-          <EmployeeDetails employee={employee} onClose={() => setIsEmployeeDetailsModalOpen(false)} />
-        </FullScreenModal>
+        <EmployeeDetails employee={employee} onClose={() => setIsEmployeeDetailsModalOpen(false)} />
+      )}
+
+      {isCompletionModalOpen && (
+        <MissionCompletionModal
+          mission={mission}
+          onClose={() => setIsCompletionModalOpen(false)}
+          onComplete={handleConfirmComplete}
+        />
       )}
 
       <ConfirmationModal
