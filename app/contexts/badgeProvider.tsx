@@ -19,7 +19,7 @@ const checkingInterval = 60; // 1 minute
 const BadgeContext = createContext<BadgeContextType | undefined>(undefined);
 
 export function BadgeProvider({ children }: { children: ReactNode }) {
-  const { userType, conciergerieName, employees: allEmployees } = useAuth();
+  const { userId, userType, conciergerieName, employees: allEmployees } = useAuth();
   const { missions } = useMissions();
 
   const [employeesLastChecked, setEmployeesLastChecked] = useLocalStorage('last_checked_employees', '');
@@ -91,7 +91,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
   // Count missions for today
   useEffect(() => {
     const countTodayMissions = () => {
-      if (!missions.length) return;
+      if (!missions.length || userType !== 'employee') return;
 
       // Find missions that are scheduled for today
       const today = new Date();
@@ -100,6 +100,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
 
         // Check if mission is scheduled for today (mission day matches today)
         return (
+          mission.employeeId === userId &&
           missionStart.getDate() === today.getDate() &&
           missionStart.getMonth() === today.getMonth() &&
           missionStart.getFullYear() === today.getFullYear()
@@ -133,7 +134,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
     }, checkingInterval * 1000);
 
     return () => clearInterval(interval);
-  }, [missions, userType, conciergerieName]);
+  }, [missions, userId, userType, conciergerieName]);
 
   // Reset functions
   const resetPendingEmployeesCount = () => {
