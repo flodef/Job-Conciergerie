@@ -11,6 +11,8 @@ export const spinningClassName =
   'w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin mr-2';
 export const secondaryButtonClassName = 'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1';
 export const rightSideButtonClassName = secondaryButtonClassName + ' bg-foreground/10 text-foreground self-end mb-1.5';
+export const actionButtonClassName =
+  'flex justify-end gap-2 bg-background border-t border-secondary px-2 py-2 rounded-b-lg';
 
 export const buttonClassName = (type: ButtonStyle) =>
   clsx(

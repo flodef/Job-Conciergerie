@@ -50,9 +50,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   const getLateMissions = (missions: Mission[]) => {
     const now = new Date();
-    return missions.filter(
-      mission => mission.employeeId && mission.status !== 'completed' && new Date(mission.endDateTime) < now,
-    );
+    return missions.filter(mission => mission.status !== 'completed' && new Date(mission.endDateTime) < now);
   };
 
   /**

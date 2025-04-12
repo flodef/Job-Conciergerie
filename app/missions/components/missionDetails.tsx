@@ -7,21 +7,19 @@ import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
+import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import MissionActions from '@/app/missions/components/missionActions';
 import MissionForm from '@/app/missions/components/missionForm';
-import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import { Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateTime, getDateRangeDifference } from '@/app/utils/date';
 import { getIPFSImageUrl } from '@/app/utils/ipfs';
-import { calculateEmployeePointsForDay, calculateMissionPoints, formatNumber, getTaskPoints } from '@/app/utils/task';
+import { calculateMissionPoints, formatNumber, getTaskPoints } from '@/app/utils/task';
 import {
-  IconAlertTriangle,
   IconBuildingStore,
   IconCalculator,
   IconCalendarEvent,
-  IconCheck,
   IconInfoCircle,
   IconListCheck,
   IconMail,
@@ -42,7 +40,6 @@ type MissionDetailsProps = {
 
 export default function MissionDetails({ mission, onClose, isFromCalendar = false }: MissionDetailsProps) {
   const {
-    missions,
     shouldShowAcceptWarning,
     deleteMission,
     cancelMission,
@@ -51,7 +48,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     completeMission,
     setShouldShowAcceptWarning,
   } = useMissions();
-  const { userId, userType, conciergerieName, conciergeries, employees } = useAuth();
+  const { userType, conciergerieName, conciergeries, employees } = useAuth();
   const { homes } = useHomes();
 
   const [toast, setToast] = useState<Toast>();
@@ -76,7 +73,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   // Get the home data
   const home = homes.find(h => h.id === mission.homeId);
 
-  const isEmployee = userType === 'employee';
   const isConciergerie = userType === 'conciergerie';
 
   const handleDelete = () => {
@@ -99,11 +95,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   };
 
   const handleAccept = () => {
-    if (shouldShowAcceptWarning) {
-      setIsAcceptModalOpen(true);
-    } else {
-      setIsConfirmationModalOpen(true);
-    }
+    if (shouldShowAcceptWarning) setIsAcceptModalOpen(true);
+    else setIsConfirmationModalOpen(true);
   };
 
   const handleConfirmAccept = () => {
@@ -120,9 +113,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const handleAcceptWithWarning = () => {
     // Update the warning preference if the checkbox is checked
-    if (dontShowAgain) {
-      setShouldShowAcceptWarning(false);
-    }
+    if (dontShowAgain) setShouldShowAcceptWarning(false);
 
     // Accept the mission
     acceptMission(mission.id).then(isSuccess => {
@@ -158,9 +149,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     });
   };
 
-  if (isEditMode) {
+  if (isEditMode)
     return <MissionForm mission={mission} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" />;
-  }
 
   if (showHomeDetails && home) {
     // Get the original home from the homes context to ensure we have all images
@@ -171,90 +161,23 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const firstHomeImage = home?.images?.length ? home.images[0] : '';
   const employee = employees.find(e => e.id === mission.employeeId);
 
-  // Check if the employee can accept the mission
-  const canAcceptMission = isEmployee && !employee;
-
-  // Calculate the total points the employee has for each day of the mission
-  const [hasExceededPoints] = (() => {
-    if (!canAcceptMission || !userId) return [false, 0];
-
-    // Get the mission points
-    const { pointsPerDay } = calculateMissionPoints(mission);
-
-    // Check each day of the mission to see if accepting would exceed 3 points per day
-    const startDate = new Date(mission.startDateTime);
-    const endDate = new Date(mission.endDateTime);
-
-    // Create dates for the range
-    const currentDate = new Date(startDate);
-    currentDate.setHours(0, 0, 0, 0);
-
-    const lastDate = new Date(endDate);
-    lastDate.setHours(0, 0, 0, 0);
-
-    let maxPointsForAnyDay = 0;
-
-    // Check each day in the range
-    while (currentDate <= lastDate) {
-      const pointsForDay = calculateEmployeePointsForDay(userId, new Date(currentDate), missions);
-
-      // Keep track of the maximum points for any day
-      maxPointsForAnyDay = Math.max(maxPointsForAnyDay, pointsForDay);
-
-      // If adding this mission would exceed 3 points for this day, return true
-      if (pointsForDay + pointsPerDay > 3) {
-        return [true];
-      }
-
-      // Move to the next day
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return [false];
-  })();
-
   const footer = (
-    <>
-      <MissionActions
-        mission={mission}
-        onEdit={() => {
-          if (mission.employeeId) setIsEditWarningModalOpen(true);
-          else setIsEditMode(true);
-        }}
-        onDelete={() => {
-          if (mission.employeeId) setIsDeleteWarningModalOpen(true);
-          else setIsDeleteModalOpen(true);
-        }}
-        onRemoveEmployee={handleCancel}
-        onStartMission={handleStart}
-        onCompleteMission={handleComplete}
-        onClose={onClose}
-      />
-      {canAcceptMission && (
-        <div className="sticky bottom-0 bg-background border-t border-secondary py-2">
-          <div className="flex justify-end gap-2">
-            {hasExceededPoints && (
-              <div className="flex items-center text-center p-2 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
-                <IconAlertTriangle size={16} className="mr-2 w-8 h-8" />
-                Le maximum de 3 points/jour est déjà atteint !
-              </div>
-            )}
-            <button
-              onClick={handleAccept}
-              disabled={hasExceededPoints}
-              className={`flex flex-col items-center p-2 w-20 rounded-lg ${
-                hasExceededPoints
-                  ? 'bg-gray-100 text-gray-400/50 cursor-not-allowed'
-                  : 'bg-green-100 text-green-700 hover:bg-green-200'
-              }`}
-            >
-              <IconCheck />
-              Accepter
-            </button>
-          </div>
-        </div>
-      )}
-    </>
+    <MissionActions
+      mission={mission}
+      onEdit={() => {
+        if (mission.employeeId) setIsEditWarningModalOpen(true);
+        else setIsEditMode(true);
+      }}
+      onDelete={() => {
+        if (mission.employeeId) setIsDeleteWarningModalOpen(true);
+        else setIsDeleteModalOpen(true);
+      }}
+      onRemoveEmployee={handleCancel}
+      onAcceptMission={handleAccept}
+      onStartMission={handleStart}
+      onCompleteMission={handleComplete}
+      onClose={onClose}
+    />
   );
 
   if (!home) return;
