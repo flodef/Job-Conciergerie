@@ -45,7 +45,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background pt-2">
       <div className="w-full max-w-md bg-background overflow-hidden">
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
-          <div className="flex gap-6">
+          <div className="flex flex-col gap-6">
             <InstallButton />
             <UserTypeSelection onSelect={handleUserTypeSelect} />
           </div>
