@@ -7,8 +7,10 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import { Home } from '@/app/types/dataTypes';
+import { actionButtonBarClassName, actionButtonClassName } from '@/app/utils/className';
 import { fallbackImage, getIPFSImageUrl } from '@/app/utils/ipfs';
 import { IconFileDescription, IconListCheck, IconPencil, IconTrash } from '@tabler/icons-react';
+import clsx from 'clsx/lite';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
@@ -79,27 +81,19 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   };
 
   const footer = !isReadOnly && !isEmployee && (
-    <div className="flex justify-end gap-2 bg-background border-t border-secondary px-2 py-2 rounded-b-lg">
-      <button
-        onClick={() => setIsEditMode(true)}
-        className="flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80"
-      >
+    <div className={actionButtonBarClassName}>
+      <button onClick={() => setIsEditMode(true)} className={actionButtonClassName}>
         <IconPencil />
         Modifier
       </button>
-      <button
-        onClick={handleDeleteClick}
-        className="flex flex-col items-center p-2 w-20 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
-      >
+      <button onClick={handleDeleteClick} className={clsx(actionButtonClassName, 'bg-red-100 text-red-700')}>
         <IconTrash />
         Supprimer
       </button>
     </div>
   );
 
-  if (isEditMode) {
-    return <HomeForm home={home} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" />;
-  }
+  if (isEditMode) return <HomeForm home={home} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" />;
 
   return (
     <FullScreenModal title={`${home.title} (${home.geographicZone})`} onClose={onClose} footer={footer}>

@@ -3,9 +3,10 @@
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission } from '@/app/types/dataTypes';
-import { actionButtonClassName } from '@/app/utils/className';
+import { actionButtonBarClassName, actionButtonClassName } from '@/app/utils/className';
 import { calculateEmployeePointsForDay, calculateMissionPoints } from '@/app/utils/task';
 import { IconAlertTriangle, IconCancel, IconCheck, IconPencil, IconPlayerPlay, IconTrash } from '@tabler/icons-react';
+import clsx from 'clsx/lite';
 import { useMemo } from 'react';
 
 type MissionActionsProps = {
@@ -16,7 +17,6 @@ type MissionActionsProps = {
   onAcceptMission: () => void;
   onStartMission: () => void;
   onCompleteMission: () => void;
-  onClose: () => void;
 };
 
 export default function MissionActions({
@@ -27,7 +27,6 @@ export default function MissionActions({
   onAcceptMission,
   onStartMission,
   onCompleteMission,
-  onClose,
 }: MissionActionsProps) {
   const { userId, userType, conciergerieName } = useAuth();
   const { missions } = useMissions();
@@ -81,16 +80,10 @@ export default function MissionActions({
 
   // For employees in calendar view
   return isCurrentEmployee && hasStartTimePassed && (isAccepted || isStarted) ? (
-    <div className={actionButtonClassName}>
+    <div className={actionButtonBarClassName}>
       {/* Start button - only visible if mission has not started yet and start time has passed */}
       {isAccepted && (
-        <button
-          onClick={() => {
-            onStartMission();
-            onClose();
-          }}
-          className="flex flex-col items-center p-2 w-20 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
-        >
+        <button onClick={onStartMission} className={clsx(actionButtonClassName, 'bg-blue-100 text-blue-700')}>
           <IconPlayerPlay />
           Démarrer
         </button>
@@ -98,20 +91,14 @@ export default function MissionActions({
 
       {/* Finish button - only visible if mission is started */}
       {isStarted && (
-        <button
-          onClick={() => {
-            onCompleteMission();
-            onClose();
-          }}
-          className="flex flex-col items-center p-2 w-20 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
-        >
+        <button onClick={onCompleteMission} className={clsx(actionButtonClassName, 'bg-green-100 text-green-700')}>
           <IconCheck />
           Terminer
         </button>
       )}
     </div>
   ) : canAcceptMission ? (
-    <div className={actionButtonClassName}>
+    <div className={actionButtonBarClassName}>
       {hasExceededPoints && (
         <div className="flex items-center text-center p-2 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
           <IconAlertTriangle size={16} className="mr-2 w-8 h-8" />
@@ -121,52 +108,35 @@ export default function MissionActions({
       <button
         onClick={onAcceptMission}
         disabled={hasExceededPoints}
-        className={`flex flex-col items-center p-2 w-20 rounded-lg ${
-          hasExceededPoints
-            ? 'bg-gray-100 text-gray-400/50 cursor-not-allowed'
-            : 'bg-green-100 text-green-700 hover:bg-green-200'
-        }`}
+        className={clsx(
+          actionButtonClassName,
+          hasExceededPoints ? 'bg-gray-100 text-gray-400/50 cursor-not-allowed' : 'bg-green-100 text-green-700',
+        )}
       >
         <IconCheck />
         Accepter
       </button>
     </div>
   ) : isOwnMission && !isCompleted ? (
-    <div className={actionButtonClassName}>
+    <div className={actionButtonBarClassName}>
       {!isStarted && (
         <>
-          <button
-            onClick={onEdit}
-            className="flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80"
-            data-edit-button
-          >
+          <button onClick={onEdit} className={actionButtonClassName} data-edit-button>
             <IconPencil />
             Modifier
           </button>
-          <button
-            onClick={onDelete}
-            className="flex flex-col items-center p-2 w-20 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
-          >
+          <button onClick={onDelete} className={clsx(actionButtonClassName, 'bg-red-100 text-red-700')}>
             <IconTrash />
             Supprimer
           </button>
-          <button
-            onClick={onRemoveEmployee}
-            className="flex flex-col items-center p-2 w-20 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200"
-          >
+          <button onClick={onRemoveEmployee} className={clsx(actionButtonClassName, 'bg-yellow-100 text-yellow-700')}>
             <IconCancel />
             Annuler
           </button>
         </>
       )}
       {isStarted && (
-        <button
-          onClick={() => {
-            onCompleteMission();
-            onClose();
-          }}
-          className="flex flex-col items-center p-2 w-20 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
-        >
+        <button onClick={onCompleteMission} className={clsx(actionButtonClassName, 'bg-green-100 text-green-700')}>
           <IconCheck />
           Terminer
         </button>
