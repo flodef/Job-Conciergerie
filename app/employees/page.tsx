@@ -57,15 +57,17 @@ export default function EmployeesList() {
 
     isFetching.current = true;
 
-    fetchDataFromDatabase('employee').then(isSuccess => {
-      if (!isSuccess) {
-        setToast({
-          type: ToastType.Error,
-          message: 'Erreur lors du chargement des employés',
-        });
-      }
-    });
-  }, [currentPage]); // eslint-disable-line react-hooks/exhaustive-deps
+    fetchDataFromDatabase('employee')
+      .then(isSuccess => {
+        if (!isSuccess) {
+          setToast({
+            type: ToastType.Error,
+            message: 'Erreur lors du chargement des employés',
+          });
+        }
+      })
+      .finally(() => (isFetching.current = false));
+  }, [currentPage, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filter employees by status
   const pendingEmployees = employees.filter(

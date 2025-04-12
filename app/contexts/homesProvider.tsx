@@ -5,7 +5,7 @@ import { deleteFileFromIPFS } from '@/app/actions/ipfs';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Home } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
-import { createContext, ReactNode, useContext, useMemo, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
 
 type HomesContextType = {
   isLoading: boolean;
@@ -32,7 +32,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   );
 
   // Load homes from localStorage on initial render
-  const fetchHomes = async () => {
+  const fetchHomes = useCallback(async () => {
     console.warn('Loading homes from database...');
 
     setIsLoading(homes.length === 0);
@@ -41,7 +41,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(false);
     return !!fetchedHomes;
-  };
+  }, [homes.length]);
 
   // Check if a home with the same title already exists for the current conciergerie
   const homeExists = (title: string, id?: string): boolean => {

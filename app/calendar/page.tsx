@@ -43,14 +43,16 @@ export default function Calendar() {
 
     isFetching.current = true;
 
-    fetchMissions().then(isSuccess => {
-      if (!isSuccess)
-        setToast({
-          type: ToastType.Error,
-          message: 'Erreur lors du chargement des missions',
-        });
-    });
-  }, [currentPage, authLoading, fetchMissions]);
+    fetchMissions()
+      .then(isSuccess => {
+        if (!isSuccess)
+          setToast({
+            type: ToastType.Error,
+            message: 'Erreur lors du chargement des missions',
+          });
+      })
+      .finally(() => (isFetching.current = false));
+  }, [currentPage, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Second useEffect to handle mission filtering after we have the user identity
   useEffect(() => {

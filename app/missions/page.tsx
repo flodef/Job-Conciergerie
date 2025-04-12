@@ -67,14 +67,16 @@ export default function Missions() {
 
     isFetching.current = true;
 
-    fetchMissions().then(isSuccess => {
-      if (!isSuccess)
-        setToast({
-          type: ToastType.Error,
-          message: 'Erreur lors du chargement des missions',
-        });
-    });
-  }, [currentPage, authLoading, fetchMissions]);
+    fetchMissions()
+      .then(isSuccess => {
+        if (!isSuccess)
+          setToast({
+            type: ToastType.Error,
+            message: 'Erreur lors du chargement des missions',
+          });
+      })
+      .finally(() => (isFetching.current = false));
+  }, [currentPage, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load saved filters from localStorage on component mount - must be called before any conditional returns
   useEffect(() => {

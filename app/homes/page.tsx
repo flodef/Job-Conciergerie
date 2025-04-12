@@ -33,14 +33,16 @@ export default function HomesPage() {
 
     isFetching.current = true;
 
-    fetchHomes().then(isSuccess => {
-      if (!isSuccess)
-        setToast({
-          type: ToastType.Error,
-          message: 'Erreur lors du chargement des biens',
-        });
-    });
-  }, [currentPage, authLoading, fetchHomes]);
+    fetchHomes()
+      .then(isSuccess => {
+        if (!isSuccess)
+          setToast({
+            type: ToastType.Error,
+            message: 'Erreur lors du chargement des biens',
+          });
+      })
+      .finally(() => (isFetching.current = false));
+  }, [currentPage, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset unsaved changes when navigating to this page - must be called before any conditional returns
   useEffect(() => {

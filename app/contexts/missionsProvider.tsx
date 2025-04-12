@@ -14,7 +14,7 @@ import { Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
 
 type MissionsContextType = {
   isLoading: boolean;
@@ -55,7 +55,44 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const fetchMissions = async () => {
+  /**
+   * Checks for missions that haven't been completed on time and sends notifications
+   * to the conciergeries that have the missionsEndedWithoutCompletion setting enabled
+   */
+  const checkForLateMissions = useCallback(
+    async (missions: Mission[]) => {
+      const lateMissions = getLateMissions(missions);
+      if (lateMissions.length === 0) return;
+
+      // Group late missions by conciergerie to avoid sending multiple emails to the same conciergerie
+      const missionsByConciergerieMap = new Map<string, Mission[]>();
+
+      lateMissions.forEach(mission => {
+        const existing = missionsByConciergerieMap.get(mission.conciergerieName) || [];
+        missionsByConciergerieMap.set(mission.conciergerieName, [...existing, mission]);
+      });
+
+      // For each conciergerie with late missions
+      for (const [conciergerieName, conciergerieMissions] of missionsByConciergerieMap.entries()) {
+        // Find the conciergerie object
+        const conciergerie = conciergeries?.find(c => c.name === conciergerieName);
+
+        // Only send notifications if the conciergerie has the setting enabled
+        if (!conciergerie || !conciergerie.notificationSettings?.missionsEndedWithoutCompletion) continue;
+
+        // Send a notification for each late mission
+        for (const mission of conciergerieMissions) {
+          const home = homes.find(h => h.id === mission.homeId);
+          const employee = employees.find(e => e.id === mission.employeeId);
+
+          if (home && employee) sendLateCompletionEmail(mission, home, employee, conciergerie);
+        }
+      }
+    },
+    [homes, employees, conciergeries],
+  );
+
+  const fetchMissions = useCallback(async () => {
     console.warn('Loading missions from database...');
 
     setIsLoading(missions.length === 0);
@@ -73,7 +110,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(false);
     return isSuccess;
-  };
+  }, [fetchHomes, checkForLateMissions, missions.length]);
 
   const addMission = async (missionData: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>) => {
     if (!conciergerieName || missionExists(missionData)) return false;
@@ -259,40 +296,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     setMissions(prev => prev.map(mission => (mission.id === updated.id ? { ...updated } : mission)));
     return true;
-  };
-
-  /**
-   * Checks for missions that haven't been completed on time and sends notifications
-   * to the conciergeries that have the missionsEndedWithoutCompletion setting enabled
-   */
-  const checkForLateMissions = async (missions: Mission[]) => {
-    const lateMissions = getLateMissions(missions);
-    if (lateMissions.length === 0) return;
-
-    // Group late missions by conciergerie to avoid sending multiple emails to the same conciergerie
-    const missionsByConciergerieMap = new Map<string, Mission[]>();
-
-    lateMissions.forEach(mission => {
-      const existing = missionsByConciergerieMap.get(mission.conciergerieName) || [];
-      missionsByConciergerieMap.set(mission.conciergerieName, [...existing, mission]);
-    });
-
-    // For each conciergerie with late missions
-    for (const [conciergerieName, conciergerieMissions] of missionsByConciergerieMap.entries()) {
-      // Find the conciergerie object
-      const conciergerie = conciergeries?.find(c => c.name === conciergerieName);
-
-      // Only send notifications if the conciergerie has the setting enabled
-      if (!conciergerie || !conciergerie.notificationSettings?.missionsEndedWithoutCompletion) continue;
-
-      // Send a notification for each late mission
-      for (const mission of conciergerieMissions) {
-        const home = homes.find(h => h.id === mission.homeId);
-        const employee = employees.find(e => e.id === mission.employeeId);
-
-        if (home && employee) sendLateCompletionEmail(mission, home, employee, conciergerie);
-      }
-    }
   };
 
   // Check if a mission with the same home, tasks, start date, and end date already exists
