@@ -2,6 +2,7 @@
 
 import ConciergerieForm from '@/app/components/conciergerieForm';
 import EmployeeForm from '@/app/components/employeeForm';
+import InstallButton from '@/app/components/installButton';
 import UserTypeSelection from '@/app/components/userTypeSelection';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { useCallback, useEffect, useState } from 'react';
@@ -41,10 +42,13 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background pt-2">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background pt-2">
       <div className="w-full max-w-md bg-background overflow-hidden">
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
-          <UserTypeSelection onSelect={handleUserTypeSelect} />
+          <div className="flex gap-6">
+            <InstallButton />
+            <UserTypeSelection onSelect={handleUserTypeSelect} />
+          </div>
         ) : showEmployeeForm ? (
           <EmployeeForm onClose={handleCloseForm} />
         ) : showConciergerieForm ? (

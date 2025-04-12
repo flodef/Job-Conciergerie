@@ -21,7 +21,14 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: 'Job Conciergerie',
-  description: 'Postez votre annonce de maniere simple',
+  description: 'Gestion des missions pour conciergeries et employés',
+  manifest: '/manifest.json',
+  themeColor: '#a4bcde',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Job Conciergerie',
+  },
 };
 
 export default function RootLayout({
@@ -31,6 +38,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="theme-color" content="#a4bcde" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}>
         <MenuProvider>
           <AuthProvider>
