@@ -1,9 +1,9 @@
 'use client';
 
-import { buttonClassName } from '@/app/utils/className';
-import { IconDeviceMobile } from '@tabler/icons-react';
 import { usePWAInstall } from '@/app/hooks/usePWAInstall';
+import { buttonClassName } from '@/app/utils/className';
 import { isDevMode } from '@/app/utils/environment';
+import { IconDeviceMobile } from '@tabler/icons-react';
 
 export default function InstallButton() {
   const { isInstallable, isInstalled, handleInstallClick } = usePWAInstall();
@@ -17,15 +17,11 @@ export default function InstallButton() {
   const onClickHandler = isFakeButton
     ? () => console.log('Fake install button clicked in dev mode')
     : handleInstallClick;
-  const buttonLabel = isFakeButton ? "Installer l'app (Dev)" : "Installer l'application";
-  const ariaLabel = isFakeButton ? 'Fake install button for development' : "Installer l'application";
+  const buttonLabel = isFakeButton ? "Installer l'app (Dev)" : "Installer l'app sur votre appareil";
+  const ariaLabel = isFakeButton ? 'Fake install button for development' : "Installer l'app sur votre appareil";
 
   return (
-    <button
-      onClick={onClickHandler}
-      className={buttonClassName('primary') + ' flex items-center gap-2 text-sm mt-4'}
-      aria-label={ariaLabel}
-    >
+    <button onClick={onClickHandler} className={buttonClassName('primary')} aria-label={ariaLabel}>
       <IconDeviceMobile size={20} />
       {buttonLabel}
     </button>
