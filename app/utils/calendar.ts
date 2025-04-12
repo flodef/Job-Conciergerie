@@ -31,6 +31,8 @@ export const formatCalendarDate = (date: Date): string => {
 // Group missions by date
 export const groupMissionsByDate = (missions: Mission[]): Map<string, Mission[]> => {
   const missionsByDate = new Map<string, Mission[]>();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   missions.forEach(mission => {
     // Create date objects in local timezone
@@ -40,7 +42,20 @@ export const groupMissionsByDate = (missions: Mission[]): Map<string, Mission[]>
     // Get all dates in the range using local dates (including start and end dates)
     const datesInRange = getDatesInRange(startDate, endDate);
 
-    datesInRange.forEach(date => {
+    // Filter out past dates, keep today and future dates
+    const relevantDates = datesInRange.filter(date => {
+      const dateToCompare = new Date(date);
+      dateToCompare.setHours(0, 0, 0, 0);
+      return dateToCompare >= today;
+    });
+
+    // If all dates are in the past but the mission isn't completed, show the last day
+    if (relevantDates.length === 0 && mission.status !== 'completed' && endDate >= startDate) {
+      // Get the last day of the mission
+      relevantDates.push(datesInRange[datesInRange.length - 1]);
+    }
+
+    relevantDates.forEach(date => {
       // Use local date string to avoid timezone issues
       const dateStr = toLocalDateString(date);
       const existingMissions = missionsByDate.get(dateStr) || [];

@@ -80,8 +80,8 @@ export default function Calendar() {
     setMissionsByDate(groupedMissions);
 
     // Sort dates
-    const dates = Array.from(groupedMissions.keys());
-    setSortedDates(sortDates(dates));
+    const dates = sortDates(Array.from(groupedMissions.keys()));
+    setSortedDates(dates);
   }, [missions, userId, conciergerieName, isEmployee, isConciergerie, getLateMissions]);
 
   const handleMissionClick = (mission: Mission) => {
