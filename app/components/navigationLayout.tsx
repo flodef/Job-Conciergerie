@@ -1,5 +1,6 @@
 'use client';
 
+import InstallToast from '@/app/components/installToast';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { useBadge } from '@/app/contexts/badgeProvider';
@@ -91,6 +92,9 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
         </header>
       )}
 
+      {/* Installation toast - only shown for logged in users */}
+      {isNavigationPage && !!userType && <InstallToast />}
+      
       {/* Main content */}
       <main className="flex-1 relative">
         {/* Content wrapper with padding to prevent content from being hidden under the navigation */}
