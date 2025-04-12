@@ -53,6 +53,7 @@ export default function HomeCard({ home, onClick, onEdit }: HomeCardProps) {
               // Fallback to mockup
               (e.target as HTMLImageElement).src = fallbackImage;
             }}
+            priority
           />
         </div>
       )}
