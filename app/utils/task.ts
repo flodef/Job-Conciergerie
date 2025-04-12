@@ -53,9 +53,7 @@ export const calculateRemainingPointsPerDay = (mission: Mission, currentDate: Da
   endDate.setHours(0, 0, 0, 0);
 
   // If mission is already over, return 0
-  if (today > endDate) {
-    return 0;
-  }
+  if (today > endDate) return 0;
 
   // Calculate the difference in days from today to end date
   const diffTime = Math.abs(endDate.getTime() - today.getTime());
@@ -106,9 +104,42 @@ export const calculateEmployeePointsForDay = (
 
   // Calculate the total points for the day
   return employeeMissions.reduce((total, mission) => {
-    // Get the mission objectives' total points
-    const { totalPoints } = calculateMissionPoints(mission);
-    return total + totalPoints; // Add the total points for each mission
+    // If the specified date is today or a future date, calculate the points per day
+    // based on remaining days
+    const targetDate = new Date(date);
+    targetDate.setHours(0, 0, 0, 0);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const endDate = new Date(mission.endDateTime);
+    endDate.setHours(0, 0, 0, 0);
+    
+    // If the target date is today or a future date
+    if (targetDate >= today) {
+      // Calculate points for the day based on remaining days from today
+      return total + calculateRemainingPointsPerDay(mission, today);
+    } 
+    // If the target date is the last day of the mission and it's in the past
+    else if (targetDate.getTime() === endDate.getTime()) {
+      // For past, last day of mission, allocate all remaining points
+      const { totalPoints } = calculateMissionPoints(mission);
+      return total + totalPoints;
+    } 
+    // If it's a past date but not the last day of the mission
+    else {
+      // Calculate what the points per day were at that time
+      const { totalPoints } = calculateMissionPoints(mission);
+      
+      // Calculate days from target date to end date
+      const diffTime = Math.abs(endDate.getTime() - targetDate.getTime());
+      const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include target date
+      
+      // Calculate points per remaining day (capped at 3 points per day)
+      const pointsPerDay = Math.min(totalPoints / remainingDays, 3);
+      
+      return total + pointsPerDay;
+    }
   }, 0);
 };
 
