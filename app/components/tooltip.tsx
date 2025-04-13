@@ -2,15 +2,22 @@
 
 import { Size } from '@/app/types/types';
 import { IconInfoCircle, IconProps } from '@tabler/icons-react';
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 type TooltipProps = {
   children: string | ReactNode;
   size?: Size;
   icon?: React.ComponentType<IconProps>;
+  onClick?: () => void;
 };
 
-export default function Tooltip({ children, size = 'medium', icon: Icon = IconInfoCircle }: TooltipProps) {
+export default function Tooltip({
+  children,
+  size = 'medium',
+  icon: Icon = IconInfoCircle,
+  orientation = 'vertical',
+  onClick,
+}: TooltipProps & { orientation?: 'vertical' | 'horizontal' }) {
   const [isVisible, setIsVisible] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -34,29 +41,59 @@ export default function Tooltip({ children, size = 'medium', icon: Icon = IconIn
     large: 24,
   }[size];
 
-  useEffect(() => {
-    if (isVisible && tooltipRef.current && buttonRef.current) {
-      const buttonRect = buttonRef.current.getBoundingClientRect();
-      const tooltipRect = tooltipRef.current.getBoundingClientRect();
+  const calculatePosition = useCallback(() => {
+    if (!buttonRef.current || !tooltipRef.current) return { top: 0, left: 0 };
 
-      // Calculate position to ensure tooltip is visible
-      let left = buttonRect.left - tooltipRect.width / 2 + buttonRect.width / 2;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const tooltipWidth = tooltipRef.current.offsetWidth;
+    const tooltipHeight = tooltipRef.current.offsetHeight;
+    const spaceAbove = rect.top;
+    const spaceBelow = window.innerHeight - rect.bottom; // Used to determine if tooltip can fit below
+    const spaceLeft = rect.left;
+    const spaceRight = window.innerWidth - rect.right; // Used to determine if tooltip can fit to the right
 
-      // Ensure tooltip doesn't go off the left edge of the screen
-      if (left < 10) left = 10;
+    let top = 0;
+    let left = 0;
 
-      // Ensure tooltip doesn't go off the right edge of the screen
-      if (left + tooltipRect.width > window.innerWidth - 10) left = window.innerWidth - tooltipRect.width - 10;
-
-      // Ensure tooltip stays in the middle if it's taking up the entire width
-      if (tooltipRect.width > window.innerWidth) left = 0;
-
-      setPosition({
-        top: buttonRect.top - tooltipRect.height - 10,
-        left: left,
-      });
+    if (orientation === 'vertical') {
+      const positionAbove = spaceAbove >= tooltipHeight;
+      top = positionAbove ? rect.top - tooltipHeight - 10 : rect.bottom + 10;
+      // Check if positioning below would fit within viewport
+      if (!positionAbove && spaceBelow < tooltipHeight + 10) {
+        top = window.innerHeight - tooltipHeight - 10;
+      }
+      left = rect.left + (rect.width - tooltipWidth) / 2;
+      if (left + tooltipWidth > window.innerWidth) {
+        left = window.innerWidth - tooltipWidth - 10;
+      }
+      if (left < 0) {
+        left = 10;
+      }
+    } else {
+      const positionLeft = spaceLeft >= tooltipWidth;
+      left = positionLeft ? rect.left - tooltipWidth - 10 : rect.right + 10;
+      // Check if positioning right would fit within viewport
+      if (!positionLeft && spaceRight < tooltipWidth + 10) {
+        left = window.innerWidth - tooltipWidth - 10;
+      }
+      top = rect.top + (rect.height - tooltipHeight) / 2;
+      if (top + tooltipHeight > window.innerHeight) {
+        top = window.innerHeight - tooltipHeight - 10;
+      }
+      if (top < 0) {
+        top = 10;
+      }
     }
-  }, [isVisible]);
+
+    return { top, left };
+  }, [orientation]);
+
+  useEffect(() => {
+    if (isVisible) {
+      const newPosition = calculatePosition();
+      setPosition(newPosition);
+    }
+  }, [isVisible, calculatePosition]);
 
   return (
     <div className="inline-flex items-center ml-1">
@@ -64,7 +101,10 @@ export default function Tooltip({ children, size = 'medium', icon: Icon = IconIn
         ref={buttonRef}
         type="button"
         className="text-light hover:text-foreground focus:outline-none cursor-help"
-        onClick={() => setIsVisible(!isVisible)}
+        onClick={() => {
+          setIsVisible(!isVisible);
+          onClick?.();
+        }}
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => setIsVisible(false)}
         aria-label="Information"
@@ -74,7 +114,7 @@ export default function Tooltip({ children, size = 'medium', icon: Icon = IconIn
       {isVisible && (
         <div
           ref={tooltipRef}
-          className={`fixed z-50 bg-background text-foreground rounded-md shadow-lg border border-secondary ${sizeClasses[size]} ${widthClasses[size]}`}
+          className={`fixed z-100 bg-background text-foreground rounded-md shadow-lg border border-secondary ${sizeClasses[size]} ${widthClasses[size]}`}
           style={{ top: `${position.top}px`, left: `${position.left}px` }}
         >
           {children}
