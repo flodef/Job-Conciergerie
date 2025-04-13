@@ -71,7 +71,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   const imagesRef = useRef<HTMLInputElement>(null);
 
   // Constants for validation
-  const MAX_OBJECTIVES = 10;
+  const MAX_OBJECTIVES = 30;
   const MAX_PHOTOS = 9;
 
   // Load geographic zones from JSON file
