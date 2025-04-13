@@ -243,9 +243,15 @@ export default function Calendar() {
                       </div>
 
                       <div className="flex flex-col justify-between text-sm">
-                        <div className="flex items-center">
-                          <span className="text-light text-nowrap">Points :&nbsp;</span>
-                          <span className="font-medium">{formatNumber(totalPoints)}</span>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <span className="text-light text-nowrap">Points :&nbsp;</span>
+                            <span className="font-medium">{formatNumber(totalPoints)}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <span className="text-light text-nowrap">Heures :&nbsp;</span>
+                            <span className="font-medium">{formatNumber(mission.hours)}</span>
+                          </div>
                         </div>
                         <div className="flex items-center">
                           <span className="text-light text-nowrap">Durée :&nbsp;</span>
