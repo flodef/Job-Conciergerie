@@ -5,7 +5,7 @@ import { HomesProvider } from '@/app/contexts/homesProvider';
 import { MenuProvider } from '@/app/contexts/menuProvider';
 import { MissionsProviderWrapper } from '@/app/contexts/missionsProvider';
 import '@/app/globals.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 
 const geistSans = localFont({
@@ -23,12 +23,15 @@ export const metadata: Metadata = {
   title: 'Job Conciergerie',
   description: 'Gestion des missions pour conciergeries et employés',
   manifest: '/manifest.json',
-  themeColor: '#a4bcde',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Job Conciergerie',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#a4bcde',
 };
 
 export default function RootLayout({
@@ -44,6 +47,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#a4bcde" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}>
+        <span style={{ display: 'none', fontFamily: "var(--font-geist-sans)" }}>Force font load</span>
         <MenuProvider>
           <AuthProvider>
             <HomesProvider>
