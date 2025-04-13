@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocalStorage } from '@/app/utils/localStorage';
 import { useCallback, useEffect, useState } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -14,6 +15,7 @@ interface PWAInstallResult {
 }
 
 export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'install_prompt_seen'): PWAInstallResult {
+  const [lastPrompt, setLastPrompt] = useLocalStorage<string>(cooldownKey);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -41,16 +43,13 @@ export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'i
     }
 
     // Check if we've already shown the prompt recently
-    const lastPrompt = localStorage.getItem(cooldownKey);
     if (lastPrompt) {
       const lastPromptDate = new Date(lastPrompt);
       const now = new Date();
       const daysSinceLastPrompt = Math.floor((now.getTime() - lastPromptDate.getTime()) / (1000 * 60 * 60 * 24));
 
       // If we've shown the prompt recently, don't show it again yet
-      if (daysSinceLastPrompt < cooldownDays) {
-        return;
-      }
+      if (daysSinceLastPrompt < cooldownDays) return;
     }
 
     // Listen for the beforeinstallprompt event
@@ -65,7 +64,7 @@ export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'i
       setIsInstallable(true);
 
       // Mark that we've shown the prompt
-      localStorage.setItem(cooldownKey, new Date().toISOString());
+      setLastPrompt(new Date().toISOString());
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -74,7 +73,7 @@ export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'i
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, [cooldownDays, cooldownKey]);
+  }, [cooldownDays, lastPrompt, setLastPrompt]);
 
   // Handle app installed event
   useEffect(() => {
@@ -82,6 +81,7 @@ export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'i
       // Hide the install button when installed
       setIsInstallable(false);
       setIsInstalled(true);
+      setLastPrompt(undefined);
     };
 
     window.addEventListener('appinstalled', handleAppInstalled);
@@ -89,7 +89,7 @@ export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'i
     return () => {
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [setLastPrompt]);
 
   return {
     isInstallable,
