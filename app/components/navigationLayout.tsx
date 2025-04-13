@@ -94,7 +94,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
       {/* Installation toast - only shown for logged in users */}
       {isNavigationPage && !!userType && <InstallToast />}
-      
+
       {/* Main content */}
       <main className="flex-1 relative">
         {/* Content wrapper with padding to prevent content from being hidden under the navigation */}
@@ -114,8 +114,8 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
       {/* Fixed bottom navigation bar - hidden on home page */}
       {isNavigationPage && !!userType && (
-        <nav className="fixed bottom-0 left-0 right-0 h-20 bg-background border-t border-secondary z-40">
-          <div className="max-w-7xl mx-auto flex justify-around h-full">
+        <nav className="fixed bottom-0 left-0 right-0 h-16 bg-background border-secondary z-40">
+          <div className="max-w-7xl mx-auto flex justify-around h-full border-t">
             {navigationPages
               .filter(page => {
                 // Skip Welcome page in navigation
@@ -131,7 +131,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
                   onClick={() => handleMenuClick(page)}
                   className={clsx(
                     'flex flex-col items-center justify-center py-2 px-4',
-                    'transition-colors duration-200 w-20 h-20 relative',
+                    'transition-colors duration-200 w-20 h-16 relative',
                     page === currentPage ? 'text-primary bg-primary/10' : 'text-foreground hover:bg-secondary/20',
                   )}
                 >

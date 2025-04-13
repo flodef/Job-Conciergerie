@@ -157,7 +157,7 @@ export default function HomesPage() {
               className={clsx(
                 displayMode === 'list' && 'flex flex-col gap-2',
                 displayMode === 'grid' && 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4',
-                displayMode === 'thumb' && 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-4',
+                displayMode === 'thumb' && 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6',
               )}
             >
               {filteredHomes.map(home => (
