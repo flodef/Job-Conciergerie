@@ -204,7 +204,12 @@ export default function EmployeesList() {
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       {employees.length > 1 && (
-        <SearchInput placeholder="Rechercher un prestataire..." value={searchTerm} onChange={setSearchTerm} />
+        <SearchInput
+          className="mb-2"
+          placeholder="Rechercher un prestataire..."
+          value={searchTerm}
+          onChange={setSearchTerm}
+        />
       )}
 
       {/* Render employee tables in an accordion */}

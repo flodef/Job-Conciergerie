@@ -18,7 +18,7 @@ export default function SearchInput({
   className = '',
 }: SearchInputProps) {
   return (
-    <div className={clsx('relative mb-4', className)}>
+    <div className={clsx('relative', className)}>
       <input
         type="text"
         placeholder={placeholder}

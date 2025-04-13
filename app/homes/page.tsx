@@ -97,40 +97,42 @@ export default function HomesPage() {
     <div>
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      <div className="flex items-start justify-between gap-2">
-        {myHomes.length > 1 && (
+      <div className="flex items-start justify-end gap-2 mb-2">
+        {myHomes.length > 2 && (
           <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
         )}
-        <button
-          className={clsx(
-            'mt-1 p-2 rounded',
-            displayMode === 'list' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
-          )}
-          onClick={() => setDisplayMode('list')}
-          title="Liste"
-        >
-          <IconList size={20} />
-        </button>
-        <button
-          className={clsx(
-            'mt-1 p-2 rounded',
-            displayMode === 'grid' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
-          )}
-          onClick={() => setDisplayMode('grid')}
-          title="Grille"
-        >
-          <IconLayoutGrid size={20} />
-        </button>
-        <button
-          className={clsx(
-            'mt-1 p-2 rounded',
-            displayMode === 'thumb' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
-          )}
-          onClick={() => setDisplayMode('thumb')}
-          title="Miniatures"
-        >
-          <IconLayout size={20} />
-        </button>
+        <div className="flex gap-2">
+          <button
+            className={clsx(
+              'mt-1 p-2 rounded',
+              displayMode === 'list' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
+            )}
+            onClick={() => setDisplayMode('list')}
+            title="Liste"
+          >
+            <IconList size={20} />
+          </button>
+          <button
+            className={clsx(
+              'mt-1 p-2 rounded',
+              displayMode === 'grid' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
+            )}
+            onClick={() => setDisplayMode('grid')}
+            title="Grille"
+          >
+            <IconLayoutGrid size={20} />
+          </button>
+          <button
+            className={clsx(
+              'mt-1 p-2 rounded',
+              displayMode === 'thumb' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
+            )}
+            onClick={() => setDisplayMode('thumb')}
+            title="Miniatures"
+          >
+            <IconLayout size={20} />
+          </button>
+        </div>
       </div>
 
       {filteredHomes.length === 0 && searchTerm === '' ? (
@@ -157,7 +159,7 @@ export default function HomesPage() {
               className={clsx(
                 displayMode === 'list' && 'flex flex-col gap-2',
                 displayMode === 'grid' && 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4',
-                displayMode === 'thumb' && 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6',
+                displayMode === 'thumb' && 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4',
               )}
             >
               {filteredHomes.map(home => (
