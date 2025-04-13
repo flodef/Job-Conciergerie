@@ -6,7 +6,7 @@ export const labelClassName = 'text-base font-medium text-foreground mb-1';
 export const errorClassName = 'text-red-500 text-sm mt-1';
 export const textAreaCharCountClassName = 'text-right text-sm text-foreground/50 -mt-1.5';
 export const inputClassName =
-  'w-full p-2 pl-10 border-2 border-secondary rounded-md focus:ring-primary focus:border-primary focus-visible:outline-none focus-within:outline-none';
+  'w-full p-2 pl-9 border-2 border-secondary rounded-md focus:ring-primary focus:border-primary focus-visible:outline-none focus-within:outline-none';
 export const spinningClassName =
   'w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin mr-2';
 export const secondaryButtonClassName = 'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1';
