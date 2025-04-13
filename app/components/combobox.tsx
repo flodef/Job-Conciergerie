@@ -1,7 +1,14 @@
 'use client';
 
 import Label from '@/app/components/label';
-import { errorClassName, rowClassName, selectClassName } from '@/app/utils/className';
+import { SelectOption } from '@/app/types/types';
+import {
+  errorClassName,
+  optionClassName,
+  optionsClassName,
+  rowClassName,
+  selectClassName,
+} from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
@@ -12,7 +19,7 @@ type ComboboxProps = {
   label: ReactNode;
   value: string | number | undefined;
   onChange: (value: string) => void;
-  options: string[];
+  options: string[] | number[] | SelectOption[];
   placeholder?: string;
   className?: string;
   error?: boolean | string;
@@ -51,7 +58,9 @@ const Combobox = forwardRef(
     useImperativeHandle(forwardedRef, () => inputRef.current as HTMLInputElement);
 
     // Filter options based on search term
-    const filteredOptions = options.filter(option => option.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredOptions = options.filter(option =>
+      (typeof option === 'object' ? option.label : option).toString().toLowerCase().includes(searchTerm.toLowerCase()),
+    );
 
     // Close the dropdown when clicking outside
     useEffect(() => {
@@ -88,12 +97,15 @@ const Combobox = forwardRef(
           e.preventDefault();
           if (highlightedIndex >= 0) {
             const selectedOption = filteredOptions[highlightedIndex];
-            onChange(selectedOption);
+            const value = typeof selectedOption === 'object' ? selectedOption.label : selectedOption;
+            onChange(value.toString());
             setSearchTerm('');
             setIsOpen(false);
           } else if (filteredOptions.length > 0) {
             // Select the first option if none is highlighted
-            onChange(filteredOptions[0]);
+            const selectedOption = filteredOptions[0];
+            const value = typeof selectedOption === 'object' ? selectedOption.label : selectedOption;
+            onChange(value.toString());
             setSearchTerm('');
             setIsOpen(false);
           }
@@ -116,8 +128,8 @@ const Combobox = forwardRef(
       }
     }, [highlightedIndex]);
 
-    const handleSelect = (option: string) => {
-      onChange(option);
+    const handleSelect = (option: string | number) => {
+      onChange(option.toString());
       setSearchTerm('');
       setIsOpen(false);
       setIsFocused(true);
@@ -128,6 +140,20 @@ const Combobox = forwardRef(
       setIsOpen(true);
       setHighlightedIndex(-1);
     };
+
+    // Determine the display value based on the selected value
+    const displayValue = (() => {
+      if (!value?.toString().trim()) return placeholder;
+
+      // If options are objects with value and label
+      if (typeof options[0] === 'object') {
+        const option = (options as SelectOption[]).find(opt => opt.value === value);
+        return option ? option.label : value;
+      }
+
+      // If options are just strings
+      return value;
+    })();
 
     const checkPosition = () => {
       if (comboboxRef.current) {
@@ -153,8 +179,8 @@ const Combobox = forwardRef(
               ref={inputRef}
               type="text"
               className="flex-grow w-full bg-transparent outline-none text-foreground"
-              placeholder={value?.toString().trim() || placeholder}
-              value={isOpen ? searchTerm : value}
+              placeholder={displayValue?.toString().trim() || placeholder}
+              value={isOpen ? searchTerm : displayValue}
               onChange={handleInputChange}
               onClick={() => {
                 if (!disabled) {
@@ -167,6 +193,10 @@ const Combobox = forwardRef(
               onBlur={() => setIsFocused(false)}
               autoComplete="off"
               disabled={disabled}
+              role="combobox"
+              aria-expanded={isOpen}
+              aria-haspopup="listbox"
+              aria-controls={`${id}-options`}
             />
             <button
               type="button"
@@ -182,30 +212,27 @@ const Combobox = forwardRef(
           </div>
 
           {isOpen && !disabled && (
-            <div
-              ref={optionsRef}
-              className={clsx(
-                'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
-                openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
-              )}
-            >
+            <div ref={optionsRef} className={optionsClassName(openUpward)} role="listbox">
               {filteredOptions.length === 0 ? (
                 <div className="p-2 text-foreground/50 text-center">Aucun résultat</div>
               ) : (
-                filteredOptions.map((option, index) => (
-                  <div
-                    key={option}
-                    className={clsx(
-                      'p-2 cursor-pointer hover:bg-primary/10',
-                      highlightedIndex === index && 'bg-primary/10',
-                      option === value && 'font-medium text-primary bg-primary/10',
-                    )}
-                    onClick={() => handleSelect(option)}
-                    onMouseEnter={() => setHighlightedIndex(index)}
-                  >
-                    {option}
-                  </div>
-                ))
+                filteredOptions.map((option, index) => {
+                  const optionValue = typeof option === 'object' ? option.value : option;
+                  const optionLabel = typeof option === 'object' ? option.label : option;
+
+                  return (
+                    <div
+                      key={optionValue}
+                      className={optionClassName(index === highlightedIndex, optionValue === value)}
+                      onClick={() => handleSelect(optionValue)}
+                      onMouseEnter={() => setHighlightedIndex(index)}
+                      role="option"
+                      aria-selected={optionValue === value}
+                    >
+                      {optionLabel}
+                    </div>
+                  );
+                })
               )}
             </div>
           )}

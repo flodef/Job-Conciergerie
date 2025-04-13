@@ -1,7 +1,13 @@
 'use client';
 
 import Label from '@/app/components/label';
-import { errorClassName, rowClassName, selectClassName } from '@/app/utils/className';
+import {
+  errorClassName,
+  optionClassName,
+  optionsClassName,
+  rowClassName,
+  selectClassName,
+} from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
@@ -150,10 +156,7 @@ const MultiSelect = forwardRef(
           {isOpen && !disabled && (
             <div
               id={`${id}-options`}
-              className={clsx(
-                'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
-                openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
-              )}
+              className={optionsClassName(openUpward)}
               role="listbox"
               aria-multiselectable="true"
             >
@@ -167,10 +170,7 @@ const MultiSelect = forwardRef(
                   return (
                     <div
                       key={option.value}
-                      className={clsx(
-                        'p-2 cursor-pointer hover:bg-primary/10 flex items-center justify-between',
-                        isSelected && 'bg-primary/10',
-                      )}
+                      className={optionClassName(isSelected)}
                       onClick={() => toggleOption(option.value)}
                       role="option"
                       aria-selected={isSelected}

@@ -44,3 +44,14 @@ export const filterButtonClassName = (shouldAppear: boolean) =>
       ? 'bg-foreground/10 text-foreground w-[115px]'
       : 'bg-foreground/5 text-foreground/40 w-0 px-[0px] overflow-hidden',
   );
+export const optionsClassName = (openUpward: boolean) =>
+  clsx(
+    'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
+    openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
+  );
+export const optionClassName = (isHighlighted: boolean, isSelected?: boolean) =>
+  clsx(
+    'p-2 cursor-pointer hover:bg-primary/10 flex items-center justify-between',
+    isHighlighted && 'bg-primary/10',
+    isSelected && 'font-medium text-primary bg-primary/10',
+  );

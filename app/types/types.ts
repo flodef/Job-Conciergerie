@@ -5,5 +5,9 @@ export type ErrorField = {
   fieldRef: React.RefObject<HTMLField | HTMLDivElement | HTMLLabelElement | null>;
   func: (message: string) => void;
 };
+export type SelectOption = {
+  value: string;
+  label: string;
+};
 
 export type Size = 'small' | 'medium' | 'large';

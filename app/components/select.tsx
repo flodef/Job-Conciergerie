@@ -1,16 +1,18 @@
 'use client';
 
 import Label from '@/app/components/label';
-import { errorClassName, rowClassName, selectClassName } from '@/app/utils/className';
+import { SelectOption } from '@/app/types/types';
+import {
+  errorClassName,
+  optionClassName,
+  optionsClassName,
+  rowClassName,
+  selectClassName,
+} from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
 import { IconChevronDown } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
 import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
-
-type SelectOption = {
-  value: string;
-  label: string;
-};
 
 type SelectProps = {
   id: string;
@@ -194,15 +196,7 @@ const Select = forwardRef(
           </div>
 
           {isOpen && !disabled && (
-            <div
-              id={`${id}-options`}
-              ref={optionsRef}
-              className={clsx(
-                'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
-                openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
-              )}
-              role="listbox"
-            >
+            <div id={`${id}-options`} ref={optionsRef} className={optionsClassName(openUpward)} role="listbox">
               {options.map((option: string | number | SelectOption, index: number) => {
                 const optionValue = typeof option === 'object' ? option.value : option;
                 const optionLabel = typeof option === 'object' ? option.label : option;
@@ -210,11 +204,7 @@ const Select = forwardRef(
                 return (
                   <div
                     key={optionValue}
-                    className={clsx(
-                      'p-2 cursor-pointer hover:bg-primary/10',
-                      highlightedIndex === index && 'bg-primary/10',
-                      optionValue === value && 'font-medium text-primary bg-primary/10',
-                    )}
+                    className={optionClassName(index === highlightedIndex, optionValue === value)}
                     onClick={() => handleSelect(optionValue)}
                     onMouseEnter={() => setHighlightedIndex(index)}
                     role="option"
