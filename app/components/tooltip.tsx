@@ -1,15 +1,16 @@
 'use client';
 
 import { Size } from '@/app/types/types';
-import { IconInfoCircle } from '@tabler/icons-react';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { IconInfoCircle, IconProps } from '@tabler/icons-react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 
 type TooltipProps = {
   children: string | ReactNode;
   size?: Size;
+  icon?: React.ComponentType<IconProps>;
 };
 
-export default function Tooltip({ children, size = 'medium' }: TooltipProps) {
+export default function Tooltip({ children, size = 'medium', icon: Icon = IconInfoCircle }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -62,13 +63,13 @@ export default function Tooltip({ children, size = 'medium' }: TooltipProps) {
       <button
         ref={buttonRef}
         type="button"
-        className="text-foreground/70 hover:text-foreground focus:outline-none cursor-help"
+        className="text-light hover:text-foreground focus:outline-none cursor-help"
         onClick={() => setIsVisible(!isVisible)}
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => setIsVisible(false)}
         aria-label="Information"
       >
-        <IconInfoCircle size={iconSize} />
+        <Icon size={iconSize} />
       </button>
       {isVisible && (
         <div
