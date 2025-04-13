@@ -4,7 +4,7 @@ import { useLocalStorage } from '@/app/utils/localStorage';
 import { useCallback, useEffect, useState } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
+  prompt: () => Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
@@ -25,13 +25,15 @@ export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'i
     if (!deferredPrompt) return;
 
     // Show the install prompt
-    deferredPrompt.prompt();
-
+    const result = await deferredPrompt.prompt();
     // Wait for the user to respond to the prompt
-    await deferredPrompt.userChoice;
-
-    // We've used the prompt, and can't use it again, discard it
-    setDeferredPrompt(null);
+    if (result.outcome === 'accepted') {
+      setIsInstalled(true);
+    } else {
+      // Reset the deferred prompt so it can be triggered again
+      setDeferredPrompt(null);
+      setIsInstallable(false);
+    }
   }, [deferredPrompt]);
 
   // Check if we can show the install prompt
