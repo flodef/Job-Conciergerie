@@ -2,6 +2,7 @@
 
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
@@ -24,11 +25,12 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   const { missions, deleteMission } = useMissions();
   const { userType, conciergerieName } = useAuth();
 
+  const [toast, setToast] = useState<Toast>();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteWithMissionsModalOpen, setIsDeleteWithMissionsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [associatedMissions, setAssociatedMissions] = useState<string[]>([]);
 
   const isEmployee = userType === 'employee';
@@ -61,9 +63,13 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
   };
 
   const handleDelete = () => {
-    deleteHome(home.id);
-    setIsDeleteModalOpen(false);
-    onClose();
+    deleteHome(home.id).then(isSuccess => {
+      setToast({
+        type: isSuccess ? ToastType.Success : ToastType.Error,
+        message: isSuccess ? 'Bien supprimé !' : 'Erreur lors de la suppression du bien',
+      });
+      if (isSuccess) setIsDeleteModalOpen(false);
+    });
   };
 
   const handleDeleteWithMissions = () => {
@@ -97,11 +103,19 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
 
   return (
     <FullScreenModal title={`${home.title} (${home.geographicZone})`} onClose={onClose} footer={footer}>
-      {selectedImageIndex !== null && home.images && (
+      <ToastMessage
+        toast={toast}
+        onClose={() => {
+          setToast(undefined);
+          if (toast?.type === ToastType.Success) onClose();
+        }}
+      />
+
+      {selectedImageIndex !== undefined && (
         <FullScreenModal
           title={`Photo de ${home.title}`}
           imageData={{ urls: home.images, startIndex: selectedImageIndex }}
-          onClose={() => setSelectedImageIndex(null)}
+          onClose={() => setSelectedImageIndex(undefined)}
         />
       )}
 

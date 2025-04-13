@@ -9,7 +9,7 @@ import { useCallback, useState } from 'react';
 export default function InstallToast() {
   const { isInstallable, isInstalled, handleInstallClick } = usePWAInstall();
   const inDevMode = isDevMode();
-  const [toast, setToast] = useState<Toast | undefined>(undefined);
+  const [toast, setToast] = useState<Toast>();
   const [hasShownToast, setHasShownToast] = useState(false);
 
   // Function to close the toast
