@@ -21,9 +21,7 @@ export default function InstallToast() {
   // Show the toast if installable or in dev mode
   const showToast = useCallback(() => {
     const isFakeToast = inDevMode && !isInstallable;
-    const onClickHandler = isFakeToast
-      ? () => console.log('Fake install toast clicked in dev mode')
-      : handleInstallClick;
+    const onClickHandler = isFakeToast ? () => alert('Fake install toast clicked in dev mode') : handleInstallClick;
     const messageText = isFakeToast ? "Installer l'app (Dev)" : "Installer l'app sur votre appareil";
 
     setToast({

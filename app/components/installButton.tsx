@@ -14,9 +14,7 @@ export default function InstallButton() {
 
   // Determine button properties based on dev mode and installability
   const isFakeButton = inDevMode && !isInstallable;
-  const onClickHandler = isFakeButton
-    ? () => console.log('Fake install button clicked in dev mode')
-    : handleInstallClick;
+  const onClickHandler = isFakeButton ? () => alert('Fake install button clicked in dev mode') : handleInstallClick;
   const buttonLabel = isFakeButton ? "Installer l'app (Dev)" : "Installer l'app sur votre appareil";
   const ariaLabel = isFakeButton ? 'Fake install button for development' : "Installer l'app sur votre appareil";
 

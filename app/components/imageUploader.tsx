@@ -83,9 +83,7 @@ const ImageUploader = React.forwardRef<
     React.useImperativeHandle(ref, () => ({
       async uploadAllPendingImages(conciergerieName: string, houseTitle: string) {
         imageIdsToRemove.forEach(async img => {
-          // Upload with progress tracking
-          const result = await deleteFileFromIPFS(img);
-          console.log(result);
+          await deleteFileFromIPFS(img);
         });
 
         if (localImages.length === 0) return imageIds; // No pending images to upload
@@ -452,7 +450,7 @@ const ImageUploader = React.forwardRef<
         {fullscreenImageUrl && (
           <FullScreenModal
             title={"Aperçu de l'image"}
-            imageUrl={fullscreenImageUrl}
+            imageData={{ urls: fullscreenImageUrl }}
             onClose={() => setFullscreenImageUrl(undefined)}
           />
         )}

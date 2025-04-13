@@ -26,13 +26,7 @@ export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'i
     deferredPrompt.prompt();
 
     // Wait for the user to respond to the prompt
-    const choiceResult = await deferredPrompt.userChoice;
-
-    if (choiceResult.outcome === 'accepted') {
-      console.log('User accepted the install prompt');
-    } else {
-      console.log('User dismissed the install prompt');
-    }
+    await deferredPrompt.userChoice;
 
     // We've used the prompt, and can't use it again, discard it
     setDeferredPrompt(null);
@@ -52,7 +46,7 @@ export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'i
       const lastPromptDate = new Date(lastPrompt);
       const now = new Date();
       const daysSinceLastPrompt = Math.floor((now.getTime() - lastPromptDate.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       // If we've shown the prompt recently, don't show it again yet
       if (daysSinceLastPrompt < cooldownDays) {
         return;
@@ -63,19 +57,19 @@ export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'i
     const handleBeforeInstallPrompt = (e: Event) => {
       // Prevent Chrome 76+ from automatically showing the prompt
       e.preventDefault();
-      
+
       // Stash the event so it can be triggered later
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      
+
       // Update UI to show the install button
       setIsInstallable(true);
-      
+
       // Mark that we've shown the prompt
       localStorage.setItem(cooldownKey, new Date().toISOString());
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    
+
     // Clean up
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -91,7 +85,7 @@ export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'i
     };
 
     window.addEventListener('appinstalled', handleAppInstalled);
-    
+
     return () => {
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
@@ -100,6 +94,6 @@ export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'i
   return {
     isInstallable,
     isInstalled,
-    handleInstallClick
+    handleInstallClick,
   };
 }
