@@ -6,6 +6,7 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
+import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
 import HomeCard from '@/app/homes/components/homeCard';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
@@ -19,6 +20,7 @@ export default function HomesPage() {
   const { myHomes, fetchHomes } = useHomes();
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
   const { isLoading: authLoading } = useAuth();
+  const { updateFetchTime, needsRefresh } = useFetchTime();
 
   const [toast, setToast] = useState<Toast>();
   const [selectedHome, setSelectedHome] = useState<Home | null>(null);
@@ -30,20 +32,20 @@ export default function HomesPage() {
   const isFetching = useRef(false);
   useEffect(() => {
     // Skip if still loading
-    if (authLoading || currentPage !== Page.Homes || isFetching.current) return;
+    if (authLoading || currentPage !== Page.Homes || isFetching.current || !needsRefresh[Page.Homes]) return;
 
     isFetching.current = true;
-
     fetchHomes()
       .then(isSuccess => {
-        if (!isSuccess)
+        if (isSuccess) updateFetchTime(Page.Homes);
+        else
           setToast({
             type: ToastType.Error,
             message: 'Erreur lors du chargement des biens',
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentPage, authLoading, fetchHomes, updateFetchTime, needsRefresh]);
 
   // Reset unsaved changes when navigating to this page - must be called before any conditional returns
   useEffect(() => {
@@ -97,43 +99,45 @@ export default function HomesPage() {
     <div>
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      <div className="flex items-start justify-end gap-2 mb-2">
-        {myHomes.length > 2 && (
-          <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
-        )}
-        <div className="flex gap-2">
-          <button
-            className={clsx(
-              'mt-1 p-2 rounded',
-              displayMode === 'list' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
-            )}
-            onClick={() => setDisplayMode('list')}
-            title="Liste"
-          >
-            <IconList size={20} />
-          </button>
-          <button
-            className={clsx(
-              'mt-1 p-2 rounded',
-              displayMode === 'grid' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
-            )}
-            onClick={() => setDisplayMode('grid')}
-            title="Grille"
-          >
-            <IconLayoutGrid size={20} />
-          </button>
-          <button
-            className={clsx(
-              'mt-1 p-2 rounded',
-              displayMode === 'thumb' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
-            )}
-            onClick={() => setDisplayMode('thumb')}
-            title="Miniatures"
-          >
-            <IconLayout size={20} />
-          </button>
+      {myHomes.length > 0 && (
+        <div className="flex items-start justify-end gap-2 mb-2">
+          {myHomes.length > 1 && (
+            <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
+          )}
+          <div className="flex gap-2">
+            <button
+              className={clsx(
+                'mt-1 p-2 rounded',
+                displayMode === 'list' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
+              )}
+              onClick={() => setDisplayMode('list')}
+              title="Liste"
+            >
+              <IconList size={20} />
+            </button>
+            <button
+              className={clsx(
+                'mt-1 p-2 rounded',
+                displayMode === 'grid' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
+              )}
+              onClick={() => setDisplayMode('grid')}
+              title="Grille"
+            >
+              <IconLayoutGrid size={20} />
+            </button>
+            <button
+              className={clsx(
+                'mt-1 p-2 rounded',
+                displayMode === 'thumb' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
+              )}
+              onClick={() => setDisplayMode('thumb')}
+              title="Miniatures"
+            >
+              <IconLayout size={20} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {filteredHomes.length === 0 && searchTerm === '' ? (
         <div

@@ -7,6 +7,7 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import SearchInput from '@/app/components/searchInput';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
@@ -27,6 +28,7 @@ export default function EmployeesList() {
   } = useAuth();
   const { currentPage } = useMenuContext();
   const { missions } = useMissions();
+  const { updateFetchTime, needsRefresh } = useFetchTime();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,6 +38,25 @@ export default function EmployeesList() {
   // Confirmation modal state
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [employeeToReject, setEmployeeToReject] = useState<Employee | null>(null);
+
+  // Reload employees when displaying the page
+  const isFetching = useRef(false);
+  useEffect(() => {
+    // Skip if still loading
+    if (authLoading || currentPage !== Page.Employees || isFetching.current || !needsRefresh[Page.Employees]) return;
+
+    isFetching.current = true;
+    fetchDataFromDatabase('employee')
+      .then(isSuccess => {
+        if (isSuccess) updateFetchTime(Page.Employees);
+        else
+          setToast({
+            type: ToastType.Error,
+            message: 'Erreur lors du chargement des employés',
+          });
+      })
+      .finally(() => (isFetching.current = false));
+  }, [currentPage, authLoading, fetchDataFromDatabase, updateFetchTime, needsRefresh]);
 
   // Filter employees by conciergerie and sort them
   useEffect(() => {
@@ -47,26 +68,6 @@ export default function EmployeesList() {
 
     setEmployees(sortEmployees(filteredEmployees));
   }, [conciergerieName, authLoading, authEmployees]);
-
-  // Reload employees when displaying the page
-  const isFetching = useRef(false);
-  useEffect(() => {
-    // Skip if still loading
-    if (authLoading || currentPage !== Page.Employees || isFetching.current) return;
-
-    isFetching.current = true;
-
-    fetchDataFromDatabase('employee')
-      .then(isSuccess => {
-        if (!isSuccess) {
-          setToast({
-            type: ToastType.Error,
-            message: 'Erreur lors du chargement des employés',
-          });
-        }
-      })
-      .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filter employees by status
   const pendingEmployees = employees.filter(

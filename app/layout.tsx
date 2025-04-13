@@ -1,6 +1,7 @@
 import NavigationLayout from '@/app/components/navigationLayout';
 import { AuthProvider } from '@/app/contexts/authProvider';
 import { BadgeProvider } from '@/app/contexts/badgeProvider';
+import { FetchTimeProvider } from '@/app/contexts/fetchTimeProvider';
 import { HomesProvider } from '@/app/contexts/homesProvider';
 import { MenuProvider } from '@/app/contexts/menuProvider';
 import { MissionsProviderWrapper } from '@/app/contexts/missionsProvider';
@@ -47,14 +48,16 @@ export default function RootLayout({
         <meta name="theme-color" content="#a4bcde" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}>
-        <span style={{ display: 'none', fontFamily: "var(--font-geist-sans)" }}>Force font load</span>
+        <span style={{ display: 'none', fontFamily: 'var(--font-geist-sans)' }}>Force font load</span>
         <MenuProvider>
           <AuthProvider>
             <HomesProvider>
               <MissionsProviderWrapper>
-                <BadgeProvider>
-                  <NavigationLayout>{children}</NavigationLayout>
-                </BadgeProvider>
+                <FetchTimeProvider>
+                  <BadgeProvider>
+                    <NavigationLayout>{children}</NavigationLayout>
+                  </BadgeProvider>
+                </FetchTimeProvider>
               </MissionsProviderWrapper>
             </HomesProvider>
           </AuthProvider>

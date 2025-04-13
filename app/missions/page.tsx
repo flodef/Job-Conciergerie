@@ -7,6 +7,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
+import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import MissionFilters, { MissionFiltersType } from '@/app/missions/components/missionFilters';
@@ -29,6 +30,7 @@ export default function Missions() {
   const { homes } = useHomes();
   const { userType, isLoading: authLoading, getUserData } = useAuth();
   const { currentPage } = useMenuContext();
+  const { updateFetchTime, needsRefresh } = useFetchTime();
 
   const [toast, setToast] = useState<Toast>();
 
@@ -63,20 +65,20 @@ export default function Missions() {
   const isFetching = useRef(false);
   useEffect(() => {
     // Skip if still loading
-    if (authLoading || currentPage !== Page.Missions || isFetching.current) return;
+    if (authLoading || currentPage !== Page.Missions || isFetching.current || !needsRefresh[Page.Missions]) return;
 
     isFetching.current = true;
-
     fetchMissions()
       .then(isSuccess => {
-        if (!isSuccess)
+        if (isSuccess) updateFetchTime(Page.Missions);
+        else
           setToast({
             type: ToastType.Error,
             message: 'Erreur lors du chargement des missions',
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentPage, authLoading, fetchMissions, updateFetchTime, needsRefresh]);
 
   // Load saved filters from localStorage on component mount - must be called before any conditional returns
   useEffect(() => {

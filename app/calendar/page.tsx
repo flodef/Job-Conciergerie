@@ -2,6 +2,7 @@
 
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import MissionDetails from '@/app/missions/components/missionDetails';
@@ -19,7 +20,7 @@ export default function Calendar() {
   const { userId, userType, conciergerieName, conciergeries, isLoading: authLoading } = useAuth();
   const { missions, fetchMissions, getLateMissions } = useMissions();
   const { currentPage } = useMenuContext();
-
+  const { needsRefresh, updateFetchTime } = useFetchTime();
   const [toast, setToast] = useState<Toast>();
 
   const [acceptedMissions, setAcceptedMissions] = useState<Mission[]>([]);
@@ -39,20 +40,20 @@ export default function Calendar() {
   const isFetching = useRef(false);
   useEffect(() => {
     // Skip if still loading
-    if (authLoading || currentPage !== Page.Calendar || isFetching.current) return;
+    if (authLoading || currentPage !== Page.Calendar || isFetching.current || !needsRefresh[Page.Calendar]) return;
 
     isFetching.current = true;
-
     fetchMissions()
       .then(isSuccess => {
-        if (!isSuccess)
+        if (isSuccess) updateFetchTime(Page.Calendar);
+        else
           setToast({
             type: ToastType.Error,
             message: 'Erreur lors du chargement des missions',
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentPage, authLoading, fetchMissions, updateFetchTime, needsRefresh]);
 
   // Second useEffect to handle mission filtering after we have the user identity
   useEffect(() => {
@@ -95,11 +96,9 @@ export default function Calendar() {
   if (acceptedMissions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100dvh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8">
-        <div className="text-center">
-          <h3 className="text-lg font-medium mb-2">
-            {isEmployee ? 'Aucune mission acceptée' : 'Aucune mission en cours'}
-          </h3>
-          <p className="text-light mb-4">
+        <div className="flex flex-col items-center justify-center text-center gap-2">
+          <h3 className="text-lg font-medium">{isEmployee ? 'Aucune mission acceptée' : 'Aucune mission en cours'}</h3>
+          <p className="text-light">
             {isEmployee
               ? "Vous n'avez pas encore accepté de missions"
               : "Aucun employé n'a accepté de missions de votre conciergerie"}
@@ -146,7 +145,7 @@ export default function Calendar() {
       {selectedMission && (
         <MissionDetails mission={selectedMission} onClose={handleCloseDetails} isFromCalendar={true} />
       )}
-      <div className="space-y-4 pb-4">
+      <div className="space-y-4">
         {sortedDates.map(dateStr => {
           // Create a date object from the date string (which is in YYYY-MM-DD format)
           // Parse the parts manually to ensure we're using local time
