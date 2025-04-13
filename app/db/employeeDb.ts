@@ -128,3 +128,22 @@ export const updateEmployeeSettings = async (id: string | undefined, data: Parti
     return null;
   }
 };
+
+/**
+ * Delete an employee
+ */
+export const deleteEmployee = async (id: string) => {
+  try {
+    if (!id) throw new Error('No ID provided');
+    const result = await sql`
+      DELETE FROM employees
+      WHERE id = ${id}
+      RETURNING id
+    `;
+
+    return result.length > 0; // Check if deletion occurred by verifying if result has data
+  } catch (error) {
+    console.error(`Error deleting employee for ID ${id}:`, error);
+    return false;
+  }
+};

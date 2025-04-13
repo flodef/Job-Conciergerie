@@ -1,7 +1,7 @@
 'use client';
 
 import { fetchConciergeries } from '@/app/actions/conciergerie';
-import { fetchEmployees } from '@/app/actions/employee';
+import { deleteEmployeeData, fetchEmployees } from '@/app/actions/employee';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
@@ -20,6 +20,7 @@ interface AuthContextType {
   updateUserType: (userType: UserType | undefined) => void;
   conciergerieName: string | undefined;
   setConciergerieName: (name: string | undefined) => void;
+  deleteEmployee: (id: string) => Promise<boolean>;
   sentEmailError: boolean | undefined;
   setSentEmailError: (sentEmailError: boolean | undefined) => void;
   getUserData: <T extends UserData>() => T | undefined;
@@ -40,6 +41,7 @@ const AuthContext = createContext<AuthContextType>({
   updateUserType: () => {},
   conciergerieName: undefined,
   setConciergerieName: () => {},
+  deleteEmployee: () => Promise.resolve(false),
   sentEmailError: undefined,
   setSentEmailError: () => {},
   getUserData: () => undefined,
@@ -196,6 +198,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteEmployee = async (id: string) => {
+    const isSuccess = await deleteEmployeeData(id);
+    if (isSuccess) setEmployees(prev => prev?.filter(e => e.id !== id) ?? []);
+    return isSuccess;
+  };
+
   const disconnect = () => {
     // Clear all data from localStorage
     updateUserId(undefined);
@@ -223,6 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateUserType,
         conciergerieName,
         setConciergerieName,
+        deleteEmployee,
         sentEmailError,
         setSentEmailError,
         getUserData,

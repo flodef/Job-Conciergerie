@@ -3,6 +3,7 @@
 import {
   DbEmployee,
   createEmployee,
+  deleteEmployee,
   getAllEmployees,
   updateEmployeeSettings,
   updateEmployeeStatus,
@@ -81,4 +82,11 @@ export async function updateEmployeeData(
   };
 
   return await updateEmployeeSettings(id, dbData);
+}
+
+/**
+ * Delete an employee
+ */
+export async function deleteEmployeeData(id: string): Promise<boolean> {
+  return await deleteEmployee(id);
 }

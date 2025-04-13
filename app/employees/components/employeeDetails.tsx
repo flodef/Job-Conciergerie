@@ -1,18 +1,68 @@
 'use client';
 
+import ConfirmationModal from '@/app/components/confirmationModal';
+import FullScreenModal from '@/app/components/fullScreenModal';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { useAuth } from '@/app/contexts/authProvider';
 import { Employee } from '@/app/types/dataTypes';
+import { actionButtonBarClassName, actionButtonClassName } from '@/app/utils/className';
 import { formatDate } from '@/app/utils/date';
-import { IconMail, IconMapPin, IconPhone } from '@tabler/icons-react';
+import { IconMail, IconMapPin, IconPhone, IconTrash } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
+import { useState } from 'react';
 
 type EmployeeDetailsProps = {
   employee: Employee;
   onClose: () => void;
 };
 
-export default function EmployeeDetails({ employee }: EmployeeDetailsProps) {
+export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsProps) {
+  const { deleteEmployee } = useAuth();
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [toast, setToast] = useState<Toast>();
+
+  const handleDelete = () => {
+    deleteEmployee(employee.id).then(isSuccess => {
+      setToast({
+        type: isSuccess ? ToastType.Success : ToastType.Error,
+        message: isSuccess ? 'Employé supprimé !' : "Erreur lors de la suppression de l'employé",
+      });
+      if (isSuccess) setIsDeleteModalOpen(false);
+    });
+  };
+
+  const footer = (
+    <div className={actionButtonBarClassName}>
+      <button
+        onClick={() => setIsDeleteModalOpen(true)}
+        className={clsx(actionButtonClassName, 'bg-red-100 text-red-700')}
+      >
+        <IconTrash />
+        Supprimer
+      </button>
+    </div>
+  );
+
   return (
-    <div className="space-y-2">
+    <FullScreenModal title={`${employee.firstName} ${employee.familyName}`} onClose={onClose} footer={footer}>
+      <ToastMessage
+        toast={toast}
+        onClose={() => {
+          setToast(undefined);
+          if (toast?.type === ToastType.Success) onClose();
+        }}
+      />
+
+      {isDeleteModalOpen && (
+        <ConfirmationModal
+          title="Supprimer l'employé"
+          message="Êtes-vous sûr de vouloir supprimer cet employé ? Cette action est irréversible."
+          onConfirm={handleDelete}
+          onCancel={() => setIsDeleteModalOpen(false)}
+          isOpen={isDeleteModalOpen}
+        />
+      )}
       <div>
         <div className="text-sm text-foreground/70">
           Statut:{' '}
@@ -66,6 +116,6 @@ export default function EmployeeDetails({ employee }: EmployeeDetailsProps) {
         <h4 className="text-sm font-medium text-foreground/70 mb-1">Date d&apos;inscription</h4>
         <div className="text-foreground text-sm">{formatDate(new Date(employee.createdAt))}</div>
       </div>
-    </div>
+    </FullScreenModal>
   );
 }

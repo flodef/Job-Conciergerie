@@ -1,9 +1,9 @@
 'use client';
 
+import { sendEmployeeAcceptanceEmail } from '@/app/actions/email';
 import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import Accordion from '@/app/components/accordion';
 import ConfirmationModal from '@/app/components/confirmationModal';
-import FullScreenModal from '@/app/components/fullScreenModal';
 import SearchInput from '@/app/components/searchInput';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
@@ -15,7 +15,6 @@ import { filterEmployees, filterEmployeesByConciergerie, sortEmployees } from '@
 import { Page } from '@/app/utils/navigation';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import { sendEmployeeAcceptanceEmail } from '@/app/actions/email';
 
 export default function EmployeesList() {
   const {
@@ -232,14 +231,7 @@ export default function EmployeesList() {
       </div>
 
       {/* Employee details modal */}
-      {selectedEmployee && (
-        <FullScreenModal
-          onClose={closeEmployeeDetails}
-          title={`${selectedEmployee.firstName} ${selectedEmployee.familyName}`}
-        >
-          <EmployeeDetails employee={selectedEmployee} onClose={closeEmployeeDetails} />
-        </FullScreenModal>
-      )}
+      {selectedEmployee && <EmployeeDetails employee={selectedEmployee} onClose={closeEmployeeDetails} />}
 
       {/* Confirmation modal for employee rejection */}
       <ConfirmationModal
