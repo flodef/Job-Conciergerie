@@ -2,23 +2,8 @@
 
 import { clsx } from 'clsx/lite';
 import { ReactNode } from 'react';
-import { IconX } from '@tabler/icons-react';
-import ImageCarousel from './imageCarousel';
-
-interface CloseButtonProps {
-  onClose: () => void;
-  className?: string;
-}
-
-const CloseButton = ({ onClose, className }: CloseButtonProps) => (
-  <button
-    onClick={onClose}
-    className={clsx('p-2 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors', className)}
-    aria-label="Fermer"
-  >
-    <IconX size={24} />
-  </button>
-);
+import ImageCarousel from '@/app/components/imageCarousel';
+import { CloseButton } from '@/app/components/button';
 
 interface FullScreenModalProps {
   title: string;
