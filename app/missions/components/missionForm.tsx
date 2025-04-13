@@ -1,11 +1,11 @@
 'use client';
 
+import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import DateTimeInput from '@/app/components/dateTimeInput';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import MultiSelect from '@/app/components/multiSelect';
-import Select from '@/app/components/select';
 import TaskSelector from '@/app/components/taskSelector';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
@@ -68,7 +68,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   const [endDateTimeError, setEndDateTimeError] = useState('');
 
   // Refs for form elements
-  const homeSelectRef = useRef<HTMLDivElement>(null);
+  const homeSelectRef = useRef<HTMLInputElement>(null);
   const taskRef = useRef<HTMLDivElement>(null);
   const startDateRef = useRef<HTMLInputElement>(null);
   const endDateRef = useRef<HTMLInputElement>(null);
@@ -301,7 +301,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       />
 
       <form onSubmit={handleSubmit} className="space-y-2">
-        <Select
+        <Combobox
           id="home-select"
           label="Bien"
           ref={homeSelectRef}
@@ -375,12 +375,22 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             disabled={isSubmitting || cannotEdit}
             required
             allOption
+            tooltip={
+              <>
+                {selectedEmployees.length === 0
+                  ? 'Tous les prestataires pourront voir cette mission'
+                  : 'Seuls les prestataires suivant pourront voir cette mission :'}
+                <ul className="list-disc pl-4">
+                  {selectedEmployees.map(employeeId => {
+                    const employee = employees.find(e => e.id === employeeId);
+                    return (
+                      <li key={employeeId}>{employee ? `${employee.firstName} ${employee.familyName}` : employeeId}</li>
+                    );
+                  })}
+                </ul>
+              </>
+            }
           />
-          <p className="text-sm text-light mt-1">
-            {selectedEmployees.length === 0
-              ? 'Tous les prestataires pourront voir cette mission'
-              : 'Seuls les prestataires sélectionnés pourront voir cette mission'}
-          </p>
         </div>
 
         <ConfirmationModal
