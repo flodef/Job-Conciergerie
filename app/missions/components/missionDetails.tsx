@@ -55,7 +55,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [toast, setToast] = useState<Toast>();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [showHomeDetails, setShowHomeDetails] = useState(false);
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
@@ -197,11 +197,11 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         }}
       />
 
-      {selectedImage && (
+      {selectedImageIndex !== undefined && (
         <FullScreenModal
           title={`Photo de ${home.title}`}
-          imageUrl={getIPFSImageUrl(selectedImage)}
-          onClose={() => setSelectedImage(null)}
+          imageData={{ urls: home.images, startIndex: selectedImageIndex }}
+          onClose={() => setSelectedImageIndex(undefined)}
         />
       )}
 
@@ -224,7 +224,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                 fill
                 sizes="(max-width: 768px) 100vw, 300px"
                 className="object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => setSelectedImage(firstHomeImage)}
+                onClick={() => setSelectedImageIndex(home.images.indexOf(firstHomeImage))}
                 priority
               />
             </div>

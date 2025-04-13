@@ -100,7 +100,7 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
       {selectedImageIndex !== null && home.images && (
         <FullScreenModal
           title={`Photo de ${home.title}`}
-          imageUrl={getIPFSImageUrl(home.images[selectedImageIndex])}
+          imageData={{ urls: home.images, startIndex: selectedImageIndex }}
           onClose={() => setSelectedImageIndex(null)}
         />
       )}

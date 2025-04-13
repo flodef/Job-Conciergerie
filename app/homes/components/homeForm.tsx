@@ -16,7 +16,6 @@ import geographicZones from '@/app/data/geographicZone.json';
 import { Home } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import { handleChange } from '@/app/utils/form';
-import { getIPFSImageUrl } from '@/app/utils/ipfs';
 import { getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
 import { range } from '@/app/utils/select';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -264,7 +263,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     return (
       <FullScreenModal
         title={`Photo de ${title}`}
-        imageUrl={getIPFSImageUrl(images[selectedImageIndex])}
+        imageData={{ urls: images, startIndex: selectedImageIndex }}
         onClose={() => setSelectedImageIndex(undefined)}
       />
     );
@@ -274,6 +273,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
     <FullScreenModal
       title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'}
       onClose={handleClose}
+      disabled={isSubmitting}
       footer={footer}
     >
       <ToastMessage

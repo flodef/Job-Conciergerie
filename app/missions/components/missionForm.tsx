@@ -289,6 +289,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     <FullScreenModal
       title={mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}
       onClose={handleClose}
+      disabled={isSubmitting}
       footer={footer}
     >
       <ToastMessage

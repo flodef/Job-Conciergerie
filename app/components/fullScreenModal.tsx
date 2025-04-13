@@ -1,30 +1,53 @@
 'use client';
 
-import { CloseButton } from '@/app/components/button';
 import { clsx } from 'clsx/lite';
-import Image from 'next/image';
 import { ReactNode } from 'react';
+import { IconX } from '@tabler/icons-react';
+import ImageCarousel from './imageCarousel';
 
-type FullScreenModalProps = {
+interface CloseButtonProps {
+  onClose: () => void;
+  className?: string;
+}
+
+const CloseButton = ({ onClose, className }: CloseButtonProps) => (
+  <button
+    onClick={onClose}
+    className={clsx('p-2 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors', className)}
+    aria-label="Fermer"
+  >
+    <IconX size={24} />
+  </button>
+);
+
+interface FullScreenModalProps {
+  title: string;
   children?: ReactNode;
   onClose: () => void;
   className?: string;
-  imageUrl?: string;
-  title: string;
+  imageData?: {
+    urls: string | string[];
+    startIndex?: number;
+  };
   footer?: ReactNode;
-};
+  disabled?: boolean;
+}
 
 export default function FullScreenModal({
+  title,
   children,
   onClose,
-  className = '',
-  imageUrl,
-  title,
+  className,
+  imageData,
   footer,
+  disabled,
 }: FullScreenModalProps) {
   const handleBackdropClick = () => {
-    if (imageUrl) onClose();
+    if (imageData) onClose();
   };
+
+  const hasImages =
+    imageData && imageData.urls && (Array.isArray(imageData.urls) ? imageData.urls.length > 0 : !!imageData.urls);
 
   return (
     <div
@@ -34,19 +57,22 @@ export default function FullScreenModal({
       )}
       onClick={handleBackdropClick}
     >
-      {imageUrl ? (
+      {hasImages ? (
         <>
           <CloseButton onClose={onClose} className="absolute top-4 right-4 text-white z-10" />
-          <div className="relative w-full h-[80vh]">
-            <Image src={imageUrl} alt={title} fill sizes="100vw" className="object-contain" priority />
-          </div>
+          <ImageCarousel
+            imageUrls={imageData.urls}
+            altPrefix={title}
+            className="w-full h-[80vh]"
+            startIndex={imageData.startIndex || 0}
+          />
         </>
       ) : (
         <div className="relative bg-background rounded-lg shadow-lg max-w-md w-full flex flex-col max-h-[90vh]">
           {/* Fixed header with title and close button */}
           <div className="sticky top-0 z-10 bg-background p-4 border-b border-secondary flex justify-between items-center rounded-t-lg">
             <h2 className="text-xl font-bold overflow-hidden">{title}</h2>
-            <CloseButton onClose={onClose} />
+            <CloseButton onClose={!disabled ? onClose : () => {}} />
           </div>
 
           {/* Scrollable content area */}
