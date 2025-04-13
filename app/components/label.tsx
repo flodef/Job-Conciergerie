@@ -14,10 +14,12 @@ interface LabelProps {
 const Label = ({ id, required, children, tooltip }: LabelProps) => {
   return (
     children && (
-      <label htmlFor={id} className={labelClassName}>
-        {children} {!required && ' (facultatif)'}
+      <div className="flex items-center">
+        <label htmlFor={id} className={labelClassName}>
+          {children} {!required && ' (facultatif)'}
+        </label>
         {tooltip && <Tooltip>{tooltip}</Tooltip>}
-      </label>
+      </div>
     )
   );
 };

@@ -2,13 +2,16 @@
 
 import { Size } from '@/app/types/types';
 import { IconInfoCircle, IconProps } from '@tabler/icons-react';
+import clsx from 'clsx/lite';
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 type TooltipProps = {
   children: string | ReactNode;
   size?: Size;
   icon?: React.ComponentType<IconProps>;
+  orientation?: 'vertical' | 'horizontal';
   onClick?: () => void;
+  className?: string;
 };
 
 export default function Tooltip({
@@ -17,7 +20,8 @@ export default function Tooltip({
   icon: Icon = IconInfoCircle,
   orientation = 'vertical',
   onClick,
-}: TooltipProps & { orientation?: 'vertical' | 'horizontal' }) {
+  className = '',
+}: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -100,7 +104,7 @@ export default function Tooltip({
       <button
         ref={buttonRef}
         type="button"
-        className="text-light hover:text-foreground focus:outline-none cursor-help"
+        className={clsx('text-light hover:text-foreground focus:outline-none cursor-help', className)}
         onClick={() => {
           setIsVisible(!isVisible);
           onClick?.();
