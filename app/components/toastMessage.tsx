@@ -16,10 +16,11 @@ export interface Toast {
 interface ToastMessageProps {
   toast: Toast | undefined;
   timeout?: number;
+  onClick?: () => void;
   onClose?: () => void;
 }
 
-export const ToastMessage = ({ toast, timeout = 3000, onClose }: ToastMessageProps) => {
+export const ToastMessage = ({ toast, timeout = 3000, onClick, onClose }: ToastMessageProps) => {
   const typeStyles: Record<ToastType, string> = {
     [ToastType.Success]: 'bg-green-500 animate-fade-in-up',
     [ToastType.Error]: 'bg-[#fb8c8c] animate-shake',
@@ -55,7 +56,10 @@ export const ToastMessage = ({ toast, timeout = 3000, onClose }: ToastMessagePro
 
   return (
     toast && (
-      <div className={`fixed z-[100] top-4 inset-x-2 text-black text-center py-2 rounded-lg ${typeStyles[toast.type]}`}>
+      <div
+        className={`fixed z-[100] top-4 inset-x-2 text-black text-center py-2 rounded-lg ${typeStyles[toast.type]}`}
+        onClick={onClick}
+      >
         {typeIcon[toast.type]}
         {toast.message}
       </div>

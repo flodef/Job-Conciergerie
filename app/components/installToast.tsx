@@ -12,6 +12,9 @@ export default function InstallToast() {
   const [toast, setToast] = useState<Toast>();
   const [hasShownToast, setHasShownToast] = useState(false);
 
+  const isFakeToast = inDevMode && !isInstallable;
+  const onClickHandler = isFakeToast ? () => alert('Fake install toast clicked in dev mode') : handleInstallClick;
+
   // Function to close the toast
   const handleCloseToast = useCallback(() => {
     setToast(undefined);
@@ -20,20 +23,18 @@ export default function InstallToast() {
 
   // Show the toast if installable or in dev mode
   const showToast = useCallback(() => {
-    const isFakeToast = inDevMode && !isInstallable;
-    const onClickHandler = isFakeToast ? () => alert('Fake install toast clicked in dev mode') : handleInstallClick;
     const messageText = isFakeToast ? "Installer l'app (Dev)" : "Installer l'app sur votre appareil";
 
     setToast({
       type: ToastType.Info,
       message: (
-        <div className="flex items-center gap-2 cursor-pointer justify-self-center" onClick={onClickHandler}>
+        <div className="flex items-center gap-2 cursor-pointer justify-self-center">
           <IconDeviceMobile size={20} />
           <span>{messageText}</span>
         </div>
       ),
     });
-  }, [handleInstallClick, inDevMode, isInstallable]);
+  }, [isFakeToast]);
 
   // Show toast when installable status changes to true or in dev mode, but only if not previously shown
   if ((isInstallable || inDevMode) && !isInstalled && !toast && !hasShownToast) showToast();
@@ -46,6 +47,7 @@ export default function InstallToast() {
       toast={toast}
       timeout={30000} // 30 seconds
       onClose={handleCloseToast}
+      onClick={onClickHandler}
     />
   );
 }
