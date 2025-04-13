@@ -1,7 +1,7 @@
 'use client';
 
 import { Mission } from '@/app/types/dataTypes';
-import { formatTime, getDatesInRange, toLocalDateString } from '@/app/utils/date';
+import { formatTime, toLocalDateString } from '@/app/utils/date';
 
 export const monthNames = [
   'Janvier',
@@ -35,36 +35,59 @@ export const groupMissionsByDate = (missions: Mission[]): Map<string, Mission[]>
   today.setHours(0, 0, 0, 0);
 
   missions.forEach(mission => {
+    // Skip completed missions
+    if (mission.status === 'completed') return;
+
     // Create date objects in local timezone
     const startDate = new Date(mission.startDateTime);
     const endDate = new Date(mission.endDateTime);
 
-    // Get all dates in the range using local dates (including start and end dates)
-    const datesInRange = getDatesInRange(startDate, endDate);
+    // Reset hours to compare just the dates
+    const startDay = new Date(startDate);
+    startDay.setHours(0, 0, 0, 0);
 
-    // Filter out past dates, keep today and future dates
-    const relevantDates = datesInRange.filter(date => {
-      const dateToCompare = new Date(date);
-      dateToCompare.setHours(0, 0, 0, 0);
-      return dateToCompare >= today;
-    });
+    const endDay = new Date(endDate);
+    endDay.setHours(0, 0, 0, 0);
 
-    // If all dates are in the past but the mission isn't completed, show the last day
-    if (relevantDates.length === 0 && mission.status !== 'completed' && endDate >= startDate) {
-      // Get the last day of the mission
-      relevantDates.push(datesInRange[datesInRange.length - 1]);
-    }
+    // Check if mission spans multiple days
+    const isMultiDay = startDay.getTime() !== endDay.getTime();
 
-    relevantDates.forEach(date => {
-      // Use local date string to avoid timezone issues
-      const dateStr = toLocalDateString(date);
+    // Check if mission is ongoing (includes today)
+    const isOngoing = startDay <= today && endDay >= today;
+    // Check if mission has ended
+    const isEnded = endDay < today;
+
+    if (isMultiDay) {
+      if (isOngoing) {
+        // For ongoing multi-day missions, show only on current day
+        const todayStr = toLocalDateString(today);
+        const existingMissions = missionsByDate.get(todayStr) || [];
+        if (!existingMissions.some(m => m.id === mission.id)) {
+          missionsByDate.set(todayStr, [...existingMissions, mission]);
+        }
+      } else if (isEnded) {
+        // For ended multi-day missions that are not completed, show only on last day
+        const endDateStr = toLocalDateString(endDate);
+        const existingMissions = missionsByDate.get(endDateStr) || [];
+        if (!existingMissions.some(m => m.id === mission.id)) {
+          missionsByDate.set(endDateStr, [...existingMissions, mission]);
+        }
+      } else {
+        // For future multi-day missions, show only on start day
+        const startDateStr = toLocalDateString(startDate);
+        const existingMissions = missionsByDate.get(startDateStr) || [];
+        if (!existingMissions.some(m => m.id === mission.id)) {
+          missionsByDate.set(startDateStr, [...existingMissions, mission]);
+        }
+      }
+    } else {
+      // For single-day missions, show on that day
+      const dateStr = toLocalDateString(startDate);
       const existingMissions = missionsByDate.get(dateStr) || [];
-
-      // Only add the mission if it's not already in the array for this date
       if (!existingMissions.some(m => m.id === mission.id)) {
         missionsByDate.set(dateStr, [...existingMissions, mission]);
       }
-    });
+    }
   });
 
   return missionsByDate;

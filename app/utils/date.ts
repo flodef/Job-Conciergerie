@@ -102,30 +102,6 @@ export const isPastDate = (date: Date): boolean => {
   return compareDate < today;
 };
 
-// Get all dates between start and end date (inclusive)
-export const getDatesInRange = (startDate: Date, endDate: Date): Date[] => {
-  const dates: Date[] = [];
-
-  // Create a new date object to avoid modifying the original
-  // Use local year, month, day to create a date at midnight local time
-  const currentDate = new Date();
-  currentDate.setFullYear(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-  currentDate.setHours(0, 0, 0, 0);
-
-  // Create a new date object for the end date using local time
-  const lastDate = new Date();
-  lastDate.setFullYear(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-  lastDate.setHours(0, 0, 0, 0);
-
-  // Loop through each day and add it to the array
-  while (currentDate <= lastDate) {
-    dates.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-
-  return dates;
-};
-
 /**
  * Convert a date to local date string in YYYY-MM-DD format
  * This handles timezone correctly by using local time
