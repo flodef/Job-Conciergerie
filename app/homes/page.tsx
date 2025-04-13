@@ -11,7 +11,8 @@ import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
 import { Home } from '@/app/types/dataTypes';
 import { Page } from '@/app/utils/navigation';
-import { IconPlus } from '@tabler/icons-react';
+import { IconPlus, IconList, IconLayoutGrid, IconLayout } from '@tabler/icons-react';
+import clsx from 'clsx/lite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function HomesPage() {
@@ -90,13 +91,47 @@ export default function HomesPage() {
     setSelectedHome(null);
   };
 
+  const [displayMode, setDisplayMode] = useState<'list' | 'grid' | 'thumb'>('thumb');
+
   return (
     <div>
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      {myHomes.length > 1 && (
-        <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
-      )}
+      <div className="flex items-start justify-between gap-2">
+        {myHomes.length > 1 && (
+          <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
+        )}
+        <button
+          className={clsx(
+            'mt-1 p-2 rounded',
+            displayMode === 'list' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
+          )}
+          onClick={() => setDisplayMode('list')}
+          title="Liste"
+        >
+          <IconList size={20} />
+        </button>
+        <button
+          className={clsx(
+            'mt-1 p-2 rounded',
+            displayMode === 'grid' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
+          )}
+          onClick={() => setDisplayMode('grid')}
+          title="Grille"
+        >
+          <IconLayoutGrid size={20} />
+        </button>
+        <button
+          className={clsx(
+            'mt-1 p-2 rounded',
+            displayMode === 'thumb' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
+          )}
+          onClick={() => setDisplayMode('thumb')}
+          title="Miniatures"
+        >
+          <IconLayout size={20} />
+        </button>
+      </div>
 
       {filteredHomes.length === 0 && searchTerm === '' ? (
         <div
@@ -111,25 +146,35 @@ export default function HomesPage() {
             </div>
           </div>
         </div>
-      ) : filteredHomes.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-foreground/60">Aucun bien ne correspond à votre recherche</p>
-        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-          {filteredHomes.map(home => (
-            <HomeCard
-              key={home.id}
-              home={home}
-              onClick={() => handleHomeClick(home)}
-              onEdit={() => handleHomeEdit(home)}
-            />
-          ))}
-        </div>
-      )}
+        <>
+          {filteredHomes.length === 0 ? (
+            <div className="flex items-center justify-center h-[calc(100vh-16rem)]">
+              <p className="text-light">Aucun résultat trouvé</p>
+            </div>
+          ) : (
+            <div
+              className={clsx(
+                displayMode === 'list' && 'flex flex-col gap-2',
+                displayMode === 'grid' && 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4',
+                displayMode === 'thumb' && 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-4',
+              )}
+            >
+              {filteredHomes.map(home => (
+                <HomeCard
+                  key={home.id}
+                  home={home}
+                  onClick={() => handleHomeClick(home)}
+                  onEdit={() => handleHomeEdit(home)}
+                  displayMode={displayMode}
+                />
+              ))}
+            </div>
+          )}
 
-      {/* Only show the floating action button if there are homes and we're not in search mode with no results */}
-      {filteredHomes.length > 0 && <FloatingActionButton onClick={handleAddHome} />}
+          <FloatingActionButton onClick={handleAddHome} />
+        </>
+      )}
 
       {isAddModalOpen && <HomeForm onClose={handleCloseAddModal} mode="add" />}
 
