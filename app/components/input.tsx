@@ -16,6 +16,7 @@ interface InputProps {
   placeholder?: string;
   className?: string;
   row?: boolean;
+  tooltip?: ReactNode;
 }
 
 const InputComponent: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
@@ -31,6 +32,7 @@ const InputComponent: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
     placeholder = '',
     className = '',
     row = false,
+    tooltip,
   },
   ref,
 ) => {
@@ -39,7 +41,7 @@ const InputComponent: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
 
   return (
     <div className={row ? rowClassName : className}>
-      <Label id={id} required={required}>
+      <Label id={id} required={required} tooltip={tooltip}>
         {label}
       </Label>
       <input

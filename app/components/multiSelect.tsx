@@ -30,6 +30,7 @@ type MultiSelectProps = {
   required?: boolean;
   allOption?: boolean; // Whether to include an "All" option
   row?: boolean;
+  tooltip?: ReactNode;
 };
 
 const MultiSelect = forwardRef(
@@ -46,6 +47,7 @@ const MultiSelect = forwardRef(
       required = false,
       allOption = true,
       row = false,
+      tooltip,
     }: MultiSelectProps,
     forwardedRef: ForwardedRef<HTMLDivElement>,
   ) => {
@@ -124,7 +126,7 @@ const MultiSelect = forwardRef(
 
     return (
       <div className={row ? rowClassName : 'w-full'}>
-        <Label id={id} required={required}>
+        <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
         <div className={clsx('relative w-full', className)} ref={selectRef}>

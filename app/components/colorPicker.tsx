@@ -20,6 +20,7 @@ interface ColorPickerProps {
   required?: boolean;
   className?: string;
   row?: boolean;
+  tooltip?: ReactNode;
 }
 
 const ColorPickerComponent: ForwardRefRenderFunction<HTMLDivElement, ColorPickerProps> = (
@@ -34,6 +35,7 @@ const ColorPickerComponent: ForwardRefRenderFunction<HTMLDivElement, ColorPicker
     required = false,
     className = '',
     row = false,
+    tooltip,
   },
   ref,
 ) => {
@@ -50,7 +52,7 @@ const ColorPickerComponent: ForwardRefRenderFunction<HTMLDivElement, ColorPicker
 
   return (
     <div className={row ? rowClassName : className}>
-      <Label id={id} required={required}>
+      <Label id={id} required={required} tooltip={tooltip}>
         {label}
       </Label>
       <div ref={ref} className="grid grid-cols-3 gap-3">

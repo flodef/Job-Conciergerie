@@ -26,6 +26,7 @@ type SelectProps = {
   disabled: boolean;
   required?: boolean;
   row?: boolean;
+  tooltip?: ReactNode;
 };
 
 const Select = forwardRef(
@@ -42,6 +43,7 @@ const Select = forwardRef(
       disabled = false,
       required = false,
       row = false,
+      tooltip,
     }: SelectProps,
     forwardedRef: ForwardedRef<HTMLDivElement>,
   ) => {
@@ -166,7 +168,7 @@ const Select = forwardRef(
 
     return (
       <div className={row ? rowClassName : ''}>
-        <Label id={id} required={required}>
+        <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
         <div className={clsx('relative w-full', className)} ref={selectRef}>

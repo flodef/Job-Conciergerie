@@ -3,7 +3,7 @@
 import Label from '@/app/components/label';
 import { errorClassName, inputFieldClassName } from '@/app/utils/className';
 import { getMaxLength, objectiveLengthRegex } from '@/app/utils/regex';
-import { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type ObjectiveListProps = {
   id: string;
@@ -14,11 +14,12 @@ type ObjectiveListProps = {
   maxObjectives: number;
   error?: string;
   disabled?: boolean;
+  tooltip?: ReactNode;
 };
 
 const ObjectiveList = forwardRef(
   (
-    { id, label, objectives, setObjectives, maxObjectives, error, disabled }: ObjectiveListProps,
+    { id, label, objectives, setObjectives, maxObjectives, error, disabled, tooltip }: ObjectiveListProps,
     forwardedRef: ForwardedRef<HTMLTextAreaElement>,
   ) => {
     const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
@@ -143,7 +144,7 @@ const ObjectiveList = forwardRef(
     return (
       <div id={id} className="space-y-2">
         <div className="flex justify-between items-center mb-2">
-          <Label id={id} required={true}>
+          <Label id={id} required={true} tooltip={tooltip}>
             {label}
           </Label>
           {(objectives.length === 0 || objectives[objectives.length - 1]?.trim() !== '') &&

@@ -16,6 +16,7 @@ interface DateTimeInputProps {
   max?: string;
   className?: string;
   row?: boolean;
+  tooltip?: ReactNode;
 }
 
 const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTimeInputProps> = (
@@ -32,12 +33,13 @@ const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTim
     max,
     className = '',
     row = false,
+    tooltip,
   },
   ref,
 ) => {
   return (
     <div className={row ? rowClassName : className}>
-      <Label id={id} required={required}>
+      <Label id={id} required={required} tooltip={tooltip}>
         {label}
       </Label>
       <input

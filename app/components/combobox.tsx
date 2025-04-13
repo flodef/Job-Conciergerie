@@ -26,6 +26,7 @@ type ComboboxProps = {
   disabled: boolean;
   required?: boolean;
   row?: boolean;
+  tooltip?: ReactNode;
 };
 
 const Combobox = forwardRef(
@@ -42,6 +43,7 @@ const Combobox = forwardRef(
       disabled = false,
       required = false,
       row = false,
+      tooltip,
     }: ComboboxProps,
     forwardedRef: ForwardedRef<HTMLInputElement>,
   ) => {
@@ -168,7 +170,7 @@ const Combobox = forwardRef(
 
     return (
       <div className={row ? rowClassName : ''}>
-        <Label id={id} required={required}>
+        <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
         <div className={clsx('relative w-full', className)} ref={comboboxRef}>

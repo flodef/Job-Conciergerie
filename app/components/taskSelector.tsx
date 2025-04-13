@@ -17,6 +17,7 @@ interface TaskSelectorProps {
   required?: boolean;
   className?: string;
   row?: boolean;
+  tooltip?: ReactNode;
 }
 
 const TaskSelectorComponent: ForwardRefRenderFunction<HTMLDivElement, TaskSelectorProps> = (
@@ -32,6 +33,7 @@ const TaskSelectorComponent: ForwardRefRenderFunction<HTMLDivElement, TaskSelect
     required = false,
     className = '',
     row = false,
+    tooltip,
   },
   ref,
 ) => {
@@ -46,7 +48,7 @@ const TaskSelectorComponent: ForwardRefRenderFunction<HTMLDivElement, TaskSelect
 
   return (
     <div className={row ? rowClassName : className}>
-      <Label id={id} required={required}>
+      <Label id={id} required={required} tooltip={tooltip}>
         {label}
       </Label>
       <div ref={ref} className="grid grid-cols-2 gap-2">

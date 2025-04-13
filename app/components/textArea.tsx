@@ -17,6 +17,7 @@ interface TextAreaProps {
   className?: string;
   row?: boolean;
   rows?: number;
+  tooltip?: ReactNode;
 }
 
 const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaProps> = (
@@ -33,12 +34,13 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
     className = '',
     row = false,
     rows = 4,
+    tooltip,
   },
   ref,
 ) => {
   return (
     <div className={row ? rowClassName : className}>
-      <Label id={id} required={required}>
+      <Label id={id} required={required} tooltip={tooltip}>
         {label}
       </Label>
       <div className="relative">
