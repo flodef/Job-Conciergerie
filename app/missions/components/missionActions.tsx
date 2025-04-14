@@ -119,21 +119,19 @@ export default function MissionActions({
     </div>
   ) : isOwnMission && !isCompleted ? (
     <div className={actionButtonBarClassName}>
-      {!isStarted && (
-        <>
-          <button onClick={onEdit} className={actionButtonClassName} data-edit-button>
-            <IconPencil />
-            Modifier
-          </button>
-          <button onClick={onDelete} className={clsx(actionButtonClassName, 'bg-red-100 text-red-700')}>
-            <IconTrash />
-            Supprimer
-          </button>
-          <button onClick={onRemoveEmployee} className={clsx(actionButtonClassName, 'bg-yellow-100 text-yellow-700')}>
-            <IconCancel />
-            Annuler
-          </button>
-        </>
+      <button onClick={onEdit} className={actionButtonClassName} data-edit-button>
+        <IconPencil />
+        Modifier
+      </button>
+      <button onClick={onDelete} className={clsx(actionButtonClassName, 'bg-red-100 text-red-700')}>
+        <IconTrash />
+        Supprimer
+      </button>
+      {isAccepted && (
+        <button onClick={onRemoveEmployee} className={clsx(actionButtonClassName, 'bg-yellow-100 text-yellow-700')}>
+          <IconCancel />
+          Annuler
+        </button>
       )}
       {isStarted && (
         <button onClick={onCompleteMission} className={clsx(actionButtonClassName, 'bg-green-100 text-green-700')}>
