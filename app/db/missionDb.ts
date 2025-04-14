@@ -8,10 +8,10 @@ export interface DbMission {
   tasks: Task[];
   start_date_time: Date;
   end_date_time: Date;
-  employee_id?: string;
+  employee_id: string | null;
   modified_date: Date;
   conciergerie_name: string;
-  status?: MissionStatus;
+  status: MissionStatus | null;
   allowed_employees?: string[];
   hours: number;
 }

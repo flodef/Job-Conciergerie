@@ -31,7 +31,10 @@ type MissionsContextType = {
   completeMission: (id: string) => Promise<boolean>;
   shouldShowAcceptWarning: boolean | undefined;
   setShouldShowAcceptWarning: (show: boolean) => void;
-  missionExists: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName' | 'hours'>, id?: string) => boolean;
+  missionExists: (
+    mission: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName' | 'hours' | 'employeeId' | 'status'>,
+    id?: string,
+  ) => boolean;
 };
 
 const MissionsContext = createContext<MissionsContextType | undefined>(undefined);
@@ -116,6 +119,8 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const newMission: Mission = {
       ...missionData,
       id: generateSimpleId(),
+      employeeId: null,
+      status: null,
       conciergerieName,
       modifiedDate: new Date(),
     };
@@ -215,7 +220,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const missionToCancel = missions.find(m => m.id === id && m.conciergerieName === conciergerieName);
     if (!missionToCancel) return false;
 
-    const success = await setMissionData(id, { ...missionToCancel, employeeId: undefined, status: undefined });
+    const success = await setMissionData(id, { ...missionToCancel, employeeId: null, status: null });
     if (!success) return false;
 
     // Check if we need to notify an employee about the cancellation
@@ -298,7 +303,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   // Check if a mission with the same home, tasks, start date, and end date already exists
   const missionExists = (
-    missionData: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName' | 'hours'>,
+    missionData: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName' | 'hours' | 'employeeId' | 'status'>,
     id?: string,
   ): boolean => {
     // Sort tasks to ensure consistent comparison

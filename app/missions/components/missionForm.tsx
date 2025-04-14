@@ -210,6 +210,8 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
           endDateTime: endDate,
           allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
           hours: totalHours,
+          employeeId: null,
+          status: null,
         });
         if (!result) throw new Error("Impossible d'ajouter la mission");
 
