@@ -31,6 +31,7 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Employé supprimé !' : "Erreur lors de la suppression de l'employé",
       });
+      if (!isSuccess) setIsSubmitting(false);
     });
   };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import ConfirmationModal from '@/app/components/confirmationModal';
+import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
@@ -68,6 +69,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Bien supprimé !' : 'Erreur lors de la suppression du bien',
       });
+      if (!isSuccess) setIsSubmitting(false);
     });
   };
 
@@ -107,9 +109,10 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
       />
 
       {selectedImageIndex !== undefined && (
-        <FullScreenModal
-          title={`Photo de ${home.title}`}
-          imageData={{ urls: home.images, startIndex: selectedImageIndex }}
+        <FullScreenImageCarousel
+          altPrefix={`Photo de ${home.title}`}
+          imageUrls={home.images}
+          startIndex={selectedImageIndex}
           onClose={() => setSelectedImageIndex(undefined)}
         />
       )}

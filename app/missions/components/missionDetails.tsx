@@ -1,6 +1,7 @@
 'use client';
 
 import ConfirmationModal from '@/app/components/confirmationModal';
+import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
@@ -87,6 +88,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Mission supprimée !' : 'Erreur lors de la suppression de la mission',
       });
+      if (!isSuccess) setIsSubmitting(false);
     });
   };
 
@@ -98,6 +100,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Mission annulée !' : "Erreur lors de l'annulation de la mission",
       });
+      if (!isSuccess) setIsSubmitting(false);
     });
   };
 
@@ -116,6 +119,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           ? 'Mission acceptée ! Retrouvez-la dans votre calendrier.'
           : "Erreur lors de l'acceptation de la mission",
       });
+      if (!isSuccess) setIsSubmitting(false);
     });
   };
 
@@ -137,6 +141,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           ? 'Mission démarrée ! Retrouvez-la dans votre calendrier.'
           : 'Erreur lors du démarrage de la mission',
       });
+      if (!isSuccess) setIsSubmitting(false);
     });
   };
 
@@ -153,6 +158,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Mission terminée ! Félicitations !' : 'Erreur lors de la validation de la mission',
       });
+      if (!isSuccess) setIsSubmitting(false);
     });
   };
 
@@ -201,9 +207,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
       />
 
       {selectedImageIndex !== undefined && (
-        <FullScreenModal
-          title={`Photo de ${home.title}`}
-          imageData={{ urls: home.images, startIndex: selectedImageIndex }}
+        <FullScreenImageCarousel
+          altPrefix={`Photo de ${home.title}`}
+          imageUrls={home.images}
+          startIndex={selectedImageIndex}
           onClose={() => setSelectedImageIndex(undefined)}
         />
       )}
