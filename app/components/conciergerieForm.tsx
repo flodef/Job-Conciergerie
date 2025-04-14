@@ -19,7 +19,7 @@ type ConciergerieFormProps = {
 
 export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const { onMenuChange } = useMenuContext();
-  const { userId, setSentEmailError, setConciergerieName: setSelectedConciergerieName, conciergeries } = useAuth();
+  const { userId, setConciergerieName: setSelectedConciergerieName, conciergeries } = useAuth();
 
   const conciergerieNameRef = useRef<HTMLDivElement>(null);
   const [conciergerieNameError, setConciergerieNameError] = useState('');
@@ -39,7 +39,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     onClose();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     let error: ErrorField | undefined;
@@ -69,8 +69,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
-      const isEmailSent = await sendConciergerieVerificationEmail(selectedConciergerie, userId);
-      setSentEmailError(!isEmailSent || undefined);
+      sendConciergerieVerificationEmail(selectedConciergerie, userId);
 
       onMenuChange(Page.Waiting);
     } catch (error) {

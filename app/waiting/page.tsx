@@ -1,8 +1,10 @@
 'use client';
 
-import { sendConciergerieVerificationEmail, sendEmployeeRegistrationEmail } from '@/app/actions/email';
+import { RefreshButton } from '@/app/components/button';
+import { EmailRetryManager } from '@/app/components/emailRetryManager';
 import ErrorPage from '@/app/components/error';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { Toast, ToastMessage } from '@/app/components/toastMessage';
+import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
@@ -10,22 +12,11 @@ import { getTimeDifference, getTimeRemaining } from '@/app/utils/date';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconHelpCircle, IconMailForward } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RefreshButton } from '@/app/components/button';
-import Tooltip from '@/app/components/tooltip';
 
 const MINIMUM_WAITING_TIME = 24; // minimum waiting time in hours
 
 export default function WaitingPage() {
-  const {
-    userId,
-    userType,
-    isLoading: authLoading,
-    sentEmailError,
-    setSentEmailError,
-    conciergerieName,
-    conciergeries,
-    employees,
-  } = useAuth();
+  const { userId, userType, isLoading: authLoading, conciergerieName, conciergeries, employees } = useAuth();
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -35,28 +26,13 @@ export default function WaitingPage() {
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const [toast, setToast] = useState<Toast>();
 
-  const handleConciergerie = useCallback(
-    (userId: string) => {
-      const foundConciergerie = conciergeries.find(c => c.name === conciergerieName);
-      setConciergerie(foundConciergerie);
-      setPrimaryColor(foundConciergerie?.color);
+  const handleConciergerie = useCallback(() => {
+    const foundConciergerie = conciergeries.find(c => c.name === conciergerieName);
+    setConciergerie(foundConciergerie);
+    setPrimaryColor(foundConciergerie?.color);
 
-      if (sentEmailError && foundConciergerie) {
-        sendConciergerieVerificationEmail(foundConciergerie, userId).then(isEmailSent => {
-          if (isEmailSent) {
-            setSentEmailError(undefined);
-          } else {
-            setToast({
-              type: ToastType.Error,
-              message: "Une erreur est survenue lors de l'envoi de l'email de vérification",
-            });
-          }
-        });
-      }
-      setIsLoading(false);
-    },
-    [conciergeries, conciergerieName, sentEmailError, setSentEmailError],
-  );
+    setIsLoading(false);
+  }, [conciergeries, conciergerieName]);
 
   const handleEmployee = useCallback(
     (userId: string) => {
@@ -74,27 +50,9 @@ export default function WaitingPage() {
         setDaysWaiting(timeDifference);
       }
 
-      // Send notification email to conciergerie
-      if (sentEmailError) {
-        const selectedConciergerie = conciergeries.find(c => c.name === foundEmployee.conciergerieName);
-        if (!selectedConciergerie) throw new Error('Conciergerie not found');
-        if (!selectedConciergerie.email) throw new Error('Conciergerie email not found');
-
-        sendEmployeeRegistrationEmail(selectedConciergerie, foundEmployee).then(isEmailSent => {
-          if (isEmailSent) {
-            setSentEmailError(undefined);
-          } else {
-            setToast({
-              type: ToastType.Error,
-              message: "Une erreur est survenue lors de l'envoi de l'email de confirmation",
-            });
-          }
-        });
-      }
-
       setIsLoading(false);
     },
-    [employees, conciergeries, setSentEmailError, sentEmailError],
+    [employees],
   );
 
   // Use a ref to track if we've already loaded the data to prevent infinite loops
@@ -126,6 +84,7 @@ export default function WaitingPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
+      <EmailRetryManager onToastChange={setToast} />
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       <div className="w-full max-w-md bg-background overflow-hidden p-6">

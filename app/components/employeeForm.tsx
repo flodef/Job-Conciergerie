@@ -26,7 +26,7 @@ type EmployeeFormProps = {
 };
 
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
-  const { userId, setSentEmailError, conciergeries, updateUserData, employees } = useAuth();
+  const { userId, conciergeries, updateUserData, employees } = useAuth();
   const { onMenuChange } = useMenuContext();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
@@ -182,8 +182,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
-      const isEmailSent = await sendEmployeeRegistrationEmail(selectedConciergerie, employee);
-      setSentEmailError(!isEmailSent || undefined);
+      sendEmployeeRegistrationEmail(selectedConciergerie, employee);
 
       onMenuChange(Page.Waiting);
     } catch (error) {

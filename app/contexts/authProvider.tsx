@@ -21,8 +21,6 @@ interface AuthContextType {
   conciergerieName: string | undefined;
   setConciergerieName: (name: string | undefined) => void;
   deleteEmployee: (id: string) => Promise<boolean>;
-  sentEmailError: boolean | undefined;
-  setSentEmailError: (sentEmailError: boolean | undefined) => void;
   getUserData: <T extends UserData>() => T | undefined;
   updateUserData: <T extends UserData>(updatedData: T, updateType?: UserType) => void;
   fetchDataFromDatabase: (fetchType?: UserType) => Promise<boolean>;
@@ -42,8 +40,6 @@ const AuthContext = createContext<AuthContextType>({
   conciergerieName: undefined,
   setConciergerieName: () => {},
   deleteEmployee: () => Promise.resolve(false),
-  sentEmailError: undefined,
-  setSentEmailError: () => {},
   getUserData: () => undefined,
   updateUserData: () => {},
   fetchDataFromDatabase: () => Promise.resolve(false),
@@ -60,7 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useLocalStorage<string>('user_id');
   const [userType, setUserType] = useLocalStorage<UserType>('user_type');
   const [conciergerieName, setConciergerieName] = useLocalStorage<string>('conciergerie_name');
-  const [sentEmailError, setSentEmailError] = useLocalStorage<boolean>('sent_email_error');
 
   const [userData, setUserData] = useState<UserData>();
   const [conciergeries, setConciergeries] = useState<Conciergerie[]>([]);
@@ -209,7 +204,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     updateUserId(undefined);
     updateUserType(undefined);
     setConciergerieName(undefined);
-    setSentEmailError(undefined);
 
     // Force a full page reload to reset the app state
     refreshData();
@@ -232,8 +226,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         conciergerieName,
         setConciergerieName,
         deleteEmployee,
-        sentEmailError,
-        setSentEmailError,
         getUserData,
         updateUserData,
         fetchDataFromDatabase,
