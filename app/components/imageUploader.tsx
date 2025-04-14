@@ -1,7 +1,7 @@
 'use client';
 
 import { deleteFileFromIPFS, uploadFileToIPFS } from '@/app/actions/ipfs';
-import FullScreenModal from '@/app/components/fullScreenModal';
+import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { errorClassName } from '@/app/utils/className';
@@ -448,9 +448,9 @@ const ImageUploader = React.forwardRef<
 
         {/* Fullscreen modal */}
         {fullscreenImageUrl && (
-          <FullScreenModal
-            title={"Aperçu de l'image"}
-            imageData={{ urls: fullscreenImageUrl }}
+          <FullScreenImageCarousel
+            altPrefix={"Aperçu de l'image"}
+            imageUrls={fullscreenImageUrl}
             onClose={() => setFullscreenImageUrl(undefined)}
           />
         )}

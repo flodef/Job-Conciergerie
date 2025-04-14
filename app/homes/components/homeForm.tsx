@@ -3,6 +3,7 @@
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
+import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import ImageUploader from '@/app/components/imageUploader';
 import Input from '@/app/components/input';
@@ -261,9 +262,10 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
 
   if (selectedImageIndex !== undefined && selectedImageIndex < images.length) {
     return (
-      <FullScreenModal
-        title={`Photo de ${title}`}
-        imageData={{ urls: images, startIndex: selectedImageIndex }}
+      <FullScreenImageCarousel
+        altPrefix={`Photo de ${title}`}
+        imageUrls={images}
+        startIndex={selectedImageIndex}
         onClose={() => setSelectedImageIndex(undefined)}
       />
     );

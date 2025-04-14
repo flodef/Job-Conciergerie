@@ -5,6 +5,7 @@ import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { Mission } from '@/app/types/dataTypes';
+import clsx from 'clsx/lite';
 import { useEffect, useState } from 'react';
 
 type MissionCompletionModalProps = {
@@ -66,7 +67,7 @@ export default function MissionCompletionModal({ mission, onClose, onComplete }:
   if (!home) return null;
 
   return (
-    <FullScreenModal title="Points particuliers" onClose={onClose} footer={footer}>
+    <FullScreenModal title="Points particuliers" onClose={onClose} footer={footer} disabled={false}>
       <div className="py-2">
         <p className="text-foreground mb-4 text-center">
           Veuillez confirmer que tous les points particuliers suivants ont été réalisés :
@@ -78,7 +79,10 @@ export default function MissionCompletionModal({ mission, onClose, onComplete }:
                 id={`objective-${index}`}
                 checked={checkedObjectives[objective] || false}
                 onChange={() => handleCheckboxChange(objective)}
-                labelClassName={`flex-1 ${checkedObjectives[objective] ? 'line-through text-gray-500' : 'text-foreground'}`}
+                labelClassName={clsx(
+                  'flex-1',
+                  checkedObjectives[objective] ? 'line-through text-gray-500' : 'text-foreground',
+                )}
                 label={objective}
               />
             </li>
