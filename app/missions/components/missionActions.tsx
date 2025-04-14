@@ -128,16 +128,16 @@ export default function MissionActions({
         Supprimer
       </button>
       {isAccepted && (
-        <button onClick={onRemoveEmployee} className={clsx(actionButtonClassName, 'bg-yellow-100 text-yellow-700')}>
-          <IconCancel />
-          Annuler
-        </button>
-      )}
-      {isStarted && (
-        <button onClick={onCompleteMission} className={clsx(actionButtonClassName, 'bg-green-100 text-green-700')}>
-          <IconCheck />
-          Terminer
-        </button>
+        <>
+          <button onClick={onRemoveEmployee} className={clsx(actionButtonClassName, 'bg-yellow-100 text-yellow-700')}>
+            <IconCancel />
+            Annuler
+          </button>
+          <button onClick={onCompleteMission} className={clsx(actionButtonClassName, 'bg-green-100 text-green-700')}>
+            <IconCheck />
+            Terminer
+          </button>
+        </>
       )}
     </div>
   ) : null;
