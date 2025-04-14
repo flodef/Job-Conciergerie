@@ -9,7 +9,7 @@ import {
   updateMission,
   updateMissionStatus,
 } from '@/app/db/missionDb';
-import { Mission, MissionStatus, Task } from '@/app/types/dataTypes';
+import { Mission, MissionStatus } from '@/app/types/dataTypes';
 
 /**
  * Fetch all missions from the database
@@ -21,18 +21,7 @@ export async function fetchAllMissions(): Promise<Mission[] | null> {
 /**
  * Create a new mission in the database
  */
-export async function createNewMission(data: {
-  id: string;
-  homeId: string;
-  tasks: Task[];
-  startDateTime: Date;
-  endDateTime: Date;
-  employeeId?: string;
-  conciergerieName: string;
-  status?: MissionStatus;
-  allowedEmployees?: string[];
-  hours: number;
-}): Promise<Mission | null> {
+export async function createNewMission(data: Mission): Promise<Mission | null> {
   // Convert to DB format
   const dbData: Omit<DbMission, 'modified_date'> = {
     id: data.id,
@@ -42,7 +31,7 @@ export async function createNewMission(data: {
     end_date_time: data.endDateTime,
     employee_id: data.employeeId,
     conciergerie_name: data.conciergerieName,
-    status: data.status || 'accepted',
+    status: data.status,
     allowed_employees: data.allowedEmployees,
     hours: data.hours,
   };
@@ -53,20 +42,7 @@ export async function createNewMission(data: {
 /**
  * Update a mission in the database
  */
-export async function updateMissionData(
-  id: string,
-  data: Partial<{
-    homeId: string;
-    tasks: Task[];
-    startDateTime: Date;
-    endDateTime: Date;
-    employeeId?: string;
-    conciergerieName: string;
-    status?: MissionStatus;
-    allowedEmployees?: string[];
-    hours: number;
-  }>,
-): Promise<Mission | null> {
+export async function updateMissionData(id: string, data: Partial<Mission>): Promise<Mission | null> {
   // Convert to DB format
   const dbData: Partial<Omit<DbMission, 'id' | 'modified_date'>> = {};
 
