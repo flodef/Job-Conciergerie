@@ -113,6 +113,23 @@ export const toLocalDateString = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+/*
+ * Calculate the remaining time until refresh is available
+ * @param targetDate The date when the request was created
+ * @returns A string representing the remaining time until refresh is available
+ */
+export const getTimeRemaining = (targetDate: Date) => {
+  const now = new Date();
+  const targetTime = targetDate.getTime();
+  const diffInMillis = now.getTime() - targetTime;
+  const hoursLeft = 24 - Math.floor(diffInMillis / (1000 * 60 * 60));
+  const minsLeft = 60 - Math.floor((diffInMillis % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (hoursLeft <= 0 && minsLeft <= 0) return 'maintenant';
+  if (hoursLeft <= 0) return `${minsLeft} minute${minsLeft > 1 ? 's' : ''}`;
+  return `${hoursLeft} heure${hoursLeft > 1 ? 's' : ''} et ${minsLeft} minute${minsLeft > 1 ? 's' : ''}`;
+};
+
 /**
  * Calculate the time difference between two dates in a human-readable format
  * Consistent with mission points calculation (counting both start and end days)

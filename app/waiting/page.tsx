@@ -6,10 +6,14 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
-import { getTimeDifference } from '@/app/utils/date';
-import { IconAlertCircle, IconCircleCheck, IconClock, IconMailForward } from '@tabler/icons-react';
+import { getTimeDifference, getTimeRemaining } from '@/app/utils/date';
+import { IconAlertCircle, IconCircleCheck, IconClock, IconHelpCircle, IconMailForward } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { RefreshButton } from '@/app/components/button';
+import Tooltip from '@/app/components/tooltip';
+
+const MINIMUM_WAITING_TIME = 24; // minimum waiting time in hours
 
 export default function WaitingPage() {
   const {
@@ -27,6 +31,7 @@ export default function WaitingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [employee, setEmployee] = useState<Employee>();
   const [daysWaiting, setDaysWaiting] = useState('');
+  const [creationDate, setCreationDate] = useState<Date>(new Date(0));
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const [toast, setToast] = useState<Toast>();
 
@@ -63,7 +68,9 @@ export default function WaitingPage() {
 
       // Calculate time waiting
       if (foundEmployee.createdAt) {
-        const timeDifference = getTimeDifference(new Date(foundEmployee.createdAt), new Date());
+        const createdDate = new Date(foundEmployee.createdAt);
+        setCreationDate(createdDate);
+        const timeDifference = getTimeDifference(createdDate, new Date());
         setDaysWaiting(timeDifference);
       }
 
@@ -106,6 +113,14 @@ export default function WaitingPage() {
     }[userType];
     handleUser(userId);
   }, [userId, userType, authLoading, handleConciergerie, handleEmployee, router]);
+
+  // Helper function to check if request is less than minimum waiting time
+  const isRequestLessThanMinimumWaitingTime = () => {
+    if (!creationDate) return true; // Default to disabled if no date available
+    const now = new Date();
+    const diffInHours = (now.getTime() - creationDate.getTime()) / (1000 * 60 * 60);
+    return diffInHours < MINIMUM_WAITING_TIME;
+  };
 
   if (!userId || !userType) return <ErrorPage />;
 
@@ -212,6 +227,18 @@ export default function WaitingPage() {
                 Une fois votre demande acceptée, vous pourrez accéder directement à l&apos;application lors de votre
                 prochaine visite.
               </p>
+            </div>
+
+            {/* Refresh Button with Tooltip */}
+            <div className="flex items-center justify-center mt-4">
+              <div className="flex items-center">
+                <RefreshButton shouldDisconnect disabled={isRequestLessThanMinimumWaitingTime()} />
+                {isRequestLessThanMinimumWaitingTime() && (
+                  <Tooltip size="small" icon={IconHelpCircle}>
+                    Pour éviter le spam, vous pourrez réessayer dans {getTimeRemaining(creationDate)}
+                  </Tooltip>
+                )}
+              </div>
             </div>
           </>
         ) : !isLoading ? (
