@@ -20,15 +20,18 @@ interface Email {
   from?: string;
   subject: string;
   html: string;
+  id?: string; // For retry identification
+  type?: string; // For categorizing the email type for retries
 }
 
 async function sendEmail(email: Email): Promise<boolean> {
   try {
     await transporter.sendMail({
       ...email,
-      from: `"Job Conciergerie" <${email.from || process.env.SMTP_FROM_EMAIL}>`,
+      from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
+      replyTo: email.from,
     });
-
+    
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
@@ -41,10 +44,12 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 /**
  * Send a verification email to a conciergerie
  */
-export async function sendConciergerieVerificationEmail(conciergerie: Conciergerie, userId: string): Promise<boolean> {
+export async function sendConciergerieVerificationEmail(conciergerie: Conciergerie, userId: string, retryId?: string): Promise<boolean> {
   const verificationUrl = baseUrl + `/${userId}`;
 
   return await sendEmail({
+    id: retryId,
+    type: 'verification',
     to: conciergerie.email,
     subject: 'Vérification de votre compte conciergerie',
     html: `
@@ -70,8 +75,10 @@ export async function sendConciergerieVerificationEmail(conciergerie: Concierger
 /**
  * Send a notification email to a conciergerie about a new employee registration
  */
-export async function sendEmployeeRegistrationEmail(conciergerie: Conciergerie, employee: Employee): Promise<boolean> {
+export async function sendEmployeeRegistrationEmail(conciergerie: Conciergerie, employee: Employee, retryId?: string): Promise<boolean> {
   return await sendEmail({
+    id: retryId,
+    type: 'registration',
     to: conciergerie.email,
     subject: "Nouvelle demande d'inscription employé",
     html: `
@@ -102,9 +109,12 @@ export async function sendEmployeeAcceptanceEmail(
   conciergerie: Conciergerie,
   missionsCount: number,
   isAccepted: boolean,
+  retryId?: string,
 ): Promise<boolean> {
   const wasAccepted = employee.status === 'accepted';
   return await sendEmail({
+    id: retryId,
+    type: 'acceptance',
     to: employee.email,
     from: conciergerie.email,
     subject: 'Information concernant votre inscription à Job Conciergerie',
@@ -151,6 +161,7 @@ export async function sendMissionStatusChangeEmail(
   employee: Employee,
   conciergerie: Conciergerie,
   status: 'accepted' | 'started' | 'completed',
+  retryId?: string,
 ): Promise<boolean> {
   // Format dates
   const startDate = formatDateTime(mission.startDateTime);
@@ -177,6 +188,8 @@ export async function sendMissionStatusChangeEmail(
 
   // Generate email content
   return await sendEmail({
+    id: retryId,
+    type: 'missionStatus',
     to: conciergerie.email,
     subject: `Mission ${statusAction}e - ${home.title}`,
     html: `
@@ -218,6 +231,7 @@ export async function sendLateCompletionEmail(
   home: Home,
   employee: Employee,
   conciergerie: Conciergerie,
+  retryId?: string,
 ): Promise<boolean> {
   // Format dates
   const startDate = formatDateTime(mission.startDateTime);
@@ -238,6 +252,8 @@ export async function sendLateCompletionEmail(
 
   // Generate email content
   return await sendEmail({
+    id: retryId,
+    type: 'lateCompletion',
     to: conciergerie.email,
     subject: `⚠️ Mission non terminée à temps - ${home.title}`,
     html: `
@@ -279,6 +295,7 @@ export async function sendMissionAcceptanceToEmployeeEmail(
   home: Home,
   employee: Employee,
   conciergerie: Conciergerie,
+  retryId?: string,
 ): Promise<boolean> {
   // Format dates
   const startDate = formatDateTime(mission.startDateTime);
@@ -289,6 +306,8 @@ export async function sendMissionAcceptanceToEmployeeEmail(
 
   // Generate email content
   return await sendEmail({
+    id: retryId,
+    type: 'missionAcceptance',
     to: employee.email,
     from: conciergerie.email,
     subject: `🔔 Confirmation de mission - ${home.title}`,
@@ -338,6 +357,7 @@ export async function sendMissionUpdatedToEmployeeEmail(
   employee: Employee,
   conciergerie: Conciergerie,
   changes: string[],
+  retryId?: string,
 ): Promise<boolean> {
   // Format dates
   const startDate = formatDateTime(mission.startDateTime);
@@ -348,6 +368,8 @@ export async function sendMissionUpdatedToEmployeeEmail(
 
   // Generate email content
   return await sendEmail({
+    id: retryId,
+    type: 'missionUpdated',
     to: employee.email,
     from: conciergerie.email,
     subject: `🔄 Mise à jour de mission - ${home.title}`,
@@ -401,6 +423,7 @@ export async function sendMissionRemovedToEmployeeEmail(
   employee: Employee,
   conciergerie: Conciergerie,
   type: 'deleted' | 'canceled',
+  retryId?: string,
 ): Promise<boolean> {
   // Format dates
   const startDate = formatDateTime(mission.startDateTime);
@@ -428,6 +451,8 @@ export async function sendMissionRemovedToEmployeeEmail(
 
   // Generate email content
   return await sendEmail({
+    id: retryId,
+    type: 'missionRemoved',
     to: employee.email,
     from: conciergerie.email,
     subject: `${config.emoji} ${config.title} - ${home.title}`,
