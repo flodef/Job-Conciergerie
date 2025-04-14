@@ -48,12 +48,7 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
   );
 
   return (
-    <FullScreenModal
-      title={`${employee.firstName} ${employee.familyName}`}
-      onClose={onClose}
-      footer={footer}
-      disabled={isSubmitting}
-    >
+    <>
       <ToastMessage
         toast={toast}
         onClose={() => {
@@ -62,68 +57,75 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
         }}
       />
 
-      {isDeleteModalOpen && (
-        <ConfirmationModal
-          title="Supprimer l'employé"
-          message="Êtes-vous sûr de vouloir supprimer cet employé ? Cette action est irréversible."
-          onConfirm={handleDelete}
-          onCancel={() => setIsDeleteModalOpen(false)}
-          isOpen={isDeleteModalOpen}
-        />
-      )}
-      <div>
-        <div className="text-sm text-foreground/70">
-          Statut:{' '}
-          <span
-            className={clsx(
-              'font-bold',
-              {
-                pending: 'text-yellow-500',
-                accepted: 'text-green-500',
-                rejected: 'text-red-500',
-              }[employee.status],
-            )}
-          >
-            {employee.status === 'pending' ? 'En attente' : employee.status === 'accepted' ? 'Accepté' : 'Rejeté'}
-          </span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <FullScreenModal
+        title={`${employee.firstName} ${employee.familyName}`}
+        onClose={onClose}
+        footer={footer}
+        disabled={isSubmitting}
+      >
+        {isDeleteModalOpen && (
+          <ConfirmationModal
+            title="Supprimer l'employé"
+            message="Êtes-vous sûr de vouloir supprimer cet employé ? Cette action est irréversible."
+            onConfirm={handleDelete}
+            onCancel={() => setIsDeleteModalOpen(false)}
+            isOpen={isDeleteModalOpen}
+          />
+        )}
         <div>
-          <h4 className="text-sm font-medium text-foreground/70 mb-1">Contact</h4>
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <IconMail size={25} className="text-foreground/70" />
-              <a href={`mailto:${employee.email}`} className="text-foreground hover:underline truncate">
-                {employee.email}
-              </a>
-            </div>
-            <div className="flex items-center gap-2">
-              <IconPhone size={25} className="text-foreground/70" />
-              <a href={`tel:${employee.tel}`} className="text-foreground hover:underline truncate">
-                {employee.tel}
-              </a>
-            </div>
-            <div className="flex items-center gap-2">
-              <IconMapPin size={25} className="text-foreground/70" />
-              <span className="text-foreground truncate">{employee.geographicZone}</span>
+          <div className="text-sm text-foreground/70">
+            Statut:{' '}
+            <span
+              className={clsx(
+                'font-bold',
+                {
+                  pending: 'text-yellow-500',
+                  accepted: 'text-green-500',
+                  rejected: 'text-red-500',
+                }[employee.status],
+              )}
+            >
+              {employee.status === 'pending' ? 'En attente' : employee.status === 'accepted' ? 'Accepté' : 'Rejeté'}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 className="text-sm font-medium text-foreground/70 mb-1">Contact</h4>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <IconMail size={25} className="text-foreground/70" />
+                <a href={`mailto:${employee.email}`} className="text-foreground hover:underline truncate">
+                  {employee.email}
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <IconPhone size={25} className="text-foreground/70" />
+                <a href={`tel:${employee.tel}`} className="text-foreground hover:underline truncate">
+                  {employee.tel}
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <IconMapPin size={25} className="text-foreground/70" />
+                <span className="text-foreground truncate">{employee.geographicZone}</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {employee.message && employee.status === 'pending' && (
+        {employee.message && employee.status === 'pending' && (
+          <div>
+            <h4 className="text-sm font-medium text-foreground/70 mb-1">Message</h4>
+            <div className="bg-secondary/10 rounded-md text-foreground">{employee.message}</div>
+          </div>
+        )}
+
         <div>
-          <h4 className="text-sm font-medium text-foreground/70 mb-1">Message</h4>
-          <div className="bg-secondary/10 rounded-md text-foreground">{employee.message}</div>
+          <h4 className="text-sm font-medium text-foreground/70 mb-1">Date d&apos;inscription</h4>
+          <div className="text-foreground text-sm">{formatDate(new Date(employee.createdAt))}</div>
         </div>
-      )}
-
-      <div>
-        <h4 className="text-sm font-medium text-foreground/70 mb-1">Date d&apos;inscription</h4>
-        <div className="text-foreground text-sm">{formatDate(new Date(employee.createdAt))}</div>
-      </div>
-    </FullScreenModal>
+      </FullScreenModal>
+    </>
   );
 }

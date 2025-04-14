@@ -288,12 +288,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   );
 
   return (
-    <FullScreenModal
-      title={mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}
-      onClose={handleClose}
-      disabled={isSubmitting}
-      footer={footer}
-    >
+    <>
       <ToastMessage
         toast={toast}
         onClose={() => {
@@ -302,109 +297,118 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         }}
       />
 
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <Combobox
-          id="home-select"
-          label="Bien"
-          ref={homeSelectRef}
-          value={homeId}
-          onChange={value => handleChange(value, setHomeId, setHomeIdError)}
-          options={filteredHomes.map(home => ({
-            value: home.id,
-            label: home.title,
-          }))}
-          disabled={isSubmitting || cannotEdit}
-          placeholder="Sélectionner un bien"
-          error={homeIdError}
-          required
-        />
-
-        <TaskSelector
-          id="task-select"
-          label="Tâches"
-          ref={taskRef}
-          availableTasks={getAvailableTasks(filteredHomes.find(h => h.id === homeId)!, Object.values(Task))}
-          selectedTasks={tasks}
-          onTasksChange={setTasks}
-          error={tasksError}
-          setError={setTasksError}
-          disabled={isSubmitting || cannotEdit}
-          required
-        />
-
-        <DateTimeInput
-          id="start-date"
-          label="Date et heure de début"
-          ref={startDateRef}
-          value={startDateTime}
-          onChange={handleStartDateChange}
-          error={startDateTimeError}
-          onError={setStartDateTimeError}
-          min={nowString}
-          disabled={isSubmitting || cannotEdit}
-          required
-        />
-
-        <DateTimeInput
-          id="end-date"
-          label="Date et heure de fin"
-          ref={endDateRef}
-          value={endDateTime}
-          onChange={setEndDateTime}
-          error={endDateTimeError}
-          onError={setEndDateTimeError}
-          min={(() => {
-            // Calculate minimum end date (start date + 1 hour)
-            const startDate = new Date(startDateTime);
-            const minEndDate = new Date(startDate);
-            minEndDate.setHours(minEndDate.getHours() + 1);
-            return localISOString(minEndDate);
-          })()}
-          disabled={isSubmitting || cannotEdit}
-          required
-        />
-
-        <div>
-          <MultiSelect
-            id="prestataires-select"
-            label="Prestataires"
-            values={selectedEmployees}
-            onChange={setSelectedEmployees}
-            options={employees.map(emp => ({
-              value: emp.id,
-              label: `${emp.firstName} ${emp.familyName}`,
+      <FullScreenModal
+        title={mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}
+        onClose={handleClose}
+        disabled={isSubmitting}
+        footer={footer}
+      >
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <Combobox
+            id="home-select"
+            label="Bien"
+            ref={homeSelectRef}
+            value={homeId}
+            onChange={value => handleChange(value, setHomeId, setHomeIdError)}
+            options={filteredHomes.map(home => ({
+              value: home.id,
+              label: home.title,
             }))}
             disabled={isSubmitting || cannotEdit}
+            placeholder="Sélectionner un bien"
+            error={homeIdError}
             required
-            allOption
-            tooltip={
-              <>
-                {selectedEmployees.length === 0
-                  ? 'Tous les prestataires pourront voir cette mission'
-                  : 'Seuls les prestataires suivant pourront voir cette mission :'}
-                <ul className="list-disc pl-4">
-                  {selectedEmployees.map(employeeId => {
-                    const employee = employees.find(e => e.id === employeeId);
-                    return (
-                      <li key={employeeId}>{employee ? `${employee.firstName} ${employee.familyName}` : employeeId}</li>
-                    );
-                  })}
-                </ul>
-              </>
-            }
           />
-        </div>
 
-        <ConfirmationModal
-          isOpen={showConfirmDialog}
-          onClose={() => setShowConfirmDialog(false)}
-          onConfirm={onClose}
-          title="Modifications non enregistrées"
-          message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
-          confirmText="Quitter sans enregistrer"
-          cancelText="Continuer l'édition"
-        />
-      </form>
-    </FullScreenModal>
+          <TaskSelector
+            id="task-select"
+            label="Tâches"
+            ref={taskRef}
+            availableTasks={getAvailableTasks(filteredHomes.find(h => h.id === homeId)!, Object.values(Task))}
+            selectedTasks={tasks}
+            onTasksChange={setTasks}
+            error={tasksError}
+            setError={setTasksError}
+            disabled={isSubmitting || cannotEdit}
+            required
+          />
+
+          <DateTimeInput
+            id="start-date"
+            label="Date et heure de début"
+            ref={startDateRef}
+            value={startDateTime}
+            onChange={handleStartDateChange}
+            error={startDateTimeError}
+            onError={setStartDateTimeError}
+            min={nowString}
+            disabled={isSubmitting || cannotEdit}
+            required
+          />
+
+          <DateTimeInput
+            id="end-date"
+            label="Date et heure de fin"
+            ref={endDateRef}
+            value={endDateTime}
+            onChange={setEndDateTime}
+            error={endDateTimeError}
+            onError={setEndDateTimeError}
+            min={(() => {
+              // Calculate minimum end date (start date + 1 hour)
+              const startDate = new Date(startDateTime);
+              const minEndDate = new Date(startDate);
+              minEndDate.setHours(minEndDate.getHours() + 1);
+              return localISOString(minEndDate);
+            })()}
+            disabled={isSubmitting || cannotEdit}
+            required
+          />
+
+          <div>
+            <MultiSelect
+              id="prestataires-select"
+              label="Prestataires"
+              values={selectedEmployees}
+              onChange={setSelectedEmployees}
+              options={employees.map(emp => ({
+                value: emp.id,
+                label: `${emp.firstName} ${emp.familyName}`,
+              }))}
+              disabled={isSubmitting || cannotEdit}
+              required
+              allOption
+              tooltip={
+                <>
+                  {selectedEmployees.length === 0
+                    ? 'Tous les prestataires pourront voir cette mission'
+                    : 'Seuls les prestataires suivant pourront voir cette mission :'}
+                  <ul className="list-disc pl-4">
+                    {selectedEmployees.map(employeeId => {
+                      const employee = employees.find(e => e.id === employeeId);
+                      return (
+                        <li key={employeeId}>
+                          {employee ? `${employee.firstName} ${employee.familyName}` : employeeId}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              }
+            />
+          </div>
+
+          <ConfirmationModal
+            isOpen={showConfirmDialog}
+            onClose={() => setShowConfirmDialog(false)}
+            onConfirm={onClose}
+            title="Modifications non enregistrées"
+            message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
+            confirmText="Quitter sans enregistrer"
+            cancelText="Continuer l'édition"
+          />
+        </form>
+      </FullScreenModal>
+    </>
   );
 }

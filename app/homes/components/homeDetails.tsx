@@ -94,12 +94,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
   if (isEditMode) return <HomeForm home={home} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" />;
 
   return (
-    <FullScreenModal
-      title={`${home.title} (${home.geographicZone})`}
-      onClose={onClose}
-      footer={footer}
-      disabled={isSubmitting}
-    >
+    <>
       <ToastMessage
         toast={toast}
         onClose={() => {
@@ -108,88 +103,95 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
         }}
       />
 
-      {selectedImageIndex !== undefined && (
-        <FullScreenImageCarousel
-          altPrefix={`Photo de ${home.title}`}
-          imageUrls={home.images}
-          startIndex={selectedImageIndex}
-          onClose={() => setSelectedImageIndex(undefined)}
-        />
-      )}
-
-      <div className="space-y-2" data-home-details>
-        {home.images.length > 0 && (
-          <div>
-            <div className="grid grid-cols-3 gap-2">
-              {[...new Set(home.images)].map((cidWithId, index) => (
-                <div key={index} className="relative aspect-square">
-                  <Image
-                    src={getIPFSImageUrl(cidWithId)}
-                    alt={`Photo ${index + 1}`}
-                    fill
-                    sizes="(max-width: 768px) 33vw, 150px"
-                    className="object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => setSelectedImageIndex(index)}
-                    onError={e => {
-                      // Fallback to mockup
-                      (e.target as HTMLImageElement).src = fallbackImage;
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+      <FullScreenModal
+        title={`${home.title} (${home.geographicZone})`}
+        onClose={onClose}
+        footer={footer}
+        disabled={isSubmitting}
+      >
+        {selectedImageIndex !== undefined && (
+          <FullScreenImageCarousel
+            altPrefix={`Photo de ${home.title}`}
+            imageUrls={home.images}
+            startIndex={selectedImageIndex}
+            onClose={() => setSelectedImageIndex(undefined)}
+          />
         )}
 
-        {(userType === 'conciergerie' || (userType === 'employee' && isFromCalendar)) && (
+        <div className="space-y-2" data-home-details>
+          {home.images.length > 0 && (
+            <div>
+              <div className="grid grid-cols-3 gap-2">
+                {[...new Set(home.images)].map((cidWithId, index) => (
+                  <div key={index} className="relative aspect-square">
+                    <Image
+                      src={getIPFSImageUrl(cidWithId)}
+                      alt={`Photo ${index + 1}`}
+                      fill
+                      sizes="(max-width: 768px) 33vw, 150px"
+                      className="object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setSelectedImageIndex(index)}
+                      onError={e => {
+                        // Fallback to mockup
+                        (e.target as HTMLImageElement).src = fallbackImage;
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(userType === 'conciergerie' || (userType === 'employee' && isFromCalendar)) && (
+            <div>
+              <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                <IconFileDescription size={16} />
+                Description
+              </h3>
+              <p className="text-foreground whitespace-pre-wrap truncate">{home.description}</p>
+            </div>
+          )}
+
           <div>
             <h3 className="text-sm font-medium text-light flex items-center gap-1">
-              <IconFileDescription size={16} />
-              Description
+              <IconListCheck size={16} />
+              Points particuliers
             </h3>
-            <p className="text-foreground whitespace-pre-wrap truncate">{home.description}</p>
+            <ul className="list-none pl-0 mt-1 space-y-1">
+              {home.objectives.map((objective, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 flex-shrink-0 border border-foreground" />
+                  <span className="text-foreground overflow-hidden">{objective}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-        )}
-
-        <div>
-          <h3 className="text-sm font-medium text-light flex items-center gap-1">
-            <IconListCheck size={16} />
-            Points particuliers
-          </h3>
-          <ul className="list-none pl-0 mt-1 space-y-1">
-            {home.objectives.map((objective, index) => (
-              <li key={index} className="flex items-start">
-                <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 flex-shrink-0 border border-foreground" />
-                <span className="text-foreground overflow-hidden">{objective}</span>
-              </li>
-            ))}
-          </ul>
         </div>
-      </div>
 
-      {/* Regular confirmation modal for deletion */}
-      <ConfirmationModal
-        isOpen={isDeleteModalOpen}
-        onConfirm={handleDelete}
-        onCancel={() => setIsDeleteModalOpen(false)}
-        title="Supprimer le bien"
-        message="Êtes-vous sûr de vouloir supprimer ce bien ?"
-        confirmText="Supprimer"
-        cancelText="Annuler"
-      />
+        {/* Regular confirmation modal for deletion */}
+        <ConfirmationModal
+          isOpen={isDeleteModalOpen}
+          onConfirm={handleDelete}
+          onCancel={() => setIsDeleteModalOpen(false)}
+          title="Supprimer le bien"
+          message="Êtes-vous sûr de vouloir supprimer ce bien ?"
+          confirmText="Supprimer"
+          cancelText="Annuler"
+        />
 
-      {/* Special confirmation modal for deletion with associated missions */}
-      <ConfirmationModal
-        isOpen={isDeleteWithMissionsModalOpen}
-        onConfirm={handleDeleteWithMissions}
-        onCancel={() => setIsDeleteWithMissionsModalOpen(false)}
-        title="Supprimer le bien et ses missions"
-        message={`Ce bien est associé à ${associatedMissions.length} mission${
-          associatedMissions.length > 1 ? 's' : ''
-        }. En supprimant ce bien, toutes les missions associées seront également supprimées. Êtes-vous sûr de vouloir continuer ?`}
-        confirmText="Supprimer tout"
-        cancelText="Annuler"
-      />
-    </FullScreenModal>
+        {/* Special confirmation modal for deletion with associated missions */}
+        <ConfirmationModal
+          isOpen={isDeleteWithMissionsModalOpen}
+          onConfirm={handleDeleteWithMissions}
+          onCancel={() => setIsDeleteWithMissionsModalOpen(false)}
+          title="Supprimer le bien et ses missions"
+          message={`Ce bien est associé à ${associatedMissions.length} mission${
+            associatedMissions.length > 1 ? 's' : ''
+          }. En supprimant ce bien, toutes les missions associées seront également supprimées. Êtes-vous sûr de vouloir continuer ?`}
+          confirmText="Supprimer tout"
+          cancelText="Annuler"
+        />
+      </FullScreenModal>
+    </>
   );
 }

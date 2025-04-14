@@ -272,12 +272,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
   }
 
   return (
-    <FullScreenModal
-      title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'}
-      onClose={handleClose}
-      disabled={isSubmitting}
-      footer={footer}
-    >
+    <>
       <ToastMessage
         toast={toast}
         onClose={() => {
@@ -286,115 +281,122 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
         }}
       />
 
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <ImageUploader
-          id="images"
-          label="Photos"
-          ref={imageUploaderRef}
-          imagesRef={imagesRef}
-          imageIds={images}
-          onImageIdsChange={setImages}
-          onPendingImagesChange={setHasPendingImages}
-          maxImages={MAX_PHOTOS}
-          error={imagesError}
-          onError={setImagesError}
-          disabled={isSubmitting}
-          required
-        />
+      <FullScreenModal
+        title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'}
+        onClose={handleClose}
+        disabled={isSubmitting}
+        footer={footer}
+      >
+        <form onSubmit={handleSubmit} className="space-y-2">
+          <ImageUploader
+            id="images"
+            label="Photos"
+            ref={imageUploaderRef}
+            imagesRef={imagesRef}
+            imageIds={images}
+            onImageIdsChange={setImages}
+            onPendingImagesChange={setHasPendingImages}
+            maxImages={MAX_PHOTOS}
+            error={imagesError}
+            onError={setImagesError}
+            disabled={isSubmitting}
+            required
+          />
 
-        <Input
-          id="title"
-          label="Titre"
-          ref={titleRef}
-          value={title}
-          onChange={setTitle}
-          error={titleError}
-          onError={setTitleError}
-          disabled={isSubmitting}
-          placeholder="Entrez le titre du bien..."
-          required
-        />
+          <Input
+            id="title"
+            label="Titre"
+            ref={titleRef}
+            value={title}
+            onChange={setTitle}
+            error={titleError}
+            onError={setTitleError}
+            disabled={isSubmitting}
+            placeholder="Entrez le titre du bien..."
+            required
+          />
 
-        <Combobox
-          id="geographic-zone"
-          label="Zone"
-          ref={geographicZoneRef}
-          className="max-w-2/3"
-          options={geographicZones}
-          value={geographicZone}
-          onChange={e => handleChange(e, setGeographicZone, setGeographicZoneError)}
-          placeholder="Sélectionnez zone"
-          disabled={isSubmitting}
-          error={geographicZoneError}
-          required
-          row
-        />
+          <Combobox
+            id="geographic-zone"
+            label="Zone"
+            ref={geographicZoneRef}
+            className="max-w-2/3"
+            options={geographicZones}
+            value={geographicZone}
+            onChange={e => handleChange(e, setGeographicZone, setGeographicZoneError)}
+            placeholder="Sélectionnez zone"
+            disabled={isSubmitting}
+            error={geographicZoneError}
+            required
+            row
+          />
 
-        <TextArea
-          id="description"
-          label="Description"
-          ref={descriptionRef}
-          value={description}
-          onChange={setDescription}
-          error={descriptionError}
-          onError={setDescriptionError}
-          disabled={isSubmitting}
-          placeholder="Décrivez les caractéristiques du bien..."
-          required
-        />
+          <TextArea
+            id="description"
+            label="Description"
+            ref={descriptionRef}
+            value={description}
+            onChange={setDescription}
+            error={descriptionError}
+            onError={setDescriptionError}
+            disabled={isSubmitting}
+            placeholder="Décrivez les caractéristiques du bien..."
+            required
+          />
 
-        <Select
-          id="hours-of-cleaning"
-          label="Heures de ménage"
-          className="max-w-1/3"
-          value={hoursOfCleaning}
-          onChange={value => setHoursOfCleaning(Number(value))}
-          options={range(0.5, 4, 0.5)}
-          disabled={isSubmitting}
-          placeholder="Nombre d'heures"
-          required
-          row
-        />
+          <Select
+            id="hours-of-cleaning"
+            label="Heures de ménage"
+            className="max-w-1/3"
+            value={hoursOfCleaning}
+            onChange={value => setHoursOfCleaning(Number(value))}
+            options={range(0.5, 4, 0.5)}
+            disabled={isSubmitting}
+            placeholder="Nombre d'heures"
+            required
+            row
+          />
 
-        <Select
-          id="hours-of-gardening"
-          label="Heures de jardinage"
-          value={hoursOfGardening}
-          className="max-w-1/3"
-          onChange={value => setHoursOfGardening(Number(value))}
-          options={range(0, 4, 0.5)}
-          disabled={isSubmitting}
-          placeholder="Nombre d'heures"
-          required
-          row
-        />
+          <Select
+            id="hours-of-gardening"
+            label="Heures de jardinage"
+            value={hoursOfGardening}
+            className="max-w-1/3"
+            onChange={value => setHoursOfGardening(Number(value))}
+            options={range(0, 4, 0.5)}
+            disabled={isSubmitting}
+            placeholder="Nombre d'heures"
+            required
+            row
+          />
 
-        <ObjectiveList
-          id="objectives"
-          label="Points particuliers"
-          ref={objectivesRef}
-          objectives={objectives}
-          setObjectives={e => {
-            setObjectives(e);
-            setObjectivesError('');
-          }}
-          maxObjectives={MAX_OBJECTIVES}
-          disabled={isSubmitting}
-          error={objectivesError}
-        />
+          <ObjectiveList
+            id="objectives"
+            label="Points particuliers"
+            ref={objectivesRef}
+            objectives={objectives}
+            setObjectives={e => {
+              setObjectives(e);
+              setObjectivesError('');
+            }}
+            maxObjectives={MAX_OBJECTIVES}
+            disabled={isSubmitting}
+            error={objectivesError}
+          />
 
-        <ConfirmationModal
-          isOpen={showConfirmDialog}
-          onClose={() => setShowConfirmDialog(false)}
-          onConfirm={() => {
-            onClose();
-          }}
-          title="Modifications non enregistrées"
-          message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
-          confirmText="Quitter sans enregistrer"
-          cancelText="Continuer l'édition"
-        />
-      </form>
-    </FullScreenModal>
+          <ConfirmationModal
+            isOpen={showConfirmDialog}
+            onClose={() => setShowConfirmDialog(false)}
+            onConfirm={() => {
+              onClose();
+            }}
+            title="Modifications non enregistrées"
+            message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
+            confirmText="Quitter sans enregistrer"
+            cancelText="Continuer l'édition"
+          />
+        </form>
+      </FullScreenModal>
+    </>
   );
 }
