@@ -191,7 +191,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
       };
     else if (hasDuplicateObjectives())
       error = {
-        message: 'Des objectifs identiques ont été détectés',
+        message: 'Des points particuliers identiques ont été détectés',
         fieldRef: objectivesRef,
         func: setObjectivesError,
       };

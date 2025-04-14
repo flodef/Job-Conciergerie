@@ -18,9 +18,10 @@ import { useEffect, useState } from 'react';
 type HomeDetailsProps = {
   home: Home;
   onClose: () => void;
+  isFromCalendar?: boolean;
 };
 
-export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
+export default function HomeDetails({ home, onClose, isFromCalendar = false }: HomeDetailsProps) {
   const { deleteHome, homes: allHomes } = useHomes();
   const { missions, deleteMission } = useMissions();
   const { userType, conciergerieName } = useAuth();
@@ -143,18 +144,20 @@ export default function HomeDetails({ home, onClose }: HomeDetailsProps) {
           </div>
         )}
 
-        <div>
-          <h3 className="text-sm font-medium text-light flex items-center gap-1">
-            <IconFileDescription size={16} />
-            Description
-          </h3>
-          <p className="text-foreground whitespace-pre-wrap truncate">{home.description}</p>
-        </div>
+        {(userType === 'conciergerie' || (userType === 'employee' && isFromCalendar)) && (
+          <div>
+            <h3 className="text-sm font-medium text-light flex items-center gap-1">
+              <IconFileDescription size={16} />
+              Description
+            </h3>
+            <p className="text-foreground whitespace-pre-wrap truncate">{home.description}</p>
+          </div>
+        )}
 
         <div>
           <h3 className="text-sm font-medium text-light flex items-center gap-1">
             <IconListCheck size={16} />
-            Objectifs
+            Points particuliers
           </h3>
           <ul className="list-none pl-0 mt-1 space-y-1">
             {home.objectives.map((objective, index) => (
