@@ -38,6 +38,7 @@ export default function FullScreenModal({
     <div
       className={clsx(
         'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4',
+        disabled && 'pointer-events-none opacity-50 cursor-not-allowed',
         className,
       )}
       onClick={handleBackdropClick}
@@ -57,7 +58,7 @@ export default function FullScreenModal({
           {/* Fixed header with title and close button */}
           <div className="sticky top-0 z-10 bg-background p-4 border-b border-secondary flex justify-between items-center rounded-t-lg">
             <h2 className="text-xl font-bold overflow-hidden">{title}</h2>
-            <CloseButton onClose={!disabled ? onClose : () => {}} />
+            <CloseButton onClose={onClose} />
           </div>
 
           {/* Scrollable content area */}

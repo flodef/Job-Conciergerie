@@ -64,6 +64,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [isDeleteWarningModalOpen, setIsDeleteWarningModalOpen] = useState(false);
   const [isEmployeeDetailsModalOpen, setIsEmployeeDetailsModalOpen] = useState(false);
   const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get the conciergerie from the mission data
   const conciergerie = useMemo(
@@ -78,16 +80,19 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const isConciergerie = userType === 'conciergerie';
 
   const handleDelete = () => {
+    setIsSubmitting(true);
+    setIsDeleteModalOpen(false);
     deleteMission(mission.id).then(isSuccess => {
       setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Mission supprimée !' : 'Erreur lors de la suppression de la mission',
       });
-      if (isSuccess) setIsDeleteModalOpen(false);
     });
   };
 
   const handleCancel = () => {
+    setIsSubmitting(true);
+    setIsCancelModalOpen(false);
     cancelMission(mission.id).then(isSuccess => {
       setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
@@ -102,6 +107,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   };
 
   const handleConfirmAccept = () => {
+    setIsSubmitting(true);
+    setIsConfirmationModalOpen(false);
     acceptMission(mission.id).then(isSuccess => {
       setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
@@ -109,7 +116,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           ? 'Mission acceptée ! Retrouvez-la dans votre calendrier.'
           : "Erreur lors de l'acceptation de la mission",
       });
-      if (isSuccess) setIsConfirmationModalOpen(false);
     });
   };
 
@@ -118,18 +124,12 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     if (dontShowAgain) setShouldShowAcceptWarning(false);
 
     // Accept the mission
-    acceptMission(mission.id).then(isSuccess => {
-      setToast({
-        type: isSuccess ? ToastType.Success : ToastType.Error,
-        message: isSuccess
-          ? 'Mission acceptée ! Retrouvez-la dans votre calendrier.'
-          : "Erreur lors de l'acceptation de la mission",
-      });
-      if (isSuccess) setIsAcceptModalOpen(false);
-    });
+    setIsAcceptModalOpen(false);
+    handleConfirmAccept();
   };
 
   const handleStart = () => {
+    setIsSubmitting(true);
     startMission(mission.id).then(isSuccess => {
       setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
@@ -147,6 +147,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const handleConfirmComplete = () => {
     // This function will be called after the objectives have been checked
+    setIsSubmitting(true);
     completeMission(mission.id).then(isSuccess => {
       setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
@@ -161,7 +162,9 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   if (showHomeDetails && home) {
     // Get the original home from the homes context to ensure we have all images
     const originalHome = homes.find(h => h.id === mission.homeId) || home;
-    return <HomeDetails home={originalHome} onClose={() => setShowHomeDetails(false)} />;
+    return (
+      <HomeDetails home={originalHome} onClose={() => setShowHomeDetails(false)} isFromCalendar={isFromCalendar} />
+    );
   }
 
   const firstHomeImage = home?.images?.length ? home.images[0] : '';
@@ -178,7 +181,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         if (mission.employeeId) setIsDeleteWarningModalOpen(true);
         else setIsDeleteModalOpen(true);
       }}
-      onRemoveEmployee={handleCancel}
+      onRemoveEmployee={() => setIsCancelModalOpen(true)}
       onAcceptMission={handleAccept}
       onStartMission={handleStart}
       onCompleteMission={handleComplete}
@@ -188,7 +191,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   if (!home) return;
 
   return (
-    <FullScreenModal onClose={onClose} title="Détails de la mission" footer={footer}>
+    <FullScreenModal onClose={onClose} title="Détails de la mission" footer={footer} disabled={isSubmitting}>
       <ToastMessage
         toast={toast}
         onClose={() => {
@@ -428,6 +431,16 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         title="Supprimer la mission"
         message="Êtes-vous sûr de vouloir supprimer cette mission ?"
         confirmText="Supprimer"
+        cancelText="Annuler"
+      />
+
+      <ConfirmationModal
+        isOpen={isCancelModalOpen}
+        onConfirm={handleCancel}
+        onCancel={() => setIsCancelModalOpen(false)}
+        title="Annuler la mission"
+        message="Êtes-vous sûr de vouloir annuler cette mission ? En annulant cette mission, elle sera retirée du planning du prestataire et retournera dans la liste des missions disponibles."
+        confirmText="Confirmer"
         cancelText="Annuler"
       />
 

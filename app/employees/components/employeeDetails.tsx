@@ -21,14 +21,16 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [toast, setToast] = useState<Toast>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleDelete = () => {
+    setIsSubmitting(true);
+    setIsDeleteModalOpen(false);
     deleteEmployee(employee.id).then(isSuccess => {
       setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Employé supprimé !' : "Erreur lors de la suppression de l'employé",
       });
-      if (isSuccess) setIsDeleteModalOpen(false);
     });
   };
 
@@ -45,7 +47,12 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
   );
 
   return (
-    <FullScreenModal title={`${employee.firstName} ${employee.familyName}`} onClose={onClose} footer={footer}>
+    <FullScreenModal
+      title={`${employee.firstName} ${employee.familyName}`}
+      onClose={onClose}
+      footer={footer}
+      disabled={isSubmitting}
+    >
       <ToastMessage
         toast={toast}
         onClose={() => {

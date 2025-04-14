@@ -23,10 +23,11 @@ type HomeDetailsProps = {
 
 export default function HomeDetails({ home, onClose, isFromCalendar = false }: HomeDetailsProps) {
   const { deleteHome, homes: allHomes } = useHomes();
-  const { missions, deleteMission } = useMissions();
+  const { missions } = useMissions();
   const { userType, conciergerieName } = useAuth();
 
   const [toast, setToast] = useState<Toast>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteWithMissionsModalOpen, setIsDeleteWithMissionsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -54,37 +55,25 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
   }, [missions, home.id, allHomes]);
 
   const handleDeleteClick = () => {
-    if (associatedMissions.length > 0) {
-      // If there are associated missions, show special confirmation
-      setIsDeleteWithMissionsModalOpen(true);
-    } else {
-      // If no associated missions, show regular confirmation
-      setIsDeleteModalOpen(true);
-    }
+    // If there are associated missions, show special confirmation otherwise show regular confirmation
+    if (associatedMissions.length > 0) setIsDeleteWithMissionsModalOpen(true);
+    else setIsDeleteModalOpen(true);
   };
 
   const handleDelete = () => {
+    setIsSubmitting(true);
+    setIsDeleteModalOpen(false);
     deleteHome(home.id).then(isSuccess => {
       setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Bien supprimé !' : 'Erreur lors de la suppression du bien',
       });
-      if (isSuccess) setIsDeleteModalOpen(false);
     });
   };
 
   const handleDeleteWithMissions = () => {
-    // Delete all associated missions first
-    missions
-      .filter(mission => mission.homeId === home.id)
-      .forEach(mission => {
-        deleteMission(mission.id);
-      });
-
-    // Then delete the home
-    deleteHome(home.id);
     setIsDeleteWithMissionsModalOpen(false);
-    onClose();
+    handleDelete();
   };
 
   const footer = !isReadOnly && !isEmployee && (
@@ -103,7 +92,12 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
   if (isEditMode) return <HomeForm home={home} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" />;
 
   return (
-    <FullScreenModal title={`${home.title} (${home.geographicZone})`} onClose={onClose} footer={footer}>
+    <FullScreenModal
+      title={`${home.title} (${home.geographicZone})`}
+      onClose={onClose}
+      footer={footer}
+      disabled={isSubmitting}
+    >
       <ToastMessage
         toast={toast}
         onClose={() => {
