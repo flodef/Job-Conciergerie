@@ -17,11 +17,11 @@ export const actionButtonClassName = 'flex flex-col items-center p-2 w-20 rounde
 
 export const buttonClassName = (type: ButtonStyle) =>
   clsx(
-    'px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed',
-    type === 'primary' && 'text-background bg-primary hover:bg-primary/80 disabled:bg-primary/50',
-    type === 'secondary' && 'text-foreground bg-secondary hover:bg-secondary/80 disabled:bg-secondary/50',
-    type === 'dangerous' && 'text-background bg-red-500 hover:bg-red-600 disabled:bg-red-500/50',
-    type === 'inferno' && 'text-background bg-red-700 hover:bg-red-800 disabled:bg-red-700/50',
+    'px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50',
+    type === 'primary' && 'text-background bg-primary hover:bg-primary/80',
+    type === 'secondary' && 'text-foreground bg-secondary hover:bg-secondary/80',
+    type === 'dangerous' && 'text-background bg-red-500 hover:bg-red-600',
+    type === 'inferno' && 'text-background bg-red-700 hover:bg-red-800',
   );
 export const selectClassName = (error: boolean | string, disabled: boolean, isFocused: boolean, isOpen: boolean) =>
   clsx(

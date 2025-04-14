@@ -48,9 +48,11 @@ export function Button({
 
 export function RefreshButton({
   shouldDisconnect = false,
+  disabled = false,
   className = '',
 }: {
   shouldDisconnect?: boolean;
+  disabled?: boolean;
   className?: string;
 }) {
   const { refreshData, disconnect } = useAuth();
@@ -60,6 +62,7 @@ export function RefreshButton({
       className={clsx('mt-4 mx-auto', className)}
       style={shouldDisconnect ? 'dangerous' : 'primary'}
       onClick={shouldDisconnect ? disconnect : refreshData}
+      disabled={disabled}
     >
       {shouldDisconnect ? 'Se déconnecter' : 'Réessayer'}
     </Button>
@@ -68,10 +71,11 @@ export function RefreshButton({
 
 type CloseButtonProps = {
   onClose: (e?: React.MouseEvent) => void;
+  disabled?: boolean;
   className?: string;
 };
 
-export function CloseButton({ onClose, className = '' }: CloseButtonProps) {
+export function CloseButton({ onClose, disabled = false, className = '' }: CloseButtonProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onClose(e);
@@ -80,7 +84,7 @@ export function CloseButton({ onClose, className = '' }: CloseButtonProps) {
   return (
     <button
       className={clsx('text-foreground hover:scale-110 transition-transform', className)}
-      onClick={handleClick}
+      onClick={!disabled ? handleClick : undefined}
       aria-label={'Fermer'}
     >
       <IconX size={24} stroke={2} />
