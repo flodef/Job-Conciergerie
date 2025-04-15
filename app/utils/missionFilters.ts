@@ -12,6 +12,8 @@ export function filterMissionsByUserType(
   return missions.filter(mission => {
     // For employee users, show only missions they have access to
     if (userType === 'employee') {
+      if (mission.employeeId) return mission.employeeId === userData?.id;
+
       // If the mission has prestataires specified, check if the current employee is in the list
       if (mission.allowedEmployees?.length) return mission.allowedEmployees.includes(userData?.id ?? '');
 
