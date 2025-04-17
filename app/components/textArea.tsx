@@ -1,7 +1,7 @@
 import Label from '@/app/components/label';
 import { errorClassName, inputFieldClassName, rowClassName, textAreaCharCountClassName } from '@/app/utils/className';
 import { handleChange } from '@/app/utils/form';
-import { getMaxLength, messageLengthRegex } from '@/app/utils/regex';
+import { getMaxLength } from '@/app/utils/regex';
 import { ForwardRefRenderFunction, ReactNode, forwardRef } from 'react';
 
 interface TextAreaProps {
@@ -18,6 +18,7 @@ interface TextAreaProps {
   row?: boolean;
   rows?: number;
   tooltip?: ReactNode;
+  regex: RegExp;
 }
 
 const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaProps> = (
@@ -35,6 +36,7 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
     row = false,
     rows = 4,
     tooltip,
+    regex,
   },
   ref,
 ) => {
@@ -49,7 +51,7 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
           name={label?.toString() || id}
           ref={ref}
           value={value}
-          onChange={e => handleChange(e, onChange, onError, messageLengthRegex)}
+          onChange={e => handleChange(e, onChange, onError, regex)}
           className={inputFieldClassName(error)}
           disabled={disabled}
           required={required}
@@ -60,7 +62,7 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
           <p className={errorClassName}>{error}</p>
         ) : (
           <div className={textAreaCharCountClassName}>
-            {value?.length || 0}/{getMaxLength(messageLengthRegex)}
+            {value?.length || 0}/{getMaxLength(regex)}
           </div>
         )}
       </div>
