@@ -308,6 +308,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           onError={setMessageError}
           disabled={isSubmitting}
           placeholder="Exemple : Nous nous sommes rencontrés lors de l'événement Machin à Trucville."
+          regex={messageLengthRegex}
         />
 
         <FormActions

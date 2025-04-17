@@ -17,7 +17,7 @@ import geographicZones from '@/app/data/geographicZone.json';
 import { Home } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import { handleChange } from '@/app/utils/form';
-import { getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
+import { descriptionLengthRegex, getMaxLength, inputLengthRegex } from '@/app/utils/regex';
 import { range } from '@/app/utils/select';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -178,9 +178,9 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
         fieldRef: descriptionRef,
         func: setDescriptionError,
       };
-    else if (description.length > getMaxLength(messageLengthRegex))
+    else if (description.length > getMaxLength(descriptionLengthRegex))
       error = {
-        message: `La description ne peut pas dépasser ${getMaxLength(messageLengthRegex)} caractères`,
+        message: `La description ne peut pas dépasser ${getMaxLength(descriptionLengthRegex)} caractères`,
         fieldRef: descriptionRef,
         func: setDescriptionError,
       };
@@ -341,6 +341,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
             onError={setDescriptionError}
             disabled={isSubmitting}
             placeholder="Décrivez les caractéristiques du bien..."
+            regex={descriptionLengthRegex}
             required
           />
 
