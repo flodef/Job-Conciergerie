@@ -80,6 +80,17 @@ export default function WaitingPage() {
     return diffInHours < MINIMUM_WAITING_TIME;
   };
 
+  const refreshButton = (
+    <div className="flex items-center justify-center">
+      <RefreshButton shouldDisconnect disabled={isRequestLessThanMinimumWaitingTime()} />
+      {isRequestLessThanMinimumWaitingTime() && (
+        <Tooltip size="small" icon={IconHelpCircle}>
+          Pour éviter le spam, vous pourrez réessayer dans {getTimeRemaining(creationDate)}
+        </Tooltip>
+      )}
+    </div>
+  );
+
   if (!userId || !userType) return <ErrorPage />;
 
   return (
@@ -87,26 +98,22 @@ export default function WaitingPage() {
       <EmailRetryManager onToastChange={setToast} />
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      <div className="w-full max-w-md bg-background overflow-hidden p-6">
+      <div className="w-full max-w-md bg-background overflow-hidden p-6 flex flex-col gap-4">
         {conciergerie ? (
           // Conciergerie waiting page
           <>
-            <h1 className="text-2xl font-bold mb-4 text-center">Vérification en cours</h1>
+            <h1 className="text-2xl font-bold text-center">Vérification en cours</h1>
 
-            <div className="flex items-center justify-center mb-6">
+            <div className="flex items-center justify-center">
               <IconMailForward size={60} className="text-primary" />
             </div>
 
-            <p className="mb-4">
-              Nous avons envoyé un email de vérification à l&apos;adresse associée à votre conciergerie.
-            </p>
+            <p>Nous avons envoyé un email de vérification à l&apos;adresse associée à votre conciergerie.</p>
 
-            <p className="mb-4">
-              Veuillez vérifier votre boîte de réception et suivre les instructions pour activer votre compte.
-            </p>
+            <p>Veuillez vérifier votre boîte de réception et suivre les instructions pour activer votre compte.</p>
 
-            <div className="bg-secondary/10 p-4 rounded-lg mb-4">
-              <div className="flex items-center mb-2">
+            <div className="bg-secondary/10 p-4 rounded-lg">
+              <div className="flex items-center">
                 <IconClock size={25} className="text-yellow-500 mr-2" />
                 <p className="text-sm text-foreground font-medium">
                   Statut actuel : <span className="font-bold text-yellow-500">En attente de vérification</span>
@@ -114,7 +121,7 @@ export default function WaitingPage() {
               </div>
             </div>
 
-            <div className="bg-primary/10 p-4 rounded-lg mb-6">
+            <div className="bg-primary/10 p-4 rounded-lg">
               <p className="text-sm text-foreground">
                 <span className="font-medium">Délai de traitement habituel :</span> 24 heures ouvrées
               </p>
@@ -123,13 +130,15 @@ export default function WaitingPage() {
                 prochaine visite.
               </p>
             </div>
+
+            {refreshButton}
           </>
         ) : employee ? (
           // Employee waiting page
           <>
-            <h1 className="text-2xl font-bold mb-4 text-center">Demande en cours d&apos;examen</h1>
+            <h1 className="text-2xl font-bold text-center">Demande en cours d&apos;examen</h1>
 
-            <p className="mb-4">
+            <p>
               Bonjour{' '}
               <span className="font-semibold">
                 {employee.firstName} {employee.familyName}
@@ -137,13 +146,13 @@ export default function WaitingPage() {
               ,
             </p>
 
-            <p className="mb-4">
+            <p>
               Votre demande d&apos;accès a bien été reçue et est actuellement en cours d&apos;examen par la conciergerie{' '}
               <span className="font-semibold">{employee.conciergerieName}</span>.
             </p>
 
-            <div className="bg-secondary/10 p-4 rounded-lg mb-4">
-              <div className="flex items-center mb-2">
+            <div className="bg-secondary/10 p-4 rounded-lg">
+              <div className="flex items-center">
                 {employee.status === 'pending' ? (
                   <IconClock size={25} className="text-yellow-500 mr-2" />
                 ) : employee.status === 'accepted' ? (
@@ -178,7 +187,7 @@ export default function WaitingPage() {
               )}
             </div>
 
-            <div className="bg-primary/10 p-4 rounded-lg mb-6">
+            <div className="bg-primary/10 p-4 rounded-lg">
               <p className="text-sm text-foreground">
                 <span className="font-medium">Délai de traitement habituel :</span> 48 heures ouvrées
               </p>
@@ -188,17 +197,7 @@ export default function WaitingPage() {
               </p>
             </div>
 
-            {/* Refresh Button with Tooltip */}
-            <div className="flex items-center justify-center mt-4">
-              <div className="flex items-center">
-                <RefreshButton shouldDisconnect disabled={isRequestLessThanMinimumWaitingTime()} />
-                {isRequestLessThanMinimumWaitingTime() && (
-                  <Tooltip size="small" icon={IconHelpCircle}>
-                    Pour éviter le spam, vous pourrez réessayer dans {getTimeRemaining(creationDate)}
-                  </Tooltip>
-                )}
-              </div>
-            </div>
+            {refreshButton}
           </>
         ) : !isLoading ? (
           // Error state
