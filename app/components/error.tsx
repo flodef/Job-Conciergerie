@@ -14,7 +14,7 @@ export default function ErrorPage({
       <div className="text-center max-w-md">
         <h1 className="text-3xl font-bold mb-4 text-foreground">{title}</h1>
         <p className="text-foreground">{message}</p>
-        <div className="flex gap-2 mt-4">
+        <div className="flex">
           <RefreshButton />
           <RefreshButton shouldDisconnect />
         </div>

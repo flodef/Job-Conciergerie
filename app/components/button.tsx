@@ -16,7 +16,7 @@ export function Button({
   children,
   disabled = false,
   loading = false,
-  loadingText = 'Traitement...',
+  loadingText = 'En cours...',
 }: {
   onClick: () => void;
   type?: ButtonType;
@@ -37,7 +37,7 @@ export function Button({
       {loading && !disabled ? (
         <>
           <span className={spinningClassName}></span>
-          {loadingText}
+          <span className="whitespace-nowrap">{loadingText}</span>
         </>
       ) : (
         children
