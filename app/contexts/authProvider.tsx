@@ -206,7 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setConciergerieName(undefined);
 
     // Force a full page reload to reset the app state
-    refreshData();
+    window.location.reload();
   };
 
   const nuke = () => {
