@@ -9,30 +9,29 @@ const AdvancedSettings: React.FC = () => {
   const [showNukeConfirmation, setShowNukeConfirmation] = useState(false);
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-col space-y-4 text-center">
-        <div>
-          <button onClick={() => setShowConfirmation(true)} className={buttonClassName('dangerous')}>
-            Réinitialiser mes données
+    <div className="flex flex-col space-y-4 text-center">
+      <div className="justify-items-center">
+        <button onClick={() => setShowConfirmation(true)} className={buttonClassName('dangerous')}>
+          Réinitialiser mes données
+        </button>
+        <p className="text-sm text-light mt-2">
+          Cette action supprimera votre accès à l&apos;application et vous redirigera vers la page d&apos;accueil. Vos
+          paramètres seront néanmoins conservés.
+        </p>
+      </div>
+
+      {/* Nuke button - only for conciergerie */}
+      {userType === 'conciergerie' && (
+        <div className="justify-items-center">
+          <button onClick={() => setShowNukeConfirmation(true)} className={buttonClassName('inferno')}>
+            Supprimer toutes les données
           </button>
-          <p className="text-sm text-foreground/70 mt-2">
+          <p className="text-sm text-light mt-2">
             Cette action supprimera votre accès à l&apos;application et vous redirigera vers la page d&apos;accueil.
+            Tous vos paramètres seront supprimés.
           </p>
         </div>
-
-        {/* Nuke button - only for conciergerie */}
-        {userType === 'conciergerie' && (
-          <div className="mt-4">
-            <button onClick={() => setShowNukeConfirmation(true)} className={buttonClassName('inferno')}>
-              Supprimer toutes les données
-            </button>
-            <p className="text-sm text-foreground/70 mt-2">
-              Cette action supprimera toutes les données de l&apos;application, y compris les missions, les prestataires
-              et les logements.
-            </p>
-          </div>
-        )}
-      </div>
+      )}
 
       <ConfirmationModal
         isOpen={showConfirmation}
@@ -48,6 +47,7 @@ const AdvancedSettings: React.FC = () => {
           <li>Vous serez déconnecté de votre profil actuel</li>
           <li>Vous devrez remplir à nouveau votre profil utilisateur et faire une demande d&apos;accès</li>
           <li>Vos données personnelles resteront enregistrées mais ne seront plus associées à votre profil</li>
+          <li>Vos paramètres seront conservés</li>
         </ul>
       </ConfirmationModal>
 
@@ -66,10 +66,9 @@ const AdvancedSettings: React.FC = () => {
           :
         </p>
         <ul className="list-disc pl-5 mt-2 space-y-1">
-          <li>Supprimera toutes les missions, prestataires et logements</li>
-          <li>Déconnectera tous les utilisateurs</li>
-          <li>Réinitialisera complètement l&apos;application</li>
-          <li>Vous devrez reconfigurer entièrement votre conciergerie</li>
+          <li>Vous serez déconnecté de votre profil actuel</li>
+          <li>Vous devrez de nouveau faire une demande d&apos;accès</li>
+          <li>Tous vos paramètres seront supprimés</li>
         </ul>
       </ConfirmationModal>
     </div>
