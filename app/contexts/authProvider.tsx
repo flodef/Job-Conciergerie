@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
 
       const foundEmployee = fetchedEmployees?.find(e => e.id === id);
-      const newUserData = foundEmployee || fetchedConciergeries?.find(c => c.id === id);
+      const newUserData = foundEmployee || fetchedConciergeries?.find(c => c.id.includes(id));
       const isEmployee = !!newUserData && !!foundEmployee;
       const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
       const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;

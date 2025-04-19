@@ -31,12 +31,12 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
         if (!conciergerie) throw new Error('Conciergerie non trouvée. Veuillez vous reconnecter.');
 
         // If the ID fetched is not the one in the localStorage, update it in the database
-        if (conciergerie.id !== userId) {
-          const result = await updateConciergerieWithUserId(id, conciergerie.id);
+        if (!conciergerie.id.includes(userId)) {
+          const result = await updateConciergerieWithUserId(conciergerie.id, userId);
           if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
           updateUserData({
             ...conciergerie,
-            id: userId,
+            id: result,
           });
         }
 

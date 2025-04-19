@@ -44,7 +44,7 @@ const ColorPickerComponent: ForwardRefRenderFunction<HTMLDivElement, ColorPicker
   // Check if a color is already used by another conciergerie
   const isColorUsed = (colorName: string) => {
     // Find conciergeries that are not the current one
-    const otherConciergeries = conciergeries?.filter(c => c.id !== userId);
+    const otherConciergeries = conciergeries?.filter(c => !c.id.includes(userId!));
 
     // Check if any other conciergerie uses this color
     return otherConciergeries?.some(c => c.colorName === colorName);

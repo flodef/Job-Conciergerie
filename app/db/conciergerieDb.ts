@@ -4,7 +4,7 @@ import { ConciergerieNotificationSettings, defaultConciergerieSettings } from '@
 
 // Type definition for database conciergerie
 export interface DbConciergerie {
-  id: string;
+  id: string[];
   name: string;
   email: string;
   tel: string;
@@ -63,7 +63,7 @@ export const updateConciergerie = async (id: string | undefined, data: Partial<D
         tel = COALESCE(${data.tel}, tel),
         color_name = COALESCE(${data.color_name}, color_name),
         notification_settings = COALESCE(${notificationSettings}::jsonb, notification_settings)
-      WHERE id = ${id}
+      WHERE ${id} = ANY(id)
       RETURNING id, name, email, tel, color_name, notification_settings
     `;
 
@@ -77,21 +77,23 @@ export const updateConciergerie = async (id: string | undefined, data: Partial<D
 /**
  * Update a conciergerie's ID
  */
-export const updateConciergerieId = async (conciergerieId: string, id: string) => {
+export const updateConciergerieId = async (conciergerieId: string[], id: string): Promise<string[] | null> => {
   try {
-    if (!conciergerieId) throw new Error('No conciergerie ID provided');
+    if (!conciergerieId || conciergerieId.length === 0) throw new Error('No conciergerie ID array provided');
     if (!id) throw new Error('No ID provided');
+    if (conciergerieId.includes(id)) throw new Error('ID already in conciergerie ID array');
 
+    const newIdArray = [id, ...conciergerieId].slice(0, 3);
     const result = await sql`
       UPDATE conciergeries
-      SET id = ${id}
-      WHERE id = ${conciergerieId}
-      RETURNING 1
+      SET id = ${newIdArray}::text[]
+      WHERE id = ${conciergerieId}::text[]
+      RETURNING id
     `;
 
-    return result.length > 0;
+    return result.length > 0 ? result[0].id : null;
   } catch (error) {
-    console.error(`Error updating conciergerie with id ${conciergerieId}:`, error);
-    return false;
+    console.error(`Error updating conciergerie with ID array ${conciergerieId}:`, error);
+    return null;
   }
 };

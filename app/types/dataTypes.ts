@@ -1,7 +1,7 @@
 import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
 
 export interface Conciergerie {
-  id: string;
+  id: string[];
   name: string;
   color: string;
   colorName: string;

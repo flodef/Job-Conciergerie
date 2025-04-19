@@ -31,11 +31,11 @@ export async function fetchConciergeries(): Promise<Conciergerie[] | null> {
  * Update a conciergerie with a user ID
  * This is used when a user accesses the app with a specific URL (e.g., /abcdef123456)
  */
-export async function updateConciergerieWithUserId(userId: string, conciergerieId: string): Promise<boolean> {
-  if (!userId || !conciergerieId) return false;
+export async function updateConciergerieWithUserId(conciergerieId: string[], userId: string): Promise<string[] | null> {
+  if (!userId || !conciergerieId) return null;
 
   // If the conciergerie already has the correct ID, we don't need to do anything
-  if (conciergerieId === userId) return true;
+  if (conciergerieId.includes(userId)) return conciergerieId;
 
   // Update the conciergerie's ID in the database
   return await updateConciergerieId(conciergerieId, userId);

@@ -28,7 +28,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 export default function Missions() {
   const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
   const { homes } = useHomes();
-  const { userType, isLoading: authLoading, getUserData } = useAuth();
+  const { userId, userType, isLoading: authLoading } = useAuth();
   const { currentPage } = useMenuContext();
   const { updateFetchTime, needsRefresh } = useFetchTime();
 
@@ -94,8 +94,8 @@ export default function Missions() {
   // Basic filtered missions (by user type) - must be declared before any conditional returns
   const basicFilteredMissions = useMemo(() => {
     if (missionsLoading) return [];
-    return filterMissionsByUserType(missions, userType, getUserData());
-  }, [missions, userType, missionsLoading, getUserData]);
+    return filterMissionsByUserType(missions, userType, userId);
+  }, [missions, userId, userType, missionsLoading]);
 
   // Apply additional filters (conciergerie, status, zones) - must be declared before any conditional returns
   const filteredMissions = useMemo(() => {
