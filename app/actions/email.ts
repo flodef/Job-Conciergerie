@@ -2,7 +2,7 @@
 
 import { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
-import nodemailer from 'nodemailer';
+import nodemailer, { SendMailOptions } from 'nodemailer';
 
 // Configure nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -15,11 +15,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-interface Email {
-  to: string;
-  from?: string;
-  subject: string;
-  html: string;
+interface Email extends SendMailOptions {
   id?: string; // For retry identification
   type?: string; // For categorizing the email type for retries
 }
@@ -31,7 +27,7 @@ async function sendEmail(email: Email): Promise<boolean> {
       from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
       replyTo: email.from,
     });
-    
+
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
@@ -44,7 +40,11 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 /**
  * Send a verification email to a conciergerie
  */
-export async function sendConciergerieVerificationEmail(conciergerie: Conciergerie, userId: string, retryId?: string): Promise<boolean> {
+export async function sendConciergerieVerificationEmail(
+  conciergerie: Conciergerie,
+  userId: string,
+  retryId?: string,
+): Promise<boolean> {
   const verificationUrl = baseUrl + `/${userId}`;
 
   return await sendEmail({
@@ -75,7 +75,11 @@ export async function sendConciergerieVerificationEmail(conciergerie: Concierger
 /**
  * Send a notification email to a conciergerie about a new employee registration
  */
-export async function sendEmployeeRegistrationEmail(conciergerie: Conciergerie, employee: Employee, retryId?: string): Promise<boolean> {
+export async function sendEmployeeRegistrationEmail(
+  conciergerie: Conciergerie,
+  employee: Employee,
+  retryId?: string,
+): Promise<boolean> {
   return await sendEmail({
     id: retryId,
     type: 'registration',
@@ -255,11 +259,12 @@ export async function sendLateCompletionEmail(
     id: retryId,
     type: 'lateCompletion',
     to: conciergerie.email,
+    cc: employee.email,
     subject: `⚠️ Mission non terminée à temps - ${home.title}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #d32f2f;">Mission non terminée à temps</h2>
-        <p>Bonjour ${conciergerie.name},</p>
+        <p>Bonjour,</p>
         <p>Une mission pour <strong>${
           home.title
         }</strong> n'a pas été terminée à temps. La date de fin était prévue pour ${endDate} (${daysLateText}).</p>
@@ -274,7 +279,7 @@ export async function sendLateCompletionEmail(
           <p><strong>Statut actuel:</strong> ${statusLabel}</p>
         </div>
         
-        <p>Vous pouvez vérifier l'état de cette mission ou contacter l'employé via votre espace conciergerie.</p>
+        <p>Vous pouvez vérifier l'état de cette mission via votre espace conciergerie.</p>
         <p>
           <a href="${baseUrl}/calendar" style="display: inline-block; background-color: #d32f2f; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
             Voir mes missions
