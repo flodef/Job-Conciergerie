@@ -388,9 +388,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
           <ConfirmationModal
             isOpen={showConfirmDialog}
             onClose={() => setShowConfirmDialog(false)}
-            onConfirm={() => {
-              onClose();
-            }}
+            onConfirm={onClose}
             title="Modifications non enregistrées"
             message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
             confirmText="Quitter sans enregistrer"

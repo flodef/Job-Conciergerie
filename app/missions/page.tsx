@@ -290,11 +290,7 @@ export default function Missions() {
           message="Vous devez d'abord ajouter un bien avant de pouvoir créer une mission."
           confirmText="Ajouter un bien"
           cancelText="Annuler"
-          onConfirm={() => {
-            setIsNoHomesModalOpen(false);
-            setIsAddHomeModalOpen(true);
-          }}
-          onCancel={() => setIsNoHomesModalOpen(false)}
+          onConfirm={() => setIsAddHomeModalOpen(true)}
           onClose={() => setIsNoHomesModalOpen(false)}
         />
       )}
