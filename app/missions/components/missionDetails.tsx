@@ -3,6 +3,7 @@
 import ConfirmationModal from '@/app/components/confirmationModal';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
+import Switch from '@/app/components/switch';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
@@ -31,6 +32,7 @@ import {
   IconUsersGroup,
   IconZoomScan,
 } from '@tabler/icons-react';
+import clsx from 'clsx/lite';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 
@@ -462,16 +464,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           confirmText="Accepter"
           cancelText="Annuler"
         >
-          <div className="mt-4 flex items-center">
-            <input
-              type="checkbox"
-              id="dontShowAgain"
-              checked={dontShowAgain}
-              onChange={e => setDontShowAgain(e.target.checked)}
-              className="mr-2 h-4 w-4 text-primary border-secondary rounded focus:ring-primary"
-            />
-            <label htmlFor="dontShowAgain" className="text-sm text-foreground/80">
-              Ne plus afficher ce message
+          <div className="mt-4 flex items-center justify-center w-full">
+            <label className="flex items-center cursor-pointer select-none w-full justify-center gap-2">
+              <span className={clsx('text-light', dontShowAgain ? 'font-bold' : '')}>Ne plus afficher ce message</span>
+              <Switch enabled={dontShowAgain} onChange={() => setDontShowAgain(!dontShowAgain)} />
             </label>
           </div>
         </ConfirmationModal>
