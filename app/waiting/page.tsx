@@ -13,7 +13,8 @@ import { IconAlertCircle, IconCircleCheck, IconClock, IconHelpCircle, IconMailFo
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const MINIMUM_WAITING_TIME = 24; // minimum waiting time in hours
+const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
+const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
 
 export default function WaitingPage() {
   const { userId, userType, isLoading: authLoading, conciergerieName, conciergeries, employees } = useAuth();
@@ -23,6 +24,7 @@ export default function WaitingPage() {
   const [employee, setEmployee] = useState<Employee>();
   const [timeWaiting, setTimeWaiting] = useState('');
   const [creationDate, setCreationDate] = useState<Date>(new Date(0));
+  const [pageLoadTime] = useState<Date>(new Date());
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const [toast, setToast] = useState<Toast>();
 
@@ -83,10 +85,12 @@ export default function WaitingPage() {
 
   // Helper function to check if request is less than minimum waiting time
   const isRequestLessThanMinimumWaitingTime = () => {
-    if (!creationDate) return true; // Default to disabled if no date available
+    const referenceDate = creationDate.getTime() !== 0 ? creationDate : pageLoadTime;
+    const minimumWaitingTime =
+      creationDate.getTime() !== 0 ? EMPLOYEE_MINIMUM_WAITING_TIME : CONCIERGERIE_MINIMUM_WAITING_TIME;
     const now = new Date();
-    const diffInHours = (now.getTime() - creationDate.getTime()) / (1000 * 60 * 60);
-    return diffInHours < MINIMUM_WAITING_TIME;
+    const diffInMinutes = (now.getTime() - referenceDate.getTime()) / (1000 * 60);
+    return diffInMinutes < minimumWaitingTime;
   };
 
   const refreshButton = (
