@@ -69,20 +69,20 @@ export default function ImageCarousel({
               e.stopPropagation();
               handlePrevImage();
             }}
-            className="absolute left-4 p-2 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors"
+            className="absolute left-4 p-1 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors"
             aria-label="Image précédente"
           >
-            <IconChevronLeft size={24} />
+            <IconChevronLeft className="text-white" size={32} />
           </button>
           <button
             onClick={e => {
               e.stopPropagation();
               handleNextImage();
             }}
-            className="absolute right-4 p-2 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors"
+            className="absolute right-4 p-1 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors"
             aria-label="Image suivante"
           >
-            <IconChevronRight size={24} />
+            <IconChevronRight className="text-white" size={32} />
           </button>
           <div className="absolute bottom-4 flex space-x-2">
             {images.map((_, index) => (

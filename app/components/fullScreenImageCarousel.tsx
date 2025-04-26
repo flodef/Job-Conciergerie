@@ -31,7 +31,7 @@ export function FullScreenImageCarousel({
         }
       }}
     >
-      <CloseButton onClose={onClose} className="absolute top-4 right-4 text-white z-10" />
+      <CloseButton size={32} onClose={onClose} className="absolute top-4 right-4 text-white z-10" />
       <ImageCarousel imageUrls={imageUrls} altPrefix={altPrefix} className="w-full h-[80vh]" startIndex={startIndex} />
     </div>
   );

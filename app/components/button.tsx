@@ -71,11 +71,12 @@ export function RefreshButton({
 
 type CloseButtonProps = {
   onClose: (e?: React.MouseEvent) => void;
+  size?: number;
   disabled?: boolean;
   className?: string;
 };
 
-export function CloseButton({ onClose, disabled = false, className = '' }: CloseButtonProps) {
+export function CloseButton({ onClose, size = 24, disabled = false, className = '' }: CloseButtonProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onClose(e);
@@ -87,7 +88,7 @@ export function CloseButton({ onClose, disabled = false, className = '' }: Close
       onClick={!disabled ? handleClick : undefined}
       aria-label={'Fermer'}
     >
-      <IconX size={24} stroke={2} />
+      <IconX size={size} />
     </button>
   );
 }
