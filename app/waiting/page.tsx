@@ -21,7 +21,7 @@ export default function WaitingPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [employee, setEmployee] = useState<Employee>();
-  const [daysWaiting, setDaysWaiting] = useState('');
+  const [timeWaiting, setTimeWaiting] = useState('');
   const [creationDate, setCreationDate] = useState<Date>(new Date(0));
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const [toast, setToast] = useState<Toast>();
@@ -46,8 +46,6 @@ export default function WaitingPage() {
       if (foundEmployee.createdAt) {
         const createdDate = new Date(foundEmployee.createdAt);
         setCreationDate(createdDate);
-        const timeDifference = getTimeDifference(createdDate, new Date());
-        setDaysWaiting(timeDifference);
       }
 
       setIsLoading(false);
@@ -71,6 +69,17 @@ export default function WaitingPage() {
     }[userType];
     handleUser(userId);
   }, [userId, userType, authLoading, handleConciergerie, handleEmployee, router]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (creationDate.getTime() !== 0) {
+      interval = setInterval(() => {
+        const timeDifference = getTimeDifference(creationDate, new Date());
+        setTimeWaiting(timeDifference);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [creationDate]);
 
   // Helper function to check if request is less than minimum waiting time
   const isRequestLessThanMinimumWaitingTime = () => {
@@ -179,10 +188,10 @@ export default function WaitingPage() {
                   </span>
                 </p>
               </div>
-              {daysWaiting && (
+              {timeWaiting && (
                 <p className="text-sm text-foreground ml-7">
                   <span className="font-medium">Demande soumise il y a : </span>
-                  <span className="font-bold">{daysWaiting}</span>
+                  <span className="font-bold">{timeWaiting}</span>
                 </p>
               )}
             </div>
