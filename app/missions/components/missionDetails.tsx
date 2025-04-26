@@ -213,7 +213,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           <FullScreenImageCarousel
             altPrefix={`Photo de ${home.title}`}
             imageUrls={home.images}
-            startIndex={selectedImageIndex}
+            initialIndex={selectedImageIndex}
             onClose={() => setSelectedImageIndex(undefined)}
           />
         )}

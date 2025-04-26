@@ -7,7 +7,7 @@ import clsx from 'clsx/lite';
 interface FullScreenImageCarouselProps {
   imageUrls: string | string[];
   altPrefix: string;
-  startIndex?: number;
+  initialIndex?: number;
   onClose: () => void;
   className?: string;
 }
@@ -15,7 +15,7 @@ interface FullScreenImageCarouselProps {
 export function FullScreenImageCarousel({
   imageUrls,
   altPrefix,
-  startIndex = 0,
+  initialIndex = 0,
   onClose,
   className = '',
 }: FullScreenImageCarouselProps) {
@@ -32,7 +32,7 @@ export function FullScreenImageCarousel({
       }}
     >
       <CloseButton size={32} onClose={onClose} className="absolute top-4 right-4 text-white z-10" />
-      <ImageCarousel imageUrls={imageUrls} altPrefix={altPrefix} className="w-full h-[80vh]" startIndex={startIndex} />
+      <ImageCarousel imageUrls={imageUrls} altPrefix={altPrefix} className="w-full h-[80vh]" initialIndex={initialIndex} />
     </div>
   );
 }

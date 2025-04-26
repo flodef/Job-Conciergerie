@@ -32,7 +32,7 @@ export default function FullScreenModal({
         {/* Fixed header with title and close button */}
         <div className="sticky top-0 z-10 bg-background p-4 border-b border-secondary flex justify-between items-center rounded-t-lg">
           <h2 className="text-xl font-bold overflow-hidden">{title}</h2>
-          <CloseButton size={32} onClose={!disabled ? onClose : () => {}} />
+          <CloseButton onClose={!disabled ? onClose : () => {}} />
         </div>
 
         {/* Scrollable content area */}

@@ -113,7 +113,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
           <FullScreenImageCarousel
             altPrefix={`Photo de ${home.title}`}
             imageUrls={home.images}
-            startIndex={selectedImageIndex}
+            initialIndex={selectedImageIndex}
             onClose={() => setSelectedImageIndex(undefined)}
           />
         )}

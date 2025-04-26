@@ -265,7 +265,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
       <FullScreenImageCarousel
         altPrefix={`Photo de ${title}`}
         imageUrls={images}
-        startIndex={selectedImageIndex}
+        initialIndex={selectedImageIndex}
         onClose={() => setSelectedImageIndex(undefined)}
       />
     );
