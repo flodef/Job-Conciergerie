@@ -84,7 +84,7 @@ export function CloseButton({ onClose, size = 24, disabled = false, className = 
 
   return (
     <button
-      className={clsx('text-foreground hover:scale-110 transition-transform', className)}
+      className={clsx('text-foreground hover:scale-110 transition-transform cursor-pointer z-50', className)}
       onClick={!disabled ? handleClick : undefined}
       aria-label={'Fermer'}
     >

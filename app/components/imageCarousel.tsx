@@ -142,27 +142,25 @@ export default function ImageCarousel({
       onClick={() => onCurrentImageIndexChange?.(currentIndex)}
     >
       <div className="w-full h-full overflow-hidden relative">
-        <div className="w-full h-full relative">
-          {/* Only render image if it's been preloaded */}
-          {preloadedImages.current.has(currentImageUrl) && (
-            <Image
-              key={`image-${currentIndex}`}
-              src={currentImageUrl}
-              alt={`${altPrefix} ${currentIndex + 1}`}
-              fill
-              className="object-contain rounded-lg"
-              sizes="100vw"
-              priority
-            />
-          )}
+        {/* Only render image if it's been preloaded */}
+        {preloadedImages.current.has(currentImageUrl) && (
+          <Image
+            key={`image-${currentIndex}`}
+            src={currentImageUrl}
+            alt={`${altPrefix} ${currentIndex + 1}`}
+            fill
+            className="object-contain rounded-lg"
+            sizes="100vw"
+            priority
+          />
+        )}
 
-          {/* Loading spinner */}
-          {showSpinner && (
-            <div className="absolute inset-0 flex items-center justify-center z-10">
-              <LoadingSpinner />
-            </div>
-          )}
-        </div>
+        {/* Loading spinner */}
+        {showSpinner && (
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <LoadingSpinner />
+          </div>
+        )}
       </div>
 
       {/* Navigation controls */}
@@ -173,7 +171,7 @@ export default function ImageCarousel({
               e.stopPropagation();
               goToPrevious();
             }}
-            className="absolute left-4 p-1 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors"
+            className="absolute left-4 p-1 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors z-20"
             aria-label="Image précédente"
           >
             <IconChevronLeft className="text-white" size={32} />
@@ -183,7 +181,7 @@ export default function ImageCarousel({
               e.stopPropagation();
               goToNext();
             }}
-            className="absolute right-4 p-1 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors"
+            className="absolute right-4 p-1 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors z-20"
             aria-label="Image suivante"
           >
             <IconChevronRight className="text-white" size={32} />
@@ -196,7 +194,7 @@ export default function ImageCarousel({
                   e.stopPropagation();
                   goToIndex(index);
                 }}
-                className={`w-2 h-2 rounded-full transition-colors ${
+                className={`w-2 h-2 rounded-full transition-colors z-20 ${
                   index === currentIndex ? 'bg-white' : 'bg-white/50'
                 }`}
                 aria-label={`Aller à l&apos;image ${index + 1}`}
