@@ -22,7 +22,7 @@ export function FullScreenImageCarousel({
   return (
     <div
       className={clsx(
-        'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4',
+        'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center py-4',
         className,
       )}
       onClick={e => {
@@ -32,7 +32,12 @@ export function FullScreenImageCarousel({
       }}
     >
       <CloseButton size={32} onClose={onClose} className="absolute top-4 right-4 text-white z-10" />
-      <ImageCarousel imageUrls={imageUrls} altPrefix={altPrefix} className="w-full h-[80vh]" initialIndex={initialIndex} />
+      <ImageCarousel
+        imageUrls={imageUrls}
+        altPrefix={altPrefix}
+        className="w-full h-[80vh]"
+        initialIndex={initialIndex}
+      />
     </div>
   );
 }
