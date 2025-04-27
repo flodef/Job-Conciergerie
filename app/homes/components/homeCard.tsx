@@ -17,7 +17,7 @@ export default function HomeCard({ home, onClick, onEdit, displayMode = 'thumb' 
     onEdit();
   };
 
-  const HomeImage = ({ altText, sizes, className }: { altText: string; sizes: string; className: string }) => (
+  const HomeImage = ({ altText, sizes, className }: { altText: string; sizes: string; className?: string }) => (
     <Image
       src={home.images && home.images.length > 0 ? getIPFSImageUrl(home.images[0]) : fallbackImage}
       alt={altText}
@@ -42,7 +42,7 @@ export default function HomeCard({ home, onClick, onEdit, displayMode = 'thumb' 
           >
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <div className="relative w-8 h-8 overflow-hidden rounded-md flex-shrink-0">
-                <HomeImage altText={`Miniature de ${home.title}`} sizes="32px" className="object-cover" />
+                <HomeImage altText={`Miniature de ${home.title}`} sizes="32px" />
               </div>
               <span className="text-foreground font-medium truncate">{home.title}</span>
             </div>
@@ -59,7 +59,7 @@ export default function HomeCard({ home, onClick, onEdit, displayMode = 'thumb' 
             <HomeImage
               altText={`Photo de ${home.title}`}
               sizes="(max-width: 768px) 100vw, 300px"
-              className="object-cover rounded-md"
+              className="rounded-md"
             />
           </div>
         );
@@ -77,7 +77,7 @@ export default function HomeCard({ home, onClick, onEdit, displayMode = 'thumb' 
               <HomeImage
                 altText={`Photo de ${home.title}`}
                 sizes="(max-width: 768px) 100vw, 300px"
-                className="object-cover rounded-md"
+                className="rounded-md"
               />
             </div>
           </div>

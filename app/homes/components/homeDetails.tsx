@@ -13,7 +13,6 @@ import { actionButtonBarClassName, actionButtonClassName } from '@/app/utils/cla
 import { fallbackImage, getIPFSImageUrl } from '@/app/utils/ipfs';
 import { IconFileDescription, IconListCheck, IconPencil, IconTrash } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 type HomeDetailsProps = {
@@ -123,20 +122,21 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
             <div>
               <div className="grid grid-cols-3 gap-2">
                 {[...new Set(home.images)].map((cidWithId, index) => (
-                  <div key={index} className="relative aspect-square">
-                    <Image
+                  <picture
+                    key={`thumb-${cidWithId}`}
+                    className="relative aspect-square"
+                    onClick={() => setSelectedImageIndex(index)}
+                  >
+                    <img
                       src={getIPFSImageUrl(cidWithId)}
                       alt={`Photo ${index + 1}`}
-                      fill
-                      sizes="(max-width: 768px) 33vw, 150px"
-                      className="object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => setSelectedImageIndex(index)}
+                      className="absolute inset-0 w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                      loading="eager"
                       onError={e => {
-                        // Fallback to mockup
-                        (e.target as HTMLImageElement).src = fallbackImage;
+                        e.currentTarget.src = fallbackImage;
                       }}
                     />
-                  </div>
+                  </picture>
                 ))}
               </div>
             </div>
