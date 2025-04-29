@@ -3,13 +3,14 @@
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
+import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import { Mission } from '@/app/types/dataTypes';
 import { formatCalendarDate, formatMissionTimeForCalendar, groupMissionsByDate } from '@/app/utils/calendar';
 import { getColorValueByName } from '@/app/utils/color';
-import { formatDateRange, isPastDate, isToday, sortDates } from '@/app/utils/date';
+import { isPastDate, isToday, sortDates } from '@/app/utils/date';
 import { Page } from '@/app/utils/navigation';
 import { calculateEmployeePointsForDay, calculateMissionPoints, formatNumber, getTaskPoints } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
@@ -17,8 +18,9 @@ import clsx from 'clsx/lite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function Calendar() {
-  const { userId, userType, conciergerieName, conciergeries, isLoading: authLoading } = useAuth();
+  const { userId, userType, employees, conciergerieName, conciergeries, isLoading: authLoading } = useAuth();
   const { missions, fetchMissions, getLateMissions } = useMissions();
+  const { homes } = useHomes();
   const { currentPage } = useMenuContext();
   const { needsRefresh, updateFetchTime } = useFetchTime();
   const [toast, setToast] = useState<Toast>();
@@ -184,6 +186,8 @@ export default function Calendar() {
                 {missionsForDate.map(mission => {
                   const conciergerie = conciergeries.find(c => c.name === mission.conciergerieName);
                   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
+                  const home = homes.find(h => h.id === mission.homeId);
+                  const employee = employees.find(e => e.id === mission.employeeId);
                   const { totalPoints } = calculateMissionPoints(mission);
 
                   return (
@@ -213,16 +217,10 @@ export default function Calendar() {
                         </div>
                       )}
                       <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center">
-                          <div
-                            className="w-3 h-3 rounded-full mr-2"
-                            style={{ backgroundColor: conciergerieColor }}
-                          ></div>
-                          <span className="font-medium">{mission.conciergerieName}</span>
-                        </div>
-                        <div className="text-sm flex items-center gap-1">
-                          <IconClock size={16} />
-                          <span>{formatMissionTimeForCalendar(mission, date)}</span>
+                        <span className="font-medium">{`${home?.title} (${home?.geographicZone})`}</span>
+                        <div className="text-sm flex items-center self-center gap-1">
+                          <IconClock className="min-w-4" size={16} />
+                          <span className="whitespace-nowrap">{formatMissionTimeForCalendar(mission, date)}</span>
                         </div>
                       </div>
 
@@ -252,12 +250,19 @@ export default function Calendar() {
                             <span className="font-medium">{formatNumber(mission.hours)}</span>
                           </div>
                         </div>
-                        <div className="flex items-center">
-                          <span className="text-light text-nowrap">Durée :&nbsp;</span>
-                          <span className="font-medium">
-                            {formatDateRange(new Date(mission.startDateTime), new Date(mission.endDateTime))}
-                          </span>
-                        </div>
+                        {userType === 'conciergerie' ? (
+                          <div className="flex items-center">
+                            <span className="text-light text-nowrap">Prestataire :&nbsp;</span>
+                            <span className="font-medium">
+                              {employee?.firstName} {employee?.familyName}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center">
+                            <span className="text-light text-nowrap">Conciergerie :&nbsp;</span>
+                            <span className="font-medium">{mission.conciergerieName}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
