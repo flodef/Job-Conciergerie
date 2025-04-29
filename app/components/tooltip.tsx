@@ -105,7 +105,8 @@ export default function Tooltip({
         ref={buttonRef}
         type="button"
         className={clsx('text-light hover:text-foreground focus:outline-none cursor-help', className)}
-        onClick={() => {
+        onClick={e => {
+          e.stopPropagation();
           setIsVisible(!isVisible);
           onClick?.();
         }}
