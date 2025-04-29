@@ -12,7 +12,7 @@ export interface DbMission {
   modified_date: Date;
   conciergerie_name: string;
   status: MissionStatus | null;
-  allowed_employees?: string[];
+  allowed_employees?: string[] | null;
   hours: number;
 }
 

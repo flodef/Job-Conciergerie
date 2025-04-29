@@ -208,7 +208,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
           tasks: availableTasks,
           startDateTime: startDate,
           endDateTime: endDate,
-          allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
+          allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : null,
           hours: totalHours,
           employeeId: null,
           status: null,
@@ -224,7 +224,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
           startDateTime: startDate,
           endDateTime: endDate,
           modifiedDate: new Date(),
-          allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : undefined,
+          allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : null,
           hours: totalHours,
         };
 

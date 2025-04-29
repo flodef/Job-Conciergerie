@@ -59,6 +59,6 @@ export interface Mission {
   modifiedDate: Date;
   conciergerieName: string; // Reference to the conciergerie by name
   status: MissionStatus | null; // Default is 'pending' if not specified
-  allowedEmployees?: string[]; // List of prestataire IDs who can see this mission, empty or undefined means all
+  allowedEmployees?: string[] | null; // List of prestataire IDs who can see this mission, empty or undefined means all
   hours: number; // Total hours for the mission based on tasks and home specifications
 }
