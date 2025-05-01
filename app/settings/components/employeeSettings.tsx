@@ -118,9 +118,7 @@ const EmployeeSettings: React.FC = () => {
         throw new Error(error.message);
       }
 
-      if (!userId) throw new Error("L'identifiant n'est pas défini");
-
-      const updatedEmployee = await updateEmployeeData(userId, {
+      const updatedEmployee = await updateEmployeeData(getUserData<Employee>(), {
         email,
         tel,
         geographicZone,

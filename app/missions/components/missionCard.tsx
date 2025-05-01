@@ -15,13 +15,13 @@ type MissionCardProps = {
 };
 
 export default function MissionCard({ mission, onClick, onEdit }: MissionCardProps) {
-  const { employees, conciergeries } = useAuth();
+  const { conciergeries, findEmployee } = useAuth();
   const { homes } = useHomes();
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
 
   const home = homes.find(h => h.id === mission.homeId);
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
-  const employee = employees.find(e => e.id === mission.employeeId);
+  const employee = findEmployee(mission.employeeId);
 
   // Fetch conciergerie data when mission changes
   useEffect(() => {

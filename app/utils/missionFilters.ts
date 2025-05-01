@@ -1,21 +1,16 @@
-import { UserType } from '@/app/contexts/authProvider';
 import { Home, Mission } from '@/app/types/dataTypes';
 
 /**
  * Filter missions based on user type
  */
-export function filterMissionsByUserType(
-  missions: Mission[],
-  userType: UserType | undefined,
-  userId: string | undefined,
-): Mission[] {
+export function filterMissionsByUserType(missions: Mission[], userId: string | undefined): Mission[] {
   return missions.filter(mission => {
     // For employee users, show only missions they have access to
-    if (userType === 'employee') {
+    if (userId) {
       if (mission.employeeId) return mission.employeeId === userId;
 
       // If the mission has prestataires specified, check if the current employee is in the list
-      if (mission.allowedEmployees?.length) return mission.allowedEmployees.includes(userId ?? '');
+      if (mission.allowedEmployees?.length) return mission.allowedEmployees.includes(userId);
 
       // If no prestataires specified, show to all
       return true;

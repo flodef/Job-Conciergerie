@@ -41,9 +41,10 @@ export async function updateConciergerieWithUserId(conciergerieId: string[], use
   return await updateConciergerieId(conciergerieId, userId);
 }
 
-export async function updateConciergerieData(id: string, data: Partial<Conciergerie>): Promise<Conciergerie | null> {
-  if (!id) return null;
-
+export async function updateConciergerieData(
+  conciergerie: Conciergerie | undefined,
+  data: Partial<Conciergerie>,
+): Promise<Conciergerie | null> {
   // Convert to DB format
   const dbData: Partial<DbConciergerie> = {
     name: data.name,
@@ -53,5 +54,5 @@ export async function updateConciergerieData(id: string, data: Partial<Concierge
     notification_settings: data.notificationSettings,
   };
 
-  return await updateConciergerie(id, dbData);
+  return await updateConciergerie(conciergerie?.name, dbData);
 }

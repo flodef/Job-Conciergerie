@@ -52,7 +52,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     completeMission,
     setShouldShowAcceptWarning,
   } = useMissions();
-  const { userType, conciergerieName, conciergeries, employees } = useAuth();
+  const { userType, conciergerieName, conciergeries, findEmployee } = useAuth();
   const { homes } = useHomes();
 
   const [toast, setToast] = useState<Toast>();
@@ -176,7 +176,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   }
 
   const firstHomeImage = home?.images?.length ? home.images[0] : '';
-  const employee = employees.find(e => e.id === mission.employeeId);
+  const employee = findEmployee(mission.employeeId);
 
   const footer = (
     <MissionActions
@@ -408,14 +408,9 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     {!!mission.allowedEmployees?.length && (
                       <Tooltip>
                         <ul className="list-disc pl-4">
-                          {mission.allowedEmployees?.map(employeeId => {
-                            const employee = employees.find(e => e.id === employeeId);
-                            return (
-                              <li key={employeeId}>
-                                {employee ? `${employee.firstName} ${employee.familyName}` : employeeId}
-                              </li>
-                            );
-                          })}
+                          {mission.allowedEmployees?.map(employeeId => (
+                            <li key={employeeId}>{employeeId}</li>
+                          ))}
                         </ul>
                       </Tooltip>
                     )}

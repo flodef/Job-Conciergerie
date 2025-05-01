@@ -48,9 +48,9 @@ export const getAllConciergeries = async () => {
 /**
  * Update a conciergerie's data
  */
-export const updateConciergerie = async (id: string | undefined, data: Partial<DbConciergerie>) => {
+export const updateConciergerie = async (name: string | undefined, data: Partial<DbConciergerie>) => {
   try {
-    if (!id) throw new Error('No ID provided');
+    if (!name) throw new Error('No name provided');
 
     // Convert notification_settings to JSONB if present
     const notificationSettings = data.notification_settings ? JSON.stringify(data.notification_settings) : null;
@@ -63,13 +63,13 @@ export const updateConciergerie = async (id: string | undefined, data: Partial<D
         tel = COALESCE(${data.tel}, tel),
         color_name = COALESCE(${data.color_name}, color_name),
         notification_settings = COALESCE(${notificationSettings}::jsonb, notification_settings)
-      WHERE ${id} = ANY(id)
+      WHERE name = ${name}
       RETURNING id, name, email, tel, color_name, notification_settings
     `;
 
     return result.length > 0 ? formatConciergerie(result[0] as DbConciergerie) : null;
   } catch (error) {
-    console.error(`Error updating conciergerie with ID ${id}:`, error);
+    console.error(`Error updating conciergerie with name ${name}:`, error);
     return null;
   }
 };

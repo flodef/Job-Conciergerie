@@ -26,7 +26,7 @@ type MissionFormProps = {
 
 export default function MissionForm({ mission, onClose, onCancel, mode }: MissionFormProps) {
   const { homes, addMission, updateMission, missionExists } = useMissions();
-  const { conciergerieName, employees: allEmployees } = useAuth();
+  const { conciergerieName, employees: allEmployees, getEmployeeId } = useAuth();
 
   // Filter homes by the current conciergerie
   const filteredHomes = homes.filter(home => home.conciergerieName === conciergerieName);
@@ -372,8 +372,8 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               values={selectedEmployees}
               onChange={setSelectedEmployees}
               options={employees.map(emp => ({
-                value: emp.id,
-                label: `${emp.firstName} ${emp.familyName}`,
+                value: getEmployeeId(emp),
+                label: getEmployeeId(emp),
               }))}
               disabled={isSubmitting || cannotEdit}
               required
@@ -384,14 +384,9 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
                     ? 'Tous les prestataires pourront voir cette mission'
                     : 'Seuls les prestataires suivant pourront voir cette mission :'}
                   <ul className="list-disc pl-4">
-                    {selectedEmployees.map(employeeId => {
-                      const employee = employees.find(e => e.id === employeeId);
-                      return (
-                        <li key={employeeId}>
-                          {employee ? `${employee.firstName} ${employee.familyName}` : employeeId}
-                        </li>
-                      );
-                    })}
+                    {selectedEmployees.map(employeeId => (
+                      <li key={employeeId}>{employeeId}</li>
+                    ))}
                   </ul>
                 </>
               }

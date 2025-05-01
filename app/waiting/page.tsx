@@ -39,7 +39,7 @@ export default function WaitingPage() {
   const handleEmployee = useCallback(
     (userId: string) => {
       // Check if employee exists in database with this ID
-      const foundEmployee = employees?.find(e => e.id === userId);
+      const foundEmployee = employees.find(e => e.id.includes(userId));
       if (!foundEmployee) return;
 
       setEmployee(foundEmployee);

@@ -23,7 +23,7 @@ type EmployeeDetailsProps = {
 };
 
 export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsProps) {
-  const { deleteEmployee } = useAuth();
+  const { getEmployeeId, deleteEmployee } = useAuth();
   const { missions } = useMissions();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -33,7 +33,7 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
   const handleDelete = () => {
     setIsSubmitting(true);
     setIsDeleteModalOpen(false);
-    deleteEmployee(employee.id).then(isSuccess => {
+    deleteEmployee(employee).then(isSuccess => {
       setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Employé supprimé !' : "Erreur lors de la suppression de l'employé",
@@ -124,7 +124,11 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
         <div className={clsx(descriptionClassName, 'flex items-center gap-1')}>
           Missions complétées :
           <span className={labelClassName}>
-            {missions.filter(mission => mission.employeeId === employee.id && mission.status === 'completed').length}
+            {
+              missions.filter(
+                mission => getEmployeeId(employee) === mission.employeeId && mission.status === 'completed',
+              ).length
+            }
           </span>
         </div>
 

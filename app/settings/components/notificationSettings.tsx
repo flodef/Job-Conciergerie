@@ -3,6 +3,7 @@ import { updateEmployeeData } from '@/app/actions/employee';
 import Switch from '@/app/components/switch';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
+import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import {
   ConciergerieNotificationSettings,
   defaultConciergerieSettings,
@@ -32,7 +33,7 @@ const getDefaultSettings = (userType: UserType | undefined) => {
 };
 
 const NotificationSettings: React.FC = () => {
-  const { userId, userType, getUserData, updateUserData } = useAuth();
+  const { userType, getUserData, updateUserData } = useAuth();
 
   const [toast, setToast] = useState<Toast>();
   const [settings, setSettings] = useState<ConciergerieNotificationSettings | EmployeeNotificationSettings>(
@@ -58,19 +59,18 @@ const NotificationSettings: React.FC = () => {
     settings: T,
   ) => {
     try {
-      if (!userId) throw new Error('User ID not found');
       if (!userType) throw new Error('User type not found');
 
       const updateData = {
         conciergerie: async () => {
-          const data = await updateConciergerieData(userId, {
+          const data = await updateConciergerieData(getUserData<Conciergerie>(), {
             notificationSettings: settings as ConciergerieNotificationSettings,
           });
           if (!data) throw new Error('failed to update conciergerie in database');
           updateUserData(data);
         },
         employee: async () => {
-          const data = await updateEmployeeData(userId, {
+          const data = await updateEmployeeData(getUserData<Employee>(), {
             notificationSettings: settings as EmployeeNotificationSettings,
           });
           if (!data) throw new Error('failed to update employee in database');

@@ -20,7 +20,10 @@ interface AuthContextType {
   updateUserType: (userType: UserType | undefined) => void;
   conciergerieName: string | undefined;
   setConciergerieName: (name: string | undefined) => void;
-  deleteEmployee: (id: string) => Promise<boolean>;
+  employeeName: string | undefined;
+  getEmployeeId: (employee: Employee) => string;
+  findEmployee: (id: string | null) => Employee | undefined;
+  deleteEmployee: (employee: Employee) => Promise<boolean>;
   getUserData: <T extends UserData>() => T | undefined;
   updateUserData: <T extends UserData>(updatedData: T, updateType?: UserType) => void;
   fetchDataFromDatabase: (fetchType?: UserType) => Promise<boolean>;
@@ -39,6 +42,9 @@ const AuthContext = createContext<AuthContextType>({
   updateUserType: () => {},
   conciergerieName: undefined,
   setConciergerieName: () => {},
+  employeeName: undefined,
+  getEmployeeId: () => '',
+  findEmployee: () => undefined,
   deleteEmployee: () => Promise.resolve(false),
   getUserData: () => undefined,
   updateUserData: () => {},
@@ -57,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userType, setUserType] = useLocalStorage<UserType>('user_type');
   const [conciergerieName, setConciergerieName] = useLocalStorage<string>('conciergerie_name');
 
+  const [employeeName, setEmployeeName] = useState<string>();
   const [userData, setUserData] = useState<UserData>();
   const [conciergeries, setConciergeries] = useState<Conciergerie[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -106,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : conciergeries;
       const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
 
-      const foundEmployee = fetchedEmployees?.find(e => e.id === id);
+      const foundEmployee = fetchedEmployees?.find(e => e.id.includes(id));
       const newUserData = foundEmployee || fetchedConciergeries?.find(c => c.id.includes(id));
       const isEmployee = !!newUserData && !!foundEmployee;
       const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
@@ -116,12 +123,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ? (newUserData as Conciergerie).name
           : conciergerieName
         : undefined;
+      const newEmployeeName = isEmployee
+        ? newUserData
+          ? (newUserData as Employee).firstName + ' ' + (newUserData as Employee).familyName
+          : employeeName
+        : undefined;
       const newPrimaryColor = fetchedConciergeries?.find(c => c.name === newConciergerieName)?.color;
 
       console.warn('Loading data from database');
 
       setConciergerieName(newConciergerieName);
       setConciergeries(fetchedConciergeries ?? []);
+      setEmployeeName(newEmployeeName);
       setEmployees(fetchedEmployees ?? []);
       updateUserType(newUserType);
       setUserData(newUserData);
@@ -144,6 +157,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshData,
       conciergerieName,
       setConciergerieName,
+      employeeName,
+      setEmployeeName,
       conciergeries,
       employees,
     ],
@@ -158,16 +173,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getUserData = <T extends Employee | Conciergerie>(): T | undefined => {
-    if (userType === 'employee') {
-      return userData as T; // Assumes T is Employee
-    } else if (userType === 'conciergerie') {
-      return userData as T; // Assumes T is Conciergerie
-    }
-    return undefined;
+  const getUserData = <T extends UserData>(): T | undefined => {
+    return userData as T;
   };
 
-  const updateUserData = <T extends Employee | Conciergerie>(updatedData: T, updateType = userType) => {
+  const updateUserData = <T extends UserData>(updatedData: T, updateType = userType) => {
     // Update user data only if the update type matches the current user type (meaning we are updating the current user)
     if (updateType === userType) setUserData(updatedData);
 
@@ -193,9 +203,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const deleteEmployee = async (id: string) => {
-    const isSuccess = await deleteEmployeeData(id);
-    if (isSuccess) setEmployees(prev => prev?.filter(e => e.id !== id) ?? []);
+  const getEmployeeId = (employee: Employee) => {
+    return employee.firstName + ' ' + employee.familyName;
+  };
+
+  const findEmployee = (id: string | null) => {
+    return id ? employees.find(e => getEmployeeId(e) === id) : undefined;
+  };
+
+  const deleteEmployee = async (employee: Employee) => {
+    const isSuccess = await deleteEmployeeData(employee);
+    if (isSuccess) setEmployees(prev => prev?.filter(e => getEmployeeId(e) !== getEmployeeId(employee)) ?? []);
     return isSuccess;
   };
 
@@ -225,6 +243,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updateUserType,
         conciergerieName,
         setConciergerieName,
+        employeeName,
+        getEmployeeId,
+        findEmployee,
         deleteEmployee,
         getUserData,
         updateUserData,

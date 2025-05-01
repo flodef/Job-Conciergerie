@@ -4,7 +4,7 @@ import { defaultEmployeeSettings, EmployeeNotificationSettings } from '@/app/uti
 
 // Type definition for database employee
 export interface DbEmployee {
-  id: string;
+  id: string[];
   first_name: string;
   family_name: string;
   tel: string;
@@ -83,19 +83,18 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
 /**
  * Update an employee's status
  */
-export const updateEmployeeStatus = async (id: string | undefined, status: EmployeeStatus) => {
+export const updateEmployeeStatus = async (firstName: string, familyName: string, status: EmployeeStatus) => {
   try {
-    if (!id) throw new Error('No ID provided');
     const result = await sql`
       UPDATE employees
       SET status = ${status}
-      WHERE id = ${id}
+      WHERE first_name = ${firstName} AND family_name = ${familyName}
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
 
     return result.length > 0 ? formatEmployee(result[0] as DbEmployee) : null;
   } catch (error) {
-    console.error(`Error updating employee status for ID ${id}:`, error);
+    console.error(`Error updating employee status for ${firstName} ${familyName}:`, error);
     return null;
   }
 };
@@ -103,9 +102,14 @@ export const updateEmployeeStatus = async (id: string | undefined, status: Emplo
 /**
  * Update an employee's settings
  */
-export const updateEmployeeSettings = async (id: string | undefined, data: Partial<DbEmployee>) => {
+export const updateEmployeeSettings = async (
+  firstName: string | undefined,
+  familyName: string | undefined,
+  data: Partial<DbEmployee>,
+) => {
   try {
-    if (!id) throw new Error('No ID provided');
+    if (!firstName || !familyName) throw new Error('No employee name provided');
+
     // Convert notification_settings to JSONB if present
     const notificationSettings = data.notification_settings ? JSON.stringify(data.notification_settings) : null;
 
@@ -118,13 +122,13 @@ export const updateEmployeeSettings = async (id: string | undefined, data: Parti
         message = COALESCE(${data.message}, message),
         conciergerie_name = COALESCE(${data.conciergerie_name}, conciergerie_name),
         notification_settings = COALESCE(${notificationSettings}::jsonb, notification_settings)
-      WHERE id = ${id}
+      WHERE first_name = ${firstName} AND family_name = ${familyName}
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
 
     return result.length > 0 ? formatEmployee(result[0] as DbEmployee) : null;
   } catch (error) {
-    console.error(`Error updating employee settings for ID ${id}:`, error);
+    console.error(`Error updating employee settings for ${firstName} ${familyName}:`, error);
     return null;
   }
 };
@@ -132,18 +136,18 @@ export const updateEmployeeSettings = async (id: string | undefined, data: Parti
 /**
  * Delete an employee
  */
-export const deleteEmployee = async (id: string) => {
+export const deleteEmployee = async (firstName: string, familyName: string) => {
+  if (!firstName || !familyName) throw new Error('No employee name provided');
   try {
-    if (!id) throw new Error('No ID provided');
     const result = await sql`
       DELETE FROM employees
-      WHERE id = ${id}
+      WHERE first_name = ${firstName} AND family_name = ${familyName}
       RETURNING id
     `;
 
     return result.length > 0; // Check if deletion occurred by verifying if result has data
   } catch (error) {
-    console.error(`Error deleting employee for ID ${id}:`, error);
+    console.error(`Error deleting employee ${firstName} ${familyName}:`, error);
     return false;
   }
 };

@@ -12,7 +12,7 @@ export interface Conciergerie {
 
 export type EmployeeStatus = 'pending' | 'accepted' | 'rejected';
 export interface Employee {
-  id: string;
+  id: string[];
   firstName: string;
   familyName: string;
   tel: string;

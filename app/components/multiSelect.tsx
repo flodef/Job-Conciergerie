@@ -101,9 +101,7 @@ const MultiSelect = forwardRef(
 
     // Determine the display value based on the selected values
     const displayValue = () => {
-      if (values.length === 0) {
-        return 'Tous'; // Default to "All" if nothing selected
-      }
+      if (values.length === 0) return 'Tous'; // Default to "All" if nothing selected
 
       if (values.length === 1) {
         const option = processedOptions.find(opt => opt.value === values[0]);

@@ -4,10 +4,10 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import FloatingActionButton from '@/app/components/floatingActionButton';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import MissionFilters, { MissionFiltersType } from '@/app/missions/components/missionFilters';
@@ -28,7 +28,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 export default function Missions() {
   const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
   const { homes } = useHomes();
-  const { userId, userType, isLoading: authLoading } = useAuth();
+  const { userType, isLoading: authLoading, employeeName } = useAuth();
   const { currentPage } = useMenuContext();
   const { updateFetchTime, needsRefresh } = useFetchTime();
 
@@ -94,8 +94,8 @@ export default function Missions() {
   // Basic filtered missions (by user type) - must be declared before any conditional returns
   const basicFilteredMissions = useMemo(() => {
     if (missionsLoading) return [];
-    return filterMissionsByUserType(missions, userType, userId);
-  }, [missions, userId, userType, missionsLoading]);
+    return filterMissionsByUserType(missions, userType === 'employee' ? employeeName : undefined);
+  }, [missions, userType, missionsLoading, employeeName]);
 
   // Apply additional filters (conciergerie, status, zones) - must be declared before any conditional returns
   const filteredMissions = useMemo(() => {

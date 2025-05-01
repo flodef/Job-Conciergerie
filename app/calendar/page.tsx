@@ -12,13 +12,19 @@ import { formatCalendarDate, formatMissionTimeForCalendar, groupMissionsByDate }
 import { getColorValueByName } from '@/app/utils/color';
 import { isPastDate, isToday, sortDates } from '@/app/utils/date';
 import { Page } from '@/app/utils/navigation';
-import { calculateEmployeeHoursForDay, calculateMissionPoints, formatHour, formatNumber, getTaskPoints } from '@/app/utils/task';
+import {
+  calculateEmployeeHoursForDay,
+  calculateMissionPoints,
+  formatHour,
+  formatNumber,
+  getTaskPoints,
+} from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function Calendar() {
-  const { userId, userType, employees, conciergerieName, conciergeries, isLoading: authLoading } = useAuth();
+  const { userType, conciergerieName, conciergeries, isLoading: authLoading, employeeName, findEmployee } = useAuth();
   const { missions, fetchMissions, getLateMissions } = useMissions();
   const { homes } = useHomes();
   const { currentPage } = useMenuContext();
@@ -65,7 +71,7 @@ export default function Calendar() {
       mission =>
         mission.status &&
         mission.status !== 'completed' &&
-        (isEmployee ? mission.employeeId === userId : mission.conciergerieName === conciergerieName),
+        (isEmployee ? mission.employeeId === employeeName : mission.conciergerieName === conciergerieName),
     );
 
     // Count started missions
@@ -85,7 +91,7 @@ export default function Calendar() {
     // Sort dates
     const dates = sortDates(Array.from(groupedMissions.keys()));
     setSortedDates(dates);
-  }, [missions, userId, conciergerieName, isEmployee, isConciergerie, getLateMissions]);
+  }, [missions, conciergerieName, employeeName, isEmployee, isConciergerie, getLateMissions]);
 
   const handleMissionClick = (mission: Mission) => {
     setSelectedMission(mission);
@@ -174,9 +180,9 @@ export default function Calendar() {
                       {missionsForDate.length} mission{missionsForDate.length > 1 ? 's' : ''}
                     </span>
                     {isEmployee &&
-                      userId &&
+                      employeeName &&
                       (() => {
-                        const hours = calculateEmployeeHoursForDay(userId, date, missionsForDate);
+                        const hours = calculateEmployeeHoursForDay(employeeName, date, missionsForDate);
                         const hoursClass =
                           hours > 10
                             ? 'bg-red-200 text-red-700'
@@ -198,7 +204,7 @@ export default function Calendar() {
                   const conciergerie = conciergeries.find(c => c.name === mission.conciergerieName);
                   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
                   const home = homes.find(h => h.id === mission.homeId);
-                  const employee = employees.find(e => e.id === mission.employeeId);
+                  const employee = findEmployee(mission.employeeId);
                   const { totalPoints } = calculateMissionPoints(mission);
 
                   return (

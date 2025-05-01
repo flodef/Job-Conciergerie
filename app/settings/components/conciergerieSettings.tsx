@@ -108,10 +108,7 @@ const ConciergerieSettings: React.FC = () => {
         throw new Error(error.message);
       }
 
-      if (!userId) throw new Error("L'identifiant n'est pas défini");
-
-      // Update in database if we have an ID
-      const updatedConciergerie = await updateConciergerieData(userId, {
+      const updatedConciergerie = await updateConciergerieData(getUserData<Conciergerie>(), {
         email,
         tel,
         colorName: selectedColor?.name || '',

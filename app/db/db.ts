@@ -12,7 +12,7 @@ export async function getExistingUserType(userId: string): Promise<UserType | nu
     const result = await sql`
       SELECT CASE 
         WHEN EXISTS (SELECT 1 FROM conciergeries WHERE ${userId} = ANY(id)) THEN 'conciergerie'
-        WHEN EXISTS (SELECT 1 FROM employees WHERE id = ${userId} AND status = 'accepted') THEN 'employee'
+        WHEN EXISTS (SELECT 1 FROM employees WHERE ${userId} = ANY(id) AND status = 'accepted') THEN 'employee'
         ELSE NULL
       END AS result
     `;

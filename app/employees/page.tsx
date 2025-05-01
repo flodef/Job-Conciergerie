@@ -22,6 +22,7 @@ export default function EmployeesList() {
     conciergerieName,
     isLoading: authLoading,
     employees: authEmployees,
+    getEmployeeId,
     fetchDataFromDatabase,
     getUserData,
     updateUserData,
@@ -81,15 +82,12 @@ export default function EmployeesList() {
   );
 
   // Count missions assigned to an employee
-  const countEmployeeMissions = (employeeId: string): number => {
-    return missions.filter(mission => mission.employeeId === employeeId).length;
+  const countEmployeeMissions = (employee: Employee): number => {
+    return missions.filter(mission => getEmployeeId(employee) === mission.employeeId).length;
   };
 
   // Handle status change
-  const handleStatusChange = (id: string, newStatus: 'accepted' | 'rejected') => {
-    const employee = employees.find(emp => emp.id === id);
-    if (!employee) return;
-
+  const handleStatusChange = (employee: Employee, newStatus: 'accepted' | 'rejected') => {
     // For rejection, show confirmation modal first
     if (newStatus === 'rejected') {
       setEmployeeToReject(employee);
@@ -101,7 +99,7 @@ export default function EmployeesList() {
 
   const updateEmployeeStatus = (employee: Employee, newStatus: 'accepted' | 'rejected') => {
     // For acceptance, proceed directly
-    updateEmployeeStatusAction(employee.id, newStatus)
+    updateEmployeeStatusAction(employee, newStatus)
       .then(updatedEmployee => {
         if (!updatedEmployee) throw new Error("L'employé à modifier n'a pas été trouvé");
 
@@ -111,12 +109,7 @@ export default function EmployeesList() {
         const conciergerie = getUserData<Conciergerie>();
         if (!conciergerie) throw new Error('Conciergerie non trouvée');
 
-        sendEmployeeAcceptanceEmail(
-          employee,
-          conciergerie,
-          countEmployeeMissions(employee.id),
-          newStatus === 'accepted',
-        )
+        sendEmployeeAcceptanceEmail(employee, conciergerie, countEmployeeMissions(employee), newStatus === 'accepted')
           .then(isEmailSent => {
             if (!isEmailSent) throw new Error();
           })
@@ -188,7 +181,7 @@ export default function EmployeesList() {
           <tbody className="bg-background divide-y divide-secondary">
             {employees.map(employee => (
               <EmployeeRow
-                key={employee.id}
+                key={getEmployeeId(employee)}
                 employee={employee}
                 onStatusChange={handleStatusChange}
                 onClick={() => handleEmployeeClick(employee)}
@@ -248,8 +241,8 @@ export default function EmployeesList() {
         message={
           employeeToReject
             ? `Vous êtes sur le point de rejeter ${employeeToReject.firstName} ${employeeToReject.familyName}.${
-                countEmployeeMissions(employeeToReject.id) > 0
-                  ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employeeToReject.id)} mission(s).`
+                countEmployeeMissions(employeeToReject) > 0
+                  ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employeeToReject)} mission(s).`
                   : ''
               } Il ne pourra plus accéder à l'application.`
             : ''
@@ -269,7 +262,7 @@ function EmployeeRow({
   onClick,
 }: {
   employee: Employee;
-  onStatusChange: (id: string, status: 'accepted' | 'rejected') => void;
+  onStatusChange: (employee: Employee, status: 'accepted' | 'rejected') => void;
   onClick: () => void;
 }) {
   return (
@@ -291,7 +284,7 @@ function EmployeeRow({
         <div className="flex space-x-2 justify-center" onClick={e => e.stopPropagation()}>
           {employee.status !== 'accepted' && (
             <button
-              onClick={() => onStatusChange(employee.id, 'accepted')}
+              onClick={() => onStatusChange(employee, 'accepted')}
               className="text-green-600 hover:text-green-900 bg-green-100 hover:bg-green-200 p-1.5 rounded-full"
               title="Accepter"
             >
@@ -300,7 +293,7 @@ function EmployeeRow({
           )}
           {employee.status !== 'rejected' && (
             <button
-              onClick={() => onStatusChange(employee.id, 'rejected')}
+              onClick={() => onStatusChange(employee, 'rejected')}
               className="text-red-600 hover:text-red-900 bg-red-100 hover:bg-red-200 p-1.5 rounded-full"
               title="Rejeter"
             >

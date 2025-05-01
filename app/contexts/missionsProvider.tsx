@@ -44,7 +44,7 @@ export function MissionsProviderWrapper({ children }: { children: ReactNode }) {
 }
 
 function MissionsProvider({ children }: { children: ReactNode }) {
-  const { getUserData, conciergeries, conciergerieName, employees } = useAuth();
+  const { conciergeries, conciergerieName, getEmployeeId, findEmployee, getUserData } = useAuth();
   const { homes, fetchHomes } = useHomes();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -79,18 +79,18 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         const conciergerie = conciergeries?.find(c => c.name === conciergerieName);
 
         // Only send notifications if the conciergerie has the setting enabled
-        if (!conciergerie || !conciergerie.notificationSettings?.missionsEndedWithoutCompletion) continue;
+        if (!conciergerie?.notificationSettings?.missionsEndedWithoutCompletion) continue;
 
         // Send a notification for each late mission
         for (const mission of conciergerieMissions) {
           const home = homes.find(h => h.id === mission.homeId);
-          const employee = employees.find(e => e.id === mission.employeeId);
+          const employee = findEmployee(mission.employeeId);
 
           if (home && employee) sendLateCompletionEmail(mission, home, employee, conciergerie);
         }
       }
     },
-    [homes, employees, conciergeries],
+    [homes, conciergeries, findEmployee],
   );
 
   const fetchMissions = useCallback(async () => {
@@ -146,41 +146,35 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     if (!existingMission) return false;
 
     // Check if we need to notify an employee about the changes
-    const employeeId = existingMission.employeeId;
-    const employee = employeeId ? employees.find(e => e.id === employeeId) : null;
+    const employee = findEmployee(existingMission.employeeId);
 
     // Create a list of changes to include in the email
     const changes: string[] = [];
 
     // Compare mission properties to identify changes
-    if (new Date(existingMission.startDateTime).getTime() !== new Date(updatedMission.startDateTime).getTime()) {
+    if (new Date(existingMission.startDateTime).getTime() !== new Date(updatedMission.startDateTime).getTime())
       changes.push(`Date/heure de début modifiée: ${formatDateTime(updatedMission.startDateTime)}`);
-    }
 
-    if (new Date(existingMission.endDateTime).getTime() !== new Date(updatedMission.endDateTime).getTime()) {
+    if (new Date(existingMission.endDateTime).getTime() !== new Date(updatedMission.endDateTime).getTime())
       changes.push(`Date/heure de fin modifiée: ${formatDateTime(updatedMission.endDateTime)}`);
-    }
 
     // Compare tasks
     const existingTasks = [...existingMission.tasks].sort().join(', ');
     const updatedTasks = [...updatedMission.tasks].sort().join(', ');
-    if (existingTasks !== updatedTasks) {
-      changes.push(`Tâches modifiées: ${updatedTasks}`);
-    }
+    if (existingTasks !== updatedTasks) changes.push(`Tâches modifiées: ${updatedTasks}`);
 
     // Special case for homes (home might be different)
     const existingHome = homes.find(h => h.id === existingMission.homeId);
     const updatedHome = homes.find(h => h.id === updatedMission.homeId);
-    if (existingMission.homeId !== updatedMission.homeId && existingHome && updatedHome) {
+    if (existingMission.homeId !== updatedMission.homeId && existingHome && updatedHome)
       changes.push(`Bien modifié: ${updatedHome.title}`);
-    }
 
     const home = updatedHome || existingHome;
 
     // First update the mission
     const success = await setMissionData(updatedMission.id, {
       ...updatedMission,
-      employeeId,
+      employeeId: existingMission.employeeId,
       status: existingMission.status,
     });
     if (!success) return false;
@@ -204,7 +198,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     setMissions(prev => prev.filter(mission => mission.id !== id));
 
     // Check if we need to notify an employee about the deletion
-    const employee = employees.find(e => e.id === missionToDelete.employeeId);
+    const employee = findEmployee(missionToDelete.employeeId);
     const home = homes.find(h => h.id === missionToDelete.homeId);
     const conciergerie = conciergeries?.find(c => c.name === missionToDelete.conciergerieName);
 
@@ -224,7 +218,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     if (!success) return false;
 
     // Check if we need to notify an employee about the cancellation
-    const employee = employees.find(e => e.id === missionToCancel.employeeId);
+    const employee = findEmployee(missionToCancel.employeeId);
     const home = homes.find(h => h.id === missionToCancel.homeId);
     const conciergerie = conciergeries?.find(c => c.name === missionToCancel.conciergerieName);
 
@@ -239,20 +233,20 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const missionToAccept = missions.find(m => m.id === id);
     if (!missionToAccept) return false;
 
-    const employeeData = getUserData<Employee>();
-    if (!employeeData?.id) return false;
+    const employee = getUserData<Employee>();
+    if (!employee) return false;
 
-    const success = await setMissionData(id, { ...missionToAccept, employeeId: employeeData.id, status: 'accepted' });
+    const employeeId = getEmployeeId(employee);
+    const success = await setMissionData(id, { ...missionToAccept, employeeId, status: 'accepted' });
     if (!success) return false;
 
     // Notify the conciergerie
-    sendMissionStatusNotification(missionToAccept, employeeData.id, 'accepted');
+    sendMissionStatusNotification(missionToAccept, employee, 'accepted');
 
     // Send confirmation email to the employee
     const home = homes.find(h => h.id === missionToAccept.homeId);
     const conciergerie = conciergeries?.find(c => c.name === missionToAccept.conciergerieName);
-    const employee = employees.find(e => e.id === employeeData.id);
-    if (employee?.notificationSettings?.acceptedMissions && home && conciergerie)
+    if (employee.notificationSettings?.acceptedMissions && home && conciergerie)
       sendMissionAcceptanceToEmployeeEmail(missionToAccept, home, employee, conciergerie);
 
     return true;
@@ -260,8 +254,10 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   const startMission = async (id: string) => {
     const missionToStart = missions.find(m => m.id === id);
+    const employee = getUserData<Employee>();
+
     // Check if mission has been accepted by current employee
-    if (!missionToStart || !missionToStart.employeeId || missionToStart.employeeId !== getUserData()?.id) return false;
+    if (!missionToStart?.employeeId || !employee || getEmployeeId(employee) !== missionToStart.employeeId) return false;
 
     // Only allow starting if the mission is accepted and the start time has passed
     if (new Date() < new Date(missionToStart.startDateTime)) return false;
@@ -270,7 +266,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     if (!success) return false;
 
     // Notify the conciergerie
-    sendMissionStatusNotification(missionToStart, missionToStart.employeeId, 'started');
+    sendMissionStatusNotification(missionToStart, employee, 'started');
 
     return true;
   };
@@ -278,17 +274,21 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   const completeMission = async (id: string) => {
     // Check if mission status has been updated (mission is accepted or started)
     const missionToComplete = missions.find(m => m.id === id && m.status);
-    if (!missionToComplete || !missionToComplete.employeeId) return false;
+    const employee = getUserData<Employee>();
+    if (!missionToComplete?.employeeId || !employee) return false;
 
     // Check if mission belongs to current employee or conciergerie is trying to complete the mission for the employee
-    if (missionToComplete.employeeId !== getUserData()?.id && missionToComplete.conciergerieName !== conciergerieName)
+    if (
+      getEmployeeId(employee) !== missionToComplete.employeeId &&
+      missionToComplete.conciergerieName !== conciergerieName
+    )
       return false;
 
     const success = await setMissionData(id, { ...missionToComplete, status: 'completed' });
     if (!success) return false;
 
     // Notify the conciergerie
-    sendMissionStatusNotification(missionToComplete, missionToComplete.employeeId, 'completed');
+    sendMissionStatusNotification(missionToComplete, employee, 'completed');
 
     return true;
   };
@@ -360,7 +360,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   /**
    * Send a notification email for a mission status change if the conciergerie has the appropriate notification setting enabled
    */
-  const sendMissionStatusNotification = (mission: Mission, employeeId: string, status: MissionStatus) => {
+  const sendMissionStatusNotification = (mission: Mission, employee: Employee, status: MissionStatus) => {
     // Get all conciergeries to find the one that owns this mission
     const conciergerie = conciergeries?.find(c => c.name === mission.conciergerieName);
 
@@ -371,15 +371,12 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       completed: 'completedMissions',
     }[status] as 'acceptedMissions' | 'startedMissions' | 'completedMissions';
 
-    // Only proceed if we found the conciergerie and it has the appropriate notification setting enabled
-    if (!conciergerie || !conciergerie.notificationSettings?.[notificationSetting]) return;
-
     // Get the home and employee data for this mission
     const home = homes.find(h => h.id === mission.homeId);
-    const employee = employees.find(e => e.id === employeeId);
 
     // If we have all the required data, send the notification email
-    if (home && employee) sendMissionStatusChangeEmail(mission, home, employee, conciergerie, status);
+    if (home && conciergerie?.notificationSettings?.[notificationSetting])
+      sendMissionStatusChangeEmail(mission, home, employee, conciergerie, status);
   };
 
   return (

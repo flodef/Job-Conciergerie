@@ -35,7 +35,7 @@ export async function createNewEmployee(data: {
 }): Promise<Employee | null> {
   // Convert to DB format
   const dbData: Omit<DbEmployee, 'created_at'> = {
-    id: data.id,
+    id: [data.id],
     first_name: data.firstName,
     family_name: data.familyName,
     tel: data.tel,
@@ -53,15 +53,15 @@ export async function createNewEmployee(data: {
 /**
  * Update an employee's status in the database
  */
-export async function updateEmployeeStatusAction(id: string, status: EmployeeStatus): Promise<Employee | null> {
-  return await updateEmployeeStatus(id, status);
+export async function updateEmployeeStatusAction(employee: Employee, status: EmployeeStatus): Promise<Employee | null> {
+  return await updateEmployeeStatus(employee.firstName, employee.familyName, status);
 }
 
 /**
  * Update an employee's settings in the database
  */
 export async function updateEmployeeData(
-  id: string,
+  employee: Employee | undefined,
   data: {
     tel?: string;
     email?: string;
@@ -81,12 +81,12 @@ export async function updateEmployeeData(
     notification_settings: data.notificationSettings,
   };
 
-  return await updateEmployeeSettings(id, dbData);
+  return await updateEmployeeSettings(employee?.firstName, employee?.familyName, dbData);
 }
 
 /**
  * Delete an employee
  */
-export async function deleteEmployeeData(id: string): Promise<boolean> {
-  return await deleteEmployee(id);
+export async function deleteEmployeeData(employee: Employee): Promise<boolean> {
+  return await deleteEmployee(employee.firstName, employee.familyName);
 }
