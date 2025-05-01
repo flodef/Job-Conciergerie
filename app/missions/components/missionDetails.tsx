@@ -18,7 +18,7 @@ import { Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateTime, getDateRangeDifference } from '@/app/utils/date';
 import { getIPFSImageUrl } from '@/app/utils/ipfs';
-import { calculateMissionPoints, formatNumber, getTaskPoints } from '@/app/utils/task';
+import { calculateMissionPoints, formatHour, getTaskPoints } from '@/app/utils/task';
 import {
   IconBuildingStore,
   IconCalculator,
@@ -291,7 +291,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
               <IconStopwatch size={16} />
               Nombre d&apos;heures estimées
             </h3>
-            <span className="font-medium">{formatNumber(mission.hours)} heures</span>
+            <span className="font-medium">{formatHour(mission.hours)}</span>
           </div>
 
           <div className="flex items-center space-x-4">

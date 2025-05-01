@@ -5,7 +5,7 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import { Conciergerie, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
-import { formatNumber } from '@/app/utils/task';
+import { formatHour } from '@/app/utils/task';
 import { useEffect, useState } from 'react';
 
 type MissionCardProps = {
@@ -59,7 +59,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
           }}
         ></div>
         <span className="absolute top-2 right-1 w-7 text-xs text-center font-bold text-background z-10">
-          {formatNumber(mission.hours)}h
+          {formatHour(mission.hours)}
         </span>
       </div>
       {/* Diagonal label for taken missions */}
