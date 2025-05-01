@@ -13,6 +13,8 @@ import React, { useEffect, useRef, useState } from 'react';
 
 // --- Constants ---
 const MAX_FILE_SIZE_MB = 5;
+const MAX_DIMENSION = 1024; // Max width/height after resize
+const IMAGE_QUALITY = 0.7; // Adjust quality (0.0 - 1.0)
 
 // --- Interfaces ---
 interface LocalImage {
@@ -149,7 +151,6 @@ const ImageUploader = React.forwardRef<
             }
 
             let { width, height } = img;
-            const MAX_DIMENSION = 1024; // Max width/height after resize
 
             if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
               if (width > height) {
@@ -174,7 +175,7 @@ const ImageUploader = React.forwardRef<
                 }
               },
               'image/jpeg',
-              0.8, // Adjust quality (0.0 - 1.0)
+              IMAGE_QUALITY,
             );
           };
           img.onerror = _e => {
