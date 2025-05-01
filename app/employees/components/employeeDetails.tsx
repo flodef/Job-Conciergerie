@@ -4,8 +4,14 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useMissions } from '@/app/contexts/missionsProvider';
 import { Employee } from '@/app/types/dataTypes';
-import { actionButtonBarClassName, actionButtonClassName } from '@/app/utils/className';
+import {
+  actionButtonBarClassName,
+  actionButtonClassName,
+  descriptionClassName,
+  labelClassName,
+} from '@/app/utils/className';
 import { formatDate } from '@/app/utils/date';
 import { IconMail, IconMapPin, IconPhone, IconTrash } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
@@ -18,6 +24,7 @@ type EmployeeDetailsProps = {
 
 export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsProps) {
   const { deleteEmployee } = useAuth();
+  const { missions } = useMissions();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [toast, setToast] = useState<Toast>();
@@ -73,8 +80,8 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
           />
         )}
         <div>
-          <div className="text-sm text-foreground/70">
-            Statut:{' '}
+          <div className={clsx(descriptionClassName, 'flex items-center gap-1')}>
+            Statut :
             <span
               className={clsx(
                 'font-bold',
@@ -92,38 +99,44 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <h4 className="text-sm font-medium text-foreground/70 mb-1">Contact</h4>
-            <div className="space-y-3">
+            <h4 className={descriptionClassName}>Contact :</h4>
+            <div className="space-y-3 mt-1">
               <div className="flex items-center gap-2">
-                <IconMail size={25} className="text-foreground/70" />
+                <IconMail size={25} className="text-light" />
                 <a href={`mailto:${employee.email}`} className="text-foreground hover:underline truncate">
                   {employee.email}
                 </a>
               </div>
               <div className="flex items-center gap-2">
-                <IconPhone size={25} className="text-foreground/70" />
+                <IconPhone size={25} className="text-light" />
                 <a href={`tel:${employee.tel}`} className="text-foreground hover:underline truncate">
                   {employee.tel}
                 </a>
               </div>
               <div className="flex items-center gap-2">
-                <IconMapPin size={25} className="text-foreground/70" />
+                <IconMapPin size={25} className="text-light" />
                 <span className="text-foreground truncate">{employee.geographicZone}</span>
               </div>
             </div>
           </div>
         </div>
 
+        <div className={clsx(descriptionClassName, 'flex items-center gap-1')}>
+          Missions complétées :
+          <span className={labelClassName}>
+            {missions.filter(mission => mission.employeeId === employee.id && mission.status === 'completed').length}
+          </span>
+        </div>
+
         {employee.message && employee.status === 'pending' && (
           <div>
-            <h4 className="text-sm font-medium text-foreground/70 mb-1">Message</h4>
+            <h4 className={descriptionClassName}>Message :</h4>
             <div className="bg-secondary/10 rounded-md text-foreground">{employee.message}</div>
           </div>
         )}
 
-        <div>
-          <h4 className="text-sm font-medium text-foreground/70 mb-1">Date d&apos;inscription</h4>
-          <div className="text-foreground text-sm">{formatDate(new Date(employee.createdAt))}</div>
+        <div className={clsx(descriptionClassName, 'flex items-center gap-1')}>
+          Date d&apos;inscription :<span className={labelClassName}>{formatDate(new Date(employee.createdAt))}</span>
         </div>
       </FullScreenModal>
     </>
