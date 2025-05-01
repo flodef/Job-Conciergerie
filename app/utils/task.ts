@@ -49,6 +49,9 @@ export const calculateRemainingPointsPerDay = (mission: Mission, currentDate: Da
   const today = new Date(currentDate);
   today.setHours(0, 0, 0, 0);
 
+  const startDate = new Date(mission.startDateTime);
+  startDate.setHours(0, 0, 0, 0);
+
   const endDate = new Date(mission.endDateTime);
   endDate.setHours(0, 0, 0, 0);
 
@@ -56,7 +59,7 @@ export const calculateRemainingPointsPerDay = (mission: Mission, currentDate: Da
   if (today > endDate) return 0;
 
   // Calculate the difference in days from today to end date
-  const diffTime = Math.abs(endDate.getTime() - today.getTime());
+  const diffTime = Math.abs(endDate.getTime() - Math.max(startDate.getTime(), today.getTime()));
   const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include today
 
   // Calculate points per remaining day (capped at 3 points per day)
