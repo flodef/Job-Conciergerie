@@ -381,43 +381,47 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
           {!isFromCalendar && isConciergerie && (
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-light flex items-center gap-1">
-                <IconUsersGroup size={16} />
-                Prestataires autorisés
-              </h3>
-              <div className="flex items-center gap-1">
-                <p>{mission.allowedEmployees?.length || 'Tous'}</p>
-                {!!mission.allowedEmployees?.length && (
-                  <Tooltip>
-                    <ul className="list-disc pl-4">
-                      {mission.allowedEmployees?.map(employeeId => {
-                        const employee = employees.find(e => e.id === employeeId);
-                        return (
-                          <li key={employeeId}>
-                            {employee ? `${employee.firstName} ${employee.familyName}` : employeeId}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </Tooltip>
-                )}
-              </div>
-            </div>
-          )}
-
-          {employee && !isFromCalendar && (
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-light flex items-center gap-1">
-                <IconUserCheck size={16} />
-                Prestataire
-              </h3>
-              <p
-                onClick={() => setIsEmployeeDetailsModalOpen(true)}
-                className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
-              >
-                <IconInfoCircle size={18} />
-                {employee.firstName} {employee.familyName}
-              </p>
+              {employee ? (
+                <>
+                  <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                    <IconUserCheck size={16} />
+                    Prestataire
+                  </h3>
+                  <div
+                    onClick={() => setIsEmployeeDetailsModalOpen(true)}
+                    className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
+                  >
+                    <span className="text-right">
+                      {employee.firstName} {employee.familyName}
+                    </span>
+                    <IconInfoCircle className="min-w-4.5" size={18} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                    <IconUsersGroup size={16} />
+                    Prestataires autorisés
+                  </h3>
+                  <div className="flex items-center gap-1">
+                    <p>{mission.allowedEmployees?.length || 'Tous'}</p>
+                    {!!mission.allowedEmployees?.length && (
+                      <Tooltip>
+                        <ul className="list-disc pl-4">
+                          {mission.allowedEmployees?.map(employeeId => {
+                            const employee = employees.find(e => e.id === employeeId);
+                            return (
+                              <li key={employeeId}>
+                                {employee ? `${employee.firstName} ${employee.familyName}` : employeeId}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </Tooltip>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
