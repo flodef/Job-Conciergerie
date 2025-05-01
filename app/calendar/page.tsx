@@ -12,7 +12,7 @@ import { formatCalendarDate, formatMissionTimeForCalendar, groupMissionsByDate }
 import { getColorValueByName } from '@/app/utils/color';
 import { isPastDate, isToday, sortDates } from '@/app/utils/date';
 import { Page } from '@/app/utils/navigation';
-import { calculateEmployeePointsForDay, calculateMissionPoints, formatNumber, getTaskPoints } from '@/app/utils/task';
+import { calculateEmployeeHoursForDay, calculateMissionPoints, formatHour, formatNumber, getTaskPoints } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -173,11 +173,22 @@ export default function Calendar() {
                     <span className="text-sm bg-primary/10 px-2 py-1 rounded-full text-nowrap">
                       {missionsForDate.length} mission{missionsForDate.length > 1 ? 's' : ''}
                     </span>
-                    {isEmployee && userId && (
-                      <span className="text-sm bg-green-100 text-green-700 px-2 py-1 rounded-full text-nowrap">
-                        {formatNumber(calculateEmployeePointsForDay(userId, date, missions))} pts
-                      </span>
-                    )}
+                    {isEmployee &&
+                      userId &&
+                      (() => {
+                        const hours = calculateEmployeeHoursForDay(userId, date, missionsForDate);
+                        const hoursClass =
+                          hours > 10
+                            ? 'bg-red-200 text-red-700'
+                            : hours > 5
+                            ? 'bg-orange-200 text-orange-700'
+                            : 'bg-green-200 text-green-700';
+                        return (
+                          <span className={`text-sm ${hoursClass} px-2 py-1 rounded-full text-nowrap`}>
+                            {formatHour(hours)}
+                          </span>
+                        );
+                      })()}
                   </div>
                 </div>
               </div>

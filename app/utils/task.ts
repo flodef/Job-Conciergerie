@@ -158,6 +158,51 @@ export const calculateMissionHours = (home: Home, tasks: Task[]): number => {
 };
 
 /**
+ * Calculate the total hours an employee has for missions on a specific day
+ * @param employeeId The ID of the employee
+ * @param date The date to check
+ * @param missions All missions
+ * @param excludeMissionId Optional mission ID to exclude from calculation
+ * @returns The total hours for the day
+ */
+export const calculateEmployeeHoursForDay = (
+  employeeId: string,
+  date: Date,
+  missions: Mission[],
+  excludeMissionId?: string,
+): number => {
+  // Filter missions that belong to the employee and include the target date
+  const employeeMissions = missions.filter(mission => {
+    // Skip this mission if it's the one we want to exclude
+    if (excludeMissionId && mission.id === excludeMissionId) return false;
+
+    // Only include missions assigned to this employee
+    if (mission.employeeId !== employeeId) return false;
+
+    // Check if the mission spans the target date
+    const startDate = new Date(mission.startDateTime);
+    const endDate = new Date(mission.endDateTime);
+
+    // Set hours to 0 to calculate just the days
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(endDate);
+    end.setHours(0, 0, 0, 0);
+
+    const target = new Date(date);
+    target.setHours(0, 0, 0, 0);
+
+    return start <= target && target <= end;
+  });
+
+  // Calculate the total hours for the day
+  return employeeMissions.reduce((total, mission) => {
+    return total + mission.hours;
+  }, 0);
+};
+
+/**
  * Get hours for a specific task
  */
 export const getTaskHours = (home: Home, task: Task): number => {
@@ -175,6 +220,22 @@ export const getTaskHours = (home: Home, task: Task): number => {
  * e.g., 3.0 becomes 3, and 1.666 becomes 1.7
  */
 export const formatNumber = (number: number | string): string => {
-  const num = Number(number);
-  return Number.isInteger(num) ? num.toString() : parseFloat(num.toFixed(1)).toString();
+  const num = typeof number === 'string' ? parseFloat(number) : number;
+  const rounded = Math.round(num * 10) / 10;
+  return rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(1);
+};
+
+/**
+ * Formats hours in decimal format to a more human-readable format
+ * e.g., 3.5 becomes "3h30", 1.25 becomes "1h15"
+ */
+export const formatHour = (hours: number): string => {
+  const wholeHours = Math.floor(hours);
+  const minutes = Math.round((hours - wholeHours) * 60);
+  
+  if (minutes === 0) {
+    return `${wholeHours}h`;
+  } else {
+    return `${wholeHours}h${minutes.toString().padStart(2, '0')}`;
+  }
 };
