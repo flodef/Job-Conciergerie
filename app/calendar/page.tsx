@@ -264,7 +264,7 @@ export default function Calendar() {
                           </div>
                           <div className="flex items-center">
                             <span className="text-light text-nowrap">Heures :&nbsp;</span>
-                            <span className="font-medium">{formatNumber(mission.hours)}</span>
+                            <span className="font-medium">{formatHour(mission.hours)}</span>
                           </div>
                         </div>
                         {userType === 'conciergerie' ? (
