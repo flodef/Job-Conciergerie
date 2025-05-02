@@ -151,3 +151,32 @@ export const deleteEmployee = async (firstName: string, familyName: string) => {
     return false;
   }
 };
+
+/**
+ * Update an employee's ID array
+ * @param employeeIds - Current array of employee IDs
+ * @param firstName - Current employee first name
+ * @param familyName - Current employee family name
+ * @returns Updated array of employee IDs or null if error
+ */
+export const updateEmployeeId = async (
+  firstName: string,
+  familyName: string,
+  employeeIds: string[],
+): Promise<string[] | null> => {
+  try {
+    if (!firstName || !familyName) throw new Error('No employee name provided');
+
+    const result = await sql`
+      UPDATE employees
+      SET id = ${employeeIds.slice(0, 3)}::text[]
+      WHERE first_name = ${firstName} AND family_name = ${familyName}
+      RETURNING id
+    `;
+
+    return result.length > 0 ? result[0].id : null;
+  } catch (error) {
+    console.error(`Error updating employee ID array ${employeeIds}:`, error);
+    return null;
+  }
+};

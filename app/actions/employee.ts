@@ -5,6 +5,7 @@ import {
   createEmployee,
   deleteEmployee,
   getAllEmployees,
+  updateEmployeeId,
   updateEmployeeSettings,
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
@@ -55,6 +56,21 @@ export async function createNewEmployee(data: {
  */
 export async function updateEmployeeStatusAction(employee: Employee, status: EmployeeStatus): Promise<Employee | null> {
   return await updateEmployeeStatus(employee.firstName, employee.familyName, status);
+}
+
+/**
+ * Update an employee's list of associated user IDs
+ * If the userId already exists in the employee's id array, do nothing
+ * Otherwise add it to the array
+ */
+export async function updateEmployeeWithUserId(
+  employee: Employee | undefined,
+  employeeIds: string[],
+): Promise<string[] | null> {
+  if (!employee) return null;
+
+  // Update the employee's ID in the database
+  return await updateEmployeeId(employee.firstName, employee.familyName, employeeIds);
 }
 
 /**

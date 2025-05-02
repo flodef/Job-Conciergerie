@@ -76,24 +76,24 @@ export const updateConciergerie = async (name: string | undefined, data: Partial
 
 /**
  * Update a conciergerie's ID
+ * @param conciergerieIds - Current array of conciergerie IDs
+ * @param name - Current conciergerie name
+ * @returns Updated array of conciergerie IDs or null if error
  */
-export const updateConciergerieId = async (conciergerieId: string[], id: string): Promise<string[] | null> => {
+export const updateConciergerieId = async (name: string, conciergerieIds: string[]): Promise<string[] | null> => {
   try {
-    if (!conciergerieId || conciergerieId.length === 0) throw new Error('No conciergerie ID array provided');
-    if (!id) throw new Error('No ID provided');
-    if (conciergerieId.includes(id)) throw new Error('ID already in conciergerie ID array');
+    if (!name) throw new Error('No name provided');
 
-    const newIdArray = [id, ...conciergerieId].slice(0, 3);
     const result = await sql`
       UPDATE conciergeries
-      SET id = ${newIdArray}::text[]
-      WHERE id = ${conciergerieId}::text[]
+      SET id = ${conciergerieIds.slice(0, 3)}::text[]
+      WHERE name = ${name}
       RETURNING id
     `;
 
     return result.length > 0 ? result[0].id : null;
   } catch (error) {
-    console.error(`Error updating conciergerie with ID array ${conciergerieId}:`, error);
+    console.error(`Error updating conciergerie with ID array ${conciergerieIds}:`, error);
     return null;
   }
 };

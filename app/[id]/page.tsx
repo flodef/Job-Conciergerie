@@ -32,7 +32,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
 
         // If the ID fetched is not the one in the localStorage, update it in the database
         if (!conciergerie.id.includes(userId)) {
-          const result = await updateConciergerieWithUserId(conciergerie.id, userId);
+          const result = await updateConciergerieWithUserId(conciergerie, [userId, ...conciergerie.id]);
           if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
           updateUserData({
             ...conciergerie,

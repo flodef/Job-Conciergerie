@@ -6,7 +6,7 @@ import AdvancedSettings from '@/app/settings/components/advancedSettings';
 import ConciergerieSettings from '@/app/settings/components/conciergerieSettings';
 import EmployeeSettings from '@/app/settings/components/employeeSettings';
 import NotificationSettings from '@/app/settings/components/notificationSettings';
-import { IconAdjustments, IconBell, IconSettings } from '@tabler/icons-react';
+import { IconBell, IconDevices, IconSettings } from '@tabler/icons-react';
 
 export default function Settings() {
   const { userType } = useAuth();
@@ -34,8 +34,8 @@ export default function Settings() {
       content: notificationsSection,
     },
     {
-      title: 'Avancé',
-      icon: <IconAdjustments size={20} />,
+      title: 'Appareils connectés',
+      icon: <IconDevices size={20} />,
       content: advancedSection,
     },
   ];

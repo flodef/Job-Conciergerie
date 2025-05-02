@@ -28,3 +28,8 @@ export const generateUniqueId = async (): Promise<string> => {
 export const generateSimpleId = () => {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 };
+
+export const formatId = (id: string) => {
+  if (id.length <= 8) return id;
+  return `${id.substring(0, 4)}...${id.substring(id.length - 4)}`;
+};
