@@ -25,6 +25,7 @@ async function sendEmail(email: Email): Promise<boolean> {
     await transporter.sendMail({
       ...email,
       from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
+      bcc: 'contact@job-conciergerie.fr',
       replyTo: email.from,
     });
 
