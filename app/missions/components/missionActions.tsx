@@ -28,14 +28,14 @@ export default function MissionActions({
   onStartMission,
   onCompleteMission,
 }: MissionActionsProps) {
-  const { userId, userType, conciergerieName } = useAuth();
+  const { userType, conciergerieName, employeeName } = useAuth();
   const { missions } = useMissions();
 
   // Check if the current time is after the mission start time
   const now = new Date();
   const hasStartTimePassed = now > mission.startDateTime;
   const isOwnMission = userType === 'conciergerie' && mission.conciergerieName === conciergerieName;
-  const isCurrentEmployee = mission.employeeId === userId;
+  const isCurrentEmployee = mission.employeeId === employeeName;
   const canAcceptMission = userType === 'employee' && !mission.employeeId;
   const isAccepted = mission.status === 'accepted';
   const isStarted = mission.status === 'started';
@@ -43,7 +43,7 @@ export default function MissionActions({
 
   // Calculate the total points the employee has for each day of the mission
   const hasExceededPoints = useMemo(() => {
-    if (!canAcceptMission || !userId) return false;
+    if (!canAcceptMission || !employeeName) return false;
 
     // Get the mission points
     const { pointsPerDay } = calculateMissionPoints(mission);
@@ -63,7 +63,7 @@ export default function MissionActions({
 
     // Check each day in the range
     while (currentDate <= lastDate) {
-      const pointsForDay = calculateEmployeePointsForDay(userId, new Date(currentDate), missions);
+      const pointsForDay = calculateEmployeePointsForDay(employeeName, new Date(currentDate), missions);
 
       // Keep track of the maximum points for any day
       maxPointsForAnyDay = Math.max(maxPointsForAnyDay, pointsForDay);
@@ -76,7 +76,7 @@ export default function MissionActions({
     }
 
     return false;
-  }, [canAcceptMission, userId, mission, missions]);
+  }, [canAcceptMission, employeeName, mission, missions]);
 
   // For employees in calendar view
   return isCurrentEmployee && hasStartTimePassed && (isAccepted || isStarted) ? (

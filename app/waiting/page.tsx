@@ -10,15 +10,13 @@ import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { getTimeDifference, getTimeRemaining } from '@/app/utils/date';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconHelpCircle, IconMailForward } from '@tabler/icons-react';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
 const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
 
 export default function WaitingPage() {
-  const { userId, userType, isLoading: authLoading, conciergerieName, conciergeries, employees } = useAuth();
-  const router = useRouter();
+  const { userType, isLoading: authLoading, conciergerieName, conciergeries, employeeName, findEmployee } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [employee, setEmployee] = useState<Employee>();
@@ -36,30 +34,20 @@ export default function WaitingPage() {
     setIsLoading(false);
   }, [conciergeries, conciergerieName]);
 
-  const handleEmployee = useCallback(
-    (userId: string) => {
-      // Check if employee exists in database with this ID
-      const foundEmployee = employees.find(e => e.id.includes(userId));
-      if (!foundEmployee) return;
+  const handleEmployee = useCallback(() => {
+    // Check if employee exists in database with this ID
+    const foundEmployee = findEmployee(employeeName ?? null);
+    setEmployee(foundEmployee);
+    setCreationDate(foundEmployee?.createdAt ? new Date(foundEmployee.createdAt) : new Date());
 
-      setEmployee(foundEmployee);
-
-      // Calculate time waiting
-      if (foundEmployee.createdAt) {
-        const createdDate = new Date(foundEmployee.createdAt);
-        setCreationDate(createdDate);
-      }
-
-      setIsLoading(false);
-    },
-    [employees],
-  );
+    setIsLoading(false);
+  }, [employeeName, findEmployee]);
 
   // Use a ref to track if we've already loaded the data to prevent infinite loops
   const hasLoadedDataRef = useRef(false);
   useEffect(() => {
     // Wait for auth to be loaded or if we've already loaded the data
-    if (authLoading || hasLoadedDataRef.current || !userId || !userType) return;
+    if (authLoading || hasLoadedDataRef.current || !userType) return;
 
     // Mark that we're loading data to prevent infinite loops
     hasLoadedDataRef.current = true;
@@ -69,8 +57,8 @@ export default function WaitingPage() {
       conciergerie: handleConciergerie,
       employee: handleEmployee,
     }[userType];
-    handleUser(userId);
-  }, [userId, userType, authLoading, handleConciergerie, handleEmployee, router]);
+    handleUser();
+  }, [userType, authLoading, handleConciergerie, handleEmployee]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -104,7 +92,7 @@ export default function WaitingPage() {
     </div>
   );
 
-  if (!userId || !userType) return <ErrorPage />;
+  if (!userType) return <ErrorPage />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

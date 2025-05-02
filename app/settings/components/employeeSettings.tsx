@@ -13,7 +13,7 @@ import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
 const EmployeeSettings: React.FC = () => {
-  const { userId, employees, getUserData, updateUserData } = useAuth();
+  const { employees, getUserData, updateUserData } = useAuth();
 
   // Validation states
   const [emailError, setEmailError] = useState('');
@@ -53,7 +53,7 @@ const EmployeeSettings: React.FC = () => {
     setOriginalEmail(employee.email);
     setOriginalTel(employee.tel);
     setOriginalGeographicZone(employee.geographicZone || '');
-  }, [userId, getUserData]);
+  }, [getUserData]);
 
   const hasChanges = () => {
     const emailChanged = email !== originalEmail;

@@ -236,8 +236,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const employee = getUserData<Employee>();
     if (!employee) return false;
 
-    const employeeId = getEmployeeId(employee);
-    const success = await setMissionData(id, { ...missionToAccept, employeeId, status: 'accepted' });
+    const success = await setMissionData(id, {
+      ...missionToAccept,
+      employeeId: getEmployeeId(employee),
+      status: 'accepted',
+    });
     if (!success) return false;
 
     // Notify the conciergerie

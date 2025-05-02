@@ -17,7 +17,7 @@ type ColorOption = {
 };
 
 const ConciergerieSettings: React.FC = () => {
-  const { userId, conciergeries, getUserData, updateUserData } = useAuth();
+  const { conciergeries, getUserData, updateUserData } = useAuth();
 
   // Validation states
   const [emailError, setEmailError] = useState('');
@@ -60,7 +60,7 @@ const ConciergerieSettings: React.FC = () => {
 
     // Apply theme color
     setPrimaryColor(conciergerie.color);
-  }, [userId, getUserData]);
+  }, [getUserData]);
 
   // Check if form has been modified
   const hasChanges = () => {
