@@ -11,7 +11,8 @@ export type EmailType =
   | 'lateCompletion'
   | 'missionAcceptance'
   | 'missionUpdated'
-  | 'missionRemoved';
+  | 'missionRemoved'
+  | 'newDevice';
 
 export interface EmailRetryItem {
   id: string;

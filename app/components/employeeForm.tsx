@@ -1,7 +1,6 @@
 'use client';
 
-import { sendEmployeeRegistrationEmail } from '@/app/actions/email';
-import { createNewEmployee } from '@/app/actions/employee';
+import { createNewEmployee, updateEmployeeWithUserId } from '@/app/actions/employee';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
@@ -15,7 +14,9 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { Employee } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
-import { employeeExists } from '@/app/utils/employee';
+import { useEmailRetry } from '@/app/utils/emailRetry';
+import { EmailSender } from '@/app/utils/emailSender';
+import { employeeExists, employeeReachedIdLimit } from '@/app/utils/employee';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -28,6 +29,7 @@ type EmployeeFormProps = {
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const { userId, conciergeries, updateUserData, employees } = useAuth();
   const { onMenuChange } = useMenuContext();
+  const { addFailedEmail } = useEmailRetry();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
   const [formData, setFormData] = useLocalStorage<Omit<Employee, 'id' | 'status' | 'createdAt'>>('employee_data', {
@@ -156,9 +158,40 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
       if (!userId) throw new Error("L'identifiant n'est pas défini");
 
-      // Check if employee already exists with the same name, phone, or email
-      if (employeeExists(employees, formData.firstName, formData.familyName, formData.tel, formData.email))
+      // Check if employee already exists with the same name, phone, or email and if they've reached device limit
+      const idLimitCheck = employeeReachedIdLimit(employees, formData.firstName, formData.familyName);
+
+      if (idLimitCheck.employee) {
+        if (idLimitCheck.hasReachedLimit) {
+          // The employee exists and has reached the maximum number of devices
+          throw new Error(
+            `Cet employé a atteint le nombre maximum d'appareils autorisés (${idLimitCheck.employee.id.length}).`,
+          );
+        }
+
+        // Employee exists but hasn't reached the maximum - update their IDs instead of creating a new record
+        // Add the new userId to the existing employee's ID array and prefix it with '$' to indicate it's a new device
+        const newIds = [...idLimitCheck.employee.id, '$' + userId];
+        const updatedIds = await updateEmployeeWithUserId(idLimitCheck.employee, newIds);
+
+        if (!updatedIds) throw new Error('Employé non mis à jour dans la base de données');
+
+        // Update the employee object with the new ID array
+        const updatedEmployee = {
+          ...idLimitCheck.employee,
+          id: updatedIds,
+        };
+
+        // Update local user data and redirect based on status
+        updateUserData(updatedEmployee);
+
+        // Send notification email to employee about the new device
+        EmailSender.sendNewDeviceEmail({ addFailedEmail, setToast }, updatedEmployee);
+
+        onMenuChange(Page.Waiting);
+      } else if (employeeExists(employees, formData.firstName, formData.familyName, formData.tel, formData.email)) {
         throw new Error('Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.');
+      }
 
       // Create a new employee in the database
       const employee = await createNewEmployee({
@@ -174,7 +207,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
-      sendEmployeeRegistrationEmail(selectedConciergerie, employee);
+      // Use EmailSender for consistent retry mechanism
+      EmailSender.sendRegistrationEmail({ addFailedEmail, setToast }, selectedConciergerie, employee);
 
       onMenuChange(Page.Waiting);
     } catch (error) {

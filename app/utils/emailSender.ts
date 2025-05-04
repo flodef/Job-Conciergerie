@@ -9,6 +9,7 @@ import {
   sendMissionAcceptanceToEmployeeEmail,
   sendMissionUpdatedToEmployeeEmail,
   sendMissionRemovedToEmployeeEmail,
+  sendNewDeviceNotificationEmail,
 } from '@/app/actions/email';
 import { EmailType } from '@/app/utils/emailRetry';
 import { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
@@ -460,6 +461,50 @@ export const EmailSender = {
           conciergerie,
           type,
         });
+        
+        if (setToast) {
+          setToast({
+            type: ToastType.Error,
+            message: "Une erreur est survenue. Nous réessaierons automatiquement.",
+          });
+        }
+        return false;
+      });
+  },
+
+  // Sending new device connection notification to employee
+  sendNewDeviceEmail: (
+    { addFailedEmail, setToast, showSuccessToast = false }: EmailSenderProps,
+    employee: Employee
+  ) => {
+    return sendNewDeviceNotificationEmail(employee)
+      .then(isSuccess => {
+        if (isSuccess) {
+          if (showSuccessToast && setToast) {
+            setToast({
+              type: ToastType.Success,
+              message: "L'email de notification de nouvel appareil a été envoyé avec succès",
+            });
+          }
+          return true;
+        } else {
+          // Add to retry queue
+          addFailedEmail('newDevice', { employee });
+          
+          if (setToast) {
+            setToast({
+              type: ToastType.Info,
+              message: "L'email sera envoyé automatiquement dès que possible",
+            });
+          }
+          return false;
+        }
+      })
+      .catch(error => {
+        console.error('Error sending new device notification email:', error);
+        
+        // Add to retry queue
+        addFailedEmail('newDevice', { employee });
         
         if (setToast) {
           setToast({

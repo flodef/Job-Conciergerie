@@ -15,18 +15,19 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Interface for email options
 interface Email extends SendMailOptions {
   id?: string; // For retry identification
   type?: string; // For categorizing the email type for retries
 }
 
+// Send an email
 async function sendEmail(email: Email): Promise<boolean> {
   try {
     await transporter.sendMail({
       ...email,
       from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
       bcc: 'contact@job-conciergerie.fr',
-      replyTo: email.from,
     });
 
     return true;
@@ -36,10 +37,15 @@ async function sendEmail(email: Email): Promise<boolean> {
   }
 }
 
+// Base URL for the app
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 /**
  * Send a verification email to a conciergerie
+ * @param conciergerie - The conciergerie to send the email to
+ * @param userId - The user id of the conciergerie
+ * @param retryId - The retry id for the email
+ * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
  */
 export async function sendConciergerieVerificationEmail(
   conciergerie: Conciergerie,
@@ -75,6 +81,10 @@ export async function sendConciergerieVerificationEmail(
 
 /**
  * Send a notification email to a conciergerie about a new employee registration
+ * @param conciergerie - The conciergerie to send the email to
+ * @param employee - The employee to send the email to
+ * @param retryId - The retry id for the email
+ * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
  */
 export async function sendEmployeeRegistrationEmail(
   conciergerie: Conciergerie,
@@ -107,7 +117,46 @@ export async function sendEmployeeRegistrationEmail(
 }
 
 /**
+ * Send a notification email to an employee when a new device is connected to their account
+ * @param employee - The employee to send the email to
+ * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
+ */
+export async function sendNewDeviceNotificationEmail(employee: Employee): Promise<boolean> {
+  return await sendEmail({
+    to: employee.email,
+    subject: 'Nouvel appareil connecté sur Job Conciergerie',
+    html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #4a5568;">Nouvel appareil détecté</h2>
+          <p>Bonjour ${employee.firstName} ${employee.familyName},</p>
+          <p>Un nouvel appareil vient d&apos;être connecté à votre compte Job Conciergerie :</p>
+          <div style="background-color: #fff8f8; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #d32f2f;">
+            <p>Si vous êtes l&apos;auteur de cette connexion, vous devez au préalable valider cet appareil.</p>
+            <p>Si vous n&apos;êtes pas à l&apos;origine de cette connexion, vous pouvez supprimer cet appareil.</p>
+          </div>
+          <p>Ces actions se font depuis les paramètres de votre compte, section "Appareils connectés".</p>
+          <p>
+            <a href="${baseUrl}/settings" style="display: inline-block; background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+              Voir mes appareils connectés
+            </a>
+          </p>
+          <p style="margin-top: 30px; font-size: 14px; color: #718096;">
+            Cordialement,<br>
+            L&apos;équipe Job Conciergerie
+          </p>
+        </div>
+      `,
+  });
+}
+
+/**
  * Send an acceptance notification email to an employee whether it's status is approved or rejected
+ * @param employee - The employee to send the email to
+ * @param conciergerie - The conciergerie to send the email to
+ * @param missionsCount - The number of missions associated with the employee
+ * @param isAccepted - Whether the employee is accepted or not
+ * @param retryId - The retry id for the email
+ * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
  */
 export async function sendEmployeeAcceptanceEmail(
   employee: Employee,
@@ -121,7 +170,7 @@ export async function sendEmployeeAcceptanceEmail(
     id: retryId,
     type: 'acceptance',
     to: employee.email,
-    from: conciergerie.email,
+    replyTo: conciergerie.email,
     subject: 'Information concernant votre inscription à Job Conciergerie',
     html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -159,6 +208,13 @@ export async function sendEmployeeAcceptanceEmail(
 
 /**
  * Send notification email to a conciergerie about a mission status change
+ * @param mission - The mission to send the email to
+ * @param home - The home associated with the mission
+ * @param employee - The employee associated with the mission
+ * @param conciergerie - The conciergerie associated with the mission
+ * @param status - The status of the mission
+ * @param retryId - The retry id for the email
+ * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
  */
 export async function sendMissionStatusChangeEmail(
   mission: Mission,
@@ -230,6 +286,12 @@ export async function sendMissionStatusChangeEmail(
 
 /**
  * Send notification for missions that haven't been completed on time
+ * @param mission - The mission to send the email to
+ * @param home - The home associated with the mission
+ * @param employee - The employee associated with the mission
+ * @param conciergerie - The conciergerie associated with the mission
+ * @param retryId - The retry id for the email
+ * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
  */
 export async function sendLateCompletionEmail(
   mission: Mission,
@@ -295,6 +357,12 @@ export async function sendLateCompletionEmail(
 
 /**
  * Send a confirmation email to an employee when they accept a mission
+ * @param mission - The mission to send the email to
+ * @param home - The home associated with the mission
+ * @param employee - The employee associated with the mission
+ * @param conciergerie - The conciergerie associated with the mission
+ * @param retryId - The retry id for the email
+ * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
  */
 export async function sendMissionAcceptanceToEmployeeEmail(
   mission: Mission,
@@ -315,7 +383,7 @@ export async function sendMissionAcceptanceToEmployeeEmail(
     id: retryId,
     type: 'missionAcceptance',
     to: employee.email,
-    from: conciergerie.email,
+    replyTo: conciergerie.email,
     subject: `🔔 Confirmation de mission - ${home.title}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -356,6 +424,13 @@ export async function sendMissionAcceptanceToEmployeeEmail(
 
 /**
  * Send an email to an employee when a mission has been updated
+ * @param mission - The mission to send the email to
+ * @param home - The home associated with the mission
+ * @param employee - The employee associated with the mission
+ * @param conciergerie - The conciergerie associated with the mission
+ * @param changes - The changes made to the mission
+ * @param retryId - The retry id for the email
+ * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
  */
 export async function sendMissionUpdatedToEmployeeEmail(
   mission: Mission,
@@ -377,7 +452,7 @@ export async function sendMissionUpdatedToEmployeeEmail(
     id: retryId,
     type: 'missionUpdated',
     to: employee.email,
-    from: conciergerie.email,
+    replyTo: conciergerie.email,
     subject: `🔄 Mise à jour de mission - ${home.title}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -422,6 +497,13 @@ export async function sendMissionUpdatedToEmployeeEmail(
 
 /**
  * Send an email to an employee when a mission has been either deleted or canceled
+ * @param mission - The mission to send the email to
+ * @param home - The home associated with the mission
+ * @param employee - The employee associated with the mission
+ * @param conciergerie - The conciergerie associated with the mission
+ * @param type - The type of removal (deleted or canceled)
+ * @param retryId - The retry id for the email
+ * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
  */
 export async function sendMissionRemovedToEmployeeEmail(
   mission: Mission,
@@ -460,7 +542,7 @@ export async function sendMissionRemovedToEmployeeEmail(
     id: retryId,
     type: 'missionRemoved',
     to: employee.email,
-    from: conciergerie.email,
+    replyTo: conciergerie.email,
     subject: `${config.emoji} ${config.title} - ${home.title}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
