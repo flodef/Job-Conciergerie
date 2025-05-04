@@ -24,495 +24,239 @@ export type EmailSenderProps = {
   showSuccessToast?: boolean;
 };
 
+/**
+ * Generic handler for all email sending operations
+ * This reduces code duplication across all email sender functions
+ */
+const handleEmailSending = <T extends unknown[]>(
+  { addFailedEmail, setToast, showSuccessToast = false }: EmailSenderProps,
+  emailType: EmailType,
+  serverAction: (...args: T) => Promise<boolean>,
+  args: T,
+  retryData: Record<string, unknown>,
+  successMessage: string = "L'email a été envoyé avec succès",
+) => {
+  return serverAction(...args)
+    .then(isSuccess => {
+      if (isSuccess) {
+        if (showSuccessToast && setToast) {
+          setToast({
+            type: ToastType.Success,
+            message: successMessage,
+          });
+        }
+        return true;
+      } else {
+        // Add to retry queue
+        addFailedEmail(emailType, retryData);
+
+        if (setToast) {
+          setToast({
+            type: ToastType.Info,
+            message: "L'email sera envoyé automatiquement dès que possible",
+          });
+        }
+        return false;
+      }
+    })
+    .catch(error => {
+      console.error(`Error sending ${emailType} email:`, error);
+
+      // Add to retry queue
+      addFailedEmail(emailType, retryData);
+
+      if (setToast) {
+        setToast({
+          type: ToastType.Error,
+          message: 'Une erreur est survenue. Nous réessaierons automatiquement.',
+        });
+      }
+      return false;
+    });
+};
+
 export const EmailSender = {
   // Sending email with verification for a conciergerie
-  sendVerificationEmail: (
-    { addFailedEmail, setToast, showSuccessToast = false }: EmailSenderProps,
-    conciergerie: Conciergerie, 
-    userId: string
-  ) => {
-    return sendConciergerieVerificationEmail(conciergerie, userId)
-      .then(isSuccess => {
-        if (isSuccess) {
-          if (showSuccessToast && setToast) {
-            setToast({
-              type: ToastType.Success,
-              message: "L'email de vérification a été envoyé avec succès",
-            });
-          }
-          return true;
-        } else {
-          // Add to retry queue
-          addFailedEmail('verification', { ...conciergerie });
-          
-          if (setToast) {
-            setToast({
-              type: ToastType.Info,
-              message: "L'email sera envoyé automatiquement dès que possible",
-            });
-          }
-          return false;
-        }
-      })
-      .catch(error => {
-        console.error('Error sending verification email:', error);
-        
-        // Add to retry queue
-        addFailedEmail('verification', { ...conciergerie });
-        
-        if (setToast) {
-          setToast({
-            type: ToastType.Error,
-            message: "Une erreur est survenue. Nous réessaierons automatiquement.",
-          });
-        }
-        return false;
-      });
+  sendVerificationEmail: (props: EmailSenderProps, conciergerie: Conciergerie, userId: string) => {
+    return handleEmailSending(
+      props,
+      'verification',
+      sendConciergerieVerificationEmail,
+      [conciergerie, userId],
+      { ...conciergerie },
+      "L'email de vérification a été envoyé avec succès",
+    );
   },
-  
+
   // Sending registration notification for employee
-  sendRegistrationEmail: (
-    { addFailedEmail, setToast, showSuccessToast = false }: EmailSenderProps,
-    conciergerie: Conciergerie, 
-    employee: Employee
-  ) => {
-    return sendEmployeeRegistrationEmail(conciergerie, employee)
-      .then(isSuccess => {
-        if (isSuccess) {
-          if (showSuccessToast && setToast) {
-            setToast({
-              type: ToastType.Success,
-              message: "L'email de notification a été envoyé avec succès",
-            });
-          }
-          return true;
-        } else {
-          // Add to retry queue
-          addFailedEmail('registration', {
-            conciergerie,
-            employee,
-          });
-          
-          if (setToast) {
-            setToast({
-              type: ToastType.Info,
-              message: "L'email sera envoyé automatiquement dès que possible",
-            });
-          }
-          return false;
-        }
-      })
-      .catch(error => {
-        console.error('Error sending registration email:', error);
-        
-        // Add to retry queue
-        addFailedEmail('registration', {
-          conciergerie,
-          employee,
-        });
-        
-        if (setToast) {
-          setToast({
-            type: ToastType.Error,
-            message: "Une erreur est survenue. Nous réessaierons automatiquement.",
-          });
-        }
-        return false;
-      });
+  sendRegistrationEmail: (props: EmailSenderProps, conciergerie: Conciergerie, employee: Employee) => {
+    return handleEmailSending(
+      props,
+      'registration',
+      sendEmployeeRegistrationEmail,
+      [conciergerie, employee],
+      {
+        conciergerie,
+        employee,
+      },
+      "L'email de notification a été envoyé avec succès",
+    );
   },
-  
+
   // Sending acceptance/rejection notification to employee
   sendAcceptanceEmail: (
-    { addFailedEmail, setToast, showSuccessToast = false }: EmailSenderProps,
+    props: EmailSenderProps,
     employee: Employee,
     conciergerie: Conciergerie,
     missionsCount: number,
-    isAccepted: boolean
+    isAccepted: boolean,
   ) => {
-    return sendEmployeeAcceptanceEmail(employee, conciergerie, missionsCount, isAccepted)
-      .then(isSuccess => {
-        if (isSuccess) {
-          if (showSuccessToast && setToast) {
-            setToast({
-              type: ToastType.Success,
-              message: "L'email de notification a été envoyé avec succès",
-            });
-          }
-          return true;
-        } else {
-          // Add to retry queue
-          addFailedEmail('acceptance', {
-            employee,
-            conciergerie,
-            missionsCount,
-            isAccepted,
-          });
-          
-          if (setToast) {
-            setToast({
-              type: ToastType.Info,
-              message: "L'email sera envoyé automatiquement dès que possible",
-            });
-          }
-          return false;
-        }
-      })
-      .catch(error => {
-        console.error('Error sending acceptance email:', error);
-        
-        // Add to retry queue
-        addFailedEmail('acceptance', {
-          employee,
-          conciergerie,
-          missionsCount,
-          isAccepted,
-        });
-        
-        if (setToast) {
-          setToast({
-            type: ToastType.Error,
-            message: "Une erreur est survenue. Nous réessaierons automatiquement.",
-          });
-        }
-        return false;
-      });
+    return handleEmailSending(
+      props,
+      'acceptance',
+      sendEmployeeAcceptanceEmail,
+      [employee, conciergerie, missionsCount, isAccepted],
+      {
+        employee,
+        conciergerie,
+        missionsCount,
+        isAccepted,
+      },
+      "L'email de notification a été envoyé avec succès",
+    );
   },
-  
+
   // Sending mission status change notification
   sendMissionStatusEmail: (
-    { addFailedEmail, setToast, showSuccessToast = false }: EmailSenderProps,
+    props: EmailSenderProps,
     mission: Mission,
     home: Home,
     employee: Employee,
     conciergerie: Conciergerie,
-    status: 'accepted' | 'started' | 'completed'
+    status: 'accepted' | 'started' | 'completed',
   ) => {
-    return sendMissionStatusChangeEmail(mission, home, employee, conciergerie, status)
-      .then(isSuccess => {
-        if (isSuccess) {
-          if (showSuccessToast && setToast) {
-            setToast({
-              type: ToastType.Success,
-              message: "L'email de notification a été envoyé avec succès",
-            });
-          }
-          return true;
-        } else {
-          // Add to retry queue
-          addFailedEmail('missionStatus', {
-            mission,
-            home,
-            employee,
-            conciergerie,
-            status,
-          });
-          
-          if (setToast) {
-            setToast({
-              type: ToastType.Info,
-              message: "L'email sera envoyé automatiquement dès que possible",
-            });
-          }
-          return false;
-        }
-      })
-      .catch(error => {
-        console.error('Error sending mission status email:', error);
-        
-        // Add to retry queue
-        addFailedEmail('missionStatus', {
-          mission,
-          home,
-          employee,
-          conciergerie,
-          status,
-        });
-        
-        if (setToast) {
-          setToast({
-            type: ToastType.Error,
-            message: "Une erreur est survenue. Nous réessaierons automatiquement.",
-          });
-        }
-        return false;
-      });
+    return handleEmailSending(
+      props,
+      'missionStatus',
+      sendMissionStatusChangeEmail,
+      [mission, home, employee, conciergerie, status],
+      {
+        mission,
+        home,
+        employee,
+        conciergerie,
+        status,
+      },
+      "L'email de notification a été envoyé avec succès",
+    );
   },
-  
+
   // Sending late completion notification
   sendLateCompletionEmail: (
-    { addFailedEmail, setToast, showSuccessToast = false }: EmailSenderProps,
+    props: EmailSenderProps,
     mission: Mission,
     home: Home,
     employee: Employee,
-    conciergerie: Conciergerie
+    conciergerie: Conciergerie,
   ) => {
-    return sendLateCompletionEmail(mission, home, employee, conciergerie)
-      .then(isSuccess => {
-        if (isSuccess) {
-          if (showSuccessToast && setToast) {
-            setToast({
-              type: ToastType.Success,
-              message: "L'email d'alerte de retard a été envoyé avec succès",
-            });
-          }
-          return true;
-        } else {
-          // Add to retry queue
-          addFailedEmail('lateCompletion', {
-            mission,
-            home,
-            employee,
-            conciergerie,
-          });
-          
-          if (setToast) {
-            setToast({
-              type: ToastType.Info,
-              message: "L'email sera envoyé automatiquement dès que possible",
-            });
-          }
-          return false;
-        }
-      })
-      .catch(error => {
-        console.error('Error sending late completion email:', error);
-        
-        // Add to retry queue
-        addFailedEmail('lateCompletion', {
-          mission,
-          home,
-          employee,
-          conciergerie,
-        });
-        
-        if (setToast) {
-          setToast({
-            type: ToastType.Error,
-            message: "Une erreur est survenue. Nous réessaierons automatiquement.",
-          });
-        }
-        return false;
-      });
+    return handleEmailSending(
+      props,
+      'lateCompletion',
+      sendLateCompletionEmail,
+      [mission, home, employee, conciergerie],
+      {
+        mission,
+        home,
+        employee,
+        conciergerie,
+      },
+      "L'email d'alerte de retard a été envoyé avec succès",
+    );
   },
-  
+
   // Sending mission acceptance confirmation to employee
   sendMissionAcceptanceEmail: (
-    { addFailedEmail, setToast, showSuccessToast = false }: EmailSenderProps,
+    props: EmailSenderProps,
     mission: Mission,
     home: Home,
     employee: Employee,
-    conciergerie: Conciergerie
+    conciergerie: Conciergerie,
   ) => {
-    return sendMissionAcceptanceToEmployeeEmail(mission, home, employee, conciergerie)
-      .then(isSuccess => {
-        if (isSuccess) {
-          if (showSuccessToast && setToast) {
-            setToast({
-              type: ToastType.Success,
-              message: "L'email de confirmation a été envoyé avec succès",
-            });
-          }
-          return true;
-        } else {
-          // Add to retry queue
-          addFailedEmail('missionAcceptance', {
-            mission,
-            home,
-            employee,
-            conciergerie,
-          });
-          
-          if (setToast) {
-            setToast({
-              type: ToastType.Info,
-              message: "L'email sera envoyé automatiquement dès que possible",
-            });
-          }
-          return false;
-        }
-      })
-      .catch(error => {
-        console.error('Error sending mission acceptance email:', error);
-        
-        // Add to retry queue
-        addFailedEmail('missionAcceptance', {
-          mission,
-          home,
-          employee,
-          conciergerie,
-        });
-        
-        if (setToast) {
-          setToast({
-            type: ToastType.Error,
-            message: "Une erreur est survenue. Nous réessaierons automatiquement.",
-          });
-        }
-        return false;
-      });
+    return handleEmailSending(
+      props,
+      'missionAcceptance',
+      sendMissionAcceptanceToEmployeeEmail,
+      [mission, home, employee, conciergerie],
+      {
+        mission,
+        home,
+        employee,
+        conciergerie,
+      },
+      "L'email de confirmation a été envoyé avec succès",
+    );
   },
-  
+
   // Sending mission update notification to employee
   sendMissionUpdatedEmail: (
-    { addFailedEmail, setToast, showSuccessToast = false }: EmailSenderProps,
+    props: EmailSenderProps,
     mission: Mission,
     home: Home,
     employee: Employee,
     conciergerie: Conciergerie,
-    changes: string[]
+    changes: string[],
   ) => {
-    return sendMissionUpdatedToEmployeeEmail(mission, home, employee, conciergerie, changes)
-      .then(isSuccess => {
-        if (isSuccess) {
-          if (showSuccessToast && setToast) {
-            setToast({
-              type: ToastType.Success,
-              message: "L'email de mise à jour a été envoyé avec succès",
-            });
-          }
-          return true;
-        } else {
-          // Add to retry queue
-          addFailedEmail('missionUpdated', {
-            mission,
-            home,
-            employee,
-            conciergerie,
-            changes,
-          });
-          
-          if (setToast) {
-            setToast({
-              type: ToastType.Info,
-              message: "L'email sera envoyé automatiquement dès que possible",
-            });
-          }
-          return false;
-        }
-      })
-      .catch(error => {
-        console.error('Error sending mission updated email:', error);
-        
-        // Add to retry queue
-        addFailedEmail('missionUpdated', {
-          mission,
-          home,
-          employee,
-          conciergerie,
-          changes,
-        });
-        
-        if (setToast) {
-          setToast({
-            type: ToastType.Error,
-            message: "Une erreur est survenue. Nous réessaierons automatiquement.",
-          });
-        }
-        return false;
-      });
+    return handleEmailSending(
+      props,
+      'missionUpdated',
+      sendMissionUpdatedToEmployeeEmail,
+      [mission, home, employee, conciergerie, changes],
+      {
+        mission,
+        home,
+        employee,
+        conciergerie,
+        changes,
+      },
+      "L'email de mise à jour a été envoyé avec succès",
+    );
   },
-  
+
   // Sending mission deleted/canceled notification to employee
   sendMissionRemovedEmail: (
-    { addFailedEmail, setToast, showSuccessToast = false }: EmailSenderProps,
+    props: EmailSenderProps,
     mission: Mission,
     home: Home,
     employee: Employee,
     conciergerie: Conciergerie,
-    type: 'deleted' | 'canceled'
+    type: 'deleted' | 'canceled',
   ) => {
-    return sendMissionRemovedToEmployeeEmail(mission, home, employee, conciergerie, type)
-      .then(isSuccess => {
-        if (isSuccess) {
-          if (showSuccessToast && setToast) {
-            setToast({
-              type: ToastType.Success,
-              message: "L'email de notification a été envoyé avec succès",
-            });
-          }
-          return true;
-        } else {
-          // Add to retry queue
-          addFailedEmail('missionRemoved', {
-            mission,
-            home,
-            employee,
-            conciergerie,
-            type,
-          });
-          
-          if (setToast) {
-            setToast({
-              type: ToastType.Info,
-              message: "L'email sera envoyé automatiquement dès que possible",
-            });
-          }
-          return false;
-        }
-      })
-      .catch(error => {
-        console.error('Error sending mission removed email:', error);
-        
-        // Add to retry queue
-        addFailedEmail('missionRemoved', {
-          mission,
-          home,
-          employee,
-          conciergerie,
-          type,
-        });
-        
-        if (setToast) {
-          setToast({
-            type: ToastType.Error,
-            message: "Une erreur est survenue. Nous réessaierons automatiquement.",
-          });
-        }
-        return false;
-      });
+    const action = type === 'deleted' ? 'suppression' : 'annulation';
+    return handleEmailSending(
+      props,
+      'missionRemoved',
+      sendMissionRemovedToEmployeeEmail,
+      [mission, home, employee, conciergerie, type],
+      {
+        mission,
+        home,
+        employee,
+        conciergerie,
+        type,
+      },
+      `L'email de ${action} a été envoyé avec succès`,
+    );
   },
 
   // Sending new device connection notification to employee
-  sendNewDeviceEmail: (
-    { addFailedEmail, setToast, showSuccessToast = false }: EmailSenderProps,
-    employee: Employee
-  ) => {
-    return sendNewDeviceNotificationEmail(employee)
-      .then(isSuccess => {
-        if (isSuccess) {
-          if (showSuccessToast && setToast) {
-            setToast({
-              type: ToastType.Success,
-              message: "L'email de notification de nouvel appareil a été envoyé avec succès",
-            });
-          }
-          return true;
-        } else {
-          // Add to retry queue
-          addFailedEmail('newDevice', { employee });
-          
-          if (setToast) {
-            setToast({
-              type: ToastType.Info,
-              message: "L'email sera envoyé automatiquement dès que possible",
-            });
-          }
-          return false;
-        }
-      })
-      .catch(error => {
-        console.error('Error sending new device notification email:', error);
-        
-        // Add to retry queue
-        addFailedEmail('newDevice', { employee });
-        
-        if (setToast) {
-          setToast({
-            type: ToastType.Error,
-            message: "Une erreur est survenue. Nous réessaierons automatiquement.",
-          });
-        }
-        return false;
-      });
+  sendNewDeviceEmail: (props: EmailSenderProps, employee: Employee) => {
+    return handleEmailSending(
+      props,
+      'newDevice',
+      sendNewDeviceNotificationEmail,
+      [employee],
+      { employee },
+      "L'email de notification de nouvel appareil a été envoyé avec succès",
+    );
   },
 };
