@@ -157,15 +157,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       if (!userId) throw new Error("L'identifiant n'est pas défini");
 
       // Check if employee already exists with the same name, phone, or email
-      if (
-        employeeExists(
-          employees,
-          formData.firstName || '',
-          formData.familyName || '',
-          formData.tel || '',
-          formData.email || '',
-        )
-      )
+      if (employeeExists(employees, formData.firstName, formData.familyName, formData.tel, formData.email))
         throw new Error('Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.');
 
       // Create a new employee in the database

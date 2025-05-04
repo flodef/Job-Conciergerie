@@ -169,7 +169,7 @@ export const updateEmployeeId = async (
 
     const result = await sql`
       UPDATE employees
-      SET id = ${employeeIds.slice(0, 3)}::text[]
+      SET id = ${employeeIds.slice(0, parseInt(process.env.NEXT_PUBLIC_MAX_DEVICES || '3'))}::text[]
       WHERE first_name = ${firstName} AND family_name = ${familyName}
       RETURNING id
     `;
