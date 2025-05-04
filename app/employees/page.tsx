@@ -1,6 +1,5 @@
 'use client';
 
-import { sendEmployeeAcceptanceEmail } from '@/app/actions/email';
 import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import Accordion from '@/app/components/accordion';
 import ConfirmationModal from '@/app/components/confirmationModal';
@@ -12,6 +11,8 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
+import { useEmailRetry } from '@/app/utils/emailRetry';
+import { EmailSender } from '@/app/utils/emailSender';
 import { filterEmployees, filterEmployeesByConciergerie, sortEmployees } from '@/app/utils/employee';
 import { Page } from '@/app/utils/navigation';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
@@ -30,6 +31,7 @@ export default function EmployeesList() {
   const { currentPage } = useMenuContext();
   const { missions } = useMissions();
   const { updateFetchTime, needsRefresh } = useFetchTime();
+  const { addFailedEmail } = useEmailRetry();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -109,13 +111,13 @@ export default function EmployeesList() {
         const conciergerie = getUserData<Conciergerie>();
         if (!conciergerie) throw new Error('Conciergerie non trouvée');
 
-        sendEmployeeAcceptanceEmail(employee, conciergerie, countEmployeeMissions(employee), newStatus === 'accepted')
-          .then(isEmailSent => {
-            if (!isEmailSent) throw new Error();
-          })
-          .catch(() => {
-            throw new Error('Email non envoyé');
-          });
+        EmailSender.sendAcceptanceEmail(
+          { addFailedEmail, setToast },
+          employee,
+          conciergerie,
+          countEmployeeMissions(employee),
+          newStatus === 'accepted',
+        );
 
         setToast({
           type: newStatus === 'accepted' ? ToastType.Success : ToastType.Error,

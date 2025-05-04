@@ -1,17 +1,12 @@
 'use client';
 
-import {
-  sendLateCompletionEmail,
-  sendMissionAcceptanceToEmployeeEmail,
-  sendMissionRemovedToEmployeeEmail,
-  sendMissionStatusChangeEmail,
-  sendMissionUpdatedToEmployeeEmail,
-} from '@/app/actions/email';
 import { createNewMission, deleteMissionData, fetchAllMissions, updateMissionData } from '@/app/actions/mission';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
+import { useEmailRetry } from '@/app/utils/emailRetry';
+import { EmailSender } from '@/app/utils/emailSender';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
@@ -45,6 +40,7 @@ export function MissionsProviderWrapper({ children }: { children: ReactNode }) {
 
 function MissionsProvider({ children }: { children: ReactNode }) {
   const { conciergeries, conciergerieName, getEmployeeId, findEmployee, getUserData } = useAuth();
+  const { addFailedEmail } = useEmailRetry();
   const { homes, fetchHomes } = useHomes();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -86,11 +82,12 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           const home = homes.find(h => h.id === mission.homeId);
           const employee = findEmployee(mission.employeeId);
 
-          if (home && employee) sendLateCompletionEmail(mission, home, employee, conciergerie);
+          if (home && employee)
+            EmailSender.sendLateCompletionEmail({ addFailedEmail }, mission, home, employee, conciergerie);
         }
       }
     },
-    [homes, conciergeries, findEmployee],
+    [homes, conciergeries, findEmployee, addFailedEmail],
   );
 
   const fetchMissions = useCallback(async () => {
@@ -182,7 +179,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     // If successful and there's an employee assigned who has notifications enabled, send email
     const conciergerie = conciergeries?.find(c => c.name === updatedMission.conciergerieName);
     if (employee?.notificationSettings?.missionChanged && home && changes.length > 0 && conciergerie)
-      await sendMissionUpdatedToEmployeeEmail(updatedMission, home, employee, conciergerie, changes);
+      EmailSender.sendMissionUpdatedEmail({ addFailedEmail }, updatedMission, home, employee, conciergerie, changes);
 
     return true;
   };
@@ -204,7 +201,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     // Notify employee before deleting the mission
     if (employee?.notificationSettings?.missionDeleted && home && conciergerie)
-      sendMissionRemovedToEmployeeEmail(missionToDelete, home, employee, conciergerie, 'deleted');
+      EmailSender.sendMissionRemovedEmail({ addFailedEmail }, missionToDelete, home, employee, conciergerie, 'deleted');
 
     return true;
   };
@@ -224,7 +221,14 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     // Send notification to employee about cancellation
     if (employee?.notificationSettings?.missionsCanceled && home && conciergerie)
-      sendMissionRemovedToEmployeeEmail(missionToCancel, home, employee, conciergerie, 'canceled');
+      EmailSender.sendMissionRemovedEmail(
+        { addFailedEmail },
+        missionToCancel,
+        home,
+        employee,
+        conciergerie,
+        'canceled',
+      );
 
     return true;
   };
@@ -250,7 +254,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const home = homes.find(h => h.id === missionToAccept.homeId);
     const conciergerie = conciergeries?.find(c => c.name === missionToAccept.conciergerieName);
     if (employee.notificationSettings?.acceptedMissions && home && conciergerie)
-      sendMissionAcceptanceToEmployeeEmail(missionToAccept, home, employee, conciergerie);
+      EmailSender.sendMissionAcceptanceEmail({ addFailedEmail }, missionToAccept, home, employee, conciergerie);
 
     return true;
   };
@@ -379,7 +383,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     // If we have all the required data, send the notification email
     if (home && conciergerie?.notificationSettings?.[notificationSetting])
-      sendMissionStatusChangeEmail(mission, home, employee, conciergerie, status);
+      EmailSender.sendMissionStatusEmail({ addFailedEmail }, mission, home, employee, conciergerie, status);
   };
 
   return (
