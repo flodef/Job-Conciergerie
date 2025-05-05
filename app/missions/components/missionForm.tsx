@@ -26,7 +26,7 @@ type MissionFormProps = {
 
 export default function MissionForm({ mission, onClose, onCancel, mode }: MissionFormProps) {
   const { homes, addMission, updateMission, missionExists } = useMissions();
-  const { conciergerieName, employees: allEmployees, getUserId } = useAuth();
+  const { conciergerieName, employees: allEmployees, getUserKey } = useAuth();
 
   // Filter homes by the current conciergerie
   const filteredHomes = homes.filter(home => home.conciergerieName === conciergerieName);
@@ -372,8 +372,8 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               values={selectedEmployees}
               onChange={setSelectedEmployees}
               options={employees.map(emp => ({
-                value: getUserId(emp),
-                label: getUserId(emp),
+                value: getUserKey(emp),
+                label: getUserKey(emp),
               }))}
               disabled={isSubmitting || cannotEdit}
               required

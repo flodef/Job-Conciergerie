@@ -39,7 +39,7 @@ export function MissionsProviderWrapper({ children }: { children: ReactNode }) {
 }
 
 function MissionsProvider({ children }: { children: ReactNode }) {
-  const { conciergerieName, getUserId, findConciergerie, findEmployee, getUserData } = useAuth();
+  const { conciergerieName, getUserKey, findConciergerie, findEmployee, getUserData } = useAuth();
   const { addFailedEmail } = useEmailRetry();
   const { homes, fetchHomes } = useHomes();
 
@@ -242,7 +242,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     const success = await setMissionData(id, {
       ...missionToAccept,
-      employeeId: getUserId(employee),
+      employeeId: getUserKey(employee),
       status: 'accepted',
     });
     if (!success) return false;
@@ -264,7 +264,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const employee = getUserData<Employee>();
 
     // Check if mission has been accepted by current employee
-    if (!missionToStart?.employeeId || !employee || getUserId(employee) !== missionToStart.employeeId) return false;
+    if (!missionToStart?.employeeId || !employee || getUserKey(employee) !== missionToStart.employeeId) return false;
 
     // Only allow starting if the mission is accepted and the start time has passed
     if (new Date() < new Date(missionToStart.startDateTime)) return false;
@@ -285,7 +285,10 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     if (!missionToComplete?.employeeId || !employee) return false;
 
     // Check if mission belongs to current employee or conciergerie is trying to complete the mission for the employee
-    if (getUserId(employee) !== missionToComplete.employeeId && missionToComplete.conciergerieName !== conciergerieName)
+    if (
+      getUserKey(employee) !== missionToComplete.employeeId &&
+      missionToComplete.conciergerieName !== conciergerieName
+    )
       return false;
 
     const success = await setMissionData(id, { ...missionToComplete, status: 'completed' });

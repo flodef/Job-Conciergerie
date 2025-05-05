@@ -21,7 +21,7 @@ interface AuthContextType {
   conciergerieName: string | undefined;
   setConciergerieName: (name: string | undefined) => void;
   employeeName: string | undefined;
-  getUserId: <T extends UserData>(user: T) => string;
+  getUserKey: <T extends UserData>(user: T) => string;
   findEmployee: (id: string | null) => Employee | undefined;
   findConciergerie: (id: string | null) => Conciergerie | undefined;
   deleteEmployee: (employee: Employee) => Promise<boolean>;
@@ -44,7 +44,7 @@ const AuthContext = createContext<AuthContextType>({
   conciergerieName: undefined,
   setConciergerieName: () => {},
   employeeName: undefined,
-  getUserId: () => '',
+  getUserKey: () => '',
   findEmployee: () => undefined,
   findConciergerie: () => undefined,
   deleteEmployee: () => Promise.resolve(false),
@@ -115,8 +115,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : conciergeries;
       const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
 
-      const foundEmployee = fetchedEmployees?.find(e => e.id.includes(id));
-      const newUserData = foundEmployee || fetchedConciergeries?.find(c => c.id.includes(id));
+      const findUserById = <T extends UserData>(users: T[] | null, id: string) =>
+        users?.find(user => user.id.includes(id.replace('$', '')));
+
+      const foundEmployee = findUserById(fetchedEmployees, id);
+      const newUserData = foundEmployee || findUserById(fetchedConciergeries, id);
       const isEmployee = !!newUserData && !!foundEmployee;
       const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
       const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
@@ -180,40 +183,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (updateType === userType) setUserData(updatedData);
 
     // Update employees or conciergeries list
-    const userId = getUserId(updatedData);
+    const userId = getUserKey(updatedData);
     if (updateType === 'employee') {
       setEmployees(prev => {
         if (!prev) return [updatedData as Employee];
-        const exists = prev.some(e => getUserId(e) === userId);
-        if (exists) return prev.map(e => (getUserId(e) === userId ? (updatedData as Employee) : e));
+        const exists = prev.some(e => getUserKey(e) === userId);
+        if (exists) return prev.map(e => (getUserKey(e) === userId ? (updatedData as Employee) : e));
         return [...prev, updatedData as Employee];
       });
     } else if (updateType === 'conciergerie') {
       setConciergeries(prev => {
         if (!prev) return [updatedData as Conciergerie];
-        const exists = prev.some(c => getUserId(c) === userId);
-        if (exists) return prev.map(c => (getUserId(c) === userId ? (updatedData as Conciergerie) : c));
+        const exists = prev.some(c => getUserKey(c) === userId);
+        if (exists) return prev.map(c => (getUserKey(c) === userId ? (updatedData as Conciergerie) : c));
         return [...prev, updatedData as Conciergerie];
       });
     }
   };
 
-  const getUserId = <T extends UserData>(user: T): string => {
+  const getUserKey = <T extends UserData>(user: T): string => {
     if ('name' in user) return user.name;
     if ('firstName' in user && 'familyName' in user) return `${user.firstName} ${user.familyName}`;
     throw new Error('Invalid UserData type');
   };
 
-  const findEmployee = (id: string | null) => {
-    return id ? employees.find(e => getUserId(e) === id) : undefined;
-  };
-  const findConciergerie = (id: string | null) => {
-    return id ? conciergeries.find(c => getUserId(c) === id) : undefined;
-  };
+  const findEmployee = (id: string | null) => (id ? employees.find(e => getUserKey(e) === id) : undefined);
+  const findConciergerie = (id: string | null) => (id ? conciergeries.find(c => getUserKey(c) === id) : undefined);
 
   const deleteEmployee = async (employee: Employee) => {
     const isSuccess = await deleteEmployeeData(employee);
-    if (isSuccess) setEmployees(prev => prev?.filter(e => getUserId(e) !== getUserId(employee)) ?? []);
+    if (isSuccess) setEmployees(prev => prev?.filter(e => getUserKey(e) !== getUserKey(employee)) ?? []);
     return isSuccess;
   };
 
@@ -244,7 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         conciergerieName,
         setConciergerieName,
         employeeName,
-        getUserId,
+        getUserKey,
         findEmployee,
         findConciergerie,
         deleteEmployee,
