@@ -13,7 +13,7 @@ import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
 const EmployeeSettings: React.FC = () => {
-  const { employees, getUserData, updateUserData } = useAuth();
+  const { employees, userData, updateUserData } = useAuth();
 
   // Validation states
   const [emailError, setEmailError] = useState('');
@@ -40,7 +40,7 @@ const EmployeeSettings: React.FC = () => {
 
   // Load user info and set form values
   useEffect(() => {
-    const employee = getUserData<Employee>();
+    const employee = userData as Employee;
     if (!employee) return;
 
     // Set employee data for form
@@ -53,7 +53,7 @@ const EmployeeSettings: React.FC = () => {
     setOriginalEmail(employee.email);
     setOriginalTel(employee.tel);
     setOriginalGeographicZone(employee.geographicZone || '');
-  }, [getUserData]);
+  }, [userData]);
 
   const hasChanges = () => {
     const emailChanged = email !== originalEmail;
@@ -118,7 +118,7 @@ const EmployeeSettings: React.FC = () => {
         throw new Error(error.message);
       }
 
-      const updatedEmployee = await updateEmployeeData(getUserData<Employee>(), {
+      const updatedEmployee = await updateEmployeeData(userData as Employee, {
         email,
         tel,
         geographicZone,

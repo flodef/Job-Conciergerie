@@ -19,7 +19,7 @@ type Device = {
 };
 
 const AdvancedSettings: React.FC = () => {
-  const { disconnect, nuke, getUserData, userId: currentUserId, userType } = useAuth();
+  const { disconnect, nuke, userData, userId: currentUserId, userType } = useAuth();
 
   const [storedLabels, setStoredLabels] = useLocalStorage<Device[]>('device_labels', []);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -33,7 +33,6 @@ const AdvancedSettings: React.FC = () => {
   const [deleteSettings, setDeleteSettings] = useState(false);
 
   useEffect(() => {
-    const userData = getUserData();
     if (!userData) return;
 
     const ids: Device[] = [];
@@ -46,7 +45,7 @@ const AdvancedSettings: React.FC = () => {
     });
 
     setStoredLabels(ids);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDeleteDevice = (id: string) => {
     setConfirmTargetId(id);
@@ -111,7 +110,6 @@ const AdvancedSettings: React.FC = () => {
 
   // Helper to update device IDs array and handle all side effects
   const updateDeviceIds = async (transform: (ids: string[]) => string[], action: string) => {
-    const userData = getUserData();
     if (!userData) return;
 
     const newIds = transform(userData.id);

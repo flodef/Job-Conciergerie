@@ -17,7 +17,7 @@ type ColorOption = {
 };
 
 const ConciergerieSettings: React.FC = () => {
-  const { conciergeries, getUserData, updateUserData } = useAuth();
+  const { conciergeries, userData, updateUserData } = useAuth();
 
   // Validation states
   const [emailError, setEmailError] = useState('');
@@ -42,7 +42,7 @@ const ConciergerieSettings: React.FC = () => {
   // Load user info and set form values
   useEffect(() => {
     // Find the conciergerie that matches the name in localStorage
-    const conciergerie = getUserData<Conciergerie>();
+    const conciergerie = userData as Conciergerie;
     if (!conciergerie) return;
 
     // Set current form values for conciergerie
@@ -60,7 +60,7 @@ const ConciergerieSettings: React.FC = () => {
 
     // Apply theme color
     setPrimaryColor(conciergerie.color);
-  }, [getUserData]);
+  }, [userData]);
 
   // Check if form has been modified
   const hasChanges = () => {
@@ -108,7 +108,7 @@ const ConciergerieSettings: React.FC = () => {
         throw new Error(error.message);
       }
 
-      const updatedConciergerie = await updateConciergerieData(getUserData<Conciergerie>(), {
+      const updatedConciergerie = await updateConciergerieData(userData as Conciergerie, {
         email,
         tel,
         colorName: selectedColor?.name || '',

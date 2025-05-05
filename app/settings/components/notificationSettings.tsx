@@ -33,11 +33,11 @@ const getDefaultSettings = (userType: UserType | undefined) => {
 };
 
 const NotificationSettings: React.FC = () => {
-  const { userType, getUserData, updateUserData } = useAuth();
+  const { userType, userData, updateUserData } = useAuth();
 
   const [toast, setToast] = useState<Toast>();
   const [settings, setSettings] = useState<ConciergerieNotificationSettings | EmployeeNotificationSettings>(
-    getUserData()?.notificationSettings || getDefaultSettings(userType),
+    userData?.notificationSettings || getDefaultSettings(userType),
   );
   const options = userType === 'conciergerie' ? conciergerieOptions : employeeOptions;
 
@@ -63,14 +63,14 @@ const NotificationSettings: React.FC = () => {
 
       const updateData = {
         conciergerie: async () => {
-          const data = await updateConciergerieData(getUserData<Conciergerie>(), {
+          const data = await updateConciergerieData(userData as Conciergerie, {
             notificationSettings: settings as ConciergerieNotificationSettings,
           });
           if (!data) throw new Error('failed to update conciergerie in database');
           updateUserData(data);
         },
         employee: async () => {
-          const data = await updateEmployeeData(getUserData<Employee>(), {
+          const data = await updateEmployeeData(userData as Employee, {
             notificationSettings: settings as EmployeeNotificationSettings,
           });
           if (!data) throw new Error('failed to update employee in database');
