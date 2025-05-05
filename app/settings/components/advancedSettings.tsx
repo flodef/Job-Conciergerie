@@ -109,47 +109,48 @@ const AdvancedSettings: React.FC = () => {
     setEditLabel('');
   };
 
-  const handleAcceptDevice = (id: string) => {
-    // Logic to accept device
-    console.log('Accept device:', id);
+  // Helper to update device IDs array and handle all side effects
+  const updateDeviceIds = async (transform: (ids: string[]) => string[], action: string) => {
+    const userData = getUserData();
+    if (!userData) return;
+
+    const newIds = transform(userData.id);
+    const updateAction =
+      userType === 'employee'
+        ? () => updateEmployeeWithUserId(userData as Employee, newIds)
+        : () => updateConciergerieWithUserId(userData as Conciergerie, newIds);
+    const updatedIds = await updateAction();
+    if (updatedIds) {
+      // Create an updated Device[] based on the newIds
+      const updatedLabels = newIds.map(newId => {
+        // Find existing device label if available
+        const existingDevice = storedLabels?.find(item => item.id === newId || item.id === `$${newId}`);
+        return { id: newId, label: existingDevice?.label };
+      });
+      setStoredLabels(updatedLabels);
+      setToast({ type: ToastType.Success, message: `L'appareil a été ${action} avec succès` });
+      return updatedIds;
+    } else {
+      setToast({ type: ToastType.Error, message: `L'appareil n'a pas pu être ${action}` });
+      return null;
+    }
+  };
+
+  const handleAcceptDevice = async (id: string) => {
+    // Accept device by removing the $ prefix from the id
+    await updateDeviceIds(
+      ids => ids.map(deviceId => (deviceId === id && deviceId.startsWith('$') ? deviceId.slice(1) : deviceId)),
+      'accepté',
+    );
   };
 
   const resetMyData = async () => {
     if (!confirmTargetId || !currentUserId) return;
 
-    // If a specific device is selected, handle that device
-    const userData = getUserData();
-    if (!userData) return;
-
-    // Remove the device ID based on user type
-    const filteredIds = userData.id.filter(id => id !== confirmTargetId);
-    const updateAction =
-      userType === 'employee'
-        ? () => updateEmployeeWithUserId(userData as Employee, filteredIds)
-        : () => updateConciergerieWithUserId(userData as Conciergerie, filteredIds);
-
-    // Update the user's ID in the database
-    const updatedIds = await updateAction();
-    if (updatedIds) {
-      // Update the stored labels
-      setStoredLabels(prevLabels => prevLabels?.filter(item => item.id !== confirmTargetId));
-
-      // Show success message
-      setToast({
-        type: ToastType.Success,
-        message: "L'appareil a été supprimé avec succès",
-      });
-
-      if (confirmTargetId === currentUserId) {
-        // Reset all data for current device
-        if (deleteSettings) nuke();
-        else disconnect();
-      }
-    } else {
-      setToast({
-        type: ToastType.Error,
-        message: "Impossible de supprimer l'appareil",
-      });
+    const updatedIds = await updateDeviceIds(ids => ids.filter(id => id !== confirmTargetId), 'supprimé');
+    if (updatedIds && confirmTargetId === currentUserId) {
+      if (deleteSettings) nuke();
+      else disconnect();
     }
   };
 
