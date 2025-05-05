@@ -16,15 +16,15 @@ import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
 import { getTimeDifference } from '@/app/utils/date';
 
 // Map pages to their respective icons
-export const pageSettings: Record<Page, { icon: ReactNode; userType: UserType | undefined; useFetchTime: boolean }> = {
-  [Page.Welcome]: { icon: null, userType: undefined, useFetchTime: false },
-  [Page.Waiting]: { icon: null, userType: undefined, useFetchTime: false },
-  [Page.Error]: { icon: null, userType: undefined, useFetchTime: false },
-  [Page.Missions]: { icon: <IconBriefcase size={30} />, userType: undefined, useFetchTime: true },
-  [Page.Calendar]: { icon: <IconCalendar size={30} />, userType: undefined, useFetchTime: true },
-  [Page.Homes]: { icon: <IconHome size={30} />, userType: 'conciergerie', useFetchTime: true },
-  [Page.Employees]: { icon: <IconUser size={30} />, userType: 'conciergerie', useFetchTime: true },
-  [Page.Settings]: { icon: <IconSettings size={30} />, userType: undefined, useFetchTime: false },
+export const pageSettings: Record<Page, { icon: ReactNode; userType: UserType | undefined }> = {
+  [Page.Welcome]: { icon: null, userType: undefined },
+  [Page.Waiting]: { icon: null, userType: undefined },
+  [Page.Error]: { icon: null, userType: undefined },
+  [Page.Missions]: { icon: <IconBriefcase size={30} />, userType: undefined },
+  [Page.Calendar]: { icon: <IconCalendar size={30} />, userType: undefined },
+  [Page.Homes]: { icon: <IconHome size={30} />, userType: 'conciergerie' },
+  [Page.Employees]: { icon: <IconUser size={30} />, userType: 'conciergerie' },
+  [Page.Settings]: { icon: <IconSettings size={30} />, userType: undefined },
 };
 
 export default function NavigationLayout({ children }: { children: ReactNode }) {
@@ -95,7 +95,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
           {/* Title */}
           <h1 className="w-full text-2xl font-semibold text-foreground text-center">{currentPage}</h1>
           {/* Tooltip for last fetch time */}
-          {pageSettings[currentPage].useFetchTime && !!lastFetchTime[currentPage] && (
+          {!!lastFetchTime[currentPage] && (
             <Tooltip icon={IconClock} size="small" orientation="horizontal" onClick={() => setCurrentTime(new Date())}>
               <div className="flex w-full justify-center text-center">
                 Dernière mise à jour :<br /> il y a {getTimeDifference(lastFetchTime[currentPage], currentTime)}

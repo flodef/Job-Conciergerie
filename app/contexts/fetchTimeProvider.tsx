@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Page } from '@/app/utils/navigation';
+import { navigationPages, Page } from '@/app/utils/navigation';
 import { pageSettings } from '@/app/components/navigationLayout';
 
 const AUTO_REFRESH_INTERVAL = 60 * 1000; // 1 minute
@@ -9,7 +9,7 @@ const STALE_THRESHOLD = 10 * 60 * 1000; // 10 minutes
 
 type FetchTimeContextType = {
   lastFetchTime: Partial<Record<Page, Date>>;
-  updateFetchTime: (page: Page) => void;
+  updateFetchTime: (pages: Page | Page[]) => void;
   needsRefresh: Partial<Record<Page, boolean>>;
 };
 
@@ -18,8 +18,8 @@ const FetchTimeContext = createContext<FetchTimeContextType | undefined>(undefin
 // Function to initialize needsRefresh based on pageSettings
 const initializeNeedsRefresh = (): Partial<Record<Page, boolean>> => {
   const initialRefresh: Partial<Record<Page, boolean>> = {};
-  Object.entries(pageSettings).forEach(([page, settings]) => {
-    if (settings.useFetchTime) {
+  Object.entries(pageSettings).forEach(([page]) => {
+    if (navigationPages.includes(page as Page)) {
       initialRefresh[page as Page] = true;
     }
   });
@@ -30,10 +30,26 @@ export const FetchTimeProvider = ({ children }: { children: ReactNode }) => {
   const [lastFetchTime, setLastFetchTime] = useState<Partial<Record<Page, Date>>>({});
   const [needsRefresh, setNeedsRefresh] = useState<Partial<Record<Page, boolean>>>(initializeNeedsRefresh());
 
-  // Function to update fetch time for a specific page
-  const updateFetchTime = (page: Page) => {
-    setLastFetchTime(prev => ({ ...prev, [page]: new Date() }));
-    setNeedsRefresh(prev => ({ ...prev, [page]: false }));
+  // Function to update fetch time for one or multiple pages
+  const updateFetchTime = (pages: Page | Page[]) => {
+    const pageArray = Array.isArray(pages) ? pages : [pages];
+    const now = new Date();
+    
+    setLastFetchTime(prev => {
+      const updated = { ...prev };
+      pageArray.forEach(page => {
+        updated[page] = now;
+      });
+      return updated;
+    });
+    
+    setNeedsRefresh(prev => {
+      const updated = { ...prev };
+      pageArray.forEach(page => {
+        updated[page] = false;
+      });
+      return updated;
+    });
   };
 
   // Auto-refresh logic: Check every minute if data is stale (older than 10 minutes)

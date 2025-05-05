@@ -60,7 +60,7 @@ export default function Calendar() {
     isFetching.current = true;
     fetchMissions()
       .then(isSuccess => {
-        if (isSuccess) updateFetchTime(Page.Calendar);
+        if (isSuccess) updateFetchTime([Page.Calendar, Page.Missions, Page.Homes]);
         else
           setToast({
             type: ToastType.Error,
