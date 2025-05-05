@@ -23,7 +23,7 @@ export default function EmployeesList() {
     conciergerieName,
     isLoading: authLoading,
     employees: authEmployees,
-    getEmployeeId,
+    getUserId,
     fetchDataFromDatabase,
     getUserData,
     updateUserData,
@@ -85,7 +85,7 @@ export default function EmployeesList() {
 
   // Count missions assigned to an employee
   const countEmployeeMissions = (employee: Employee): number => {
-    return missions.filter(mission => getEmployeeId(employee) === mission.employeeId).length;
+    return missions.filter(mission => getUserId(employee) === mission.employeeId).length;
   };
 
   // Handle status change
@@ -183,7 +183,7 @@ export default function EmployeesList() {
           <tbody className="bg-background divide-y divide-secondary">
             {employees.map(employee => (
               <EmployeeRow
-                key={getEmployeeId(employee)}
+                key={getUserId(employee)}
                 employee={employee}
                 onStatusChange={handleStatusChange}
                 onClick={() => handleEmployeeClick(employee)}

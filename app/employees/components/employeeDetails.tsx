@@ -23,7 +23,7 @@ type EmployeeDetailsProps = {
 };
 
 export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsProps) {
-  const { getEmployeeId, deleteEmployee } = useAuth();
+  const { getUserId, deleteEmployee } = useAuth();
   const { missions } = useMissions();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -125,9 +125,8 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
           Missions complétées :
           <span className={labelClassName}>
             {
-              missions.filter(
-                mission => getEmployeeId(employee) === mission.employeeId && mission.status === 'completed',
-              ).length
+              missions.filter(mission => getUserId(employee) === mission.employeeId && mission.status === 'completed')
+                .length
             }
           </span>
         </div>

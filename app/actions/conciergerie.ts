@@ -45,6 +45,8 @@ export async function updateConciergerieData(
   conciergerie: Conciergerie | undefined,
   data: Partial<Conciergerie>,
 ): Promise<Conciergerie | null> {
+  if (!conciergerie) return null;
+
   // Convert to DB format
   const dbData: Partial<DbConciergerie> = {
     name: data.name,
@@ -54,5 +56,5 @@ export async function updateConciergerieData(
     notification_settings: data.notificationSettings,
   };
 
-  return await updateConciergerie(conciergerie?.name, dbData);
+  return await updateConciergerie(conciergerie.name, dbData);
 }

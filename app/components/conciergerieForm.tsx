@@ -6,7 +6,6 @@ import Select from '@/app/components/select';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { Conciergerie } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
 import { useEmailRetry } from '@/app/utils/emailRetry';
@@ -20,7 +19,7 @@ type ConciergerieFormProps = {
 
 export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const { onMenuChange } = useMenuContext();
-  const { userId, setConciergerieName: setSelectedConciergerieName, conciergeries } = useAuth();
+  const { userId, setConciergerieName: setSelectedConciergerieName, conciergeries, findConciergerie } = useAuth();
   const { addFailedEmail } = useEmailRetry();
 
   const conciergerieNameRef = useRef<HTMLDivElement>(null);
@@ -31,10 +30,10 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const selectedConciergerie = conciergeries.find((c: Conciergerie) => c.name === conciergerieName);
+    const selectedConciergerie = findConciergerie(conciergerieName);
     const color = getColorValueByName(selectedConciergerie?.colorName);
     setPrimaryColor(color);
-  }, [conciergeries, conciergerieName]);
+  }, [conciergerieName, findConciergerie]);
 
   const handleClose = () => {
     setPrimaryColor(undefined);
@@ -67,7 +66,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       setSelectedConciergerieName(conciergerieName);
 
       // Get the selected conciergerie data
-      const selectedConciergerie = conciergeries.find(c => c.name === conciergerieName);
+      const selectedConciergerie = findConciergerie(conciergerieName);
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 

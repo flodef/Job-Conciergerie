@@ -52,7 +52,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     completeMission,
     setShouldShowAcceptWarning,
   } = useMissions();
-  const { userType, conciergerieName, conciergeries, findEmployee } = useAuth();
+  const { userType, conciergerieName, findConciergerie, findEmployee } = useAuth();
   const { homes } = useHomes();
 
   const [toast, setToast] = useState<Toast>();
@@ -72,8 +72,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   // Get the conciergerie from the mission data
   const conciergerie = useMemo(
-    () => conciergeries.find(c => c.name === mission.conciergerieName),
-    [conciergeries, mission.conciergerieName],
+    () => findConciergerie(mission.conciergerieName),
+    [mission.conciergerieName, findConciergerie],
   );
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
 

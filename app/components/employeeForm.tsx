@@ -27,7 +27,7 @@ type EmployeeFormProps = {
 };
 
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
-  const { userId, conciergeries, updateUserData, employees } = useAuth();
+  const { userId, conciergeries, updateUserData, employees, findConciergerie } = useAuth();
   const { onMenuChange } = useMenuContext();
   const { addFailedEmail } = useEmailRetry();
 
@@ -202,7 +202,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         updateUserData(employee);
 
         // Send notification email to conciergerie
-        const selectedConciergerie = conciergeries.find(c => c.name === employee.conciergerieName);
+        const selectedConciergerie = findConciergerie(employee.conciergerieName ?? null);
         if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
         if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 

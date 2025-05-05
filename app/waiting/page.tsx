@@ -16,7 +16,7 @@ const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
 const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
 
 export default function WaitingPage() {
-  const { userType, isLoading: authLoading, conciergeries, getUserData, getEmployeeId, findEmployee } = useAuth();
+  const { userType, isLoading: authLoading, getUserData, getUserId, findEmployee, findConciergerie } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [employee, setEmployee] = useState<Employee>();
@@ -28,22 +28,22 @@ export default function WaitingPage() {
 
   const handleConciergerie = useCallback(() => {
     const conciergerie = getUserData<Conciergerie>();
-    const foundConciergerie = conciergeries.find(c => c.name === conciergerie?.name);
+    const foundConciergerie = findConciergerie(conciergerie?.name ?? null);
     setConciergerie(foundConciergerie);
     setPrimaryColor(foundConciergerie?.color);
 
     setIsLoading(false);
-  }, [conciergeries, getUserData]);
+  }, [getUserData, findConciergerie]);
 
   const handleEmployee = useCallback(() => {
     // Check if employee exists in database with this ID
     const employee = getUserData<Employee>();
-    const foundEmployee = findEmployee(getEmployeeId(employee!));
+    const foundEmployee = findEmployee(getUserId(employee!));
     setEmployee(foundEmployee);
     setCreationDate(foundEmployee?.createdAt ? new Date(foundEmployee.createdAt) : new Date());
 
     setIsLoading(false);
-  }, [getUserData, findEmployee, getEmployeeId]);
+  }, [getUserData, findEmployee, getUserId]);
 
   // Use a ref to track if we've already loaded the data to prevent infinite loops
   const hasLoadedDataRef = useRef(false);

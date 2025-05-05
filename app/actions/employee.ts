@@ -87,6 +87,8 @@ export async function updateEmployeeData(
     notificationSettings?: EmployeeNotificationSettings;
   },
 ): Promise<Employee | null> {
+  if (!employee) return null;
+
   // Convert to DB format
   const dbData: Partial<DbEmployee> = {
     tel: data.tel,
@@ -97,7 +99,7 @@ export async function updateEmployeeData(
     notification_settings: data.notificationSettings,
   };
 
-  return await updateEmployeeSettings(employee?.firstName, employee?.familyName, dbData);
+  return await updateEmployeeSettings(employee.firstName, employee.familyName, dbData);
 }
 
 /**

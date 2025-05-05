@@ -15,7 +15,7 @@ type MissionCardProps = {
 };
 
 export default function MissionCard({ mission, onClick, onEdit }: MissionCardProps) {
-  const { conciergeries, findEmployee } = useAuth();
+  const { findConciergerie, findEmployee } = useAuth();
   const { homes } = useHomes();
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
 
@@ -25,9 +25,9 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
 
   // Fetch conciergerie data when mission changes
   useEffect(() => {
-    const conciergerieData = conciergeries.find(c => c.name === home?.conciergerieName);
+    const conciergerieData = findConciergerie(home?.conciergerieName ?? null);
     setConciergerie(conciergerieData);
-  }, [conciergeries, home?.conciergerieName]);
+  }, [home?.conciergerieName, findConciergerie]);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent the default context menu

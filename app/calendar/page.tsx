@@ -24,7 +24,14 @@ import clsx from 'clsx/lite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function Calendar() {
-  const { userType, conciergerieName, conciergeries, isLoading: authLoading, employeeName, findEmployee } = useAuth();
+  const {
+    userType,
+    conciergerieName,
+    isLoading: authLoading,
+    employeeName,
+    findEmployee,
+    findConciergerie,
+  } = useAuth();
   const { missions, fetchMissions, getLateMissions } = useMissions();
   const { homes } = useHomes();
   const { currentPage } = useMenuContext();
@@ -201,7 +208,7 @@ export default function Calendar() {
 
               <div className="divide-y divide-secondary/30">
                 {missionsForDate.map(mission => {
-                  const conciergerie = conciergeries.find(c => c.name === mission.conciergerieName);
+                  const conciergerie = findConciergerie(mission.conciergerieName);
                   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
                   const home = homes.find(h => h.id === mission.homeId);
                   const employee = findEmployee(mission.employeeId);

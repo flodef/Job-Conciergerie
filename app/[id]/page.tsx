@@ -8,7 +8,7 @@ import { Page } from '@/app/utils/navigation';
 import { use, useEffect, useRef, useState } from 'react';
 
 export default function IdPage({ params }: { params: Promise<{ id: string }> }) {
-  const { userId, conciergerieName, conciergeries, isLoading, updateUserData } = useAuth();
+  const { userId, conciergerieName, isLoading, updateUserData, findConciergerie } = useAuth();
   const { onMenuChange } = useMenuContext();
 
   // Use React.use to unwrap the params promise
@@ -27,7 +27,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
           throw new Error('Identifiant non trouvée ou incorrect. Veuillez vous reconnecter.');
 
         // Check if the conciergerie whose name is stored in localStorage exists in the database
-        const conciergerie = conciergeries.find(c => c.name === conciergerieName);
+        const conciergerie = findConciergerie(conciergerieName);
         if (!conciergerie) throw new Error('Conciergerie non trouvée. Veuillez vous reconnecter.');
 
         // If the ID fetched is not the one in the localStorage, update it in the database
@@ -48,7 +48,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
     };
 
     if (!isLoading && !isFetching.current) validateAndUpdateConciergerie();
-  }, [id, conciergerieName, conciergeries, isLoading, userId, updateUserData, onMenuChange]);
+  }, [id, conciergerieName, isLoading, userId, updateUserData, onMenuChange, findConciergerie]);
 
   return error && <ErrorPage message={error} />;
 }
