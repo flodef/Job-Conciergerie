@@ -162,12 +162,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       const idLimitCheck = employeeReachedIdLimit(employees, formData.firstName, formData.familyName);
 
       if (idLimitCheck.employee) {
-        if (idLimitCheck.hasReachedLimit) {
-          // The employee exists and has reached the maximum number of devices
+        // The employee exists and has reached the maximum number of devices
+        if (idLimitCheck.hasReachedLimit)
           throw new Error(
             `Cet employé a atteint le nombre maximum d'appareils autorisés (${idLimitCheck.employee.id.length}).`,
           );
-        }
 
         // Employee exists but hasn't reached the maximum - update their IDs instead of creating a new record
         // Add the new userId to the existing employee's ID array and prefix it with '$' to indicate it's a new device
@@ -189,28 +188,29 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         EmailSender.sendNewDeviceEmail({ addFailedEmail, setToast }, updatedEmployee);
 
         onMenuChange(Page.Waiting);
-      } else if (employeeExists(employees, formData.firstName, formData.familyName, formData.tel, formData.email)) {
-        throw new Error('Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.');
+      } else {
+        if (employeeExists(employees, formData.firstName, formData.familyName, formData.tel, formData.email))
+          throw new Error('Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.');
+
+        // Create a new employee in the database
+        const employee = await createNewEmployee({
+          ...formData,
+          id: userId,
+        });
+        if (!employee) throw new Error('Employé non créé dans la base de données');
+
+        updateUserData(employee);
+
+        // Send notification email to conciergerie
+        const selectedConciergerie = conciergeries.find(c => c.name === employee.conciergerieName);
+        if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
+        if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
+
+        // Use EmailSender for consistent retry mechanism
+        EmailSender.sendRegistrationEmail({ addFailedEmail, setToast }, selectedConciergerie, employee);
+
+        onMenuChange(Page.Waiting);
       }
-
-      // Create a new employee in the database
-      const employee = await createNewEmployee({
-        ...formData,
-        id: userId,
-      });
-      if (!employee) throw new Error('Employé non créé dans la base de données');
-
-      updateUserData(employee);
-
-      // Send notification email to conciergerie
-      const selectedConciergerie = conciergeries.find(c => c.name === employee.conciergerieName);
-      if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
-      if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
-
-      // Use EmailSender for consistent retry mechanism
-      EmailSender.sendRegistrationEmail({ addFailedEmail, setToast }, selectedConciergerie, employee);
-
-      onMenuChange(Page.Waiting);
     } catch (error) {
       setToast({
         type: ToastType.Error,
