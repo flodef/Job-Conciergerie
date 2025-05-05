@@ -171,7 +171,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         // Employee exists but hasn't reached the maximum - update their IDs instead of creating a new record
         // Add the new userId to the existing employee's ID array and prefix it with '$' to indicate it's a new device
         // If the employee has no IDs yet, just use the userId to let it connect
-        const newIds = idLimitCheck.employee.id.length ? [...idLimitCheck.employee.id, '$' + userId] : [userId];
+        const newIds = idLimitCheck.employee.id.length
+          ? idLimitCheck.employee.id.includes(userId.replace('$', ''))
+            ? [...idLimitCheck.employee.id]
+            : [...idLimitCheck.employee.id, '$' + userId]
+          : [userId];
         const updatedIds = await updateEmployeeWithUserId(idLimitCheck.employee, newIds);
 
         if (!updatedIds) throw new Error('Employé non mis à jour dans la base de données');
