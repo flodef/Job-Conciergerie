@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
       // Not authenticated, redirect to error or waiting page
       if (navigationRoutes.includes(path)) return NextResponse.redirect(new URL('/error', request.url));
       // Skip if path matches a user ID pattern (20-22 characters alphanumeric string)
-      else if ((path === '/' || !/^\/?[0-9a-z]{2,26}$/.test(path)) && path !== '/waiting')
+      else if ((path === '/' || path === '/error' || !/^\/?[0-9a-z]{2,26}$/.test(path)) && path !== '/waiting')
         return NextResponse.redirect(new URL('/waiting', request.url));
 
       return NextResponse.next();
