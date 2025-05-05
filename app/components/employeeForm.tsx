@@ -27,7 +27,7 @@ type EmployeeFormProps = {
 };
 
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
-  const { userId, conciergeries, updateUserData, employees, findConciergerie } = useAuth();
+  const { userId, conciergeries, updateUserData, employees, findConciergerie, refreshData } = useAuth();
   const { onMenuChange } = useMenuContext();
   const { addFailedEmail } = useEmailRetry();
 
@@ -170,7 +170,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
         // Employee exists but hasn't reached the maximum - update their IDs instead of creating a new record
         // Add the new userId to the existing employee's ID array and prefix it with '$' to indicate it's a new device
-        const newIds = [...idLimitCheck.employee.id, '$' + userId];
+        // If the employee has no IDs yet, just use the userId to let it connect
+        const newIds = idLimitCheck.employee.id.length ? [...idLimitCheck.employee.id, '$' + userId] : [userId];
         const updatedIds = await updateEmployeeWithUserId(idLimitCheck.employee, newIds);
 
         if (!updatedIds) throw new Error('Employé non mis à jour dans la base de données');
@@ -187,7 +188,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         // Send notification email to employee about the new device
         EmailSender.sendNewDeviceEmail({ addFailedEmail, setToast }, updatedEmployee);
 
-        onMenuChange(Page.Waiting);
+        refreshData();
       } else {
         if (employeeExists(employees, formData.firstName, formData.familyName, formData.tel, formData.email))
           throw new Error('Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.');

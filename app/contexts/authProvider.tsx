@@ -170,14 +170,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsLoading(true);
     // Only run this once when the component mounts
-    fetchDataFromDatabase().then(() => {
-      setIsLoading(false);
-    });
+    fetchDataFromDatabase().then(() => setIsLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getUserData = <T extends UserData>(): T | undefined => {
-    return userData as T;
-  };
+  const getUserData = <T extends UserData>(): T | undefined => userData as T;
 
   const updateUserData = <T extends UserData>(updatedData: T, updateType = userType) => {
     // Update user data only if the update type matches the current user type (meaning we are updating the current user)
@@ -189,18 +185,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setEmployees(prev => {
         if (!prev) return [updatedData as Employee];
         const exists = prev.some(e => getUserId(e) === userId);
-        if (exists) {
-          return prev.map(e => (getUserId(e) === userId ? (updatedData as Employee) : e));
-        }
+        if (exists) return prev.map(e => (getUserId(e) === userId ? (updatedData as Employee) : e));
         return [...prev, updatedData as Employee];
       });
     } else if (updateType === 'conciergerie') {
       setConciergeries(prev => {
         if (!prev) return [updatedData as Conciergerie];
         const exists = prev.some(c => getUserId(c) === userId);
-        if (exists) {
-          return prev.map(c => (getUserId(c) === userId ? (updatedData as Conciergerie) : c));
-        }
+        if (exists) return prev.map(c => (getUserId(c) === userId ? (updatedData as Conciergerie) : c));
         return [...prev, updatedData as Conciergerie];
       });
     }

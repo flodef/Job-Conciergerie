@@ -80,11 +80,8 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
   const confirmNavigation = (confirm: boolean) => {
     setShouldShowConfirmClose(false);
 
-    if (confirm) {
-      setHasUnsavedChanges(false);
-    } else {
-      setPendingPage(undefined);
-    }
+    if (confirm) setHasUnsavedChanges(false);
+    else setPendingPage(undefined);
   };
 
   const confirmationModal = (
