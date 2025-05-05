@@ -121,10 +121,8 @@ export const toLocalDateString = (date: Date): string => {
  * @returns A string representing the remaining time until refresh is available
  */
 export const getTimeRemaining = (targetDate: Date) => {
-  const now = new Date();
-  const targetTime = targetDate.getTime();
-  const diffInMillis = now.getTime() - targetTime;
-  const hoursLeft = 24 - Math.floor(diffInMillis / (1000 * 60 * 60));
+  const diffInMillis = Math.abs(new Date().getTime() - targetDate.getTime());
+  const hoursLeft = Math.floor(diffInMillis / (1000 * 60 * 60));
   const minsLeft = 60 - Math.floor((diffInMillis % (1000 * 60 * 60)) / (1000 * 60));
 
   if (hoursLeft <= 0 && minsLeft <= 0) return 'maintenant';
