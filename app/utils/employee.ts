@@ -78,6 +78,15 @@ export function filterEmployees(employees: Employee[], searchTerm: string): Empl
 }
 
 /**
+ * Get the list of connected devices for an employee
+ * @param employee Employee to get connected devices for
+ * @returns List of connected devices
+ */
+export function getConnectedDevices(employee: Employee): string[] {
+  return employee.id.filter(id => !id.startsWith('$'));
+}
+
+/**
  * Check if an employee has reached the maximum number of device IDs allowed
  * @param employees All employees
  * @param firstName First name to check
@@ -95,9 +104,13 @@ export function employeeReachedIdLimit(
   );
   if (!matchedEmployee) return { hasReachedLimit: false, employee: null };
 
-  // Check if the employee has reached the maximum number of device IDs allowed
+  // Count only active device IDs (without $ prefix)
+  const connectedDeviceCount = getConnectedDevices(matchedEmployee).length;
+  const maxDevices = parseInt(process.env.NEXT_PUBLIC_MAX_DEVICES || '3');
+
+  // Check if the employee has reached the maximum number of active device IDs allowed
   return {
-    hasReachedLimit: matchedEmployee.id.length >= parseInt(process.env.NEXT_PUBLIC_MAX_DEVICES || '3'),
+    hasReachedLimit: connectedDeviceCount >= maxDevices,
     employee: matchedEmployee,
   };
 }

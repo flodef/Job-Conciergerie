@@ -16,7 +16,7 @@ import { Employee } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import { useEmailRetry } from '@/app/utils/emailRetry';
 import { EmailSender } from '@/app/utils/emailSender';
-import { employeeExists, employeeReachedIdLimit } from '@/app/utils/employee';
+import { employeeExists, employeeReachedIdLimit, getConnectedDevices } from '@/app/utils/employee';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -174,7 +174,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         const newIds = idLimitCheck.employee.id.length
           ? idLimitCheck.employee.id.some(i => i.replace('$', '') === userId.replace('$', ''))
             ? [...idLimitCheck.employee.id]
-            : [...idLimitCheck.employee.id, '$' + userId]
+            : [...getConnectedDevices(idLimitCheck.employee), '$' + userId]
           : [userId];
         const updatedIds = await updateEmployeeWithUserId(idLimitCheck.employee, newIds);
 
