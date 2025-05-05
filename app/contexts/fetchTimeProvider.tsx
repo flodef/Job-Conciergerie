@@ -5,7 +5,7 @@ import { navigationPages, Page } from '@/app/utils/navigation';
 import { pageSettings } from '@/app/components/navigationLayout';
 
 const AUTO_REFRESH_INTERVAL = 60 * 1000; // 1 minute
-const STALE_THRESHOLD = 10 * 60 * 1000; // 10 minutes
+const STALE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 
 type FetchTimeContextType = {
   lastFetchTime: Partial<Record<Page, Date>>;
@@ -34,7 +34,7 @@ export const FetchTimeProvider = ({ children }: { children: ReactNode }) => {
   const updateFetchTime = (pages: Page | Page[]) => {
     const pageArray = Array.isArray(pages) ? pages : [pages];
     const now = new Date();
-    
+
     setLastFetchTime(prev => {
       const updated = { ...prev };
       pageArray.forEach(page => {
@@ -42,7 +42,7 @@ export const FetchTimeProvider = ({ children }: { children: ReactNode }) => {
       });
       return updated;
     });
-    
+
     setNeedsRefresh(prev => {
       const updated = { ...prev };
       pageArray.forEach(page => {
