@@ -19,7 +19,7 @@ type Device = {
 };
 
 const AdvancedSettings: React.FC = () => {
-  const { disconnect, nuke, userData, userId: currentUserId, userType } = useAuth();
+  const { disconnect, nuke, userData, userId: currentUserId, userType, updateUserData } = useAuth();
 
   const [storedLabels, setStoredLabels] = useLocalStorage<Device[]>('device_labels', []);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -120,11 +120,12 @@ const AdvancedSettings: React.FC = () => {
     const updatedIds = await updateAction();
     if (updatedIds) {
       // Create an updated Device[] based on the newIds
-      const updatedLabels = newIds.map(newId => {
+      const updatedLabels = updatedIds.map(updatedId => {
         // Find existing device label if available
-        const existingDevice = storedLabels?.find(item => item.id === newId || item.id === `$${newId}`);
-        return { id: newId, label: existingDevice?.label };
+        const existingDevice = storedLabels?.find(item => item.id === updatedId || item.id === `$${updatedId}`);
+        return { id: updatedId, label: existingDevice?.label };
       });
+      updateUserData({ ...userData, id: updatedIds });
       setStoredLabels(updatedLabels);
       setToast({ type: ToastType.Success, message: `L'appareil a été ${action} avec succès` });
       return updatedIds;
