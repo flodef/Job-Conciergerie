@@ -17,31 +17,39 @@ const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
 const REFRESH_BUTTON_DISABLE_TIME = 1; // time in minutes
 
 export default function WaitingPage() {
-  const { userType, isLoading: authLoading, userData, getUserKey, findEmployee, findConciergerie } = useAuth();
+  const {
+    userType,
+    isLoading: authLoading,
+    userData,
+    conciergerieName,
+    getUserKey,
+    findEmployee,
+    findConciergerie,
+  } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [employee, setEmployee] = useState<Employee>();
   const [timeWaiting, setTimeWaiting] = useState('');
-  const [creationDate, setCreationDate] = useState<Date>(new Date(0));
-  const [pageLoadTime] = useState<Date>(new Date());
+  const [creationDate, setCreationDate] = useState<Date>(new Date());
+  const [minimumWaitingTime, setMinimumWaitingTime] = useState(0);
   const [refreshDisabled, setRefreshDisabled] = useState(true);
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const [toast, setToast] = useState<Toast>();
 
   const handleConciergerie = useCallback(() => {
-    const conciergerie = userData as Conciergerie;
-    const foundConciergerie = findConciergerie(conciergerie?.name ?? null);
+    const foundConciergerie = findConciergerie(conciergerieName ?? null);
     setConciergerie(foundConciergerie);
     setPrimaryColor(foundConciergerie?.color);
+    setMinimumWaitingTime(CONCIERGERIE_MINIMUM_WAITING_TIME);
 
     setIsLoading(false);
-  }, [userData, findConciergerie]);
+  }, [conciergerieName, findConciergerie]);
 
   const handleEmployee = useCallback(() => {
-    const employee = userData as Employee;
-    const foundEmployee = findEmployee(getUserKey(employee!));
+    const foundEmployee = findEmployee(getUserKey(userData as Employee));
     setEmployee(foundEmployee);
     setCreationDate(foundEmployee?.createdAt ? new Date(foundEmployee.createdAt) : new Date());
+    setMinimumWaitingTime(EMPLOYEE_MINIMUM_WAITING_TIME);
 
     setIsLoading(false);
   }, [userData, findEmployee, getUserKey]);
@@ -65,7 +73,7 @@ export default function WaitingPage() {
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (creationDate.getTime() !== 0) {
+    if (creationDate) {
       interval = setInterval(() => {
         const timeDifference = getTimeDifference(creationDate, new Date());
         setTimeWaiting(timeDifference);
@@ -85,20 +93,16 @@ export default function WaitingPage() {
   }, []); // Empty dependency array means this runs once on component mount
 
   // Helper function to check if request is less than minimum waiting time
-  const isRequestLessThanMinimumWaitingTime = () => {
-    const referenceDate = creationDate.getTime() !== 0 ? creationDate : pageLoadTime;
-    const minimumWaitingTime =
-      creationDate.getTime() !== 0 ? EMPLOYEE_MINIMUM_WAITING_TIME : CONCIERGERIE_MINIMUM_WAITING_TIME;
-    return isElapsedTimeLessThan(referenceDate, minimumWaitingTime);
-  };
+  const isRequestLessThanMinimumWaitingTime = () => isElapsedTimeLessThan(creationDate, minimumWaitingTime);
 
   const refreshButton = (
     <div className="flex items-center justify-center">
       <RefreshButton disabled={refreshDisabled} />
       <RefreshButton shouldDisconnect disabled={isRequestLessThanMinimumWaitingTime()} />
-      {isRequestLessThanMinimumWaitingTime() ? (
+      {isRequestLessThanMinimumWaitingTime() && creationDate ? (
         <Tooltip className="mt-4" size="large" icon={IconHelpCircle}>
-          Pour éviter le spam, vous pourrez tenter une nouvelle demande dans {getTimeRemaining(creationDate)}
+          Pour éviter le spam, vous pourrez tenter une nouvelle demande dans{' '}
+          {getTimeRemaining(new Date(creationDate.getTime() + minimumWaitingTime * 60 * 1000))}
         </Tooltip>
       ) : refreshDisabled ? (
         <Tooltip className="mt-4" size="large" icon={IconClock}>
