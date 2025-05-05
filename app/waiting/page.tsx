@@ -17,7 +17,7 @@ const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
 const REFRESH_BUTTON_DISABLE_TIME = 1; // time in minutes
 
 export default function WaitingPage() {
-  const { userType, isLoading: authLoading, getUserData, getUserKey, findEmployee, findConciergerie } = useAuth();
+  const { userType, isLoading: authLoading, userData, getUserKey, findEmployee, findConciergerie } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [employee, setEmployee] = useState<Employee>();
@@ -29,22 +29,22 @@ export default function WaitingPage() {
   const [toast, setToast] = useState<Toast>();
 
   const handleConciergerie = useCallback(() => {
-    const conciergerie = getUserData<Conciergerie>();
+    const conciergerie = userData as Conciergerie;
     const foundConciergerie = findConciergerie(conciergerie?.name ?? null);
     setConciergerie(foundConciergerie);
     setPrimaryColor(foundConciergerie?.color);
 
     setIsLoading(false);
-  }, [getUserData, findConciergerie]);
+  }, [userData, findConciergerie]);
 
   const handleEmployee = useCallback(() => {
-    const employee = getUserData<Employee>();
+    const employee = userData as Employee;
     const foundEmployee = findEmployee(getUserKey(employee!));
     setEmployee(foundEmployee);
     setCreationDate(foundEmployee?.createdAt ? new Date(foundEmployee.createdAt) : new Date());
 
     setIsLoading(false);
-  }, [getUserData, findEmployee, getUserKey]);
+  }, [userData, findEmployee, getUserKey]);
 
   // Use a ref to track if we've already loaded the data to prevent infinite loops
   const hasLoadedDataRef = useRef(false);

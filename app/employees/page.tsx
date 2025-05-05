@@ -20,12 +20,12 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 
 export default function EmployeesList() {
   const {
+    userData,
     conciergerieName,
     isLoading: authLoading,
     employees: authEmployees,
     getUserKey,
     fetchDataFromDatabase,
-    getUserData,
     updateUserData,
   } = useAuth();
   const { currentPage } = useMenuContext();
@@ -108,7 +108,7 @@ export default function EmployeesList() {
         // Update local state
         updateUserData(updatedEmployee, 'employee');
 
-        const conciergerie = getUserData<Conciergerie>();
+        const conciergerie = userData as Conciergerie;
         if (!conciergerie) throw new Error('Conciergerie non trouvée');
 
         EmailSender.sendAcceptanceEmail(

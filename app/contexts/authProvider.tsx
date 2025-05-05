@@ -17,6 +17,7 @@ export type UserData = Conciergerie | Employee;
 interface AuthContextType {
   userId: string | undefined;
   userType: UserType | undefined;
+  userData: UserData | undefined;
   updateUserType: (userType: UserType | undefined) => void;
   conciergerieName: string | undefined;
   setConciergerieName: (name: string | undefined) => void;
@@ -25,7 +26,6 @@ interface AuthContextType {
   findEmployee: (id: string | null) => Employee | undefined;
   findConciergerie: (id: string | null) => Conciergerie | undefined;
   deleteEmployee: (employee: Employee) => Promise<boolean>;
-  getUserData: <T extends UserData>() => T | undefined;
   updateUserData: <T extends UserData>(updatedData: T, updateType?: UserType) => void;
   fetchDataFromDatabase: (fetchType?: UserType) => Promise<boolean>;
   conciergeries: Conciergerie[];
@@ -40,6 +40,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   userId: undefined,
   userType: undefined,
+  userData: undefined,
   updateUserType: () => {},
   conciergerieName: undefined,
   setConciergerieName: () => {},
@@ -48,7 +49,6 @@ const AuthContext = createContext<AuthContextType>({
   findEmployee: () => undefined,
   findConciergerie: () => undefined,
   deleteEmployee: () => Promise.resolve(false),
-  getUserData: () => undefined,
   updateUserData: () => {},
   fetchDataFromDatabase: () => Promise.resolve(false),
   conciergeries: [],
@@ -176,8 +176,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchDataFromDatabase().then(() => setIsLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getUserData = <T extends UserData>(): T | undefined => userData as T;
-
   const updateUserData = <T extends UserData>(updatedData: T, updateType = userType) => {
     // Update user data only if the update type matches the current user type (meaning we are updating the current user)
     if (updateType === userType) setUserData(updatedData);
@@ -239,6 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         userId,
         userType,
+        userData,
         updateUserType,
         conciergerieName,
         setConciergerieName,
@@ -247,7 +246,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         findEmployee,
         findConciergerie,
         deleteEmployee,
-        getUserData,
         updateUserData,
         fetchDataFromDatabase,
         conciergeries,
