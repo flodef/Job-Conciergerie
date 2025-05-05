@@ -131,6 +131,18 @@ export const getTimeRemaining = (targetDate: Date) => {
 };
 
 /**
+ * Helper function to check if elapsed minutes is less than a threshold
+ * @param fromDate The date to compare from
+ * @param minutes The threshold in minutes
+ * @returns True if the elapsed time is less than the threshold, false otherwise
+ */
+export const isElapsedTimeLessThan = (fromDate: Date, minutes: number) => {
+  const now = new Date();
+  const diffInMinutes = (now.getTime() - fromDate.getTime()) / (1000 * 60);
+  return diffInMinutes < minutes;
+};
+
+/**
  * Calculate the time difference between two dates in a human-readable format
  * Consistent with mission points calculation (counting both start and end days)
  */

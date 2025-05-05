@@ -8,12 +8,13 @@ import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
-import { getTimeDifference, getTimeRemaining } from '@/app/utils/date';
+import { getTimeDifference, getTimeRemaining, isElapsedTimeLessThan } from '@/app/utils/date';
 import { IconAlertCircle, IconCircleCheck, IconClock, IconHelpCircle, IconMailForward } from '@tabler/icons-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
 const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
+const REFRESH_BUTTON_DISABLE_TIME = 1; // time in minutes
 
 export default function WaitingPage() {
   const { userType, isLoading: authLoading, getUserData, getUserKey, findEmployee, findConciergerie } = useAuth();
@@ -23,6 +24,7 @@ export default function WaitingPage() {
   const [timeWaiting, setTimeWaiting] = useState('');
   const [creationDate, setCreationDate] = useState<Date>(new Date(0));
   const [pageLoadTime] = useState<Date>(new Date());
+  const [refreshDisabled, setRefreshDisabled] = useState(true);
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const [toast, setToast] = useState<Toast>();
 
@@ -72,24 +74,37 @@ export default function WaitingPage() {
     return () => clearInterval(interval);
   }, [creationDate]);
 
+  // Effect to handle the refresh button enabling after 1 minute
+  useEffect(() => {
+    // Set a timeout to enable the refresh button after 1 minute
+    const timeout = setTimeout(() => {
+      setRefreshDisabled(false);
+    }, REFRESH_BUTTON_DISABLE_TIME * 60 * 1000); // 1 minute in milliseconds
+
+    return () => clearTimeout(timeout);
+  }, []); // Empty dependency array means this runs once on component mount
+
   // Helper function to check if request is less than minimum waiting time
   const isRequestLessThanMinimumWaitingTime = () => {
     const referenceDate = creationDate.getTime() !== 0 ? creationDate : pageLoadTime;
     const minimumWaitingTime =
       creationDate.getTime() !== 0 ? EMPLOYEE_MINIMUM_WAITING_TIME : CONCIERGERIE_MINIMUM_WAITING_TIME;
-    const now = new Date();
-    const diffInMinutes = (now.getTime() - referenceDate.getTime()) / (1000 * 60);
-    return diffInMinutes < minimumWaitingTime;
+    return isElapsedTimeLessThan(referenceDate, minimumWaitingTime);
   };
 
   const refreshButton = (
     <div className="flex items-center justify-center">
+      <RefreshButton disabled={refreshDisabled} />
       <RefreshButton shouldDisconnect disabled={isRequestLessThanMinimumWaitingTime()} />
-      {isRequestLessThanMinimumWaitingTime() && (
+      {isRequestLessThanMinimumWaitingTime() ? (
         <Tooltip className="mt-4" size="large" icon={IconHelpCircle}>
-          Pour éviter le spam, vous pourrez réessayer dans {getTimeRemaining(creationDate)}
+          Pour éviter le spam, vous pourrez tenter une nouvelle demande dans {getTimeRemaining(creationDate)}
         </Tooltip>
-      )}
+      ) : refreshDisabled ? (
+        <Tooltip className="mt-4" size="large" icon={IconClock}>
+          Pour éviter le spam, vous devez attendre 1 minute avant de rafraîchir la page
+        </Tooltip>
+      ) : null}
     </div>
   );
 
