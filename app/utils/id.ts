@@ -29,4 +29,4 @@ export const generateSimpleId = () =>
   Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
 export const formatId = (id: string) =>
-  (id.length <= 8 ? id : `${id.substring(0, 4)}...${id.substring(id.length - 4)}`).replace('$', '');
+  id.length <= 8 ? id.replace('$', '') : `${id.replace('$', '').substring(0, 4)}...${id.substring(id.length - 4)}`;
