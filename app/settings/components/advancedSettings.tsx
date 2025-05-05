@@ -198,9 +198,9 @@ const AdvancedSettings: React.FC = () => {
             <div key={item.id} className="py-4 h-[60px] flex items-center justify-between">
               <p className={labelClassName}>
                 {item.id === currentUserId ? 'Cet appareil' : item.label || formatId(item.id)}
-                {item.id === currentUserId && (
+                {(item.id === currentUserId || item.id.startsWith('$')) && (
                   <span className="ml-2 text-xs bg-primary text-white px-1.5 py-0.5 rounded-full align-text-top">
-                    Actuel
+                    {item.id === currentUserId ? 'Actuel' : 'Nouveau'}
                   </span>
                 )}
               </p>
