@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
 
       const findUserById = <T extends UserData>(users: T[] | null, id: string) =>
-        users?.find(user => user.id.includes(id.replace('$', '')));
+        users?.find(user => user.id.some(i => i.replace('$', '') === id.replace('$', '')));
 
       const foundEmployee = findUserById(fetchedEmployees, id);
       const newUserData = foundEmployee || findUserById(fetchedConciergeries, id);

@@ -172,7 +172,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         // Add the new userId to the existing employee's ID array and prefix it with '$' to indicate it's a new device
         // If the employee has no IDs yet, just use the userId to let it connect
         const newIds = idLimitCheck.employee.id.length
-          ? idLimitCheck.employee.id.includes(userId.replace('$', ''))
+          ? idLimitCheck.employee.id.some(i => i.replace('$', '') === userId.replace('$', ''))
             ? [...idLimitCheck.employee.id]
             : [...idLimitCheck.employee.id, '$' + userId]
           : [userId];
