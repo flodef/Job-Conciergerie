@@ -16,7 +16,7 @@ const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
 const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
 
 export default function WaitingPage() {
-  const { userType, isLoading: authLoading, conciergerieName, conciergeries, employeeName, findEmployee } = useAuth();
+  const { userType, isLoading: authLoading, conciergeries, getUserData, getEmployeeId, findEmployee } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [employee, setEmployee] = useState<Employee>();
@@ -27,21 +27,23 @@ export default function WaitingPage() {
   const [toast, setToast] = useState<Toast>();
 
   const handleConciergerie = useCallback(() => {
-    const foundConciergerie = conciergeries.find(c => c.name === conciergerieName);
+    const conciergerie = getUserData<Conciergerie>();
+    const foundConciergerie = conciergeries.find(c => c.name === conciergerie?.name);
     setConciergerie(foundConciergerie);
     setPrimaryColor(foundConciergerie?.color);
 
     setIsLoading(false);
-  }, [conciergeries, conciergerieName]);
+  }, [conciergeries, getUserData]);
 
   const handleEmployee = useCallback(() => {
     // Check if employee exists in database with this ID
-    const foundEmployee = findEmployee(employeeName ?? null);
+    const employee = getUserData<Employee>();
+    const foundEmployee = findEmployee(getEmployeeId(employee!));
     setEmployee(foundEmployee);
     setCreationDate(foundEmployee?.createdAt ? new Date(foundEmployee.createdAt) : new Date());
 
     setIsLoading(false);
-  }, [employeeName, findEmployee]);
+  }, [getUserData, findEmployee, getEmployeeId]);
 
   // Use a ref to track if we've already loaded the data to prevent infinite loops
   const hasLoadedDataRef = useRef(false);
@@ -85,7 +87,7 @@ export default function WaitingPage() {
     <div className="flex items-center justify-center">
       <RefreshButton shouldDisconnect disabled={isRequestLessThanMinimumWaitingTime()} />
       {isRequestLessThanMinimumWaitingTime() && (
-        <Tooltip size="small" icon={IconHelpCircle}>
+        <Tooltip className="mt-4" size="large" icon={IconHelpCircle}>
           Pour éviter le spam, vous pourrez réessayer dans {getTimeRemaining(creationDate)}
         </Tooltip>
       )}
@@ -113,7 +115,7 @@ export default function WaitingPage() {
 
             <p>Veuillez vérifier votre boîte de réception et suivre les instructions pour activer votre compte.</p>
 
-            <div className="bg-secondary/10 p-4 rounded-lg">
+            <div className="bg-secondary/10 p-3 rounded-lg">
               <div className="flex items-center">
                 <IconClock size={25} className="text-yellow-500 mr-2" />
                 <p className="text-sm text-foreground font-medium">
@@ -122,7 +124,7 @@ export default function WaitingPage() {
               </div>
             </div>
 
-            <div className="bg-primary/10 p-4 rounded-lg">
+            <div className="bg-primary/10 p-3 rounded-lg">
               <p className="text-sm text-foreground">
                 <span className="font-medium">Délai de traitement habituel :</span> 24 heures ouvrées
               </p>
@@ -152,7 +154,7 @@ export default function WaitingPage() {
               <span className="font-semibold">{employee.conciergerieName}</span>.
             </p>
 
-            <div className="bg-secondary/10 p-4 rounded-lg">
+            <div className="bg-secondary/10 p-3 rounded-lg">
               <div className="flex items-center">
                 {employee.status === 'pending' ? (
                   <IconClock size={25} className="text-yellow-500 mr-2" />
@@ -188,7 +190,7 @@ export default function WaitingPage() {
               )}
             </div>
 
-            <div className="bg-primary/10 p-4 rounded-lg">
+            <div className="bg-primary/10 p-3 rounded-lg">
               <p className="text-sm text-foreground">
                 <span className="font-medium">Délai de traitement habituel :</span> 48 heures ouvrées
               </p>
