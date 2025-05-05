@@ -110,6 +110,11 @@ export async function sendEmployeeRegistrationEmail(
             ${employee.message && `<li><strong>Message :</strong> ${employee.message}</li>`}
           </ul>
           <p>Vous pouvez vous connecter à votre espace conciergerie pour accepter ou refuser cette demande.</p>
+          <p>
+            <a href="${baseUrl}/employees" style="display: inline-block; background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+              Voir mes prestataires
+            </a>
+          </p>
           <p>Merci,<br>L'équipe Job Conciergerie</p>
         </div>
       `,
