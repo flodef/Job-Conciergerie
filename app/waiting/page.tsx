@@ -140,9 +140,6 @@ export default function WaitingPage() {
 
             <div className="bg-primary/10 p-3 rounded-lg">
               <p className="text-sm text-foreground">
-                <span className="font-medium">Délai de traitement habituel :</span> 24 heures ouvrées
-              </p>
-              <p className="text-sm text-foreground mt-2">
                 Une fois votre compte vérifié, vous pourrez accéder directement à l&apos;application lors de votre
                 prochaine visite.
               </p>
@@ -163,11 +160,18 @@ export default function WaitingPage() {
               ,
             </p>
 
-            <p>
-              Votre demande d&apos;accès a bien été reçue et est actuellement en cours d&apos;examen par la conciergerie{' '}
-              <span className="font-semibold">{employee.conciergerieName}</span>.
-            </p>
-
+            {employee.status === 'pending' && (
+              <p>
+                Votre demande d&apos;accès a bien été reçue et est actuellement en cours d&apos;examen par la
+                conciergerie <span className="font-semibold">{employee.conciergerieName}</span>.
+              </p>
+            )}
+            {employee.status === 'accepted' && (
+              <p>Votre demande d&apos;accès a bien été acceptée par la conciergerie.</p>
+            )}
+            {employee.status === 'rejected' && (
+              <p>Votre demande d&apos;accès a malheureusement été rejetée par la conciergerie.</p>
+            )}
             <div className="bg-secondary/10 p-3 rounded-lg">
               <div className="flex items-center">
                 {employee.status === 'pending' ? (
@@ -205,13 +209,22 @@ export default function WaitingPage() {
             </div>
 
             <div className="bg-primary/10 p-3 rounded-lg">
-              <p className="text-sm text-foreground">
-                <span className="font-medium">Délai de traitement habituel :</span> 48 heures ouvrées
-              </p>
-              <p className="text-sm text-foreground mt-2">
-                Une fois votre demande acceptée, vous pourrez accéder directement à l&apos;application lors de votre
-                prochaine visite.
-              </p>
+              {employee.status === 'accepted' ? (
+                <p className="text-sm text-foreground">
+                  Pour accéder à votre compte depuis cet appareil, vous devez l&apos;accepter depuis votre compte déjà
+                  connecté en allant dans <span className="font-semibold">Paramètres &gt; Appareils connectés</span>.
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-foreground">
+                    <span className="font-medium">Délai de traitement habituel :</span> 48 heures ouvrées
+                  </p>
+                  <p className="text-sm text-foreground mt-2">
+                    Une fois votre demande acceptée, vous pourrez accéder directement à l&apos;application lors de votre
+                    prochaine visite.
+                  </p>
+                </>
+              )}
             </div>
 
             {refreshButton}
