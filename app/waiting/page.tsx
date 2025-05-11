@@ -3,13 +3,21 @@
 import { RefreshButton } from '@/app/components/button';
 import { EmailRetryManager } from '@/app/components/emailRetryManager';
 import ErrorPage from '@/app/components/error';
-import { Toast, ToastMessage } from '@/app/components/toastMessage';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
+import { formatId } from '@/app/utils/id';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { getTimeDifference, getTimeRemaining, isElapsedTimeLessThan } from '@/app/utils/date';
-import { IconAlertCircle, IconCircleCheck, IconClock, IconHelpCircle, IconMailForward } from '@tabler/icons-react';
+import {
+  IconAlertCircle,
+  IconCircleCheck,
+  IconClock,
+  IconCopy,
+  IconHelpCircle,
+  IconMailForward,
+} from '@tabler/icons-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
@@ -18,6 +26,7 @@ const REFRESH_BUTTON_DISABLE_TIME = 1; // time in minutes
 
 export default function WaitingPage() {
   const {
+    userId,
     userType,
     isLoading: authLoading,
     userData,
@@ -95,7 +104,43 @@ export default function WaitingPage() {
   // Helper function to check if request is less than minimum waiting time
   const isRequestLessThanMinimumWaitingTime = () => isElapsedTimeLessThan(creationDate, minimumWaitingTime);
 
-  const refreshButton = (
+  const copyToClipboard = (id: string) => {
+    navigator.clipboard
+      .writeText(id)
+      .then(() => {
+        setToast({
+          type: ToastType.Success,
+          message: 'ID copié dans le presse-papier',
+        });
+      })
+      .catch(err => {
+        setToast({
+          type: ToastType.Error,
+          message: "Impossible de copier l'ID",
+          error: err,
+        });
+      });
+  };
+
+  const DeviceIdDisplay = () => {
+    if (!userId) return null;
+    
+    return (
+      <div className="flex items-center mt-2 text-xs text-foreground">
+        <span className="font-medium">ID appareil : </span>
+        <span className="font-mono ml-1">{formatId(userId)}</span>
+        <button
+          onClick={() => copyToClipboard(userId)}
+          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ml-1"
+          title="Copier l'ID"
+        >
+          <IconCopy size={14} stroke={1.5} />
+        </button>
+      </div>
+    );
+  };
+
+  const RefreshButtons = () => (
     <div className="flex items-center justify-center">
       <RefreshButton disabled={refreshDisabled} />
       <RefreshButton shouldDisconnect disabled={isRequestLessThanMinimumWaitingTime()} />
@@ -139,6 +184,7 @@ export default function WaitingPage() {
                 <p className="text-sm text-foreground font-medium">
                   Statut actuel : <span className="font-bold text-yellow-500">En attente de vérification</span>
                 </p>
+                <DeviceIdDisplay />
               </div>
             </div>
 
@@ -149,7 +195,7 @@ export default function WaitingPage() {
               </p>
             </div>
 
-            {refreshButton}
+            <RefreshButtons />
           </>
         ) : employee ? (
           // Employee waiting page
@@ -203,6 +249,7 @@ export default function WaitingPage() {
                     }
                   </span>
                 </p>
+                <DeviceIdDisplay />
               </div>
               {timeWaiting && (
                 <p className="text-sm text-foreground ml-7">
@@ -231,7 +278,7 @@ export default function WaitingPage() {
               )}
             </div>
 
-            {refreshButton}
+            <RefreshButtons />
           </>
         ) : !isLoading ? (
           // Error state
