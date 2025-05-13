@@ -122,16 +122,16 @@ export default function WaitingPage() {
       });
   };
 
-  const DeviceIdDisplay = () => {
+  const DeviceId = () => {
     if (!userId) return null;
-    
+
     return (
-      <div className="flex items-center mt-2 text-xs text-foreground">
-        <span className="font-medium">ID appareil : </span>
-        <span className="font-mono ml-1">{formatId(userId)}</span>
+      <div className="flex items-center mb-0.5 ml-7 text-sm text-foreground gap-1">
+        <span>ID appareil : </span>
+        <span className="font-mono self-end">{formatId(userId)}</span>
         <button
           onClick={() => copyToClipboard(userId)}
-          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ml-1"
+          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           title="Copier l'ID"
         >
           <IconCopy size={14} stroke={1.5} />
@@ -184,9 +184,9 @@ export default function WaitingPage() {
                 <p className="text-sm text-foreground font-medium">
                   Statut actuel : <span className="font-bold text-yellow-500">En attente de vérification</span>
                 </p>
-                <DeviceIdDisplay />
               </div>
             </div>
+            <DeviceId />
 
             <div className="bg-primary/10 p-3 rounded-lg">
               <p className="text-sm text-foreground">
@@ -249,8 +249,8 @@ export default function WaitingPage() {
                     }
                   </span>
                 </p>
-                <DeviceIdDisplay />
               </div>
+              <DeviceId />
               {timeWaiting && (
                 <p className="text-sm text-foreground ml-7">
                   <span className="font-medium">Demande soumise il y a : </span>
