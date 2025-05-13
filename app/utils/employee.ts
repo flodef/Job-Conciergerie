@@ -100,7 +100,9 @@ export function employeeReachedIdLimit(
 ): { hasReachedLimit: boolean; employee: Employee | null } {
   // Find the employee that matches the criteria
   const matchedEmployee = employees.find(
-    employee => employee.firstName === firstName && employee.familyName === familyName,
+    employee =>
+      employee.firstName.toLowerCase() === firstName.toLowerCase() &&
+      employee.familyName.toLowerCase() === familyName.toLowerCase(),
   );
   if (!matchedEmployee) return { hasReachedLimit: false, employee: null };
 
