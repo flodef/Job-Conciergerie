@@ -1,6 +1,6 @@
-export const NEW_ID_CHAR = '$';
+const NEW_ID_CHAR = '$';
 
-export const generateUniqueId = async (): Promise<string> => {
+export async function generateUniqueId(): Promise<string> {
   try {
     // Generate new ECDSA key pair
     const keyPair = await crypto.subtle.generateKey(
@@ -25,7 +25,7 @@ export const generateUniqueId = async (): Promise<string> => {
     console.error('Error generating unique ID:', error);
     return '';
   }
-};
+}
 
 export const generateSimpleId = () =>
   Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -34,3 +34,9 @@ export const formatId = (id: string) =>
   id.length <= 8
     ? id.replace(NEW_ID_CHAR, '')
     : `${id.replace(NEW_ID_CHAR, '').substring(0, 4)}...${id.substring(id.length - 4)}`;
+
+export const isNewDevice = (id: string) => id.startsWith(NEW_ID_CHAR);
+export const getNewDevice = (id: string) => NEW_ID_CHAR + id;
+
+export const containsId = (ids: string[], id: string) =>
+  ids.some(i => i.replace(NEW_ID_CHAR, '') === id.replace(NEW_ID_CHAR, ''));

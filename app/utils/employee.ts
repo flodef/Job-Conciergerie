@@ -1,5 +1,5 @@
 import { Employee, EmployeeStatus } from '@/app/types/dataTypes';
-import { NEW_ID_CHAR } from '@/app/utils/id';
+import { isNewDevice } from '@/app/utils/id';
 
 /**
  * Sort employees by status (pending first, then accepted, then rejected)
@@ -60,7 +60,7 @@ export function filterEmployees(employees: Employee[], searchTerm: string): Empl
  * @returns List of connected devices
  */
 export function getConnectedDevices(employee: Employee): string[] {
-  return employee.id.filter(id => !id.startsWith(NEW_ID_CHAR));
+  return employee.id.filter(id => !isNewDevice(id));
 }
 
 /**
