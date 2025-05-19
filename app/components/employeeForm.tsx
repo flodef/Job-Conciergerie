@@ -17,7 +17,7 @@ import { ErrorField } from '@/app/types/types';
 import { useEmailRetry } from '@/app/utils/emailRetry';
 import { EmailSender } from '@/app/utils/emailSender';
 import { employeeConnectedDevices, getConnectedDevices } from '@/app/utils/employee';
-import { NEW_ID_CHAR } from '@/app/utils/id';
+import { containsId, getNewDevice } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -166,7 +166,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         formData.familyName,
       );
 
-      if (employee && connectedDeviceCount) {
+      if (employee) {
         // The employee exists and has reached the maximum number of devices
         const maxDevices = parseInt(process.env.NEXT_PUBLIC_MAX_DEVICES || '3');
         if (connectedDeviceCount >= maxDevices)
@@ -175,9 +175,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         // Employee exists but hasn't reached the maximum - update their IDs instead of creating a new record
         // Add the new userId to the existing employee's ID array and prefix it with a character to indicate it's a new device
         // If the employee has no IDs yet, just use the userId to let it connect
-        const newIds = employee.id.some(i => i.replace(NEW_ID_CHAR, '') === userId.replace(NEW_ID_CHAR, ''))
-          ? [...employee.id]
-          : [...getConnectedDevices(employee), NEW_ID_CHAR + userId];
+        const newIds = connectedDeviceCount
+          ? containsId(employee.id, userId)
+            ? [...employee.id]
+            : [...getConnectedDevices(employee), getNewDevice(userId)]
+          : [userId];
         const updatedIds = await updateEmployeeWithUserId(employee, newIds);
 
         if (!updatedIds) throw new Error('Employé non mis à jour dans la base de données');
@@ -192,7 +194,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         updateUserData(updatedEmployee);
 
         // Send notification email to employee about the new device
-        EmailSender.sendNewDeviceEmail({ addFailedEmail, setToast }, updatedEmployee);
+        if (connectedDeviceCount) EmailSender.sendNewDeviceEmail({ addFailedEmail, setToast }, updatedEmployee);
 
         refreshData();
       } else {
