@@ -7,7 +7,7 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { labelClassName } from '@/app/utils/className';
-import { formatId } from '@/app/utils/id';
+import { formatId, NEW_ID_CHAR } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { IconCheck, IconCopy, IconEdit, IconTrash, IconX } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
@@ -138,7 +138,7 @@ const AdvancedSettings: React.FC = () => {
   const handleAcceptDevice = async (id: string) => {
     // Accept device by removing the $ prefix from the id
     await updateDeviceIds(
-      ids => ids.map(deviceId => (deviceId === id && deviceId.startsWith('$') ? deviceId.slice(1) : deviceId)),
+      ids => ids.map(deviceId => (deviceId === id && deviceId.startsWith(NEW_ID_CHAR) ? deviceId.slice(1) : deviceId)),
       'accepté',
     );
   };
@@ -198,7 +198,7 @@ const AdvancedSettings: React.FC = () => {
             <div key={item.id} className="py-4 h-[60px] flex items-center justify-between">
               <p className={labelClassName}>
                 {item.id === currentUserId ? 'Cet appareil' : item.label || formatId(item.id)}
-                {(item.id === currentUserId || item.id.startsWith('$')) && (
+                {(item.id === currentUserId || item.id.startsWith(NEW_ID_CHAR)) && (
                   <span className="ml-2 text-xs bg-primary text-white px-1.5 py-0.5 rounded-full align-text-top">
                     {item.id === currentUserId ? 'Actuel' : 'Nouveau'}
                   </span>

@@ -1,3 +1,5 @@
+export const NEW_ID_CHAR = '$';
+
 export const generateUniqueId = async (): Promise<string> => {
   try {
     // Generate new ECDSA key pair
@@ -29,4 +31,6 @@ export const generateSimpleId = () =>
   Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
 export const formatId = (id: string) =>
-  id.length <= 8 ? id.replace('$', '') : `${id.replace('$', '').substring(0, 4)}...${id.substring(id.length - 4)}`;
+  id.length <= 8
+    ? id.replace(NEW_ID_CHAR, '')
+    : `${id.replace(NEW_ID_CHAR, '').substring(0, 4)}...${id.substring(id.length - 4)}`;

@@ -5,7 +5,7 @@ import { deleteEmployeeData, fetchEmployees } from '@/app/actions/employee';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
-import { generateSimpleId } from '@/app/utils/id';
+import { generateSimpleId, NEW_ID_CHAR } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes } from '@/app/utils/navigation';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
 
       const findUserById = <T extends UserData>(users: T[] | null, id: string) =>
-        users?.find(user => user.id.some(i => i.replace('$', '') === id.replace('$', '')));
+        users?.find(user => user.id.some(i => i.replace(NEW_ID_CHAR, '') === id.replace(NEW_ID_CHAR, '')));
 
       const foundEmployee = findUserById(fetchedEmployees, id);
       const newUserData = foundEmployee || findUserById(fetchedConciergeries, id);
