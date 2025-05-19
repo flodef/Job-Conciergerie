@@ -1,28 +1,5 @@
 import { Employee, EmployeeStatus } from '@/app/types/dataTypes';
-
-/**
- * Check if an employee with the same name, phone number, or email already exists
- * @param employees All employees
- * @param firstName First name to check
- * @param familyName Family name to check
- * @param tel Phone number to check
- * @param email Email to check
- * @returns Boolean indicating if an employee with the same name, phone number, or email already exists
- */
-export function employeeExists(
-  employees: Employee[],
-  firstName: string,
-  familyName: string,
-  tel: string,
-  email: string,
-): boolean {
-  return employees.some(
-    employee =>
-      (employee.firstName === firstName && employee.familyName === familyName) ||
-      employee.tel === tel ||
-      employee.email === email,
-  );
-}
+import { NEW_ID_CHAR } from '@/app/utils/id';
 
 /**
  * Sort employees by status (pending first, then accepted, then rejected)
@@ -83,7 +60,7 @@ export function filterEmployees(employees: Employee[], searchTerm: string): Empl
  * @returns List of connected devices
  */
 export function getConnectedDevices(employee: Employee): string[] {
-  return employee.id.filter(id => !id.startsWith('$'));
+  return employee.id.filter(id => !id.startsWith(NEW_ID_CHAR));
 }
 
 /**
@@ -93,27 +70,24 @@ export function getConnectedDevices(employee: Employee): string[] {
  * @param familyName Family name to check
  * @returns Object with boolean 'hasReachedLimit' and the matched employee if found
  */
-export function employeeReachedIdLimit(
+export function employeeConnectedDevices(
   employees: Employee[],
   firstName: string,
   familyName: string,
-): { hasReachedLimit: boolean; employee: Employee | null } {
+): { employee: Employee | undefined; connectedDeviceCount: number } {
   // Find the employee that matches the criteria
-  const matchedEmployee = employees.find(
+  const employee = employees.find(
     employee =>
       employee.firstName.toLowerCase() === firstName.toLowerCase() &&
       employee.familyName.toLowerCase() === familyName.toLowerCase(),
   );
-  if (!matchedEmployee) return { hasReachedLimit: false, employee: null };
 
-  // Count only active device IDs (without $ prefix)
-  const connectedDeviceCount = getConnectedDevices(matchedEmployee).length;
-  const maxDevices = parseInt(process.env.NEXT_PUBLIC_MAX_DEVICES || '3');
+  // Count only active device IDs (without new devices)
+  const connectedDeviceCount = employee ? getConnectedDevices(employee).length : 0;
 
-  // Check if the employee has reached the maximum number of active device IDs allowed
   return {
-    hasReachedLimit: connectedDeviceCount >= maxDevices,
-    employee: matchedEmployee,
+    employee,
+    connectedDeviceCount,
   };
 }
 

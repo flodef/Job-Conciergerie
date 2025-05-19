@@ -16,7 +16,8 @@ import { Employee } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import { useEmailRetry } from '@/app/utils/emailRetry';
 import { EmailSender } from '@/app/utils/emailSender';
-import { employeeExists, employeeReachedIdLimit, getConnectedDevices } from '@/app/utils/employee';
+import { employeeConnectedDevices, getConnectedDevices } from '@/app/utils/employee';
+import { NEW_ID_CHAR } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -159,30 +160,31 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       if (!userId) throw new Error("L'identifiant n'est pas défini");
 
       // Check if employee already exists with the same name, phone, or email and if they've reached device limit
-      const idLimitCheck = employeeReachedIdLimit(employees, formData.firstName, formData.familyName);
+      const { employee, connectedDeviceCount } = employeeConnectedDevices(
+        employees,
+        formData.firstName,
+        formData.familyName,
+      );
 
-      if (idLimitCheck.employee) {
+      if (employee && connectedDeviceCount) {
         // The employee exists and has reached the maximum number of devices
-        if (idLimitCheck.hasReachedLimit)
-          throw new Error(
-            `Cet employé a atteint le nombre maximum d'appareils autorisés (${idLimitCheck.employee.id.length}).`,
-          );
+        const maxDevices = parseInt(process.env.NEXT_PUBLIC_MAX_DEVICES || '3');
+        if (connectedDeviceCount >= maxDevices)
+          throw new Error(`Cet employé a atteint le nombre maximum d'appareils autorisés (${employee.id.length}).`);
 
         // Employee exists but hasn't reached the maximum - update their IDs instead of creating a new record
-        // Add the new userId to the existing employee's ID array and prefix it with '$' to indicate it's a new device
+        // Add the new userId to the existing employee's ID array and prefix it with a character to indicate it's a new device
         // If the employee has no IDs yet, just use the userId to let it connect
-        const newIds = idLimitCheck.employee.id.length
-          ? idLimitCheck.employee.id.some(i => i.replace('$', '') === userId.replace('$', ''))
-            ? [...idLimitCheck.employee.id]
-            : [...getConnectedDevices(idLimitCheck.employee), '$' + userId]
-          : [userId];
-        const updatedIds = await updateEmployeeWithUserId(idLimitCheck.employee, newIds);
+        const newIds = employee.id.some(i => i.replace(NEW_ID_CHAR, '') === userId.replace(NEW_ID_CHAR, ''))
+          ? [...employee.id]
+          : [...getConnectedDevices(employee), NEW_ID_CHAR + userId];
+        const updatedIds = await updateEmployeeWithUserId(employee, newIds);
 
         if (!updatedIds) throw new Error('Employé non mis à jour dans la base de données');
 
         // Update the employee object with the new ID array
         const updatedEmployee = {
-          ...idLimitCheck.employee,
+          ...employee,
           id: updatedIds,
         };
 
@@ -194,25 +196,25 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
         refreshData();
       } else {
-        if (employeeExists(employees, formData.firstName, formData.familyName, formData.tel, formData.email))
-          throw new Error('Un employé avec ce nom, ce numéro de téléphone ou cet email existe déjà.');
+        if (!employee && employees.some(employee => employee.tel === formData.tel || employee.email === formData.email))
+          throw new Error('Un employé avec ce numéro de téléphone ou cet email existe déjà.');
 
         // Create a new employee in the database
-        const employee = await createNewEmployee({
+        const newEmployee = await createNewEmployee({
           ...formData,
           id: userId,
         });
-        if (!employee) throw new Error('Employé non créé dans la base de données');
+        if (!newEmployee) throw new Error('Employé non créé dans la base de données');
 
-        updateUserData(employee);
+        updateUserData(newEmployee);
 
         // Send notification email to conciergerie
-        const selectedConciergerie = findConciergerie(employee.conciergerieName ?? null);
+        const selectedConciergerie = findConciergerie(newEmployee.conciergerieName ?? null);
         if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
         if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
         // Use EmailSender for consistent retry mechanism
-        EmailSender.sendRegistrationEmail({ addFailedEmail, setToast }, selectedConciergerie, employee);
+        EmailSender.sendRegistrationEmail({ addFailedEmail, setToast }, selectedConciergerie, newEmployee);
 
         onMenuChange(Page.Waiting);
       }
