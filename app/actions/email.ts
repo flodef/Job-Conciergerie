@@ -187,11 +187,13 @@ export async function sendEmployeeAcceptanceEmail(
             isAccepted ? 'retenue' : wasAccepted ? 'arrêtée' : 'refusée'
           } par la conciergerie ${conciergerie.name}.</p>
           ${
-            missionsCount > 0
-              ? `<p>Vos ${missionsCount} mission${missionsCount > 1 ? 's' : ''} ont été annulée${
-                  missionsCount > 1 ? 's' : ''
-                }, et vous n&apos;aurez plus accès à l&apos;application.</p>`
-              : `<p>Vous n&apos;aurez plus accès à l&apos;application.</p>`
+            isAccepted
+              ? missionsCount > 0
+                ? `<p>Vos ${missionsCount} mission${missionsCount > 1 ? 's' : ''} ont été annulée${
+                    missionsCount > 1 ? 's' : ''
+                  }, et vous n&apos;aurez plus accès à l&apos;application.</p>`
+                : `<p>Vous n&apos;aurez plus accès à l&apos;application.</p>`
+              : null
           }
           ${
             isAccepted
