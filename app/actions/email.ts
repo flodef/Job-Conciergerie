@@ -133,7 +133,7 @@ export async function sendNewDeviceNotificationEmail(employee: Employee): Promis
     html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #4a5568;">Nouvel appareil détecté</h2>
-          <p>Bonjour ${employee.firstName} ${employee.familyName},</p>
+          <p>Bonjour ${employee.firstName},</p>
           <p>Un nouvel appareil vient d&apos;être connecté à votre compte Job Conciergerie :</p>
           <div style="background-color: #fff8f8; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #d32f2f;">
             <p>Si vous êtes l&apos;auteur de cette connexion, vous devez au préalable valider cet appareil.</p>
@@ -182,7 +182,7 @@ export async function sendEmployeeAcceptanceEmail(
           <h2 style="color: #333;">${
             isAccepted ? 'Acceptation' : wasAccepted ? 'Arrêt' : 'Refus'
           } de votre inscription</h2>
-          <p>Bonjour ${employee.firstName} ${employee.familyName},</p>
+          <p>Bonjour ${employee.firstName},</p>
           <p>Nous vous informons que votre inscription a été ${
             isAccepted ? 'retenue' : wasAccepted ? 'arrêtée' : 'refusée'
           } par la conciergerie ${conciergerie.name}.</p>
