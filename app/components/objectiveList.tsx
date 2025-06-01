@@ -53,7 +53,7 @@ const ObjectiveList = forwardRef(
     };
 
     const addObjective = () => {
-      // Prevent adding more than 10 points
+      // Prevent adding more than 10 objectives
       if (objectives.length >= maxObjectives) {
         return;
       }

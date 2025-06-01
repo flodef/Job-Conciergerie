@@ -11,7 +11,7 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import HomeDetails from '@/app/homes/components/homeDetails';
-import MissionActions from '@/app/missions/components/missionActions';
+import MissionActions, { MAX_POINTS_PER_DAY } from '@/app/missions/components/missionActions';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
 import { Mission } from '@/app/types/dataTypes';
@@ -278,8 +278,9 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
               Points de mission
               <Tooltip>
                 <p>
-                  <strong>Règle des 3 points par jour :</strong> Pour ne pas dépasser la capacité de travail d&apos;un
-                  prestataire, il est impossible d&apos;attribuer plus de 3 points de mission par jour par prestataire.
+                  <strong>Règle des {MAX_POINTS_PER_DAY} points par jour :</strong> Pour ne pas dépasser la capacité de
+                  travail d&apos;un prestataire, il est impossible d&apos;attribuer plus de {MAX_POINTS_PER_DAY} points
+                  de mission par jour par prestataire.
                 </p>
               </Tooltip>
             </h3>

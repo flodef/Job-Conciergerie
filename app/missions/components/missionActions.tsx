@@ -9,6 +9,8 @@ import { IconAlertTriangle, IconCancel, IconCheck, IconPencil, IconPlayerPlay, I
 import clsx from 'clsx/lite';
 import { useMemo } from 'react';
 
+export const MAX_POINTS_PER_DAY = 100;
+
 type MissionActionsProps = {
   mission: Mission;
   onEdit: () => void;
@@ -48,7 +50,7 @@ export default function MissionActions({
     // Get the mission points
     const { pointsPerDay } = calculateMissionPoints(mission);
 
-    // Check each day of the mission to see if accepting would exceed 3 points per day
+    // Check each day of the mission to see if accepting would exceed max points per day
     const startDate = new Date(mission.startDateTime);
     const endDate = new Date(mission.endDateTime);
 
@@ -68,8 +70,8 @@ export default function MissionActions({
       // Keep track of the maximum points for any day
       maxPointsForAnyDay = Math.max(maxPointsForAnyDay, pointsForDay);
 
-      // If adding this mission would exceed 3 points for this day, return true
-      if (pointsForDay + pointsPerDay > 3) return true;
+      // If adding this mission would exceed max points per day, return true
+      if (pointsForDay + pointsPerDay > MAX_POINTS_PER_DAY) return true;
 
       // Move to the next day
       currentDate.setDate(currentDate.getDate() + 1);
@@ -102,7 +104,7 @@ export default function MissionActions({
       {hasExceededPoints && (
         <div className="flex items-center text-center p-2 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
           <IconAlertTriangle size={16} className="mr-2 w-8 h-8" />
-          Le maximum de 3 points/jour est déjà atteint !
+          Le maximum de {MAX_POINTS_PER_DAY} points/jour est déjà atteint !
         </div>
       )}
       <button

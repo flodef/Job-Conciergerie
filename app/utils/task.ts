@@ -1,6 +1,7 @@
 'use client';
 
 import tasksData from '@/app/data/tasks.json';
+import { MAX_POINTS_PER_DAY } from '@/app/missions/components/missionActions';
 import { Home, Mission, MissionPoints, Task } from '@/app/types/dataTypes';
 
 // Get points for a specific task
@@ -34,7 +35,11 @@ const calculateDaysBetweenDates = (startDate: Date, endDate: Date, inclusiveCoun
 /**
  * Calculate points per day with a maximum cap
  */
-const calculatePointsPerDayWithCap = (totalPoints: number, days: number, maxPointsPerDay = 3): number => {
+const calculatePointsPerDayWithCap = (
+  totalPoints: number,
+  days: number,
+  maxPointsPerDay = MAX_POINTS_PER_DAY,
+): number => {
   return Math.min(totalPoints / days, maxPointsPerDay);
 };
 
@@ -50,7 +55,7 @@ export const calculateMissionPoints = (mission: Mission): MissionPoints => {
   // Calculate the difference in days (include both start and end days)
   const diffDays = calculateDaysBetweenDates(startDate, endDate);
 
-  // Calculate points per day (capped at 3 points per day)
+  // Calculate points per day (capped at MAX_POINTS_PER_DAY points per day)
   const pointsPerDay = calculatePointsPerDayWithCap(totalPoints, diffDays);
 
   return {
