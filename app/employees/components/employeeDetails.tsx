@@ -97,26 +97,24 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h4 className={descriptionClassName}>Contact :</h4>
-            <div className="space-y-3 mt-1">
-              <div className="flex items-center gap-2">
-                <IconMail size={25} className="text-light" />
-                <a href={`mailto:${employee.email}`} className="text-foreground hover:underline truncate">
-                  {employee.email}
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <IconPhone size={25} className="text-light" />
-                <a href={`tel:${employee.tel}`} className="text-foreground hover:underline truncate">
-                  {employee.tel}
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <IconMapPin size={25} className="text-light" />
-                <span className="text-foreground truncate">{employee.geographicZone}</span>
-              </div>
+        <div className="flex flex-col gap-4">
+          <h4 className={descriptionClassName}>Contact :</h4>
+          <div className="space-y-3 mt-1">
+            <div className="flex items-center gap-2">
+              <IconMail size={25} className="text-light" />
+              <a href={`mailto:${employee.email}`} className="text-foreground hover:underline truncate">
+                {employee.email}
+              </a>
+            </div>
+            <div className="flex items-center gap-2">
+              <IconPhone size={25} className="text-light" />
+              <a href={`tel:${employee.tel}`} className="text-foreground hover:underline truncate">
+                {employee.tel}
+              </a>
+            </div>
+            <div className="flex items-center gap-2">
+              <IconMapPin size={25} className="text-light" />
+              <span className="text-foreground truncate">{employee.geographicZone}</span>
             </div>
           </div>
         </div>
