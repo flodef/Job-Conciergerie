@@ -136,10 +136,11 @@ export async function sendNewDeviceNotificationEmail(employee: Employee): Promis
           <p>Bonjour ${employee.firstName},</p>
           <p>Un nouvel appareil vient d&apos;être connecté à votre compte Job Conciergerie :</p>
           <div style="background-color: #fff8f8; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #d32f2f;">
-            <p>Si vous êtes l&apos;auteur de cette connexion, vous devez au préalable valider cet appareil.</p>
-            <p>Si vous n&apos;êtes pas à l&apos;origine de cette connexion, vous pouvez supprimer cet appareil.</p>
+            <p>Si vous êtes l&apos;auteur de cette connexion, vous devez au préalable <strong>valider cet appareil</strong>.</p>
+            <p style="margin: 10px 0; font-weight: bold;">OU</p>
+            <p>Si vous n&apos;êtes pas à l&apos;origine de cette connexion, vous pouvez <strong>supprimer cet appareil</strong>.</p>
           </div>
-          <p>Ces actions se font depuis les paramètres de votre compte, section "Appareils connectés".</p>
+          <p>Ces actions se font <strong>à partir d'un appareil déjà autorisé</strong>, depuis les paramètres de votre compte, section "Appareils connectés".</p>
           <p>
             <a href="${baseUrl}/settings" style="display: inline-block; background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
               Voir mes appareils connectés
