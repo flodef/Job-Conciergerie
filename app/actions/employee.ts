@@ -10,6 +10,7 @@ import {
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
 import { Employee, EmployeeStatus } from '@/app/types/dataTypes';
+import { normalizeName } from '@/app/utils/employee';
 import { EmployeeNotificationSettings } from '@/app/utils/notifications';
 
 /**
@@ -37,8 +38,8 @@ export async function createNewEmployee(data: {
   // Convert to DB format
   const dbData: Omit<DbEmployee, 'created_at'> = {
     id: [data.id],
-    first_name: data.firstName,
-    family_name: data.familyName,
+    first_name: normalizeName(data.firstName),
+    family_name: normalizeName(data.familyName),
     tel: data.tel,
     email: data.email,
     geographic_zone: data.geographicZone,

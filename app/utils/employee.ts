@@ -2,6 +2,22 @@ import { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 import { isNewDevice } from '@/app/utils/id';
 
 /**
+ * Normalize a name by capitalizing the first letter of each part
+ * separated by spaces or dashes
+ * @param name Name to normalize
+ * @returns Normalized name
+ */
+export const normalizeName = function (name: string) {
+  // Handle names with spaces or dashes by capitalizing each part
+  return name
+    .trim()
+    .split(/[ -]/)
+    .filter(Boolean)
+    .map(part => (part.charAt(0).toUpperCase() + part.slice(1)).trim())
+    .join(name.includes('-') ? '-' : ' ');
+};
+
+/**
  * Sort employees by status (pending first, then accepted, then rejected)
  * and then alphabetically by name
  * @param employees All employees
