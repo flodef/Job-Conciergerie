@@ -174,8 +174,7 @@ export default function WaitingPage() {
               <IconMailForward size={60} className="text-primary" />
             </div>
 
-            <p>Nous avons envoyé un email de vérification à l&apos;adresse associée à votre conciergerie.</p>
-
+            <p>Un email de vérification à été envoyé à l&apos;adresse email associée à votre conciergerie.</p>
             <p>Veuillez vérifier votre boîte de réception et suivre les instructions pour activer votre compte.</p>
 
             <div className="bg-secondary/10 p-3 rounded-lg">
@@ -200,7 +199,13 @@ export default function WaitingPage() {
         ) : employee ? (
           // Employee waiting page
           <>
-            <h1 className="text-2xl font-bold text-center">Demande en cours d&apos;examen</h1>
+            <h1 className="text-2xl font-bold text-center">
+              {employee.status === 'pending'
+                ? 'Demande en cours d&apos;examen'
+                : employee.status === 'accepted'
+                ? 'Nouvel appareil connecté'
+                : 'Demande rejetée'}
+            </h1>
 
             <p>
               Bonjour{' '}
@@ -213,11 +218,17 @@ export default function WaitingPage() {
             {employee.status === 'pending' && (
               <p>
                 Votre demande d&apos;accès a bien été reçue et est actuellement en cours d&apos;examen par la
-                conciergerie <span className="font-semibold">{employee.conciergerieName}</span>.
+                conciergerie <span className="font-semibold">{employee.conciergerieName}</span>. <br />
+                Un email vous sera envoyé une fois votre demande examinée.
               </p>
             )}
             {employee.status === 'accepted' && (
-              <p>Votre demande d&apos;accès a bien été acceptée par la conciergerie.</p>
+              <p>
+                Un email de vérification à été envoyé à l&apos;adresse email associée à votre compte.
+                <br />
+                Veuillez vérifier votre boîte de réception et suivre les instructions pour donner l&apos;accès à cet
+                appareil.
+              </p>
             )}
             {employee.status === 'rejected' && (
               <p>Votre demande d&apos;accès a malheureusement été rejetée par la conciergerie.</p>
@@ -242,11 +253,7 @@ export default function WaitingPage() {
                         : 'text-red-500'
                     }`}
                   >
-                    {
-                      { pending: 'En attente de validation', accepted: 'Acceptée', rejected: 'Rejetée' }[
-                        employee.status
-                      ]
-                    }
+                    {{ pending: 'En attente de validation', accepted: 'Accepté', rejected: 'Rejeté' }[employee.status]}
                   </span>
                 </p>
               </div>
@@ -261,10 +268,19 @@ export default function WaitingPage() {
 
             <div className="bg-primary/10 p-3 rounded-lg">
               {employee.status === 'accepted' ? (
-                <p className="text-sm text-foreground">
-                  Pour accéder à votre compte depuis cet appareil, vous devez l&apos;accepter depuis votre compte déjà
-                  connecté en allant dans <span className="font-semibold">Paramètres &gt; Appareils connectés</span>.
-                </p>
+                <span className="text-sm text-foreground">
+                  Pour accéder à votre compte depuis cet appareil, vous devez :
+                  <ul className="list-disc list-inside">
+                    <li>
+                      soit le <span className="font-semibold">valider depuis l&apos;email</span> envoyé sur
+                      l&apos;adresse associée à votre compte
+                    </li>
+                    <li>
+                      soit l&apos;accepter depuis votre appareil déjà connecté en allant dans{' '}
+                      <span className="font-semibold">Paramètres &gt; Appareils connectés</span>.
+                    </li>
+                  </ul>
+                </span>
               ) : (
                 <>
                   <p className="text-sm text-foreground">

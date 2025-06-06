@@ -249,13 +249,13 @@ export const EmailSender = {
   },
 
   // Sending new device connection notification to employee
-  sendNewDeviceEmail: (props: EmailSenderProps, employee: Employee) => {
+  sendNewDeviceEmail: (props: EmailSenderProps, employee: Employee, userId: string) => {
     return handleEmailSending(
       props,
       'newDevice',
       sendNewDeviceNotificationEmail,
-      [employee],
-      { employee },
+      [employee, userId],
+      { employee, userId },
       "L'email de notification de nouvel appareil a été envoyé avec succès",
     );
   },

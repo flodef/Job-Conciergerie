@@ -23,8 +23,8 @@ interface AuthContextType {
   setConciergerieName: (name: string | undefined) => void;
   employeeName: string | undefined;
   getUserKey: <T extends UserData>(user: T) => string;
-  findEmployee: (id: string | null) => Employee | undefined;
-  findConciergerie: (id: string | null) => Conciergerie | undefined;
+  findEmployee: (id: string | null | undefined) => Employee | undefined;
+  findConciergerie: (id: string | null | undefined) => Conciergerie | undefined;
   deleteEmployee: (employee: Employee) => Promise<boolean>;
   updateUserData: <T extends UserData>(updatedData: T, updateType?: UserType) => void;
   fetchDataFromDatabase: (fetchType?: UserType) => Promise<boolean>;
@@ -205,8 +205,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     throw new Error('Invalid UserData type');
   };
 
-  const findEmployee = (id: string | null) => (id ? employees.find(e => getUserKey(e) === id) : undefined);
-  const findConciergerie = (id: string | null) => (id ? conciergeries.find(c => getUserKey(c) === id) : undefined);
+  const findEmployee = (id: string | null | undefined) => (id ? employees.find(e => getUserKey(e) === id) : undefined);
+  const findConciergerie = (id: string | null | undefined) =>
+    id ? conciergeries.find(c => getUserKey(c) === id) : undefined;
 
   const deleteEmployee = async (employee: Employee) => {
     const isSuccess = await deleteEmployeeData(employee);
