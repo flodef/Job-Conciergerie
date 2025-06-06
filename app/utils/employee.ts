@@ -1,5 +1,4 @@
 import { Employee, EmployeeStatus } from '@/app/types/dataTypes';
-import { isNewDevice } from '@/app/utils/id';
 
 /**
  * Normalize a name by capitalizing the first letter of each part
@@ -68,43 +67,6 @@ export function filterEmployees(employees: Employee[], searchTerm: string): Empl
       emp.familyName.toLowerCase().includes(term) ||
       emp.email.toLowerCase().includes(term),
   );
-}
-
-/**
- * Get the list of connected devices for an employee
- * @param employee Employee to get connected devices for
- * @returns List of connected devices
- */
-export function getConnectedDevices(employee: Employee): string[] {
-  return employee.id.filter(id => !isNewDevice(id));
-}
-
-/**
- * Check if an employee has reached the maximum number of device IDs allowed
- * @param employees All employees
- * @param firstName First name to check
- * @param familyName Family name to check
- * @returns Object with boolean 'hasReachedLimit' and the matched employee if found
- */
-export function employeeConnectedDevices(
-  employees: Employee[],
-  firstName: string,
-  familyName: string,
-): { employee: Employee | undefined; connectedDeviceCount: number } {
-  // Find the employee that matches the criteria
-  const employee = employees.find(
-    employee =>
-      employee.firstName.toLowerCase() === firstName.toLowerCase() &&
-      employee.familyName.toLowerCase() === familyName.toLowerCase(),
-  );
-
-  // Count only active device IDs (without new devices)
-  const connectedDeviceCount = employee ? getConnectedDevices(employee).length : 0;
-
-  return {
-    employee,
-    connectedDeviceCount,
-  };
 }
 
 /**

@@ -16,8 +16,7 @@ import { Employee } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import { useEmailRetry } from '@/app/utils/emailRetry';
 import { EmailSender } from '@/app/utils/emailSender';
-import { employeeConnectedDevices, getConnectedDevices } from '@/app/utils/employee';
-import { containsId, getNewDevice } from '@/app/utils/id';
+import { getConnectedDevices, getDevices } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -159,15 +158,17 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
       if (!userId) throw new Error("L'identifiant n'est pas défini");
 
-      // Check if employee already exists with the same name, phone, or email and if they've reached device limit
-      const { employee, connectedDeviceCount } = employeeConnectedDevices(
-        employees,
-        formData.firstName,
-        formData.familyName,
+      // Find the employee that matches the criteria
+      const employee = employees.find(
+        employee =>
+          employee.firstName.toLowerCase() === formData.firstName.toLowerCase() &&
+          employee.familyName.toLowerCase() === formData.familyName.toLowerCase(),
       );
 
       if (employee) {
         // The employee exists and has reached the maximum number of devices
+        // Count only active device IDs (without new devices)
+        const connectedDeviceCount = getConnectedDevices(employee.id).length;
         const maxDevices = parseInt(process.env.NEXT_PUBLIC_MAX_DEVICES || '3');
         if (connectedDeviceCount >= maxDevices)
           throw new Error(`Cet employé a atteint le nombre maximum d'appareils autorisés (${employee.id.length}).`);
@@ -175,11 +176,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         // Employee exists but hasn't reached the maximum - update their IDs instead of creating a new record
         // Add the new userId to the existing employee's ID array and prefix it with a character to indicate it's a new device
         // If the employee has no IDs yet, just use the userId to let it connect
-        const newIds = connectedDeviceCount
-          ? containsId(employee.id, userId)
-            ? [...employee.id]
-            : [...getConnectedDevices(employee), getNewDevice(userId)]
-          : [userId];
+        const newIds = getDevices(employee.id, userId, true);
         const updatedIds = await updateEmployeeWithUserId(employee, newIds);
 
         if (!updatedIds) throw new Error('Employé non mis à jour dans la base de données');
@@ -194,7 +191,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         updateUserData(updatedEmployee);
 
         // Send notification email to employee about the new device
-        if (connectedDeviceCount) EmailSender.sendNewDeviceEmail({ addFailedEmail, setToast }, updatedEmployee);
+        if (connectedDeviceCount) EmailSender.sendNewDeviceEmail({ addFailedEmail, setToast }, updatedEmployee, userId);
 
         refreshData();
       } else {
