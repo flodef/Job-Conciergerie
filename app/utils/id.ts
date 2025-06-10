@@ -81,7 +81,11 @@ export function getConnectedDevices(ids: string[]): string[] {
  * @returns List of devices
  */
 export function getDevices(ids: string[], userId: string, isNewDevice = false) {
-  const newId = isNewDevice ? NEW_ID_CHAR + userId : userId;
+  const maxDevices = parseInt(process.env.NEXT_PUBLIC_MAX_DEVICES || '3');
   const connectedDevices = getConnectedDevices(ids);
+  if (connectedDevices.length >= maxDevices)
+    throw new Error(`Nombre maximum d'appareils autorisés atteint (${maxDevices}).`);
+
+  const newId = isNewDevice ? NEW_ID_CHAR + userId : userId;
   return connectedDevices.length ? [...connectedDevices.filter(id => id !== userId), newId] : [userId];
 }

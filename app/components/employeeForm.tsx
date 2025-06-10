@@ -16,7 +16,7 @@ import { Employee } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import { useEmailRetry } from '@/app/utils/emailRetry';
 import { EmailSender } from '@/app/utils/emailSender';
-import { getConnectedDevices, getDevices } from '@/app/utils/id';
+import { getDevices } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -166,36 +166,30 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       );
 
       if (employee) {
-        // The employee exists and has reached the maximum number of devices
-        // Count only active device IDs (without new devices)
-        const connectedDeviceCount = getConnectedDevices(employee.id).length;
-        const maxDevices = parseInt(process.env.NEXT_PUBLIC_MAX_DEVICES || '3');
-        if (connectedDeviceCount >= maxDevices)
-          throw new Error(`Cet employé a atteint le nombre maximum d'appareils autorisés (${employee.id.length}).`);
-
-        // Employee exists but hasn't reached the maximum - update their IDs instead of creating a new record
-        // Add the new userId to the existing employee's ID array and prefix it with a character to indicate it's a new device
-        // If the employee has no IDs yet, just use the userId to let it connect
         const newIds = getDevices(employee.id, userId, true);
-        const updatedIds = await updateEmployeeWithUserId(employee, newIds);
+        if (employee.status === 'accepted' && newIds !== employee.id) {
+          const updatedIds = await updateEmployeeWithUserId(employee, newIds);
 
-        if (!updatedIds) throw new Error('Employé non mis à jour dans la base de données');
+          if (!updatedIds) throw new Error('Employé non mis à jour dans la base de données');
 
-        // Update the employee object with the new ID array
-        const updatedEmployee = {
-          ...employee,
-          id: updatedIds,
-        };
+          // Update the employee object with the new ID array
+          const updatedEmployee = {
+            ...employee,
+            id: updatedIds,
+          };
 
-        // Update local user data and redirect based on status
-        updateUserData(updatedEmployee);
+          // Update local user data and redirect based on status
+          updateUserData(updatedEmployee);
 
-        // Send notification email to employee about the new device
-        if (connectedDeviceCount) EmailSender.sendNewDeviceEmail({ addFailedEmail, setToast }, updatedEmployee, userId);
-
-        refreshData();
+          // Send notification email to employee about the new device
+          if (employee.status === 'accepted')
+            EmailSender.sendNewDeviceEmail({ addFailedEmail, setToast }, updatedEmployee, userId);
+          refreshData();
+        } else {
+          onMenuChange(Page.Waiting);
+        }
       } else {
-        if (!employee && employees.some(employee => employee.tel === formData.tel || employee.email === formData.email))
+        if (employees.some(employee => employee.tel === formData.tel || employee.email === formData.email))
           throw new Error('Un employé avec ce numéro de téléphone ou cet email existe déjà.');
 
         // Create a new employee in the database
