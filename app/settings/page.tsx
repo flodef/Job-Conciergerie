@@ -5,7 +5,7 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import AdvancedSettings from '@/app/settings/components/advancedSettings';
+import ConnectedDevicesSettings from '@/app/settings/components/connectedDevicesSettings';
 import ConciergerieSettings from '@/app/settings/components/conciergerieSettings';
 import EmployeeSettings from '@/app/settings/components/employeeSettings';
 import NotificationSettings from '@/app/settings/components/notificationSettings';
@@ -38,32 +38,25 @@ export default function Settings() {
       .finally(() => (isFetching.current = false));
   }, [currentPage, authLoading, fetchDataFromDatabase, updateFetchTime, needsRefresh, userType]);
 
-  // Sections content
-  const generalSection = {
-    conciergerie: <ConciergerieSettings />,
-    employee: <EmployeeSettings />,
-    undefined: null,
-  }[userType || 'undefined'];
-
-  const notificationsSection = <NotificationSettings />;
-
-  const advancedSection = <AdvancedSettings />;
-
   const accordionItems = [
     {
       title: 'Général',
       icon: <IconSettings size={20} />,
-      content: generalSection,
+      content: {
+        conciergerie: <ConciergerieSettings />,
+        employee: <EmployeeSettings />,
+        undefined: null,
+      }[userType || 'undefined'],
     },
     {
       title: 'Notifications',
       icon: <IconBell size={20} />,
-      content: notificationsSection,
+      content: <NotificationSettings />,
     },
     {
       title: 'Appareils connectés',
       icon: <IconDevices size={20} />,
-      content: advancedSection,
+      content: <ConnectedDevicesSettings />,
     },
   ];
 

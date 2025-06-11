@@ -18,7 +18,7 @@ type Device = {
   label?: string;
 };
 
-const AdvancedSettings: React.FC = () => {
+const ConnectedDevicesSettings: React.FC = () => {
   const { disconnect, nuke, userData, userId: currentUserId, userType, updateUserData } = useAuth();
 
   const [storedLabels, setStoredLabels] = useLocalStorage<Device[]>('device_labels', []);
@@ -277,4 +277,4 @@ const AdvancedSettings: React.FC = () => {
   );
 };
 
-export default AdvancedSettings;
+export default ConnectedDevicesSettings;
