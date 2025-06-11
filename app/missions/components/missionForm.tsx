@@ -5,6 +5,7 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import DateTimeInput from '@/app/components/dateTimeInput';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
+import Label from '@/app/components/label';
 import MultiSelect from '@/app/components/multiSelect';
 import TaskSelector from '@/app/components/taskSelector';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
@@ -12,12 +13,9 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission, Task } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
-import { buttonClassName } from '@/app/utils/className';
 import { adjustMissionDateTime, getMissionDateTime, localISOString, minimumMissionTime } from '@/app/utils/date';
 import { handleChange } from '@/app/utils/form';
 import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
-import { IconRefresh } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type MissionFormProps = {
@@ -32,15 +30,19 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   const { conciergerieName, employees: allEmployees, getUserKey } = useAuth();
 
   // Filter homes by the current conciergerie
-  const filteredHomes = homes.filter(home => home.conciergerieName === conciergerieName);
+  const filteredHomes = useMemo(
+    () => homes.filter(home => home.conciergerieName === conciergerieName),
+    [homes, conciergerieName],
+  );
 
   // Initialize form values
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
+  const [missionHours, setMissionHours] = useState(mission?.hours || 0);
   const [tasks, setTasks] = useState<Task[]>(mission?.tasks || []);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>(mission?.allowedEmployees || []);
-  const [needHomeRefresh, setNeedHomeRefresh] = useState(false);
   const [initialFormValues, setInitialFormValues] = useState<{
     homeId: string;
+    missionHours: number;
     startDateTime: string;
     endDateTime: string;
     tasks: Task[];
@@ -98,6 +100,19 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     }
   }, [mission, mode]);
 
+  // Calculate mission hours when dependencies change
+  useEffect(() => {
+    if (homeId && tasks.length > 0) {
+      const selectedHome = filteredHomes.find(h => h.id === homeId);
+      if (selectedHome) {
+        const hours = calculateMissionHours(selectedHome, tasks);
+        setMissionHours(hours);
+      }
+    } else {
+      setMissionHours(0);
+    }
+  }, [homeId, tasks, filteredHomes]);
+
   // Set up French locale for date inputs
   useEffect(() => {
     // Try to set the locale for date inputs
@@ -111,6 +126,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
     setInitialFormValues({
       homeId,
+      missionHours,
       startDateTime,
       endDateTime,
       tasks,
@@ -121,18 +137,20 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   // Check if form has been modified
   const checkFormChanged = useCallback(() => {
     if (!initialFormValues) return false;
-    if (needHomeRefresh) return true;
 
     // Check if any field has been filled in compared to initial state
     const tasksChanged = JSON.stringify(tasks) !== JSON.stringify(initialFormValues.tasks);
     const homeIdChanged = homeId !== initialFormValues.homeId;
+    const missionHoursChanged = missionHours !== initialFormValues.missionHours;
     const startDateChanged = startDateTime !== initialFormValues.startDateTime;
     const endDateChanged = endDateTime !== initialFormValues.endDateTime;
     const employeesChanged =
       JSON.stringify(selectedEmployees.sort()) !== JSON.stringify(initialFormValues.selectedEmployees.sort());
 
-    return tasksChanged || homeIdChanged || startDateChanged || endDateChanged || employeesChanged;
-  }, [homeId, tasks, startDateTime, endDateTime, selectedEmployees, initialFormValues, needHomeRefresh]);
+    return (
+      tasksChanged || homeIdChanged || missionHoursChanged || startDateChanged || endDateChanged || employeesChanged
+    );
+  }, [homeId, missionHours, tasks, startDateTime, endDateTime, selectedEmployees, initialFormValues]);
 
   const closeAndCancel = () => {
     onClose();
@@ -158,7 +176,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         fieldRef: homeSelectRef,
         func: setHomeIdError,
       };
-    else if (tasks.length === 0)
+    else if (tasks.length === 0 || missionHours === 0)
       error = {
         message: 'Veuillez sélectionner au moins une tâche',
         fieldRef: taskRef,
@@ -186,22 +204,15 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         throw new Error(error.message);
       }
 
-      const selectedHome = filteredHomes.find(h => h.id === homeId);
-      if (!selectedHome) throw new Error('Veuillez sélectionner un bien valide');
-
       // Convert string dates to Date objects
       const { startDateTime: startDate, endDateTime: endDate } = adjustMissionDateTime(startDateTime, endDateTime);
-
-      // Calculate the total hours and available tasks based on tasks and home specifications
-      const totalHours = calculateMissionHours(selectedHome, tasks);
-      const availableTasks = getAvailableTasks(selectedHome, tasks);
 
       if (mode === 'add') {
         // Check if a mission with the same criteria already exists
         if (
           missionExists({
-            homeId: selectedHome.id,
-            tasks: availableTasks,
+            homeId,
+            tasks,
             startDateTime: startDate,
             endDateTime: endDate,
           })
@@ -209,12 +220,12 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
           throw new Error('Une mission identique existe déjà');
 
         const result = await addMission({
-          homeId: selectedHome.id,
-          tasks: availableTasks,
+          homeId,
+          tasks,
           startDateTime: startDate,
           endDateTime: endDate,
           allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : null,
-          hours: totalHours,
+          hours: missionHours,
           employeeId: null,
           status: null,
         });
@@ -224,13 +235,13 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       } else if (mission) {
         const updatedMission: Mission = {
           ...mission,
-          homeId: selectedHome.id,
-          tasks: availableTasks,
+          homeId,
+          tasks,
           startDateTime: startDate,
           endDateTime: endDate,
           modifiedDate: new Date(),
           allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : null,
-          hours: totalHours,
+          hours: missionHours,
         };
 
         // Check if update would create a duplicate
@@ -309,34 +320,32 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         footer={footer}
       >
         <form onSubmit={handleSubmit} className="space-y-2">
-          <div className="flex items-end gap-2">
-            <div className="flex-grow">
-              <Combobox
-                id="home-select"
-                label="Bien"
-                ref={homeSelectRef}
-                value={homeId}
-                onChange={value => handleChange(value, setHomeId, setHomeIdError)}
-                options={filteredHomes.map(home => ({
-                  value: home.id,
-                  label: home.title,
-                }))}
-                disabled={isSubmitting || cannotEdit}
-                placeholder="Sélectionner un bien"
-                error={homeIdError}
-                required
-              />
+          <Combobox
+            id="home-select"
+            label="Bien"
+            ref={homeSelectRef}
+            value={homeId}
+            onChange={value => handleChange(value, setHomeId, setHomeIdError)}
+            options={filteredHomes.map(home => ({
+              value: home.id,
+              label: home.title,
+            }))}
+            disabled={isSubmitting || cannotEdit}
+            placeholder="Sélectionner un bien"
+            error={homeIdError}
+            required
+          />
+
+          {missionHours > 0 && (
+            <div className="mt-2">
+              <Label id="mission-hours" required>
+                Durée estimée :{' '}
+                <span className="font-bold">
+                  {missionHours} heure{missionHours > 1 ? 's' : ''}
+                </span>
+              </Label>
             </div>
-            <button
-              type="button"
-              className={clsx(buttonClassName('secondary'), 'py-3')}
-              onClick={() => setNeedHomeRefresh(true)}
-              disabled={isSubmitting || cannotEdit || needHomeRefresh}
-              title="Rafraîchir"
-            >
-              <IconRefresh size={20} className="text-foreground" />
-            </button>
-          </div>
+          )}
 
           <TaskSelector
             id="task-select"
