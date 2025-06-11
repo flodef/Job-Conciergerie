@@ -55,7 +55,7 @@ const ColorPickerComponent: ForwardRefRenderFunction<HTMLDivElement, ColorPicker
       <Label id={id} required={required} tooltip={tooltip}>
         {label}
       </Label>
-      <div ref={ref} className="grid grid-cols-3 gap-3">
+      <div ref={ref} className="grid grid-cols-3 gap-3 mt-1">
         {colorOptions.map(color => {
           const isUsed = isColorUsed(color.name);
           const isSelected = selectedColor?.name === color.name;
