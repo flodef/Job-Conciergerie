@@ -28,10 +28,12 @@ export default function FullScreenModal({
         className,
       )}
     >
-      <div className="relative bg-background rounded-lg shadow-lg max-w-md w-full flex flex-col max-h-[90vh]">
+      <div className="relative bg-background rounded-lg shadow-lg max-w-md w-full flex flex-col max-h-[90vh] overflow-hidden">
         {/* Fixed header with title and close button */}
-        <div className="sticky top-0 z-10 bg-background p-4 border-b border-secondary flex justify-between items-center rounded-t-lg">
-          <h2 className="text-xl font-bold overflow-hidden">{title}</h2>
+        <div className="flex-shrink-0 z-20 bg-background p-4 border-b border-secondary flex justify-between items-center rounded-t-lg">
+          <div className="flex items-center">
+            <h2 className="text-xl font-bold overflow-hidden">{title}</h2>
+          </div>
           <CloseButton onClose={!disabled ? onClose : () => {}} />
         </div>
 
@@ -45,11 +47,17 @@ export default function FullScreenModal({
           {children}
         </div>
 
-        {/* The FormActions component will be rendered as part of children, 
-            but will be positioned at the bottom if it has the className="sticky bottom-0" */}
-        <div className={clsx('sticky bottom-0', disabled && 'pointer-events-none opacity-50 cursor-not-allowed')}>
-          {footer}
-        </div>
+        {/* Footer area */}
+        {footer && (
+          <div
+            className={clsx(
+              'flex-shrink-0 z-20 bg-background border-t border-secondary',
+              disabled && 'pointer-events-none opacity-50 cursor-not-allowed',
+            )}
+          >
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
