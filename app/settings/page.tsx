@@ -5,11 +5,14 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import ConnectedDevicesSettings from '@/app/settings/components/connectedDevicesSettings';
 import ConciergerieSettings from '@/app/settings/components/conciergerieSettings';
+import ConnectedDevicesSettings from '@/app/settings/components/connectedDevicesSettings';
 import EmployeeSettings from '@/app/settings/components/employeeSettings';
 import NotificationSettings from '@/app/settings/components/notificationSettings';
+import { MAX_DEVICES } from '@/app/utils/id';
+import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
+import packageJson from '@/package.json';
 import { IconBell, IconDevices, IconSettings } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -19,6 +22,9 @@ export default function Settings() {
   const { needsRefresh, updateFetchTime } = useFetchTime();
 
   const [toast, setToast] = useState<Toast>();
+
+  // Get connected devices count for the subtitle
+  const [storedLabels] = useLocalStorage<Array<{ id: string; label?: string }>>('device_labels', []);
 
   const isFetching = useRef(false);
   useEffect(() => {
@@ -41,6 +47,7 @@ export default function Settings() {
   const accordionItems = [
     {
       title: 'Général',
+      subtitle: `v. ${packageJson.version}`,
       icon: <IconSettings size={20} />,
       content: {
         conciergerie: <ConciergerieSettings />,
@@ -55,6 +62,7 @@ export default function Settings() {
     },
     {
       title: 'Appareils connectés',
+      subtitle: `${storedLabels?.length || 0}/${MAX_DEVICES}`,
       icon: <IconDevices size={20} />,
       content: <ConnectedDevicesSettings />,
     },

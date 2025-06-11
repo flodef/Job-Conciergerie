@@ -1,14 +1,13 @@
 import { updateConciergerieData } from '@/app/actions/conciergerie';
-import packageJson from '@/package.json';
 import { Button } from '@/app/components/button';
 import ColorPicker from '@/app/components/colorPicker';
 import Input from '@/app/components/input';
+import Label from '@/app/components/label';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import colorOptions from '@/app/data/colors.json';
 import { Conciergerie } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
-import { labelClassName } from '@/app/utils/className';
 import { setPrimaryColor } from '@/app/utils/color';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
@@ -149,10 +148,9 @@ const ConciergerieSettings: React.FC = () => {
     <div className="space-y-2">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      <div className="flex justify-between items-center">
-        <p className={labelClassName}>{name}</p>
-        <span className="text-sm text-gray-500">v. {packageJson.version}</span>
-      </div>
+      <Label id="name" required>
+        {name}
+      </Label>
 
       <Input
         id="email"
