@@ -5,7 +5,7 @@ import FullScreenModal from '@/app/components/fullScreenModal';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { Employee } from '@/app/types/dataTypes';
+import { Employee, MissionStatus } from '@/app/types/dataTypes';
 import {
   actionButtonBarClassName,
   actionButtonClassName,
@@ -29,6 +29,14 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [toast, setToast] = useState<Toast>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Helper function to count missions by status
+  const countMissions = (status: MissionStatus) => {
+    const employeeId = getUserKey(employee);
+    if (!employeeId) return 0;
+
+    return missions.filter(mission => mission.employeeId === employeeId && mission.status === status).length;
+  };
 
   const handleDelete = () => {
     setIsSubmitting(true);
@@ -97,7 +105,7 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col">
           <h4 className={descriptionClassName}>Contact :</h4>
           <div className="space-y-3 mt-1">
             <div className="flex items-center gap-2">
@@ -119,14 +127,13 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
           </div>
         </div>
 
-        <div className={clsx(descriptionClassName, 'flex items-center gap-1')}>
-          Missions complétées :
-          <span className={labelClassName}>
-            {
-              missions.filter(mission => getUserKey(employee) === mission.employeeId && mission.status === 'completed')
-                .length
-            }
-          </span>
+        <div className={clsx(descriptionClassName, 'flex flex-row items-center gap-1')}>
+          <p>
+            Missions acceptées :<span className={labelClassName}>{countMissions('accepted')}</span>
+          </p>
+          <p>
+            Missions complétées :<span className={labelClassName}>{countMissions('completed')}</span>
+          </p>
         </div>
 
         {employee.message && employee.status === 'pending' && (
