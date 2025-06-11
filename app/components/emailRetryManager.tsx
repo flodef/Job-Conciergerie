@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useEmailRetry } from '@/app/utils/emailRetry';
-import { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
+import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import {
   sendConciergerieVerificationEmail,
   sendEmployeeRegistrationEmail,
@@ -85,7 +85,7 @@ export function EmailRetryManager({ onToastChange }: { onToastChange: (toast: To
               email.data.home as unknown as Home,
               email.data.employee as unknown as Employee,
               email.data.conciergerie as unknown as Conciergerie,
-              email.data.status as 'accepted' | 'started' | 'completed',
+              email.data.status as MissionStatus,
               email.id
             )
               .then(isSuccess => {

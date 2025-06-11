@@ -12,7 +12,7 @@ import {
   sendNewDeviceNotificationEmail,
 } from '@/app/actions/email';
 import { EmailType } from '@/app/utils/emailRetry';
-import { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
+import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { Toast, ToastType } from '@/app/components/toastMessage';
 
 // This is a client-side utility to send emails with automatic retry capability
@@ -133,7 +133,7 @@ export const EmailSender = {
     home: Home,
     employee: Employee,
     conciergerie: Conciergerie,
-    status: 'accepted' | 'started' | 'completed',
+    status: MissionStatus,
   ) => {
     return handleEmailSending(
       props,
