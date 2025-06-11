@@ -1,4 +1,5 @@
 import { updateConciergerieData } from '@/app/actions/conciergerie';
+import packageJson from '@/package.json';
 import { Button } from '@/app/components/button';
 import ColorPicker from '@/app/components/colorPicker';
 import Input from '@/app/components/input';
@@ -7,6 +8,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import colorOptions from '@/app/data/colors.json';
 import { Conciergerie } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
+import { labelClassName } from '@/app/utils/className';
 import { setPrimaryColor } from '@/app/utils/color';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
@@ -28,6 +30,7 @@ const ConciergerieSettings: React.FC = () => {
   const phoneRef = React.useRef<HTMLInputElement>(null);
 
   // Form state for editable fields
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [tel, setTel] = useState('');
   const [selectedColor, setSelectedColor] = useState<ColorOption | null>(null);
@@ -46,6 +49,7 @@ const ConciergerieSettings: React.FC = () => {
     if (!conciergerie) return;
 
     // Set current form values for conciergerie
+    setName(conciergerie.name);
     setEmail(conciergerie.email);
     setTel(conciergerie.tel);
 
@@ -118,16 +122,12 @@ const ConciergerieSettings: React.FC = () => {
       updateUserData(updatedConciergerie);
 
       // Update theme
-      if (selectedColor) {
-        setPrimaryColor(selectedColor.value);
-      }
+      if (selectedColor) setPrimaryColor(selectedColor.value);
 
       // Update original values to match current values after save
       setOriginalEmail(email);
       setOriginalTel(tel);
-      if (selectedColor) {
-        setOriginalColorName(selectedColor.name);
-      }
+      if (selectedColor) setOriginalColorName(selectedColor.name);
 
       // Show success toast
       setToast({
@@ -149,6 +149,11 @@ const ConciergerieSettings: React.FC = () => {
     <div className="space-y-2">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
+      <div className="flex justify-between items-center">
+        <p className={labelClassName}>{name}</p>
+        <span className="text-sm text-gray-500">v. {packageJson.version}</span>
+      </div>
+
       <Input
         id="email"
         label="Email"
@@ -160,6 +165,7 @@ const ConciergerieSettings: React.FC = () => {
         disabled={isSaving}
         placeholder="jean.dupont@example.com"
         required
+        row
       />
 
       <Input
@@ -173,6 +179,7 @@ const ConciergerieSettings: React.FC = () => {
         disabled={isSaving}
         placeholder="06 12 34 56 78"
         required
+        row
       />
 
       <ColorPicker
@@ -182,6 +189,7 @@ const ConciergerieSettings: React.FC = () => {
         selectedColor={selectedColor}
         onColorChange={setSelectedColor}
         disabled={isSaving}
+        required
       />
 
       <div className="flex justify-center pt-2">

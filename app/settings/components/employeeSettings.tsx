@@ -1,4 +1,5 @@
 import { updateEmployeeData } from '@/app/actions/employee';
+import packageJson from '@/package.json';
 import { Button } from '@/app/components/button';
 import Combobox from '@/app/components/combobox';
 import Input from '@/app/components/input';
@@ -152,9 +153,9 @@ const EmployeeSettings: React.FC = () => {
     <div className="space-y-2">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      <div>
-        <p className={labelClassName}>Nom</p>
-        <p className="font-medium">{name}</p>
+      <div className="flex justify-between items-center">
+        <p className={labelClassName}>{name}</p>
+        <span className="text-sm text-gray-500">v. {packageJson.version}</span>
       </div>
 
       <Input
@@ -168,6 +169,7 @@ const EmployeeSettings: React.FC = () => {
         disabled={isSaving}
         placeholder="jean.dupont@example.com"
         required
+        row
       />
 
       <Input
@@ -181,6 +183,7 @@ const EmployeeSettings: React.FC = () => {
         disabled={isSaving}
         placeholder="06 12 34 56 78"
         required
+        row
       />
 
       <Combobox
@@ -194,6 +197,7 @@ const EmployeeSettings: React.FC = () => {
         placeholder="Sélectionnez un lieu de vie..."
         error={geographicZoneError}
         required
+        row
       />
 
       <div className="flex justify-center pt-2">
