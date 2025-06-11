@@ -1,5 +1,6 @@
 import { sql } from '@/app/db/db';
 import { getColorValueByName } from '@/app/utils/color';
+import { MAX_DEVICES } from '@/app/utils/id';
 import { ConciergerieNotificationSettings, defaultConciergerieSettings } from '@/app/utils/notifications';
 
 // Type definition for database conciergerie
@@ -86,7 +87,7 @@ export const updateConciergerieId = async (name: string, conciergerieIds: string
 
     const result = await sql`
       UPDATE conciergeries
-      SET id = ${conciergerieIds.slice(0, parseInt(process.env.NEXT_PUBLIC_MAX_DEVICES || '3'))}::text[]
+      SET id = ${conciergerieIds.slice(0, MAX_DEVICES)}::text[]
       WHERE name = ${name}
       RETURNING id
     `;
