@@ -196,7 +196,7 @@ export async function sendEmployeeAcceptanceEmail(
                     missionsCount > 1 ? 's' : ''
                   }, et vous n&apos;aurez plus accès à l&apos;application.</p>`
                 : `<p>Vous n&apos;aurez plus accès à l&apos;application.</p>`
-              : null
+              : ''
           }
           ${
             isAccepted
