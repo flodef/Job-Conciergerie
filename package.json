@@ -1,13 +1,14 @@
 {
   "name": "job-conciergerie",
-  "version": "1.457",
+  "version": "1.459",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prepare": "husky"
+    "prepare": "husky",
+    "version:bump": "bun scripts/increment-version.js"
   },
   "dependencies": {
     "@neondatabase/serverless": "latest",

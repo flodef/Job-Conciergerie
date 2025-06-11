@@ -1,1 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Bump version
+bun run version:bump
+
+# Add the package.json to include version change
+git add package.json
+
+# Run build to ensure everything works
 bun run build
