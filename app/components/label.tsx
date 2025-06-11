@@ -6,12 +6,12 @@ import { ReactNode } from 'react';
 
 interface LabelProps {
   id: string;
-  required: boolean;
   children: ReactNode;
   tooltip?: ReactNode;
+  required?: boolean;
 }
 
-const Label = ({ id, required, children, tooltip }: LabelProps) => {
+const Label = ({ id, children, tooltip, required = true }: LabelProps) => {
   return (
     children && (
       <div className="flex items-center">

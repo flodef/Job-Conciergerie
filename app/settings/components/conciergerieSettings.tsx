@@ -148,9 +148,7 @@ const ConciergerieSettings: React.FC = () => {
     <div className="space-y-2">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      <Label id="name" required>
-        {name}
-      </Label>
+      <Label id="name">{name}</Label>
 
       <Input
         id="email"

@@ -338,7 +338,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
           {missionHours > 0 && (
             <div className="mt-2">
-              <Label id="mission-hours" required>
+              <Label id="mission-hours">
                 Durée estimée :{' '}
                 <span className="font-bold">
                   {missionHours} heure{missionHours > 1 ? 's' : ''}

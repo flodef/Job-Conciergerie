@@ -144,7 +144,7 @@ const ObjectiveList = forwardRef(
     return (
       <div id={id} className="space-y-2">
         <div className="flex justify-between items-center mb-2">
-          <Label id={id} required={true} tooltip={tooltip}>
+          <Label id={id} tooltip={tooltip} required>
             {label}
           </Label>
           {(objectives.length === 0 || objectives[objectives.length - 1]?.trim() !== '') &&
