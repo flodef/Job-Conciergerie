@@ -12,9 +12,12 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission, Task } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
+import { buttonClassName } from '@/app/utils/className';
 import { adjustMissionDateTime, getMissionDateTime, localISOString, minimumMissionTime } from '@/app/utils/date';
 import { handleChange } from '@/app/utils/form';
 import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
+import { IconRefresh } from '@tabler/icons-react';
+import clsx from 'clsx/lite';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type MissionFormProps = {
@@ -35,6 +38,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
   const [tasks, setTasks] = useState<Task[]>(mission?.tasks || []);
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>(mission?.allowedEmployees || []);
+  const [needHomeRefresh, setNeedHomeRefresh] = useState(false);
   const [initialFormValues, setInitialFormValues] = useState<{
     homeId: string;
     startDateTime: string;
@@ -117,6 +121,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   // Check if form has been modified
   const checkFormChanged = useCallback(() => {
     if (!initialFormValues) return false;
+    if (needHomeRefresh) return true;
 
     // Check if any field has been filled in compared to initial state
     const tasksChanged = JSON.stringify(tasks) !== JSON.stringify(initialFormValues.tasks);
@@ -127,7 +132,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       JSON.stringify(selectedEmployees.sort()) !== JSON.stringify(initialFormValues.selectedEmployees.sort());
 
     return tasksChanged || homeIdChanged || startDateChanged || endDateChanged || employeesChanged;
-  }, [homeId, tasks, startDateTime, endDateTime, selectedEmployees, initialFormValues]);
+  }, [homeId, tasks, startDateTime, endDateTime, selectedEmployees, initialFormValues, needHomeRefresh]);
 
   const closeAndCancel = () => {
     onClose();
@@ -304,21 +309,34 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         footer={footer}
       >
         <form onSubmit={handleSubmit} className="space-y-2">
-          <Combobox
-            id="home-select"
-            label="Bien"
-            ref={homeSelectRef}
-            value={homeId}
-            onChange={value => handleChange(value, setHomeId, setHomeIdError)}
-            options={filteredHomes.map(home => ({
-              value: home.id,
-              label: home.title,
-            }))}
-            disabled={isSubmitting || cannotEdit}
-            placeholder="Sélectionner un bien"
-            error={homeIdError}
-            required
-          />
+          <div className="flex items-end gap-2">
+            <div className="flex-grow">
+              <Combobox
+                id="home-select"
+                label="Bien"
+                ref={homeSelectRef}
+                value={homeId}
+                onChange={value => handleChange(value, setHomeId, setHomeIdError)}
+                options={filteredHomes.map(home => ({
+                  value: home.id,
+                  label: home.title,
+                }))}
+                disabled={isSubmitting || cannotEdit}
+                placeholder="Sélectionner un bien"
+                error={homeIdError}
+                required
+              />
+            </div>
+            <button
+              type="button"
+              className={clsx(buttonClassName('secondary'), 'py-3')}
+              onClick={() => setNeedHomeRefresh(true)}
+              disabled={isSubmitting || cannotEdit || needHomeRefresh}
+              title="Rafraîchir"
+            >
+              <IconRefresh size={20} className="text-foreground" />
+            </button>
+          </div>
 
           <TaskSelector
             id="task-select"
