@@ -67,11 +67,14 @@ export default function MissionCompletionModal({ mission, onClose, onComplete }:
   if (!home) return null;
 
   return (
-    <FullScreenModal title="Points particuliers" onClose={onClose} footer={footer} disabled={false}>
+    <FullScreenModal
+      title="Points particuliers"
+      tooltip="Veuillez confirmer que tous les points particuliers suivants ont été réalisés"
+      onClose={onClose}
+      footer={footer}
+      disabled={false}
+    >
       <div className="py-2">
-        <p className="text-foreground mb-4 text-center">
-          Veuillez confirmer que tous les points particuliers suivants ont été réalisés :
-        </p>
         <ul className="space-y-3">
           {home.objectives.map((objective, index) => (
             <li key={index} className="flex items-start gap-2">
