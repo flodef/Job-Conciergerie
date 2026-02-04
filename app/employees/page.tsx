@@ -287,19 +287,19 @@ function EmployeeRow({
           {employee.status !== 'accepted' && (
             <button
               onClick={() => onStatusChange(employee, 'accepted')}
-              className="text-green-600 hover:text-green-900 bg-green-100 hover:bg-green-200 p-1.5 rounded-full"
+              className="text-green-600 hover:text-green-900 p-1.5 rounded-full"
               title="Accepter"
             >
-              <IconCheck size={18} />
+              <IconCheck size={28} />
             </button>
           )}
           {employee.status !== 'rejected' && (
             <button
               onClick={() => onStatusChange(employee, 'rejected')}
-              className="text-red-600 hover:text-red-900 bg-red-100 hover:bg-red-200 p-1.5 rounded-full"
+              className="text-red-600 hover:text-red-900 p-1.5 rounded-full"
               title="Rejeter"
             >
-              <IconX size={18} />
+              <IconX size={28} />
             </button>
           )}
         </div>
