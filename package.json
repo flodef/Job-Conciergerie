@@ -1,6 +1,6 @@
 {
   "name": "job-conciergerie",
-  "version": "1.469",
+  "version": "1.470",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
