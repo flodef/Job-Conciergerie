@@ -92,7 +92,7 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
             Statut :
             <span
               className={clsx(
-                'font-bold',
+                'text-base font-bold',
                 {
                   pending: 'text-yellow-500',
                   accepted: 'text-green-500',
@@ -127,14 +127,12 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
           </div>
         </div>
 
-        <div className={clsx(descriptionClassName, 'flex flex-row items-center gap-1')}>
-          <p>
-            Missions acceptées :<span className={labelClassName}>{countMissions('accepted')}</span>
-          </p>
-          <p>
-            Missions complétées :<span className={labelClassName}>{countMissions('completed')}</span>
-          </p>
-        </div>
+        <p className={descriptionClassName}>
+          Missions acceptées : <span className={labelClassName}>{countMissions('accepted')}</span>
+        </p>
+        <p className={descriptionClassName}>
+          Missions complétées : <span className={labelClassName}>{countMissions('completed')}</span>
+        </p>
 
         {employee.message && employee.status === 'pending' && (
           <div>
