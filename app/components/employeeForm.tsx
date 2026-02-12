@@ -183,8 +183,14 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
           // Send notification email to employee about the new device
           if (employee.status === 'accepted')
-            EmailSender.sendNewDeviceEmail({ addFailedEmail, setToast }, updatedEmployee, userId);
-          refreshData();
+            await EmailSender.sendNewDeviceEmail(
+              { addFailedEmail, setToast, showSuccessToast: true },
+              updatedEmployee,
+              userId,
+            );
+
+          // Wait a bit before refreshing to allow the email to be sent and a toast to be displayed
+          setTimeout(refreshData, 1500);
         } else {
           onMenuChange(Page.Waiting);
         }
@@ -207,9 +213,14 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
         // Use EmailSender for consistent retry mechanism
-        EmailSender.sendRegistrationEmail({ addFailedEmail, setToast }, selectedConciergerie, newEmployee);
+        await EmailSender.sendRegistrationEmail(
+          { addFailedEmail, setToast, showSuccessToast: true },
+          selectedConciergerie,
+          newEmployee,
+        );
 
-        onMenuChange(Page.Waiting);
+        // Wait a bit before redirecting to allow the email to be sent and a toast to be displayed
+        setTimeout(() => onMenuChange(Page.Waiting), 1500);
       }
     } catch (error) {
       setToast({
