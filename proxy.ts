@@ -7,8 +7,14 @@ export async function proxy(request: NextRequest) {
   // Get the pathname of the request
   const path = request.nextUrl.pathname;
 
-  // Skip middleware for API routes, static files, and direct user ID access
-  if (path.startsWith('/_next') || path.startsWith('/api') || path.includes('.') || path === '/favicon.ico')
+  // Skip proxy for API routes, static files, server actions, and direct user ID access
+  if (
+    path.startsWith('/_next') ||
+    path.startsWith('/api') ||
+    path.includes('.') ||
+    path === '/favicon.ico' ||
+    request.headers.get('Next-Action')
+  )
     return NextResponse.next();
 
   // Get the user ID and user type from cookies
