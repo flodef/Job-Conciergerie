@@ -167,7 +167,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
       if (employee) {
         const newIds = getDevices(employee.id, userId, true);
-        if (employee.status === 'accepted' && newIds !== employee.id) {
+        if (employee.status === 'accepted' && JSON.stringify(newIds) !== JSON.stringify(employee.id)) {
           const updatedIds = await updateEmployeeWithUserId(employee, newIds);
 
           if (!updatedIds) throw new Error('Employé non mis à jour dans la base de données');

@@ -68,7 +68,7 @@ export async function updateEmployeeWithUserId(
   employee: Employee | undefined,
   employeeIds: string[],
 ): Promise<string[] | null> {
-  if (!employee) return null;
+  if (!employee?.firstName || !employee?.familyName) return null;
 
   // Update the employee's ID in the database
   return await updateEmployeeId(employee.firstName, employee.familyName, employeeIds);
