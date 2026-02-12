@@ -28,7 +28,7 @@ export type EmailSenderProps = {
  * Generic handler for all email sending operations
  * This reduces code duplication across all email sender functions
  */
-const handleEmailSending = <T extends unknown[]>(
+const handleEmailSending = async <T extends unknown[]>(
   { addFailedEmail, setToast, showSuccessToast = false }: EmailSenderProps,
   emailType: EmailType,
   serverAction: (...args: T) => Promise<boolean>,

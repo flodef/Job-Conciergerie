@@ -8,6 +8,8 @@ import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { formatId } from '@/app/utils/id';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
+import { useEmailRetry } from '@/app/utils/emailRetry';
+import { EmailSender } from '@/app/utils/emailSender';
 import { setPrimaryColor } from '@/app/utils/color';
 import { getTimeDifference, getTimeRemaining, isElapsedTimeLessThan } from '@/app/utils/date';
 import {
@@ -44,6 +46,7 @@ export default function WaitingPage() {
   const [refreshDisabled, setRefreshDisabled] = useState(true);
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const [toast, setToast] = useState<Toast>();
+  const { addFailedEmail } = useEmailRetry();
 
   const handleConciergerie = useCallback(() => {
     const foundConciergerie = findConciergerie(conciergerieName ?? null);
@@ -94,9 +97,12 @@ export default function WaitingPage() {
   // Effect to handle the refresh button enabling after 1 minute
   useEffect(() => {
     // Set a timeout to enable the refresh button after 1 minute
-    const timeout = setTimeout(() => {
-      setRefreshDisabled(false);
-    }, REFRESH_BUTTON_DISABLE_TIME * 60 * 1000); // 1 minute in milliseconds
+    const timeout = setTimeout(
+      () => {
+        setRefreshDisabled(false);
+      },
+      REFRESH_BUTTON_DISABLE_TIME * 60 * 1000,
+    ); // 1 minute in milliseconds
 
     return () => clearTimeout(timeout);
   }, []); // Empty dependency array means this runs once on component mount
@@ -140,9 +146,32 @@ export default function WaitingPage() {
     );
   };
 
+  const handleRefreshWithEmail = useCallback(() => {
+    if (conciergerie && userId)
+      return EmailSender.sendVerificationEmail(
+        { addFailedEmail, setToast, showSuccessToast: true },
+        conciergerie,
+        userId,
+      );
+
+    if (employee && userId) {
+      if (employee.status === 'pending') {
+        const selectedConciergerie = findConciergerie(employee.conciergerieName ?? null);
+        if (selectedConciergerie)
+          return EmailSender.sendRegistrationEmail(
+            { addFailedEmail, setToast, showSuccessToast: true },
+            selectedConciergerie,
+            employee,
+          );
+      } else if (employee.status === 'accepted') {
+        return EmailSender.sendNewDeviceEmail({ addFailedEmail, setToast, showSuccessToast: true }, employee, userId);
+      }
+    }
+  }, [conciergerie, employee, userId, addFailedEmail, findConciergerie]);
+
   const RefreshButtons = () => (
     <div className="flex items-center justify-center">
-      <RefreshButton disabled={refreshDisabled} />
+      <RefreshButton disabled={refreshDisabled} onRefresh={handleRefreshWithEmail} />
       <RefreshButton shouldDisconnect disabled={isRequestLessThanMinimumWaitingTime()} />
       {isRequestLessThanMinimumWaitingTime() && creationDate ? (
         <Tooltip className="mt-4" size="large" icon={IconHelpCircle}>
@@ -151,7 +180,7 @@ export default function WaitingPage() {
         </Tooltip>
       ) : refreshDisabled ? (
         <Tooltip className="mt-4" size="large" icon={IconClock}>
-          Pour éviter le spam, vous devez attendre 1 minute avant de rafraîchir la page
+          Pour éviter le spam, vous devez attendre 1 minute avant de réessayer
         </Tooltip>
       ) : null}
     </div>
@@ -203,8 +232,8 @@ export default function WaitingPage() {
               {employee.status === 'pending'
                 ? 'Demande en cours d&apos;examen'
                 : employee.status === 'accepted'
-                ? 'Nouvel appareil connecté'
-                : 'Demande rejetée'}
+                  ? 'Nouvel appareil connecté'
+                  : 'Demande rejetée'}
             </h1>
 
             <p>
@@ -249,8 +278,8 @@ export default function WaitingPage() {
                       employee.status === 'pending'
                         ? 'text-yellow-500'
                         : employee.status === 'accepted'
-                        ? 'text-green-500'
-                        : 'text-red-500'
+                          ? 'text-green-500'
+                          : 'text-red-500'
                     }`}
                   >
                     {{ pending: 'En attente de validation', accepted: 'Accepté', rejected: 'Rejeté' }[employee.status]}
