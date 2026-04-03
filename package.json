@@ -15,7 +15,7 @@
     "@tabler/icons-react": "latest",
     "@tailwindcss/postcss": "latest",
     "clsx": "latest",
-    "next": "latest",
+    "next": "15.5.8",
     "nodemailer": "latest",
     "react": "latest",
     "react-dom": "latest"
