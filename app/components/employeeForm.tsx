@@ -16,7 +16,7 @@ import { Employee } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import { useEmailRetry } from '@/app/utils/emailRetry';
 import { EmailSender } from '@/app/utils/emailSender';
-import { getDevices } from '@/app/utils/id';
+import { formatId, getDevices, MaxDevicesError, MAX_DEVICES } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -45,6 +45,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormChanged, setIsFormChanged] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [maxDevicesPrompt, setMaxDevicesPrompt] = useState<{ oldestId: string; employee: Employee } | null>(null);
 
   // Validation states
   const [firstNameError, setFirstNameError] = useState('');
@@ -166,33 +167,15 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       );
 
       if (employee) {
-        const newIds = getDevices(employee.id, userId, true);
-        if (employee.status === 'accepted' && JSON.stringify(newIds) !== JSON.stringify(employee.id)) {
-          const updatedIds = await updateEmployeeWithUserId(employee, newIds);
-
-          if (!updatedIds) throw new Error('Employé non mis à jour dans la base de données');
-
-          // Update the employee object with the new ID array
-          const updatedEmployee = {
-            ...employee,
-            id: updatedIds,
-          };
-
-          // Update local user data and redirect based on status
-          updateUserData(updatedEmployee);
-
-          // Send notification email to employee about the new device
-          if (employee.status === 'accepted')
-            await EmailSender.sendNewDeviceEmail(
-              { addFailedEmail, setToast, showSuccessToast: true },
-              updatedEmployee,
-              userId,
-            );
-
-          // Wait a bit before refreshing to allow the email to be sent and a toast to be displayed
-          setTimeout(refreshData, 1500);
-        } else {
-          onMenuChange(Page.Waiting);
+        try {
+          await proceedWithDeviceUpdate(employee, false);
+        } catch (err) {
+          if (err instanceof MaxDevicesError) {
+            setMaxDevicesPrompt({ oldestId: err.oldestDevice, employee });
+            setIsSubmitting(false);
+            return;
+          }
+          throw err;
         }
       } else {
         if (employees.some(employee => employee.tel === formData.tel || employee.email === formData.email))
@@ -230,6 +213,53 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       });
       setIsSubmitting(false);
     }
+  };
+
+  const proceedWithDeviceUpdate = async (employee: Employee, evictOldest: boolean) => {
+    if (!userId) throw new Error("L'identifiant n'est pas défini");
+
+    const newIds = getDevices(employee.id, userId, true, evictOldest);
+    if (employee.status === 'accepted' && JSON.stringify(newIds) !== JSON.stringify(employee.id)) {
+      const updatedIds = await updateEmployeeWithUserId(employee, newIds);
+
+      if (!updatedIds) throw new Error('Employé non mis à jour dans la base de données');
+
+      // Update the employee object with the new ID array
+      const updatedEmployee = {
+        ...employee,
+        id: updatedIds,
+      };
+
+      // Update local user data and redirect based on status
+      updateUserData(updatedEmployee);
+
+      // Send notification email to employee about the new device
+      await EmailSender.sendNewDeviceEmail(
+        { addFailedEmail, setToast, showSuccessToast: true },
+        updatedEmployee,
+        userId,
+      );
+
+      // Wait a bit before refreshing to allow the email to be sent and a toast to be displayed
+      setTimeout(refreshData, 1500);
+    } else {
+      onMenuChange(Page.Waiting);
+    }
+  };
+
+  const handleConfirmEviction = () => {
+    if (!maxDevicesPrompt) return;
+    const { employee } = maxDevicesPrompt;
+    setMaxDevicesPrompt(null);
+    setIsSubmitting(true);
+    proceedWithDeviceUpdate(employee, true).catch(error => {
+      setToast({
+        type: ToastType.Error,
+        message: String(error),
+        error,
+      });
+      setIsSubmitting(false);
+    });
   };
 
   if (!formData) return null;
@@ -376,6 +406,19 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
           confirmText="Quitter sans enregistrer"
           cancelText="Continuer l'édition"
+        />
+
+        <ConfirmationModal
+          isOpen={!!maxDevicesPrompt}
+          onClose={() => setMaxDevicesPrompt(null)}
+          onConfirm={handleConfirmEviction}
+          title="Limite d'appareils atteinte"
+          message={`Vous avez déjà ${MAX_DEVICES} appareils connectés. Si vous continuez, le plus ancien (${
+            maxDevicesPrompt ? formatId(maxDevicesPrompt.oldestId) : ''
+          }) sera déconnecté et un email vous sera envoyé pour valider ce nouvel appareil.`}
+          confirmText="Continuer"
+          cancelText="Annuler"
+          isDangerous
         />
       </form>
     </div>

@@ -75,16 +75,33 @@ export function getConnectedDevices(ids: string[]): string[] {
 }
 
 /**
+ * Error thrown when the maximum number of devices is reached.
+ * Carries the ID of the oldest connected device (the first one stored),
+ * so the caller can prompt the user to confirm its eviction.
+ */
+export class MaxDevicesError extends Error {
+  oldestDevice: string;
+  constructor(oldestDevice: string) {
+    super(`Nombre maximum d'appareils autorisés atteint (${MAX_DEVICES}).`);
+    this.name = 'MaxDevicesError';
+    this.oldestDevice = oldestDevice;
+  }
+}
+
+/**
  * Get the list of devices for a user
  * @param ids List of device IDs
  * @param userId User ID to add to the list
  * @param isNewDevice Whether the device is new
+ * @param evictOldest If true, removes the oldest connected device when the limit is reached instead of throwing
  * @returns List of devices
  */
-export function getDevices(ids: string[], userId: string, isNewDevice = false) {
-  const connectedDevices = getConnectedDevices(ids);
-  if (connectedDevices.length >= MAX_DEVICES)
-    throw new Error(`Nombre maximum d'appareils autorisés atteint (${MAX_DEVICES}).`);
+export function getDevices(ids: string[], userId: string, isNewDevice = false, evictOldest = false) {
+  let connectedDevices = getConnectedDevices(ids);
+  if (connectedDevices.length >= MAX_DEVICES) {
+    if (!evictOldest) throw new MaxDevicesError(connectedDevices[0]);
+    connectedDevices = connectedDevices.slice(1); // remove the oldest (first stored)
+  }
 
   const newId = isNewDevice ? NEW_ID_CHAR + userId : userId;
   return connectedDevices.length ? [...connectedDevices.filter(id => id !== userId), newId] : [userId];

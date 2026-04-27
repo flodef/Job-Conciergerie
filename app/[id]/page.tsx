@@ -2,12 +2,18 @@
 
 import { updateConciergerieWithUserId } from '@/app/actions/conciergerie';
 import { updateEmployeeWithUserId } from '@/app/actions/employee';
+import ConfirmationModal from '@/app/components/confirmationModal';
 import ErrorPage from '@/app/components/error';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
+import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { Page } from '@/app/utils/navigation';
-import { use, useEffect, useRef, useState } from 'react';
-import { getDevices } from '../utils/id';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { formatId, getDevices, MAX_DEVICES, MaxDevicesError } from '../utils/id';
+
+type PendingUpdate =
+  | { kind: 'employee'; entity: Employee; oldestId: string }
+  | { kind: 'conciergerie'; entity: Conciergerie; oldestId: string };
 
 export default function IdPage({ params }: { params: Promise<{ id: string }> }) {
   const {
@@ -26,6 +32,29 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
   const unwrappedParams = use(params);
   const { id } = unwrappedParams;
   const [error, setError] = useState('');
+  const [pendingUpdate, setPendingUpdate] = useState<PendingUpdate | null>(null);
+
+  const applyEmployeeUpdate = useCallback(
+    async (employee: Employee, evictOldest: boolean) => {
+      if (!userId) throw new Error("Identifiant non trouvé");
+      const newIds = getDevices(employee.id, userId, false, evictOldest);
+      const result = await updateEmployeeWithUserId(employee, newIds);
+      if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
+      updateUserData({ ...employee, id: result });
+    },
+    [userId, updateUserData],
+  );
+
+  const applyConciergerieUpdate = useCallback(
+    async (conciergerie: Conciergerie, evictOldest: boolean) => {
+      if (!userId) throw new Error("Identifiant non trouvé");
+      const newIds = getDevices(conciergerie.id, userId, false, evictOldest);
+      const result = await updateConciergerieWithUserId(conciergerie, newIds);
+      if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
+      updateUserData({ ...conciergerie, id: result });
+    },
+    [userId, updateUserData],
+  );
 
   const isFetching = useRef(false);
   useEffect(() => {
@@ -44,13 +73,15 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
 
           // If the ID fetched is not the one in the localStorage, update it in the database
           if (!employee.id.includes(userId)) {
-            const newIds = getDevices(employee.id, userId);
-            const result = await updateEmployeeWithUserId(employee, newIds);
-            if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
-            updateUserData({
-              ...employee,
-              id: result,
-            });
+            try {
+              await applyEmployeeUpdate(employee, false);
+            } catch (err) {
+              if (err instanceof MaxDevicesError) {
+                setPendingUpdate({ kind: 'employee', entity: employee, oldestId: err.oldestDevice });
+                return;
+              }
+              throw err;
+            }
           }
         } else if (userType === 'conciergerie') {
           const conciergerie = findConciergerie(conciergerieName);
@@ -58,13 +89,15 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
 
           // If the ID fetched is not the one in the localStorage, update it in the database
           if (!conciergerie.id.includes(userId)) {
-            const newIds = getDevices(conciergerie.id, userId);
-            const result = await updateConciergerieWithUserId(conciergerie, newIds);
-            if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
-            updateUserData({
-              ...conciergerie,
-              id: result,
-            });
+            try {
+              await applyConciergerieUpdate(conciergerie, false);
+            } catch (err) {
+              if (err instanceof MaxDevicesError) {
+                setPendingUpdate({ kind: 'conciergerie', entity: conciergerie, oldestId: err.oldestDevice });
+                return;
+              }
+              throw err;
+            }
           }
         } else {
           throw new Error("Type d'utilisateur non reconnu");
@@ -87,11 +120,46 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
     employeeName,
     conciergerieName,
     isLoading,
-    updateUserData,
     onMenuChange,
     findEmployee,
     findConciergerie,
+    applyEmployeeUpdate,
+    applyConciergerieUpdate,
   ]);
 
-  return error && <ErrorPage message={error} />;
+  const handleConfirmEviction = () => {
+    if (!pendingUpdate) return;
+    const update = pendingUpdate;
+    setPendingUpdate(null);
+    const promise =
+      update.kind === 'employee'
+        ? applyEmployeeUpdate(update.entity, true)
+        : applyConciergerieUpdate(update.entity, true);
+    promise
+      .then(() => onMenuChange(Page.Missions))
+      .catch(err => setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour'));
+  };
+
+  const handleCancelEviction = () => {
+    setPendingUpdate(null);
+    setError("Connexion annulée. L'appareil n'a pas été enregistré.");
+  };
+
+  return (
+    <>
+      {error && <ErrorPage message={error} />}
+      <ConfirmationModal
+        isOpen={!!pendingUpdate}
+        onConfirm={handleConfirmEviction}
+        onCancel={handleCancelEviction}
+        title="Limite d'appareils atteinte"
+        message={`Vous avez déjà ${MAX_DEVICES} appareils connectés. Si vous continuez, le plus ancien (${
+          pendingUpdate ? formatId(pendingUpdate.oldestId) : ''
+        }) sera déconnecté pour permettre l'enregistrement de cet appareil.`}
+        confirmText="Continuer"
+        cancelText="Annuler"
+        isDangerous
+      />
+    </>
+  );
 }
