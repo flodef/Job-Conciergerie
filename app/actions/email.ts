@@ -1,6 +1,7 @@
 'use server';
 
-import { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
+import { insertFailedEmail } from '@/app/db/failedEmailsDb';
+import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
 import nodemailer, { SendMailOptions } from 'nodemailer';
 
@@ -15,48 +16,60 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Interface for email options
-interface Email extends SendMailOptions {
-  id?: string; // For retry identification
-  type?: string; // For categorizing the email type for retries
-}
-
-// Send an email
-async function sendEmail(email: Email): Promise<boolean> {
+// Low-level SMTP send - returns { success, error }
+async function sendEmail(email: SendMailOptions): Promise<{ success: boolean; error?: string }> {
   try {
     await transporter.sendMail({
       ...email,
       from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
       bcc: 'contact@job-conciergerie.fr',
     });
-
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Error sending email:', error);
-    return false;
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
   }
+}
+
+/**
+ * Attempt to send an email. If SMTP fails AND this is not itself a retry call,
+ * the payload is persisted in the failed_emails queue so the cron job can retry later.
+ */
+async function deliver(
+  email: SendMailOptions,
+  type: FailedEmailType,
+  payload: Record<string, unknown>,
+  isRetry: boolean,
+): Promise<boolean> {
+  const { success, error } = await sendEmail(email);
+  if (!success && !isRetry) {
+    await insertFailedEmail(type, payload, error);
+  }
+  return success;
 }
 
 // Base URL for the app
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-/**
- * Send a verification email to a conciergerie
- * @param conciergerie - The conciergerie to send the email to
- * @param userId - The user id of the conciergerie
- * @param retryId - The retry id for the email
- * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
- */
-export async function sendConciergerieVerificationEmail(
-  conciergerie: Conciergerie,
-  userId: string,
-  retryId?: string,
-): Promise<boolean> {
-  const verificationUrl = baseUrl + `/${userId}`;
+type FailedEmailType =
+  | 'verification'
+  | 'registration'
+  | 'acceptance'
+  | 'missionStatus'
+  | 'lateCompletion'
+  | 'missionAcceptance'
+  | 'missionUpdated'
+  | 'missionRemoved'
+  | 'newDevice';
 
-  return await sendEmail({
-    id: retryId,
-    type: 'verification',
+// ------------------------------------------------------------------
+// Email composition functions - one per type.
+// They build the Email object only; delivery is handled by `deliver()`.
+// ------------------------------------------------------------------
+
+function composeConciergerieVerificationEmail(conciergerie: Conciergerie, userId: string): SendMailOptions {
+  const verificationUrl = baseUrl + `/${userId}`;
+  return {
     to: conciergerie.email,
     subject: 'Vérification de votre compte conciergerie',
     html: `
@@ -76,24 +89,11 @@ export async function sendConciergerieVerificationEmail(
           <p>Merci,<br>L'équipe Job Conciergerie</p>
         </div>
       `,
-  });
+  };
 }
 
-/**
- * Send a notification email to a conciergerie about a new employee registration
- * @param conciergerie - The conciergerie to send the email to
- * @param employee - The employee to send the email to
- * @param retryId - The retry id for the email
- * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
- */
-export async function sendEmployeeRegistrationEmail(
-  conciergerie: Conciergerie,
-  employee: Employee,
-  retryId?: string,
-): Promise<boolean> {
-  return await sendEmail({
-    id: retryId,
-    type: 'registration',
+function composeEmployeeRegistrationEmail(conciergerie: Conciergerie, employee: Employee): SendMailOptions {
+  return {
     to: conciergerie.email,
     subject: "Nouvelle demande d'inscription employé",
     html: `
@@ -118,16 +118,11 @@ export async function sendEmployeeRegistrationEmail(
           <p>Merci,<br>L'équipe Job Conciergerie</p>
         </div>
       `,
-  });
+  };
 }
 
-/**
- * Send a notification email to an employee when a new device is connected to their account
- * @param employee - The employee to send the email to
- * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
- */
-export async function sendNewDeviceNotificationEmail(employee: Employee, userId: string): Promise<boolean> {
-  return await sendEmail({
+function composeNewDeviceNotificationEmail(employee: Employee, userId: string): SendMailOptions {
+  return {
     to: employee.email,
     subject: 'Nouvel appareil connecté sur Job Conciergerie',
     html: `
@@ -154,37 +149,23 @@ export async function sendNewDeviceNotificationEmail(employee: Employee, userId:
           </p>
         </div>
       `,
-  });
+  };
 }
 
-/**
- * Send an acceptance notification email to an employee whether it's status is approved or rejected
- * @param employee - The employee to send the email to
- * @param conciergerie - The conciergerie to send the email to
- * @param missionsCount - The number of missions associated with the employee
- * @param isAccepted - Whether the employee is accepted or not
- * @param retryId - The retry id for the email
- * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
- */
-export async function sendEmployeeAcceptanceEmail(
+function composeEmployeeAcceptanceEmail(
   employee: Employee,
   conciergerie: Conciergerie,
   missionsCount: number,
   isAccepted: boolean,
-  retryId?: string,
-): Promise<boolean> {
+): SendMailOptions {
   const wasAccepted = employee.status === 'accepted';
-  return await sendEmail({
-    id: retryId,
-    type: 'acceptance',
+  return {
     to: employee.email,
     replyTo: conciergerie.email,
     subject: 'Information concernant votre inscription à Job Conciergerie',
     html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">${
-            isAccepted ? 'Acceptation' : wasAccepted ? 'Arrêt' : 'Refus'
-          } de votre inscription</h2>
+          <h2 style="color: #333;">${isAccepted ? 'Acceptation' : wasAccepted ? 'Arrêt' : 'Refus'} de votre inscription</h2>
           <p>Bonjour ${employee.firstName},</p>
           <p>Nous vous informons que votre inscription a été ${
             isAccepted ? 'retenue' : wasAccepted ? 'arrêtée' : 'refusée'
@@ -213,35 +194,21 @@ export async function sendEmployeeAcceptanceEmail(
           <p>Cordialement,<br>L&apos;équipe Job Conciergerie</p>
         </div>
       `,
-  });
+  };
 }
 
-/**
- * Send notification email to a conciergerie about a mission status change
- * @param mission - The mission to send the email to
- * @param home - The home associated with the mission
- * @param employee - The employee associated with the mission
- * @param conciergerie - The conciergerie associated with the mission
- * @param status - The status of the mission
- * @param retryId - The retry id for the email
- * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
- */
-export async function sendMissionStatusChangeEmail(
+function composeMissionStatusChangeEmail(
   mission: Mission,
   home: Home,
   employee: Employee,
   conciergerie: Conciergerie,
-  status: 'accepted' | 'started' | 'completed',
-  retryId?: string,
-): Promise<boolean> {
-  // Format dates
+  status: MissionStatus,
+): SendMailOptions {
   const startDate = formatDateTime(mission.startDateTime);
   const endDate = formatDateTime(mission.endDateTime);
 
-  // Determine status message
   let statusMessage = '';
   let statusAction = '';
-
   switch (status) {
     case 'accepted':
       statusMessage = 'a été acceptée';
@@ -257,20 +224,14 @@ export async function sendMissionStatusChangeEmail(
       break;
   }
 
-  // Generate email content
-  return await sendEmail({
-    id: retryId,
-    type: 'missionStatus',
+  return {
     to: conciergerie.email,
     subject: `Mission ${statusAction}e - ${home.title}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">Statut de mission mis à jour</h2>
         <p>Bonjour ${conciergerie.name},</p>
-        <p>Une mission pour <strong>${home.title}</strong> ${statusMessage} par ${employee.firstName} ${
-      employee.familyName
-    }.</p>
-        
+        <p>Une mission pour <strong>${home.title}</strong> ${statusMessage} par ${employee.firstName} ${employee.familyName}.</p>
         <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
           <h3 style="margin-top: 0; color: #4F46E5;">Détails de la mission</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
@@ -280,57 +241,39 @@ export async function sendMissionStatusChangeEmail(
           <p><strong>Employé:</strong> ${employee.firstName} ${employee.familyName}</p>
           <p><strong>Statut:</strong> ${employee.firstName} a ${statusAction} cette mission</p>
         </div>
-        
         <p>Vous pouvez consulter les détails complets de cette mission dans votre espace conciergerie.</p>
         <p>
           <a href="${baseUrl}/missions" style="display: inline-block; background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
             Voir mes missions
           </a>
         </p>
-        
         <p>Cordialement,<br>L&apos;équipe Job Conciergerie</p>
       </div>
     `,
-  });
+  };
 }
 
-/**
- * Send notification for missions that haven't been completed on time
- * @param mission - The mission to send the email to
- * @param home - The home associated with the mission
- * @param employee - The employee associated with the mission
- * @param conciergerie - The conciergerie associated with the mission
- * @param retryId - The retry id for the email
- * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
- */
-export async function sendLateCompletionEmail(
+function composeLateCompletionEmail(
   mission: Mission,
   home: Home,
   employee: Employee,
   conciergerie: Conciergerie,
-  retryId?: string,
-): Promise<boolean> {
-  // Format dates
+): SendMailOptions {
   const startDate = formatDateTime(mission.startDateTime);
   const endDate = formatDateTime(mission.endDateTime);
 
-  // Get current mission status label
   const statusLabel = {
     accepted: 'acceptée mais non démarrée',
     started: 'démarrée mais non terminée',
     completed: 'terminée',
   }[mission.status || 'accepted'];
 
-  // Calculate how many days late
   const now = new Date();
   const endDateTime = new Date(mission.endDateTime);
   const daysLate = Math.floor((now.getTime() - endDateTime.getTime()) / (1000 * 60 * 60 * 24));
   const daysLateText = daysLate === 0 ? "aujourd'hui" : daysLate === 1 ? 'hier' : `il y a ${daysLate} jours`;
 
-  // Generate email content
-  return await sendEmail({
-    id: retryId,
-    type: 'lateCompletion',
+  return {
     to: conciergerie.email,
     cc: employee.email,
     subject: `⚠️ Mission non terminée à temps - ${home.title}`,
@@ -338,10 +281,7 @@ export async function sendLateCompletionEmail(
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #d32f2f;">Mission non terminée à temps</h2>
         <p>Bonjour,</p>
-        <p>Une mission pour <strong>${
-          home.title
-        }</strong> n'a pas été terminée à temps. La date de fin était prévue pour ${endDate} (${daysLateText}).</p>
-        
+        <p>Une mission pour <strong>${home.title}</strong> n'a pas été terminée à temps. La date de fin était prévue pour ${endDate} (${daysLateText}).</p>
         <div style="background-color: #fff8f8; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #d32f2f;">
           <h3 style="margin-top: 0; color: #d32f2f;">Détails de la mission</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
@@ -351,47 +291,29 @@ export async function sendLateCompletionEmail(
           <p><strong>Employé:</strong> ${employee.firstName} ${employee.familyName}</p>
           <p><strong>Statut actuel:</strong> ${statusLabel}</p>
         </div>
-        
         <p>Vous pouvez vérifier l'état de cette mission via votre espace conciergerie.</p>
         <p>
           <a href="${baseUrl}/calendar" style="display: inline-block; background-color: #d32f2f; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
             Voir mes missions
           </a>
         </p>
-        
         <p>Cordialement,<br>L&apos;équipe Job Conciergerie</p>
       </div>
     `,
-  });
+  };
 }
 
-/**
- * Send a confirmation email to an employee when they accept a mission
- * @param mission - The mission to send the email to
- * @param home - The home associated with the mission
- * @param employee - The employee associated with the mission
- * @param conciergerie - The conciergerie associated with the mission
- * @param retryId - The retry id for the email
- * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
- */
-export async function sendMissionAcceptanceToEmployeeEmail(
+function composeMissionAcceptanceToEmployeeEmail(
   mission: Mission,
   home: Home,
   employee: Employee,
   conciergerie: Conciergerie,
-  retryId?: string,
-): Promise<boolean> {
-  // Format dates
+): SendMailOptions {
   const startDate = formatDateTime(mission.startDateTime);
   const endDate = formatDateTime(mission.endDateTime);
-
-  // Calculate mission duration in hours and display it in a human-readable format
   const hours = mission.hours === 1 ? '1 heure' : `${mission.hours} heures`;
 
-  // Generate email content
-  return await sendEmail({
-    id: retryId,
-    type: 'missionAcceptance',
+  return {
     to: employee.email,
     replyTo: conciergerie.email,
     subject: `🔔 Confirmation de mission - ${home.title}`,
@@ -400,7 +322,6 @@ export async function sendMissionAcceptanceToEmployeeEmail(
         <h2 style="color: #4F46E5;">Confirmation de mission</h2>
         <p>Bonjour ${employee.firstName},</p>
         <p>Vous avez accepté une mission pour <strong>${home.title}</strong>. Voici un récapitulatif des détails :</p>
-        
         <div style="background-color: #f5f7ff; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #4F46E5;">
           <h3 style="margin-top: 0; color: #4F46E5;">Récapitulatif de la mission</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
@@ -410,57 +331,37 @@ export async function sendMissionAcceptanceToEmployeeEmail(
           <p><strong>Durée estimée:</strong> ${hours}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
         </div>
-        
         <p><strong>Rappel important:</strong></p>
         <ul>
           <li>N'oubliez pas de démarrer la mission dans l'application dès que vous commencez votre travail.</li>
           <li>Quand vous avez terminé les tâches, marquez la mission comme complétée dans l'application.</li>
           <li>Si vous rencontrez des difficultés, contactez directement la conciergerie.</li>
         </ul>
-        
         <p>Vous pouvez consulter et gérer cette mission à tout moment via l'application :</p>
         <p>
           <a href="${baseUrl}/calendar" style="display: inline-block; background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
             Gérer mes missions
           </a>
         </p>
-        
         <p>Merci de votre engagement et bon travail !</p>
         <p>Cordialement,<br>L&apos;équipe Job Conciergerie</p>
       </div>
     `,
-  });
+  };
 }
 
-/**
- * Send an email to an employee when a mission has been updated
- * @param mission - The mission to send the email to
- * @param home - The home associated with the mission
- * @param employee - The employee associated with the mission
- * @param conciergerie - The conciergerie associated with the mission
- * @param changes - The changes made to the mission
- * @param retryId - The retry id for the email
- * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
- */
-export async function sendMissionUpdatedToEmployeeEmail(
+function composeMissionUpdatedToEmployeeEmail(
   mission: Mission,
   home: Home,
   employee: Employee,
   conciergerie: Conciergerie,
   changes: string[],
-  retryId?: string,
-): Promise<boolean> {
-  // Format dates
+): SendMailOptions {
   const startDate = formatDateTime(mission.startDateTime);
   const endDate = formatDateTime(mission.endDateTime);
-
-  // Calculate mission duration in hours
   const hours = mission.hours === 1 ? '1 heure' : `${mission.hours} heures`;
 
-  // Generate email content
-  return await sendEmail({
-    id: retryId,
-    type: 'missionUpdated',
+  return {
     to: employee.email,
     replyTo: conciergerie.email,
     subject: `🔄 Mise à jour de mission - ${home.title}`,
@@ -468,17 +369,13 @@ export async function sendMissionUpdatedToEmployeeEmail(
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #d97706;">Mise à jour de mission</h2>
         <p>Bonjour ${employee.firstName},</p>
-        <p>Une mission que vous avez acceptée pour <strong>${home.title}</strong> a été modifiée par la conciergerie ${
-      conciergerie.name
-    }.</p>
-        
+        <p>Une mission que vous avez acceptée pour <strong>${home.title}</strong> a été modifiée par la conciergerie ${conciergerie.name}.</p>
         <div style="background-color: #fffbeb; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #d97706;">
           <h3 style="margin-top: 0; color: #d97706;">Modifications apportées</h3>
           <ul>
             ${changes.map(change => `<li>${change}</li>`).join('')}
           </ul>
         </div>
-        
         <div style="background-color: #f9fafb; padding: 15px; border-radius: 5px; margin: 15px 0;">
           <h3 style="margin-top: 0; color: #4b5563;">Détails mis à jour de la mission</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
@@ -488,46 +385,30 @@ export async function sendMissionUpdatedToEmployeeEmail(
           <p><strong>Durée estimée:</strong> ${hours}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
         </div>
-        
         <p><strong>Important :</strong> Suite à ces modifications, votre assignation à cette mission a été annulée.</p>
         <p>Si vous êtes toujours intéressé(e) par cette mission avec les changements mentionnés ci-dessus, vous devrez l'accepter à nouveau dans l'application.</p>
-        
         <p>Vous pouvez consulter les détails complets de la mission via l'application :</p>
         <p>
           <a href="${baseUrl}/missions" style="display: inline-block; background-color: #d97706; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
             Voir les missions
           </a>
         </p>
-        
         <p>Cordialement,<br>L&apos;équipe Job Conciergerie</p>
       </div>
     `,
-  });
+  };
 }
 
-/**
- * Send an email to an employee when a mission has been either deleted or canceled
- * @param mission - The mission to send the email to
- * @param home - The home associated with the mission
- * @param employee - The employee associated with the mission
- * @param conciergerie - The conciergerie associated with the mission
- * @param type - The type of removal (deleted or canceled)
- * @param retryId - The retry id for the email
- * @returns A promise that resolves to a boolean indicating whether the email was sent successfully
- */
-export async function sendMissionRemovedToEmployeeEmail(
+function composeMissionRemovedToEmployeeEmail(
   mission: Mission,
   home: Home,
   employee: Employee,
   conciergerie: Conciergerie,
   type: 'deleted' | 'canceled',
-  retryId?: string,
-): Promise<boolean> {
-  // Format dates
+): SendMailOptions {
   const startDate = formatDateTime(mission.startDateTime);
   const endDate = formatDateTime(mission.endDateTime);
 
-  // Determine styling and text based on removal type
   const config = {
     deleted: {
       emoji: '❌',
@@ -547,10 +428,7 @@ export async function sendMissionRemovedToEmployeeEmail(
     },
   }[type];
 
-  // Generate email content
-  return await sendEmail({
-    id: retryId,
-    type: 'missionRemoved',
+  return {
     to: employee.email,
     replyTo: conciergerie.email,
     subject: `${config.emoji} ${config.title} - ${home.title}`,
@@ -558,13 +436,8 @@ export async function sendMissionRemovedToEmployeeEmail(
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: ${config.color};">${config.title}</h2>
         <p>Bonjour ${employee.firstName},</p>
-        <p>Nous vous informons que la mission pour <strong>${home.title}</strong> a été ${
-      config.action
-    } par la conciergerie ${conciergerie.name}.</p>
-        
-        <div style="background-color: ${
-          config.bgColor
-        }; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid ${config.color};">
+        <p>Nous vous informons que la mission pour <strong>${home.title}</strong> a été ${config.action} par la conciergerie ${conciergerie.name}.</p>
+        <div style="background-color: ${config.bgColor}; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid ${config.color};">
           <h3 style="margin-top: 0; color: ${config.color};">Détails de la mission ${config.action}</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
           <p><strong>Conciergerie:</strong> ${conciergerie.name}</p>
@@ -572,20 +445,271 @@ export async function sendMissionRemovedToEmployeeEmail(
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
         </div>
-        
-        <p>Pour toute question concernant cette ${
-          config.actionNoun
-        }, veuillez contacter directement la conciergerie.</p>
-        
+        <p>Pour toute question concernant cette ${config.actionNoun}, veuillez contacter directement la conciergerie.</p>
         <p>Vous pouvez consulter vos autres missions via l'application :</p>
         <p>
           <a href="${baseUrl}/calendar" style="display: inline-block; background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
             Voir mes missions
           </a>
         </p>
-        
         <p>Cordialement,<br>L&apos;équipe Job Conciergerie</p>
       </div>
     `,
+  };
+}
+
+// ------------------------------------------------------------------
+// Public server actions
+// Each attempts the SMTP send; on failure the email is queued in the DB
+// and the cron job will pick it up for retries.
+// ------------------------------------------------------------------
+
+export async function sendConciergerieVerificationEmail(
+  conciergerie: Conciergerie,
+  userId: string,
+  isRetry = false,
+): Promise<boolean> {
+  return deliver(
+    composeConciergerieVerificationEmail(conciergerie, userId),
+    'verification',
+    { conciergerie, userId },
+    isRetry,
+  );
+}
+
+export async function sendEmployeeRegistrationEmail(
+  conciergerie: Conciergerie,
+  employee: Employee,
+  isRetry = false,
+): Promise<boolean> {
+  return deliver(
+    composeEmployeeRegistrationEmail(conciergerie, employee),
+    'registration',
+    { conciergerie, employee },
+    isRetry,
+  );
+}
+
+export async function sendNewDeviceNotificationEmail(
+  employee: Employee,
+  userId: string,
+  isRetry = false,
+): Promise<boolean> {
+  return deliver(
+    composeNewDeviceNotificationEmail(employee, userId),
+    'newDevice',
+    { employee, userId },
+    isRetry,
+  );
+}
+
+export async function sendEmployeeAcceptanceEmail(
+  employee: Employee,
+  conciergerie: Conciergerie,
+  missionsCount: number,
+  isAccepted: boolean,
+  isRetry = false,
+): Promise<boolean> {
+  return deliver(
+    composeEmployeeAcceptanceEmail(employee, conciergerie, missionsCount, isAccepted),
+    'acceptance',
+    { employee, conciergerie, missionsCount, isAccepted },
+    isRetry,
+  );
+}
+
+export async function sendMissionStatusChangeEmail(
+  mission: Mission,
+  home: Home,
+  employee: Employee,
+  conciergerie: Conciergerie,
+  status: MissionStatus,
+  isRetry = false,
+): Promise<boolean> {
+  return deliver(
+    composeMissionStatusChangeEmail(mission, home, employee, conciergerie, status),
+    'missionStatus',
+    { mission, home, employee, conciergerie, status },
+    isRetry,
+  );
+}
+
+export async function sendLateCompletionEmail(
+  mission: Mission,
+  home: Home,
+  employee: Employee,
+  conciergerie: Conciergerie,
+  isRetry = false,
+): Promise<boolean> {
+  return deliver(
+    composeLateCompletionEmail(mission, home, employee, conciergerie),
+    'lateCompletion',
+    { mission, home, employee, conciergerie },
+    isRetry,
+  );
+}
+
+export async function sendMissionAcceptanceToEmployeeEmail(
+  mission: Mission,
+  home: Home,
+  employee: Employee,
+  conciergerie: Conciergerie,
+  isRetry = false,
+): Promise<boolean> {
+  return deliver(
+    composeMissionAcceptanceToEmployeeEmail(mission, home, employee, conciergerie),
+    'missionAcceptance',
+    { mission, home, employee, conciergerie },
+    isRetry,
+  );
+}
+
+export async function sendMissionUpdatedToEmployeeEmail(
+  mission: Mission,
+  home: Home,
+  employee: Employee,
+  conciergerie: Conciergerie,
+  changes: string[],
+  isRetry = false,
+): Promise<boolean> {
+  return deliver(
+    composeMissionUpdatedToEmployeeEmail(mission, home, employee, conciergerie, changes),
+    'missionUpdated',
+    { mission, home, employee, conciergerie, changes },
+    isRetry,
+  );
+}
+
+export async function sendMissionRemovedToEmployeeEmail(
+  mission: Mission,
+  home: Home,
+  employee: Employee,
+  conciergerie: Conciergerie,
+  type: 'deleted' | 'canceled',
+  isRetry = false,
+): Promise<boolean> {
+  return deliver(
+    composeMissionRemovedToEmployeeEmail(mission, home, employee, conciergerie, type),
+    'missionRemoved',
+    { mission, home, employee, conciergerie, type },
+    isRetry,
+  );
+}
+
+/**
+ * Admin alert sent when an email is permanently given up on after exhausting all retries.
+ * Not queued on failure - if this one fails, we only log.
+ */
+export async function sendAdminAlertEmail(
+  queuedEmailType: string,
+  payload: Record<string, unknown>,
+  attempts: number,
+  lastError: string | null,
+): Promise<boolean> {
+  const adminEmail = process.env.ADMIN_ALERT_EMAIL || 'contact@job-conciergerie.fr';
+  const { success } = await sendEmail({
+    to: adminEmail,
+    subject: `🚨 Email abandonné après ${attempts} tentatives - ${queuedEmailType}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto;">
+        <h2 style="color: #dc2626;">Email abandonné</h2>
+        <p>Un email n'a pas pu être envoyé après ${attempts} tentatives et a été retiré de la file d'attente.</p>
+        <ul>
+          <li><strong>Type :</strong> ${queuedEmailType}</li>
+          <li><strong>Tentatives :</strong> ${attempts}</li>
+          <li><strong>Dernière erreur :</strong> ${lastError ?? 'n/a'}</li>
+        </ul>
+        <p><strong>Payload :</strong></p>
+        <pre style="background-color: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto;">${JSON.stringify(
+          payload,
+          null,
+          2,
+        )
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')}</pre>
+        <p style="color: #6b7280; font-size: 12px;">Job Conciergerie - système de retry</p>
+      </div>
+    `,
   });
+  return success;
+}
+
+/**
+ * Internal retry helper used by the /api/retry-emails endpoint.
+ * Re-dispatches a queued email by its type and payload, WITHOUT re-queuing on failure.
+ */
+export async function retryQueuedEmail(
+  type: FailedEmailType,
+  payload: Record<string, unknown>,
+): Promise<boolean> {
+  switch (type) {
+    case 'verification':
+      return sendConciergerieVerificationEmail(
+        payload.conciergerie as Conciergerie,
+        payload.userId as string,
+        true,
+      );
+    case 'registration':
+      return sendEmployeeRegistrationEmail(
+        payload.conciergerie as Conciergerie,
+        payload.employee as Employee,
+        true,
+      );
+    case 'newDevice':
+      return sendNewDeviceNotificationEmail(payload.employee as Employee, payload.userId as string, true);
+    case 'acceptance':
+      return sendEmployeeAcceptanceEmail(
+        payload.employee as Employee,
+        payload.conciergerie as Conciergerie,
+        payload.missionsCount as number,
+        payload.isAccepted as boolean,
+        true,
+      );
+    case 'missionStatus':
+      return sendMissionStatusChangeEmail(
+        payload.mission as Mission,
+        payload.home as Home,
+        payload.employee as Employee,
+        payload.conciergerie as Conciergerie,
+        payload.status as MissionStatus,
+        true,
+      );
+    case 'lateCompletion':
+      return sendLateCompletionEmail(
+        payload.mission as Mission,
+        payload.home as Home,
+        payload.employee as Employee,
+        payload.conciergerie as Conciergerie,
+        true,
+      );
+    case 'missionAcceptance':
+      return sendMissionAcceptanceToEmployeeEmail(
+        payload.mission as Mission,
+        payload.home as Home,
+        payload.employee as Employee,
+        payload.conciergerie as Conciergerie,
+        true,
+      );
+    case 'missionUpdated':
+      return sendMissionUpdatedToEmployeeEmail(
+        payload.mission as Mission,
+        payload.home as Home,
+        payload.employee as Employee,
+        payload.conciergerie as Conciergerie,
+        payload.changes as string[],
+        true,
+      );
+    case 'missionRemoved':
+      return sendMissionRemovedToEmployeeEmail(
+        payload.mission as Mission,
+        payload.home as Home,
+        payload.employee as Employee,
+        payload.conciergerie as Conciergerie,
+        payload.type as 'deleted' | 'canceled',
+        true,
+      );
+    default:
+      console.error(`Unknown email type for retry: ${type}`);
+      return false;
+  }
 }

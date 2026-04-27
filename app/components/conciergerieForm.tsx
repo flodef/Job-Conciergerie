@@ -8,7 +8,6 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { ErrorField } from '@/app/types/types';
 import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
-import { useEmailRetry } from '@/app/utils/emailRetry';
 import { EmailSender } from '@/app/utils/emailSender';
 import { Page } from '@/app/utils/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -20,7 +19,6 @@ type ConciergerieFormProps = {
 export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const { onMenuChange } = useMenuContext();
   const { userId, setConciergerieName: setSelectedConciergerieName, conciergeries, findConciergerie } = useAuth();
-  const { addFailedEmail } = useEmailRetry();
 
   const conciergerieNameRef = useRef<HTMLDivElement>(null);
   const [conciergerieNameError, setConciergerieNameError] = useState('');
@@ -70,7 +68,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
-      EmailSender.sendVerificationEmail({ addFailedEmail, setToast }, selectedConciergerie, userId);
+      EmailSender.sendVerificationEmail({ setToast }, selectedConciergerie, userId);
 
       onMenuChange(Page.Waiting);
     } catch (error) {

@@ -11,7 +11,6 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
-import { useEmailRetry } from '@/app/utils/emailRetry';
 import { EmailSender } from '@/app/utils/emailSender';
 import { filterEmployees, filterEmployeesByConciergerie, sortEmployees } from '@/app/utils/employee';
 import { Page } from '@/app/utils/navigation';
@@ -31,7 +30,6 @@ export default function EmployeesList() {
   const { currentPage } = useMenuContext();
   const { missions } = useMissions();
   const { updateFetchTime, needsRefresh } = useFetchTime();
-  const { addFailedEmail } = useEmailRetry();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -112,7 +110,7 @@ export default function EmployeesList() {
         if (!conciergerie) throw new Error('Conciergerie non trouvée');
 
         EmailSender.sendAcceptanceEmail(
-          { addFailedEmail, setToast },
+          { setToast },
           employee,
           conciergerie,
           countEmployeeMissions(employee),

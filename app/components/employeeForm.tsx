@@ -14,7 +14,6 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { Employee } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
-import { useEmailRetry } from '@/app/utils/emailRetry';
 import { EmailSender } from '@/app/utils/emailSender';
 import { formatId, getDevices, MaxDevicesError, MAX_DEVICES } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
@@ -29,7 +28,6 @@ type EmployeeFormProps = {
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const { userId, conciergeries, updateUserData, employees, findConciergerie, refreshData } = useAuth();
   const { onMenuChange } = useMenuContext();
-  const { addFailedEmail } = useEmailRetry();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
   const [formData, setFormData] = useLocalStorage<Omit<Employee, 'id' | 'status' | 'createdAt'>>('employee_data', {
@@ -197,7 +195,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
         // Use EmailSender for consistent retry mechanism
         await EmailSender.sendRegistrationEmail(
-          { addFailedEmail, setToast, showSuccessToast: true },
+          { setToast, showSuccessToast: true },
           selectedConciergerie,
           newEmployee,
         );
@@ -234,11 +232,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       updateUserData(updatedEmployee);
 
       // Send notification email to employee about the new device
-      await EmailSender.sendNewDeviceEmail(
-        { addFailedEmail, setToast, showSuccessToast: true },
-        updatedEmployee,
-        userId,
-      );
+      await EmailSender.sendNewDeviceEmail({ setToast, showSuccessToast: true }, updatedEmployee, userId);
 
       // Wait a bit before refreshing to allow the email to be sent and a toast to be displayed
       setTimeout(refreshData, 1500);

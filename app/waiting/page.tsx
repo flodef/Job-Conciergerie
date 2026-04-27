@@ -1,14 +1,12 @@
 'use client';
 
 import { RefreshButton } from '@/app/components/button';
-import { EmailRetryManager } from '@/app/components/emailRetryManager';
 import ErrorPage from '@/app/components/error';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { formatId } from '@/app/utils/id';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
-import { useEmailRetry } from '@/app/utils/emailRetry';
 import { EmailSender } from '@/app/utils/emailSender';
 import { setPrimaryColor } from '@/app/utils/color';
 import { getTimeDifference, getTimeRemaining, isElapsedTimeLessThan } from '@/app/utils/date';
@@ -46,7 +44,6 @@ export default function WaitingPage() {
   const [refreshDisabled, setRefreshDisabled] = useState(true);
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
   const [toast, setToast] = useState<Toast>();
-  const { addFailedEmail } = useEmailRetry();
 
   const handleConciergerie = useCallback(() => {
     const foundConciergerie = findConciergerie(conciergerieName ?? null);
@@ -148,26 +145,22 @@ export default function WaitingPage() {
 
   const handleRefreshWithEmail = useCallback(() => {
     if (conciergerie && userId)
-      return EmailSender.sendVerificationEmail(
-        { addFailedEmail, setToast, showSuccessToast: true },
-        conciergerie,
-        userId,
-      );
+      return EmailSender.sendVerificationEmail({ setToast, showSuccessToast: true }, conciergerie, userId);
 
     if (employee && userId) {
       if (employee.status === 'pending') {
         const selectedConciergerie = findConciergerie(employee.conciergerieName ?? null);
         if (selectedConciergerie)
           return EmailSender.sendRegistrationEmail(
-            { addFailedEmail, setToast, showSuccessToast: true },
+            { setToast, showSuccessToast: true },
             selectedConciergerie,
             employee,
           );
       } else if (employee.status === 'accepted') {
-        return EmailSender.sendNewDeviceEmail({ addFailedEmail, setToast, showSuccessToast: true }, employee, userId);
+        return EmailSender.sendNewDeviceEmail({ setToast, showSuccessToast: true }, employee, userId);
       }
     }
-  }, [conciergerie, employee, userId, addFailedEmail, findConciergerie]);
+  }, [conciergerie, employee, userId, findConciergerie]);
 
   const RefreshButtons = () => (
     <div className="flex items-center justify-center">
@@ -190,7 +183,6 @@ export default function WaitingPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <EmailRetryManager onToastChange={setToast} />
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       <div className="w-full max-w-md bg-background overflow-hidden p-6 flex flex-col gap-4">
