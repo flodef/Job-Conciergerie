@@ -158,42 +158,58 @@ function composeEmployeeAcceptanceEmail(
   missionsCount: number,
   isAccepted: boolean,
 ): SendMailOptions {
+  let title: string;
+  let statusText: string;
+  let extraHtml = '';
+
+  // 3 valid transitions:
+  // 1. isAccepted=true,  wasAccepted=false → new employee ACCEPTED
+  // 2. isAccepted=false, wasAccepted=false → new employee REJECTED
+  // 3. isAccepted=false, wasAccepted=true  → existing employee REMOVED
   const wasAccepted = employee.status === 'accepted';
+  const status = isAccepted ? 'accepted' : wasAccepted ? 'removed' : 'rejected';
+  switch (status) {
+    case 'accepted': // Case 1 — New employee accepted
+      title = 'Acceptation de votre inscription';
+      statusText = 'retenue';
+      extraHtml = `<p>Vous pouvez dès à présent vous connecter à l&apos;application</p>
+        <p><a href="${baseUrl}" style="display:inline-block;background-color:#4F46E5;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Accéder à l&apos;application</a></p>
+        <p>Ou copiez ce lien dans votre navigateur :</p><p>${baseUrl}</p>`;
+      break;
+    case 'rejected': // Case 2 — New employee rejected
+      title = 'Refus de votre inscription';
+      statusText = 'refusée';
+      extraHtml = `<p>Vous n&apos;aurez plus accès à l&apos;application.</p>
+        <p>Nous vous remercions pour l&apos;intérêt que vous avez porté à notre service et vous souhaitons une bonne continuation.</p>`;
+      break;
+    case 'removed': // Case 3 — Existing employee removed
+      title = 'Arrêt de votre inscription';
+      statusText = 'arrêtée';
+      extraHtml =
+        (missionsCount > 0
+          ? `<p>Vos ${missionsCount} mission${missionsCount > 1 ? 's' : ''} ont été annulée${missionsCount > 1 ? 's' : ''}, et vous n&apos;aurez plus accès à l&apos;application.</p>`
+          : '') +
+        `<p>Vous n&apos;aurez plus accès à l&apos;application.</p>
+        <p>Nous vous remercions pour l&apos;intérêt que vous avez porté à notre service et vous souhaitons une bonne continuation.</p>`;
+      break;
+    default: // Invalid combo (should never happen in UI)
+      title = 'Mise à jour de votre inscription';
+      statusText = 'mise à jour';
+      console.warn('Unexpected acceptance state: isAccepted=true & wasAccepted=true');
+  }
+
   return {
     to: employee.email,
     replyTo: conciergerie.email,
-    subject: 'Information concernant votre inscription à Job Conciergerie',
+    subject: title,
     html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">${isAccepted ? 'Acceptation' : wasAccepted ? 'Arrêt' : 'Refus'} de votre inscription</h2>
-          <p>Bonjour ${employee.firstName},</p>
-          <p>Nous vous informons que votre inscription a été ${
-            isAccepted ? 'retenue' : wasAccepted ? 'arrêtée' : 'refusée'
-          } par la conciergerie ${conciergerie.name}.</p>
-          ${
-            isAccepted
-              ? missionsCount > 0
-                ? `<p>Vos ${missionsCount} mission${missionsCount > 1 ? 's' : ''} ont été annulée${
-                    missionsCount > 1 ? 's' : ''
-                  }, et vous n&apos;aurez plus accès à l&apos;application.</p>`
-                : `<p>Vous n&apos;aurez plus accès à l&apos;application.</p>`
-              : ''
-          }
-          ${
-            isAccepted
-              ? `<p>Vous pouvez dès à présent vous connecter à l&apos;application</p>
-              <p>
-                <a href="${baseUrl}" style="display: inline-block; background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-                  Accéder à l&apos;application
-                </a>
-              </p>
-              <p>Ou copiez ce lien dans votre navigateur :</p>
-              <p>${baseUrl}</p>`
-              : `<p>Nous vous remercions pour l&apos;intérêt que vous avez porté à notre service et vous souhaitons une bonne continuation.</p>`
-          }
-          <p>Cordialement,<br>L&apos;équipe Job Conciergerie</p>
-        </div>
-      `,
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+        <h2 style="color:#333;">${title}</h2>
+        <p>Bonjour ${employee.firstName},</p>
+        <p>Nous vous informons que votre inscription a été ${statusText} par la conciergerie ${conciergerie.name}.</p>
+        ${extraHtml}
+        <p>Cordialement,<br>L&apos;équipe Job Conciergerie</p>
+      </div>`,
   };
 }
 
@@ -495,12 +511,7 @@ export async function sendNewDeviceNotificationEmail(
   userId: string,
   isRetry = false,
 ): Promise<boolean> {
-  return deliver(
-    composeNewDeviceNotificationEmail(employee, userId),
-    'newDevice',
-    { employee, userId },
-    isRetry,
-  );
+  return deliver(composeNewDeviceNotificationEmail(employee, userId), 'newDevice', { employee, userId }, isRetry);
 }
 
 export async function sendEmployeeAcceptanceEmail(
@@ -638,23 +649,12 @@ export async function sendAdminAlertEmail(
  * Internal retry helper used by the /api/retry-emails endpoint.
  * Re-dispatches a queued email by its type and payload, WITHOUT re-queuing on failure.
  */
-export async function retryQueuedEmail(
-  type: FailedEmailType,
-  payload: Record<string, unknown>,
-): Promise<boolean> {
+export async function retryQueuedEmail(type: FailedEmailType, payload: Record<string, unknown>): Promise<boolean> {
   switch (type) {
     case 'verification':
-      return sendConciergerieVerificationEmail(
-        payload.conciergerie as Conciergerie,
-        payload.userId as string,
-        true,
-      );
+      return sendConciergerieVerificationEmail(payload.conciergerie as Conciergerie, payload.userId as string, true);
     case 'registration':
-      return sendEmployeeRegistrationEmail(
-        payload.conciergerie as Conciergerie,
-        payload.employee as Employee,
-        true,
-      );
+      return sendEmployeeRegistrationEmail(payload.conciergerie as Conciergerie, payload.employee as Employee, true);
     case 'newDevice':
       return sendNewDeviceNotificationEmail(payload.employee as Employee, payload.userId as string, true);
     case 'acceptance':
