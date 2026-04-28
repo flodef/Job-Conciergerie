@@ -201,6 +201,8 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
     if (data.end_date_time !== undefined) {
       fields.push(`end_date_time = $${values.length + 1}`);
       values.push(data.end_date_time);
+      // Reset the late notification flag so a rescheduled mission can be re-notified if it becomes late again
+      fields.push(`late_notified_at = NULL`);
     }
     if (data.employee_id !== undefined) {
       fields.push(`employee_id = $${values.length + 1}`);
@@ -277,6 +279,28 @@ export const assignEmployeeToMission = async (missionId: string, employeeId: str
   } catch (error) {
     console.error(`Error assigning employee ${employeeId} to mission ${missionId}:`, error);
     return null;
+  }
+};
+
+/**
+ * Atomically claim the "late notification" slot for a mission.
+ * Returns true only the first time it is called for a given mission id;
+ * any subsequent call returns false because `late_notified_at` is no longer NULL.
+ * This prevents duplicate "mission non terminée à temps" emails when several
+ * users (or background jobs) fetch missions concurrently.
+ */
+export const claimLateNotification = async (id: string): Promise<boolean> => {
+  try {
+    const result = await sql`
+      UPDATE missions
+      SET late_notified_at = NOW()
+      WHERE id = ${id} AND late_notified_at IS NULL
+      RETURNING id
+    `;
+    return result.length > 0;
+  } catch (error) {
+    console.error(`Error claiming late notification for mission ${id}:`, error);
+    return false;
   }
 };
 

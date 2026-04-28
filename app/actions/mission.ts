@@ -3,6 +3,7 @@
 import {
   DbMission,
   assignEmployeeToMission,
+  claimLateNotification,
   createMission,
   deleteMission,
   getAllMissions,
@@ -78,4 +79,13 @@ export async function assignEmployeeToMissionAction(missionId: string, employeeI
  */
 export async function deleteMissionData(id: string): Promise<boolean> {
   return await deleteMission(id);
+}
+
+/**
+ * Atomically claim the right to send the "mission non terminée à temps" email.
+ * Returns true ONLY the first time it is called for a given mission;
+ * any subsequent call returns false. Use this to guarantee the email is sent at most once.
+ */
+export async function claimLateNotificationForMission(missionId: string): Promise<boolean> {
+  return await claimLateNotification(missionId);
 }

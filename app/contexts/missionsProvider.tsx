@@ -1,6 +1,12 @@
 'use client';
 
-import { createNewMission, deleteMissionData, fetchAllMissions, updateMissionData } from '@/app/actions/mission';
+import {
+  claimLateNotificationForMission,
+  createNewMission,
+  deleteMissionData,
+  fetchAllMissions,
+  updateMissionData,
+} from '@/app/actions/mission';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
@@ -75,12 +81,16 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         // Only send notifications if the conciergerie has the setting enabled
         if (!conciergerie?.notificationSettings?.missionsEndedWithoutCompletion) continue;
 
-        // Send a notification for each late mission
+        // Send a notification for each late mission - but only ONCE per mission ever.
+        // The DB performs an atomic UPDATE on `late_notified_at` so concurrent fetches
+        // (multiple users / tabs) cannot trigger duplicate emails.
         for (const mission of conciergerieMissions) {
           const home = homes.find(h => h.id === mission.homeId);
           const employee = findEmployee(mission.employeeId);
+          if (!home || !employee) continue;
 
-          if (home && employee) EmailSender.sendLateCompletionEmail({}, mission, home, employee, conciergerie);
+          const claimed = await claimLateNotificationForMission(mission.id);
+          if (claimed) EmailSender.sendLateCompletionEmail({}, mission, home, employee, conciergerie);
         }
       }
     },
