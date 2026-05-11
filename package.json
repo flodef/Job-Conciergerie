@@ -1,6 +1,6 @@
 {
   "name": "job-conciergerie",
-  "version": "1.482",
+  "version": "1.484",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -8,10 +8,15 @@
     "start": "next start",
     "lint": "next lint",
     "prepare": "husky",
-    "version:bump": "bun scripts/increment-version.js"
+    "version:bump": "bun scripts/increment-version.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@neondatabase/serverless": "latest",
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.105.4",
     "@tabler/icons-react": "latest",
     "@tailwindcss/postcss": "latest",
     "clsx": "latest",
@@ -22,17 +27,24 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "latest",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "latest",
     "@types/nodemailer": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "@vitest/coverage-v8": "^4.1.6",
     "dotenv": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "happy-dom": "^20.9.0",
     "husky": "latest",
+    "jsdom": "^29.1.1",
     "postcss": "latest",
     "tailwindcss": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "vitest": "^4.1.6"
   },
   "prettier": {
     "useTabs": false,
