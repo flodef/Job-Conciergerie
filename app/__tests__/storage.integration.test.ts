@@ -15,6 +15,7 @@ import {
  * 2. Run: bun test app/__tests__/storage.integration.test.ts
  *
  * Note: These tests will create and delete actual files in your Supabase storage
+ * Note: These tests require a valid Conciergerie auth session (currently skipped in CI)
  */
 
 describe('Supabase Storage Integration', () => {

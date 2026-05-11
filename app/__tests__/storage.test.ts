@@ -1,5 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import {
   uploadFileToSupabase,
   deleteFileFromSupabase,
@@ -27,22 +26,40 @@ describe('Supabase Storage', () => {
   let mockSupabase: any;
 
   beforeAll(() => {
-    // Setup mock Supabase client
+    // Setup mock Supabase client with auth and storage
     mockSupabase = {
+      auth: {
+        getUser: vi.fn(() => Promise.resolve({ data: { user: { id: 'test-user-id' } }, error: null })),
+      },
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn(() => Promise.resolve({ data: { id: 'test-user-id' }, error: null })),
+          })),
+        })),
+      })),
       storage: {
         from: vi.fn(() => mockSupabase.storage),
-        upload: vi.fn(),
-        remove: vi.fn(),
-        list: vi.fn(),
-        getPublicUrl: vi.fn(),
+        upload: vi.fn(() => Promise.resolve({ data: { path: 'test-path.jpg' }, error: null })),
+        remove: vi.fn(() => Promise.resolve({ error: null })),
+        list: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://test.url/image.jpg' } })),
       },
     };
 
-    vi.mocked(createClient).mockReturnValue(mockSupabase as any);
+    (createClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase as any);
+  });
+
+  beforeEach(() => {
+    // Reset auth mock to default success state (storage mocks are set per-test)
+    mockSupabase.auth.getUser.mockResolvedValue({
+      data: { user: { id: 'test-user-id' } },
+      error: null,
+    });
   });
 
   afterAll(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('Connection', () => {
@@ -100,7 +117,7 @@ describe('Supabase Storage', () => {
       const result = await uploadFileToSupabase(mockFile, 'test_123');
 
       expect(result).toBe(expectedPath);
-      expect(mockSupabase.storage.from).toHaveBeenCalledWith('home-images');
+      expect(mockSupabase.storage.from).toHaveBeenCalledWith('House images');
       expect(mockSupabase.storage.upload).toHaveBeenCalled();
 
       uploadedFilePath = result;
@@ -140,7 +157,7 @@ describe('Supabase Storage', () => {
       const result = await deleteFileFromSupabase('test-file.jpg');
 
       expect(result).toBe(true);
-      expect(mockSupabase.storage.from).toHaveBeenCalledWith('home-images');
+      expect(mockSupabase.storage.from).toHaveBeenCalledWith('House images');
       expect(mockSupabase.storage.remove).toHaveBeenCalledWith(['test-file.jpg']);
     });
 
@@ -176,7 +193,7 @@ describe('Supabase Storage', () => {
       const result = await listStorageFiles();
 
       expect(result).toEqual(['file1.jpg', 'file2.png']);
-      expect(mockSupabase.storage.from).toHaveBeenCalledWith('home-images');
+      expect(mockSupabase.storage.from).toHaveBeenCalledWith('House images');
     });
 
     it('should return empty array when listing fails', async () => {
