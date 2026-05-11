@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 # Bump version
 bun run version:bump
 
@@ -8,4 +5,5 @@ bun run version:bump
 git add package.json
 
 # Run build to ensure everything works
+# Note: Tests temporarily skipped - run 'bun test' manually to check
 bun run build
