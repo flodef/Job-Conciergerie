@@ -18,7 +18,11 @@ export function getStorageImageUrl(filePath: string): string {
     return filePath;
   }
 
-  return `${supabaseUrl}/storage/v1/object/public/House images/${filePath}`;
+  // URL-encode the bucket name (it contains a space) and file path segments
+  const bucketName = encodeURIComponent('House images');
+  // Encode each path segment separately to handle spaces in folder/file names
+  const encodedPath = filePath.split('/').map(encodeURIComponent).join('/');
+  return `${supabaseUrl}/storage/v1/object/public/${bucketName}/${encodedPath}`;
 }
 
 /**
