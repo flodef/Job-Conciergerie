@@ -1,11 +1,11 @@
 'use client';
 
-import { deleteFileFromIPFS, uploadFileToIPFS } from '@/app/actions/ipfs';
+import { deleteFileFromSupabase, uploadFileToSupabase } from '@/app/actions/storage';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { errorClassName } from '@/app/utils/className';
-import { extractCID, fallbackImage, getIPFSImageUrl } from '@/app/utils/ipfs';
+import { fallbackImage, getStorageFileName, getStorageImageUrl } from '@/app/utils/storage';
 import { IconCheck, IconPhotoPlus, IconX } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
 import Image from 'next/image';
@@ -84,8 +84,9 @@ const ImageUploader = React.forwardRef<
     // Expose method to upload all pending images
     React.useImperativeHandle(ref, () => ({
       async uploadAllPendingImages(conciergerieName: string, houseTitle: string) {
+        // Delete removed images from storage
         imageIdsToRemove.forEach(async img => {
-          await deleteFileFromIPFS(img);
+          await deleteFileFromSupabase(img);
         });
 
         if (localImages.length === 0) return imageIds; // No pending images to upload
@@ -101,7 +102,8 @@ const ImageUploader = React.forwardRef<
         console.warn('Uploading images...');
 
         // Upload images one by one
-        const newCIDs: string[] = [];
+        const newPaths: string[] = [];
+        let uploadedCount = 0;
         for (const image of localImages) {
           // Skip already failed images
           if (image.uploadStatus === 'success') continue;
@@ -112,25 +114,26 @@ const ImageUploader = React.forwardRef<
             type: compressedBlob.type,
           });
 
-          const result = await uploadFileToIPFS(file);
+          const result = await uploadFileToSupabase(file, fileName);
           setLocalImages(prev =>
             prev.map(img => (img.id === image.id ? { ...img, uploadStatus: result ? 'success' : 'error' } : img)),
           );
 
           if (!result) continue;
 
-          newCIDs.push(result);
+          newPaths.push(result);
+          uploadedCount++;
         }
 
-        // Update committed CIDs with newly uploaded ones
-        const allCIDs = [...imageIds, ...newCIDs];
-        onImageIdsChange(allCIDs);
+        // Update committed paths with newly uploaded ones
+        const allPaths = [...imageIds, ...newPaths];
+        onImageIdsChange(allPaths);
 
         // Keep only images that failed to upload
         setLocalImages(prev => prev.filter(img => img.uploadStatus !== 'success'));
 
         // Notify user of failed uploads
-        return newCIDs.length === localImages.length ? allCIDs : null;
+        return uploadedCount === localImages.length ? allPaths : null;
       },
     }));
 
@@ -219,8 +222,8 @@ const ImageUploader = React.forwardRef<
       const message = exceedsLimit
         ? `Vous ne pouvez pas ajouter plus de ${maxImages} photos au total`
         : hasDuplicates
-        ? 'Certaines photos existent déjà dans la sélection !'
-        : '';
+          ? 'Certaines photos existent déjà dans la sélection !'
+          : '';
       if (message)
         setToast({
           type: ToastType.Warning,
@@ -334,10 +337,10 @@ const ImageUploader = React.forwardRef<
         </div>
         <div className={clsx('grid grid-cols-3 gap-4', error && 'border border-red-500 rounded-lg p-2')}>
           {/* Existing committed images */}
-          {[...new Set(imageIds)].map((cidWithId, index) => {
-            const url = getIPFSImageUrl(cidWithId);
+          {[...new Set(imageIds)].map((filePath, index) => {
+            const url = getStorageImageUrl(filePath);
             return (
-              <div key={`committed-${cidWithId}-${index}`} className="relative aspect-square">
+              <div key={`committed-${filePath}-${index}`} className="relative aspect-square">
                 <Image
                   src={url}
                   alt={`Image ${index + 1}`}
@@ -346,7 +349,7 @@ const ImageUploader = React.forwardRef<
                   className="object-cover w-full h-full rounded-lg cursor-pointer"
                   onClick={() => !disabled && setFullscreenImageUrl(url)}
                   onError={e => {
-                    console.warn(`Failed to load image from IPFS: ${extractCID(cidWithId)}`);
+                    console.warn(`Failed to load image: ${getStorageFileName(filePath)}`);
                     (e.target as HTMLImageElement).src = fallbackImage;
                   }}
                 />
@@ -364,7 +367,7 @@ const ImageUploader = React.forwardRef<
                 {!disabled && (
                   <button
                     type="button"
-                    onClick={() => handleDeleteCommitted(cidWithId)}
+                    onClick={() => handleDeleteCommitted(filePath)}
                     className="absolute -top-2 -right-2 p-1 bg-red-500 text-background rounded-full hover:bg-red-600 transition-colors"
                     aria-label={`Supprimer l'image ${index + 1}`}
                   >

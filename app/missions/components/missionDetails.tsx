@@ -17,7 +17,7 @@ import MissionForm from '@/app/missions/components/missionForm';
 import { Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateTime, getDateRangeDifference } from '@/app/utils/date';
-import { getIPFSImageUrl } from '@/app/utils/ipfs';
+import { getStorageImageUrl } from '@/app/utils/storage';
 import { calculateMissionPoints, formatHour, getTaskPoints } from '@/app/utils/task';
 import {
   IconBuildingStore,
@@ -232,7 +232,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             {home.images.length ? (
               <div className="relative aspect-video w-full max-h-32 mt-1 overflow-hidden rounded-lg">
                 <Image
-                  src={getIPFSImageUrl(firstHomeImage)}
+                  src={getStorageImageUrl(firstHomeImage)}
                   alt={`Photo de ${home.title}`}
                   fill
                   sizes="(max-width: 768px) 100vw, 300px"

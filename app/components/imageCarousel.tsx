@@ -1,6 +1,6 @@
 'use client';
 
-import { getIPFSImageUrl } from '@/app/utils/ipfs';
+import { getStorageImageUrl } from '@/app/utils/storage';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -35,7 +35,7 @@ export default function ImageCarousel({
 
   // URL helper function
   const getUrl = useCallback((url: string) => {
-    return url.startsWith('http') || url.startsWith('/') || url.includes('.') ? url : getIPFSImageUrl(url);
+    return url.startsWith('http') || url.startsWith('/') ? url : getStorageImageUrl(url);
   }, []);
 
   // Initialize index

@@ -1,6 +1,6 @@
 {
   "name": "job-conciergerie",
-  "version": "1.490",
+  "version": "1.492",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -27,24 +27,24 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "latest",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
+    "@testing-library/jest-dom": "latest",
+    "@testing-library/react": "latest",
+    "@testing-library/user-event": "latest",
     "@types/node": "latest",
     "@types/nodemailer": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "@vitest/coverage-v8": "^4.1.6",
+    "@vitest/coverage-v8": "latest",
     "dotenv": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
-    "happy-dom": "^20.9.0",
+    "happy-dom": "latest",
     "husky": "latest",
-    "jsdom": "^29.1.1",
+    "jsdom": "latest",
     "postcss": "latest",
     "tailwindcss": "latest",
     "typescript": "latest",
-    "vitest": "^4.1.6"
+    "vitest": "latest"
   },
   "prettier": {
     "useTabs": false,

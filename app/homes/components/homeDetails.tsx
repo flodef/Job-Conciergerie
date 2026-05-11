@@ -10,7 +10,7 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import { Home } from '@/app/types/dataTypes';
 import { actionButtonBarClassName, actionButtonClassName } from '@/app/utils/className';
-import { fallbackImage, getIPFSImageUrl } from '@/app/utils/ipfs';
+import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { IconFileDescription, IconListCheck, IconPencil, IconTrash } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { useEffect, useState } from 'react';
@@ -121,14 +121,14 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
           {home.images.length > 0 && (
             <div>
               <div className="grid grid-cols-3 gap-2">
-                {[...new Set(home.images)].map((cidWithId, index) => (
+                {[...new Set(home.images)].map((filePath, index) => (
                   <picture
-                    key={`thumb-${cidWithId}`}
+                    key={`thumb-${filePath}`}
                     className="relative aspect-square"
                     onClick={() => setSelectedImageIndex(index)}
                   >
                     <img
-                      src={getIPFSImageUrl(cidWithId)}
+                      src={getStorageImageUrl(filePath)}
                       alt={`Photo ${index + 1}`}
                       className="absolute inset-0 w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                       loading="eager"
@@ -160,7 +160,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
             <ul className="list-none pl-0 mt-1 space-y-1">
               {home.objectives.map((objective, index) => (
                 <li key={index} className="flex items-start">
-                  <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 flex-shrink-0 border border-foreground" />
+                  <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 shrink-0 border border-foreground" />
                   <span className="text-foreground overflow-hidden">{objective}</span>
                 </li>
               ))}
