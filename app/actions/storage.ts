@@ -63,9 +63,10 @@ export async function uploadFileToSupabase(file: File, fileName?: string): Promi
   const supabase = createClient(cookieStore);
 
   try {
-    // Generate a unique file name if not provided
-    const finalFileName = fileName || `JobConciergerie_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-    const filePath = `${finalFileName}.${file.type.split('/')[1] || 'jpg'}`;
+    // Use provided fileName as the full path (includes folder structure and extension)
+    // If no fileName provided, generate a simple timestamp-based name
+    const filePath =
+      fileName || `uploads/JobConciergerie_${Date.now()}_${Math.random().toString(36).substring(2, 15)}.jpg`;
 
     // Convert File to ArrayBuffer for upload
     const arrayBuffer = await file.arrayBuffer();

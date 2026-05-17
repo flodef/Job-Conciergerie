@@ -104,17 +104,23 @@ const ImageUploader = React.forwardRef<
         // Upload images one by one
         const newPaths: string[] = [];
         let uploadedCount = 0;
+        let imageIndex = imageIds.length; // Start index after existing images
         for (const image of localImages) {
           // Skip already failed images
           if (image.uploadStatus === 'success') continue;
 
-          const fileName = `${conciergerieName}-${houseTitle}`;
+          // Build path: "ConciergerieName/Home Title X.jpg"
+          const sanitizedConciergerie = conciergerieName.replace(/[/\\?%*:|"<>]/g, '-').trim();
+          const sanitizedHome = houseTitle.replace(/[/\\?%*:|"<>]/g, '-').trim();
+          const fileName = `${sanitizedConciergerie}/${sanitizedHome} ${imageIndex}.jpg`;
+
           const compressedBlob = await compressImage(image.file);
           const file = new File([compressedBlob], fileName, {
-            type: compressedBlob.type,
+            type: 'image/jpeg', // Compressed images are always JPEG
           });
 
           const result = await uploadFileToSupabase(file, fileName);
+          imageIndex++;
           setLocalImages(prev =>
             prev.map(img => (img.id === image.id ? { ...img, uploadStatus: result ? 'success' : 'error' } : img)),
           );
