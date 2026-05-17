@@ -4,6 +4,8 @@ bun run version:bump
 # Add the package.json to include version change
 git add package.json
 
+# Run tests to catch regressions
+bun test
+
 # Run build to ensure everything works
-# Note: Tests temporarily skipped - run 'bun test' manually to check
 bun run build
