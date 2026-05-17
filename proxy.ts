@@ -1,9 +1,39 @@
+import { createServerClient } from '@supabase/ssr';
 import { navigationRoutes } from '@/app/utils/navigation';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
 // This function can be marked `async` if using `await` inside
 export async function proxy(request: NextRequest) {
+  // Create supabaseResponse that we'll modify with refreshed cookies
+  let supabaseResponse = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
+
+  // Refresh Supabase auth session if needed - required for Server Components
+  if (supabaseUrl && supabaseKey) {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
+        },
+      },
+    });
+
+    // This refreshes the session if it exists and is expired
+    await supabase.auth.getUser();
+  }
+
   // Get the pathname of the request
   const path = request.nextUrl.pathname;
 
@@ -25,7 +55,7 @@ export async function proxy(request: NextRequest) {
   if (!userId || !userType) {
     if (path !== '/') return NextResponse.redirect(new URL('/', request.url));
 
-    return NextResponse.next();
+    return supabaseResponse;
   }
 
   try {
@@ -47,7 +77,7 @@ export async function proxy(request: NextRequest) {
       // If we're on an invalid path, redirect to missions
       if (!navigationRoutes.includes(path)) return NextResponse.redirect(new URL('/missions', request.url));
 
-      return NextResponse.next();
+      return supabaseResponse;
     } else {
       // Not authenticated, redirect to error or waiting page
       if (navigationRoutes.includes(path)) return NextResponse.redirect(new URL('/error', request.url));
@@ -55,14 +85,14 @@ export async function proxy(request: NextRequest) {
       else if ((path === '/' || path === '/error' || !/^\/?[0-9a-z]{2,26}$/.test(path)) && path !== '/waiting')
         return NextResponse.redirect(new URL('/waiting', request.url));
 
-      return NextResponse.next();
+      return supabaseResponse;
     }
   } catch (error) {
     console.error('Middleware error:', error);
     // Redirect to error page for database connection issues
     if (path !== '/error') return NextResponse.redirect(new URL('/error', request.url));
 
-    return NextResponse.next();
+    return supabaseResponse;
   }
 }
 

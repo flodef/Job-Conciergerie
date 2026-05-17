@@ -5,7 +5,7 @@ import {
   getSupabaseImageUrl,
   listStorageFiles,
 } from '@/app/actions/storage';
-import { createClient } from '@/app/utils/supabase/server';
+import { createAdminClient } from '@/app/utils/supabase/server';
 
 // Mock the cookies and supabase client
 vi.mock('next/headers', () => ({
@@ -18,7 +18,7 @@ vi.mock('next/headers', () => ({
 }));
 
 vi.mock('@/app/utils/supabase/server', () => ({
-  createClient: vi.fn(),
+  createAdminClient: vi.fn(),
 }));
 
 describe('Supabase Storage', () => {
@@ -50,22 +50,22 @@ describe('Supabase Storage', () => {
       },
     };
 
-    (createClient as any).mockReturnValue(mockSupabase);
+    (createAdminClient as any).mockReturnValue(mockSupabase);
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    // Default: authenticated conciergerie user
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'test-user-id' } },
-      error: null,
-    });
-    mockSupabase.from.mockReturnValue({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: { id: 'test-user-id' }, error: null })),
-        })),
-      })),
+
+    // Mock cookies for conciergerie auth
+    const { cookies } = await import('next/headers');
+    (cookies as any).mockResolvedValue({
+      get: vi.fn((name: string) => {
+        if (name === 'user_id') return { value: 'test-conciergerie-id' };
+        if (name === 'user_type') return { value: 'conciergerie' };
+        return undefined;
+      }),
+      getAll: vi.fn(() => []),
+      set: vi.fn(),
     });
   });
 
@@ -144,13 +144,16 @@ describe('Supabase Storage', () => {
     it('should return null when user is not authenticated as conciergerie', async () => {
       const mockFile = new File(['test content'], 'test.jpg', { type: 'image/jpeg' });
 
-      // Simulate non-conciergerie user
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: null, error: { message: 'Not found' } })),
-          })),
-        })),
+      // Simulate employee user (not conciergerie)
+      const { cookies } = await import('next/headers');
+      (cookies as any).mockResolvedValue({
+        get: vi.fn((name: string) => {
+          if (name === 'user_id') return { value: 'test-employee-id' };
+          if (name === 'user_type') return { value: 'employee' }; // Not conciergerie
+          return undefined;
+        }),
+        getAll: vi.fn(() => []),
+        set: vi.fn(),
       });
 
       const result = await uploadFileToSupabase(mockFile, 'test.jpg');
@@ -197,12 +200,16 @@ describe('Supabase Storage', () => {
     });
 
     it('should return false when user is not authenticated as conciergerie', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: null, error: { message: 'Not found' } })),
-          })),
-        })),
+      // Simulate employee user (not conciergerie)
+      const { cookies } = await import('next/headers');
+      (cookies as any).mockResolvedValue({
+        get: vi.fn((name: string) => {
+          if (name === 'user_id') return { value: 'test-employee-id' };
+          if (name === 'user_type') return { value: 'employee' }; // Not conciergerie
+          return undefined;
+        }),
+        getAll: vi.fn(() => []),
+        set: vi.fn(),
       });
 
       const result = await deleteFileFromSupabase('test-file.jpg');
@@ -246,12 +253,16 @@ describe('Supabase Storage', () => {
     });
 
     it('should return empty array when user is not authenticated as conciergerie', async () => {
-      mockSupabase.from.mockReturnValue({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({ data: null, error: { message: 'Not found' } })),
-          })),
-        })),
+      // Simulate employee user (not conciergerie)
+      const { cookies } = await import('next/headers');
+      (cookies as any).mockResolvedValue({
+        get: vi.fn((name: string) => {
+          if (name === 'user_id') return { value: 'test-employee-id' };
+          if (name === 'user_type') return { value: 'employee' }; // Not conciergerie
+          return undefined;
+        }),
+        getAll: vi.fn(() => []),
+        set: vi.fn(),
       });
 
       const result = await listStorageFiles();

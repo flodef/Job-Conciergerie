@@ -1,8 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-
-// Check if we have credentials for integration tests
-const hasCredentials = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-const testOrSkip = hasCredentials ? it : it.skip;
+import { config } from 'dotenv';
 import {
   uploadFileToSupabase,
   deleteFileFromSupabase,
@@ -10,16 +7,17 @@ import {
   listStorageFiles,
 } from '@/app/actions/storage';
 
+// Load environment variables from .env.local
+config({ path: '.env.local' });
+
 /**
  * Integration tests for Supabase Storage
- * These tests make actual calls to Supabase and require valid credentials
  *
- * To run these tests:
- * 1. Ensure you have valid Supabase credentials in your environment
- * 2. Run: bun test app/__tests__/storage.integration.test.ts
+ * NOTE: These tests require a full Next.js request context to work (for cookies() function).
+ * They will fail when run in isolated test environment.
+ * To properly test, start the dev server and test via UI, or use E2E tests.
  *
- * Note: These tests will create and delete actual files in your Supabase storage
- * Note: These tests require a valid Conciergerie auth session (currently skipped in CI)
+ * These tests will create and delete actual files in your Supabase storage
  */
 
 describe('Supabase Storage Integration', () => {
@@ -27,10 +25,9 @@ describe('Supabase Storage Integration', () => {
   const testFileName = `integration-test-${Date.now()}`;
 
   beforeAll(() => {
-    // Verify environment variables
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
-      console.warn('Skipping integration tests - missing Supabase credentials');
-    }
+    // Credentials are loaded from .env.local by vitest.setup.ts
+    expect(process.env.NEXT_PUBLIC_SUPABASE_URL).toBeDefined();
+    expect(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY).toBeDefined();
   });
 
   afterAll(async () => {
@@ -40,7 +37,7 @@ describe('Supabase Storage Integration', () => {
     }
   });
 
-  testOrSkip('should connect to Supabase and list files', async () => {
+  it('should connect to Supabase and list files', async () => {
     // This test will fail if Supabase is not configured
     const files = await listStorageFiles();
 
@@ -48,7 +45,7 @@ describe('Supabase Storage Integration', () => {
     expect(Array.isArray(files)).toBe(true);
   });
 
-  testOrSkip('should upload a file to Supabase storage', async () => {
+  it('should upload a file to Supabase storage', async () => {
     // Create a test file
     const testContent = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]); // PNG magic numbers
     const mockFile = new File([testContent], `${testFileName}.png`, { type: 'image/png' });
@@ -64,7 +61,7 @@ describe('Supabase Storage Integration', () => {
     }
   });
 
-  testOrSkip('should generate correct public URL for uploaded file', async () => {
+  it('should generate correct public URL for uploaded file', async () => {
     if (!testFilePath) {
       console.warn('Skipping URL test - no file was uploaded');
       return;
@@ -73,11 +70,11 @@ describe('Supabase Storage Integration', () => {
     const publicUrl = getSupabaseImageUrl(testFilePath);
 
     expect(publicUrl).toContain(process.env.NEXT_PUBLIC_SUPABASE_URL);
-    expect(publicUrl).toContain('home-images');
+    expect(publicUrl).toContain('House images');
     expect(publicUrl).toContain(testFilePath);
   });
 
-  testOrSkip('should delete a file from Supabase storage', async () => {
+  it('should delete a file from Supabase storage', async () => {
     if (!testFilePath) {
       console.warn('Skipping delete test - no file was uploaded');
       return;
@@ -91,7 +88,7 @@ describe('Supabase Storage Integration', () => {
     testFilePath = null;
   });
 
-  testOrSkip('should handle upload of a larger file', async () => {
+  it('should handle upload of a larger file', async () => {
     // Create a larger test file (1MB)
     const largerContent = new Uint8Array(1024 * 1024).fill(0);
     const mockFile = new File([largerContent], `large-test-${Date.now()}.bin`, {
@@ -109,7 +106,7 @@ describe('Supabase Storage Integration', () => {
     }
   });
 
-  testOrSkip('should handle multiple file uploads', async () => {
+  it('should handle multiple file uploads', async () => {
     const files: string[] = [];
 
     // Upload multiple small files

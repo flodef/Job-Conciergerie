@@ -99,12 +99,12 @@ const ImageUploader = React.forwardRef<
           })),
         );
 
-        console.warn('Uploading images...');
-
         // Upload images one by one
         const newPaths: string[] = [];
         let uploadedCount = 0;
+        let failedCount = 0;
         let imageIndex = imageIds.length; // Start index after existing images
+
         for (const image of localImages) {
           // Skip already failed images
           if (image.uploadStatus === 'success') continue;
@@ -114,21 +114,29 @@ const ImageUploader = React.forwardRef<
           const sanitizedHome = houseTitle.replace(/[/\\?%*:|"<>]/g, '-').trim();
           const fileName = `${sanitizedConciergerie}/${sanitizedHome} ${imageIndex}.jpg`;
 
-          const compressedBlob = await compressImage(image.file);
-          const file = new File([compressedBlob], fileName, {
-            type: 'image/jpeg', // Compressed images are always JPEG
-          });
+          try {
+            const compressedBlob = await compressImage(image.file);
+            const file = new File([compressedBlob], fileName, {
+              type: 'image/jpeg', // Compressed images are always JPEG
+            });
 
-          const result = await uploadFileToSupabase(file, fileName);
-          imageIndex++;
-          setLocalImages(prev =>
-            prev.map(img => (img.id === image.id ? { ...img, uploadStatus: result ? 'success' : 'error' } : img)),
-          );
+            const result = await uploadFileToSupabase(file, fileName);
+            imageIndex++;
 
-          if (!result) continue;
+            if (!result) {
+              failedCount++;
+              setLocalImages(prev => prev.map(img => (img.id === image.id ? { ...img, uploadStatus: 'error' } : img)));
+              continue;
+            }
 
-          newPaths.push(result);
-          uploadedCount++;
+            setLocalImages(prev => prev.map(img => (img.id === image.id ? { ...img, uploadStatus: 'success' } : img)));
+            newPaths.push(result);
+            uploadedCount++;
+          } catch (error) {
+            console.error('Error uploading image:', error);
+            failedCount++;
+            setLocalImages(prev => prev.map(img => (img.id === image.id ? { ...img, uploadStatus: 'error' } : img)));
+          }
         }
 
         // Update committed paths with newly uploaded ones
@@ -138,8 +146,9 @@ const ImageUploader = React.forwardRef<
         // Keep only images that failed to upload
         setLocalImages(prev => prev.filter(img => img.uploadStatus !== 'success'));
 
-        // Notify user of failed uploads
-        return uploadedCount === localImages.length ? allPaths : null;
+        // Return paths if all succeeded, null if any failed
+        if (failedCount > 0) return null;
+        return allPaths;
       },
     }));
 

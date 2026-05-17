@@ -1,7 +1,7 @@
 'use server';
 
-import { createClient } from '@/app/utils/supabase/server';
 import { cookies } from 'next/headers';
+import { createAdminClient } from '@/app/utils/supabase/server';
 
 // Constants
 const BUCKET_NAME = 'House images';
@@ -11,33 +11,20 @@ const BUCKET_NAME = 'House images';
  * Returns the conciergerie ID if authorized, null otherwise
  */
 async function verifyConciergerieAuth(cookieStore: Awaited<ReturnType<typeof cookies>>): Promise<string | null> {
-  const supabase = createClient(cookieStore);
-
   try {
-    // Get the current user session
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // Get user_id and user_type from cookies (custom auth system)
+    const userId = cookieStore.get('user_id')?.value;
+    const userType = cookieStore.get('user_type')?.value;
 
-    if (authError || !user) {
-      console.warn('Storage action: No authenticated user found');
+    if (!userId) {
+      console.warn('Storage action: No user_id cookie found');
       return null;
     }
 
-    // Check if user exists in conciergerie table
-    const { data: conciergerie, error: dbError } = await supabase
-      .from('conciergerie')
-      .select('id')
-      .eq('id', user.id)
-      .single();
+    // Check if user is a conciergerie
+    if (userType !== 'conciergerie') return null;
 
-    if (dbError || !conciergerie) {
-      console.warn('Storage action: User is not a conciergerie');
-      return null;
-    }
-
-    return conciergerie.id;
+    return userId;
   } catch (error) {
     console.error('Error verifying conciergerie auth:', error);
     return null;
@@ -56,17 +43,19 @@ export async function uploadFileToSupabase(file: File, fileName?: string): Promi
   // Verify user is a conciergerie
   const conciergerieId = await verifyConciergerieAuth(cookieStore);
   if (!conciergerieId) {
-    console.error('Upload denied: Only conciergeries can upload images');
+    console.error(
+      'Upload denied: Only conciergeries can upload images. User may not be logged in or not a conciergerie.',
+    );
     return null;
   }
 
-  const supabase = createClient(cookieStore);
+  // Use admin client to bypass RLS policies
+  const supabase = createAdminClient();
 
   try {
     // Use provided fileName as the full path (includes folder structure and extension)
     // If no fileName provided, generate a simple timestamp-based name
-    const filePath =
-      fileName || `uploads/JobConciergerie_${Date.now()}_${Math.random().toString(36).substring(2, 15)}.jpg`;
+    const filePath = fileName || `uploads/${Date.now()}_${Math.random().toString(36).substring(2, 15)}.jpg`;
 
     // Convert File to ArrayBuffer for upload
     const arrayBuffer = await file.arrayBuffer();
@@ -78,7 +67,7 @@ export async function uploadFileToSupabase(file: File, fileName?: string): Promi
     });
 
     if (error) {
-      console.error('Supabase storage upload error:', error);
+      console.error('Upload failed:', error.message);
       return null;
     }
 
@@ -99,21 +88,17 @@ export async function deleteFileFromSupabase(filePath: string): Promise<boolean>
 
   // Verify user is a conciergerie
   const conciergerieId = await verifyConciergerieAuth(cookieStore);
-  if (!conciergerieId) {
-    console.error('Delete denied: Only conciergeries can delete images');
-    return false;
-  }
+  if (!conciergerieId) return false;
 
-  const supabase = createClient(cookieStore);
+  // Use admin client to bypass RLS policies
+  const supabase = createAdminClient();
 
   try {
     const { error } = await supabase.storage.from(BUCKET_NAME).remove([filePath]);
-
     if (error) {
-      console.error('Supabase storage delete error:', error);
+      console.error('Delete failed:', error.message);
       return false;
     }
-
     return true;
   } catch (error) {
     console.error('Error in deleteFileFromSupabase:', error);
@@ -151,22 +136,18 @@ export async function listStorageFiles(): Promise<string[]> {
 
   // Verify user is a conciergerie
   const conciergerieId = await verifyConciergerieAuth(cookieStore);
-  if (!conciergerieId) {
-    console.error('List denied: Only conciergeries can list files');
-    return [];
-  }
+  if (!conciergerieId) return [];
 
-  const supabase = createClient(cookieStore);
+  // Use admin client to bypass RLS policies
+  const supabase = createAdminClient();
 
   try {
     const { data, error } = await supabase.storage.from(BUCKET_NAME).list();
-
     if (error) {
-      console.error('Supabase storage list error:', error);
+      console.error('List failed:', error.message);
       return [];
     }
-
-    return data.map(item => item.name);
+    return data?.map((item: { name: string }) => item.name) ?? [];
   } catch (error) {
     console.error('Error in listStorageFiles:', error);
     return [];
