@@ -32,6 +32,22 @@ async function sendEmail(email: SendMailOptions): Promise<{ success: boolean; er
 }
 
 /**
+ * Send a contact/support email (generic message to a specific recipient).
+ */
+async function sendContactEmail(to: string, subject: string, body: string, isRetry = false): Promise<boolean> {
+  return deliver(
+    {
+      to,
+      subject,
+      text: body,
+    },
+    'contact',
+    { to, subject, body },
+    isRetry,
+  );
+}
+
+/**
  * Attempt to send an email. If SMTP fails AND this is not itself a retry call,
  * the payload is persisted in the failed_emails queue so the cron job can retry later.
  */
@@ -60,7 +76,8 @@ type FailedEmailType =
   | 'missionAcceptance'
   | 'missionUpdated'
   | 'missionRemoved'
-  | 'newDevice';
+  | 'newDevice'
+  | 'contact';
 
 // ------------------------------------------------------------------
 // Email composition functions - one per type.
@@ -645,6 +662,43 @@ export async function sendAdminAlertEmail(
   return success;
 }
 
+type ConflictReportData = {
+  firstName: string;
+  familyName: string;
+  tel: string;
+  email: string;
+  geographicZone: string;
+  conciergerieName: string;
+  userId: string;
+};
+
+/**
+ * Send an employee conflict report email to conciergerie.
+ * Used when phone/email exists but name doesn't match.
+ */
+export async function sendEmployeeConflictReport(
+  conciergerieEmail: string,
+  data: ConflictReportData,
+  isRetry = false,
+): Promise<boolean> {
+  const reportMessage = `Conflit d'inscription employé•e :
+
+Informations saisies :
+- Prénom : ${data.firstName}
+- Nom : ${data.familyName}
+- Téléphone : ${data.tel}
+- Email : ${data.email}
+- Lieu : ${data.geographicZone}
+- Conciergerie : ${data.conciergerieName}
+- Clé publique : ${data.userId}
+
+L'employé•e indique que ce numéro/email lui appartient mais le nom ne correspond pas à celui enregistré dans la base de données.
+
+Veuillez vérifier manuellement et contacter l'employé•e si nécessaire.`;
+
+  return sendContactEmail(conciergerieEmail, 'Conflit inscription employé•e', reportMessage, isRetry);
+}
+
 /**
  * Internal retry helper used by the /api/retry-emails endpoint.
  * Re-dispatches a queued email by its type and payload, WITHOUT re-queuing on failure.
@@ -708,6 +762,8 @@ export async function retryQueuedEmail(type: FailedEmailType, payload: Record<st
         payload.type as 'deleted' | 'canceled',
         true,
       );
+    case 'contact':
+      return sendContactEmail(payload.to as string, payload.subject as string, payload.body as string, true);
     default:
       console.error(`Unknown email type for retry: ${type}`);
       return false;

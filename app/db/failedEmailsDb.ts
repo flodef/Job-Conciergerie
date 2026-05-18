@@ -9,7 +9,8 @@ export type FailedEmailType =
   | 'missionAcceptance'
   | 'missionUpdated'
   | 'missionRemoved'
-  | 'newDevice';
+  | 'newDevice'
+  | 'contact';
 
 export interface FailedEmailRow {
   id: string;
@@ -47,10 +48,7 @@ export const insertFailedEmail = async (
  * @param retryIntervalMinutes - only emails older than this interval since their last attempt are returned
  * @param maxAttempts - emails at or beyond this number of attempts are excluded (handled separately)
  */
-export const getEmailsToRetry = async (
-  retryIntervalMinutes = 10,
-  maxAttempts = 20,
-): Promise<FailedEmailRow[]> => {
+export const getEmailsToRetry = async (retryIntervalMinutes = 10, maxAttempts = 20): Promise<FailedEmailRow[]> => {
   try {
     const result = await sql`
       SELECT id, type, payload, attempts, last_attempt, last_error, created_at

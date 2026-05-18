@@ -3,7 +3,7 @@
 import Accordion from '@/app/components/accordion';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
+import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import ConciergerieSettings from '@/app/settings/components/conciergerieSettings';
 import ConnectedDevicesSettings from '@/app/settings/components/connectedDevicesSettings';
@@ -20,6 +20,7 @@ export default function Settings() {
   const { userType, isLoading: authLoading, fetchDataFromDatabase } = useAuth();
   const { currentPage } = useMenuContext();
   const { needsRefresh, updateFetchTime } = useFetchTime();
+  const needsRefreshSettings = needsRefresh[Page.Settings];
 
   const [toast, setToast] = useState<Toast>();
 
@@ -29,7 +30,7 @@ export default function Settings() {
   const isFetching = useRef(false);
   useEffect(() => {
     // Skip if still loading
-    if (authLoading || currentPage !== Page.Settings || isFetching.current || !needsRefresh[Page.Settings]) return;
+    if (authLoading || currentPage !== Page.Settings || isFetching.current || !needsRefreshSettings) return;
 
     isFetching.current = true;
     fetchDataFromDatabase(userType === 'conciergerie' ? 'conciergerie' : 'employee')
@@ -42,7 +43,7 @@ export default function Settings() {
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading, fetchDataFromDatabase, updateFetchTime, needsRefresh, userType]);
+  }, [currentPage, authLoading, fetchDataFromDatabase, updateFetchTime, needsRefreshSettings, userType]);
 
   const accordionItems = [
     {

@@ -2,7 +2,7 @@
 
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
+import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
@@ -36,6 +36,7 @@ export default function Calendar() {
   const { homes } = useHomes();
   const { currentPage } = useMenuContext();
   const { needsRefresh, updateFetchTime } = useFetchTime();
+  const needsRefreshCalendar = needsRefresh[Page.Calendar];
   const [toast, setToast] = useState<Toast>();
 
   const [acceptedMissions, setAcceptedMissions] = useState<Mission[]>([]);
@@ -55,7 +56,7 @@ export default function Calendar() {
   const isFetching = useRef(false);
   useEffect(() => {
     // Skip if still loading
-    if (authLoading || currentPage !== Page.Calendar || isFetching.current || !needsRefresh[Page.Calendar]) return;
+    if (authLoading || currentPage !== Page.Calendar || isFetching.current || !needsRefreshCalendar) return;
 
     isFetching.current = true;
     fetchMissions()
@@ -68,7 +69,7 @@ export default function Calendar() {
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading, fetchMissions, updateFetchTime, needsRefresh]);
+  }, [currentPage, authLoading, fetchMissions, updateFetchTime, needsRefreshCalendar]);
 
   // Second useEffect to handle mission filtering after we have the user identity
   useEffect(() => {
@@ -194,8 +195,8 @@ export default function Calendar() {
                           hours > 10
                             ? 'bg-red-200 text-red-700'
                             : hours > 5
-                            ? 'bg-orange-200 text-orange-700'
-                            : 'bg-green-200 text-green-700';
+                              ? 'bg-orange-200 text-orange-700'
+                              : 'bg-green-200 text-green-700';
                         return (
                           <span className={`text-sm ${hoursClass} px-2 py-1 rounded-full text-nowrap`}>
                             {formatHour(hours)}

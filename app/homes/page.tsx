@@ -6,7 +6,7 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
+import { useFetchTime } from '@/app/hooks/useFetchTime';
 import HomeCard from '@/app/homes/components/homeCard';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
@@ -21,6 +21,7 @@ export default function HomesPage() {
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
   const { isLoading: authLoading } = useAuth();
   const { updateFetchTime, needsRefresh } = useFetchTime();
+  const needsRefreshHomes = needsRefresh[Page.Homes];
 
   const [toast, setToast] = useState<Toast>();
   const [selectedHome, setSelectedHome] = useState<Home | null>(null);
@@ -32,7 +33,7 @@ export default function HomesPage() {
   const isFetching = useRef(false);
   useEffect(() => {
     // Skip if still loading
-    if (authLoading || currentPage !== Page.Homes || isFetching.current || !needsRefresh[Page.Homes]) return;
+    if (authLoading || currentPage !== Page.Homes || isFetching.current || !needsRefreshHomes) return;
 
     isFetching.current = true;
     fetchHomes()
@@ -45,7 +46,7 @@ export default function HomesPage() {
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading, fetchHomes, updateFetchTime, needsRefresh]);
+  }, [currentPage, authLoading, fetchHomes, updateFetchTime, needsRefreshHomes]);
 
   // Reset unsaved changes when navigating to this page - must be called before any conditional returns
   useEffect(() => {

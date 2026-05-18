@@ -12,7 +12,7 @@ import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/n
 import { IconBriefcase, IconCalendar, IconClock, IconHome, IconSettings, IconUser } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { ReactNode, useEffect, useState } from 'react';
-import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
+import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { getTimeDifference } from '@/app/utils/date';
 
 // Map pages to their respective icons
@@ -50,10 +50,10 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const loadingText = isLoadingMissions
     ? 'Chargement des missions...'
     : isLoadingHomes
-    ? 'Chargement des biens...'
-    : !isLoading
-    ? 'Redirection...'
-    : 'Identification...';
+      ? 'Chargement des biens...'
+      : !isLoading
+        ? 'Redirection...'
+        : 'Identification...';
 
   useEffect(() => {
     // Check if we're on the homepage or waiting page
@@ -98,7 +98,8 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
           {!!lastFetchTime[currentPage] && (
             <Tooltip icon={IconClock} size="small" orientation="horizontal" onClick={() => setCurrentTime(new Date())}>
               <div className="flex w-full justify-center text-center">
-                Dernière mise à jour :<br /> il y a {getTimeDifference(lastFetchTime[currentPage], currentTime)}
+                Dernière mise à jour :<br /> il y a{' '}
+                {getTimeDifference(new Date(lastFetchTime[currentPage]!), currentTime)}
               </div>
             </Tooltip>
           )}

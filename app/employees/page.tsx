@@ -6,7 +6,7 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import SearchInput from '@/app/components/searchInput';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
+import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
@@ -30,6 +30,7 @@ export default function EmployeesList() {
   const { currentPage } = useMenuContext();
   const { missions } = useMissions();
   const { updateFetchTime, needsRefresh } = useFetchTime();
+  const needsRefreshEmployees = needsRefresh[Page.Employees];
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +45,7 @@ export default function EmployeesList() {
   const isFetching = useRef(false);
   useEffect(() => {
     // Skip if still loading
-    if (authLoading || currentPage !== Page.Employees || isFetching.current || !needsRefresh[Page.Employees]) return;
+    if (authLoading || currentPage !== Page.Employees || isFetching.current || !needsRefreshEmployees) return;
 
     isFetching.current = true;
     fetchDataFromDatabase('employee')
@@ -57,7 +58,7 @@ export default function EmployeesList() {
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading, fetchDataFromDatabase, updateFetchTime, needsRefresh]);
+  }, [currentPage, authLoading, fetchDataFromDatabase, updateFetchTime, needsRefreshEmployees]);
 
   // Filter employees by conciergerie and sort them
   useEffect(() => {

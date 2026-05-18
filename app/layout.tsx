@@ -1,7 +1,6 @@
 import NavigationLayout from '@/app/components/navigationLayout';
 import { AuthProvider } from '@/app/contexts/authProvider';
 import { BadgeProvider } from '@/app/contexts/badgeProvider';
-import { FetchTimeProvider } from '@/app/contexts/fetchTimeProvider';
 import { HomesProvider } from '@/app/contexts/homesProvider';
 import { MenuProvider } from '@/app/contexts/menuProvider';
 import { MissionsProviderWrapper } from '@/app/contexts/missionsProvider';
@@ -53,11 +52,9 @@ export default function RootLayout({
           <AuthProvider>
             <HomesProvider>
               <MissionsProviderWrapper>
-                <FetchTimeProvider>
-                  <BadgeProvider>
-                    <NavigationLayout>{children}</NavigationLayout>
-                  </BadgeProvider>
-                </FetchTimeProvider>
+                <BadgeProvider>
+                  <NavigationLayout>{children}</NavigationLayout>
+                </BadgeProvider>
               </MissionsProviderWrapper>
             </HomesProvider>
           </AuthProvider>

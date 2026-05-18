@@ -4,7 +4,7 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import FloatingActionButton from '@/app/components/floatingActionButton';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useFetchTime } from '@/app/contexts/fetchTimeProvider';
+import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
@@ -31,6 +31,7 @@ export default function Missions() {
   const { userType, isLoading: authLoading, employeeName } = useAuth();
   const { currentPage } = useMenuContext();
   const { updateFetchTime, needsRefresh } = useFetchTime();
+  const needsRefreshMissions = needsRefresh[Page.Missions];
 
   const [toast, setToast] = useState<Toast>();
 
@@ -65,7 +66,7 @@ export default function Missions() {
   const isFetching = useRef(false);
   useEffect(() => {
     // Skip if still loading
-    if (authLoading || currentPage !== Page.Missions || isFetching.current || !needsRefresh[Page.Missions]) return;
+    if (authLoading || currentPage !== Page.Missions || isFetching.current || !needsRefreshMissions) return;
 
     isFetching.current = true;
     fetchMissions()
@@ -78,7 +79,7 @@ export default function Missions() {
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading, fetchMissions, updateFetchTime, needsRefresh]);
+  }, [currentPage, authLoading, fetchMissions, updateFetchTime, needsRefreshMissions]);
 
   // Load saved filters from localStorage on component mount - must be called before any conditional returns
   useEffect(() => {
