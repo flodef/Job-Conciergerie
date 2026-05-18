@@ -157,11 +157,16 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
       if (!userId) throw new Error("L'identifiant n'est pas défini");
 
-      // Find the employee that matches the criteria
+      // Find the employee that matches the criteria (trim values for comparison)
+      const trimmedFirstName = formData.firstName.trim();
+      const trimmedFamilyName = formData.familyName.trim();
+      const trimmedTel = formData.tel.trim();
+      const trimmedEmail = formData.email.trim();
+
       const employee = employees.find(
         employee =>
-          employee.firstName.toLowerCase() === formData.firstName.toLowerCase() &&
-          employee.familyName.toLowerCase() === formData.familyName.toLowerCase(),
+          employee.firstName.toLowerCase() === trimmedFirstName.toLowerCase() &&
+          employee.familyName.toLowerCase() === trimmedFamilyName.toLowerCase(),
       );
 
       if (employee) {
@@ -176,12 +181,26 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           throw err;
         }
       } else {
-        if (employees.some(employee => employee.tel === formData.tel || employee.email === formData.email))
-          throw new Error('Un employé avec ce numéro de téléphone ou cet email existe déjà.');
+        // Check for existing employee by phone/email (using trimmed values)
+        const existingByContact = employees.find(
+          employee => employee.tel === trimmedTel || employee.email === trimmedEmail,
+        );
 
-        // Create a new employee in the database
+        if (existingByContact) {
+          // If found by contact but name doesn't match exactly, show specific error
+          const existingName = `${existingByContact.firstName} ${existingByContact.familyName}`;
+          throw new Error(
+            `Un employé avec ce numéro/email existe déjà sous le nom "${existingName}". Veuillez utiliser ce nom ou contacter votre conciergerie.`,
+          );
+        }
+
+        // Create a new employee in the database (with trimmed values)
         const newEmployee = await createNewEmployee({
           ...formData,
+          firstName: trimmedFirstName,
+          familyName: trimmedFamilyName,
+          tel: trimmedTel,
+          email: trimmedEmail,
           id: userId,
         });
         if (!newEmployee) throw new Error('Employé non créé dans la base de données');

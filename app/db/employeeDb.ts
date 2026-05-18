@@ -58,6 +58,7 @@ export const getAllEmployees = async () => {
 
 /**
  * Create a new employee
+ * If employee already exists (unique constraint violation), return the existing employee
  */
 export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
   try {
@@ -75,7 +76,19 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
     `;
 
     return result.length > 0 ? formatEmployee(result[0] as DbEmployee) : null;
-  } catch (error) {
+  } catch (error: any) {
+    // Check for unique constraint violation (PostgreSQL error code 23505)
+    if (error?.code === '23505') {
+      console.log('Employee already exists with this phone or email, fetching existing record');
+      // Fetch and return the existing employee by phone or email
+      const existing = await sql`
+        SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
+        FROM employees
+        WHERE tel = ${data.tel} OR email = ${data.email}
+        LIMIT 1
+      `;
+      return existing.length > 0 ? formatEmployee(existing[0] as DbEmployee) : null;
+    }
     console.error('Error creating employee:', error);
     return null;
   }
