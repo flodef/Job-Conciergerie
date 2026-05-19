@@ -28,6 +28,36 @@ type HomeDetailsProps = {
   isFromCalendar?: boolean;
 };
 
+// Collapsible section component
+function CollapsibleSection({
+  title,
+  icon,
+  children,
+  defaultOpen = true,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  return (
+    <div className="w-full border border-secondary rounded-lg overflow-hidden">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-3 bg-secondary/10 hover:bg-secondary/20 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          {icon}
+          <span className="text-sm font-medium text-light">{title}</span>
+        </div>
+        <IconChevronDown size={16} className={clsx('text-light transition-transform', isOpen && 'rotate-180')} />
+      </button>
+      {isOpen && <div className="p-3">{children}</div>}
+    </div>
+  );
+}
+
 // Memoized image grid to prevent re-renders when parent state changes
 const HomeImageGrid = React.memo(function HomeImageGrid({
   images,
@@ -36,27 +66,41 @@ const HomeImageGrid = React.memo(function HomeImageGrid({
   images: string[];
   onImageClick: (index: number) => void;
 }) {
+  const [isOpen, setIsOpen] = useState(true);
   if (images.length === 0) return null;
 
   return (
-    <div className="w-full">
-      <h3 className="text-sm font-medium text-light mb-2">Photos</h3>
-      <div className="grid grid-cols-3 gap-2">
-        {images.map((image, index) => (
-          <picture key={image} className="relative aspect-square overflow-hidden rounded-lg cursor-pointer">
-            <img
-              src={getStorageImageUrl(image)}
-              alt={`Photo ${index + 1}`}
-              className="w-full h-full object-cover"
-              loading="lazy"
-              onClick={() => onImageClick(index)}
-              onError={e => {
-                e.currentTarget.src = fallbackImage;
-              }}
-            />
-          </picture>
-        ))}
-      </div>
+    <div className="w-full border border-secondary rounded-lg overflow-hidden">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-3 bg-secondary/10 hover:bg-secondary/20 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <IconPhoto size={16} className="text-light" />
+          <span className="text-sm font-medium text-light">Photos ({images.length})</span>
+        </div>
+        <IconChevronDown size={16} className={clsx('text-light transition-transform', isOpen && 'rotate-180')} />
+      </button>
+      {isOpen && (
+        <div className="p-3">
+          <div className="grid grid-cols-3 gap-2">
+            {images.map((image, index) => (
+              <picture key={image} className="relative aspect-square overflow-hidden rounded-lg cursor-pointer">
+                <img
+                  src={getStorageImageUrl(image)}
+                  alt={`Photo ${index + 1}`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onClick={() => onImageClick(index)}
+                  onError={e => {
+                    e.currentTarget.src = fallbackImage;
+                  }}
+                />
+              </picture>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 });
@@ -161,21 +205,13 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
           <HomeImageGrid images={home.images} onImageClick={setSelectedImageIndex} />
 
           {(userType === 'conciergerie' || (userType === 'employee' && isFromCalendar)) && (
-            <div>
-              <h3 className="text-sm font-medium text-light flex items-center gap-1">
-                <IconFileDescription size={16} />
-                Description
-              </h3>
-              <p className="text-foreground whitespace-pre-wrap truncate">{home.description}</p>
-            </div>
+            <CollapsibleSection title="Description" icon={<IconFileDescription size={16} className="text-light" />}>
+              <p className="text-foreground whitespace-pre-wrap">{home.description}</p>
+            </CollapsibleSection>
           )}
 
-          <div>
-            <h3 className="text-sm font-medium text-light flex items-center gap-1">
-              <IconListCheck size={16} />
-              Points particuliers
-            </h3>
-            <ul className="list-none pl-0 mt-1 space-y-1">
+          <CollapsibleSection title="Points particuliers" icon={<IconListCheck size={16} className="text-light" />}>
+            <ul className="list-none pl-0 space-y-1">
               {home.objectives.map((objective, index) => (
                 <li key={index} className="flex items-start">
                   <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 shrink-0 border border-foreground" />
@@ -183,7 +219,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
                 </li>
               ))}
             </ul>
-          </div>
+          </CollapsibleSection>
         </div>
 
         {/* Regular confirmation modal for deletion */}
