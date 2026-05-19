@@ -29,32 +29,10 @@ export default function HomesPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Reload employees when displaying the page
-  const isFetching = useRef(false);
-  useEffect(() => {
-    // Skip if still loading
-    if (authLoading || currentPage !== Page.Homes || isFetching.current || !needsRefreshHomes) return;
-
-    isFetching.current = true;
-    fetchHomes()
-      .then(isSuccess => {
-        if (isSuccess) updateFetchTime(Page.Homes);
-        else
-          setToast({
-            type: ToastType.Error,
-            message: 'Erreur lors du chargement des biens',
-          });
-      })
-      .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading, fetchHomes, updateFetchTime, needsRefreshHomes]);
-
   // Reset unsaved changes when navigating to this page
   useEffect(() => {
     setHasUnsavedChanges(false);
-  }, [setHasUnsavedChanges]);
-
-  // Show nothing while loading to prevent flickering, but only if we're on this page
-  if (currentPage === Page.Homes && (authLoading || homesLoading || needsRefreshHomes)) return null;
+  }, [setHasUnsavedChanges, currentPage]);
 
   // Filter homes by the current conciergerie
   const filteredHomes = useMemo(
@@ -100,8 +78,23 @@ export default function HomesPage() {
   const [displayMode, setDisplayMode] = useState<'list' | 'grid' | 'thumb'>('thumb');
 
   return (
-    <div>
+    <div className="bg-background min-h-full px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
+
+      {/* Show loading indicator while data is loading */}
+      {homesLoading && myHomes.length === 0 && (
+        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
+
+      {/* Show empty state when no homes and not loading */}
+      {!homesLoading && myHomes.length === 0 && (
+        <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] gap-4">
+          <p className="text-light">Aucun bien disponible</p>
+          <p className="text-sm text-light">Ajoutez votre premier bien</p>
+        </div>
+      )}
 
       {myHomes.length > 0 && (
         <div className="flex items-start justify-end gap-2 mb-2">

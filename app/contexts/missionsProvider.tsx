@@ -9,12 +9,14 @@ import {
 } from '@/app/actions/mission';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
+import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
 import { EmailSender } from '@/app/utils/emailSender';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
-import { createContext, ReactNode, useCallback, useContext, useState } from 'react';
+import { Page } from '@/app/utils/navigation';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 type MissionsContextType = {
   isLoading: boolean;
@@ -44,8 +46,10 @@ export function MissionsProviderWrapper({ children }: { children: ReactNode }) {
 }
 
 function MissionsProvider({ children }: { children: ReactNode }) {
-  const { userData, conciergerieName, getUserKey, findConciergerie, findEmployee } = useAuth();
+  const { userData, conciergerieName, getUserKey, findConciergerie, findEmployee, isLoading: authLoading } = useAuth();
   const { homes, fetchHomes } = useHomes();
+  const { needsRefresh, updateFetchTime } = useFetchTime();
+  const needsRefreshMissions = needsRefresh[Page.Missions] || needsRefresh[Page.Calendar];
 
   const [isLoading, setIsLoading] = useState(false);
   const [missions, setMissions] = useState<Mission[]>([]);
@@ -97,25 +101,59 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     [homes, findEmployee, findConciergerie],
   );
 
-  const fetchMissions = useCallback(async () => {
+  // Fetch missions when needed (initial load or refresh triggered)
+  const isFetching = useRef(false);
+  useEffect(() => {
+    if (authLoading || isFetching.current || !needsRefreshMissions) return;
+
+    isFetching.current = true;
     console.warn('Loading missions from database...');
-
     setIsLoading(missions.length === 0);
-    let isSuccess = false;
-    if (await fetchHomes()) {
-      const fetchedMissions = await fetchAllMissions();
-      if (fetchedMissions) {
-        setMissions(fetchedMissions);
-        isSuccess = true;
 
-        // Check for late missions and notify conciergeries if needed
-        checkForLateMissions(fetchedMissions);
+    fetchHomes().then(homesSuccess => {
+      if (!homesSuccess) {
+        setIsLoading(false);
+        isFetching.current = false;
+        return;
       }
+      fetchAllMissions().then(fetchedMissions => {
+        if (fetchedMissions) {
+          setMissions(fetchedMissions);
+          checkForLateMissions(fetchedMissions);
+          updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
+        }
+        setIsLoading(false);
+        isFetching.current = false;
+      });
+    });
+  }, [authLoading, needsRefreshMissions, missions.length, fetchHomes, checkForLateMissions, updateFetchTime]);
+
+  // Manual refresh function
+  const fetchMissions = useCallback(async () => {
+    if (isFetching.current) return false;
+
+    isFetching.current = true;
+    console.warn('Loading missions from database...');
+    setIsLoading(missions.length === 0);
+
+    const homesSuccess = await fetchHomes();
+    if (!homesSuccess) {
+      setIsLoading(false);
+      isFetching.current = false;
+      return false;
+    }
+
+    const fetchedMissions = await fetchAllMissions();
+    if (fetchedMissions) {
+      setMissions(fetchedMissions);
+      checkForLateMissions(fetchedMissions);
+      updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
     }
 
     setIsLoading(false);
-    return isSuccess;
-  }, [fetchHomes, checkForLateMissions, missions.length]);
+    isFetching.current = false;
+    return !!fetchedMissions;
+  }, [fetchHomes, checkForLateMissions, missions.length, updateFetchTime]);
 
   const addMission = async (missionData: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>) => {
     if (!conciergerieName || missionExists(missionData)) return false;

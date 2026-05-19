@@ -1,3 +1,4 @@
+import { PageManager } from '@/app/components/pageManager';
 import NavigationLayout from '@/app/components/navigationLayout';
 import { AuthProvider } from '@/app/contexts/authProvider';
 import { BadgeProvider } from '@/app/contexts/badgeProvider';
@@ -53,7 +54,9 @@ export default function RootLayout({
             <HomesProvider>
               <MissionsProviderWrapper>
                 <BadgeProvider>
-                  <NavigationLayout>{children}</NavigationLayout>
+                  <NavigationLayout>
+                    <PageManager />
+                  </NavigationLayout>
                 </BadgeProvider>
               </MissionsProviderWrapper>
             </HomesProvider>

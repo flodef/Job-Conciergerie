@@ -3,9 +3,11 @@
 import { createNewHome, deleteHomeData, fetchAllHomes, updateHomeData } from '@/app/actions/home';
 import { deleteFileFromSupabase } from '@/app/actions/storage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { Home } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
-import { createContext, ReactNode, useCallback, useContext, useMemo, useState } from 'react';
+import { Page } from '@/app/utils/navigation';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 type HomesContextType = {
   isLoading: boolean;
@@ -21,27 +23,59 @@ type HomesContextType = {
 const HomesContext = createContext<HomesContextType | undefined>(undefined);
 
 export function HomesProvider({ children }: { children: ReactNode }) {
-  const { conciergerieName } = useAuth();
+  const { conciergerieName, isLoading: authLoading } = useAuth();
+  const { needsRefresh, updateFetchTime } = useFetchTime();
+  const needsRefreshHomes = needsRefresh[Page.Homes];
 
   const [isLoading, setIsLoading] = useState(false);
   const [homes, setHomes] = useState<Home[]>([]);
 
+  // Show all homes for employees, only conciergerie's own homes for conciergeries
   const myHomes = useMemo(
-    () => homes.filter(home => home.conciergerieName === conciergerieName),
+    () => (conciergerieName ? homes.filter(home => home.conciergerieName === conciergerieName) : homes),
     [homes, conciergerieName],
   );
 
-  // Load homes from localStorage on initial render
-  const fetchHomes = useCallback(async () => {
-    console.warn('Loading homes from database...');
+  // Fetch homes when needed (initial load or refresh triggered)
+  const isFetching = useRef(false);
+  useEffect(() => {
+    if (authLoading || isFetching.current || !needsRefreshHomes) return;
 
+    isFetching.current = true;
+    console.warn('Loading homes from database...');
     setIsLoading(homes.length === 0);
+
+    fetchAllHomes()
+      .then(fetchedHomes => {
+        if (fetchedHomes) {
+          setHomes(fetchedHomes);
+          updateFetchTime(Page.Homes);
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+        isFetching.current = false;
+      });
+  }, [authLoading, needsRefreshHomes, homes.length, updateFetchTime]);
+
+  // Manual refresh function
+  const fetchHomes = useCallback(async () => {
+    if (isFetching.current) return false;
+
+    isFetching.current = true;
+    console.warn('Loading homes from database...');
+    setIsLoading(homes.length === 0);
+
     const fetchedHomes = await fetchAllHomes();
-    if (fetchedHomes) setHomes(fetchedHomes);
+    if (fetchedHomes) {
+      setHomes(fetchedHomes);
+      updateFetchTime(Page.Homes);
+    }
 
     setIsLoading(false);
+    isFetching.current = false;
     return !!fetchedHomes;
-  }, [homes.length]);
+  }, [homes.length, updateFetchTime]);
 
   // Check if a home with the same title already exists for the current conciergerie
   const homeExists = (title: string, id?: string): boolean => {

@@ -3,47 +3,25 @@
 import Accordion from '@/app/components/accordion';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useFetchTime } from '@/app/hooks/useFetchTime';
-import { useMenuContext } from '@/app/contexts/menuProvider';
 import ConciergerieSettings from '@/app/settings/components/conciergerieSettings';
 import ConnectedDevicesSettings from '@/app/settings/components/connectedDevicesSettings';
 import EmployeeSettings from '@/app/settings/components/employeeSettings';
 import NotificationSettings from '@/app/settings/components/notificationSettings';
 import { MAX_DEVICES } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
-import { Page } from '@/app/utils/navigation';
 import packageJson from '@/package.json';
 import { IconBell, IconDevices, IconSettings } from '@tabler/icons-react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 export default function Settings() {
-  const { userType, isLoading: authLoading, fetchDataFromDatabase } = useAuth();
-  const { currentPage } = useMenuContext();
-  const { needsRefresh, updateFetchTime } = useFetchTime();
-  const needsRefreshSettings = needsRefresh[Page.Settings];
+  const { userType } = useAuth();
 
   const [toast, setToast] = useState<Toast>();
 
   // Get connected devices count for the subtitle
   const [storedLabels] = useLocalStorage<Array<{ id: string; label?: string }>>('device_labels', []);
 
-  const isFetching = useRef(false);
-  useEffect(() => {
-    // Skip if still loading
-    if (authLoading || currentPage !== Page.Settings || isFetching.current || !needsRefreshSettings) return;
-
-    isFetching.current = true;
-    fetchDataFromDatabase(userType === 'conciergerie' ? 'conciergerie' : 'employee')
-      .then(isSuccess => {
-        if (isSuccess) updateFetchTime(Page.Settings);
-        else
-          setToast({
-            type: ToastType.Error,
-            message: 'Erreur lors du chargement des paramètres',
-          });
-      })
-      .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading, fetchDataFromDatabase, updateFetchTime, needsRefreshSettings, userType]);
+  // Data is loaded by AuthProvider, no need to fetch here
 
   const accordionItems = [
     {
@@ -69,11 +47,8 @@ export default function Settings() {
     },
   ];
 
-  // Show nothing while loading to prevent flickering, but only if we're on this page
-  if (currentPage === Page.Settings && (authLoading || needsRefreshSettings)) return null;
-
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="bg-background min-h-full max-w-2xl mx-auto px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
       <Accordion items={accordionItems} />
     </div>

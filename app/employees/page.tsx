@@ -15,7 +15,7 @@ import { EmailSender } from '@/app/utils/emailSender';
 import { filterEmployees, filterEmployeesByConciergerie, sortEmployees } from '@/app/utils/employee';
 import { Page } from '@/app/utils/navigation';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 
 export default function EmployeesList() {
   const {
@@ -24,13 +24,9 @@ export default function EmployeesList() {
     isLoading: authLoading,
     employees: authEmployees,
     getUserKey,
-    fetchDataFromDatabase,
     updateUserData,
   } = useAuth();
-  const { currentPage } = useMenuContext();
   const { missions } = useMissions();
-  const { updateFetchTime, needsRefresh } = useFetchTime();
-  const needsRefreshEmployees = needsRefresh[Page.Employees];
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,24 +37,7 @@ export default function EmployeesList() {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [employeeToReject, setEmployeeToReject] = useState<Employee | null>(null);
 
-  // Reload employees when displaying the page
-  const isFetching = useRef(false);
-  useEffect(() => {
-    // Skip if still loading
-    if (authLoading || currentPage !== Page.Employees || isFetching.current || !needsRefreshEmployees) return;
-
-    isFetching.current = true;
-    fetchDataFromDatabase('employee')
-      .then(isSuccess => {
-        if (isSuccess) updateFetchTime(Page.Employees);
-        else
-          setToast({
-            type: ToastType.Error,
-            message: 'Erreur lors du chargement des employés',
-          });
-      })
-      .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading, fetchDataFromDatabase, updateFetchTime, needsRefreshEmployees]);
+  // Data is loaded by AuthProvider, no need to fetch here
 
   // Filter employees by conciergerie and sort them
   useEffect(() => {
@@ -194,11 +173,8 @@ export default function EmployeesList() {
     );
   };
 
-  // Show nothing while loading to prevent flickering, but only if we're on this page
-  if (currentPage === Page.Employees && (authLoading || needsRefreshEmployees)) return null;
-
   return (
-    <div>
+    <div className="bg-background min-h-full px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       {employees.length > 1 && (

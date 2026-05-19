@@ -52,11 +52,11 @@ export default function Calendar() {
   const isEmployee = userType === 'employee';
   const isConciergerie = userType === 'conciergerie';
 
-  // Reload missions when displaying the page
+  // Reload missions when needed
   const isFetching = useRef(false);
   useEffect(() => {
-    // Skip if still loading
-    if (authLoading || currentPage !== Page.Calendar || isFetching.current || !needsRefreshCalendar) return;
+    // Skip if still loading or already fetching or no refresh needed
+    if (authLoading || isFetching.current || !needsRefreshCalendar) return;
 
     isFetching.current = true;
     fetchMissions()
@@ -69,7 +69,7 @@ export default function Calendar() {
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading, fetchMissions, updateFetchTime, needsRefreshCalendar]);
+  }, [authLoading, fetchMissions, updateFetchTime, needsRefreshCalendar]);
 
   // Second useEffect to handle mission filtering after we have the user identity
   useEffect(() => {
@@ -109,9 +109,6 @@ export default function Calendar() {
     setSelectedMission(null);
   };
 
-  // Show loading or empty state, but only if we're on this page
-  if (currentPage === Page.Calendar && (authLoading || missionsLoading || needsRefreshCalendar)) return null;
-
   // Only show empty state if not loading and we've confirmed there are no missions
   if (!missionsLoading && acceptedMissions.length === 0) {
     return (
@@ -132,7 +129,7 @@ export default function Calendar() {
   }
 
   return (
-    <div>
+    <div className="bg-background min-h-full px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
       {/* Badge for started missions */}
       {startedMissionsCount + lateMissionsCount > 0 && (

@@ -62,11 +62,11 @@ export default function Missions() {
     zones: [],
   });
 
-  // Reload missions when displaying the page
+  // Reload missions when needed
   const isFetching = useRef(false);
   useEffect(() => {
-    // Skip if still loading
-    if (authLoading || currentPage !== Page.Missions || isFetching.current || !needsRefreshMissions) return;
+    // Skip if still loading or already fetching or no refresh needed
+    if (authLoading || isFetching.current || !needsRefreshMissions) return;
 
     isFetching.current = true;
     fetchMissions()
@@ -79,7 +79,7 @@ export default function Missions() {
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [currentPage, authLoading, fetchMissions, updateFetchTime, needsRefreshMissions]);
+  }, [authLoading, fetchMissions, updateFetchTime, needsRefreshMissions]);
 
   // Load saved filters from localStorage on component mount - must be called before any conditional returns
   useEffect(() => {
@@ -194,12 +194,16 @@ export default function Missions() {
     selectedMissionStatuses.length > 0 ||
     selectedZones.length > 0;
 
-  // Show nothing while loading to prevent flickering, but only if we're on this page
-  if (currentPage === Page.Missions && (authLoading || missionsLoading || needsRefreshMissions)) return null;
-
   return (
-    <div>
+    <div className="bg-background min-h-full px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
+
+      {/* Show loading indicator while data is loading */}
+      {missionsLoading && missions.length === 0 && (
+        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
 
       {/* Sort controls and filter toggle */}
       <MissionSortControls
