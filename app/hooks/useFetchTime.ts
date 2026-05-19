@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { navigationPages, Page } from '@/app/utils/navigation';
 import { pageSettings } from '@/app/components/navigationLayout';
 
-const STORAGE_KEY = 'fetch_time_state';
 const AUTO_REFRESH_INTERVAL = 60 * 1000; // 1 minute
 const STALE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 
@@ -24,35 +23,37 @@ const initializeNeedsRefresh = (): Partial<Record<Page, boolean>> => {
   return initialRefresh;
 };
 
+// Only persist lastFetchTime to localStorage, not needsRefresh
+// needsRefresh should always start as true on app load to trigger initial fetches
+const LAST_FETCH_STORAGE_KEY = 'fetch_time_last_fetch';
+
 const getInitialState = (): FetchTimeState => {
-  if (typeof window === 'undefined') {
-    return { lastFetchTime: {}, needsRefresh: initializeNeedsRefresh() };
-  }
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored) as FetchTimeState;
-      // Ensure all pages have needsRefresh initialized
-      const initialNeedsRefresh = initializeNeedsRefresh();
-      return {
-        lastFetchTime: parsed.lastFetchTime || {},
-        needsRefresh: { ...initialNeedsRefresh, ...parsed.needsRefresh },
-      };
+  let lastFetchTime: Partial<Record<Page, number>> = {};
+
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem(LAST_FETCH_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<Record<Page, number>>;
+        lastFetchTime = parsed || {};
+      }
+    } catch {
+      // Invalid stored data, use defaults
     }
-  } catch {
-    // Invalid stored data, use defaults
   }
-  return { lastFetchTime: {}, needsRefresh: initializeNeedsRefresh() };
+
+  // Always initialize needsRefresh to true - this ensures data is fetched on app load
+  return { lastFetchTime, needsRefresh: initializeNeedsRefresh() };
 };
 
 export function useFetchTime() {
   const [state, setState] = useState<FetchTimeState>(getInitialState);
 
-  // Persist to localStorage whenever state changes
+  // Persist only lastFetchTime to localStorage (not needsRefresh)
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+    localStorage.setItem(LAST_FETCH_STORAGE_KEY, JSON.stringify(state.lastFetchTime));
+  }, [state.lastFetchTime]);
 
   // Auto-refresh logic: Check every minute if data is stale
   useEffect(() => {
