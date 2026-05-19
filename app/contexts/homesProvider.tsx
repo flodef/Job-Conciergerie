@@ -4,9 +4,11 @@ import { createNewHome, deleteHomeData, fetchAllHomes, updateHomeData } from '@/
 import { deleteFileFromSupabase } from '@/app/actions/storage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
+import { preloadImages } from '@/app/hooks/useImageCache';
 import { Home } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
 import { Page } from '@/app/utils/navigation';
+import { getStorageImageUrl } from '@/app/utils/storage';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 type HomesContextType = {
@@ -50,6 +52,10 @@ export function HomesProvider({ children }: { children: ReactNode }) {
         if (fetchedHomes) {
           setHomes(fetchedHomes);
           updateFetchTime(Page.Homes);
+
+          // Preload all home images in the background
+          const allImageUrls = fetchedHomes.flatMap(home => (home.images || []).map(img => getStorageImageUrl(img)));
+          preloadImages(allImageUrls);
         }
       })
       .finally(() => {
@@ -70,6 +76,10 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     if (fetchedHomes) {
       setHomes(fetchedHomes);
       updateFetchTime(Page.Homes);
+
+      // Preload all home images in the background
+      const allImageUrls = fetchedHomes.flatMap(home => (home.images || []).map(img => getStorageImageUrl(img)));
+      preloadImages(allImageUrls);
     }
 
     setIsLoading(false);

@@ -21,6 +21,7 @@ import {
 } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useImageCache } from '@/app/hooks/useImageCache';
 
 type HomeDetailsProps = {
   home: Home;
@@ -67,6 +68,11 @@ const HomeImageGrid = React.memo(function HomeImageGrid({
   onImageClick: (index: number) => void;
 }) {
   const [isOpen, setIsOpen] = useState(true);
+
+  // Preload and cache all images
+  const imageUrls = useMemo(() => images.map(img => getStorageImageUrl(img)), [images]);
+  const { getCachedUrl } = useImageCache(imageUrls);
+
   if (images.length === 0) return null;
 
   return (
@@ -83,20 +89,24 @@ const HomeImageGrid = React.memo(function HomeImageGrid({
       </button>
       <div className={clsx('p-3', !isOpen && 'hidden')}>
         <div className="grid grid-cols-3 gap-2">
-          {images.map((image, index) => (
-            <picture key={image} className="relative aspect-square overflow-hidden rounded-lg cursor-pointer">
-              <img
-                src={getStorageImageUrl(image)}
-                alt={`Photo ${index + 1}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
-                onClick={() => onImageClick(index)}
-                onError={e => {
-                  e.currentTarget.src = fallbackImage;
-                }}
-              />
-            </picture>
-          ))}
+          {images.map((image, index) => {
+            const originalUrl = getStorageImageUrl(image);
+            const cachedUrl = getCachedUrl(originalUrl);
+            return (
+              <picture key={image} className="relative aspect-square overflow-hidden rounded-lg cursor-pointer">
+                <img
+                  src={cachedUrl}
+                  alt={`Photo ${index + 1}`}
+                  className="w-full h-full object-cover"
+                  loading="eager"
+                  onClick={() => onImageClick(index)}
+                  onError={e => {
+                    e.currentTarget.src = fallbackImage;
+                  }}
+                />
+              </picture>
+            );
+          })}
         </div>
       </div>
     </div>

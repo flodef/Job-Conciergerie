@@ -17,7 +17,8 @@ import MissionForm from '@/app/missions/components/missionForm';
 import { Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateTime, getDateRangeDifference } from '@/app/utils/date';
-import { getStorageImageUrl } from '@/app/utils/storage';
+import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
+import { useImageCache } from '@/app/hooks/useImageCache';
 import { calculateMissionPoints, formatHour, getTaskPoints } from '@/app/utils/task';
 import {
   IconBuildingStore,
@@ -33,7 +34,6 @@ import {
   IconZoomScan,
 } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
-import Image from 'next/image';
 import { useMemo, useState } from 'react';
 
 type MissionDetailsProps = {
@@ -41,6 +41,34 @@ type MissionDetailsProps = {
   onClose: () => void;
   isFromCalendar?: boolean;
 };
+
+// Cached image preview component
+function HomeImagePreview({
+  imageUrl,
+  homeTitle,
+  onClick,
+}: {
+  imageUrl: string;
+  homeTitle: string;
+  onClick: () => void;
+}) {
+  const { getCachedUrl } = useImageCache([imageUrl]);
+  const cachedUrl = getCachedUrl(imageUrl);
+
+  return (
+    <div className="relative aspect-video w-full max-h-32 mt-1 overflow-hidden rounded-lg">
+      <img
+        src={cachedUrl}
+        alt={`Photo de ${homeTitle}`}
+        className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+        onClick={onClick}
+        onError={e => {
+          e.currentTarget.src = fallbackImage;
+        }}
+      />
+    </div>
+  );
+}
 
 export default function MissionDetails({ mission, onClose, isFromCalendar = false }: MissionDetailsProps) {
   const {
@@ -224,23 +252,21 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
               <div>
                 <p className="text-foreground">{`${home.title} (${home.geographicZone})`}</p>
               </div>
-              <button onClick={() => setShowHomeDetails(true)} title="Voir les détails du bien">
+              <button
+                className="cursor-pointer"
+                onClick={() => setShowHomeDetails(true)}
+                title="Voir les détails du bien"
+              >
                 <IconZoomScan size={40} />
               </button>
             </div>
 
             {home.images.length ? (
-              <div className="relative aspect-video w-full max-h-32 mt-1 overflow-hidden rounded-lg">
-                <Image
-                  src={getStorageImageUrl(firstHomeImage)}
-                  alt={`Photo de ${home.title}`}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 300px"
-                  className="object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setSelectedImageIndex(home.images.indexOf(firstHomeImage))}
-                  priority
-                />
-              </div>
+              <HomeImagePreview
+                imageUrl={getStorageImageUrl(firstHomeImage)}
+                homeTitle={home.title}
+                onClick={() => setSelectedImageIndex(home.images.indexOf(firstHomeImage))}
+              />
             ) : null}
           </div>
 
