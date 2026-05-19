@@ -194,6 +194,9 @@ export default function Missions() {
     selectedMissionStatuses.length > 0 ||
     selectedZones.length > 0;
 
+  // Show nothing while loading to prevent flickering, but only if we're on this page
+  if (currentPage === Page.Missions && (authLoading || missionsLoading || needsRefreshMissions)) return null;
+
   return (
     <div>
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />

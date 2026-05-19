@@ -194,6 +194,9 @@ export default function EmployeesList() {
     );
   };
 
+  // Show nothing while loading to prevent flickering, but only if we're on this page
+  if (currentPage === Page.Employees && (authLoading || needsRefreshEmployees)) return null;
+
   return (
     <div>
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />

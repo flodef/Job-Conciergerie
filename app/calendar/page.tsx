@@ -32,7 +32,7 @@ export default function Calendar() {
     findEmployee,
     findConciergerie,
   } = useAuth();
-  const { missions, fetchMissions, getLateMissions } = useMissions();
+  const { missions, isLoading: missionsLoading, fetchMissions, getLateMissions } = useMissions();
   const { homes } = useHomes();
   const { currentPage } = useMenuContext();
   const { needsRefresh, updateFetchTime } = useFetchTime();
@@ -108,6 +108,9 @@ export default function Calendar() {
   const handleCloseDetails = () => {
     setSelectedMission(null);
   };
+
+  // Show loading or empty state, but only if we're on this page
+  if (currentPage === Page.Calendar && (authLoading || missionsLoading || needsRefreshCalendar)) return null;
 
   if (acceptedMissions.length === 0) {
     return (

@@ -69,6 +69,9 @@ export default function Settings() {
     },
   ];
 
+  // Show nothing while loading to prevent flickering, but only if we're on this page
+  if (currentPage === Page.Settings && (authLoading || needsRefreshSettings)) return null;
+
   return (
     <div className="max-w-2xl mx-auto">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />

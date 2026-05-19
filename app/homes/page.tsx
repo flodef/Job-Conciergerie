@@ -17,7 +17,7 @@ import clsx from 'clsx/lite';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function HomesPage() {
-  const { myHomes, fetchHomes } = useHomes();
+  const { myHomes, isLoading: homesLoading, fetchHomes } = useHomes();
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
   const { isLoading: authLoading } = useAuth();
   const { updateFetchTime, needsRefresh } = useFetchTime();
@@ -48,10 +48,13 @@ export default function HomesPage() {
       .finally(() => (isFetching.current = false));
   }, [currentPage, authLoading, fetchHomes, updateFetchTime, needsRefreshHomes]);
 
-  // Reset unsaved changes when navigating to this page - must be called before any conditional returns
+  // Reset unsaved changes when navigating to this page
   useEffect(() => {
     setHasUnsavedChanges(false);
   }, [setHasUnsavedChanges]);
+
+  // Show nothing while loading to prevent flickering, but only if we're on this page
+  if (currentPage === Page.Homes && (authLoading || homesLoading || needsRefreshHomes)) return null;
 
   // Filter homes by the current conciergerie
   const filteredHomes = useMemo(
