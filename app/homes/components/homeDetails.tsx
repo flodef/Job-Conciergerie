@@ -53,7 +53,7 @@ function CollapsibleSection({
         </div>
         <IconChevronDown size={16} className={clsx('text-light transition-transform', isOpen && 'rotate-180')} />
       </button>
-      {isOpen && <div className="p-3">{children}</div>}
+      <div className={clsx('p-3', !isOpen && 'hidden')}>{children}</div>
     </div>
   );
 }
@@ -81,26 +81,24 @@ const HomeImageGrid = React.memo(function HomeImageGrid({
         </div>
         <IconChevronDown size={16} className={clsx('text-light transition-transform', isOpen && 'rotate-180')} />
       </button>
-      {isOpen && (
-        <div className="p-3">
-          <div className="grid grid-cols-3 gap-2">
-            {images.map((image, index) => (
-              <picture key={image} className="relative aspect-square overflow-hidden rounded-lg cursor-pointer">
-                <img
-                  src={getStorageImageUrl(image)}
-                  alt={`Photo ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  onClick={() => onImageClick(index)}
-                  onError={e => {
-                    e.currentTarget.src = fallbackImage;
-                  }}
-                />
-              </picture>
-            ))}
-          </div>
+      <div className={clsx('p-3', !isOpen && 'hidden')}>
+        <div className="grid grid-cols-3 gap-2">
+          {images.map((image, index) => (
+            <picture key={image} className="relative aspect-square overflow-hidden rounded-lg cursor-pointer">
+              <img
+                src={getStorageImageUrl(image)}
+                alt={`Photo ${index + 1}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                onClick={() => onImageClick(index)}
+                onError={e => {
+                  e.currentTarget.src = fallbackImage;
+                }}
+              />
+            </picture>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 });
