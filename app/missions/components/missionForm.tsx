@@ -90,8 +90,8 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         missionEndTime < currentTime
           ? 'Cette mission ne peut pas être modifiée car elle est déjà terminée'
           : mission.status === 'started' || mission.status === 'completed'
-          ? 'Cette mission ne peut pas être modifiée car elle est déjà commencée ou terminée.'
-          : '';
+            ? 'Cette mission ne peut pas être modifiée car elle est déjà commencée ou terminée.'
+            : '';
 
       if (message) {
         setCannotEdit(true);
@@ -261,21 +261,9 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   // Get current date/time for min attribute
   const nowString = localISOString(new Date());
 
-  // Handle start date change and update end date if needed
+  // Handle start date change - just update value and end date, no validation
   const handleStartDateChange = (value: string) => {
-    // Validate the selected date is not in the past
-    const selectedDate = new Date(value);
-    const currentDate = new Date();
-
-    if (selectedDate < currentDate) {
-      setStartDateTime(nowString);
-      setStartDateTimeError('La date de début ne peut pas être antérieure à la date actuelle');
-      const timeout = setTimeout(() => setStartDateTimeError(''), 3000);
-      return () => clearTimeout(timeout);
-    }
-
     setStartDateTime(value);
-    setStartDateTimeError('');
 
     // Create a new Date object from the selected start date
     const startDate = new Date(value);
@@ -290,6 +278,21 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     // If end date is before the minimum end date or empty, set it to the minimum end date
     if (endDateTime < minEndDateString || !endDateTime) {
       setEndDateTime(minEndDateString);
+    }
+  };
+
+  // Handle start date blur - validate only when leaving the field
+  const handleStartDateBlur = (value: string) => {
+    // Validate the selected date is not in the past
+    const selectedDate = new Date(value);
+    const currentDate = new Date();
+
+    if (selectedDate < currentDate) {
+      setStartDateTime(nowString);
+      setStartDateTimeError('La date de début ne peut pas être antérieure à la date actuelle');
+      setTimeout(() => setStartDateTimeError(''), 3000);
+    } else {
+      setStartDateTimeError('');
     }
   };
 
@@ -366,6 +369,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
             ref={startDateRef}
             value={startDateTime}
             onChange={handleStartDateChange}
+            onBlur={handleStartDateBlur}
             error={startDateTimeError}
             onError={setStartDateTimeError}
             min={nowString}

@@ -10,6 +10,7 @@ interface DateTimeInputProps {
   onChange: (value: string) => void;
   error: string;
   onError: (error: string) => void;
+  onBlur?: (value: string) => void;
   disabled?: boolean;
   required?: boolean;
   min?: string;
@@ -27,6 +28,7 @@ const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTim
     onChange,
     error,
     onError,
+    onBlur,
     disabled = false,
     required = false,
     min,
@@ -50,6 +52,7 @@ const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTim
         ref={ref}
         value={value}
         onChange={e => handleChange(e, onChange, onError)}
+        onBlur={onBlur ? () => onBlur(value) : undefined}
         className={inputFieldClassName(error)}
         disabled={disabled}
         required={required}
