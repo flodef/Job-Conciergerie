@@ -145,7 +145,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
                   onClick={() => handleMenuClick(page)}
                   className={clsx(
                     'flex flex-col items-center justify-center py-2 px-4',
-                    'transition-colors duration-200 w-20 h-16 relative',
+                    'transition-colors duration-200 w-20 h-16 relative cursor-pointer',
                     page === currentPage ? 'text-primary bg-primary/10' : 'text-foreground hover:bg-secondary/20',
                   )}
                 >
