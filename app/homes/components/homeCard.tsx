@@ -82,13 +82,13 @@ const HomeCard = React.memo(function HomeCard({ home, onClick, onEdit, displayMo
     default:
       return (
         <div
-          className="bg-background p-4 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
+          className="bg-background p-4 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 flex flex-col"
           onClick={onClick}
           onContextMenu={handleContextMenu}
         >
-          <h3 className="text-xl font-medium text-foreground overflow-hidden max-w-full">{`${home.title} (${home.geographicZone})`}</h3>
+          <h3 className="text-xl font-medium text-foreground overflow-hidden max-w-full mb-4">{`${home.title} (${home.geographicZone})`}</h3>
 
-          <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg mt-auto">
             <HomeImage
               home={home}
               altText={`Photo de ${home.title}`}

@@ -111,7 +111,7 @@ export default function HomesPage() {
           <div className="flex gap-2">
             <button
               className={clsx(
-                'mt-1 p-2 rounded',
+                'mt-1 p-2 rounded cursor-pointer',
                 displayMode === 'list' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
               )}
               onClick={() => setDisplayMode('list')}
@@ -121,7 +121,7 @@ export default function HomesPage() {
             </button>
             <button
               className={clsx(
-                'mt-1 p-2 rounded',
+                'mt-1 p-2 rounded cursor-pointer',
                 displayMode === 'grid' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
               )}
               onClick={() => setDisplayMode('grid')}
@@ -131,7 +131,7 @@ export default function HomesPage() {
             </button>
             <button
               className={clsx(
-                'mt-1 p-2 rounded',
+                'mt-1 p-2 rounded cursor-pointer',
                 displayMode === 'thumb' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
               )}
               onClick={() => setDisplayMode('thumb')}

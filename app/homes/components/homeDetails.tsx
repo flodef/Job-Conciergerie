@@ -11,15 +11,55 @@ import HomeForm from '@/app/homes/components/homeForm';
 import { Home } from '@/app/types/dataTypes';
 import { actionButtonBarClassName, actionButtonClassName } from '@/app/utils/className';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
-import { IconFileDescription, IconListCheck, IconPencil, IconTrash } from '@tabler/icons-react';
+import {
+  IconChevronDown,
+  IconFileDescription,
+  IconListCheck,
+  IconPencil,
+  IconPhoto,
+  IconTrash,
+} from '@tabler/icons-react';
 import clsx from 'clsx/lite';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 type HomeDetailsProps = {
   home: Home;
   onClose: () => void;
   isFromCalendar?: boolean;
 };
+
+// Memoized image grid to prevent re-renders when parent state changes
+const HomeImageGrid = React.memo(function HomeImageGrid({
+  images,
+  onImageClick,
+}: {
+  images: string[];
+  onImageClick: (index: number) => void;
+}) {
+  if (images.length === 0) return null;
+
+  return (
+    <div className="w-full">
+      <h3 className="text-sm font-medium text-light mb-2">Photos</h3>
+      <div className="grid grid-cols-3 gap-2">
+        {images.map((image, index) => (
+          <picture key={image} className="relative aspect-square overflow-hidden rounded-lg cursor-pointer">
+            <img
+              src={getStorageImageUrl(image)}
+              alt={`Photo ${index + 1}`}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              onClick={() => onImageClick(index)}
+              onError={e => {
+                e.currentTarget.src = fallbackImage;
+              }}
+            />
+          </picture>
+        ))}
+      </div>
+    </div>
+  );
+});
 
 export default function HomeDetails({ home, onClose, isFromCalendar = false }: HomeDetailsProps) {
   const { deleteHome, homes: allHomes } = useHomes();
@@ -118,29 +158,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
         )}
 
         <div className="space-y-2" data-home-details>
-          {home.images.length > 0 && (
-            <div>
-              <div className="grid grid-cols-3 gap-2">
-                {[...new Set(home.images)].map((filePath, index) => (
-                  <picture
-                    key={`thumb-${filePath}`}
-                    className="relative aspect-square"
-                    onClick={() => setSelectedImageIndex(index)}
-                  >
-                    <img
-                      src={getStorageImageUrl(filePath)}
-                      alt={`Photo ${index + 1}`}
-                      className="absolute inset-0 w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                      loading="eager"
-                      onError={e => {
-                        e.currentTarget.src = fallbackImage;
-                      }}
-                    />
-                  </picture>
-                ))}
-              </div>
-            </div>
-          )}
+          <HomeImageGrid images={home.images} onImageClick={setSelectedImageIndex} />
 
           {(userType === 'conciergerie' || (userType === 'employee' && isFromCalendar)) && (
             <div>

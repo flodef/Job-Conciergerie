@@ -112,7 +112,8 @@ export default function Calendar() {
   // Show loading or empty state, but only if we're on this page
   if (currentPage === Page.Calendar && (authLoading || missionsLoading || needsRefreshCalendar)) return null;
 
-  if (acceptedMissions.length === 0) {
+  // Only show empty state if not loading and we've confirmed there are no missions
+  if (!missionsLoading && acceptedMissions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100dvh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8">
         <div className="flex flex-col items-center justify-center text-center gap-2">
