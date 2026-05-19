@@ -3,8 +3,8 @@
 import { useEffect, useCallback, useSyncExternalStore } from 'react';
 import { navigationPages, Page } from '@/app/utils/navigation';
 
-const AUTO_REFRESH_INTERVAL = 60 * 1000; // 1 minute
-const STALE_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes (increased from 1 min to save Neon CU)
+const STALE_THRESHOLD = 15 * 60 * 1000; // 15 minutes (increased from 5 min to save Neon CU)
 const LAST_FETCH_STORAGE_KEY = 'fetch_time_last_fetch';
 
 type FetchTimeState = {
