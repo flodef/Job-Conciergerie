@@ -10,7 +10,15 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/navigation';
-import { IconBriefcase, IconCalendar, IconClock, IconHome, IconSettings, IconUser } from '@tabler/icons-react';
+import {
+  IconBriefcase,
+  IconCalendar,
+  IconClock,
+  IconHome,
+  IconRefresh,
+  IconSettings,
+  IconUser,
+} from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { ReactNode, useEffect, useState } from 'react';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
@@ -142,7 +150,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
           <h1 className="w-full text-2xl font-semibold text-foreground text-center">{currentPage}</h1>
           {/* Tooltip for last fetch time */}
           {!!lastFetchTime[currentPage] && (
-            <Tooltip icon={IconClock} size="small" orientation="horizontal" onClick={handleManualRefresh}>
+            <Tooltip icon={IconRefresh} size="medium" orientation="horizontal" onClick={handleManualRefresh}>
               <div className="flex w-full justify-center text-center">
                 Dernière mise à jour :<br /> il y a{' '}
                 {getTimeDifference(new Date(lastFetchTime[currentPage]!), currentTime)}
