@@ -2,6 +2,7 @@
 
 import InstallToast from '@/app/components/installToast';
 import LoadingSpinner from '@/app/components/loadingSpinner';
+import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { useBadge } from '@/app/contexts/badgeProvider';
@@ -27,10 +28,12 @@ export const pageSettings: Record<Page, { icon: ReactNode; userType: UserType | 
   [Page.Settings]: { icon: <IconSettings size={30} />, userType: undefined },
 };
 
+const MIN_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 export default function NavigationLayout({ children }: { children: ReactNode }) {
   const { userType: authUserType, isLoading: isAuthLoading } = useAuth();
-  const { isLoading: isLoadingMissions } = useMissions();
-  const { isLoading: isLoadingHomes } = useHomes();
+  const { isLoading: isLoadingMissions, fetchMissions } = useMissions();
+  const { isLoading: isLoadingHomes, fetchHomes } = useHomes();
   const { currentPage, onMenuChange } = useMenuContext();
 
   const [userType, setUserType] = useState<UserType>();
@@ -43,8 +46,51 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     resetPendingEmployeesCount,
     resetNewMissionsCount,
   } = useBadge();
-  const { lastFetchTime } = useFetchTime();
+  const { lastFetchTime, updateFetchTime } = useFetchTime();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [lastManualRefresh, setLastManualRefresh] = useState<number>(0);
+  const [refreshToast, setRefreshToast] = useState<{ type: ToastType; message: string } | null>(null);
+
+  // Auto-update currentTime every second to show accurate "time ago"
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle manual refresh with rate limiting
+  const handleManualRefresh = () => {
+    const now = Date.now();
+    const timeSinceLastRefresh = now - lastManualRefresh;
+
+    if (timeSinceLastRefresh < MIN_REFRESH_INTERVAL) {
+      const remainingSeconds = Math.ceil((MIN_REFRESH_INTERVAL - timeSinceLastRefresh) / 1000);
+      const remainingMinutes = Math.ceil(remainingSeconds / 60);
+      setRefreshToast({
+        type: ToastType.Warning,
+        message: `Veuillez attendre encore ${remainingMinutes} min avant de rafraîchir`,
+      });
+      setTimeout(() => setRefreshToast(null), 3000);
+      return;
+    }
+
+    // Perform refresh
+    setLastManualRefresh(now);
+    setCurrentTime(new Date());
+
+    // Refresh data based on current page
+    if (currentPage === Page.Missions || currentPage === Page.Calendar) {
+      fetchMissions().then(() => updateFetchTime(Page.Missions));
+    }
+    if (currentPage === Page.Homes) {
+      fetchHomes().then(() => updateFetchTime(Page.Homes));
+    }
+
+    setRefreshToast({
+      type: ToastType.Success,
+      message: 'Données rafraîchies avec succès !',
+    });
+    setTimeout(() => setRefreshToast(null), 3000);
+  };
 
   const isLoading = isAuthLoading || isLoadingMissions || isLoadingHomes;
   const loadingText = isLoadingMissions
@@ -96,12 +142,19 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
           <h1 className="w-full text-2xl font-semibold text-foreground text-center">{currentPage}</h1>
           {/* Tooltip for last fetch time */}
           {!!lastFetchTime[currentPage] && (
-            <Tooltip icon={IconClock} size="small" orientation="horizontal" onClick={() => setCurrentTime(new Date())}>
+            <Tooltip icon={IconClock} size="small" orientation="horizontal" onClick={handleManualRefresh}>
               <div className="flex w-full justify-center text-center">
                 Dernière mise à jour :<br /> il y a{' '}
                 {getTimeDifference(new Date(lastFetchTime[currentPage]!), currentTime)}
               </div>
             </Tooltip>
+          )}
+          {/* Toast for refresh feedback */}
+          {refreshToast && (
+            <ToastMessage
+              toast={{ type: refreshToast.type, message: refreshToast.message }}
+              onClose={() => setRefreshToast(null)}
+            />
           )}
         </header>
       )}
