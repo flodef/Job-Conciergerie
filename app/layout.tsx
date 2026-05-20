@@ -1,5 +1,6 @@
 import { PageManager } from '@/app/components/pageManager';
 import NavigationLayout from '@/app/components/navigationLayout';
+import { ServiceWorkerRegister } from '@/app/components/serviceWorkerRegister';
 import { AuthProvider } from '@/app/contexts/authProvider';
 import { BadgeProvider } from '@/app/contexts/badgeProvider';
 import { HomesProvider } from '@/app/contexts/homesProvider';
@@ -49,6 +50,7 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}>
         <span style={{ display: 'none', fontFamily: 'var(--font-geist-sans)' }}>Force font load</span>
+        <ServiceWorkerRegister />
         <MenuProvider>
           <AuthProvider>
             <HomesProvider>
