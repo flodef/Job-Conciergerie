@@ -1,7 +1,7 @@
 'use client';
 
 import Accordion from '@/app/components/accordion';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { Toast, ToastMessage } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import ConciergerieSettings from '@/app/settings/components/conciergerieSettings';
 import ConnectedDevicesSettings from '@/app/settings/components/connectedDevicesSettings';
@@ -11,12 +11,17 @@ import { MAX_DEVICES } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import packageJson from '@/package.json';
 import { IconBell, IconDevices, IconSettings } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Settings() {
-  const { userType } = useAuth();
+  const { userType, isLoading: authLoading } = useAuth();
 
   const [toast, setToast] = useState<Toast>();
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading) setHasLoadedOnce(true);
+  }, [authLoading]);
 
   // Get connected devices count for the subtitle
   const [storedLabels] = useLocalStorage<Array<{ id: string; label?: string }>>('device_labels', []);
@@ -50,7 +55,13 @@ export default function Settings() {
   return (
     <div className="bg-background min-h-full max-w-2xl mx-auto px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-      <Accordion items={accordionItems} />
+      {!hasLoadedOnce ? (
+        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <Accordion items={accordionItems} />
+      )}
     </div>
   );
 }

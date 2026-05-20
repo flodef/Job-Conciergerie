@@ -31,6 +31,7 @@ export default function EmployeesList() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [toast, setToast] = useState<Toast>();
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
   // Confirmation modal state
@@ -48,6 +49,7 @@ export default function EmployeesList() {
     const filteredEmployees = filterEmployeesByConciergerie(authEmployees, conciergerieName);
 
     setEmployees(sortEmployees(filteredEmployees));
+    setHasLoadedOnce(true);
   }, [conciergerieName, authLoading, authEmployees]);
 
   // Filter employees by status
@@ -177,7 +179,13 @@ export default function EmployeesList() {
     <div className="bg-background min-h-full px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      {employees.length > 1 && (
+      {!hasLoadedOnce && (
+        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      )}
+
+      {hasLoadedOnce && employees.length > 1 && (
         <SearchInput
           className="mb-2"
           placeholder="Rechercher un prestataire..."
@@ -187,27 +195,29 @@ export default function EmployeesList() {
       )}
 
       {/* Render employee tables in an accordion */}
-      <div className="w-full">
-        <Accordion
-          items={[
-            {
-              title: `En attente (${pendingEmployees.length})`,
-              icon: <IconUser size={20} />,
-              content: renderEmployeeTable(pendingEmployees, 'en attente'),
-            },
-            {
-              title: `Acceptés (${acceptedEmployees.length})`,
-              icon: <IconUserCheck size={20} />,
-              content: renderEmployeeTable(acceptedEmployees, 'accepté'),
-            },
-            {
-              title: `Rejetés (${rejectedEmployees.length})`,
-              icon: <IconUserX size={20} />,
-              content: renderEmployeeTable(rejectedEmployees, 'rejeté'),
-            },
-          ]}
-        />
-      </div>
+      {hasLoadedOnce && (
+        <div className="w-full">
+          <Accordion
+            items={[
+              {
+                title: `En attente (${pendingEmployees.length})`,
+                icon: <IconUser size={20} />,
+                content: renderEmployeeTable(pendingEmployees, 'en attente'),
+              },
+              {
+                title: `Acceptés (${acceptedEmployees.length})`,
+                icon: <IconUserCheck size={20} />,
+                content: renderEmployeeTable(acceptedEmployees, 'accepté'),
+              },
+              {
+                title: `Rejetés (${rejectedEmployees.length})`,
+                icon: <IconUserX size={20} />,
+                content: renderEmployeeTable(rejectedEmployees, 'rejeté'),
+              },
+            ]}
+          />
+        </div>
+      )}
 
       {/* Employee details modal */}
       {selectedEmployee && <EmployeeDetails employee={selectedEmployee} onClose={closeEmployeeDetails} />}

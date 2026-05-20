@@ -38,6 +38,12 @@ export default function Calendar() {
   const { needsRefresh, updateFetchTime } = useFetchTime();
   const needsRefreshCalendar = needsRefresh[Page.Calendar];
   const [toast, setToast] = useState<Toast>();
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
+  // Track when initial load completes
+  useEffect(() => {
+    if (!authLoading && !missionsLoading) setHasLoadedOnce(true);
+  }, [authLoading, missionsLoading]);
 
   const [acceptedMissions, setAcceptedMissions] = useState<Mission[]>([]);
   const [missionsByDate, setMissionsByDate] = useState<Map<string, Mission[]>>(new Map());
@@ -110,7 +116,9 @@ export default function Calendar() {
   };
 
   // Only show empty state if not loading and we've confirmed there are no missions
-  if (!missionsLoading && acceptedMissions.length === 0) {
+  if (!hasLoadedOnce) return null;
+
+  if (acceptedMissions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100dvh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8">
         <div className="flex flex-col items-center justify-center text-center gap-2">

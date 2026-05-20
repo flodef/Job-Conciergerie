@@ -24,6 +24,7 @@ export default function HomesPage() {
   const needsRefreshHomes = needsRefresh[Page.Homes];
 
   const [toast, setToast] = useState<Toast>();
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [selectedHome, setSelectedHome] = useState<Home | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -33,6 +34,11 @@ export default function HomesPage() {
   useEffect(() => {
     setHasUnsavedChanges(false);
   }, [setHasUnsavedChanges, currentPage]);
+
+  // Track when initial load completes
+  useEffect(() => {
+    if (!authLoading && !homesLoading) setHasLoadedOnce(true);
+  }, [authLoading, homesLoading]);
 
   // Filter homes by the current conciergerie
   const filteredHomes = useMemo(
@@ -82,21 +88,13 @@ export default function HomesPage() {
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       {/* Show loading indicator while data is loading */}
-      {homesLoading && myHomes.length === 0 && (
+      {!hasLoadedOnce && (
         <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       )}
 
-      {/* Show empty state when no homes and not loading */}
-      {!homesLoading && myHomes.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] gap-4">
-          <p className="text-light">Aucun bien disponible</p>
-          <p className="text-sm text-light">Ajoutez votre premier bien</p>
-        </div>
-      )}
-
-      {myHomes.length > 0 && (
+      {hasLoadedOnce && myHomes.length > 0 && (
         <div className="flex items-start justify-end gap-2 mb-2">
           {myHomes.length > 1 && (
             <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
@@ -136,7 +134,7 @@ export default function HomesPage() {
         </div>
       )}
 
-      {filteredHomes.length === 0 && searchTerm === '' ? (
+      {hasLoadedOnce && filteredHomes.length === 0 && searchTerm === '' ? (
         <div
           className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8 cursor-pointer"
           onClick={handleAddHome}
