@@ -78,7 +78,7 @@ export default function MissionFilters({
     <div className="px-4 pb-4 bg-background rounded-lg shadow-md flex flex-col gap-2">
       {/* Conciergeries filter */}
       {availableConciergeries.length > 0 && (
-        <div className={clsx(rowClassName, 'my-[0px]')}>
+        <div className={clsx(rowClassName, 'my-0')}>
           <MultiSelect
             id="conciergeries-filter"
             label="Conciergeries"
@@ -102,7 +102,7 @@ export default function MissionFilters({
       )}
 
       {/* Time period filter */}
-      <div className={clsx(rowClassName, 'my-[0px]')}>
+      <div className={clsx(rowClassName, 'my-0')}>
         <MultiSelect
           id="time-period-filter"
           label="Période"
@@ -125,7 +125,7 @@ export default function MissionFilters({
       </div>
 
       {/* Mission status filter */}
-      <div className={clsx(rowClassName, 'my-[0px]')}>
+      <div className={clsx(rowClassName, 'my-0')}>
         <MultiSelect
           id="mission-status-filter"
           label="Statut"
@@ -150,7 +150,7 @@ export default function MissionFilters({
       </div>
 
       {/* Geographic zones filter */}
-      <div className={clsx(rowClassName, 'my-[0px]')}>
+      <div className={clsx(rowClassName, 'my-0')}>
         <MultiSelect
           id="zones-filter"
           label="Zones géographiques"

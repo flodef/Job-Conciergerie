@@ -33,7 +33,7 @@ export default function MissionSortControls({
           <button
             onClick={() => changeSortField('date')}
             className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap',
+              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer',
               sortField === 'date' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
             )}
           >
@@ -44,7 +44,7 @@ export default function MissionSortControls({
           <button
             onClick={() => changeSortField('conciergerie')}
             className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap',
+              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer',
               sortField === 'conciergerie' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
             )}
           >
@@ -55,7 +55,7 @@ export default function MissionSortControls({
           <button
             onClick={() => changeSortField('geographicZone')}
             className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap',
+              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer',
               sortField === 'geographicZone' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
             )}
           >
@@ -66,7 +66,7 @@ export default function MissionSortControls({
           <button
             onClick={() => changeSortField('homeTitle')}
             className={clsx(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap',
+              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer',
               sortField === 'homeTitle' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
             )}
           >
@@ -81,7 +81,7 @@ export default function MissionSortControls({
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={clsx(
-              'w-8 h-8 rounded-lg flex items-center justify-center',
+              'w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer',
               showFilters ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
               hasActiveFilters ? 'ring-1 ring-primary' : '',
             )}
