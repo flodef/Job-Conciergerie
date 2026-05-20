@@ -163,13 +163,14 @@ export default function HomesPage() {
                 displayMode === 'thumb' && 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4',
               )}
             >
-              {filteredHomes.map(home => (
+              {filteredHomes.map((home, index) => (
                 <HomeCard
                   key={home.id}
                   home={home}
                   onClick={() => handleHomeClick(home)}
                   onEdit={() => handleHomeEdit(home)}
                   displayMode={displayMode}
+                  isPriority={index < 8}
                 />
               ))}
             </div>
