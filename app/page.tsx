@@ -47,7 +47,7 @@ export default function Home() {
     >
       <div className="w-full max-w-md bg-background">
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 cursor-pointer">
             <InstallButton />
             <UserTypeSelection onSelect={handleUserTypeSelect} />
           </div>

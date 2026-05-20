@@ -217,7 +217,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {isNavigationPage && !!userType && (
         <header
           className={clsx(
-            'fixed top-0 left-0 right-0 max-w-7xl mx-auto h-16 flex items-center justify-between px-4 w-full z-40 transition-all duration-200 bg-background',
+            'fixed top-0 left-0 right-0 mx-auto h-16 flex items-center justify-between px-4 w-full z-40 transition-all duration-200 bg-background',
             isScrolled ? 'shadow-md' : '',
           )}
         >
@@ -267,7 +267,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {/* Fixed bottom navigation bar - hidden on home page */}
       {isNavigationPage && !!userType && (
         <nav className="fixed bottom-0 left-0 right-0 h-16 bg-background border-secondary z-40">
-          <div className="max-w-7xl mx-auto flex justify-around h-full border-t">
+          <div className="mx-auto flex justify-around h-full border-t">
             {navigationPages
               .filter(page => {
                 // Skip Welcome page in navigation
