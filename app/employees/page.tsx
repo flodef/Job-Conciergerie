@@ -97,13 +97,13 @@ export default function EmployeesList() {
           conciergerie,
           countEmployeeMissions(employee),
           newStatus === 'accepted',
-        );
-
-        setToast({
-          type: newStatus === 'accepted' ? ToastType.Success : ToastType.Error,
-          message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été ${
-            newStatus === 'accepted' ? 'accepté' : 'rejeté'
-          }`,
+        ).then(emailSent => {
+          setToast({
+            type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
+            message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été ${
+              newStatus === 'accepted' ? 'accepté' : 'rejeté'
+            }${emailSent ? ". L'employé a été notifié par email." : '.'}`,
+          });
         });
       })
       .catch(error => {

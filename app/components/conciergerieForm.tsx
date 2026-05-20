@@ -68,7 +68,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
-      EmailSender.sendVerificationEmail({ setToast }, selectedConciergerie, userId);
+      EmailSender.sendVerificationEmail({ setToast, showSuccessToast: true }, selectedConciergerie, userId);
 
       onMenuChange(Page.Waiting);
     } catch (error) {

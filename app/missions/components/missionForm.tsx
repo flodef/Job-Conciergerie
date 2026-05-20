@@ -247,10 +247,15 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         // Check if update would create a duplicate
         if (missionExists(updatedMission, mission.id)) throw new Error('Une mission identique existe déjà');
 
-        const result = await updateMission(updatedMission);
-        if (!result) throw new Error('Impossible de mettre à jour la mission');
+        const { success, employeeNotified } = await updateMission(updatedMission);
+        if (!success) throw new Error('Impossible de mettre à jour la mission');
 
-        setToast({ type: ToastType.Success, message: 'Mission mise à jour avec succès !' });
+        setToast({
+          type: ToastType.Success,
+          message: employeeNotified
+            ? 'Mission mise à jour ! Le prestataire a été notifié.'
+            : 'Mission mise à jour avec succès !',
+        });
       }
     } catch (error) {
       setToast({ type: ToastType.Error, message: String(error), error });

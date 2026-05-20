@@ -113,24 +113,32 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const handleDelete = () => {
     setIsSubmitting(true);
     setIsDeleteModalOpen(false);
-    deleteMission(mission.id).then(isSuccess => {
+    deleteMission(mission.id).then(({ success, employeeNotified }) => {
       setToast({
-        type: isSuccess ? ToastType.Success : ToastType.Error,
-        message: isSuccess ? 'Mission supprimée !' : 'Erreur lors de la suppression de la mission',
+        type: success ? ToastType.Success : ToastType.Error,
+        message: success
+          ? employeeNotified
+            ? 'Mission supprimée ! Le prestataire a été notifié.'
+            : 'Mission supprimée !'
+          : 'Erreur lors de la suppression de la mission',
       });
-      if (!isSuccess) setIsSubmitting(false);
+      if (!success) setIsSubmitting(false);
     });
   };
 
   const handleCancel = () => {
     setIsSubmitting(true);
     setIsCancelModalOpen(false);
-    cancelMission(mission.id).then(isSuccess => {
+    cancelMission(mission.id).then(({ success, employeeNotified }) => {
       setToast({
-        type: isSuccess ? ToastType.Success : ToastType.Error,
-        message: isSuccess ? 'Mission annulée !' : "Erreur lors de l'annulation de la mission",
+        type: success ? ToastType.Success : ToastType.Error,
+        message: success
+          ? employeeNotified
+            ? 'Mission annulée ! Le prestataire a été notifié.'
+            : 'Mission annulée !'
+          : "Erreur lors de l'annulation de la mission",
       });
-      if (!isSuccess) setIsSubmitting(false);
+      if (!success) setIsSubmitting(false);
     });
   };
 
@@ -142,14 +150,16 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const handleConfirmAccept = () => {
     setIsSubmitting(true);
     setIsConfirmationModalOpen(false);
-    acceptMission(mission.id).then(isSuccess => {
+    acceptMission(mission.id).then(({ success, employeeNotified }) => {
       setToast({
-        type: isSuccess ? ToastType.Success : ToastType.Error,
-        message: isSuccess
-          ? 'Mission acceptée ! Retrouvez-la dans votre calendrier.'
+        type: success ? ToastType.Success : ToastType.Error,
+        message: success
+          ? employeeNotified
+            ? 'Mission acceptée ! Un email de confirmation vous a été envoyé.'
+            : 'Mission acceptée ! Retrouvez-la dans votre calendrier.'
           : "Erreur lors de l'acceptation de la mission",
       });
-      if (!isSuccess) setIsSubmitting(false);
+      if (!success) setIsSubmitting(false);
     });
   };
 
