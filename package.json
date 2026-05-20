@@ -1,10 +1,10 @@
 {
   "name": "job-conciergerie",
-  "version": "2.24",
+  "version": "2.25",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --webpack",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "prepare": "husky",
