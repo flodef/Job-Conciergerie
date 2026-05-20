@@ -1,11 +1,19 @@
 export const fallbackImage = '/home.webp';
 
+interface ImageTransformOptions {
+  width?: number;
+  height?: number;
+  quality?: number;
+  resize?: 'cover' | 'contain' | 'fill';
+}
+
 /**
  * Utility to get image URL from a Supabase storage file path
  * @param filePath The file path in Supabase storage
+ * @param options Optional image transformation parameters
  * @returns The URL to access the image
  */
-export function getStorageImageUrl(filePath: string): string {
+export function getStorageImageUrl(filePath: string, options?: ImageTransformOptions): string {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   if (!supabaseUrl) {
@@ -22,7 +30,23 @@ export function getStorageImageUrl(filePath: string): string {
   const bucketName = encodeURIComponent('House images');
   // Encode each path segment separately to handle spaces in folder/file names
   const encodedPath = filePath.split('/').map(encodeURIComponent).join('/');
-  return `${supabaseUrl}/storage/v1/object/public/${bucketName}/${encodedPath}`;
+
+  let url = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${encodedPath}`;
+
+  // Add Supabase image transformation parameters if provided
+  if (options) {
+    const params = new URLSearchParams();
+    if (options.width) params.append('width', options.width.toString());
+    if (options.height) params.append('height', options.height.toString());
+    if (options.quality) params.append('quality', options.quality.toString());
+    if (options.resize) params.append('resize', options.resize);
+
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+  }
+
+  return url;
 }
 
 /**

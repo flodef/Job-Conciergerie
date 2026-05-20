@@ -32,15 +32,20 @@ export default function ImageCarousel({
   // Convert imageUrls to array
   const images = useMemo(() => (Array.isArray(imageUrls) ? imageUrls : [imageUrls]), [imageUrls]);
 
-  // URL helper function
+  // URL helper function - use optimized thumbnails to reduce Supabase cached egress
   const getUrl = useCallback((url: string) => {
-    return url.startsWith('http') || url.startsWith('/') ? url : getStorageImageUrl(url);
+    if (url.startsWith('http') || url.startsWith('/')) return url;
+    // Use optimized thumbnail: max width 800px, 80% quality
+    return getStorageImageUrl(url, { width: 800, quality: 80 });
   }, []);
 
   // Initialize index
   useEffect(() => {
     setCurrentIndex(initialIndex);
   }, [initialIndex]);
+
+  // Check if image preloading is enabled via environment variable
+  const shouldPreloadImages = process.env.NEXT_PUBLIC_PRELOAD_IMAGES === 'true';
 
   // Preload images
   const preloadImage = useCallback((url: string): Promise<void> => {
@@ -68,7 +73,7 @@ export default function ImageCarousel({
 
   // Aggressively preload current and adjacent images
   useEffect(() => {
-    if (!images.length) return;
+    if (!images.length || !shouldPreloadImages) return;
 
     const loadCurrentImage = async () => {
       // Don't set isLoading here - it's now set by the navigation functions
@@ -101,7 +106,7 @@ export default function ImageCarousel({
     };
 
     loadCurrentImage();
-  }, [currentIndex, images, getUrl, preloadImage, isLoading]);
+  }, [currentIndex, images, getUrl, preloadImage, isLoading, shouldPreloadImages]);
 
   // Navigation functions - explicitly set loading state
   const goToNext = () => {

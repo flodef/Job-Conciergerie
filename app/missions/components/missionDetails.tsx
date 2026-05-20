@@ -273,7 +273,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
             {home.images.length ? (
               <HomeImagePreview
-                imageUrl={getStorageImageUrl(firstHomeImage)}
+                imageUrl={getStorageImageUrl(firstHomeImage, { width: 400, quality: 80 })}
                 homeTitle={home.title}
                 onClick={() => setSelectedImageIndex(home.images.indexOf(firstHomeImage))}
               />

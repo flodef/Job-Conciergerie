@@ -31,8 +31,8 @@ const HomeImageGrid = React.memo(function HomeImageGrid({
   images: string[];
   onImageClick: (index: number) => void;
 }) {
-  // Preload and cache all images
-  const imageUrls = useMemo(() => images.map(img => getStorageImageUrl(img)), [images]);
+  // Preload and cache all images - use optimized thumbnails to reduce Supabase cached egress
+  const imageUrls = useMemo(() => images.map(img => getStorageImageUrl(img, { width: 400, quality: 80 })), [images]);
   const { getCachedUrl } = useImageCache(imageUrls);
 
   if (images.length === 0) return null;
@@ -40,7 +40,7 @@ const HomeImageGrid = React.memo(function HomeImageGrid({
   return (
     <div className="grid grid-cols-3 gap-2">
       {images.map((image, index) => {
-        const originalUrl = getStorageImageUrl(image);
+        const originalUrl = getStorageImageUrl(image, { width: 400, quality: 80 });
         const cachedUrl = getCachedUrl(originalUrl);
         return (
           <picture key={image} className="relative aspect-square overflow-hidden rounded-lg cursor-pointer">

@@ -54,9 +54,13 @@ export function HomesProvider({ children }: { children: ReactNode }) {
           setHomes(fetchedHomes);
           updateFetchTime(Page.Homes);
 
-          // Preload all home images in the background
-          const allImageUrls = fetchedHomes.flatMap(home => (home.images || []).map(img => getStorageImageUrl(img)));
-          preloadImages(allImageUrls);
+          // Preload all home images in the background if enabled
+          if (process.env.NEXT_PUBLIC_PRELOAD_IMAGES === 'true') {
+            const allImageUrls = fetchedHomes.flatMap(home =>
+              (home.images || []).map(img => getStorageImageUrl(img, { width: 400, quality: 80 })),
+            );
+            preloadImages(allImageUrls);
+          }
         }
         return !!fetchedHomes;
       })

@@ -352,7 +352,7 @@ const ImageUploader = React.forwardRef<
         <div className={cn('grid grid-cols-3 gap-4', error && 'border border-red-500 rounded-lg p-2')}>
           {/* Existing committed images */}
           {[...new Set(imageIds)].map((filePath, index) => {
-            const url = getStorageImageUrl(filePath);
+            const url = getStorageImageUrl(filePath, { width: 400, quality: 80 });
             return (
               <div key={`committed-${filePath}-${index}`} className="relative aspect-square">
                 <img

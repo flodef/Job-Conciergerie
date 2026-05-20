@@ -24,7 +24,11 @@ const HomeImage = React.memo(function HomeImage({
 }) {
   return (
     <img
-      src={home.images && home.images.length > 0 ? getStorageImageUrl(home.images[0]) : fallbackImage}
+      src={
+        home.images && home.images.length > 0
+          ? getStorageImageUrl(home.images[0], { width: 400, quality: 80 })
+          : fallbackImage
+      }
       alt={altText}
       className={`object-cover w-full h-full ${className ?? ''}`}
       onError={e => {
