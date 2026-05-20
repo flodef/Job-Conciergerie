@@ -30,7 +30,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           />
           <div
             className={clsx(
-              'border-2 rounded h-5 w-5 flex flex-shrink-0 justify-center items-center',
+              'border-2 rounded h-5 w-5 flex shrink-0 justify-center items-center',
               checked ? 'bg-primary border-primary' : 'border-secondary',
               disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
             )}

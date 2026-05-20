@@ -10,11 +10,11 @@ export const inputClassName =
   'w-full p-2 pl-9 border-2 border-secondary rounded-md focus:ring-primary focus:border-primary focus-visible:outline-none focus-within:outline-none';
 export const spinningClassName =
   'w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin mr-2';
-export const secondaryButtonClassName = 'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1';
+export const secondaryButtonClassName = 'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 cursor-pointer';
 export const rightSideButtonClassName = secondaryButtonClassName + ' bg-foreground/10 text-foreground self-end mb-1.5';
 export const actionButtonBarClassName =
-  'flex justify-end gap-2 bg-background border-t border-secondary px-2 py-2 rounded-b-lg';
-export const actionButtonClassName = 'flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80';
+  'flex justify-end gap-2 bg-background border-t border-secondary px-2 py-2 rounded-b-lg cursor-pointer';
+export const actionButtonClassName = 'flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80 cursor-pointer';
 
 export const buttonClassName = (type: ButtonStyle) =>
   clsx(

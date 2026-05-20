@@ -33,7 +33,7 @@ export default function FullScreenModal({
     >
       <div className="relative bg-background rounded-lg shadow-lg max-w-md w-full flex flex-col max-h-[90vh] overflow-hidden">
         {/* Fixed header with title and close button */}
-        <div className="flex-shrink-0 z-20 bg-background p-4 border-b border-secondary flex justify-between items-center rounded-t-lg">
+        <div className="shrink-0 z-20 bg-background p-4 border-b border-secondary flex justify-between items-center rounded-t-lg">
           <div className="flex items-center">
             <h2 className="text-xl font-bold overflow-hidden">{title}</h2>
             {tooltip && <Tooltip>{tooltip}</Tooltip>}
@@ -55,7 +55,7 @@ export default function FullScreenModal({
         {footer && (
           <div
             className={clsx(
-              'flex-shrink-0 z-20 bg-background border-t border-secondary',
+              'shrink-0 z-20 bg-background border-t border-secondary',
               disabled && 'pointer-events-none opacity-50 cursor-not-allowed',
             )}
           >

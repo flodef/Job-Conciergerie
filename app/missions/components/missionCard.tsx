@@ -52,7 +52,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         aria-label={`${mission.hours} heures`}
       >
         <div
-          className="absolute top-0 right-0 w-0 h-0 border-t-[56px] border-l-[56px] border-t-[conciergerieColor] border-l-transparent rounded-tr-lg"
+          className="absolute top-0 right-0 w-0 h-0 border-t-56 border-l-56 border-t-[conciergerieColor] border-l-transparent rounded-tr-lg"
           style={{
             borderTopColor: conciergerieColor, // Fallback for Tailwind dynamic color
             borderLeftColor: 'transparent',
