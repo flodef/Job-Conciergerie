@@ -38,27 +38,25 @@ const HomeImageGrid = React.memo(function HomeImageGrid({
   if (images.length === 0) return null;
 
   return (
-    <div className="p-3">
-      <div className="grid grid-cols-3 gap-2">
-        {images.map((image, index) => {
-          const originalUrl = getStorageImageUrl(image);
-          const cachedUrl = getCachedUrl(originalUrl);
-          return (
-            <picture key={image} className="relative aspect-square overflow-hidden rounded-lg cursor-pointer">
-              <img
-                src={cachedUrl}
-                alt={`Photo ${index + 1}`}
-                className="w-full h-full object-cover"
-                loading="eager"
-                onClick={() => onImageClick(index)}
-                onError={e => {
-                  e.currentTarget.src = fallbackImage;
-                }}
-              />
-            </picture>
-          );
-        })}
-      </div>
+    <div className="grid grid-cols-3 gap-2">
+      {images.map((image, index) => {
+        const originalUrl = getStorageImageUrl(image);
+        const cachedUrl = getCachedUrl(originalUrl);
+        return (
+          <picture key={image} className="relative aspect-square overflow-hidden rounded-lg cursor-pointer">
+            <img
+              src={cachedUrl}
+              alt={`Photo ${index + 1}`}
+              className="w-full h-full object-cover"
+              loading="eager"
+              onClick={() => onImageClick(index)}
+              onError={e => {
+                e.currentTarget.src = fallbackImage;
+              }}
+            />
+          </picture>
+        );
+      })}
     </div>
   );
 });
@@ -161,12 +159,13 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
 
         <div data-home-details>
           <Accordion
+            variant="card"
             items={[
               ...(home.images.length > 0
                 ? [
                     {
                       title: `Photos (${home.images.length})`,
-                      icon: <IconPhoto size={20} />,
+                      icon: <IconPhoto size={16} className="text-light" />,
                       content: <HomeImageGrid images={home.images} onImageClick={setSelectedImageIndex} />,
                     },
                   ]
@@ -175,14 +174,14 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
                 ? [
                     {
                       title: 'Description',
-                      icon: <IconFileDescription size={20} />,
+                      icon: <IconFileDescription size={16} className="text-light" />,
                       content: <p className="text-foreground whitespace-pre-wrap">{home.description}</p>,
                     },
                   ]
                 : []),
               {
                 title: 'Points particuliers',
-                icon: <IconListCheck size={20} />,
+                icon: <IconListCheck size={16} className="text-light" />,
                 content: (
                   <ul className="list-none pl-0 space-y-1">
                     {home.objectives.map((objective, index) => (
