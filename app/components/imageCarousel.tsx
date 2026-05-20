@@ -2,7 +2,6 @@
 
 import { getStorageImageUrl } from '@/app/utils/storage';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import Image from 'next/image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import LoadingSpinner from './loadingSpinner';
 
@@ -144,14 +143,11 @@ export default function ImageCarousel({
       <div className="w-full h-full overflow-hidden relative">
         {/* Only render image if it's been preloaded */}
         {preloadedImages.current.has(currentImageUrl) && (
-          <Image
+          <img
             key={`image-${currentIndex}`}
             src={currentImageUrl}
             alt={`${altPrefix} ${currentIndex + 1}`}
-            fill
-            className="object-contain rounded-lg"
-            sizes="100vw"
-            priority
+            className="object-contain rounded-lg w-full h-full"
           />
         )}
 

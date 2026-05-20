@@ -168,7 +168,6 @@ export default function HomesPage() {
                   onClick={() => handleHomeClick(home)}
                   onEdit={() => handleHomeEdit(home)}
                   displayMode={displayMode}
-                  isPriority={index < 8}
                 />
               ))}
             </div>

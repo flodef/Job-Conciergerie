@@ -8,7 +8,6 @@ import { errorClassName } from '@/app/utils/className';
 import { fallbackImage, getStorageFileName, getStorageImageUrl } from '@/app/utils/storage';
 import { IconCheck, IconPhotoPlus, IconX } from '@tabler/icons-react';
 import { clsx } from 'clsx/lite';
-import Image from 'next/image';
 import React, { useEffect, useRef, useState } from 'react';
 
 // --- Constants ---
@@ -356,11 +355,9 @@ const ImageUploader = React.forwardRef<
             const url = getStorageImageUrl(filePath);
             return (
               <div key={`committed-${filePath}-${index}`} className="relative aspect-square">
-                <Image
+                <img
                   src={url}
                   alt={`Image ${index + 1}`}
-                  width={100}
-                  height={100}
                   className="object-cover w-full h-full rounded-lg cursor-pointer"
                   onClick={() => !disabled && setFullscreenImageUrl(url)}
                   onError={e => {
@@ -396,11 +393,9 @@ const ImageUploader = React.forwardRef<
           {/* Local images not yet uploaded */}
           {localImages.map((img, index) => (
             <div key={img.id} className="relative aspect-square">
-              <Image
+              <img
                 src={img.previewUrl}
                 alt={`Prévisualisation ${imageIds.length + index + 1}`}
-                width={100}
-                height={100}
                 className="object-cover w-full h-full rounded-lg cursor-pointer"
                 onClick={() => !disabled && setFullscreenImageUrl(img.previewUrl)}
               />
