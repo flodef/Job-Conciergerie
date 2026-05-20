@@ -103,16 +103,36 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
 
 export default function Accordion({ items, variant = 'default' }: AccordionProps) {
   const [openIndex, setOpenIndex] = React.useState<number>(0);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const transitionTimerRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const handleToggle = (index: number) => {
-    // Only change if clicking a different section (keep current open if same clicked)
-    setOpenIndex(current => (current === index ? current : index));
+    setOpenIndex(current => {
+      if (current === index) return current;
+
+      // Find nearest scrollable ancestor and suppress its scrollbar during transition
+      let el = containerRef.current?.parentElement;
+      while (el) {
+        const overflow = getComputedStyle(el).overflowY;
+        if (overflow === 'auto' || overflow === 'scroll') {
+          el.style.overflowY = 'hidden';
+          clearTimeout(transitionTimerRef.current);
+          transitionTimerRef.current = setTimeout(() => {
+            (el as HTMLElement).style.overflowY = '';
+          }, 300);
+          break;
+        }
+        el = el.parentElement;
+      }
+
+      return index;
+    });
   };
 
   const isCard = variant === 'card';
 
   return (
-    <div className={clsx('overflow-hidden bg-background', isCard ? 'space-y-2' : '')}>
+    <div ref={containerRef} className={clsx('bg-background', isCard ? 'space-y-2' : '')}>
       {items.map((item, index) => (
         <AccordionItem
           key={index}
