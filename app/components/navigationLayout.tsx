@@ -38,7 +38,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const { isLoading: isLoadingHomes, fetchHomes } = useHomes();
   const { currentPage, onMenuChange } = useMenuContext();
 
-  const [userType, setUserType] = useState<UserType>();
+  const [userType, setUserType] = useState<UserType | undefined>(authUserType);
   const [isNavigationPage, setIsNavigationPage] = useState(false);
   const {
     pendingEmployeesCount,
@@ -49,9 +49,10 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     resetNewMissionsCount,
   } = useBadge();
   const { lastFetchTime, updateFetchTime } = useFetchTime();
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [lastManualRefresh, setLastManualRefresh] = useState<number>(0);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [refreshToast, setRefreshToast] = useState<{ type: ToastType; message: string } | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [lastManualRefresh, setLastManualRefresh] = useState<number>(0);
 
   // Auto-update currentTime every second to show accurate "time ago"
   useEffect(() => {
@@ -107,21 +108,21 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       }
     };
 
-    // Handle pull-to-refresh on mobile
+    // Handle pull-to-refresh on mobile (only when scroll container is at top)
     const handleTouchStart = (e: TouchEvent) => {
-      if (window.scrollY === 0) {
+      if (!isScrolled) {
         pullStartY = e.touches[0].clientY;
         isPulling = true;
       }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isPulling) return;
+      if (!isPulling || isScrolled) return;
       const pullY = e.touches[0].clientY;
       const pullDistance = pullY - pullStartY;
 
       // If pulled down more than 100px at top of page, trigger refresh
-      if (pullDistance > 100 && window.scrollY === 0) {
+      if (pullDistance > 100) {
         isPulling = false;
         e.preventDefault();
         handleManualRefresh();
@@ -144,7 +145,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [handleManualRefresh]);
+  }, [handleManualRefresh, isScrolled]);
 
   const isLoading = isAuthLoading || isLoadingMissions || isLoadingHomes;
   const loadingText = isLoadingMissions
@@ -156,11 +157,22 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
         : 'Identification...';
 
   useEffect(() => {
-    // Check if we're on the homepage or waiting page
+    // Check if current path is a navigation page and track scroll position
     const path = currentPage ? routeMap[currentPage] : window.location.pathname;
     const isNavigationPage = navigationRoutes.includes(path);
     setIsNavigationPage(isNavigationPage);
   }, [currentPage]);
+
+  // Track scroll position for header blur effect from PageManager
+  useEffect(() => {
+    const handlePageScroll = (e: Event) => {
+      const customEvent = e as CustomEvent<{ isScrolled: boolean }>;
+      setIsScrolled(customEvent.detail.isScrolled);
+    };
+
+    window.addEventListener('pageScroll', handlePageScroll);
+    return () => window.removeEventListener('pageScroll', handlePageScroll);
+  }, []);
 
   const router = useRouter();
 
@@ -201,9 +213,14 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
   return (
     <div className="h-screen flex flex-col">
-      {/* Fixed header - hidden on home page */}
+      {/* Fixed header with blur on scroll */}
       {isNavigationPage && !!userType && (
-        <header className="sticky top-0 max-w-7xl mx-auto h-16 flex items-center justify-between px-4 w-full">
+        <header
+          className={clsx(
+            'fixed top-0 left-0 right-0 max-w-7xl mx-auto h-16 flex items-center justify-between px-4 w-full z-40 transition-all duration-200 bg-background',
+            isScrolled ? 'shadow-md' : '',
+          )}
+        >
           {/* Title */}
           <h1 className="w-full text-2xl font-semibold text-foreground text-center">{currentPage}</h1>
           {/* Tooltip for last fetch time */}
@@ -229,7 +246,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {isNavigationPage && !!userType && <InstallToast />}
 
       {/* Main content */}
-      <main className="flex-1 relative overflow-hidden">
+      <main className="flex-1 relative overflow-hidden pt-16">
         {/* Content wrapper - scrollable when content is long */}
         <div
           className={clsx('bg-background relative h-full overflow-y-auto', isNavigationPage && !!userType && 'pb-16')}
@@ -272,23 +289,29 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
                     {/* Badge for pending employees */}
                     {page === Page.Employees && pendingEmployeesCount > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                        {pendingEmployeesCount > 9 ? '9+' : pendingEmployeesCount}
+                      <div className="relative ml-auto z-10">
+                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          {pendingEmployeesCount > 9 ? '9+' : pendingEmployeesCount}
+                        </div>
                       </div>
                     )}
 
                     {/* Badge for new missions */}
                     {page === Page.Missions && newMissionsCount > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                        {newMissionsCount > 9 ? '9+' : newMissionsCount}
+                      <div className="relative ml-auto z-10">
+                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                          {newMissionsCount > 9 ? '9+' : newMissionsCount}
+                        </div>
                       </div>
                     )}
 
                     {/* Badge for today's missions (employee) or started missions (conciergerie) */}
                     {page === Page.Calendar &&
                       (userType === 'employee' && todayMissionsCount > 0 ? (
-                        <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                          {todayMissionsCount > 9 ? '9+' : todayMissionsCount}
+                        <div className="relative ml-auto z-10">
+                          <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                            {todayMissionsCount > 9 ? '9+' : todayMissionsCount}
+                          </div>
                         </div>
                       ) : userType === 'conciergerie' && startedMissionsCount > 0 ? (
                         <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">

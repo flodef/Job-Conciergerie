@@ -25,6 +25,7 @@ interface MissionListProps {
   handleAddMission: () => void;
   setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   sortField: MissionSortField;
+  isLoading?: boolean;
 }
 
 export default function MissionList({
@@ -37,6 +38,7 @@ export default function MissionList({
   handleAddMission,
   setIsEditModalOpen,
   sortField,
+  isLoading,
 }: MissionListProps) {
   const { conciergerieName } = useAuth();
 
@@ -44,6 +46,15 @@ export default function MissionList({
   const toggleCategory = (category: string) => {
     setCollapsedCategories(prev => (prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]));
   };
+
+  // Show loading spinner instead of empty state during loading
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100dvh-10rem)]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return Object.keys(groupedMissions).length === 0 ? (
     showFilters ? (

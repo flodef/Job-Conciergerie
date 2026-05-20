@@ -77,7 +77,7 @@ export default function MissionSortControls({
         </div>
 
         {/* Filter toggle button */}
-        <div className="relative ml-auto">
+        <div className="relative ml-auto mt-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={clsx(

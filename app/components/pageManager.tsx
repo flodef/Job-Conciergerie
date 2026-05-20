@@ -8,16 +8,32 @@ import Settings from '@/app/settings/page';
 import Welcome from '@/app/waiting/page';
 import { Page } from '@/app/utils/navigation';
 import { useMenuContext } from '@/app/contexts/menuProvider';
+import { useEffect, useRef } from 'react';
 
 // All pages are rendered once and kept in DOM, only visibility changes
 export function PageManager() {
   const { currentPage } = useMenuContext();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Use Welcome as default if currentPage is not set (unauthenticated)
   const activePage = currentPage || Page.Welcome;
 
+  // Emit scroll events for header shadow effect
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const isScrolled = container.scrollTop > 10;
+      window.dispatchEvent(new CustomEvent('pageScroll', { detail: { isScrolled } }));
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <div className="h-full overflow-y-auto relative">
+    <div ref={scrollRef} className="h-full overflow-y-auto relative">
       {/* Each page wrapper - active page is relative (natural height), inactive are absolute with 0 height */}
       <div
         className="transition-opacity duration-200 ease-in-out"

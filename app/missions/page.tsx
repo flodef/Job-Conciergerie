@@ -34,6 +34,17 @@ export default function Missions() {
   const needsRefreshMissions = needsRefresh[Page.Missions];
 
   const [toast, setToast] = useState<Toast>();
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+
+  // Track when initial load completes
+  useEffect(() => {
+    if (!authLoading && !missionsLoading && missions.length >= 0) {
+      setHasLoadedOnce(true);
+    }
+  }, [authLoading, missionsLoading, missions.length]);
+
+  // Show loading until initial load completes
+  const isLoading = !hasLoadedOnce;
 
   // Modal states - must be declared before any conditional returns
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -199,55 +210,63 @@ export default function Missions() {
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       {/* Show loading indicator while data is loading */}
-      {missionsLoading && missions.length === 0 && (
+      {isLoading && (
         <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       )}
 
-      {/* Sort controls and filter toggle */}
-      <MissionSortControls
-        sortField={sortField}
-        sortDirection={sortDirection}
-        changeSortField={changeSortField}
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
-        hasActiveFilters={hasActiveFilters}
-        filteredMissionsCount={filteredMissions.length}
-      />
-
-      {/* Filter panel */}
-      {showFilters && (
-        <div className="mb-4">
-          <MissionFilters
-            availableConciergeries={availableConciergeries}
-            availableZones={availableZones}
-            selectedConciergeries={selectedConciergeries}
-            setSelectedConciergeries={setSelectedConciergeries}
-            selectedStatuses={selectedStatuses}
-            setSelectedStatuses={setSelectedStatuses}
-            selectedMissionStatuses={selectedMissionStatuses}
-            setSelectedMissionStatuses={setSelectedMissionStatuses}
-            selectedZones={selectedZones}
-            setSelectedZones={setSelectedZones}
-            saveFiltersToLocalStorage={saveFiltersToLocalStorage}
-            savedFilters={savedFilters}
-          />
-        </div>
+      {/* Sort controls and filter toggle - only show when not loading */}
+      {!isLoading && (
+        <MissionSortControls
+          sortField={sortField}
+          sortDirection={sortDirection}
+          changeSortField={changeSortField}
+          showFilters={showFilters}
+          setShowFilters={setShowFilters}
+          hasActiveFilters={hasActiveFilters}
+          filteredMissionsCount={filteredMissions.length}
+        />
       )}
 
-      {/* Mission list */}
-      <MissionList
-        groupedMissions={groupedMissions}
-        collapsedCategories={collapsedCategories}
-        setCollapsedCategories={setCollapsedCategories}
-        setSelectedMission={setSelectedMission}
-        showFilters={showFilters}
-        userType={userType}
-        handleAddMission={handleAddMission}
-        setIsEditModalOpen={setIsEditModalOpen}
-        sortField={sortField}
-      />
+      {/* Content - only show when not loading */}
+      {!isLoading && (
+        <>
+          {/* Filter panel */}
+          {showFilters && (
+            <div className="mb-4">
+              <MissionFilters
+                availableConciergeries={availableConciergeries}
+                availableZones={availableZones}
+                selectedConciergeries={selectedConciergeries}
+                setSelectedConciergeries={setSelectedConciergeries}
+                selectedStatuses={selectedStatuses}
+                setSelectedStatuses={setSelectedStatuses}
+                selectedMissionStatuses={selectedMissionStatuses}
+                setSelectedMissionStatuses={setSelectedMissionStatuses}
+                selectedZones={selectedZones}
+                setSelectedZones={setSelectedZones}
+                saveFiltersToLocalStorage={saveFiltersToLocalStorage}
+                savedFilters={savedFilters}
+              />
+            </div>
+          )}
+
+          {/* Mission list */}
+          <MissionList
+            groupedMissions={groupedMissions}
+            collapsedCategories={collapsedCategories}
+            setCollapsedCategories={setCollapsedCategories}
+            setSelectedMission={setSelectedMission}
+            showFilters={showFilters}
+            userType={userType}
+            handleAddMission={handleAddMission}
+            setIsEditModalOpen={setIsEditModalOpen}
+            sortField={sortField}
+            isLoading={false}
+          />
+        </>
+      )}
 
       {/* Only show the floating action button for conciergerie users */}
       {(filteredMissions.length > 0 || showFilters) && userType === 'conciergerie' && (
