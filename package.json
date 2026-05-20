@@ -1,6 +1,6 @@
 {
   "name": "job-conciergerie",
-  "version": "2.41",
+  "version": "2.44",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -20,12 +20,12 @@
     "@supabase/supabase-js": "latest",
     "@tabler/icons-react": "latest",
     "@tailwindcss/postcss": "latest",
-    "clsx": "latest",
     "next": "latest",
     "nodemailer": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "serwist": "latest"
+    "serwist": "latest",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "latest",

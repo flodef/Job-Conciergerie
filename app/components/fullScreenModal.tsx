@@ -60,7 +60,7 @@ export default function FullScreenModal({
     >
       <div
         className={clsx(
-          'relative bg-background rounded-lg shadow-lg max-w-md w-full flex flex-col max-h-[90vh] h-full overflow-hidden',
+          'relative bg-background rounded-lg shadow-lg max-w-md w-full flex flex-col max-h-[90vh] overflow-hidden',
           'transition-all duration-200 ease-in-out',
           isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95',
         )}

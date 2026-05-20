@@ -13,7 +13,15 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { getTimeDifference } from '@/app/utils/date';
 import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/navigation';
-import { IconBriefcase, IconCalendar, IconHome, IconRefresh, IconSettings, IconUser } from '@tabler/icons-react';
+import {
+  IconBriefcase,
+  IconCalendar,
+  IconClockHour3,
+  IconHome,
+  IconRefresh,
+  IconSettings,
+  IconUser,
+} from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { useRouter } from 'next/navigation';
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
@@ -25,6 +33,7 @@ export const pageSettings: Record<Page, { icon: ReactNode; userType: UserType | 
   [Page.Error]: { icon: null, userType: undefined },
   [Page.Missions]: { icon: <IconBriefcase size={30} />, userType: undefined },
   [Page.Calendar]: { icon: <IconCalendar size={30} />, userType: undefined },
+  [Page.History]: { icon: <IconClockHour3 size={30} />, userType: 'employee' },
   [Page.Homes]: { icon: <IconHome size={30} />, userType: 'conciergerie' },
   [Page.Employees]: { icon: <IconUser size={30} />, userType: 'conciergerie' },
   [Page.Settings]: { icon: <IconSettings size={30} />, userType: undefined },

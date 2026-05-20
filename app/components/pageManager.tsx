@@ -2,6 +2,7 @@
 
 import Calendar from '@/app/calendar/page';
 import EmployeesList from '@/app/employees/page';
+import HistoryPage from '@/app/history/page';
 import HomesPage from '@/app/homes/page';
 import MissionsPage from '@/app/missions/page';
 import Settings from '@/app/settings/page';
@@ -58,6 +59,18 @@ export function PageManager() {
         }}
       >
         <Calendar />
+      </div>
+      <div
+        className="transition-opacity duration-200 ease-in-out"
+        style={{
+          position: activePage === Page.History ? 'relative' : 'absolute',
+          height: activePage === Page.History ? 'auto' : 0,
+          overflow: activePage === Page.History ? 'visible' : 'hidden',
+          opacity: activePage === Page.History ? 1 : 0,
+          width: '100%',
+        }}
+      >
+        <HistoryPage />
       </div>
       <div
         className="transition-opacity duration-200 ease-in-out"
