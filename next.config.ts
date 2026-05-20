@@ -4,7 +4,6 @@ import withSerwist from '@serwist/next';
 const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {
-  outputFileTracingRoot: '/home/flo/Github/job-conciergerie',
   turbopack: {},
   images: {
     remotePatterns: [
