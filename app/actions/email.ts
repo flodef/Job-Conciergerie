@@ -1,5 +1,6 @@
 'use server';
 
+import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { insertFailedEmail } from '@/app/db/failedEmailsDb';
 import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
@@ -22,7 +23,6 @@ async function sendEmail(email: SendMailOptions): Promise<{ success: boolean; er
     await transporter.sendMail({
       ...email,
       from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
-      bcc: 'contact@job-conciergerie.fr',
     });
     return { success: true };
   } catch (error) {
@@ -58,9 +58,10 @@ async function deliver(
   isRetry: boolean,
 ): Promise<boolean> {
   const { success, error } = await sendEmail(email);
-  if (!success && !isRetry) {
-    await insertFailedEmail(type, payload, error);
-  }
+  const to = Array.isArray(email.to) ? email.to.join(', ') : (email.to as string);
+  insertEmailLog(type, to, (email.subject as string) ?? null, success, error);
+  if (!success && !isRetry) await insertFailedEmail(type, payload, error);
+
   return success;
 }
 
