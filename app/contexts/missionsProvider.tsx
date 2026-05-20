@@ -101,22 +101,23 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     [homes, findEmployee, findConciergerie],
   );
 
-  // Fetch missions when needed (initial load or refresh triggered) - only for authenticated users
+  // Core fetch logic shared between auto-fetch and manual refresh
   const isFetching = useRef(false);
-  useEffect(() => {
-    if (authLoading || isFetching.current || !needsRefreshMissions || !userData) return;
+
+  const fetchMissionsCore = useCallback(() => {
+    if (isFetching.current) return Promise.resolve(false);
 
     isFetching.current = true;
     console.warn('Loading missions from database...');
     setIsLoading(missions.length === 0);
 
-    fetchHomes().then(homesSuccess => {
+    return fetchHomes().then(homesSuccess => {
       if (!homesSuccess) {
         setIsLoading(false);
         isFetching.current = false;
-        return;
+        return false;
       }
-      fetchAllMissions().then(fetchedMissions => {
+      return fetchAllMissions().then(fetchedMissions => {
         if (fetchedMissions) {
           setMissions(fetchedMissions);
           checkForLateMissions(fetchedMissions);
@@ -124,36 +125,19 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         }
         setIsLoading(false);
         isFetching.current = false;
+        return !!fetchedMissions;
       });
     });
-  }, [authLoading, needsRefreshMissions, missions.length, fetchHomes, checkForLateMissions, updateFetchTime]);
-
-  // Manual refresh function
-  const fetchMissions = useCallback(async () => {
-    if (isFetching.current) return false;
-
-    isFetching.current = true;
-    console.warn('Loading missions from database...');
-    setIsLoading(missions.length === 0);
-
-    const homesSuccess = await fetchHomes();
-    if (!homesSuccess) {
-      setIsLoading(false);
-      isFetching.current = false;
-      return false;
-    }
-
-    const fetchedMissions = await fetchAllMissions();
-    if (fetchedMissions) {
-      setMissions(fetchedMissions);
-      checkForLateMissions(fetchedMissions);
-      updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
-    }
-
-    setIsLoading(false);
-    isFetching.current = false;
-    return !!fetchedMissions;
   }, [fetchHomes, checkForLateMissions, missions.length, updateFetchTime]);
+
+  // Fetch missions when needed (initial load or refresh triggered) - only for authenticated users
+  useEffect(() => {
+    if (authLoading || !needsRefreshMissions || !userData) return;
+    fetchMissionsCore();
+  }, [authLoading, needsRefreshMissions, userData, fetchMissionsCore]);
+
+  // Manual refresh function - exposes the core function
+  const fetchMissions = useCallback(() => fetchMissionsCore(), [fetchMissionsCore]);
 
   const addMission = async (missionData: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>) => {
     if (!conciergerieName || missionExists(missionData)) return false;

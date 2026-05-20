@@ -38,16 +38,17 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     [homes, conciergerieName],
   );
 
-  // Fetch homes when needed (initial load or refresh triggered) - only for authenticated users
+  // Core fetch logic shared between auto-fetch and manual refresh
   const isFetching = useRef(false);
-  useEffect(() => {
-    if (authLoading || isFetching.current || !needsRefreshHomes || !conciergerieName) return;
+
+  const fetchHomesCore = useCallback(() => {
+    if (isFetching.current) return Promise.resolve(false);
 
     isFetching.current = true;
     console.warn('Loading homes from database...');
     setIsLoading(homes.length === 0);
 
-    fetchAllHomes()
+    return fetchAllHomes()
       .then(fetchedHomes => {
         if (fetchedHomes) {
           setHomes(fetchedHomes);
@@ -57,35 +58,22 @@ export function HomesProvider({ children }: { children: ReactNode }) {
           const allImageUrls = fetchedHomes.flatMap(home => (home.images || []).map(img => getStorageImageUrl(img)));
           preloadImages(allImageUrls);
         }
+        return !!fetchedHomes;
       })
       .finally(() => {
         setIsLoading(false);
         isFetching.current = false;
       });
-  }, [authLoading, needsRefreshHomes, homes.length, updateFetchTime]);
-
-  // Manual refresh function
-  const fetchHomes = useCallback(async () => {
-    if (isFetching.current) return false;
-
-    isFetching.current = true;
-    console.warn('Loading homes from database...');
-    setIsLoading(homes.length === 0);
-
-    const fetchedHomes = await fetchAllHomes();
-    if (fetchedHomes) {
-      setHomes(fetchedHomes);
-      updateFetchTime(Page.Homes);
-
-      // Preload all home images in the background
-      const allImageUrls = fetchedHomes.flatMap(home => (home.images || []).map(img => getStorageImageUrl(img)));
-      preloadImages(allImageUrls);
-    }
-
-    setIsLoading(false);
-    isFetching.current = false;
-    return !!fetchedHomes;
   }, [homes.length, updateFetchTime]);
+
+  // Fetch homes when needed (initial load or refresh triggered) - only for authenticated users
+  useEffect(() => {
+    if (authLoading || !needsRefreshHomes || !conciergerieName) return;
+    fetchHomesCore();
+  }, [authLoading, needsRefreshHomes, conciergerieName, fetchHomesCore]);
+
+  // Manual refresh function - exposes the core function
+  const fetchHomes = useCallback(() => fetchHomesCore(), [fetchHomesCore]);
 
   // Check if a home with the same title already exists for the current conciergerie
   const homeExists = (title: string, id?: string): boolean => {
