@@ -38,10 +38,10 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     [homes, conciergerieName],
   );
 
-  // Fetch homes when needed (initial load or refresh triggered)
+  // Fetch homes when needed (initial load or refresh triggered) - only for authenticated users
   const isFetching = useRef(false);
   useEffect(() => {
-    if (authLoading || isFetching.current || !needsRefreshHomes) return;
+    if (authLoading || isFetching.current || !needsRefreshHomes || !conciergerieName) return;
 
     isFetching.current = true;
     console.warn('Loading homes from database...');

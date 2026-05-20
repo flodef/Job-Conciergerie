@@ -56,9 +56,7 @@ export default function RootLayout({
             <HomesProvider>
               <MissionsProviderWrapper>
                 <BadgeProvider>
-                  <NavigationLayout>
-                    <PageManager />
-                  </NavigationLayout>
+                  <NavigationLayout>{children}</NavigationLayout>
                 </BadgeProvider>
               </MissionsProviderWrapper>
             </HomesProvider>

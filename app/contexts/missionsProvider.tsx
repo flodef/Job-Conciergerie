@@ -101,10 +101,10 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     [homes, findEmployee, findConciergerie],
   );
 
-  // Fetch missions when needed (initial load or refresh triggered)
+  // Fetch missions when needed (initial load or refresh triggered) - only for authenticated users
   const isFetching = useRef(false);
   useEffect(() => {
-    if (authLoading || isFetching.current || !needsRefreshMissions) return;
+    if (authLoading || isFetching.current || !needsRefreshMissions || !userData) return;
 
     isFetching.current = true;
     console.warn('Loading missions from database...');

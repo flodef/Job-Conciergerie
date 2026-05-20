@@ -2,6 +2,7 @@
 
 import InstallToast from '@/app/components/installToast';
 import LoadingSpinner from '@/app/components/loadingSpinner';
+import { PageManager } from '@/app/components/pageManager';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
@@ -9,20 +10,13 @@ import { useBadge } from '@/app/contexts/badgeProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/navigation';
-import {
-  IconBriefcase,
-  IconCalendar,
-  IconClock,
-  IconHome,
-  IconRefresh,
-  IconSettings,
-  IconUser,
-} from '@tabler/icons-react';
-import clsx from 'clsx/lite';
-import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { getTimeDifference } from '@/app/utils/date';
+import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/navigation';
+import { IconBriefcase, IconCalendar, IconHome, IconRefresh, IconSettings, IconUser } from '@tabler/icons-react';
+import clsx from 'clsx/lite';
+import { useRouter } from 'next/navigation';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 
 // Map pages to their respective icons
 export const pageSettings: Record<Page, { icon: ReactNode; userType: UserType | undefined }> = {
@@ -168,17 +162,29 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     setIsNavigationPage(isNavigationPage);
   }, [currentPage]);
 
-  // Hack to handle user type change : listen for storage events to detect when user type changes
+  const router = useRouter();
+
+  // Sync local userType with auth context
+  useEffect(() => {
+    setUserType(authUserType);
+  }, [authUserType]);
+
+  // Redirect to welcome page if not authenticated
+  useEffect(() => {
+    // Only redirect after auth has finished loading and we're on a navigation page
+    if (!isAuthLoading && !authUserType && isNavigationPage) {
+      router.push('/');
+    }
+  }, [isAuthLoading, authUserType, isNavigationPage, router]);
+
+  // Listen for storage events to detect when user type changes from other tabs
   useEffect(() => {
     const handleStorageChange = () => {
       setUserType(authUserType);
     };
-
-    handleStorageChange();
-
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [authUserType]);
 
   // Handle menu item click with badge reset
   const handleMenuClick = (page: Page) => {
@@ -194,7 +200,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col">
       {/* Fixed header - hidden on home page */}
       {isNavigationPage && !!userType && (
         <header className="sticky top-0 max-w-7xl mx-auto h-16 flex items-center justify-between px-4 w-full">
@@ -223,19 +229,18 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {isNavigationPage && !!userType && <InstallToast />}
 
       {/* Main content */}
-      <main className="flex-1 relative">
-        {/* Content wrapper - no padding here since PageManager uses absolute positioning */}
+      <main className="flex-1 relative overflow-hidden">
+        {/* Content wrapper - scrollable when content is long */}
         <div
-          className={clsx(
-            'bg-background relative',
-            isNavigationPage && !!userType
-              ? !isLoading
-                ? 'min-h-[calc(100dvh-4rem)] pb-20'
-                : 'h-[calc(100dvh-4rem)] pb-20'
-              : 'h-screen',
-          )}
+          className={clsx('bg-background relative h-full overflow-y-auto', isNavigationPage && !!userType && 'pb-16')}
         >
-          {isLoading || (isNavigationPage && !userType) ? <LoadingSpinner text={loadingText} /> : children}
+          {isLoading || (isNavigationPage && !userType) ? (
+            <LoadingSpinner text={loadingText} />
+          ) : isNavigationPage ? (
+            <PageManager />
+          ) : (
+            children
+          )}
         </div>
       </main>
 
