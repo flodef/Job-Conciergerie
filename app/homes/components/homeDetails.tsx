@@ -1,5 +1,6 @@
 'use client';
 
+import Accordion from '@/app/components/accordion';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
@@ -11,14 +12,7 @@ import HomeForm from '@/app/homes/components/homeForm';
 import { Home } from '@/app/types/dataTypes';
 import { actionButtonBarClassName, actionButtonClassName } from '@/app/utils/className';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
-import {
-  IconChevronDown,
-  IconFileDescription,
-  IconListCheck,
-  IconPencil,
-  IconPhoto,
-  IconTrash,
-} from '@tabler/icons-react';
+import { IconFileDescription, IconListCheck, IconPencil, IconPhoto, IconTrash } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useImageCache } from '@/app/hooks/useImageCache';
@@ -29,54 +23,13 @@ type HomeDetailsProps = {
   isFromCalendar?: boolean;
 };
 
-// Section IDs for accordion management
-type SectionId = 'photos' | 'description' | 'objectives';
-
-// Collapsible section component - now controlled by parent for accordion behavior
-function CollapsibleSection({
-  id,
-  title,
-  icon,
-  children,
-  isOpen,
-  onToggle,
-}: {
-  id: SectionId;
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  isOpen: boolean;
-  onToggle: (id: SectionId) => void;
-}) {
-  return (
-    <div className="w-full border border-secondary rounded-lg overflow-hidden">
-      <button
-        onClick={() => onToggle(id)}
-        className={clsx(
-          'w-full flex items-center justify-between p-3 bg-secondary/10 hover:bg-secondary/20 transition-colors',
-          isOpen ? 'cursor-default' : 'cursor-pointer',
-        )}
-      >
-        <div className="flex items-center gap-2">
-          {icon}
-          <span className="text-sm font-medium text-light">{title}</span>
-        </div>
-        <IconChevronDown size={16} className={clsx('text-light transition-transform', isOpen && 'rotate-180')} />
-      </button>
-      <div className={clsx('p-3', !isOpen && 'hidden')}>{children}</div>
-    </div>
-  );
-}
-
 // Memoized image grid to prevent re-renders when parent state changes
 const HomeImageGrid = React.memo(function HomeImageGrid({
   images,
   onImageClick,
-  isOpen,
 }: {
   images: string[];
   onImageClick: (index: number) => void;
-  isOpen: boolean;
 }) {
   // Preload and cache all images
   const imageUrls = useMemo(() => images.map(img => getStorageImageUrl(img)), [images]);
@@ -85,7 +38,7 @@ const HomeImageGrid = React.memo(function HomeImageGrid({
   if (images.length === 0) return null;
 
   return (
-    <div className={clsx('p-3', !isOpen && 'hidden')}>
+    <div className="p-3">
       <div className="grid grid-cols-3 gap-2">
         {images.map((image, index) => {
           const originalUrl = getStorageImageUrl(image);
@@ -123,13 +76,6 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
   const [isReadOnly, setIsReadOnly] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [associatedMissions, setAssociatedMissions] = useState<string[]>([]);
-
-  // Accordion state - track which section is open (only one at a time)
-  const [openSection, setOpenSection] = useState<SectionId>('photos');
-
-  const handleToggleSection = (sectionId: SectionId) => {
-    setOpenSection(prev => (prev === sectionId ? prev : sectionId));
-  };
 
   const isEmployee = userType === 'employee';
 
@@ -213,51 +159,43 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
           />
         )}
 
-        <div className="space-y-2" data-home-details>
-          {home.images.length > 0 && (
-            <CollapsibleSection
-              id="photos"
-              title={`Photos (${home.images.length})`}
-              icon={<IconPhoto size={16} className="text-light" />}
-              isOpen={openSection === 'photos'}
-              onToggle={handleToggleSection}
-            >
-              <HomeImageGrid
-                images={home.images}
-                onImageClick={setSelectedImageIndex}
-                isOpen={openSection === 'photos'}
-              />
-            </CollapsibleSection>
-          )}
-
-          {(userType === 'conciergerie' || (userType === 'employee' && isFromCalendar)) && (
-            <CollapsibleSection
-              id="description"
-              title="Description"
-              icon={<IconFileDescription size={16} className="text-light" />}
-              isOpen={openSection === 'description'}
-              onToggle={handleToggleSection}
-            >
-              <p className="text-foreground whitespace-pre-wrap">{home.description}</p>
-            </CollapsibleSection>
-          )}
-
-          <CollapsibleSection
-            id="objectives"
-            title="Points particuliers"
-            icon={<IconListCheck size={16} className="text-light" />}
-            isOpen={openSection === 'objectives'}
-            onToggle={handleToggleSection}
-          >
-            <ul className="list-none pl-0 space-y-1">
-              {home.objectives.map((objective, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 shrink-0 border border-foreground" />
-                  <span className="text-foreground overflow-hidden">{objective}</span>
-                </li>
-              ))}
-            </ul>
-          </CollapsibleSection>
+        <div data-home-details>
+          <Accordion
+            items={[
+              ...(home.images.length > 0
+                ? [
+                    {
+                      title: `Photos (${home.images.length})`,
+                      icon: <IconPhoto size={20} />,
+                      content: <HomeImageGrid images={home.images} onImageClick={setSelectedImageIndex} />,
+                    },
+                  ]
+                : []),
+              ...(userType === 'conciergerie' || (userType === 'employee' && isFromCalendar)
+                ? [
+                    {
+                      title: 'Description',
+                      icon: <IconFileDescription size={20} />,
+                      content: <p className="text-foreground whitespace-pre-wrap">{home.description}</p>,
+                    },
+                  ]
+                : []),
+              {
+                title: 'Points particuliers',
+                icon: <IconListCheck size={20} />,
+                content: (
+                  <ul className="list-none pl-0 space-y-1">
+                    {home.objectives.map((objective, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 shrink-0 border border-foreground" />
+                        <span className="text-foreground overflow-hidden">{objective}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ),
+              },
+            ]}
+          />
         </div>
 
         {/* Regular confirmation modal for deletion */}
