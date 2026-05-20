@@ -73,7 +73,13 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
 
   return (
     <div className="border-b border-secondary">
-      <button className="w-full flex justify-between items-center py-4 px-6 text-left" onClick={onToggle}>
+      <button
+        className={clsx(
+          'w-full flex justify-between items-center py-4 px-6 text-left',
+          isOpen ? 'cursor-default' : 'cursor-pointer',
+        )}
+        onClick={onToggle}
+      >
         <div className="flex items-center gap-2">
           {icon && icon}
           <span className="text-lg font-medium">{title}</span>
