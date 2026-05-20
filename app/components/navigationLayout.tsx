@@ -246,7 +246,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {isNavigationPage && !!userType && <InstallToast />}
 
       {/* Main content */}
-      <main className="flex-1 relative overflow-hidden pt-16">
+      <main className={clsx('flex-1 relative overflow-hidden', isNavigationPage && !!userType && 'pt-16')}>
         {/* Content wrapper - scrollable when content is long */}
         <div
           className={clsx('bg-background relative h-full overflow-y-auto', isNavigationPage && !!userType && 'pb-16')}
