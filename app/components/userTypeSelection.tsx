@@ -2,7 +2,7 @@
 
 import { UserType } from '@/app/contexts/authProvider';
 import { IconBuildingEstate, IconUser } from '@tabler/icons-react';
-import { clsx } from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 
 type UserTypeSelectionProps = {
   onSelect: (type: UserType) => void;
@@ -20,7 +20,7 @@ export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) 
           {/* Conciergerie Option */}
           <button
             onClick={() => onSelect('conciergerie')}
-            className={clsx(
+            className={cn(
               'flex flex-col items-center justify-center p-6 gap-4 border-2 rounded-lg transition-all',
               'border-secondary hover:border-primary/50 hover:bg-primary/5',
             )}
@@ -32,7 +32,7 @@ export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) 
           {/* Prestataire Option */}
           <button
             onClick={() => onSelect('employee')}
-            className={clsx(
+            className={cn(
               'flex flex-col items-center justify-center p-6 gap-4 border-2 rounded-lg transition-all',
               'border-secondary hover:border-primary/50 hover:bg-primary/5',
             )}

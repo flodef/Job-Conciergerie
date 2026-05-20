@@ -12,7 +12,7 @@ import {
   IconPlus,
   IconUser,
 } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import React from 'react';
 
 interface MissionListProps {
@@ -63,7 +63,7 @@ export default function MissionList({
       </div>
     ) : (
       <div
-        className={clsx(
+        className={cn(
           'flex flex-col items-center justify-center h-[calc(100dvh-13rem)] border-2 border-dashed border-secondary rounded-lg p-8',
           userType === 'conciergerie' ? 'cursor-pointer' : '',
         )}
@@ -94,7 +94,7 @@ export default function MissionList({
       {Object.entries(groupedMissions).map(([category, missions]) => (
         <div
           key={category}
-          className={clsx(
+          className={cn(
             'bg-background border-0 rounded-lg overflow-hidden',
             collapsedCategories.includes(category) ? 'drop-shadow-md' : '',
           )}
@@ -117,7 +117,7 @@ export default function MissionList({
             </div>
             <IconChevronDown
               size={20}
-              className={clsx(
+              className={cn(
                 'transition-transform duration-300',
                 collapsedCategories.includes(category) ? 'rotate-180' : '',
               )}
@@ -125,7 +125,7 @@ export default function MissionList({
           </button>
 
           <div
-            className={clsx(
+            className={cn(
               'overflow-hidden transition-all duration-300 ease-in-out',
               collapsedCategories.includes(category) ? 'max-h-0 opacity-0' : 'max-h-[5000px] opacity-100',
             )}

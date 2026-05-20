@@ -9,12 +9,12 @@ import { Employee, MissionStatus } from '@/app/types/dataTypes';
 import {
   actionButtonBarClassName,
   actionButtonClassName,
+  cn,
   descriptionClassName,
   labelClassName,
 } from '@/app/utils/className';
 import { formatDate } from '@/app/utils/date';
 import { IconMail, IconMapPin, IconPhone, IconTrash } from '@tabler/icons-react';
-import { clsx } from 'clsx/lite';
 import { useState } from 'react';
 
 type EmployeeDetailsProps = {
@@ -54,7 +54,7 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
     <div className={actionButtonBarClassName}>
       <button
         onClick={() => setIsDeleteModalOpen(true)}
-        className={clsx(actionButtonClassName, 'bg-red-100 text-red-700')}
+        className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}
       >
         <IconTrash />
         Supprimer
@@ -88,10 +88,10 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
           />
         )}
         <div>
-          <div className={clsx(descriptionClassName, 'flex items-center gap-1')}>
+          <div className={cn(descriptionClassName, 'flex items-center gap-1')}>
             Statut :
             <span
-              className={clsx(
+              className={cn(
                 'text-base font-bold',
                 {
                   pending: 'text-yellow-500',
@@ -128,10 +128,10 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
         </div>
 
         <p className={descriptionClassName}>
-          Missions acceptées : <span className={labelClassName}>{countMissions('accepted')}</span>
+          Missions acceptées : <span className={cn(labelClassName, 'font-bold')}>{countMissions('accepted')}</span>
         </p>
         <p className={descriptionClassName}>
-          Missions complétées : <span className={labelClassName}>{countMissions('completed')}</span>
+          Missions complétées : <span className={cn(labelClassName, 'font-bold')}>{countMissions('completed')}</span>
         </p>
 
         {employee.message && employee.status === 'pending' && (
@@ -141,7 +141,7 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
           </div>
         )}
 
-        <div className={clsx(descriptionClassName, 'flex items-center gap-1')}>
+        <div className={cn(descriptionClassName, 'flex items-center gap-1')}>
           Date d&apos;inscription :<span className={labelClassName}>{formatDate(new Date(employee.createdAt))}</span>
         </div>
       </FullScreenModal>

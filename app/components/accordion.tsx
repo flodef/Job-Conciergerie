@@ -1,7 +1,7 @@
 'use client';
 
 import { IconChevronDown } from '@tabler/icons-react';
-import { clsx } from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import React from 'react';
 
 type AccordionVariant = 'default' | 'card';
@@ -54,12 +54,12 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
             {subtitle && <span className="text-sm text-gray-500">{subtitle}</span>}
             <IconChevronDown
               size={16}
-              className={clsx('text-light transition-transform duration-300', isOpen && 'rotate-180')}
+              className={cn('text-light transition-transform duration-300', isOpen && 'rotate-180')}
             />
           </div>
         </button>
         <div
-          className={clsx(
+          className={cn(
             'overflow-hidden',
             isMobile ? 'transition-all duration-300 ease-in-out' : '',
             isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0',
@@ -83,11 +83,11 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
         </div>
         <div className="flex items-center gap-2">
           {subtitle && <span className="text-sm text-gray-500">{subtitle}</span>}
-          <IconChevronDown className={clsx('transition-transform', isOpen ? 'rotate-180' : '')} size={24} />
+          <IconChevronDown className={cn('transition-transform', isOpen ? 'rotate-180' : '')} size={24} />
         </div>
       </button>
       <div
-        className={clsx(
+        className={cn(
           'overflow-hidden',
           isMobile ? 'transition-all duration-300 ease-in-out' : '',
           isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0',
@@ -117,7 +117,7 @@ export default function Accordion({ items, variant = 'default' }: AccordionProps
   const isCard = variant === 'card';
 
   return (
-    <div className={clsx('bg-background', isCard ? 'space-y-2' : '')}>
+    <div className={cn('bg-background', isCard ? 'space-y-2' : '')}>
       {items.map((item, index) => (
         <AccordionItem
           key={index}

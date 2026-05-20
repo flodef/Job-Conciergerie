@@ -7,7 +7,7 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { errorClassName } from '@/app/utils/className';
 import { fallbackImage, getStorageFileName, getStorageImageUrl } from '@/app/utils/storage';
 import { IconCheck, IconPhotoPlus, IconX } from '@tabler/icons-react';
-import { clsx } from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import React, { useEffect, useRef, useState } from 'react';
 
 // --- Constants ---
@@ -349,7 +349,7 @@ const ImageUploader = React.forwardRef<
             </div>
           </div>
         </div>
-        <div className={clsx('grid grid-cols-3 gap-4', error && 'border border-red-500 rounded-lg p-2')}>
+        <div className={cn('grid grid-cols-3 gap-4', error && 'border border-red-500 rounded-lg p-2')}>
           {/* Existing committed images */}
           {[...new Set(imageIds)].map((filePath, index) => {
             const url = getStorageImageUrl(filePath);
@@ -407,7 +407,7 @@ const ImageUploader = React.forwardRef<
                     <LoadingSpinner size="large" fullPage={false} className="text-white" />
                   ) : (
                     <div
-                      className={clsx(
+                      className={cn(
                         'p-1.5 text-white rounded-full',
                         img.uploadStatus === 'success' ? 'bg-green-500' : 'bg-red-500',
                       )}
@@ -438,7 +438,7 @@ const ImageUploader = React.forwardRef<
               <button
                 type="button"
                 onClick={() => uploadButtonRef.current?.click()}
-                className={clsx(
+                className={cn(
                   'aspect-square border-2 border-dashed border-secondary rounded-lg flex flex-col items-center justify-center text-foreground/50 hover:border-primary hover:text-primary transition-colors',
                 )}
                 aria-label="Ajouter une image"

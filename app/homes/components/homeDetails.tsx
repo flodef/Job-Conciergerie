@@ -13,7 +13,7 @@ import { Home } from '@/app/types/dataTypes';
 import { actionButtonBarClassName, actionButtonClassName } from '@/app/utils/className';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { IconFileDescription, IconListCheck, IconPencil, IconPhoto, IconTrash } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useImageCache } from '@/app/hooks/useImageCache';
 
@@ -123,7 +123,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
         <IconPencil />
         Modifier
       </button>
-      <button onClick={handleDeleteClick} className={clsx(actionButtonClassName, 'bg-red-100 text-red-700')}>
+      <button onClick={handleDeleteClick} className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}>
         <IconTrash />
         Supprimer
       </button>

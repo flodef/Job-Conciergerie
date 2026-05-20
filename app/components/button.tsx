@@ -3,7 +3,7 @@
 import { useAuth } from '@/app/contexts/authProvider';
 import { buttonClassName, spinningClassName } from '@/app/utils/className';
 import { IconX } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { useState } from 'react';
 
 export type ButtonStyle = 'primary' | 'secondary' | 'dangerous' | 'inferno';
@@ -30,7 +30,7 @@ export function Button({
 }) {
   return (
     <button
-      className={clsx(buttonClassName(style), className)}
+      className={cn(buttonClassName(style), className)}
       onClick={onClick}
       disabled={disabled || loading}
       type={type}
@@ -88,7 +88,7 @@ export function RefreshButton({
 
   return (
     <Button
-      className={clsx('mt-4 mx-auto cursor-pointer', className)}
+      className={cn('mt-4 mx-auto cursor-pointer', className)}
       style={shouldDisconnect ? 'dangerous' : 'primary'}
       onClick={handleClick}
       disabled={disabled}
@@ -114,7 +114,7 @@ export function CloseButton({ onClose, size = 24, disabled = false, className = 
 
   return (
     <button
-      className={clsx('text-foreground hover:scale-110 transition-transform cursor-pointer z-50', className)}
+      className={cn('text-foreground hover:scale-110 transition-transform cursor-pointer z-50', className)}
       onClick={!disabled ? handleClick : undefined}
       aria-label={'Fermer'}
     >

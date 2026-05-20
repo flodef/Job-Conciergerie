@@ -1,7 +1,7 @@
 'use client';
 
 import { IconFilter, IconSortAscending, IconSortDescending } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import React from 'react';
 
 type SortField = 'date' | 'conciergerie' | 'geographicZone' | 'homeTitle';
@@ -32,7 +32,7 @@ export default function MissionSortControls({
         <div className="flex flex-wrap gap-1.5 items-center flex-1 overflow-hidden">
           <button
             onClick={() => changeSortField('date')}
-            className={clsx(
+            className={cn(
               'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer',
               sortField === 'date' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
             )}
@@ -43,7 +43,7 @@ export default function MissionSortControls({
           </button>
           <button
             onClick={() => changeSortField('conciergerie')}
-            className={clsx(
+            className={cn(
               'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer',
               sortField === 'conciergerie' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
             )}
@@ -54,7 +54,7 @@ export default function MissionSortControls({
           </button>
           <button
             onClick={() => changeSortField('geographicZone')}
-            className={clsx(
+            className={cn(
               'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer',
               sortField === 'geographicZone' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
             )}
@@ -65,7 +65,7 @@ export default function MissionSortControls({
           </button>
           <button
             onClick={() => changeSortField('homeTitle')}
-            className={clsx(
+            className={cn(
               'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer',
               sortField === 'homeTitle' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
             )}
@@ -80,7 +80,7 @@ export default function MissionSortControls({
         <div className="relative ml-auto mt-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={clsx(
+            className={cn(
               'w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer',
               showFilters ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
               hasActiveFilters ? 'ring-1 ring-primary' : '',

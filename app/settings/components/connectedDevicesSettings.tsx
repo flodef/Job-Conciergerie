@@ -10,7 +10,7 @@ import { labelClassName } from '@/app/utils/className';
 import { formatId, isNewDevice } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { IconCheck, IconCopy, IconEdit, IconTrash, IconX } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import React, { useEffect, useRef, useState } from 'react';
 
 type Device = {
@@ -176,7 +176,7 @@ const ConnectedDevicesSettings: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={saveDeviceLabel}
-                  className={clsx(
+                  className={cn(
                     'p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-green-600',
                     'disabled:text-gray-200 dark:disabled:text-gray-700 disabled:hover:bg-transparent disabled:cursor-not-allowed',
                   )}
@@ -265,7 +265,7 @@ const ConnectedDevicesSettings: React.FC = () => {
         {confirmTargetId === currentUserId && (
           <div className="mt-4 flex items-center justify-center w-full">
             <label className="flex items-center cursor-pointer select-none w-full justify-center gap-2">
-              <span className={clsx('text-light', deleteSettings ? 'font-bold' : '')}>
+              <span className={cn('text-light', deleteSettings ? 'font-bold' : '')}>
                 Supprimer également mes paramètres
               </span>
               <Switch enabled={deleteSettings} onChange={() => setDeleteSettings(!deleteSettings)} />

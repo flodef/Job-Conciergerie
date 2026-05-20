@@ -3,7 +3,7 @@
 import MultiSelect from '@/app/components/multiSelect';
 import { filterButtonClassName, rowClassName, secondaryButtonClassName } from '@/app/utils/className';
 import { IconDeviceFloppy, IconX } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import React from 'react';
 
 export type MissionFiltersType = {
@@ -78,7 +78,7 @@ export default function MissionFilters({
     <div className="px-4 pb-4 bg-background rounded-lg shadow-md flex flex-col gap-2">
       {/* Conciergeries filter */}
       {availableConciergeries.length > 0 && (
-        <div className={clsx(rowClassName, 'my-0')}>
+        <div className={cn(rowClassName, 'my-0')}>
           <MultiSelect
             id="conciergeries-filter"
             label="Conciergeries"
@@ -102,7 +102,7 @@ export default function MissionFilters({
       )}
 
       {/* Time period filter */}
-      <div className={clsx(rowClassName, 'my-0')}>
+      <div className={cn(rowClassName, 'my-0')}>
         <MultiSelect
           id="time-period-filter"
           label="Période"
@@ -125,7 +125,7 @@ export default function MissionFilters({
       </div>
 
       {/* Mission status filter */}
-      <div className={clsx(rowClassName, 'my-0')}>
+      <div className={cn(rowClassName, 'my-0')}>
         <MultiSelect
           id="mission-status-filter"
           label="Statut"
@@ -150,7 +150,7 @@ export default function MissionFilters({
       </div>
 
       {/* Geographic zones filter */}
-      <div className={clsx(rowClassName, 'my-0')}>
+      <div className={cn(rowClassName, 'my-0')}>
         <MultiSelect
           id="zones-filter"
           label="Zones géographiques"
@@ -180,7 +180,7 @@ export default function MissionFilters({
           <button
             onClick={saveFiltersToLocalStorage}
             disabled={!filtersChanged}
-            className={clsx(
+            className={cn(
               secondaryButtonClassName,
               filtersChanged ? 'bg-primary text-background' : 'bg-foreground/5 text-foreground/40 cursor-not-allowed',
             )}
@@ -199,7 +199,7 @@ export default function MissionFilters({
             setSelectedZones(savedFilters?.zones || []);
           }}
           disabled={!filtersChanged}
-          className={clsx(
+          className={cn(
             secondaryButtonClassName,
             filtersChanged
               ? 'bg-foreground/10 text-foreground'

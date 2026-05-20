@@ -1,7 +1,7 @@
 'use client'; // Error components must be Client Components
 
 // inspired by https://codepen.io/altreiter/pen/EedZRQ
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { Open_Sans } from 'next/font/google';
 import Link from 'next/link';
 import { SyntheticEvent, useEffect } from 'react';
@@ -24,7 +24,7 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
     setTimeout(() => window.location.reload(), 100); // Hard reset by reloading the page
   };
 
-  const zeroClassName = clsx(
+  const zeroClassName = cn(
     'relative before:rotate-45 before:scale-x-0 before:scale-y-75 before:animate-cross1$',
     'after:-rotate-45 after:scale-x-0 after:scale-y-75 after:animate-cross2$',
     'group-hover:before:animate-cross1Reverse group-hover:after:animate-cross2Reverse',
@@ -42,7 +42,7 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
   return (
     <div className={openSans.className}>
       <div
-        className={clsx(
+        className={cn(
           'mt-10 overflow-hidden flex flex-col items-center justify-center font-bold',
           'uppercase text-[3vmin] text-center text-theme-content dark:text-dark-theme-content',
         )}
@@ -56,7 +56,7 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
         </p>
         <div className="group z-0">
           <h1
-            className={clsx(
+            className={cn(
               'text-white text-[50vmin] text-center relative mb-[5vmin] mt-[-10vmin] cursor-pointer group-hover:scale-110',
               "group-hover:before:animate-flipReverse before:content-['('] before:absolute before:-rotate-90",
               'before:right-[25vmin] before:bottom-[-30vmin] before:block before:text-[115%] before:animate-flip',

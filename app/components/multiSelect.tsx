@@ -10,7 +10,7 @@ import {
 } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
-import { clsx } from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type MultiSelectOption = {
@@ -127,7 +127,7 @@ const MultiSelect = forwardRef(
         <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
-        <div className={clsx('relative w-full', className)} ref={selectRef}>
+        <div className={cn('relative w-full', className)} ref={selectRef}>
           <div
             id={id}
             tabIndex={disabled ? -1 : 0}
@@ -146,10 +146,10 @@ const MultiSelect = forwardRef(
             aria-haspopup="listbox"
             aria-controls={`${id}-options`}
           >
-            <span className={clsx(values.length === 0 && 'text-foreground/50')}>{displayValue()}</span>
+            <span className={cn(values.length === 0 && 'text-foreground/50')}>{displayValue()}</span>
             <IconChevronDown
               size={18}
-              className={clsx('transition-transform duration-200', isOpen && 'transform rotate-180')}
+              className={cn('transition-transform duration-200', isOpen && 'transform rotate-180')}
             />
           </div>
 
@@ -175,7 +175,7 @@ const MultiSelect = forwardRef(
                       role="option"
                       aria-selected={isSelected}
                     >
-                      <span className={clsx(isSelected && 'font-medium text-primary')}>{option.label}</span>
+                      <span className={cn(isSelected && 'font-medium text-primary')}>{option.label}</span>
                       {isSelected && <IconCheck size={18} className="text-primary" />}
                     </div>
                   );

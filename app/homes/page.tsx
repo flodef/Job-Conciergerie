@@ -13,7 +13,7 @@ import HomeForm from '@/app/homes/components/homeForm';
 import { Home } from '@/app/types/dataTypes';
 import { Page } from '@/app/utils/navigation';
 import { IconPlus, IconList, IconLayoutGrid, IconLayout } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function HomesPage() {
@@ -101,7 +101,7 @@ export default function HomesPage() {
           )}
           <div className="flex gap-2">
             <button
-              className={clsx(
+              className={cn(
                 'mt-1 p-2 rounded cursor-pointer',
                 displayMode === 'list' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
               )}
@@ -111,7 +111,7 @@ export default function HomesPage() {
               <IconList size={20} />
             </button>
             <button
-              className={clsx(
+              className={cn(
                 'mt-1 p-2 rounded cursor-pointer',
                 displayMode === 'grid' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
               )}
@@ -121,7 +121,7 @@ export default function HomesPage() {
               <IconLayoutGrid size={20} />
             </button>
             <button
-              className={clsx(
+              className={cn(
                 'mt-1 p-2 rounded cursor-pointer',
                 displayMode === 'thumb' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
               )}
@@ -155,7 +155,7 @@ export default function HomesPage() {
             </div>
           ) : (
             <div
-              className={clsx(
+              className={cn(
                 displayMode === 'list' && 'flex flex-col gap-2',
                 displayMode === 'grid' && 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4',
                 displayMode === 'thumb' && 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4',

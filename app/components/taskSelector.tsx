@@ -2,7 +2,7 @@ import Label from '@/app/components/label';
 import { Task } from '@/app/types/dataTypes';
 import { errorClassName, rowClassName } from '@/app/utils/className';
 import { getTaskPoints } from '@/app/utils/task';
-import { clsx } from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { ForwardRefRenderFunction, ReactNode, forwardRef } from 'react';
 
 interface TaskSelectorProps {
@@ -60,7 +60,7 @@ const TaskSelectorComponent: ForwardRefRenderFunction<HTMLDivElement, TaskSelect
               key={task}
               onClick={() => toggleTask(task)}
               disabled={disabled}
-              className={clsx(
+              className={cn(
                 'p-2 border rounded-lg text-sm flex justify-between items-center',
                 'border-foreground/20 focus-visible:outline-primary',
                 selectedTasks.includes(task)
@@ -70,7 +70,7 @@ const TaskSelectorComponent: ForwardRefRenderFunction<HTMLDivElement, TaskSelect
             >
               <span>{task}</span>
               <span
-                className={clsx(
+                className={cn(
                   'px-1.5 py-0.5 rounded-full text-xs',
                   selectedTasks.includes(task) ? 'bg-background/20 text-background' : 'bg-primary/10 text-primary',
                 )}

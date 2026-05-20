@@ -20,7 +20,7 @@ import {
   getTaskPoints,
 } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function Calendar() {
@@ -182,13 +182,13 @@ export default function Calendar() {
           return (
             <div key={dateStr} className="border border-secondary rounded-lg overflow-hidden">
               <div
-                className={clsx(
+                className={cn(
                   'p-3 font-medium border-b border-secondary',
                   isToday(date) ? 'bg-primary/10' : isPastDate(date) ? 'bg-secondary/30' : 'bg-secondary/10',
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <h3 className={clsx(isToday(date) && 'text-primary font-bold')}>
+                  <h3 className={cn(isToday(date) && 'text-primary font-bold')}>
                     {formattedDate}
                     {isToday(date) && " (Aujourd'hui)"}
                   </h3>
@@ -227,7 +227,7 @@ export default function Calendar() {
                   return (
                     <div
                       key={mission.id}
-                      className={clsx(
+                      className={cn(
                         'p-3 hover:bg-secondary/10 cursor-pointer transition-colors relative',
                         mission.status === 'started' ? 'animate-pulse' : '',
                       )}

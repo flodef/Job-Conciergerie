@@ -1,7 +1,7 @@
 'use client';
 
 import { CloseButton } from '@/app/components/button';
-import { clsx } from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Tooltip from './tooltip';
 
@@ -50,7 +50,7 @@ export default function FullScreenModal({
 
   return (
     <div
-      className={clsx(
+      className={cn(
         'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4',
         'transition-opacity duration-200 ease-in-out',
         isVisible ? 'opacity-100' : 'opacity-0',
@@ -59,7 +59,7 @@ export default function FullScreenModal({
       onClick={!disabled ? handleClose : undefined}
     >
       <div
-        className={clsx(
+        className={cn(
           'relative bg-background rounded-lg shadow-lg max-w-md w-full flex flex-col max-h-[90vh] overflow-hidden',
           'transition-all duration-200 ease-in-out',
           isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95',
@@ -77,7 +77,7 @@ export default function FullScreenModal({
 
         {/* Scrollable content area */}
         <div
-          className={clsx(
+          className={cn(
             'flex-1 overflow-y-auto px-4 py-2 space-y-2',
             disabled && 'pointer-events-none opacity-50 cursor-not-allowed',
           )}
@@ -88,7 +88,7 @@ export default function FullScreenModal({
         {/* Footer area */}
         {footer && (
           <div
-            className={clsx(
+            className={cn(
               'shrink-0 z-20 bg-background border-t border-secondary',
               disabled && 'pointer-events-none opacity-50 cursor-not-allowed',
             )}

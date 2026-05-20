@@ -2,7 +2,7 @@
 
 import { Size } from '@/app/types/types';
 import { IconInfoCircle, IconProps } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 type TooltipProps = {
@@ -104,7 +104,7 @@ export default function Tooltip({
       <button
         ref={buttonRef}
         type="button"
-        className={clsx('text-light hover:text-foreground focus:outline-none cursor-help', className)}
+        className={cn('text-light hover:text-foreground focus:outline-none cursor-help', className)}
         onClick={e => {
           e.stopPropagation();
           setIsVisible(!isVisible);

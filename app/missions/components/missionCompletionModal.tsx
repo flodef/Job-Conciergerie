@@ -5,7 +5,7 @@ import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { Mission } from '@/app/types/dataTypes';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { useEffect, useState } from 'react';
 
 type MissionCompletionModalProps = {
@@ -25,10 +25,13 @@ export default function MissionCompletionModal({ mission, onClose, onComplete }:
   // Set up the initial state
   useEffect(() => {
     if (home && home.objectives) {
-      const initialState = home.objectives.reduce((acc, objective) => {
-        acc[objective] = false;
-        return acc;
-      }, {} as Record<string, boolean>);
+      const initialState = home.objectives.reduce(
+        (acc, objective) => {
+          acc[objective] = false;
+          return acc;
+        },
+        {} as Record<string, boolean>,
+      );
 
       setCheckedObjectives(initialState);
     }
@@ -82,7 +85,7 @@ export default function MissionCompletionModal({ mission, onClose, onComplete }:
                 id={`objective-${index}`}
                 checked={checkedObjectives[objective] || false}
                 onChange={() => handleCheckboxChange(objective)}
-                labelClassName={clsx(
+                labelClassName={cn(
                   'flex-1',
                   checkedObjectives[objective] ? 'line-through text-gray-500' : 'text-foreground',
                 )}

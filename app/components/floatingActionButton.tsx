@@ -1,7 +1,7 @@
 'use client';
 
 import { IconPlus } from '@tabler/icons-react';
-import { clsx } from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { ReactNode } from 'react';
 
 type FloatingActionButtonProps = {
@@ -18,7 +18,7 @@ export default function FloatingActionButton({
   return (
     <button
       onClick={onClick}
-      className={clsx(
+      className={cn(
         'fixed bottom-24 right-4 w-14 h-14 rounded-full bg-primary text-background flex items-center justify-center shadow-lg',
         'hover:bg-primary/90 transition-colors z-10',
         className,

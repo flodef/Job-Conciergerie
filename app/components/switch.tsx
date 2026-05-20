@@ -1,4 +1,4 @@
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import React from 'react';
 
 interface SwitchProps {
@@ -43,14 +43,10 @@ const Switch: React.FC<SwitchProps> = ({ enabled, onChange, size = 'md', id }) =
       aria-checked={enabled}
     >
       <div
-        className={clsx(
-          track,
-          'rounded-full transition-colors duration-300',
-          enabled ? 'bg-primary' : 'bg-secondary/50',
-        )}
+        className={cn(track, 'rounded-full transition-colors duration-300', enabled ? 'bg-primary' : 'bg-secondary/50')}
       />
       <div
-        className={clsx(
+        className={cn(
           thumbPosition,
           thumb,
           'absolute rounded-full bg-white shadow-md transition-transform duration-300 ease-in-out',

@@ -33,7 +33,7 @@ import {
   IconUsersGroup,
   IconZoomScan,
 } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { useMemo, useState } from 'react';
 
 type MissionDetailsProps = {
@@ -502,7 +502,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         >
           <div className="mt-4 flex items-center justify-center w-full">
             <label className="flex items-center cursor-pointer select-none w-full justify-center gap-2">
-              <span className={clsx('text-light', dontShowAgain ? 'font-bold' : '')}>Ne plus afficher ce message</span>
+              <span className={cn('text-light', dontShowAgain ? 'font-bold' : '')}>Ne plus afficher ce message</span>
               <Switch enabled={dontShowAgain} onChange={() => setDontShowAgain(!dontShowAgain)} />
             </label>
           </div>

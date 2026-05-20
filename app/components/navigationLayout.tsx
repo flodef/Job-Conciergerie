@@ -22,7 +22,7 @@ import {
   IconSettings,
   IconUser,
 } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { useRouter } from 'next/navigation';
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 
@@ -258,7 +258,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {/* Fixed header with blur on scroll */}
       {isNavigationPage && !!userType && (
         <header
-          className={clsx(
+          className={cn(
             'fixed top-0 left-0 right-0 mx-auto h-16 flex items-center justify-between px-4 w-full z-40 transition-all duration-200 bg-background',
             isScrolled ? 'shadow-md' : '',
           )}
@@ -288,10 +288,10 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {isNavigationPage && !!userType && <InstallToast />}
 
       {/* Main content */}
-      <main className={clsx('flex-1 relative overflow-hidden', isNavigationPage && !!userType && 'pt-16')}>
+      <main className={cn('flex-1 relative overflow-hidden', isNavigationPage && !!userType && 'pt-16')}>
         {/* Content wrapper - scrollable when content is long */}
         <div
-          className={clsx(
+          className={cn(
             'bg-background relative h-full overflow-y-auto flex flex-col nice-scrollbar',
             isNavigationPage && !!userType && 'pb-16',
           )}
@@ -323,7 +323,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
                 <button
                   key={page}
                   onClick={() => handleMenuClick(page)}
-                  className={clsx(
+                  className={cn(
                     'flex flex-col items-center justify-center py-2 px-4',
                     'transition-colors duration-200 w-20 h-16 relative cursor-pointer',
                     page === currentPage ? 'text-primary bg-primary/10' : 'text-foreground hover:bg-secondary/20',

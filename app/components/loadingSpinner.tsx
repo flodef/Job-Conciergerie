@@ -1,6 +1,6 @@
 'use client';
 
-import { clsx } from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { Size } from '@/app/types/types';
 
 type LoadingSpinnerProps = {
@@ -18,12 +18,9 @@ export default function LoadingSpinner({ size = 'large', text, fullPage = true, 
   };
 
   return (
-    <div className={clsx('flex flex-col items-center justify-center', fullPage ? 'h-full' : '', className)}>
+    <div className={cn('flex flex-col items-center justify-center', fullPage ? 'h-full' : '', className)}>
       <div
-        className={clsx(
-          'animate-spin rounded-full border-solid border-primary border-t-transparent',
-          sizeClasses[size],
-        )}
+        className={cn('animate-spin rounded-full border-solid border-primary border-t-transparent', sizeClasses[size])}
       />
       {text && <p className="mt-2 text-foreground/70">{text}</p>}
     </div>

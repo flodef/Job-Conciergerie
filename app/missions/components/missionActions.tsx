@@ -6,7 +6,7 @@ import { Mission } from '@/app/types/dataTypes';
 import { actionButtonBarClassName, actionButtonClassName } from '@/app/utils/className';
 import { calculateEmployeePointsForDay, calculateMissionPoints } from '@/app/utils/task';
 import { IconAlertTriangle, IconCancel, IconCheck, IconPencil, IconPlayerPlay, IconTrash } from '@tabler/icons-react';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { useMemo } from 'react';
 
 export const MAX_POINTS_PER_DAY = 100;
@@ -85,7 +85,7 @@ export default function MissionActions({
     <div className={actionButtonBarClassName}>
       {/* Start button - only visible if mission has not started yet and start time has passed */}
       {isAccepted && (
-        <button onClick={onStartMission} className={clsx(actionButtonClassName, 'bg-blue-100 text-blue-700')}>
+        <button onClick={onStartMission} className={cn(actionButtonClassName, 'bg-blue-100 text-blue-700')}>
           <IconPlayerPlay />
           Démarrer
         </button>
@@ -93,7 +93,7 @@ export default function MissionActions({
 
       {/* Finish button - only visible if mission is started */}
       {isStarted && (
-        <button onClick={onCompleteMission} className={clsx(actionButtonClassName, 'bg-green-100 text-green-700')}>
+        <button onClick={onCompleteMission} className={cn(actionButtonClassName, 'bg-green-100 text-green-700')}>
           <IconCheck />
           Terminer
         </button>
@@ -110,7 +110,7 @@ export default function MissionActions({
       <button
         onClick={onAcceptMission}
         disabled={hasExceededPoints}
-        className={clsx(
+        className={cn(
           actionButtonClassName,
           hasExceededPoints ? 'bg-gray-100 text-gray-400/50 cursor-not-allowed' : 'bg-green-100 text-green-700',
         )}
@@ -125,18 +125,18 @@ export default function MissionActions({
         <IconPencil />
         Modifier
       </button>
-      <button onClick={onDelete} className={clsx(actionButtonClassName, 'bg-red-100 text-red-700')}>
+      <button onClick={onDelete} className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}>
         <IconTrash />
         Supprimer
       </button>
       {isAccepted && !isStarted && (
-        <button onClick={onRemoveEmployee} className={clsx(actionButtonClassName, 'bg-yellow-100 text-yellow-700')}>
+        <button onClick={onRemoveEmployee} className={cn(actionButtonClassName, 'bg-yellow-100 text-yellow-700')}>
           <IconCancel />
           Annuler
         </button>
       )}
       {(isAccepted || isStarted) && (
-        <button onClick={onCompleteMission} className={clsx(actionButtonClassName, 'bg-green-100 text-green-700')}>
+        <button onClick={onCompleteMission} className={cn(actionButtonClassName, 'bg-green-100 text-green-700')}>
           <IconCheck />
           Terminer
         </button>

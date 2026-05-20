@@ -1,6 +1,6 @@
 'use client';
 
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { InputHTMLAttributes, forwardRef } from 'react';
 import { IconCheck } from '@tabler/icons-react';
 
@@ -16,7 +16,7 @@ interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'typ
 const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   ({ id, checked, onChange, label, className, labelClassName, disabled, ...props }, ref) => {
     return (
-      <div className={clsx('flex items-center gap-2', className)}>
+      <div className={cn('flex items-center gap-2', className)}>
         <div className="relative flex items-center">
           <input
             ref={ref}
@@ -29,7 +29,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             {...props}
           />
           <div
-            className={clsx(
+            className={cn(
               'border-2 rounded h-5 w-5 flex shrink-0 justify-center items-center',
               checked ? 'bg-primary border-primary' : 'border-secondary',
               disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
@@ -41,11 +41,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         {label && (
           <label
             htmlFor={id}
-            className={clsx(
-              'select-none',
-              disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
-              labelClassName,
-            )}
+            className={cn('select-none', disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer', labelClassName)}
           >
             {label}
           </label>

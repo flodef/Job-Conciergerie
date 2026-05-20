@@ -11,7 +11,7 @@ import {
 } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
-import { clsx } from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type ComboboxProps = {
@@ -173,7 +173,7 @@ const Combobox = forwardRef(
         <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
-        <div className={clsx('relative w-full', className)} ref={comboboxRef}>
+        <div className={cn('relative w-full', className)} ref={comboboxRef}>
           <div className={selectClassName(error, disabled, isFocused, isOpen)}>
             <IconSearch size={18} className="text-foreground/50 mr-2" />
             <input
@@ -208,7 +208,7 @@ const Combobox = forwardRef(
             >
               <IconChevronDown
                 size={18}
-                className={clsx('transition-transform duration-200', isOpen && 'transform rotate-180')}
+                className={cn('transition-transform duration-200', isOpen && 'transform rotate-180')}
               />
             </button>
           </div>

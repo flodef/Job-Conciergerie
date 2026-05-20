@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { clsx } from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 
 // inspired by https://codepen.io/uiswarup/pen/dyoyLOp
 export default function NotFound() {
   return (
     <Link className="flex justify-center" href="/">
       <div
-        className={clsx(
+        className={cn(
           'w-full max-w-7xl mx-auto mt-10 flex flex-col justify-center font-bold',
           'uppercase text-[3vmin] text-center text-secondary-light dark:text-secondary-dark',
         )}

@@ -2,7 +2,7 @@
 
 import { CloseButton } from '@/app/components/button';
 import ImageCarousel from '@/app/components/imageCarousel';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 
 interface FullScreenImageCarouselProps {
   imageUrls: string | string[];
@@ -21,10 +21,7 @@ export function FullScreenImageCarousel({
 }: FullScreenImageCarouselProps) {
   return (
     <div
-      className={clsx(
-        'fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center py-4',
-        className,
-      )}
+      className={cn('fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center py-4', className)}
       onClick={e => {
         if (e.target === e.currentTarget) {
           onClose();

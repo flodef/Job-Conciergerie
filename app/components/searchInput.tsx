@@ -2,7 +2,7 @@
 
 import { inputClassName } from '@/app/utils/className';
 import { IconSearch, IconX } from '@tabler/icons-react';
-import { clsx } from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 
 interface SearchInputProps {
   placeholder?: string;
@@ -18,13 +18,13 @@ export default function SearchInput({
   className = '',
 }: SearchInputProps) {
   return (
-    <div className={clsx('relative', className)}>
+    <div className={cn('relative', className)}>
       <input
         type="text"
         placeholder={placeholder}
         value={value}
         onChange={e => onChange(e.target.value)}
-        className={clsx(inputClassName, value && 'pr-8')}
+        className={cn(inputClassName, value && 'pr-8')}
         maxLength={25}
       />
       <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-light" size={18} />

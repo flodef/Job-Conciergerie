@@ -1,5 +1,5 @@
 import { Button } from '@/app/components/button';
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 
 type FormActionsProps = {
   onCancel: () => void;
@@ -26,10 +26,7 @@ export default function FormActions({
 }: FormActionsProps) {
   return (
     <div
-      className={clsx(
-        'flex justify-end gap-4 bg-background border-t border-secondary px-4 py-4 rounded-b-lg',
-        className,
-      )}
+      className={cn('flex justify-end gap-4 bg-background border-t border-secondary px-4 py-4 rounded-b-lg', className)}
     >
       <Button onClick={onCancel} style="secondary" disabled={isSubmitting}>
         {cancelText}

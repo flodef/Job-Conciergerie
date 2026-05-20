@@ -1,7 +1,7 @@
 import Label from '@/app/components/label';
 import { useAuth } from '@/app/contexts/authProvider';
 import { errorClassName, rowClassName } from '@/app/utils/className';
-import { clsx } from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { ForwardRefRenderFunction, ReactNode, forwardRef } from 'react';
 
 export interface ColorOption {
@@ -70,7 +70,7 @@ const ColorPickerComponent: ForwardRefRenderFunction<HTMLDivElement, ColorPicker
                 }
               }}
               disabled={(isUsed && !isSelected) || disabled}
-              className={clsx(
+              className={cn(
                 'relative flex flex-col items-center space-y-1 p-2 border rounded-md transition-all',
                 isSelected ? 'ring-2 ring-primary border-primary' : 'border-secondary',
                 isUsed && !isSelected ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary/10',

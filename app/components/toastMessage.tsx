@@ -1,4 +1,4 @@
-import clsx from 'clsx/lite';
+import { cn } from '@/app/utils/className';
 import { ReactNode, useEffect } from 'react';
 
 export enum ToastType {
@@ -58,7 +58,7 @@ export const ToastMessage = ({ toast, timeout = 3000, onClick, onClose }: ToastM
   return (
     toast && (
       <div
-        className={clsx('fixed z-100 top-4 inset-x-2 text-black text-center py-2 rounded-lg', typeStyles[toast.type])}
+        className={cn('fixed z-100 top-4 inset-x-2 text-black text-center py-2 rounded-lg', typeStyles[toast.type])}
         onClick={onClick}
       >
         {typeIcon[toast.type]}
