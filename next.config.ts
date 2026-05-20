@@ -4,7 +4,9 @@ import withSerwist from '@serwist/next';
 const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {
-  turbopack: {},
+  turbopack: {
+    root: import.meta.dirname,
+  },
   images: {
     remotePatterns: [
       {
