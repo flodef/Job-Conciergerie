@@ -48,7 +48,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#a4bcde" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-dvh`}>
         <span style={{ display: 'none', fontFamily: 'var(--font-geist-sans)' }}>Force font load</span>
         <ServiceWorkerRegister />
         <MenuProvider>

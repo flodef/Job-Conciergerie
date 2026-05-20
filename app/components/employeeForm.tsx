@@ -324,14 +324,14 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
   if (!conciergeries?.length)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+      <div className="h-full flex flex-col items-center justify-center bg-background">
         <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
         <p className="text-foreground">Aucune conciergerie trouvée !</p>
       </div>
     );
 
   return (
-    <div className="min-h-full w-full flex flex-col items-center justify-center bg-background">
+    <div className="min-h-full w-full flex flex-col items-center justify-start bg-background pt-2">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>

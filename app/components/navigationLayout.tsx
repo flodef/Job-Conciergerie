@@ -212,7 +212,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   };
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-dvh flex flex-col">
       {/* Fixed header with blur on scroll */}
       {isNavigationPage && !!userType && (
         <header
@@ -249,7 +249,10 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       <main className={clsx('flex-1 relative overflow-hidden', isNavigationPage && !!userType && 'pt-16')}>
         {/* Content wrapper - scrollable when content is long */}
         <div
-          className={clsx('bg-background relative h-full overflow-y-auto', isNavigationPage && !!userType && 'pb-16')}
+          className={clsx(
+            'bg-background relative h-full overflow-y-auto flex flex-col',
+            isNavigationPage && !!userType && 'pb-16',
+          )}
         >
           {isLoading || (isNavigationPage && !userType) ? (
             <LoadingSpinner text={loadingText} />

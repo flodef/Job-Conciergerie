@@ -182,10 +182,10 @@ export default function WaitingPage() {
   if (!userType) return <ErrorPage />;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="flex-1 flex items-center justify-center bg-background">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      <div className="w-full max-w-md bg-background overflow-hidden p-6 flex flex-col gap-4">
+      <div className="w-full max-w-md bg-background overflow-hidden py-6 px-4 flex flex-col gap-4">
         {conciergerie ? (
           // Conciergerie waiting page
           <>

@@ -84,7 +84,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   if (!conciergeries?.length) return <ErrorPage message="Aucune conciergerie trouvée !" />;
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background">
+    <div className="h-full w-full flex flex-col items-center justify-center bg-background">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       <h2 className="text-2xl font-bold mb-4">Conciergerie</h2>

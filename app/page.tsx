@@ -42,8 +42,10 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background pt-2">
-      <div className="w-full max-w-md bg-background overflow-hidden">
+    <div
+      className={`min-h-full flex flex-col items-center bg-background ${showEmployeeForm ? 'justify-start' : 'justify-center'}`}
+    >
+      <div className="w-full max-w-md bg-background">
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
           <div className="flex flex-col gap-6">
             <InstallButton />
