@@ -20,7 +20,7 @@ import {
   IconUser,
 } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { getTimeDifference } from '@/app/utils/date';
 
@@ -66,7 +66,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   }, []);
 
   // Handle manual refresh with rate limiting
-  const handleManualRefresh = () => {
+  const handleManualRefresh = useCallback(() => {
     const now = Date.now();
     const timeSinceLastRefresh = now - lastManualRefresh;
 
@@ -98,7 +98,59 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       message: 'Données rafraîchies avec succès !',
     });
     setTimeout(() => setRefreshToast(null), 3000);
-  };
+  }, [currentPage, fetchHomes, fetchMissions, lastManualRefresh, updateFetchTime]);
+
+  // Intercept page refresh (F5, Ctrl+R, swipe down) and trigger app refresh instead
+  useEffect(() => {
+    let pullStartY = 0;
+    let isPulling = false;
+
+    // Handle F5 and Ctrl+R
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+        e.preventDefault();
+        handleManualRefresh();
+      }
+    };
+
+    // Handle pull-to-refresh on mobile
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.scrollY === 0) {
+        pullStartY = e.touches[0].clientY;
+        isPulling = true;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isPulling) return;
+      const pullY = e.touches[0].clientY;
+      const pullDistance = pullY - pullStartY;
+
+      // If pulled down more than 100px at top of page, trigger refresh
+      if (pullDistance > 100 && window.scrollY === 0) {
+        isPulling = false;
+        e.preventDefault();
+        handleManualRefresh();
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isPulling = false;
+    };
+
+    // Add event listeners
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [handleManualRefresh]);
 
   const isLoading = isAuthLoading || isLoadingMissions || isLoadingHomes;
   const loadingText = isLoadingMissions
