@@ -2,7 +2,7 @@
 
 import { CloseButton } from '@/app/components/button';
 import { clsx } from 'clsx/lite';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import Tooltip from './tooltip';
 
 interface FullScreenModalProps {
@@ -25,6 +25,7 @@ export default function FullScreenModal({
   tooltip,
 }: FullScreenModalProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Trigger enter animation on mount
   useEffect(() => {
@@ -32,10 +33,19 @@ export default function FullScreenModal({
     return () => clearTimeout(timer);
   }, []);
 
+  // Cleanup close timer on unmount
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+      }
+    };
+  }, []);
+
   // Handle close with exit animation
   const handleClose = () => {
     setIsVisible(false);
-    setTimeout(onClose, 200); // Wait for animation to complete
+    closeTimerRef.current = setTimeout(onClose, 200); // Wait for animation to complete
   };
 
   return (
