@@ -2,9 +2,6 @@ import type { NextConfig } from 'next';
 import withSerwist from '@serwist/next';
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: '/home/flo/Github/job-conciergerie',
-  },
   images: {
     remotePatterns: [
       {
@@ -30,7 +27,6 @@ const nextConfig: NextConfig = {
 const withPWA = withSerwist({
   swSrc: 'app/sw.ts',
   swDest: 'public/sw.js',
-  disable: process.env.NODE_ENV !== 'production',
 });
 
 export default withPWA(nextConfig);
