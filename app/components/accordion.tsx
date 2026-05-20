@@ -14,6 +14,7 @@ interface AccordionItemProps {
   onToggle: () => void;
   children: React.ReactNode;
   variant: AccordionVariant;
+  isMobile: boolean;
 }
 
 interface AccordionProps {
@@ -34,6 +35,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
   onToggle,
   children,
   variant,
+  isMobile,
 }) => {
   const isCard = variant === 'card';
 
@@ -42,10 +44,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
       <div className="w-full border border-secondary rounded-lg overflow-hidden">
         <button
           onClick={onToggle}
-          className={clsx(
-            'w-full flex items-center justify-between p-3 bg-secondary/10 hover:bg-secondary/20 transition-colors',
-            isOpen ? 'cursor-default' : 'cursor-pointer',
-          )}
+          className="w-full flex items-center justify-between p-3 bg-secondary/10 hover:bg-secondary/20 transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-2">
             {icon && icon}
@@ -61,7 +60,8 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
         </button>
         <div
           className={clsx(
-            'overflow-hidden transition-all duration-300 ease-in-out',
+            'overflow-hidden',
+            isMobile ? 'transition-all duration-300 ease-in-out' : '',
             isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0',
           )}
         >
@@ -74,10 +74,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
   return (
     <div className="border-b border-secondary">
       <button
-        className={clsx(
-          'w-full flex justify-between items-center py-4 px-6 text-left',
-          isOpen ? 'cursor-default' : 'cursor-pointer',
-        )}
+        className="w-full flex justify-between items-center py-4 px-6 text-left cursor-pointer"
         onClick={onToggle}
       >
         <div className="flex items-center gap-2">
@@ -91,7 +88,8 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
       </button>
       <div
         className={clsx(
-          'overflow-hidden transition-all duration-300 ease-in-out',
+          'overflow-hidden',
+          isMobile ? 'transition-all duration-300 ease-in-out' : '',
           isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0',
         )}
       >
@@ -103,36 +101,23 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
 
 export default function Accordion({ items, variant = 'default' }: AccordionProps) {
   const [openIndex, setOpenIndex] = React.useState<number>(0);
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const transitionTimerRef = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [isMobile, setIsMobile] = React.useState(true);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleToggle = (index: number) => {
-    setOpenIndex(current => {
-      if (current === index) return current;
-
-      // Find nearest scrollable ancestor and suppress its scrollbar during transition
-      let el = containerRef.current?.parentElement;
-      while (el) {
-        const overflow = getComputedStyle(el).overflowY;
-        if (overflow === 'auto' || overflow === 'scroll') {
-          el.style.overflowY = 'hidden';
-          clearTimeout(transitionTimerRef.current);
-          transitionTimerRef.current = setTimeout(() => {
-            (el as HTMLElement).style.overflowY = '';
-          }, 300);
-          break;
-        }
-        el = el.parentElement;
-      }
-
-      return index;
-    });
+    setOpenIndex(current => (current === index ? -1 : index));
   };
 
   const isCard = variant === 'card';
 
   return (
-    <div ref={containerRef} className={clsx('bg-background', isCard ? 'space-y-2' : '')}>
+    <div className={clsx('bg-background', isCard ? 'space-y-2' : '')}>
       {items.map((item, index) => (
         <AccordionItem
           key={index}
@@ -142,6 +127,7 @@ export default function Accordion({ items, variant = 'default' }: AccordionProps
           isOpen={openIndex === index}
           onToggle={() => handleToggle(index)}
           variant={variant}
+          isMobile={isMobile}
         >
           {item.content}
         </AccordionItem>

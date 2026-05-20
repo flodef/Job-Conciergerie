@@ -16,7 +16,7 @@ import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/n
 import { IconBriefcase, IconCalendar, IconHome, IconRefresh, IconSettings, IconUser } from '@tabler/icons-react';
 import clsx from 'clsx/lite';
 import { useRouter } from 'next/navigation';
-import { ReactNode, useCallback, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 
 // Map pages to their respective icons
 export const pageSettings: Record<Page, { icon: ReactNode; userType: UserType | undefined }> = {
@@ -34,6 +34,39 @@ const MIN_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 export default function NavigationLayout({ children }: { children: ReactNode }) {
   const { userType: authUserType, isLoading: isAuthLoading } = useAuth();
+
+  // Add nice scrollbar styling
+  React.useEffect(() => {
+    const styleId = 'nice-scrollbar-style';
+    if (document.getElementById(styleId)) return;
+
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      .nice-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+      .nice-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .nice-scrollbar::-webkit-scrollbar-thumb {
+        background-color: rgba(156, 163, 175, 0.5);
+        border-radius: 3px;
+      }
+      .nice-scrollbar:hover::-webkit-scrollbar-thumb {
+        background-color: rgba(156, 163, 175, 0.8);
+      }
+      .nice-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      style.remove();
+    };
+  }, []);
   const { isLoading: isLoadingMissions, fetchMissions } = useMissions();
   const { isLoading: isLoadingHomes, fetchHomes } = useHomes();
   const { currentPage, onMenuChange } = useMenuContext();
@@ -250,7 +283,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
         {/* Content wrapper - scrollable when content is long */}
         <div
           className={clsx(
-            'bg-background relative h-full overflow-y-auto flex flex-col',
+            'bg-background relative h-full overflow-y-auto flex flex-col nice-scrollbar',
             isNavigationPage && !!userType && 'pb-16',
           )}
         >
