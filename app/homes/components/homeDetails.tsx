@@ -29,24 +29,33 @@ type HomeDetailsProps = {
   isFromCalendar?: boolean;
 };
 
-// Collapsible section component
+// Section IDs for accordion management
+type SectionId = 'photos' | 'description' | 'objectives';
+
+// Collapsible section component - now controlled by parent for accordion behavior
 function CollapsibleSection({
+  id,
   title,
   icon,
   children,
-  defaultOpen = true,
+  isOpen,
+  onToggle,
 }: {
+  id: SectionId;
   title: string;
   icon: React.ReactNode;
   children: React.ReactNode;
-  defaultOpen?: boolean;
+  isOpen: boolean;
+  onToggle: (id: SectionId) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
     <div className="w-full border border-secondary rounded-lg overflow-hidden">
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-3 bg-secondary/10 hover:bg-secondary/20 transition-colors"
+        onClick={() => onToggle(id)}
+        className={clsx(
+          'w-full flex items-center justify-between p-3 bg-secondary/10 hover:bg-secondary/20 transition-colors',
+          isOpen ? 'cursor-default' : 'cursor-pointer',
+        )}
       >
         <div className="flex items-center gap-2">
           {icon}
@@ -63,12 +72,12 @@ function CollapsibleSection({
 const HomeImageGrid = React.memo(function HomeImageGrid({
   images,
   onImageClick,
+  isOpen,
 }: {
   images: string[];
   onImageClick: (index: number) => void;
+  isOpen: boolean;
 }) {
-  const [isOpen, setIsOpen] = useState(true);
-
   // Preload and cache all images
   const imageUrls = useMemo(() => images.map(img => getStorageImageUrl(img)), [images]);
   const { getCachedUrl } = useImageCache(imageUrls);
@@ -76,38 +85,26 @@ const HomeImageGrid = React.memo(function HomeImageGrid({
   if (images.length === 0) return null;
 
   return (
-    <div className="w-full border border-secondary rounded-lg overflow-hidden">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-3 bg-secondary/10 hover:bg-secondary/20 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <IconPhoto size={16} className="text-light" />
-          <span className="text-sm font-medium text-light">Photos ({images.length})</span>
-        </div>
-        <IconChevronDown size={16} className={clsx('text-light transition-transform', isOpen && 'rotate-180')} />
-      </button>
-      <div className={clsx('p-3', !isOpen && 'hidden')}>
-        <div className="grid grid-cols-3 gap-2">
-          {images.map((image, index) => {
-            const originalUrl = getStorageImageUrl(image);
-            const cachedUrl = getCachedUrl(originalUrl);
-            return (
-              <picture key={image} className="relative aspect-square overflow-hidden rounded-lg cursor-pointer">
-                <img
-                  src={cachedUrl}
-                  alt={`Photo ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  loading="eager"
-                  onClick={() => onImageClick(index)}
-                  onError={e => {
-                    e.currentTarget.src = fallbackImage;
-                  }}
-                />
-              </picture>
-            );
-          })}
-        </div>
+    <div className={clsx('p-3', !isOpen && 'hidden')}>
+      <div className="grid grid-cols-3 gap-2">
+        {images.map((image, index) => {
+          const originalUrl = getStorageImageUrl(image);
+          const cachedUrl = getCachedUrl(originalUrl);
+          return (
+            <picture key={image} className="relative aspect-square overflow-hidden rounded-lg cursor-pointer">
+              <img
+                src={cachedUrl}
+                alt={`Photo ${index + 1}`}
+                className="w-full h-full object-cover"
+                loading="eager"
+                onClick={() => onImageClick(index)}
+                onError={e => {
+                  e.currentTarget.src = fallbackImage;
+                }}
+              />
+            </picture>
+          );
+        })}
       </div>
     </div>
   );
@@ -126,6 +123,13 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
   const [isReadOnly, setIsReadOnly] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [associatedMissions, setAssociatedMissions] = useState<string[]>([]);
+
+  // Accordion state - track which section is open (only one at a time)
+  const [openSection, setOpenSection] = useState<SectionId>('photos');
+
+  const handleToggleSection = (sectionId: SectionId) => {
+    setOpenSection(prev => (prev === sectionId ? prev : sectionId));
+  };
 
   const isEmployee = userType === 'employee';
 
@@ -210,15 +214,41 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
         )}
 
         <div className="space-y-2" data-home-details>
-          <HomeImageGrid images={home.images} onImageClick={setSelectedImageIndex} />
+          {home.images.length > 0 && (
+            <CollapsibleSection
+              id="photos"
+              title={`Photos (${home.images.length})`}
+              icon={<IconPhoto size={16} className="text-light" />}
+              isOpen={openSection === 'photos'}
+              onToggle={handleToggleSection}
+            >
+              <HomeImageGrid
+                images={home.images}
+                onImageClick={setSelectedImageIndex}
+                isOpen={openSection === 'photos'}
+              />
+            </CollapsibleSection>
+          )}
 
           {(userType === 'conciergerie' || (userType === 'employee' && isFromCalendar)) && (
-            <CollapsibleSection title="Description" icon={<IconFileDescription size={16} className="text-light" />}>
+            <CollapsibleSection
+              id="description"
+              title="Description"
+              icon={<IconFileDescription size={16} className="text-light" />}
+              isOpen={openSection === 'description'}
+              onToggle={handleToggleSection}
+            >
               <p className="text-foreground whitespace-pre-wrap">{home.description}</p>
             </CollapsibleSection>
           )}
 
-          <CollapsibleSection title="Points particuliers" icon={<IconListCheck size={16} className="text-light" />}>
+          <CollapsibleSection
+            id="objectives"
+            title="Points particuliers"
+            icon={<IconListCheck size={16} className="text-light" />}
+            isOpen={openSection === 'objectives'}
+            onToggle={handleToggleSection}
+          >
             <ul className="list-none pl-0 space-y-1">
               {home.objectives.map((objective, index) => (
                 <li key={index} className="flex items-start">
