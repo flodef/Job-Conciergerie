@@ -28,11 +28,10 @@ const nextConfig: NextConfig = {
 };
 
 // Only enable PWA in production to prevent dev memory leaks
-const withPWA = isDev
-  ? (config: NextConfig) => config
-  : withSerwist({
-      swSrc: 'app/sw.ts',
-      swDest: 'public/sw.js',
-    });
+const withPWA = withSerwist({
+  swSrc: 'app/sw.ts',
+  swDest: 'public/sw.js',
+  disable: isDev,
+});
 
 export default withPWA(nextConfig);
