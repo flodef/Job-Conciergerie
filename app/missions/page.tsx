@@ -19,6 +19,7 @@ import { useLocalStorage } from '@/app/utils/localStorage';
 import {
   applyMissionFilters,
   filterMissionsByUserType,
+  getAvailableTimePeriods,
   groupMissionsByCategory,
   sortMissions,
 } from '@/app/utils/missionFilters';
@@ -60,7 +61,7 @@ export default function Missions() {
 
   // Filter states - must be declared before any conditional returns
   const [selectedConciergeries, setSelectedConciergeries] = useState<string[]>([]);
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['current']);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedMissionStatuses, setSelectedMissionStatuses] = useState<string[]>(['available']);
   const [selectedZones, setSelectedZones] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
@@ -68,7 +69,7 @@ export default function Missions() {
   // Store for saved filter values - must be declared before any conditional returns
   const [savedFilters, setSavedFilters] = useLocalStorage<MissionFiltersType>('mission_filters', {
     conciergeries: [],
-    statuses: ['current'],
+    statuses: [],
     missionStatuses: ['available'],
     zones: [],
   });
@@ -98,7 +99,7 @@ export default function Missions() {
 
     // Initialize filter states with saved values
     setSelectedConciergeries(savedFilters.conciergeries || []);
-    setSelectedStatuses(savedFilters.statuses || ['current']);
+    setSelectedStatuses(savedFilters.statuses || []);
     setSelectedMissionStatuses(savedFilters.missionStatuses || ['available']);
     setSelectedZones(savedFilters.zones || []);
   }, [authLoading, savedFilters]);
@@ -119,6 +120,7 @@ export default function Missions() {
       selectedMissionStatuses,
       selectedZones,
       homes,
+      userType === 'employee' ? employeeName : undefined,
     );
   }, [
     basicFilteredMissions,
@@ -128,6 +130,8 @@ export default function Missions() {
     selectedZones,
     homes,
     missionsLoading,
+    userType,
+    employeeName,
   ]);
 
   // Sort missions - must be declared before any conditional returns
@@ -166,6 +170,13 @@ export default function Missions() {
     });
     return Array.from(zones).sort();
   }, [basicFilteredMissions, homes, missionsLoading]);
+
+  // Get available time periods (months/years) for filtering - must be declared before any conditional returns
+  // Use basic filtered missions to only show periods with missions accessible to the user
+  const availableTimePeriods = useMemo(() => {
+    if (missionsLoading) return [];
+    return getAvailableTimePeriods(basicFilteredMissions);
+  }, [basicFilteredMissions, missionsLoading]);
 
   // Function to save current filter values to localStorage
   const saveFiltersToLocalStorage = () => {
@@ -238,6 +249,7 @@ export default function Missions() {
               <MissionFilters
                 availableConciergeries={availableConciergeries}
                 availableZones={availableZones}
+                availableTimePeriods={availableTimePeriods}
                 selectedConciergeries={selectedConciergeries}
                 setSelectedConciergeries={setSelectedConciergeries}
                 selectedStatuses={selectedStatuses}

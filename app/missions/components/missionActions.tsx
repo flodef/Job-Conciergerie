@@ -36,9 +36,10 @@ export default function MissionActions({
   // Check if the current time is after the mission start time
   const now = new Date();
   const hasStartTimePassed = now > mission.startDateTime;
+  const isMissionInPast = mission.endDateTime < now;
   const isOwnMission = userType === 'conciergerie' && mission.conciergerieName === conciergerieName;
   const isCurrentEmployee = mission.employeeId === employeeName;
-  const canAcceptMission = userType === 'employee' && !mission.employeeId;
+  const canAcceptMission = userType === 'employee' && !mission.employeeId && !isMissionInPast;
   const isAccepted = mission.status === 'accepted';
   const isStarted = mission.status === 'started';
   const isCompleted = mission.status === 'completed';

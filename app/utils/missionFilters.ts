@@ -1,16 +1,56 @@
 import { Home, Mission } from '@/app/types/dataTypes';
 
 /**
+ * Get available months/years from missions
+ */
+export function getAvailableTimePeriods(missions: Mission[]): string[] {
+  const periods = new Set<string>();
+
+  missions.forEach(mission => {
+    const date = new Date(mission.startDateTime);
+    const month = date.toLocaleString('fr-FR', { month: 'long' });
+    const year = date.getFullYear();
+    const period = `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
+    periods.add(period);
+  });
+
+  // Map French month names to numbers for proper sorting
+  const frenchMonths: Record<string, number> = {
+    Janvier: 0,
+    Février: 1,
+    Mars: 2,
+    Avril: 3,
+    Mai: 4,
+    Juin: 5,
+    Juillet: 6,
+    Août: 7,
+    Septembre: 8,
+    Octobre: 9,
+    Novembre: 10,
+    Décembre: 11,
+  };
+
+  return Array.from(periods).sort((a, b) => {
+    const [monthA, yearA] = a.split(' ');
+    const [monthB, yearB] = b.split(' ');
+    const dateA = new Date(parseInt(yearA), frenchMonths[monthA] || 0, 1);
+    const dateB = new Date(parseInt(yearB), frenchMonths[monthB] || 0, 1);
+    return dateB.getTime() - dateA.getTime(); // Sort descending (newest first)
+  });
+}
+
+/**
  * Filter missions based on user type
  */
 export function filterMissionsByUserType(missions: Mission[], employeeName: string | undefined): Mission[] {
   return missions.filter(mission => {
     // For employee users, show only missions they have access to
     if (employeeName) {
-      if (mission.employeeId) return mission.employeeId === employeeName;
-
       // If the mission has prestataires specified, check if the current employee is in the list
       if (mission.allowedEmployees?.length) return mission.allowedEmployees.includes(employeeName);
+
+      if (mission.employeeId) return mission.employeeId === employeeName;
+      else return new Date(mission.endDateTime) >= new Date();
 
       // If no prestataires specified, show to all
       return true;
@@ -31,66 +71,51 @@ export function applyMissionFilters(
   selectedMissionStatuses: string[],
   selectedZones: string[],
   homes: Home[],
+  employeeName?: string,
 ): Mission[] {
   // If no filters are selected, show all missions
-  if (
-    selectedConciergeries.length === 0 &&
-    selectedStatuses.length === 0 &&
-    selectedMissionStatuses.length === 0 &&
-    selectedZones.length === 0
-  ) {
-    return missions;
-  }
+  // if (
+  //   selectedConciergeries.length === 0 &&
+  //   selectedStatuses.length === 0 &&
+  //   selectedMissionStatuses.length === 0 &&
+  //   selectedZones.length === 0
+  // ) {
+  //   return missions;
+  // }
 
   return missions.filter(mission => {
     // Filter by conciergerie
     if (selectedConciergeries.length > 0 && !selectedConciergeries.includes(mission.conciergerieName)) return false;
 
-    // Get mission status information
-    const now = new Date();
-    const missionEndDate = new Date(mission.endDateTime);
-    const isCurrent = missionEndDate >= now;
-    const isArchived = missionEndDate < now;
-
-    // Filter by time period status (current/archived)
+    // Filter by time period (month/year)
     if (selectedStatuses.length > 0) {
-      // If both current and archived are selected or none are selected, show all time periods
-      const showAllTimePeriods =
-        selectedStatuses.length === 0 ||
-        (selectedStatuses.includes('current') && selectedStatuses.includes('archived'));
+      const missionDate = new Date(mission.startDateTime);
+      const missionMonth = missionDate.toLocaleString('fr-FR', { month: 'long' });
+      const missionYear = missionDate.getFullYear();
+      const missionPeriod = `${missionMonth.charAt(0).toUpperCase() + missionMonth.slice(1)} ${missionYear}`;
 
-      if (!showAllTimePeriods) {
-        const matchesTimeStatus =
-          (selectedStatuses.includes('current') && isCurrent) || (selectedStatuses.includes('archived') && isArchived);
+      const matchesTimeStatus = selectedStatuses.includes(missionPeriod);
 
-        if (!matchesTimeStatus) {
-          return false;
-        }
-      }
+      if (!matchesTimeStatus) return false;
     }
 
     // Filter by mission status
     if (selectedMissionStatuses.length > 0) {
       // Check if the mission matches the selected status filter
-      // 'available' means no employee is assigned (employeeId is empty)
+      // 'available' means no employee is assigned (employeeId is empty) AND mission is not in the past
       // 'accepted', 'started', 'completed' match the actual mission status
+      const isAvailable = !mission.employeeId && new Date(mission.endDateTime) >= new Date();
+      const isAccepted = mission.status === 'accepted';
+      const isStarted = mission.status === 'started';
+      const isCompleted = mission.status === 'completed' && (!employeeName || mission.employeeId === employeeName);
 
-      // If all statuses are selected or none are selected, show all missions
-      const showAllMissionStatuses = selectedMissionStatuses.length === 0;
+      const matchesMissionStatus =
+        (selectedMissionStatuses.includes('available') && isAvailable) ||
+        (selectedMissionStatuses.includes('accepted') && isAccepted) ||
+        (selectedMissionStatuses.includes('started') && isStarted) ||
+        (selectedMissionStatuses.includes('completed') && isCompleted);
 
-      if (!showAllMissionStatuses) {
-        const isAvailable = !mission.employeeId;
-
-        const matchesMissionStatus =
-          (selectedMissionStatuses.includes('available') && isAvailable) ||
-          (selectedMissionStatuses.includes('accepted') && mission.status === 'accepted') ||
-          (selectedMissionStatuses.includes('started') && mission.status === 'started') ||
-          (selectedMissionStatuses.includes('completed') && mission.status === 'completed');
-
-        if (!matchesMissionStatus) {
-          return false;
-        }
-      }
+      if (!matchesMissionStatus) return false;
     }
 
     // Filter by geographic zones

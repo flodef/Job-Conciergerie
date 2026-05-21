@@ -16,6 +16,7 @@ export type MissionFiltersType = {
 interface MissionFiltersProps {
   availableConciergeries: string[];
   availableZones: string[];
+  availableTimePeriods: string[];
   selectedConciergeries: string[];
   setSelectedConciergeries: React.Dispatch<React.SetStateAction<string[]>>;
   selectedStatuses: string[];
@@ -31,6 +32,7 @@ interface MissionFiltersProps {
 export default function MissionFilters({
   availableConciergeries,
   availableZones,
+  availableTimePeriods,
   selectedConciergeries,
   setSelectedConciergeries,
   selectedStatuses,
@@ -108,20 +110,19 @@ export default function MissionFilters({
           label="Période"
           values={selectedStatuses}
           onChange={setSelectedStatuses}
-          options={[
-            { value: 'current', label: 'Actuelles' },
-            { value: 'archived', label: 'Archivées' },
-          ]}
-          disabled={false}
-          required
+          options={availableTimePeriods.map(period => ({ value: period, label: period }))}
+          disabled={availableTimePeriods.length === 0}
+          required={availableTimePeriods.length > 0}
         />
-        <button
-          onClick={() => setSelectedStatuses(savedFilters?.statuses || ['current'])}
-          className={filterButtonClassName(statusesChanged)}
-          disabled={!statusesChanged}
-        >
-          <IconX size={14} /> Réinitialiser
-        </button>
+        {availableTimePeriods.length > 0 && (
+          <button
+            onClick={() => setSelectedStatuses(savedFilters?.statuses || [])}
+            className={filterButtonClassName(statusesChanged)}
+            disabled={!statusesChanged}
+          >
+            <IconX size={14} /> Réinitialiser
+          </button>
+        )}
       </div>
 
       {/* Mission status filter */}
@@ -194,7 +195,7 @@ export default function MissionFilters({
         <button
           onClick={() => {
             setSelectedConciergeries(savedFilters?.conciergeries || []);
-            setSelectedStatuses(savedFilters?.statuses || ['current']);
+            setSelectedStatuses(savedFilters?.statuses || []);
             setSelectedMissionStatuses(savedFilters?.missionStatuses || ['available']);
             setSelectedZones(savedFilters?.zones || []);
           }}

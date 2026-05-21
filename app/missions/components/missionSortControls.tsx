@@ -26,7 +26,7 @@ export default function MissionSortControls({
   filteredMissionsCount,
 }: MissionSortControlsProps) {
   return (
-    <div className="mb-4 space-y-4">
+    <div className="mb-4 space-y-4 mt-2">
       {/* Sort and filter buttons */}
       <div className="flex items-center justify-between">
         <div className="flex flex-wrap gap-1.5 items-center flex-1 overflow-hidden">
@@ -77,7 +77,7 @@ export default function MissionSortControls({
         </div>
 
         {/* Filter toggle button */}
-        <div className="relative ml-auto mt-2">
+        <div className="relative ml-auto">
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
