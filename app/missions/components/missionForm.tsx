@@ -259,6 +259,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       }
     } catch (error) {
       setToast({ type: ToastType.Error, message: String(error), error });
+    } finally {
       setIsSubmitting(false);
     }
   };
