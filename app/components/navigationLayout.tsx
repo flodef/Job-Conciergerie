@@ -3,6 +3,7 @@
 import InstallToast from '@/app/components/installToast';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { PageManager } from '@/app/components/pageManager';
+import { TimeAgoDisplay } from '@/app/components/timeAgoDisplay';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
@@ -10,8 +11,8 @@ import { useBadge } from '@/app/contexts/badgeProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { TimeAgoDisplay } from '@/app/components/timeAgoDisplay';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
+import { cn } from '@/app/utils/className';
 import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/navigation';
 import {
   IconBriefcase,
@@ -22,7 +23,6 @@ import {
   IconSettings,
   IconUser,
 } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
 import { useRouter } from 'next/navigation';
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 
@@ -218,7 +218,8 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   // Redirect to welcome page if not authenticated
   useEffect(() => {
     // Only redirect after auth has finished loading and we're on a navigation page
-    if (!isAuthLoading && !authUserType && isNavigationPage) {
+    // Skip redirect when offline - let the app work with cached data
+    if (!isAuthLoading && !authUserType && isNavigationPage && navigator.onLine) {
       router.push('/');
     }
   }, [isAuthLoading, authUserType, isNavigationPage, router]);

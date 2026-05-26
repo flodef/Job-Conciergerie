@@ -179,7 +179,21 @@ export default function WaitingPage() {
     </div>
   );
 
-  if (!userType) return <ErrorPage />;
+  // Show loading state while auth is loading or offline with no cached data
+  if (!userType) {
+    // When offline, don't show error - the app should work with cached data
+    if (!navigator.onLine) {
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-foreground">Mode hors ligne</p>
+            <p className="text-sm text-light mt-2">L&apos;application fonctionne avec les données en cache</p>
+          </div>
+        </div>
+      );
+    }
+    return <ErrorPage />;
+  }
 
   return (
     <div className="flex-1 flex items-center justify-center bg-background">
