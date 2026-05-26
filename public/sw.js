@@ -117,6 +117,19 @@ async function handleRSCRequest(request) {
   // Return cached version if available
   if (cached) return cached;
 
+  // If offline and no cache, try the navigation page cache as fallback
+  if (!navigator.onLine) {
+    const url = new URL(request.url);
+    const baseUrl = url.origin + url.pathname;
+    const pagesCache = await caches.open(PAGES_CACHE);
+    const pageFallback = await pagesCache.match(baseUrl);
+    if (pageFallback) return pageFallback;
+
+    // Last resort: return the index page
+    const indexFallback = await pagesCache.match('/');
+    if (indexFallback) return indexFallback;
+  }
+
   try {
     const response = await fetch(request, { redirect: 'follow' });
     // Only cache successful non-redirect responses
@@ -125,6 +138,16 @@ async function handleRSCRequest(request) {
     }
     return response;
   } catch (error) {
+    // Offline fallback - try to return the base page
+    const url = new URL(request.url);
+    const baseUrl = url.origin + url.pathname;
+    const pagesCache = await caches.open(PAGES_CACHE);
+    const pageFallback = await pagesCache.match(baseUrl);
+    if (pageFallback) return pageFallback;
+
+    const indexFallback = await pagesCache.match('/');
+    if (indexFallback) return indexFallback;
+
     return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
   }
 }
