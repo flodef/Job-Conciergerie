@@ -64,11 +64,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useLocalStorage<string>('user_id');
   const [userType, setUserType] = useLocalStorage<UserType>('user_type');
   const [conciergerieName, setConciergerieName] = useLocalStorage<string>('conciergerie_name');
+  const [cachedConciergeries, setCachedConciergeries] = useLocalStorage<Conciergerie[]>('conciergeries', []);
+  const [cachedEmployees, setCachedEmployees] = useLocalStorage<Employee[]>('employees', []);
+
+  // Use cached values or empty arrays
+  const conciergeries = cachedConciergeries ?? [];
+  const employees = cachedEmployees ?? [];
+  const setConciergeries = setCachedConciergeries;
+  const setEmployees = setCachedEmployees;
 
   const [employeeName, setEmployeeName] = useState<string>();
   const [userData, setUserData] = useState<UserData>();
-  const [conciergeries, setConciergeries] = useState<Conciergerie[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const updateUserId = useCallback(
