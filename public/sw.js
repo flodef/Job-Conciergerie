@@ -102,20 +102,21 @@ async function handleRSCRequest(request) {
   const cache = await caches.open(RSC_CACHE);
   const cached = await cache.match(request);
 
-  // Update cache in background if online
-  if (navigator.onLine) {
-    fetch(request.url, { redirect: 'follow', method: request.method, headers: request.headers })
-      .then(response => {
-        // Only cache successful non-redirect responses
-        if (response.ok && !response.redirected) {
-          cache.put(request, response.clone());
-        }
-      })
-      .catch(() => {});
+  // Return cached version immediately if available (stale-while-revalidate)
+  if (cached) {
+    // Update cache in background if online
+    if (navigator.onLine) {
+      fetch(request.clone())
+        .then(response => {
+          // Only cache successful non-redirect responses
+          if (response.ok && !response.redirected) {
+            cache.put(request, response.clone());
+          }
+        })
+        .catch(() => {});
+    }
+    return cached;
   }
-
-  // Return cached version if available
-  if (cached) return cached;
 
   // If offline and no cache, return error - don't fallback to wrong page
   if (!navigator.onLine) {
@@ -127,7 +128,7 @@ async function handleRSCRequest(request) {
   }
 
   try {
-    const response = await fetch(request, { redirect: 'follow' });
+    const response = await fetch(request.clone());
     // Only cache successful non-redirect responses
     if (response.ok && !response.redirected) {
       cache.put(request, response.clone());
