@@ -57,6 +57,12 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Handle RSC (React Server Component) requests FIRST - Next.js uses POST for navigation
+  if (url.searchParams.has('_rsc')) {
+    event.respondWith(handleRSCRequest(request));
+    return;
+  }
+
   // Handle non-GET requests (POST, PUT, DELETE) - can't cache but can return offline error
   if (request.method !== 'GET') {
     // Only handle same-origin API requests
@@ -68,12 +74,6 @@ self.addEventListener('fetch', event => {
 
   // Skip cross-origin requests (except for Supabase images)
   if (url.origin !== self.location.origin && !url.hostname.includes('supabase.co')) return;
-
-  // Handle RSC (React Server Component) requests
-  if (url.searchParams.has('_rsc')) {
-    event.respondWith(handleRSCRequest(request));
-    return;
-  }
 
   // Handle navigation requests
   if (request.mode === 'navigate') {
