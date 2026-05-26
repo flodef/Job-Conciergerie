@@ -107,9 +107,10 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   const fetchMissionsCore = useCallback(() => {
     if (isFetching.current) return Promise.resolve(false);
 
-    // Skip fetching if offline - preserve existing data
+    // Skip fetching if offline - preserve existing data but reset needsRefresh
     if (!navigator.onLine) {
       console.warn('Offline mode: skipping missions fetch, using cached data');
+      updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
       return Promise.resolve(false);
     }
 
@@ -121,6 +122,8 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       if (!homesSuccess) {
         setIsLoading(false);
         isFetching.current = false;
+        // Reset needsRefresh to prevent infinite retry loops
+        updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
         return false;
       }
       return fetchAllMissions()
@@ -139,6 +142,8 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           console.warn('Failed to fetch missions (possibly offline):', error);
           setIsLoading(false);
           isFetching.current = false;
+          // Reset needsRefresh to prevent infinite retry loops
+          updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
           return false;
         });
     });
@@ -148,6 +153,8 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   // Fetch missions when needed (initial load or refresh triggered) - only for authenticated users
   useEffect(() => {
     if (authLoading || !needsRefreshMissions || !userData) return;
+    // Skip if already fetching or if we have data and we're online (data is fresh)
+    if (isFetching.current) return;
     fetchMissionsCore();
   }, [authLoading, needsRefreshMissions, userData, fetchMissionsCore]);
 

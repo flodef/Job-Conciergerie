@@ -44,9 +44,10 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   const fetchHomesCore = useCallback(() => {
     if (isFetching.current) return Promise.resolve(false);
 
-    // Skip fetching if offline - preserve existing data
+    // Skip fetching if offline - preserve existing data but reset needsRefresh
     if (!navigator.onLine) {
       console.warn('Offline mode: skipping homes fetch, using cached data');
+      updateFetchTime(Page.Homes);
       return Promise.resolve(false);
     }
 
@@ -73,6 +74,8 @@ export function HomesProvider({ children }: { children: ReactNode }) {
       .catch(error => {
         // Silently fail when offline - cached data will be used if available
         console.warn('Failed to fetch homes (possibly offline):', error);
+        // Reset needsRefresh to prevent infinite retry loops
+        updateFetchTime(Page.Homes);
         return false;
       })
       .finally(() => {
@@ -85,6 +88,8 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   // Fetch homes when needed (initial load or refresh triggered) - only for authenticated users
   useEffect(() => {
     if (authLoading || !needsRefreshHomes || !conciergerieName) return;
+    // Skip if already fetching
+    if (isFetching.current) return;
     fetchHomesCore();
   }, [authLoading, needsRefreshHomes, conciergerieName, fetchHomesCore]);
 
