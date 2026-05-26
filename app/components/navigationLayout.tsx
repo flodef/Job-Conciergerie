@@ -10,8 +10,8 @@ import { useBadge } from '@/app/contexts/badgeProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
+import { TimeAgoDisplay } from '@/app/components/timeAgoDisplay';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
-import { getTimeDifference } from '@/app/utils/date';
 import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/navigation';
 import {
   IconBriefcase,
@@ -91,16 +91,9 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     resetNewMissionsCount,
   } = useBadge();
   const { lastFetchTime, updateFetchTime } = useFetchTime();
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [refreshToast, setRefreshToast] = useState<{ type: ToastType; message: string } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastManualRefresh, setLastManualRefresh] = useState<number>(0);
-
-  // Auto-update currentTime every second to show accurate "time ago"
-  useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Handle manual refresh with rate limiting
   const handleManualRefresh = useCallback(() => {
@@ -120,7 +113,6 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
     // Perform refresh
     setLastManualRefresh(now);
-    setCurrentTime(new Date());
 
     // Refresh data based on current page
     if (currentPage === Page.Missions || currentPage === Page.Calendar) {
@@ -269,8 +261,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
           {!!lastFetchTime[currentPage] && (
             <Tooltip icon={IconRefresh} size="medium" orientation="horizontal" onClick={handleManualRefresh}>
               <div className="flex w-full justify-center text-center">
-                Dernière mise à jour :<br /> il y a{' '}
-                {getTimeDifference(new Date(lastFetchTime[currentPage]!), currentTime)}
+                Dernière mise à jour :<br /> il y a <TimeAgoDisplay lastFetchTime={lastFetchTime[currentPage]} />
               </div>
             </Tooltip>
           )}
