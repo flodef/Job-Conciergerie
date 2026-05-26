@@ -40,7 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# serwist / pwa
-/public/sw.js
+# serwist / pwa - Keep sw.js for deployment
+# /public/sw.js
 /public/swe-worker-*.js
 /public/workbox-*.js
