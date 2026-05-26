@@ -89,6 +89,26 @@ const serwist = new Serwist({
         ],
       }),
     },
+
+    // Cache Next.js RSC (React Server Component) requests for offline navigation
+    {
+      matcher: ({ url }) => {
+        // Match RSC payload requests (_rsc query param)
+        return url.searchParams.has('_rsc');
+      },
+      handler: new StaleWhileRevalidate({
+        cacheName: 'rsc-cache',
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 100,
+            maxAgeSeconds: 24 * 60 * 60, // 1 day
+          }),
+          new CacheableResponsePlugin({
+            statuses: [0, 200],
+          }),
+        ],
+      }),
+    },
   ],
 });
 
