@@ -1,4 +1,4 @@
-import { PageManager } from '@/app/components/pageManager';
+import { MaintenanceCheck } from '@/app/components/maintenanceMode';
 import NavigationLayout from '@/app/components/navigationLayout';
 import { ServiceWorkerRegister } from '@/app/components/serviceWorkerRegister';
 import { AuthProvider } from '@/app/contexts/authProvider';
@@ -49,19 +49,21 @@ export default function RootLayout({
         <meta name="theme-color" content="#a4bcde" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-dvh`}>
-        <span style={{ display: 'none', fontFamily: 'var(--font-geist-sans)' }}>Force font load</span>
-        <ServiceWorkerRegister />
-        <MenuProvider>
-          <AuthProvider>
-            <HomesProvider>
-              <MissionsProviderWrapper>
-                <BadgeProvider>
-                  <NavigationLayout>{children}</NavigationLayout>
-                </BadgeProvider>
-              </MissionsProviderWrapper>
-            </HomesProvider>
-          </AuthProvider>
-        </MenuProvider>
+        <MaintenanceCheck>
+          <span style={{ display: 'none', fontFamily: 'var(--font-geist-sans)' }}>Force font load</span>
+          <ServiceWorkerRegister />
+          <MenuProvider>
+            <AuthProvider>
+              <HomesProvider>
+                <MissionsProviderWrapper>
+                  <BadgeProvider>
+                    <NavigationLayout>{children}</NavigationLayout>
+                  </BadgeProvider>
+                </MissionsProviderWrapper>
+              </HomesProvider>
+            </AuthProvider>
+          </MenuProvider>
+        </MaintenanceCheck>
       </body>
     </html>
   );
