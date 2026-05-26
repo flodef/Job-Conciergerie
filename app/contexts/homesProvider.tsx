@@ -64,6 +64,11 @@ export function HomesProvider({ children }: { children: ReactNode }) {
         }
         return !!fetchedHomes;
       })
+      .catch(error => {
+        // Silently fail when offline - cached data will be used if available
+        console.warn('Failed to fetch homes (possibly offline):', error);
+        return false;
+      })
       .finally(() => {
         setIsLoading(false);
         isFetching.current = false;

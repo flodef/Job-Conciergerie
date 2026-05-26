@@ -7,11 +7,12 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-light: var(--light);
-  --text-shadow: 1px 0 0 var(--foreground), -1px 0 0 var(--foreground), 0 1px 0 var(--foreground),
-    0 -1px 0 var(--foreground);
+  --text-shadow:
+    1px 0 0 var(--foreground), -1px 0 0 var(--foreground), 0 1px 0 var(--foreground), 0 -1px 0 var(--foreground);
 
   --animate-fade-in-up: fadeInUp 0.3s ease-out;
   --animate-shake: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  --animate-fade-out: fadeOut 0.3s ease-out forwards;
 
   @keyframes fadeInUp {
     0% {
@@ -44,6 +45,14 @@
     }
     100% {
       transform: translateX(0);
+    }
+  }
+  @keyframes fadeOut {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
     }
   }
 }

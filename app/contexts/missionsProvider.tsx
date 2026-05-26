@@ -117,16 +117,24 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         isFetching.current = false;
         return false;
       }
-      return fetchAllMissions().then(fetchedMissions => {
-        if (fetchedMissions) {
-          setMissions(fetchedMissions);
-          checkForLateMissions(fetchedMissions);
-          updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
-        }
-        setIsLoading(false);
-        isFetching.current = false;
-        return !!fetchedMissions;
-      });
+      return fetchAllMissions()
+        .then(fetchedMissions => {
+          if (fetchedMissions) {
+            setMissions(fetchedMissions);
+            checkForLateMissions(fetchedMissions);
+            updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
+          }
+          setIsLoading(false);
+          isFetching.current = false;
+          return !!fetchedMissions;
+        })
+        .catch(error => {
+          // Silently fail when offline - cached data will be used if available
+          console.warn('Failed to fetch missions (possibly offline):', error);
+          setIsLoading(false);
+          isFetching.current = false;
+          return false;
+        });
     });
   }, [fetchHomes, checkForLateMissions, missions.length, updateFetchTime]);
 

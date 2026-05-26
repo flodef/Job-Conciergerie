@@ -1,5 +1,6 @@
 import { MaintenanceCheck } from '@/app/components/maintenanceMode';
 import NavigationLayout from '@/app/components/navigationLayout';
+import { OfflineIndicator } from '@/app/components/offlineIndicator';
 import { ServiceWorkerRegister } from '@/app/components/serviceWorkerRegister';
 import { AuthProvider } from '@/app/contexts/authProvider';
 import { BadgeProvider } from '@/app/contexts/badgeProvider';
@@ -58,6 +59,7 @@ export default function RootLayout({
                 <MissionsProviderWrapper>
                   <BadgeProvider>
                     <NavigationLayout>{children}</NavigationLayout>
+                    <OfflineIndicator />
                   </BadgeProvider>
                 </MissionsProviderWrapper>
               </HomesProvider>

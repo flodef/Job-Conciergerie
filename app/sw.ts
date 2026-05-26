@@ -19,9 +19,37 @@ const serwist = new Serwist({
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
+  // Enable offline fallback for navigation
+  fallbacks: {
+    entries: [
+      {
+        url: '/',
+        matcher({ request }) {
+          return request.mode === 'navigate';
+        },
+      },
+    ],
+  },
   runtimeCaching: [
     // Default Next.js caching
     ...defaultCache,
+
+    // Cache page navigation requests - Network first with cache fallback for offline
+    {
+      matcher: ({ request }) => request.mode === 'navigate',
+      handler: new StaleWhileRevalidate({
+        cacheName: 'pages-cache',
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 50,
+            maxAgeSeconds: 24 * 60 * 60, // 1 day
+          }),
+          new CacheableResponsePlugin({
+            statuses: [0, 200],
+          }),
+        ],
+      }),
+    },
 
     // Stale-while-revalidate for API calls (missions/homes data)
     {
@@ -34,7 +62,7 @@ const serwist = new Serwist({
         plugins: [
           new ExpirationPlugin({
             maxEntries: 100,
-            maxAgeSeconds: 15 * 60, // 15 minutes max cache age
+            maxAgeSeconds: 60 * 60, // 1 hour max cache age
           }),
           new CacheableResponsePlugin({
             statuses: [0, 200],
@@ -53,7 +81,7 @@ const serwist = new Serwist({
         plugins: [
           new ExpirationPlugin({
             maxEntries: 200,
-            maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days for images
+            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days for images
           }),
           new CacheableResponsePlugin({
             statuses: [0, 200],

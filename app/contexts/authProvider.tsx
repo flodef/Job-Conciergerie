@@ -109,51 +109,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Function to fetch data from the database and store it in the context
   const fetchDataFromDatabase = useCallback(
     async (fetchType?: UserType) => {
-      const id = generateId();
+      try {
+        const id = generateId();
 
-      const fetchedConciergeries =
-        !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : conciergeries;
-      const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
+        const fetchedConciergeries =
+          !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : conciergeries;
+        const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
 
-      const findUserById = <T extends UserData>(users: T[] | null, id: string) =>
-        users?.find(user => containsId(user.id, id));
+        const findUserById = <T extends UserData>(users: T[] | null, id: string) =>
+          users?.find(user => containsId(user.id, id));
 
-      const foundEmployee = findUserById(fetchedEmployees, id);
-      const newUserData = foundEmployee || findUserById(fetchedConciergeries, id);
-      const isEmployee = !!newUserData && !!foundEmployee;
-      const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
-      const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
-      const newConciergerieName = isConciergerie
-        ? newUserData
-          ? (newUserData as Conciergerie).name
-          : conciergerieName
-        : undefined;
-      const newEmployeeName = isEmployee
-        ? newUserData
-          ? (newUserData as Employee).firstName + ' ' + (newUserData as Employee).familyName
-          : employeeName
-        : undefined;
-      const newPrimaryColor = fetchedConciergeries?.find(c => c.name === newConciergerieName)?.color;
+        const foundEmployee = findUserById(fetchedEmployees, id);
+        const newUserData = foundEmployee || findUserById(fetchedConciergeries, id);
+        const isEmployee = !!newUserData && !!foundEmployee;
+        const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
+        const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
+        const newConciergerieName = isConciergerie
+          ? newUserData
+            ? (newUserData as Conciergerie).name
+            : conciergerieName
+          : undefined;
+        const newEmployeeName = isEmployee
+          ? newUserData
+            ? (newUserData as Employee).firstName + ' ' + (newUserData as Employee).familyName
+            : employeeName
+          : undefined;
+        const newPrimaryColor = fetchedConciergeries?.find(c => c.name === newConciergerieName)?.color;
 
-      console.warn('Loading data from database');
+        console.warn('Loading data from database');
 
-      setConciergerieName(newConciergerieName);
-      setConciergeries(fetchedConciergeries ?? []);
-      setEmployeeName(newEmployeeName);
-      setEmployees(fetchedEmployees ?? []);
-      updateUserType(newUserType);
-      setUserData(newUserData);
-      setPrimaryColor(newPrimaryColor);
+        setConciergerieName(newConciergerieName);
+        setConciergeries(fetchedConciergeries ?? []);
+        setEmployeeName(newEmployeeName);
+        setEmployees(fetchedEmployees ?? []);
+        updateUserType(newUserType);
+        setUserData(newUserData);
+        setPrimaryColor(newPrimaryColor);
 
-      // Special case where the userId cookie or the userId in local storage has been manually deleted
-      const path = window.location.pathname;
-      if (
-        (newUserData && !navigationRoutes.includes(path) && userType === 'conciergerie') ||
-        (!newUserData && navigationRoutes.includes(path))
-      )
-        refreshData();
+        // Special case where the userId cookie or the userId in local storage has been manually deleted
+        const path = window.location.pathname;
+        if (
+          (newUserData && !navigationRoutes.includes(path) && userType === 'conciergerie') ||
+          (!newUserData && navigationRoutes.includes(path))
+        )
+          refreshData();
 
-      return true;
+        return true;
+      } catch (error) {
+        // Silently fail when offline - keep existing data if available
+        console.warn('Failed to fetch auth data (possibly offline):', error);
+        return false;
+      }
     },
     [
       generateId,
@@ -173,7 +179,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsLoading(true);
     // Only run this once when the component mounts
-    fetchDataFromDatabase().then(() => setIsLoading(false));
+    fetchDataFromDatabase()
+      .then(() => setIsLoading(false))
+      .catch(() => setIsLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const updateUserData = <T extends UserData>(updatedData: T, updateType = userType) => {
