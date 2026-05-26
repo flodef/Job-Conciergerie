@@ -109,17 +109,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Function to fetch data from the database and store it in the context
   const fetchDataFromDatabase = useCallback(
     async (fetchType?: UserType) => {
-      // Skip fetching if offline - preserve existing data
-      if (!navigator.onLine) {
-        console.warn('Offline mode: skipping auth data fetch, using cached data');
-        return false;
-      }
-
       try {
         const id = generateId();
 
-        const fetchedConciergeries = !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : null;
-        const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : null;
+        // Skip fetching if offline - but still process existing data
+        let fetchedConciergeries = null;
+        let fetchedEmployees = null;
+
+        if (navigator.onLine) {
+          fetchedConciergeries = !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : null;
+          fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : null;
+        } else {
+          console.warn('Offline mode: skipping auth data fetch, using cached data');
+        }
 
         // Preserve existing data if fetch failed (offline) or use fetched data
         const effectiveConciergeries = fetchedConciergeries ?? conciergeries;
@@ -132,7 +134,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const newUserData = foundEmployee || findUserById(effectiveConciergeries, id);
         const isEmployee = !!newUserData && !!foundEmployee;
         const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
-        const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
+        // When offline with no data, preserve localStorage userType
+        const newUserType = isEmployee
+          ? 'employee'
+          : isConciergerie
+            ? 'conciergerie'
+            : navigator.onLine
+              ? undefined
+              : userType;
         const newConciergerieName = isConciergerie
           ? newUserData
             ? (newUserData as Conciergerie).name
