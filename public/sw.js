@@ -117,17 +117,13 @@ async function handleRSCRequest(request) {
   // Return cached version if available
   if (cached) return cached;
 
-  // If offline and no cache, try the navigation page cache as fallback
+  // If offline and no cache, return error - don't fallback to wrong page
   if (!navigator.onLine) {
-    const url = new URL(request.url);
-    const baseUrl = url.origin + url.pathname;
-    const pagesCache = await caches.open(PAGES_CACHE);
-    const pageFallback = await pagesCache.match(baseUrl);
-    if (pageFallback) return pageFallback;
-
-    // Last resort: return the index page
-    const indexFallback = await pagesCache.match('/');
-    if (indexFallback) return indexFallback;
+    return new Response(JSON.stringify({ error: 'Page not cached for offline use' }), {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   try {
@@ -138,17 +134,12 @@ async function handleRSCRequest(request) {
     }
     return response;
   } catch (error) {
-    // Offline fallback - try to return the base page
-    const url = new URL(request.url);
-    const baseUrl = url.origin + url.pathname;
-    const pagesCache = await caches.open(PAGES_CACHE);
-    const pageFallback = await pagesCache.match(baseUrl);
-    if (pageFallback) return pageFallback;
-
-    const indexFallback = await pagesCache.match('/');
-    if (indexFallback) return indexFallback;
-
-    return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+    // Return error for offline/failed RSC requests
+    return new Response(JSON.stringify({ error: 'Page not cached for offline use' }), {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
 
