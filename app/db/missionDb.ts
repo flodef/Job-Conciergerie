@@ -1,5 +1,6 @@
 import { sql } from '@/app/db/db';
 import { Mission, MissionStatus, Task } from '@/app/types/dataTypes';
+import postgres from 'postgres';
 
 // Type definition for database mission
 export interface DbMission {
@@ -163,9 +164,9 @@ export const createMission = async (data: Omit<DbMission, 'modified_date'>) => {
       INSERT INTO missions (
         id, home_id, tasks, start_date_time, end_date_time, employee_id, conciergerie_name, status, allowed_employees, hours
       ) VALUES (
-        ${data.id}, ${data.home_id}, ${data.tasks}, ${data.start_date_time}, ${data.end_date_time}, 
-        ${data.employee_id || null}, ${data.conciergerie_name}, ${data.status}, 
-        ${data.allowed_employees}, ${data.hours}
+        ${data.id}, ${data.home_id}, ${data.tasks}, ${data.start_date_time}, ${data.end_date_time},
+        ${data.employee_id || null}, ${data.conciergerie_name ?? null}, ${data.status ?? null},
+        ${data.allowed_employees ?? null}, ${data.hours}
       )
       RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
     `;
@@ -182,62 +183,44 @@ export const createMission = async (data: Omit<DbMission, 'modified_date'>) => {
  */
 export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'id' | 'modified_date'>>) => {
   try {
-    // Prepare update fields
-    const fields = [];
-    const values = [];
+    // Build update parts and corresponding values
+    const parts: string[] = [];
+    const values: unknown[] = [];
 
-    if (data.home_id !== undefined) {
-      fields.push(`home_id = $${values.length + 1}`);
-      values.push(data.home_id);
-    }
-    if (data.tasks !== undefined) {
-      fields.push(`tasks = $${values.length + 1}`);
-      values.push(data.tasks);
-    }
-    if (data.start_date_time !== undefined) {
-      fields.push(`start_date_time = $${values.length + 1}`);
-      values.push(data.start_date_time);
-    }
+    const addField = (field: string, value: unknown) => {
+      parts.push(`${field} = $${parts.length + 1}`);
+      values.push(value);
+    };
+
+    if (data.home_id !== undefined) addField('home_id', data.home_id);
+    if (data.tasks !== undefined) addField('tasks', data.tasks);
+    if (data.start_date_time !== undefined) addField('start_date_time', data.start_date_time);
     if (data.end_date_time !== undefined) {
-      fields.push(`end_date_time = $${values.length + 1}`);
-      values.push(data.end_date_time);
+      addField('end_date_time', data.end_date_time);
       // Reset the late notification flag so a rescheduled mission can be re-notified if it becomes late again
-      fields.push(`late_notified_at = NULL`);
+      parts.push('late_notified_at = NULL');
     }
-    if (data.employee_id !== undefined) {
-      fields.push(`employee_id = $${values.length + 1}`);
-      values.push(data.employee_id === null ? null : data.employee_id);
-    }
-    if (data.conciergerie_name !== undefined) {
-      fields.push(`conciergerie_name = $${values.length + 1}`);
-      values.push(data.conciergerie_name);
-    }
-    if (data.status !== undefined) {
-      fields.push(`status = $${values.length + 1}`);
-      values.push(data.status);
-    }
-    if (data.allowed_employees !== undefined) {
-      fields.push(`allowed_employees = $${values.length + 1}`);
-      values.push(data.allowed_employees);
-    }
-    if (data.hours !== undefined) {
-      fields.push(`hours = $${values.length + 1}`);
-      values.push(data.hours);
-    }
+    if (data.employee_id !== undefined) addField('employee_id', data.employee_id);
+    if (data.conciergerie_name !== undefined) addField('conciergerie_name', data.conciergerie_name);
+    if (data.status !== undefined) addField('status', data.status);
+    if (data.allowed_employees !== undefined) addField('allowed_employees', data.allowed_employees);
+    if (data.hours !== undefined) addField('hours', data.hours);
 
-    if (fields.length === 0) return null; // Nothing to update
+    if (parts.length === 0) return null; // Nothing to update
 
-    // Build and execute query
-    const query = `
-      UPDATE missions 
-      SET ${fields.join(', ')} 
-      WHERE id = $${values.length + 1}
-      RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours`;
+    // Add id as the last parameter
     values.push(id);
 
-    const result = await sql.query(query, values);
+    const query = `
+      UPDATE missions
+      SET ${parts.join(', ')}
+      WHERE id = $${values.length}
+      RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
+    `;
 
-    return result.length > 0 ? formatMission(result[0] as DbMission) : null;
+    const result = await sql.unsafe(query, values as postgres.ParameterOrJSON<never>[]);
+
+    return result.length > 0 ? formatMission(result[0] as unknown as DbMission) : null;
   } catch (error) {
     console.error(`Error updating mission with ID ${id}:`, error);
     return null;

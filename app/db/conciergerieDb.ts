@@ -35,10 +35,9 @@ function formatConciergerie(dbConciergerie: DbConciergerie) {
 export const getAllConciergeries = async () => {
   try {
     const result = await sql`
-        SELECT id, name, email, tel, color_name, notification_settings
-        FROM conciergeries
-      `;
-
+      SELECT id, name, email, tel, color_name, notification_settings
+      FROM conciergeries
+    `;
     return result.map(row => formatConciergerie(row as DbConciergerie));
   } catch (error) {
     console.error('Error fetching conciergeries:', error);
@@ -53,16 +52,15 @@ export const updateConciergerie = async (name: string | undefined, data: Partial
   try {
     if (!name) throw new Error('No name provided');
 
-    // Convert notification_settings to JSONB if present
     const notificationSettings = data.notification_settings ? JSON.stringify(data.notification_settings) : null;
 
     const result = await sql`
       UPDATE conciergeries
       SET 
-        name = COALESCE(${data.name}, name),
-        email = COALESCE(${data.email}, email),
-        tel = COALESCE(${data.tel}, tel),
-        color_name = COALESCE(${data.color_name}, color_name),
+        name = COALESCE(${data.name ?? null}, name),
+        email = COALESCE(${data.email ?? null}, email),
+        tel = COALESCE(${data.tel ?? null}, tel),
+        color_name = COALESCE(${data.color_name ?? null}, color_name),
         notification_settings = COALESCE(${notificationSettings}::jsonb, notification_settings)
       WHERE name = ${name}
       RETURNING id, name, email, tel, color_name, notification_settings

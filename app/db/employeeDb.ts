@@ -70,7 +70,7 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
         id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status
       ) VALUES (
         ${data.id}, ${data.first_name}, ${data.family_name}, ${data.tel}, ${data.email}, ${data.geographic_zone},
-        ${data.message || null}, ${data.conciergerie_name}, ${notificationSettings}::jsonb, ${data.status || 'pending'}
+        ${data.message || null}, ${data.conciergerie_name ?? null}, ${notificationSettings}::jsonb, ${data.status || 'pending'}
       )
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
@@ -130,11 +130,11 @@ export const updateEmployeeSettings = async (
     const result = await sql`
       UPDATE employees
       SET 
-        tel = COALESCE(${data.tel}, tel),
-        email = COALESCE(${data.email}, email),
-        geographic_zone = COALESCE(${data.geographic_zone}, geographic_zone),
-        message = COALESCE(${data.message}, message),
-        conciergerie_name = COALESCE(${data.conciergerie_name}, conciergerie_name),
+        tel = COALESCE(${data.tel ?? null}, tel),
+        email = COALESCE(${data.email ?? null}, email),
+        geographic_zone = COALESCE(${data.geographic_zone ?? null}, geographic_zone),
+        message = COALESCE(${data.message ?? null}, message),
+        conciergerie_name = COALESCE(${data.conciergerie_name ?? null}, conciergerie_name),
         notification_settings = COALESCE(${notificationSettings}::jsonb, notification_settings)
       WHERE first_name = ${firstName} AND family_name = ${familyName}
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at

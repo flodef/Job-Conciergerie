@@ -1,5 +1,6 @@
 import { sql } from '@/app/db/db';
 import { Home } from '@/app/types/dataTypes';
+import postgres from 'postgres';
 
 // Type definition for database home
 export interface DbHome {
@@ -123,9 +124,9 @@ export const updateHome = async (id: string, data: Partial<Omit<DbHome, 'id'>>) 
     `;
     values.push(id);
 
-    const result = await sql.query(query, values);
+    const result = await sql.unsafe(query, values as postgres.ParameterOrJSON<never>[]);
 
-    return result.length > 0 ? formatHome(result[0] as DbHome) : null;
+    return result.length > 0 ? formatHome(result[0] as unknown as DbHome) : null;
   } catch (error) {
     console.error(`Error updating home with ID ${id}:`, error);
     return null;
