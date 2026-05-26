@@ -142,7 +142,8 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           return false;
         });
     });
-  }, [fetchHomes, checkForLateMissions, missions.length, updateFetchTime]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - uses refs and context functions which are stable
 
   // Fetch missions when needed (initial load or refresh triggered) - only for authenticated users
   useEffect(() => {

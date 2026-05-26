@@ -57,8 +57,14 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') return;
+  // Handle non-GET requests (POST, PUT, DELETE) - can't cache but can return offline error
+  if (request.method !== 'GET') {
+    // Only handle same-origin API requests
+    if (url.origin === self.location.origin) {
+      event.respondWith(handleNonGetRequest(request));
+    }
+    return;
+  }
 
   // Skip cross-origin requests (except for Supabase images)
   if (url.origin !== self.location.origin && !url.hostname.includes('supabase.co')) return;
@@ -234,5 +240,27 @@ async function handleStaticRequest(request) {
     return response;
   } catch (error) {
     return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+  }
+}
+
+// Handle non-GET requests (POST, PUT, DELETE) - pass through online, graceful offline error
+async function handleNonGetRequest(request) {
+  try {
+    const response = await fetch(request, { redirect: 'follow' });
+    return response;
+  } catch (error) {
+    // Return a JSON error response that the app can handle
+    const isJsonRequest =
+      request.headers.get('content-type')?.includes('application/json') ||
+      request.headers.get('accept')?.includes('application/json');
+
+    if (isJsonRequest) {
+      return new Response(JSON.stringify({ error: 'Offline', message: 'Cannot perform action while offline' }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response('Cannot perform action while offline', { status: 503, statusText: 'Service Unavailable' });
   }
 }

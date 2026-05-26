@@ -79,7 +79,8 @@ export function HomesProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
         isFetching.current = false;
       });
-  }, [homes.length, updateFetchTime]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - uses refs and state setters which are stable
 
   // Fetch homes when needed (initial load or refresh triggered) - only for authenticated users
   useEffect(() => {
