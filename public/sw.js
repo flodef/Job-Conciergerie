@@ -254,6 +254,11 @@ async function handleStaticRequest(request) {
 
   if (cached) return cached;
 
+  // If offline and not cached, don't intercept - let browser handle naturally
+  if (!navigator.onLine) {
+    return fetch(request);
+  }
+
   try {
     const response = await fetch(request, { redirect: 'follow' });
     // Only cache successful non-redirect responses
@@ -262,7 +267,8 @@ async function handleStaticRequest(request) {
     }
     return response;
   } catch (error) {
-    return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+    // Let the browser handle the error naturally (broken image/font)
+    return fetch(request);
   }
 }
 
