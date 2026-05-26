@@ -94,7 +94,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           if (!home || !employee) continue;
 
           const claimed = await claimLateNotificationForMission(mission.id);
-          if (claimed) EmailSender.sendLateCompletionEmail({}, mission, home, employee, conciergerie);
+          if (claimed) await EmailSender.sendLateCompletionEmail({}, mission, home, employee, conciergerie);
         }
       }
     },
@@ -214,7 +214,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       conciergerie
     );
     if (employeeNotified)
-      EmailSender.sendMissionUpdatedEmail({}, updatedMission, home!, employee!, conciergerie!, changes);
+      await EmailSender.sendMissionUpdatedEmail({}, updatedMission, home!, employee!, conciergerie!, changes);
 
     return { success: true, employeeNotified };
   };
@@ -236,7 +236,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     const employeeNotified = !!(employee?.notificationSettings?.missionDeleted && home && conciergerie);
     if (employeeNotified)
-      EmailSender.sendMissionRemovedEmail({}, missionToDelete, home!, employee!, conciergerie!, 'deleted');
+      await EmailSender.sendMissionRemovedEmail({}, missionToDelete, home!, employee!, conciergerie!, 'deleted');
 
     return { success: true, employeeNotified };
   };
@@ -256,7 +256,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     const employeeNotified = !!(employee?.notificationSettings?.missionsCanceled && home && conciergerie);
     if (employeeNotified)
-      EmailSender.sendMissionRemovedEmail({}, missionToCancel, home!, employee!, conciergerie!, 'canceled');
+      await EmailSender.sendMissionRemovedEmail({}, missionToCancel, home!, employee!, conciergerie!, 'canceled');
 
     return { success: true, employeeNotified };
   };
@@ -276,13 +276,14 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     if (!success) return { success: false, employeeNotified: false };
 
     // Notify the conciergerie
-    sendMissionStatusNotification(missionToAccept, employee, 'accepted');
+    await sendMissionStatusNotification(missionToAccept, employee, 'accepted');
 
     // Send confirmation email to the employee
     const home = homes.find(h => h.id === missionToAccept.homeId);
     const conciergerie = findConciergerie(missionToAccept.conciergerieName);
     const employeeNotified = !!(employee.notificationSettings?.acceptedMissions && home && conciergerie);
-    if (employeeNotified) EmailSender.sendMissionAcceptanceEmail({}, missionToAccept, home!, employee, conciergerie!);
+    if (employeeNotified)
+      await EmailSender.sendMissionAcceptanceEmail({}, missionToAccept, home!, employee, conciergerie!);
 
     return { success: true, employeeNotified };
   };
@@ -301,7 +302,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     if (!success) return false;
 
     // Notify the conciergerie
-    sendMissionStatusNotification(missionToStart, employee, 'started');
+    await sendMissionStatusNotification(missionToStart, employee, 'started');
 
     return true;
   };
@@ -323,7 +324,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     if (!success) return false;
 
     // Notify the conciergerie
-    sendMissionStatusNotification(missionToComplete, employee, 'completed');
+    await sendMissionStatusNotification(missionToComplete, employee, 'completed');
 
     return true;
   };
@@ -395,7 +396,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   /**
    * Send a notification email for a mission status change if the conciergerie has the appropriate notification setting enabled
    */
-  const sendMissionStatusNotification = (mission: Mission, employee: Employee, status: MissionStatus) => {
+  const sendMissionStatusNotification = async (mission: Mission, employee: Employee, status: MissionStatus) => {
     // Get all conciergeries to find the one that owns this mission
     const conciergerie = findConciergerie(mission.conciergerieName);
 
@@ -411,7 +412,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     // If we have all the required data, send the notification email
     if (home && conciergerie?.notificationSettings?.[notificationSetting])
-      EmailSender.sendMissionStatusEmail({}, mission, home, employee, conciergerie, status);
+      await EmailSender.sendMissionStatusEmail({}, mission, home, employee, conciergerie, status);
   };
 
   return (
