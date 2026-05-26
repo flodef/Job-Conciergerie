@@ -96,19 +96,27 @@ async function handleRSCRequest(request) {
   const cache = await caches.open(RSC_CACHE);
   const cached = await cache.match(request);
 
-  if (cached) {
-    // Return cached version and update in background
-    fetch(request)
+  // Update cache in background if online
+  if (navigator.onLine) {
+    fetch(request, { redirect: 'follow' })
       .then(response => {
-        if (response.ok) cache.put(request, response.clone());
+        // Only cache successful non-redirect responses
+        if (response.ok && !response.redirected) {
+          cache.put(request, response.clone());
+        }
       })
       .catch(() => {});
-    return cached;
   }
 
+  // Return cached version if available
+  if (cached) return cached;
+
   try {
-    const response = await fetch(request);
-    if (response.ok) cache.put(request, response.clone());
+    const response = await fetch(request, { redirect: 'follow' });
+    // Only cache successful non-redirect responses
+    if (response.ok && !response.redirected) {
+      cache.put(request, response.clone());
+    }
     return response;
   } catch (error) {
     return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
@@ -120,21 +128,35 @@ async function handleNavigationRequest(request) {
   const cache = await caches.open(PAGES_CACHE);
   const cached = await cache.match(request);
 
-  if (cached) {
-    fetch(request)
+  // Update cache in background if online
+  if (navigator.onLine) {
+    fetch(request, { redirect: 'follow' })
       .then(response => {
-        if (response.ok) cache.put(request, response.clone());
+        // Only cache successful non-redirect responses
+        if (response.ok && !response.redirected) {
+          cache.put(request, response.clone());
+        }
       })
       .catch(() => {});
-    return cached;
+  }
+
+  // Return cached version if available
+  if (cached) return cached;
+
+  // If offline and no cache, try to return the index page
+  if (!navigator.onLine) {
+    const fallback = await caches.match('/');
+    if (fallback) return fallback;
   }
 
   try {
-    const response = await fetch(request);
-    if (response.ok) cache.put(request, response.clone());
+    const response = await fetch(request, { redirect: 'follow' });
+    // Only cache successful non-redirect responses
+    if (response.ok && !response.redirected) {
+      cache.put(request, response.clone());
+    }
     return response;
   } catch (error) {
-    // Return the fallback page if available
     const fallback = await caches.match('/');
     if (fallback) return fallback;
     return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
@@ -146,18 +168,27 @@ async function handleAPIRequest(request) {
   const cache = await caches.open(API_CACHE);
   const cached = await cache.match(request);
 
-  if (cached) {
-    fetch(request)
+  // Update cache in background if online
+  if (navigator.onLine) {
+    fetch(request, { redirect: 'follow' })
       .then(response => {
-        if (response.ok) cache.put(request, response.clone());
+        // Only cache successful non-redirect responses
+        if (response.ok && !response.redirected) {
+          cache.put(request, response.clone());
+        }
       })
       .catch(() => {});
-    return cached;
   }
 
+  // Return cached version if available
+  if (cached) return cached;
+
   try {
-    const response = await fetch(request);
-    if (response.ok) cache.put(request, response.clone());
+    const response = await fetch(request, { redirect: 'follow' });
+    // Only cache successful non-redirect responses
+    if (response.ok && !response.redirected) {
+      cache.put(request, response.clone());
+    }
     return response;
   } catch (error) {
     if (cached) return cached;
@@ -176,8 +207,11 @@ async function handleImageRequest(request) {
   if (cached) return cached;
 
   try {
-    const response = await fetch(request);
-    if (response.ok) cache.put(request, response.clone());
+    const response = await fetch(request, { redirect: 'follow' });
+    // Only cache successful non-redirect responses
+    if (response.ok && !response.redirected) {
+      cache.put(request, response.clone());
+    }
     return response;
   } catch (error) {
     return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
@@ -192,8 +226,11 @@ async function handleStaticRequest(request) {
   if (cached) return cached;
 
   try {
-    const response = await fetch(request);
-    if (response.ok) cache.put(request, response.clone());
+    const response = await fetch(request, { redirect: 'follow' });
+    // Only cache successful non-redirect responses
+    if (response.ok && !response.redirected) {
+      cache.put(request, response.clone());
+    }
     return response;
   } catch (error) {
     return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
