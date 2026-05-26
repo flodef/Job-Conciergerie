@@ -146,15 +146,15 @@ export default function ImageCarousel({
       onClick={() => onCurrentImageIndexChange?.(currentIndex)}
     >
       <div className="w-full h-full overflow-hidden relative">
-        {/* Only render image if it's been preloaded */}
-        {preloadedImages.current.has(currentImageUrl) && (
-          <img
-            key={`image-${currentIndex}`}
-            src={currentImageUrl}
-            alt={`${altPrefix} ${currentIndex + 1}`}
-            className="object-contain rounded-lg w-full h-full"
-          />
-        )}
+        {/* Render image - show even if not preloaded yet */}
+        <img
+          key={`image-${currentIndex}`}
+          src={currentImageUrl}
+          alt={`${altPrefix} ${currentIndex + 1}`}
+          className="object-contain rounded-lg w-full h-full"
+          onLoad={() => setIsLoading(false)}
+          onError={() => setIsLoading(false)}
+        />
 
         {/* Loading spinner */}
         {showSpinner && (
@@ -175,7 +175,7 @@ export default function ImageCarousel({
             className="absolute left-4 p-1 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors z-20"
             aria-label="Image précédente"
           >
-            <IconChevronLeft className="text-white" size={32} />
+            <IconChevronLeft className="text-white cursor-pointer" size={32} />
           </button>
           <button
             onClick={e => {
@@ -185,7 +185,7 @@ export default function ImageCarousel({
             className="absolute right-4 p-1 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors z-20"
             aria-label="Image suivante"
           >
-            <IconChevronRight className="text-white" size={32} />
+            <IconChevronRight className="text-white cursor-pointer" size={32} />
           </button>
           <div className="absolute bottom-4 flex space-x-2">
             {images.map((_, index) => (
@@ -195,8 +195,8 @@ export default function ImageCarousel({
                   e.stopPropagation();
                   goToIndex(index);
                 }}
-                className={`w-2 h-2 rounded-full transition-colors z-20 ${
-                  index === currentIndex ? 'bg-white' : 'bg-white/50'
+                className={`w-2 h-2 rounded-full transition-colors z-20 cursor-pointer ${
+                  index === currentIndex ? 'bg-white' : 'bg-white/50 hover:bg-white/75'
                 }`}
                 aria-label={`Aller à l&apos;image ${index + 1}`}
               />

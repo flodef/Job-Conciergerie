@@ -3,6 +3,8 @@
 import { CloseButton } from '@/app/components/button';
 import ImageCarousel from '@/app/components/imageCarousel';
 import { cn } from '@/app/utils/className';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface FullScreenImageCarouselProps {
   imageUrls: string | string[];
@@ -19,9 +21,19 @@ export function FullScreenImageCarousel({
   onClose,
   className = '',
 }: FullScreenImageCarouselProps) {
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  const content = (
     <div
-      className={cn('fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center py-4', className)}
+      className={cn(
+        'fixed inset-0 bg-black/90 backdrop-blur-sm z-100 flex items-center justify-center py-4',
+        className,
+      )}
       onClick={e => {
         if (e.target === e.currentTarget) {
           onClose();
@@ -32,9 +44,13 @@ export function FullScreenImageCarousel({
       <ImageCarousel
         imageUrls={imageUrls}
         altPrefix={altPrefix}
-        className="w-full h-[80vh]"
+        className="w-full h-[90vh]"
         initialIndex={initialIndex}
       />
     </div>
   );
+
+  if (!mounted) return null;
+
+  return createPortal(content, document.body);
 }
