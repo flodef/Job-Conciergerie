@@ -109,6 +109,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Function to fetch data from the database and store it in the context
   const fetchDataFromDatabase = useCallback(
     async (fetchType?: UserType) => {
+      // Skip fetching if offline - preserve existing data
+      if (!navigator.onLine) {
+        console.warn('Offline mode: skipping auth data fetch, using cached data');
+        return false;
+      }
+
       try {
         const id = generateId();
 

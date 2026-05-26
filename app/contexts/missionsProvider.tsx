@@ -107,6 +107,12 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   const fetchMissionsCore = useCallback(() => {
     if (isFetching.current) return Promise.resolve(false);
 
+    // Skip fetching if offline - preserve existing data
+    if (!navigator.onLine) {
+      console.warn('Offline mode: skipping missions fetch, using cached data');
+      return Promise.resolve(false);
+    }
+
     isFetching.current = true;
     console.warn('Loading missions from database...');
     setIsLoading(missions.length === 0);

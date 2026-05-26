@@ -44,6 +44,12 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   const fetchHomesCore = useCallback(() => {
     if (isFetching.current) return Promise.resolve(false);
 
+    // Skip fetching if offline - preserve existing data
+    if (!navigator.onLine) {
+      console.warn('Offline mode: skipping homes fetch, using cached data');
+      return Promise.resolve(false);
+    }
+
     isFetching.current = true;
     console.warn('Loading homes from database...');
     setIsLoading(homes.length === 0);
