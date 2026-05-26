@@ -64,6 +64,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   const [endDateTime, setEndDateTime] = useState<string>(end);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [toast, setToast] = useState<Toast>();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
@@ -231,6 +232,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         });
         if (!result) throw new Error("Impossible d'ajouter la mission");
 
+        setIsSuccess(true);
         setToast({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
       } else if (mission) {
         const updatedMission: Mission = {
@@ -250,6 +252,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         const { success, employeeNotified } = await updateMission(updatedMission);
         if (!success) throw new Error('Impossible de mettre à jour la mission');
 
+        setIsSuccess(true);
         setToast({
           type: ToastType.Success,
           message: employeeNotified
@@ -258,9 +261,8 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         });
       }
     } catch (error) {
-      setToast({ type: ToastType.Error, message: String(error), error });
-    } finally {
       setIsSubmitting(false);
+      setToast({ type: ToastType.Error, message: String(error), error });
     }
   };
 
@@ -318,129 +320,131 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         toast={toast}
         onClose={() => {
           setToast(undefined);
-          if (toast?.type === ToastType.Success) closeAndCancel();
+          if (isSuccess) onClose();
         }}
       />
 
-      <FullScreenModal
-        title={mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}
-        onClose={handleClose}
-        disabled={isSubmitting}
-        footer={footer}
-      >
-        <form onSubmit={handleSubmit} className="space-y-2">
-          <Combobox
-            id="home-select"
-            label="Bien"
-            ref={homeSelectRef}
-            value={homeId}
-            onChange={value => handleChange(value, setHomeId, setHomeIdError)}
-            options={filteredHomes.map(home => ({
-              value: home.id,
-              label: home.title,
-            }))}
-            disabled={isSubmitting || cannotEdit}
-            placeholder="Sélectionner un bien"
-            error={homeIdError}
-            required
-          />
-
-          {missionHours > 0 && (
-            <div className="mt-2">
-              <Label id="mission-hours">
-                Durée estimée :{' '}
-                <span className="font-bold">
-                  {missionHours} heure{missionHours > 1 ? 's' : ''}
-                </span>
-              </Label>
-            </div>
-          )}
-
-          <TaskSelector
-            id="task-select"
-            label="Tâches"
-            ref={taskRef}
-            availableTasks={getAvailableTasks(filteredHomes.find(h => h.id === homeId)!, Object.values(Task))}
-            selectedTasks={tasks}
-            onTasksChange={setTasks}
-            error={tasksError}
-            setError={setTasksError}
-            disabled={isSubmitting || cannotEdit}
-            required
-          />
-
-          <DateTimeInput
-            id="start-date"
-            label="Date et heure de début"
-            ref={startDateRef}
-            value={startDateTime}
-            onChange={handleStartDateChange}
-            onBlur={handleStartDateBlur}
-            error={startDateTimeError}
-            onError={setStartDateTimeError}
-            min={nowString}
-            disabled={isSubmitting || cannotEdit}
-            required
-          />
-
-          <DateTimeInput
-            id="end-date"
-            label="Date et heure de fin"
-            ref={endDateRef}
-            value={endDateTime}
-            onChange={setEndDateTime}
-            error={endDateTimeError}
-            onError={setEndDateTimeError}
-            min={(() => {
-              // Calculate minimum end date (start date + 1 hour)
-              const startDate = new Date(startDateTime);
-              const minEndDate = new Date(startDate);
-              minEndDate.setHours(minEndDate.getHours() + 1);
-              return localISOString(minEndDate);
-            })()}
-            disabled={isSubmitting || cannotEdit}
-            required
-          />
-
-          <div>
-            <MultiSelect
-              id="prestataires-select"
-              label="Prestataires"
-              values={selectedEmployees}
-              onChange={setSelectedEmployees}
-              options={employees.map(emp => ({
-                value: getUserKey(emp),
-                label: getUserKey(emp),
+      {!isSuccess && (
+        <FullScreenModal
+          title={mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}
+          onClose={handleClose}
+          disabled={isSubmitting || isSuccess}
+          footer={!isSuccess ? footer : undefined}
+        >
+          <form onSubmit={handleSubmit} className="space-y-2">
+            <Combobox
+              id="home-select"
+              label="Bien"
+              ref={homeSelectRef}
+              value={homeId}
+              onChange={value => handleChange(value, setHomeId, setHomeIdError)}
+              options={filteredHomes.map(home => ({
+                value: home.id,
+                label: home.title,
               }))}
               disabled={isSubmitting || cannotEdit}
+              placeholder="Sélectionner un bien"
+              error={homeIdError}
               required
-              allOption
-              tooltip={
-                <>
-                  {selectedEmployees.length === 0
-                    ? 'Tous les prestataires pourront voir cette mission'
-                    : 'Seuls les prestataires suivant pourront voir cette mission :'}
-                  <ul className="list-disc pl-4">
-                    {selectedEmployees.map(employeeId => (
-                      <li key={employeeId}>{employeeId}</li>
-                    ))}
-                  </ul>
-                </>
-              }
             />
-          </div>
 
-          <ConfirmationModal
-            isOpen={showConfirmDialog}
-            onClose={() => setShowConfirmDialog(false)}
-            onConfirm={onClose}
-            title="Modifications non enregistrées"
-            message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
-            confirmText="Quitter sans enregistrer"
-            cancelText="Continuer l'édition"
-          />
-        </form>
-      </FullScreenModal>
+            {missionHours > 0 && (
+              <div className="mt-2">
+                <Label id="mission-hours">
+                  Durée estimée :{' '}
+                  <span className="font-bold">
+                    {missionHours} heure{missionHours > 1 ? 's' : ''}
+                  </span>
+                </Label>
+              </div>
+            )}
+
+            <TaskSelector
+              id="task-select"
+              label="Tâches"
+              ref={taskRef}
+              availableTasks={getAvailableTasks(filteredHomes.find(h => h.id === homeId)!, Object.values(Task))}
+              selectedTasks={tasks}
+              onTasksChange={setTasks}
+              error={tasksError}
+              setError={setTasksError}
+              disabled={isSubmitting || cannotEdit}
+              required
+            />
+
+            <DateTimeInput
+              id="start-date"
+              label="Date et heure de début"
+              ref={startDateRef}
+              value={startDateTime}
+              onChange={handleStartDateChange}
+              onBlur={handleStartDateBlur}
+              error={startDateTimeError}
+              onError={setStartDateTimeError}
+              min={nowString}
+              disabled={isSubmitting || cannotEdit}
+              required
+            />
+
+            <DateTimeInput
+              id="end-date"
+              label="Date et heure de fin"
+              ref={endDateRef}
+              value={endDateTime}
+              onChange={setEndDateTime}
+              error={endDateTimeError}
+              onError={setEndDateTimeError}
+              min={(() => {
+                // Calculate minimum end date (start date + 1 hour)
+                const startDate = new Date(startDateTime);
+                const minEndDate = new Date(startDate);
+                minEndDate.setHours(minEndDate.getHours() + 1);
+                return localISOString(minEndDate);
+              })()}
+              disabled={isSubmitting || cannotEdit}
+              required
+            />
+
+            <div>
+              <MultiSelect
+                id="prestataires-select"
+                label="Prestataires"
+                values={selectedEmployees}
+                onChange={setSelectedEmployees}
+                options={employees.map(emp => ({
+                  value: getUserKey(emp),
+                  label: getUserKey(emp),
+                }))}
+                disabled={isSubmitting || cannotEdit}
+                required
+                allOption
+                tooltip={
+                  <>
+                    {selectedEmployees.length === 0
+                      ? 'Tous les prestataires pourront voir cette mission'
+                      : 'Seuls les prestataires suivant pourront voir cette mission :'}
+                    <ul className="list-disc pl-4">
+                      {selectedEmployees.map(employeeId => (
+                        <li key={employeeId}>{employeeId}</li>
+                      ))}
+                    </ul>
+                  </>
+                }
+              />
+            </div>
+
+            <ConfirmationModal
+              isOpen={showConfirmDialog}
+              onClose={() => setShowConfirmDialog(false)}
+              onConfirm={onClose}
+              title="Modifications non enregistrées"
+              message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
+              confirmText="Quitter sans enregistrer"
+              cancelText="Continuer l'édition"
+            />
+          </form>
+        </FullScreenModal>
+      )}
     </>
   );
 }
