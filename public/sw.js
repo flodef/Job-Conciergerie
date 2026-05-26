@@ -104,7 +104,7 @@ async function handleRSCRequest(request) {
 
   // Update cache in background if online
   if (navigator.onLine) {
-    fetch(request, { redirect: 'follow' })
+    fetch(request.url, { redirect: 'follow', method: request.method, headers: request.headers })
       .then(response => {
         // Only cache successful non-redirect responses
         if (response.ok && !response.redirected) {
@@ -159,7 +159,7 @@ async function handleNavigationRequest(request) {
 
   // Update cache in background if online
   if (navigator.onLine) {
-    fetch(request, { redirect: 'follow' })
+    fetch(request.url, { redirect: 'follow' })
       .then(response => {
         // Only cache successful non-redirect responses
         if (response.ok && !response.redirected) {
@@ -199,7 +199,7 @@ async function handleAPIRequest(request) {
 
   // Update cache in background if online
   if (navigator.onLine) {
-    fetch(request, { redirect: 'follow' })
+    fetch(request.url, { redirect: 'follow' })
       .then(response => {
         // Only cache successful non-redirect responses
         if (response.ok && !response.redirected) {
@@ -254,9 +254,13 @@ async function handleStaticRequest(request) {
 
   if (cached) return cached;
 
-  // If offline and not cached, don't intercept - let browser handle naturally
+  // If offline and not cached, return network error (browser will handle gracefully)
   if (!navigator.onLine) {
-    return fetch(request);
+    return new Response(null, {
+      status: 408,
+      statusText: 'Request Timeout',
+      headers: { 'Content-Type': 'text/plain' },
+    });
   }
 
   try {
@@ -267,8 +271,12 @@ async function handleStaticRequest(request) {
     }
     return response;
   } catch (error) {
-    // Let the browser handle the error naturally (broken image/font)
-    return fetch(request);
+    // Return network error for offline/failed requests
+    return new Response(null, {
+      status: 408,
+      statusText: 'Request Timeout',
+      headers: { 'Content-Type': 'text/plain' },
+    });
   }
 }
 
