@@ -54,12 +54,14 @@ self.addEventListener('activate', event => {
 
 // Fetch event - serve from cache or network
 self.addEventListener('fetch', event => {
+  console.log('[SW] FETCH EVENT FIRED:', event.request.url.substring(0, 100));
+
   const { request } = event;
   const url = new URL(request.url);
 
   // Debug: log ALL same-origin requests
   if (url.origin === self.location.origin) {
-    console.log('[SW] Fetch:', request.method, url.pathname + url.search, 'mode:', request.mode);
+    console.log('[SW] Same-origin fetch:', request.method, url.pathname + url.search, 'mode:', request.mode);
   }
 
   // Handle RSC (React Server Component) requests FIRST - Next.js uses POST for navigation
