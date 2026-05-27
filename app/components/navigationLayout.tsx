@@ -3,6 +3,7 @@
 import InstallToast from '@/app/components/installToast';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { PageManager } from '@/app/components/pageManager';
+import { TimeAgoDisplay } from '@/app/components/timeAgoDisplay';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
@@ -10,8 +11,9 @@ import { useBadge } from '@/app/contexts/badgeProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { TimeAgoDisplay } from '@/app/components/timeAgoDisplay';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
+import { useUpdateChecker } from '@/app/hooks/useUpdateChecker';
+import { cn } from '@/app/utils/className';
 import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/navigation';
 import {
   IconBriefcase,
@@ -22,7 +24,6 @@ import {
   IconSettings,
   IconUser,
 } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
 import { useRouter } from 'next/navigation';
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 
@@ -94,6 +95,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const [refreshToast, setRefreshToast] = useState<{ type: ToastType; message: string } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastManualRefresh, setLastManualRefresh] = useState<number>(0);
+  const updateAvailable = useUpdateChecker();
 
   // Handle manual refresh with rate limiting
   const handleManualRefresh = useCallback(() => {
@@ -277,6 +279,20 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
       {/* Installation toast - only shown for logged in users */}
       {isNavigationPage && !!userType && <InstallToast />}
+
+      {/* Update available banner */}
+      {updateAvailable && (
+        <div className="fixed top-16 left-0 right-0 z-30 flex items-center justify-between gap-2 bg-primary px-4 py-2 text-white text-sm shadow-md">
+          <span>Une nouvelle version est disponible</span>
+          <button
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-1 font-semibold underline underline-offset-2 whitespace-nowrap"
+          >
+            <IconRefresh size={14} />
+            Mettre à jour
+          </button>
+        </div>
+      )}
 
       {/* Main content */}
       <main className={cn('flex-1 relative overflow-hidden', isNavigationPage && !!userType && 'pt-16')}>
