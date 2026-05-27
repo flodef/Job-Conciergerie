@@ -2,7 +2,7 @@
 
 console.log('[SW] Service Worker script loaded!');
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGES_CACHE = `pages-${CACHE_VERSION}`;
 const RSC_CACHE = `rsc-${CACHE_VERSION}`;
@@ -42,15 +42,20 @@ self.addEventListener('activate', event => {
     caches
       .keys()
       .then(cacheNames => {
-        console.log('[SW] Cleaning old caches');
+        console.log('[SW] Cleaning old caches:', cacheNames);
         return Promise.all(
           cacheNames
             .filter(
               name =>
-                name.includes(CACHE_VERSION) &&
+                // Delete caches that don't match current version
+                !name.includes(CACHE_VERSION) ||
+                // Or are not in our current cache list
                 ![STATIC_CACHE, PAGES_CACHE, RSC_CACHE, API_CACHE, IMAGES_CACHE].includes(name),
             )
-            .map(name => caches.delete(name)),
+            .map(name => {
+              console.log('[SW] Deleting cache:', name);
+              return caches.delete(name);
+            }),
         );
       })
       .then(() => {
