@@ -166,7 +166,7 @@ export const createMission = async (data: Omit<DbMission, 'modified_date'>) => {
       ) VALUES (
         ${data.id}, ${data.home_id}, ${data.tasks}, ${data.start_date_time}, ${data.end_date_time},
         ${data.employee_id || null}, ${data.conciergerie_name ?? null}, ${data.status ?? null},
-        ${data.allowed_employees ?? null}, ${data.hours}
+        ${data.allowed_employees ?? null}, ${typeof data.hours === 'string' ? parseFloat(data.hours) : data.hours}
       )
       RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
     `;
@@ -187,24 +187,34 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
     const parts: string[] = [];
     const values: unknown[] = [];
 
-    const addField = (field: string, value: unknown) => {
-      parts.push(`${field} = $${parts.length + 1}`);
+    const addField = (field: string, value: unknown, cast?: string) => {
       values.push(value);
+      parts.push(`${field} = $${values.length}${cast ? `::${cast}` : ''}`);
     };
 
-    if (data.home_id !== undefined) addField('home_id', data.home_id);
-    if (data.tasks !== undefined) addField('tasks', data.tasks);
-    if (data.start_date_time !== undefined) addField('start_date_time', data.start_date_time);
+    if (data.home_id !== undefined) addField('home_id', data.home_id, 'text');
+    if (data.tasks !== undefined) addField('tasks', data.tasks, 'text[]');
+    if (data.start_date_time !== undefined)
+      addField('start_date_time', new Date(data.start_date_time).toISOString(), 'timestamptz');
     if (data.end_date_time !== undefined) {
-      addField('end_date_time', data.end_date_time);
+      addField('end_date_time', new Date(data.end_date_time).toISOString(), 'timestamptz');
       // Reset the late notification flag so a rescheduled mission can be re-notified if it becomes late again
       parts.push('late_notified_at = NULL');
     }
-    if (data.employee_id !== undefined) addField('employee_id', data.employee_id);
-    if (data.conciergerie_name !== undefined) addField('conciergerie_name', data.conciergerie_name);
-    if (data.status !== undefined) addField('status', data.status);
-    if (data.allowed_employees !== undefined) addField('allowed_employees', data.allowed_employees);
-    if (data.hours !== undefined) addField('hours', data.hours);
+    if (data.employee_id !== undefined) {
+      if (data.employee_id === null) parts.push('employee_id = NULL');
+      else addField('employee_id', data.employee_id, 'text');
+    }
+    if (data.conciergerie_name !== undefined) addField('conciergerie_name', data.conciergerie_name, 'text');
+    if (data.status !== undefined) {
+      if (data.status === null) parts.push('status = NULL');
+      else addField('status', data.status, 'text');
+    }
+    if (data.allowed_employees !== undefined) {
+      if (data.allowed_employees === null) parts.push('allowed_employees = NULL');
+      else addField('allowed_employees', data.allowed_employees, 'text[]');
+    }
+    if (data.hours !== undefined) addField('hours', String(data.hours), 'numeric');
 
     if (parts.length === 0) return null; // Nothing to update
 
