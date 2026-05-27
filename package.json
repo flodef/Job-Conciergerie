@@ -1,6 +1,6 @@
 {
   "name": "job-conciergerie",
-  "version": "2.65",
+  "version": "2.66",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -11,7 +11,8 @@
     "version:bump": "bun scripts/increment-version.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "db:reset": "bash scripts/reset-dev-db.sh"
   },
   "dependencies": {
     "@serwist/next": "latest",
