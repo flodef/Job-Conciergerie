@@ -36,15 +36,15 @@ export function sortEmployees(employees: Employee[]): Employee[] {
     }
 
     // Then sort alphabetically by last name
-    const lastNameA = a.familyName.toLowerCase();
-    const lastNameB = b.familyName.toLowerCase();
+    const lastNameA = a.familyName?.toLowerCase() || '';
+    const lastNameB = b.familyName?.toLowerCase() || '';
 
     if (lastNameA !== lastNameB) {
       return lastNameA.localeCompare(lastNameB);
     }
 
     // If last names are the same, sort by first name
-    return a.firstName.toLowerCase().localeCompare(b.firstName.toLowerCase());
+    return (a.firstName?.toLowerCase() || '').localeCompare(b.firstName?.toLowerCase() || '');
   });
 }
 
@@ -63,9 +63,9 @@ export function filterEmployees(employees: Employee[], searchTerm: string): Empl
 
   return employees.filter(
     emp =>
-      emp.firstName.toLowerCase().includes(term) ||
-      emp.familyName.toLowerCase().includes(term) ||
-      emp.email.toLowerCase().includes(term),
+      emp.firstName?.toLowerCase().includes(term) ||
+      emp.familyName?.toLowerCase().includes(term) ||
+      emp.email?.toLowerCase().includes(term),
   );
 }
 
@@ -80,6 +80,6 @@ export function filterEmployeesByConciergerie(employees: Employee[], conciergeri
 
   return employees.filter(
     employee =>
-      !employee.conciergerieName || employee.conciergerieName.toLowerCase() === conciergerieName.toLowerCase(),
+      !employee.conciergerieName || employee.conciergerieName?.toLowerCase() === conciergerieName?.toLowerCase(),
   );
 }

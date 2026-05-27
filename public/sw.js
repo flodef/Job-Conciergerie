@@ -2,7 +2,7 @@
 
 console.log('[SW] Service Worker script loaded!');
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGES_CACHE = `pages-${CACHE_VERSION}`;
 const RSC_CACHE = `rsc-${CACHE_VERSION}`;
@@ -113,54 +113,45 @@ self.addEventListener('fetch', event => {
   event.respondWith(handleStaticRequest(request));
 });
 
-// Handle RSC requests with stale-while-revalidate
+// Handle RSC requests with network-first strategy
 async function handleRSCRequest(request) {
   const cache = await caches.open(RSC_CACHE);
 
   // Create a GET request for cache key (Cache API doesn't support POST)
   const cacheKey = new Request(request.url, { method: 'GET' });
-  const cached = await cache.match(cacheKey);
 
-  // Return cached version immediately if available (stale-while-revalidate)
-  if (cached) {
-    // Update cache in background if online
-    if (navigator.onLine) {
-      fetch(request.clone())
-        .then(response => {
-          // Only cache successful non-redirect responses
-          if (response.ok && !response.redirected) {
-            cache.put(cacheKey, response.clone());
-          }
-        })
-        .catch(() => {});
+  // Network-first: Try to fetch fresh data first when online
+  if (navigator.onLine) {
+    try {
+      const response = await fetch(request.clone());
+      console.log('[SW] RSC fetch:', request.url, 'status:', response.status, 'ok:', response.ok);
+
+      // Cache successful responses
+      if (response.ok && !response.redirected) {
+        await cache.put(cacheKey, response.clone());
+        console.log('[SW] RSC cached:', request.url);
+      }
+      return response;
+    } catch (error) {
+      console.error('[SW] RSC fetch failed:', request.url, error);
+      // Fall through to cache
     }
+  }
+
+  // Offline or fetch failed: Try cache
+  const cached = await cache.match(cacheKey);
+  if (cached) {
+    console.log('[SW] RSC from cache:', request.url);
     return cached;
   }
 
-  // If offline and no cache, return error - don't fallback to wrong page
-  if (!navigator.onLine) {
-    return new Response(JSON.stringify({ error: 'Page not cached for offline use' }), {
-      status: 503,
-      statusText: 'Service Unavailable',
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  try {
-    const response = await fetch(request.clone());
-    // Only cache successful non-redirect responses using GET cache key
-    if (response.ok && !response.redirected) {
-      await cache.put(cacheKey, response.clone());
-    }
-    return response;
-  } catch (error) {
-    // Return error for offline/failed RSC requests
-    return new Response(JSON.stringify({ error: 'Page not cached for offline use' }), {
-      status: 503,
-      statusText: 'Service Unavailable',
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  // No cache available
+  console.error('[SW] RSC not available offline:', request.url);
+  return new Response(JSON.stringify({ error: 'Page not cached for offline use' }), {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 // Handle navigation requests

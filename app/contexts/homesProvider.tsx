@@ -73,9 +73,14 @@ export function HomesProvider({ children }: { children: ReactNode }) {
       })
       .catch(error => {
         console.warn('Failed to fetch homes:', error);
-        // Only reset needsRefresh if offline to prevent infinite retry loops
-        // If online, let it retry on next refresh cycle
-        if (!navigator.onLine) {
+        // Reset needsRefresh to prevent infinite retry loops when:
+        // 1. Offline
+        // 2. Service worker returns 503 (page not cached)
+        // 3. Any fetch error that suggests the page isn't available
+        const errorMsg = error?.message?.toLowerCase() || '';
+        const is503Error =
+          errorMsg.includes('unexpected') || errorMsg.includes('503') || errorMsg.includes('service unavailable');
+        if (!navigator.onLine || is503Error) {
           updateFetchTime(Page.Homes);
         }
         return false;

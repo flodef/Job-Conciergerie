@@ -122,7 +122,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       if (!homesSuccess) {
         setIsLoading(false);
         isFetching.current = false;
-        // Only reset needsRefresh if offline to prevent infinite retry loops
+        // Reset needsRefresh to prevent infinite retry loops when offline
         if (!navigator.onLine) {
           updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
         }
@@ -143,8 +143,14 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           console.warn('Failed to fetch missions:', error);
           setIsLoading(false);
           isFetching.current = false;
-          // Only reset needsRefresh if offline to prevent infinite retry loops
-          if (!navigator.onLine) {
+          // Reset needsRefresh to prevent infinite retry loops when:
+          // 1. Offline
+          // 2. Service worker returns 503 (page not cached)
+          // 3. Any fetch error that suggests the page isn't available
+          const errorMsg = error?.message?.toLowerCase() || '';
+          const is503Error =
+            errorMsg.includes('unexpected') || errorMsg.includes('503') || errorMsg.includes('service unavailable');
+          if (!navigator.onLine || is503Error) {
             updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
           }
           return false;
