@@ -1,5 +1,7 @@
 /// <reference lib="webworker" />
 
+console.log('[SW] Service Worker script loaded!');
+
 const CACHE_VERSION = 'v1';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGES_CACHE = `pages-${CACHE_VERSION}`;
@@ -11,13 +13,16 @@ const STATIC_ASSETS = ['/', '/manifest.json', '/icon-192x192.png', '/icon-512x51
 
 // Install event - cache static assets
 self.addEventListener('install', event => {
+  console.log('[SW] INSTALL EVENT - Service Worker installing');
   event.waitUntil(
     caches
       .open(STATIC_CACHE)
       .then(cache => {
+        console.log('[SW] Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       })
       .then(() => {
+        console.log('[SW] Skip waiting');
         return self.skipWaiting();
       }),
   );
@@ -32,10 +37,12 @@ self.addEventListener('message', event => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
+  console.log('[SW] ACTIVATE EVENT - Service Worker activating');
   event.waitUntil(
     caches
       .keys()
       .then(cacheNames => {
+        console.log('[SW] Cleaning old caches');
         return Promise.all(
           cacheNames
             .filter(
@@ -47,6 +54,7 @@ self.addEventListener('activate', event => {
         );
       })
       .then(() => {
+        console.log('[SW] Claiming clients');
         return self.clients.claim();
       }),
   );
