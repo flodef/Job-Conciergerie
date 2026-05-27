@@ -67,30 +67,8 @@ self.addEventListener('activate', event => {
 
 // Fetch event - serve from cache or network
 self.addEventListener('fetch', event => {
-  console.log('[SW] FETCH EVENT FIRED:', event.request.url.substring(0, 100));
-
   const { request } = event;
   const url = new URL(request.url);
-
-  // Debug: log ALL same-origin requests
-  if (url.origin === self.location.origin) {
-    const rscHeader = request.headers.get('RSC');
-    const nextRscHeader = request.headers.get('Next-Router-State-Tree');
-    const accept = request.headers.get('Accept');
-    console.log(
-      '[SW] Same-origin fetch:',
-      request.method,
-      url.pathname + url.search,
-      'mode:',
-      request.mode,
-      'RSC header:',
-      rscHeader,
-      'Next-Router:',
-      !!nextRscHeader,
-      'Accept:',
-      accept?.substring(0, 50),
-    );
-  }
 
   // Handle RSC (React Server Component) requests FIRST - Next.js uses POST for navigation
   // RSC requests are identified by the Next-Router-State-Tree header or Accept: text/x-component
@@ -143,28 +121,18 @@ async function handleRSCRequest(request) {
   const cacheKey = new Request(request.url, { method: 'GET' });
   const cached = await cache.match(cacheKey);
 
-  console.log('[SW] RSC request:', request.url, 'cached:', !!cached, 'online:', navigator.onLine);
-
   // Return cached version immediately if available (stale-while-revalidate)
   if (cached) {
     // Update cache in background if online
     if (navigator.onLine) {
       fetch(request.clone())
         .then(response => {
-          console.log(
-            '[SW] RSC background update:',
-            request.url,
-            'ok:',
-            response.ok,
-            'redirected:',
-            response.redirected,
-          );
           // Only cache successful non-redirect responses
           if (response.ok && !response.redirected) {
             cache.put(cacheKey, response.clone());
           }
         })
-        .catch(err => console.error('[SW] RSC background update failed:', err));
+        .catch(() => {});
     }
     return cached;
   }
@@ -180,24 +148,12 @@ async function handleRSCRequest(request) {
 
   try {
     const response = await fetch(request.clone());
-    console.log(
-      '[SW] RSC fetch success:',
-      request.url,
-      'ok:',
-      response.ok,
-      'redirected:',
-      response.redirected,
-      'status:',
-      response.status,
-    );
     // Only cache successful non-redirect responses using GET cache key
     if (response.ok && !response.redirected) {
       await cache.put(cacheKey, response.clone());
-      console.log('[SW] RSC cached:', request.url);
     }
     return response;
   } catch (error) {
-    console.error('[SW] RSC fetch failed:', request.url, error);
     // Return error for offline/failed RSC requests
     return new Response(JSON.stringify({ error: 'Page not cached for offline use' }), {
       status: 503,
@@ -234,7 +190,7 @@ async function handleNavigationRequest(request) {
   }
 
   try {
-    const response = await fetch(request, { redirect: 'follow' });
+    const response = await fetch(request.clone());
     // Only cache successful non-redirect responses
     if (response.ok && !response.redirected) {
       cache.put(request, response.clone());
