@@ -1,5 +1,6 @@
 'use client';
 
+import AppVersion from '@/app/components/appVersion';
 import { RefreshButton } from '@/app/components/button';
 
 export default function ErrorPage({
@@ -19,6 +20,7 @@ export default function ErrorPage({
           <RefreshButton shouldDisconnect />
         </div>
       </div>
+      <AppVersion className="mt-4" />
     </div>
   );
 }

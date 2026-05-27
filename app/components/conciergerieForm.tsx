@@ -10,6 +10,7 @@ import { ErrorField } from '@/app/types/types';
 import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
 import { EmailSender } from '@/app/utils/emailSender';
 import { Page } from '@/app/utils/navigation';
+import AppVersion from '@/app/components/appVersion';
 import { useEffect, useRef, useState } from 'react';
 
 type ConciergerieFormProps = {
@@ -87,7 +88,10 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     <div className="h-full w-full flex flex-col items-center justify-center bg-background">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      <h2 className="text-2xl font-bold mb-4">Conciergerie</h2>
+      <div className="flex items-baseline gap-2 mb-4">
+        <h2 className="text-2xl font-bold">Conciergerie</h2>
+        <AppVersion />
+      </div>
 
       <form onSubmit={handleSubmit} className="max-w-64 w-full space-y-4">
         <Select
