@@ -1,0 +1,2 @@
+# Run tests before pushing to catch regressions early
+bun run test
