@@ -102,18 +102,28 @@ async function handleRSCRequest(request) {
   const cache = await caches.open(RSC_CACHE);
   const cached = await cache.match(request);
 
+  console.log('[SW] RSC request:', request.url, 'cached:', !!cached, 'online:', navigator.onLine);
+
   // Return cached version immediately if available (stale-while-revalidate)
   if (cached) {
     // Update cache in background if online
     if (navigator.onLine) {
       fetch(request.clone())
         .then(response => {
+          console.log(
+            '[SW] RSC background update:',
+            request.url,
+            'ok:',
+            response.ok,
+            'redirected:',
+            response.redirected,
+          );
           // Only cache successful non-redirect responses
           if (response.ok && !response.redirected) {
             cache.put(request, response.clone());
           }
         })
-        .catch(() => {});
+        .catch(err => console.error('[SW] RSC background update failed:', err));
     }
     return cached;
   }
@@ -129,12 +139,24 @@ async function handleRSCRequest(request) {
 
   try {
     const response = await fetch(request.clone());
+    console.log(
+      '[SW] RSC fetch success:',
+      request.url,
+      'ok:',
+      response.ok,
+      'redirected:',
+      response.redirected,
+      'status:',
+      response.status,
+    );
     // Only cache successful non-redirect responses
     if (response.ok && !response.redirected) {
-      cache.put(request, response.clone());
+      await cache.put(request, response.clone());
+      console.log('[SW] RSC cached:', request.url);
     }
     return response;
   } catch (error) {
+    console.error('[SW] RSC fetch failed:', request.url, error);
     // Return error for offline/failed RSC requests
     return new Response(JSON.stringify({ error: 'Page not cached for offline use' }), {
       status: 503,
