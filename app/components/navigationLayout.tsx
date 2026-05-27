@@ -256,11 +256,26 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
   return (
     <div className="h-dvh flex flex-col">
+      {/* Update available banner - sits above the header */}
+      {updateAvailable && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-2 bg-primary px-4 py-2 text-white text-sm">
+          <span>Une nouvelle version est disponible</span>
+          <button
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-1 font-semibold underline underline-offset-2 whitespace-nowrap"
+          >
+            <IconRefresh size={14} />
+            Mettre à jour
+          </button>
+        </div>
+      )}
+
       {/* Fixed header with blur on scroll */}
       {isNavigationPage && !!userType && (
         <header
           className={cn(
-            'fixed top-0 left-0 right-0 mx-auto h-16 flex items-center justify-between px-4 w-full z-40 transition-all duration-200 bg-background',
+            'fixed left-0 right-0 mx-auto h-16 flex items-center justify-between px-4 w-full z-40 transition-all duration-200 bg-background',
+            updateAvailable ? 'top-10' : 'top-0',
             isScrolled ? 'shadow-md' : '',
           )}
         >
@@ -292,22 +307,13 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
         <ChangelogModal userType={userType} onClose={dismissChangelog} mode="current" entries={changelogEntries} />
       )}
 
-      {/* Update available banner */}
-      {updateAvailable && (
-        <div className="fixed top-16 left-0 right-0 z-30 flex items-center justify-between gap-2 bg-primary px-4 py-2 text-white text-sm shadow-md">
-          <span>Une nouvelle version est disponible</span>
-          <button
-            onClick={() => window.location.reload()}
-            className="flex items-center gap-1 font-semibold underline underline-offset-2 whitespace-nowrap"
-          >
-            <IconRefresh size={14} />
-            Mettre à jour
-          </button>
-        </div>
-      )}
-
       {/* Main content */}
-      <main className={cn('flex-1 relative overflow-hidden', isNavigationPage && !!userType && 'pt-16')}>
+      <main
+        className={cn(
+          'flex-1 relative overflow-hidden',
+          isNavigationPage && !!userType && (updateAvailable ? 'pt-26' : 'pt-16'),
+        )}
+      >
         {/* Content wrapper - scrollable when content is long */}
         <div
           className={cn(

@@ -34,19 +34,27 @@ export default function Settings() {
     {
       title: 'Général',
       subtitle: (
-        <div className="flex items-center gap-1">
-          <span className="text-sm text-gray-500">v. {packageJson.version}</span>
-          <button
+        <span className="flex items-center gap-1.5">
+          <span
+            role="button"
+            tabIndex={0}
             onClick={e => {
               e.stopPropagation();
               setShowChangelogHistory(true);
             }}
-            className="text-foreground/40 hover:text-primary transition-colors"
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+                setShowChangelogHistory(true);
+              }
+            }}
+            className="text-foreground/40 hover:text-primary transition-colors cursor-pointer"
             title="Notes de version"
           >
-            <IconInfoCircle size={16} />
-          </button>
-        </div>
+            <IconInfoCircle size={20} />
+          </span>
+          <span>v. {packageJson.version}</span>
+        </span>
       ),
       icon: <IconSettings size={20} />,
       content: {
@@ -79,7 +87,7 @@ export default function Settings() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       ) : (
-        <Accordion items={accordionItems} />
+        <Accordion items={accordionItems} defaultOpenIndex={-1} />
       )}
     </div>
   );

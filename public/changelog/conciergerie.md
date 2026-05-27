@@ -6,10 +6,9 @@
 
 # 2.71
 
-- **Connexion** : affichage de la version de l'application sur les pages de connexion
 - **Filtres missions** : nouveau filtre **Prestataire** pour trier les missions par prestataire
 - **Mise à jour** : notification automatique lorsqu'une nouvelle version est disponible
 
-# 2.70
+# 2.60
 
-- **Filtres missions** : correction d'un bug d'affichage sur la dernière mission de la liste
+- **Nouveau serveur** : passage à un nouveau serveur plus puissant pour gérer l'application de manière plus fluide
