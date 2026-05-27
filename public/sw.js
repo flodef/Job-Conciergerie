@@ -138,7 +138,10 @@ self.addEventListener('fetch', event => {
 // Handle RSC requests with stale-while-revalidate
 async function handleRSCRequest(request) {
   const cache = await caches.open(RSC_CACHE);
-  const cached = await cache.match(request);
+
+  // Create a GET request for cache key (Cache API doesn't support POST)
+  const cacheKey = new Request(request.url, { method: 'GET' });
+  const cached = await cache.match(cacheKey);
 
   console.log('[SW] RSC request:', request.url, 'cached:', !!cached, 'online:', navigator.onLine);
 
@@ -158,7 +161,7 @@ async function handleRSCRequest(request) {
           );
           // Only cache successful non-redirect responses
           if (response.ok && !response.redirected) {
-            cache.put(request, response.clone());
+            cache.put(cacheKey, response.clone());
           }
         })
         .catch(err => console.error('[SW] RSC background update failed:', err));
@@ -187,9 +190,9 @@ async function handleRSCRequest(request) {
       'status:',
       response.status,
     );
-    // Only cache successful non-redirect responses
+    // Only cache successful non-redirect responses using GET cache key
     if (response.ok && !response.redirected) {
-      await cache.put(request, response.clone());
+      await cache.put(cacheKey, response.clone());
       console.log('[SW] RSC cached:', request.url);
     }
     return response;
