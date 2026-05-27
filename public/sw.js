@@ -57,21 +57,9 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Debug: log all navigation-related requests
-  if (
-    url.pathname.startsWith('/missions') ||
-    url.pathname.startsWith('/homes') ||
-    url.pathname.startsWith('/calendar')
-  ) {
-    console.log(
-      '[SW] Fetch:',
-      request.method,
-      url.pathname,
-      'has _rsc:',
-      url.searchParams.has('_rsc'),
-      'mode:',
-      request.mode,
-    );
+  // Debug: log ALL same-origin requests
+  if (url.origin === self.location.origin) {
+    console.log('[SW] Fetch:', request.method, url.pathname + url.search, 'mode:', request.mode);
   }
 
   // Handle RSC (React Server Component) requests FIRST - Next.js uses POST for navigation
