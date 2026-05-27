@@ -1,5 +1,6 @@
 'use client';
 
+import ChangelogModal from '@/app/components/changelogModal';
 import InstallToast from '@/app/components/installToast';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { PageManager } from '@/app/components/pageManager';
@@ -11,6 +12,7 @@ import { useBadge } from '@/app/contexts/badgeProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
+import { useChangelog } from '@/app/hooks/useChangelog';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { useUpdateChecker } from '@/app/hooks/useUpdateChecker';
 import { cn } from '@/app/utils/className';
@@ -96,6 +98,11 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastManualRefresh, setLastManualRefresh] = useState<number>(0);
   const updateAvailable = useUpdateChecker();
+  const {
+    showModal: showChangelog,
+    entries: changelogEntries,
+    dismiss: dismissChangelog,
+  } = useChangelog(userType as 'employee' | 'conciergerie' | undefined);
 
   // Handle manual refresh with rate limiting
   const handleManualRefresh = useCallback(() => {
@@ -279,6 +286,11 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
       {/* Installation toast - only shown for logged in users */}
       {isNavigationPage && !!userType && <InstallToast />}
+
+      {/* Changelog modal - auto-shown once per new version */}
+      {showChangelog && userType && (userType === 'employee' || userType === 'conciergerie') && (
+        <ChangelogModal userType={userType} onClose={dismissChangelog} mode="current" entries={changelogEntries} />
+      )}
 
       {/* Update available banner */}
       {updateAvailable && (

@@ -8,7 +8,7 @@ type AccordionVariant = 'default' | 'card';
 
 interface AccordionItemProps {
   title: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   icon?: React.ReactNode;
   isOpen: boolean;
   onToggle: () => void;
@@ -20,7 +20,7 @@ interface AccordionItemProps {
 interface AccordionProps {
   items: {
     title: string;
-    subtitle?: string;
+    subtitle?: React.ReactNode;
     icon?: React.ReactNode;
     content: React.ReactNode;
   }[];
