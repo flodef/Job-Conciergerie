@@ -88,7 +88,10 @@ self.addEventListener('fetch', event => {
   }
 
   // Handle RSC (React Server Component) requests FIRST - Next.js uses POST for navigation
-  if (url.searchParams.has('_rsc')) {
+  // RSC requests are identified by the Next-Router-State-Tree header or Accept: text/x-component
+  const isRSC =
+    request.headers.has('Next-Router-State-Tree') || request.headers.get('Accept')?.includes('text/x-component');
+  if (isRSC) {
     event.respondWith(handleRSCRequest(request));
     return;
   }
