@@ -72,10 +72,12 @@ export function HomesProvider({ children }: { children: ReactNode }) {
         return !!fetchedHomes;
       })
       .catch(error => {
-        // Silently fail when offline - cached data will be used if available
-        console.warn('Failed to fetch homes (possibly offline):', error);
-        // Reset needsRefresh to prevent infinite retry loops
-        updateFetchTime(Page.Homes);
+        console.warn('Failed to fetch homes:', error);
+        // Only reset needsRefresh if offline to prevent infinite retry loops
+        // If online, let it retry on next refresh cycle
+        if (!navigator.onLine) {
+          updateFetchTime(Page.Homes);
+        }
         return false;
       })
       .finally(() => {

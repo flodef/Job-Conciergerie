@@ -122,8 +122,10 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       if (!homesSuccess) {
         setIsLoading(false);
         isFetching.current = false;
-        // Reset needsRefresh to prevent infinite retry loops
-        updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
+        // Only reset needsRefresh if offline to prevent infinite retry loops
+        if (!navigator.onLine) {
+          updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
+        }
         return false;
       }
       return fetchAllMissions()
@@ -138,12 +140,13 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           return !!fetchedMissions;
         })
         .catch(error => {
-          // Silently fail when offline - cached data will be used if available
-          console.warn('Failed to fetch missions (possibly offline):', error);
+          console.warn('Failed to fetch missions:', error);
           setIsLoading(false);
           isFetching.current = false;
-          // Reset needsRefresh to prevent infinite retry loops
-          updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
+          // Only reset needsRefresh if offline to prevent infinite retry loops
+          if (!navigator.onLine) {
+            updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
+          }
           return false;
         });
     });
