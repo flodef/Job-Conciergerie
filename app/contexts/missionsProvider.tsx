@@ -294,17 +294,27 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   const acceptMission = async (id: string) => {
     const missionToAccept = missions.find(m => m.id === id);
-    if (!missionToAccept) return { success: false, employeeNotified: false };
+    if (!missionToAccept) {
+      console.error('acceptMission: Mission not found', id);
+      return { success: false, employeeNotified: false };
+    }
 
     const employee = userData as Employee;
-    if (!employee) return { success: false, employeeNotified: false };
+    if (!employee) {
+      console.error('acceptMission: No employee userData');
+      return { success: false, employeeNotified: false };
+    }
 
+    console.log('acceptMission: Accepting mission', id, 'for employee', getUserKey(employee));
     const success = await setMissionData(id, {
       ...missionToAccept,
       employeeId: getUserKey(employee),
       status: 'accepted',
     });
-    if (!success) return { success: false, employeeNotified: false };
+    if (!success) {
+      console.error('acceptMission: setMissionData failed');
+      return { success: false, employeeNotified: false };
+    }
 
     // Notify the conciergerie
     await sendMissionStatusNotification(missionToAccept, employee, 'accepted');
