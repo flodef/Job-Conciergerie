@@ -69,7 +69,22 @@ self.addEventListener('fetch', event => {
 
   // Debug: log ALL same-origin requests
   if (url.origin === self.location.origin) {
-    console.log('[SW] Same-origin fetch:', request.method, url.pathname + url.search, 'mode:', request.mode);
+    const rscHeader = request.headers.get('RSC');
+    const nextRscHeader = request.headers.get('Next-Router-State-Tree');
+    const accept = request.headers.get('Accept');
+    console.log(
+      '[SW] Same-origin fetch:',
+      request.method,
+      url.pathname + url.search,
+      'mode:',
+      request.mode,
+      'RSC header:',
+      rscHeader,
+      'Next-Router:',
+      !!nextRscHeader,
+      'Accept:',
+      accept?.substring(0, 50),
+    );
   }
 
   // Handle RSC (React Server Component) requests FIRST - Next.js uses POST for navigation
