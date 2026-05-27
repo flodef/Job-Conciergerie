@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, test, beforeAll, afterAll } from 'vitest';
-import { createNewMission, updateMissionData } from '../mission';
+import { createNewMission, updateMissionData } from '../actions/mission';
 import { createHome } from '@/app/db/homeDb';
 import { deleteMission } from '@/app/db/missionDb';
 import { sql } from '@/app/db/db';
