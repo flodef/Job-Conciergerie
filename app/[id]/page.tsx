@@ -161,7 +161,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
         cancelText="Annuler"
         isDangerous
       />
-      <AppVersion pinned />
+      <AppVersion />
     </div>
   );
 }

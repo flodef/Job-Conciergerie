@@ -338,10 +338,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     <div className="min-h-full w-full flex flex-col items-center justify-start bg-background pt-2">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      <div className="flex items-baseline gap-2 mb-2">
-        <h2 className="text-2xl font-bold">Inscription Prestataire</h2>
-        <AppVersion />
-      </div>
+      <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>
 
       <form onSubmit={handleSubmit} className="w-full px-4 space-y-2">
         <Input
@@ -517,6 +514,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           isDangerous
         />
       </form>
+
+      <AppVersion flow />
     </div>
   );
 }

@@ -43,7 +43,7 @@ export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) 
           </button>
         </div>
       </div>
-      <AppVersion pinned />
+      <AppVersion />
     </div>
   );
 }

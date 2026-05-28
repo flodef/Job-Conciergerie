@@ -340,7 +340,7 @@ export default function WaitingPage() {
           />
         ) : null}
       </div>
-      {(isLoading || employee || conciergerie) && <AppVersion pinned />}
+      {(isLoading || employee || conciergerie) && <AppVersion />}
     </div>
   );
 }

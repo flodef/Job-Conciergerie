@@ -2,16 +2,16 @@
 
 import ErrorPage from '@/app/components/error';
 import FormActions from '@/app/components/formActions';
-import Select from '@/app/components/select';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { ErrorField } from '@/app/types/types';
+import { cn } from '@/app/utils/className';
 import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
 import { EmailSender } from '@/app/utils/emailSender';
 import { Page } from '@/app/utils/navigation';
-import AppVersion from '@/app/components/appVersion';
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
+import AppVersion from './appVersion';
 
 type ConciergerieFormProps = {
   onClose: () => void;
@@ -23,6 +23,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
 
   const conciergerieNameRef = useRef<HTMLDivElement>(null);
   const [conciergerieNameError, setConciergerieNameError] = useState('');
+  const errorId = 'conciergerie-error';
 
   const [conciergerieName, setConciergerieName] = useState(conciergeries?.at(0)?.name || '');
   const [toast, setToast] = useState<Toast>();
@@ -42,22 +43,13 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    let error: ErrorField | undefined;
-
-    if (!conciergerieName?.trim())
-      error = {
-        message: 'Veuillez sélectionner une conciergerie',
-        fieldRef: conciergerieNameRef,
-        func: setConciergerieNameError,
-      };
-
     try {
       setIsSubmitting(true);
 
-      if (error) {
-        error.fieldRef.current?.focus();
-        error.func(error.message);
-        throw new Error(error.message);
+      if (!conciergerieName?.trim()) {
+        conciergerieNameRef.current?.focus();
+        setConciergerieNameError('Veuillez sélectionner une conciergerie');
+        throw new Error('Veuillez sélectionner une conciergerie');
       }
 
       if (!userId) throw new Error("L'identifiant n'est pas défini");
@@ -88,27 +80,47 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     <div className="h-full w-full flex flex-col items-center justify-center bg-background">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      <div className="flex items-baseline gap-2 mb-4">
-        <h2 className="text-2xl font-bold">Conciergerie</h2>
-        <AppVersion />
-      </div>
+      <h2 className="text-2xl font-bold mb-4">Conciergerie</h2>
 
-      <form onSubmit={handleSubmit} className="max-w-64 w-full space-y-4">
-        <Select
-          id="conciergerie"
-          label=""
-          ref={conciergerieNameRef}
-          value={conciergerieName}
-          onChange={setConciergerieName}
-          options={conciergeries.map(c => c.name)}
-          disabled={isSubmitting}
-          placeholder="Sélectionnez une conciergerie"
-          error={conciergerieNameError}
-          required
-        />
+      <form onSubmit={handleSubmit} className="w-full max-w-sm px-4 space-y-4">
+        <div ref={conciergerieNameRef} className="grid grid-cols-2 gap-3" role="group" aria-labelledby={errorId}>
+          {conciergeries.map(c => {
+            const color = getColorValueByName(c.colorName);
+            const isSelected = conciergerieName === c.name;
+            return (
+              <button
+                key={c.name}
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => {
+                  setConciergerieName(c.name);
+                  setConciergerieNameError('');
+                }}
+                className={cn(
+                  'relative flex flex-col items-center gap-2 p-3 border rounded-lg transition-all text-sm font-medium',
+                  isSelected
+                    ? 'ring-2 ring-(--btn-color) border-(--btn-color)'
+                    : 'border-secondary hover:bg-secondary/10',
+                  isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+                )}
+                style={{ '--btn-color': color } as React.CSSProperties}
+              >
+                <div className="w-6 h-6 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                <span className="text-center leading-tight">{c.name}</span>
+              </button>
+            );
+          })}
+        </div>
+        {conciergerieNameError && (
+          <p id={errorId} className="text-sm text-red-500">
+            {conciergerieNameError}
+          </p>
+        )}
 
         <FormActions onCancel={handleClose} submitText="Valider" isSubmitting={isSubmitting} />
       </form>
+
+      <AppVersion />
     </div>
   );
 }
