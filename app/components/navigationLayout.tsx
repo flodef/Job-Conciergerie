@@ -5,7 +5,6 @@ import InstallToast from '@/app/components/installToast';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { PageManager } from '@/app/components/pageManager';
 import { TimeAgoDisplay } from '@/app/components/timeAgoDisplay';
-import { TimeAgoDisplay } from '@/app/components/timeAgoDisplay';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
