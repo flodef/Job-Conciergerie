@@ -180,7 +180,7 @@ export default function WaitingPage() {
     </div>
   );
 
-  if (authLoading || !userType) return authLoading ? null : <ErrorPage />;
+  if (authLoading || !userType) return null;
 
   return (
     <div className="flex-1 flex items-center justify-center bg-background">
