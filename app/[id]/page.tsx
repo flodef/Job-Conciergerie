@@ -8,6 +8,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { Page } from '@/app/utils/navigation';
+import AppVersion from '@/app/components/appVersion';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { formatId, getDevices, MAX_DEVICES, MaxDevicesError } from '../utils/id';
 
@@ -36,7 +37,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
 
   const applyEmployeeUpdate = useCallback(
     async (employee: Employee, evictOldest: boolean) => {
-      if (!userId) throw new Error("Identifiant non trouvé");
+      if (!userId) throw new Error('Identifiant non trouvé');
       const newIds = getDevices(employee.id, userId, false, evictOldest);
       const result = await updateEmployeeWithUserId(employee, newIds);
       if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
@@ -47,7 +48,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
 
   const applyConciergerieUpdate = useCallback(
     async (conciergerie: Conciergerie, evictOldest: boolean) => {
-      if (!userId) throw new Error("Identifiant non trouvé");
+      if (!userId) throw new Error('Identifiant non trouvé');
       const newIds = getDevices(conciergerie.id, userId, false, evictOldest);
       const result = await updateConciergerieWithUserId(conciergerie, newIds);
       if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
@@ -146,7 +147,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
   };
 
   return (
-    <>
+    <div className="min-h-full flex flex-col">
       {error && <ErrorPage message={error} />}
       <ConfirmationModal
         isOpen={!!pendingUpdate}
@@ -160,6 +161,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
         cancelText="Annuler"
         isDangerous
       />
-    </>
+      <AppVersion className="text-center pb-4 mt-auto" />
+    </div>
   );
 }

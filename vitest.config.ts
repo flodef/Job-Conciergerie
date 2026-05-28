@@ -3,9 +3,9 @@ import path from 'path';
 
 export default defineConfig({
   test: {
-    environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    environment: 'jsdom',
   },
   resolve: {
     alias: {

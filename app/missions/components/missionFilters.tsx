@@ -11,12 +11,14 @@ export type MissionFiltersType = {
   statuses: string[];
   missionStatuses: string[];
   zones: string[];
+  employees: string[];
 };
 
 interface MissionFiltersProps {
   availableConciergeries: string[];
   availableZones: string[];
   availableTimePeriods: string[];
+  availableEmployees?: string[];
   selectedConciergeries: string[];
   setSelectedConciergeries: React.Dispatch<React.SetStateAction<string[]>>;
   selectedStatuses: string[];
@@ -25,6 +27,8 @@ interface MissionFiltersProps {
   setSelectedMissionStatuses: React.Dispatch<React.SetStateAction<string[]>>;
   selectedZones: string[];
   setSelectedZones: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedEmployees?: string[];
+  setSelectedEmployees?: React.Dispatch<React.SetStateAction<string[]>>;
   saveFiltersToLocalStorage?: () => void;
   savedFilters?: MissionFiltersType;
 }
@@ -33,6 +37,7 @@ export default function MissionFilters({
   availableConciergeries,
   availableZones,
   availableTimePeriods,
+  availableEmployees,
   selectedConciergeries,
   setSelectedConciergeries,
   selectedStatuses,
@@ -41,6 +46,8 @@ export default function MissionFilters({
   setSelectedMissionStatuses,
   selectedZones,
   setSelectedZones,
+  selectedEmployees,
+  setSelectedEmployees,
   saveFiltersToLocalStorage,
   savedFilters,
 }: MissionFiltersProps) {
@@ -72,10 +79,15 @@ export default function MissionFilters({
     return compareArrays(selectedZones, savedFilters.zones);
   }, [selectedZones, savedFilters]);
 
+  const employeesChanged = React.useMemo(() => {
+    if (!savedFilters || !selectedEmployees) return false;
+    return compareArrays(selectedEmployees, savedFilters.employees || []);
+  }, [selectedEmployees, savedFilters]);
+
   // Check if any filters have been changed from saved values
   const filtersChanged = React.useMemo(() => {
-    return conciergeriesChanged || statusesChanged || missionStatusesChanged || zonesChanged;
-  }, [conciergeriesChanged, statusesChanged, missionStatusesChanged, zonesChanged]);
+    return conciergeriesChanged || statusesChanged || missionStatusesChanged || zonesChanged || employeesChanged;
+  }, [conciergeriesChanged, statusesChanged, missionStatusesChanged, zonesChanged, employeesChanged]);
   return (
     <div className="px-4 pb-4 bg-background rounded-lg shadow-md flex flex-col gap-2">
       {/* Conciergeries filter */}
@@ -150,6 +162,31 @@ export default function MissionFilters({
         </button>
       </div>
 
+      {/* Employee filter - conciergerie only */}
+      {availableEmployees &&
+        availableEmployees.length > 0 &&
+        setSelectedEmployees &&
+        selectedEmployees !== undefined && (
+          <div className={cn(rowClassName, 'my-0')}>
+            <MultiSelect
+              id="employee-filter"
+              label="Prestataire"
+              values={selectedEmployees}
+              onChange={setSelectedEmployees}
+              options={availableEmployees.map(employee => ({ value: employee, label: employee }))}
+              disabled={false}
+              required
+            />
+            <button
+              onClick={() => setSelectedEmployees(savedFilters?.employees || [])}
+              className={filterButtonClassName(employeesChanged)}
+              disabled={!employeesChanged}
+            >
+              <IconX size={14} /> Réinitialiser
+            </button>
+          </div>
+        )}
+
       {/* Geographic zones filter */}
       <div className={cn(rowClassName, 'my-0')}>
         <MultiSelect
@@ -198,6 +235,7 @@ export default function MissionFilters({
             setSelectedStatuses(savedFilters?.statuses || []);
             setSelectedMissionStatuses(savedFilters?.missionStatuses || ['available']);
             setSelectedZones(savedFilters?.zones || []);
+            setSelectedEmployees?.(savedFilters?.employees || []);
           }}
           disabled={!filtersChanged}
           className={cn(

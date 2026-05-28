@@ -64,6 +64,7 @@ export default function Missions() {
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedMissionStatuses, setSelectedMissionStatuses] = useState<string[]>(['available']);
   const [selectedZones, setSelectedZones] = useState<string[]>([]);
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
   // Store for saved filter values - must be declared before any conditional returns
@@ -72,6 +73,7 @@ export default function Missions() {
     statuses: [],
     missionStatuses: ['available'],
     zones: [],
+    employees: [],
   });
 
   // Reload missions when needed
@@ -102,6 +104,7 @@ export default function Missions() {
     setSelectedStatuses(savedFilters.statuses || []);
     setSelectedMissionStatuses(savedFilters.missionStatuses || ['available']);
     setSelectedZones(savedFilters.zones || []);
+    setSelectedEmployees(savedFilters.employees || []);
   }, [authLoading, savedFilters]);
 
   // Basic filtered missions (by user type) - must be declared before any conditional returns
@@ -121,6 +124,7 @@ export default function Missions() {
       selectedZones,
       homes,
       userType === 'employee' ? employeeName : undefined,
+      userType === 'conciergerie' ? selectedEmployees : [],
     );
   }, [
     basicFilteredMissions,
@@ -128,6 +132,7 @@ export default function Missions() {
     selectedStatuses,
     selectedMissionStatuses,
     selectedZones,
+    selectedEmployees,
     homes,
     missionsLoading,
     userType,
@@ -158,6 +163,17 @@ export default function Missions() {
     return Array.from(conciergeries).sort();
   }, [basicFilteredMissions, missionsLoading]);
 
+  // Get available employees for filtering (conciergerie only) - must be declared before any conditional returns
+  // Scan all missions (not just status-filtered) to find employees with any assigned mission
+  const availableEmployees = useMemo(() => {
+    if (missionsLoading || userType !== 'conciergerie') return [];
+    const employeeIds = new Set<string>();
+    missions.forEach(mission => {
+      if (mission.employeeId) employeeIds.add(mission.employeeId);
+    });
+    return Array.from(employeeIds).sort();
+  }, [missions, missionsLoading, userType]);
+
   // Get available geographic zones for filtering - must be declared before any conditional returns
   const availableZones = useMemo(() => {
     if (missionsLoading) return [];
@@ -185,6 +201,7 @@ export default function Missions() {
       statuses: selectedStatuses,
       missionStatuses: selectedMissionStatuses,
       zones: selectedZones,
+      employees: selectedEmployees,
     });
   };
 
@@ -214,10 +231,11 @@ export default function Missions() {
     selectedConciergeries.length > 0 ||
     selectedStatuses.length > 0 ||
     selectedMissionStatuses.length > 0 ||
-    selectedZones.length > 0;
+    selectedZones.length > 0 ||
+    selectedEmployees.length > 0;
 
   return (
-    <div className="bg-background min-h-full px-4">
+    <div className="bg-background min-h-full px-4 pb-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       {/* Show loading indicator while data is loading */}
@@ -250,6 +268,7 @@ export default function Missions() {
                 availableConciergeries={availableConciergeries}
                 availableZones={availableZones}
                 availableTimePeriods={availableTimePeriods}
+                availableEmployees={availableEmployees}
                 selectedConciergeries={selectedConciergeries}
                 setSelectedConciergeries={setSelectedConciergeries}
                 selectedStatuses={selectedStatuses}
@@ -258,6 +277,8 @@ export default function Missions() {
                 setSelectedMissionStatuses={setSelectedMissionStatuses}
                 selectedZones={selectedZones}
                 setSelectedZones={setSelectedZones}
+                selectedEmployees={selectedEmployees}
+                setSelectedEmployees={setSelectedEmployees}
                 saveFiltersToLocalStorage={saveFiltersToLocalStorage}
                 savedFilters={savedFilters}
               />

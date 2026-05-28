@@ -1,8 +1,9 @@
 'use client';
 
 import { UserType } from '@/app/contexts/authProvider';
-import { IconBuildingEstate, IconUser } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
+import { IconBuildingEstate, IconUser } from '@tabler/icons-react';
+import AppVersion from './appVersion';
 
 type UserTypeSelectionProps = {
   onSelect: (type: UserType) => void;
@@ -42,6 +43,7 @@ export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) 
           </button>
         </div>
       </div>
+      <AppVersion className="absolute bottom-0 left-0 right-0 justify-self-center" />
     </div>
   );
 }

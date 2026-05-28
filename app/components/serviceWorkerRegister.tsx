@@ -1,56 +1,37 @@
 'use client';
 
+import packageJson from '@/package.json';
 import { useEffect } from 'react';
+
+const SW_CLEANUP_KEY = 'sw_cleanup_version';
 
 export function ServiceWorkerRegister() {
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!('serviceWorker' in navigator)) return;
+    // Only register service worker in production
+    if (process.env.NODE_ENV === 'development') return;
+    if (!('serviceWorker' in navigator) || typeof window === 'undefined') return;
 
-    // Skip service worker in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Service Worker disabled in development');
-      return;
-    }
-
-    const registerSW = async () => {
-      try {
-        const registration = await navigator.serviceWorker.register('/sw.js', {
-          scope: '/',
-          updateViaCache: 'imports',
+    const registerSW = () =>
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then(registration => {
+          console.log('Service Worker registered:', registration.scope);
+        })
+        .catch(error => {
+          console.error('Service Worker registration failed:', error);
         });
 
-        console.log('Service Worker registered:', registration.scope);
-
-        // Handle updates
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          if (!newWorker) return;
-
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('New Service Worker available - skip waiting');
-              newWorker.postMessage({ type: 'SKIP_WAITING' });
-            }
-          });
+    if (localStorage.getItem(SW_CLEANUP_KEY) !== packageJson.version) {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then(registrations => Promise.all(registrations.map(r => r.unregister())))
+        .then(() => localStorage.setItem(SW_CLEANUP_KEY, packageJson.version))
+        .then(registerSW)
+        .catch(error => {
+          console.error('Service Worker cleanup failed:', error);
         });
-
-        // Listen for messages from service worker
-        navigator.serviceWorker.addEventListener('message', event => {
-          if (event.data?.type === 'RELOAD') {
-            window.location.reload();
-          }
-        });
-      } catch (error) {
-        console.error('Service Worker registration failed:', error);
-      }
-    };
-
-    // Wait for page to load before registering
-    if (document.readyState === 'complete') {
-      registerSW();
     } else {
-      window.addEventListener('load', registerSW);
+      registerSW();
     }
   }, []);
 

@@ -72,6 +72,7 @@ export function applyMissionFilters(
   selectedZones: string[],
   homes: Home[],
   employeeName?: string,
+  selectedEmployees: string[] = [],
 ): Mission[] {
   // If no filters are selected, show all missions
   // if (
@@ -99,8 +100,8 @@ export function applyMissionFilters(
       if (!matchesTimeStatus) return false;
     }
 
-    // Filter by mission status
-    if (selectedMissionStatuses.length > 0) {
+    // Filter by mission status (skip if employee filter is active — shows all their missions)
+    if (selectedMissionStatuses.length > 0 && selectedEmployees.length === 0) {
       // Check if the mission matches the selected status filter
       // 'available' means no employee is assigned (employeeId is empty) AND mission is not in the past
       // 'accepted', 'started', 'completed' match the actual mission status
@@ -124,6 +125,11 @@ export function applyMissionFilters(
       if (!home?.geographicZone || !selectedZones.includes(home.geographicZone)) {
         return false;
       }
+    }
+
+    // Filter by employee
+    if (selectedEmployees.length > 0) {
+      if (!mission.employeeId || !selectedEmployees.includes(mission.employeeId)) return false;
     }
 
     return true;

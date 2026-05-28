@@ -62,6 +62,8 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
     </div>
   );
 
+  const hasSuccessToast = toast?.type === ToastType.Success;
+
   return (
     <>
       <ToastMessage
@@ -72,79 +74,81 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
         }}
       />
 
-      <FullScreenModal
-        title={`${employee.firstName} ${employee.familyName}`}
-        onClose={onClose}
-        footer={footer}
-        disabled={isSubmitting}
-      >
-        {isDeleteModalOpen && (
-          <ConfirmationModal
-            title="Supprimer l'employé"
-            message="Êtes-vous sûr de vouloir supprimer cet employé ? Cette action est irréversible."
-            onConfirm={handleDelete}
-            onCancel={() => setIsDeleteModalOpen(false)}
-            isOpen={isDeleteModalOpen}
-          />
-        )}
-        <div>
-          <div className={cn(descriptionClassName, 'flex items-center gap-1')}>
-            Statut :
-            <span
-              className={cn(
-                'text-base font-bold',
-                {
-                  pending: 'text-yellow-500',
-                  accepted: 'text-green-500',
-                  rejected: 'text-red-500',
-                }[employee.status],
-              )}
-            >
-              {employee.status === 'pending' ? 'En attente' : employee.status === 'accepted' ? 'Accepté' : 'Rejeté'}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex flex-col">
-          <h4 className={descriptionClassName}>Contact :</h4>
-          <div className="space-y-3 mt-1">
-            <div className="flex items-center gap-2">
-              <IconMail size={25} className="text-light" />
-              <a href={`mailto:${employee.email}`} className="text-foreground hover:underline truncate">
-                {employee.email}
-              </a>
-            </div>
-            <div className="flex items-center gap-2">
-              <IconPhone size={25} className="text-light" />
-              <a href={`tel:${employee.tel}`} className="text-foreground hover:underline truncate">
-                {employee.tel}
-              </a>
-            </div>
-            <div className="flex items-center gap-2">
-              <IconMapPin size={25} className="text-light" />
-              <span className="text-foreground truncate">{employee.geographicZone}</span>
-            </div>
-          </div>
-        </div>
-
-        <p className={descriptionClassName}>
-          Missions acceptées : <span className={cn(labelClassName, 'font-bold')}>{countMissions('accepted')}</span>
-        </p>
-        <p className={descriptionClassName}>
-          Missions complétées : <span className={cn(labelClassName, 'font-bold')}>{countMissions('completed')}</span>
-        </p>
-
-        {employee.message && employee.status === 'pending' && (
+      {!hasSuccessToast && (
+        <FullScreenModal
+          title={`${employee.firstName} ${employee.familyName}`}
+          onClose={onClose}
+          footer={footer}
+          disabled={isSubmitting}
+        >
+          {isDeleteModalOpen && (
+            <ConfirmationModal
+              title="Supprimer l'employé"
+              message="Êtes-vous sûr de vouloir supprimer cet employé ? Cette action est irréversible."
+              onConfirm={handleDelete}
+              onCancel={() => setIsDeleteModalOpen(false)}
+              isOpen={isDeleteModalOpen}
+            />
+          )}
           <div>
-            <h4 className={descriptionClassName}>Message :</h4>
-            <div className="bg-secondary/10 rounded-md text-foreground">{employee.message}</div>
+            <div className={cn(descriptionClassName, 'flex items-center gap-1')}>
+              Statut :
+              <span
+                className={cn(
+                  'text-base font-bold',
+                  {
+                    pending: 'text-yellow-500',
+                    accepted: 'text-green-500',
+                    rejected: 'text-red-500',
+                  }[employee.status],
+                )}
+              >
+                {employee.status === 'pending' ? 'En attente' : employee.status === 'accepted' ? 'Accepté' : 'Rejeté'}
+              </span>
+            </div>
           </div>
-        )}
 
-        <div className={cn(descriptionClassName, 'flex items-center gap-1')}>
-          Date d&apos;inscription :<span className={labelClassName}>{formatDate(new Date(employee.createdAt))}</span>
-        </div>
-      </FullScreenModal>
+          <div className="flex flex-col">
+            <h4 className={descriptionClassName}>Contact :</h4>
+            <div className="space-y-3 mt-1">
+              <div className="flex items-center gap-2">
+                <IconMail size={25} className="text-light" />
+                <a href={`mailto:${employee.email}`} className="text-foreground hover:underline truncate">
+                  {employee.email}
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <IconPhone size={25} className="text-light" />
+                <a href={`tel:${employee.tel}`} className="text-foreground hover:underline truncate">
+                  {employee.tel}
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <IconMapPin size={25} className="text-light" />
+                <span className="text-foreground truncate">{employee.geographicZone}</span>
+              </div>
+            </div>
+          </div>
+
+          <p className={descriptionClassName}>
+            Missions acceptées : <span className={cn(labelClassName, 'font-bold')}>{countMissions('accepted')}</span>
+          </p>
+          <p className={descriptionClassName}>
+            Missions complétées : <span className={cn(labelClassName, 'font-bold')}>{countMissions('completed')}</span>
+          </p>
+
+          {employee.message && employee.status === 'pending' && (
+            <div>
+              <h4 className={descriptionClassName}>Message :</h4>
+              <div className="bg-secondary/10 rounded-md text-foreground">{employee.message}</div>
+            </div>
+          )}
+
+          <div className={cn(descriptionClassName, 'flex items-center gap-1')}>
+            Date d&apos;inscription :<span className={labelClassName}>{formatDate(new Date(employee.createdAt))}</span>
+          </div>
+        </FullScreenModal>
+      )}
     </>
   );
 }

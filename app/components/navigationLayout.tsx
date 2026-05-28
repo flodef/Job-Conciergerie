@@ -1,8 +1,10 @@
 'use client';
 
+import ChangelogModal from '@/app/components/changelogModal';
 import InstallToast from '@/app/components/installToast';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { PageManager } from '@/app/components/pageManager';
+import { TimeAgoDisplay } from '@/app/components/timeAgoDisplay';
 import { TimeAgoDisplay } from '@/app/components/timeAgoDisplay';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
@@ -11,7 +13,9 @@ import { useBadge } from '@/app/contexts/badgeProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
+import { useChangelog } from '@/app/hooks/useChangelog';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
+import { useUpdateChecker } from '@/app/hooks/useUpdateChecker';
 import { cn } from '@/app/utils/className';
 import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/navigation';
 import {
@@ -94,6 +98,12 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const [refreshToast, setRefreshToast] = useState<{ type: ToastType; message: string } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastManualRefresh, setLastManualRefresh] = useState<number>(0);
+  const updateAvailable = useUpdateChecker();
+  const {
+    showModal: showChangelog,
+    entries: changelogEntries,
+    dismiss: dismissChangelog,
+  } = useChangelog(userType as 'employee' | 'conciergerie' | undefined);
 
   // Handle manual refresh with rate limiting
   const handleManualRefresh = useCallback(() => {
@@ -248,11 +258,26 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
   return (
     <div className="h-dvh flex flex-col">
+      {/* Update available banner - sits above the header */}
+      {updateAvailable && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-2 bg-primary px-4 py-2 text-white text-sm">
+          <span>Une nouvelle version est disponible</span>
+          <button
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-1 font-semibold underline underline-offset-2 whitespace-nowrap"
+          >
+            <IconRefresh size={14} />
+            Mettre à jour
+          </button>
+        </div>
+      )}
+
       {/* Fixed header with blur on scroll */}
       {isNavigationPage && !!userType && (
         <header
           className={cn(
-            'fixed top-0 left-0 right-0 mx-auto h-16 flex items-center justify-between px-4 w-full z-40 transition-all duration-200 bg-background',
+            'fixed left-0 right-0 mx-auto h-16 flex items-center justify-between px-4 w-full z-40 transition-all duration-200 bg-background',
+            updateAvailable ? 'top-10' : 'top-0',
             isScrolled ? 'shadow-md' : '',
           )}
         >
@@ -279,8 +304,18 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {/* Installation toast - only shown for logged in users */}
       {isNavigationPage && !!userType && <InstallToast />}
 
+      {/* Changelog modal - auto-shown once per new version */}
+      {showChangelog && userType && (userType === 'employee' || userType === 'conciergerie') && (
+        <ChangelogModal userType={userType} onClose={dismissChangelog} mode="current" entries={changelogEntries} />
+      )}
+
       {/* Main content */}
-      <main className={cn('flex-1 relative overflow-hidden', isNavigationPage && !!userType && 'pt-16')}>
+      <main
+        className={cn(
+          'flex-1 relative overflow-hidden',
+          isNavigationPage && !!userType && (updateAvailable ? 'pt-26' : 'pt-16'),
+        )}
+      >
         {/* Content wrapper - scrollable when content is long */}
         <div
           className={cn(

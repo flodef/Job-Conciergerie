@@ -5,6 +5,7 @@ import { insertFailedEmail } from '@/app/db/failedEmailsDb';
 import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
 import nodemailer, { SendMailOptions } from 'nodemailer';
+import packageJson from '@/package.json';
 
 // Configure nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -16,6 +17,16 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASSWORD,
   },
 });
+
+// Detect prod by comparing the project ID in NEXT_PUBLIC_SUPABASE_URL and DATABASE_URL.
+// If both contain the same Supabase project domain, we are in production.
+function extractSupabaseProjectId(url: string): string | null {
+  const match = url.match(/([a-z0-9]+)\.supabase\.co/);
+  return match ? match[1] : null;
+}
+const supabaseProjectId = extractSupabaseProjectId(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '');
+const dbProjectId = extractSupabaseProjectId(process.env.DATABASE_URL ?? '');
+const isProd = !!supabaseProjectId && supabaseProjectId === dbProjectId;
 
 // Low-level SMTP send - returns { success, error }
 async function sendEmail(email: SendMailOptions): Promise<{ success: boolean; error?: string }> {
@@ -57,9 +68,16 @@ async function deliver(
   payload: Record<string, unknown>,
   isRetry: boolean,
 ): Promise<boolean> {
-  const { success, error } = await sendEmail(email);
   const to = Array.isArray(email.to) ? email.to.join(', ') : (email.to as string);
-  insertEmailLog(type, to, (email.subject as string) ?? null, success, error);
+
+  if (!isProd) {
+    console.log(`[DEV] Email skipped (not prod) — type: ${type}, to: ${to}, subject: ${email.subject}`);
+    await insertEmailLog(type, to, (email.subject as string) ?? null, true, 'dev: not sent');
+    return true;
+  }
+
+  const { success, error } = await sendEmail(email);
+  await insertEmailLog(type, to, (email.subject as string) ?? null, success, error);
   if (!success && !isRetry) await insertFailedEmail(type, payload, error);
 
   return success;
@@ -272,6 +290,7 @@ function composeMissionStatusChangeEmail(
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
+          <p><strong>Heures:</strong> ${mission.hours}h</p>
           <p><strong>Employé:</strong> ${employee.firstName} ${employee.familyName}</p>
           <p><strong>Statut:</strong> ${employee.firstName} a ${statusAction} cette mission</p>
         </div>
@@ -671,6 +690,7 @@ type ConflictReportData = {
   geographicZone: string;
   conciergerieName: string;
   userId: string;
+  existingName?: string;
 };
 
 /**
@@ -692,7 +712,13 @@ Informations saisies :
 - Lieu : ${data.geographicZone}
 - Conciergerie : ${data.conciergerieName}
 - Clé publique : ${data.userId}
-
+- Version : ${packageJson.version}
+${
+  data.existingName
+    ? `
+Nom enregistré en base de données : ${data.existingName}`
+    : ''
+}
 L'employé•e indique que ce numéro/email lui appartient mais le nom ne correspond pas à celui enregistré dans la base de données.
 
 Veuillez vérifier manuellement et contacter l'employé•e si nécessaire.`;

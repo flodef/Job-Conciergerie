@@ -38,6 +38,36 @@ function formatEmployee(dbEmployee: DbEmployee) {
 }
 
 /**
+ * Look up an employee by tel or email (unique identifiers).
+ * Also returns whether the provided name matches, so the caller can detect conflicts.
+ * Returns null if no employee with that tel/email exists.
+ */
+export const findEmployeeByContact = async (
+  firstName: string,
+  familyName: string,
+  tel: string,
+  email: string,
+): Promise<{ employee: DbEmployee; nameMatches: boolean } | null> => {
+  try {
+    const result = await sql`
+      SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
+      FROM employees
+      WHERE tel = ${tel} OR email = ${email}
+      LIMIT 1
+    `;
+    if (result.length === 0) return null;
+    const employee = result[0] as DbEmployee;
+    const nameMatches =
+      employee.first_name.toLowerCase() === firstName.toLowerCase() &&
+      employee.family_name.toLowerCase() === familyName.toLowerCase();
+    return { employee, nameMatches };
+  } catch (error) {
+    console.error('Error finding employee by contact:', error);
+    return null;
+  }
+};
+
+/**
  * Fetch all employees with caching
  * Cache is invalidated when employee data changes
  */

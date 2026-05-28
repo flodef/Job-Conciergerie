@@ -8,8 +8,9 @@ type AccordionVariant = 'default' | 'card';
 
 interface AccordionItemProps {
   title: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   icon?: React.ReactNode;
+  action?: React.ReactNode;
   isOpen: boolean;
   onToggle: () => void;
   children: React.ReactNode;
@@ -20,17 +21,20 @@ interface AccordionItemProps {
 interface AccordionProps {
   items: {
     title: string;
-    subtitle?: string;
+    subtitle?: React.ReactNode;
     icon?: React.ReactNode;
+    action?: React.ReactNode;
     content: React.ReactNode;
   }[];
   variant?: AccordionVariant;
+  defaultOpenIndex?: number;
 }
 
 const AccordionItem: React.FC<AccordionItemProps> = ({
   title,
   subtitle,
   icon,
+  action,
   isOpen,
   onToggle,
   children,
@@ -42,22 +46,25 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
   if (isCard) {
     return (
       <div className="w-full border border-secondary rounded-lg overflow-hidden">
-        <button
-          onClick={onToggle}
-          className="w-full flex items-center justify-between p-3 bg-secondary/10 hover:bg-secondary/20 transition-colors cursor-pointer"
-        >
-          <div className="flex items-center gap-2">
-            {icon && icon}
-            <span className="text-sm font-medium text-light">{title}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {subtitle && <span className="text-sm text-gray-500">{subtitle}</span>}
-            <IconChevronDown
-              size={16}
-              className={cn('text-light transition-transform duration-300', isOpen && 'rotate-180')}
-            />
-          </div>
-        </button>
+        <div className="flex items-center">
+          <button
+            onClick={onToggle}
+            className="flex-1 flex items-center justify-between p-3 bg-secondary/10 hover:bg-secondary/20 transition-colors cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              {icon && icon}
+              <span className="text-sm font-medium text-light">{title}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {subtitle && <span className="text-sm text-gray-500">{subtitle}</span>}
+              <IconChevronDown
+                size={16}
+                className={cn('text-light transition-transform duration-300', isOpen && 'rotate-180')}
+              />
+            </div>
+          </button>
+          {action && <div className="pr-3 bg-secondary/10">{action}</div>}
+        </div>
         <div
           className={cn(
             'overflow-hidden',
@@ -73,19 +80,22 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
 
   return (
     <div className="border-b border-secondary">
-      <button
-        className="w-full flex justify-between items-center py-4 px-6 text-left cursor-pointer"
-        onClick={onToggle}
-      >
-        <div className="flex items-center gap-2">
-          {icon && icon}
-          <span className="text-lg font-medium">{title}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          {subtitle && <span className="text-sm text-gray-500">{subtitle}</span>}
-          <IconChevronDown className={cn('transition-transform', isOpen ? 'rotate-180' : '')} size={24} />
-        </div>
-      </button>
+      <div className="flex items-center">
+        <button
+          className="flex-1 flex justify-between items-center py-4 px-6 text-left cursor-pointer"
+          onClick={onToggle}
+        >
+          <div className="flex items-center gap-2">
+            {icon && icon}
+            <span className="text-lg font-medium">{title}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {subtitle && <span className="text-sm text-gray-500">{subtitle}</span>}
+            <IconChevronDown className={cn('transition-transform', isOpen ? 'rotate-180' : '')} size={24} />
+          </div>
+        </button>
+        {action && <div className="pr-6">{action}</div>}
+      </div>
       <div
         className={cn(
           'overflow-hidden',
@@ -99,8 +109,8 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
   );
 };
 
-export default function Accordion({ items, variant = 'default' }: AccordionProps) {
-  const [openIndex, setOpenIndex] = React.useState<number>(0);
+export default function Accordion({ items, variant = 'default', defaultOpenIndex = 0 }: AccordionProps) {
+  const [openIndex, setOpenIndex] = React.useState<number>(defaultOpenIndex);
   const [isMobile, setIsMobile] = React.useState(true);
 
   React.useEffect(() => {
@@ -124,6 +134,7 @@ export default function Accordion({ items, variant = 'default' }: AccordionProps
           title={item.title}
           subtitle={item.subtitle}
           icon={item.icon}
+          action={item.action}
           isOpen={openIndex === index}
           onToggle={() => handleToggle(index)}
           variant={variant}

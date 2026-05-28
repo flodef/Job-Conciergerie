@@ -18,6 +18,7 @@ import {
   IconHelpCircle,
   IconMailForward,
 } from '@tabler/icons-react';
+import AppVersion from '@/app/components/appVersion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
@@ -199,7 +200,7 @@ export default function WaitingPage() {
     <div className="flex-1 flex items-center justify-center bg-background">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      <div className="w-full max-w-md bg-background overflow-hidden py-6 px-4 flex flex-col gap-4">
+      <div className="w-full max-w-md bg-background overflow-hidden pt-6 px-4 pb-2 flex flex-col gap-4">
         {conciergerie ? (
           // Conciergerie waiting page
           <>
@@ -339,6 +340,7 @@ export default function WaitingPage() {
           />
         ) : null}
       </div>
+      <AppVersion className="pb-4" />
     </div>
   );
 }

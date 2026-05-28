@@ -132,6 +132,8 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
 
   if (isEditMode) return <HomeForm home={home} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" />;
 
+  const hasSuccessToast = toast?.type === ToastType.Success;
+
   return (
     <>
       <ToastMessage
@@ -142,85 +144,87 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
         }}
       />
 
-      <FullScreenModal
-        title={`${home.title} (${home.geographicZone})`}
-        onClose={onClose}
-        footer={footer}
-        disabled={isSubmitting}
-      >
-        {selectedImageIndex !== undefined && (
-          <FullScreenImageCarousel
-            altPrefix={`Photo de ${home.title}`}
-            imageUrls={home.images}
-            initialIndex={selectedImageIndex}
-            onClose={() => setSelectedImageIndex(undefined)}
+      {!hasSuccessToast && (
+        <FullScreenModal
+          title={`${home.title} (${home.geographicZone})`}
+          onClose={onClose}
+          footer={footer}
+          disabled={isSubmitting}
+        >
+          {selectedImageIndex !== undefined && (
+            <FullScreenImageCarousel
+              altPrefix={`Photo de ${home.title}`}
+              imageUrls={home.images}
+              initialIndex={selectedImageIndex}
+              onClose={() => setSelectedImageIndex(undefined)}
+            />
+          )}
+
+          <div data-home-details>
+            <Accordion
+              variant="card"
+              items={[
+                ...(home.images.length > 0
+                  ? [
+                      {
+                        title: `Photos (${home.images.length})`,
+                        icon: <IconPhoto size={16} className="text-light" />,
+                        content: <HomeImageGrid images={home.images} onImageClick={setSelectedImageIndex} />,
+                      },
+                    ]
+                  : []),
+                ...(userType === 'conciergerie' || (userType === 'employee' && isFromCalendar)
+                  ? [
+                      {
+                        title: 'Description',
+                        icon: <IconFileDescription size={16} className="text-light" />,
+                        content: <p className="text-foreground whitespace-pre-wrap">{home.description}</p>,
+                      },
+                    ]
+                  : []),
+                {
+                  title: 'Points particuliers',
+                  icon: <IconListCheck size={16} className="text-light" />,
+                  content: (
+                    <ul className="list-none pl-0 space-y-1">
+                      {home.objectives.map((objective, index) => (
+                        <li key={index} className="flex items-start">
+                          <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 shrink-0 border border-foreground" />
+                          <span className="text-foreground overflow-hidden">{objective}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ),
+                },
+              ]}
+            />
+          </div>
+
+          {/* Regular confirmation modal for deletion */}
+          <ConfirmationModal
+            isOpen={isDeleteModalOpen}
+            onConfirm={handleDelete}
+            onCancel={() => setIsDeleteModalOpen(false)}
+            title="Supprimer le bien"
+            message="Êtes-vous sûr de vouloir supprimer ce bien ?"
+            confirmText="Supprimer"
+            cancelText="Annuler"
           />
-        )}
 
-        <div data-home-details>
-          <Accordion
-            variant="card"
-            items={[
-              ...(home.images.length > 0
-                ? [
-                    {
-                      title: `Photos (${home.images.length})`,
-                      icon: <IconPhoto size={16} className="text-light" />,
-                      content: <HomeImageGrid images={home.images} onImageClick={setSelectedImageIndex} />,
-                    },
-                  ]
-                : []),
-              ...(userType === 'conciergerie' || (userType === 'employee' && isFromCalendar)
-                ? [
-                    {
-                      title: 'Description',
-                      icon: <IconFileDescription size={16} className="text-light" />,
-                      content: <p className="text-foreground whitespace-pre-wrap">{home.description}</p>,
-                    },
-                  ]
-                : []),
-              {
-                title: 'Points particuliers',
-                icon: <IconListCheck size={16} className="text-light" />,
-                content: (
-                  <ul className="list-none pl-0 space-y-1">
-                    {home.objectives.map((objective, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 shrink-0 border border-foreground" />
-                        <span className="text-foreground overflow-hidden">{objective}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ),
-              },
-            ]}
+          {/* Special confirmation modal for deletion with associated missions */}
+          <ConfirmationModal
+            isOpen={isDeleteWithMissionsModalOpen}
+            onConfirm={handleDeleteWithMissions}
+            onCancel={() => setIsDeleteWithMissionsModalOpen(false)}
+            title="Supprimer le bien et ses missions"
+            message={`Ce bien est associé à ${associatedMissions.length} mission${
+              associatedMissions.length > 1 ? 's' : ''
+            }. En supprimant ce bien, toutes les missions associées seront également supprimées. Êtes-vous sûr de vouloir continuer ?`}
+            confirmText="Supprimer tout"
+            cancelText="Annuler"
           />
-        </div>
-
-        {/* Regular confirmation modal for deletion */}
-        <ConfirmationModal
-          isOpen={isDeleteModalOpen}
-          onConfirm={handleDelete}
-          onCancel={() => setIsDeleteModalOpen(false)}
-          title="Supprimer le bien"
-          message="Êtes-vous sûr de vouloir supprimer ce bien ?"
-          confirmText="Supprimer"
-          cancelText="Annuler"
-        />
-
-        {/* Special confirmation modal for deletion with associated missions */}
-        <ConfirmationModal
-          isOpen={isDeleteWithMissionsModalOpen}
-          onConfirm={handleDeleteWithMissions}
-          onCancel={() => setIsDeleteWithMissionsModalOpen(false)}
-          title="Supprimer le bien et ses missions"
-          message={`Ce bien est associé à ${associatedMissions.length} mission${
-            associatedMissions.length > 1 ? 's' : ''
-          }. En supprimant ce bien, toutes les missions associées seront également supprimées. Êtes-vous sûr de vouloir continuer ?`}
-          confirmText="Supprimer tout"
-          cancelText="Annuler"
-        />
-      </FullScreenModal>
+        </FullScreenModal>
+      )}
     </>
   );
 }

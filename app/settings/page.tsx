@@ -1,6 +1,7 @@
 'use client';
 
 import Accordion from '@/app/components/accordion';
+import ChangelogModal from '@/app/components/changelogModal';
 import { Toast, ToastMessage } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import ConciergerieSettings from '@/app/settings/components/conciergerieSettings';
@@ -10,7 +11,7 @@ import NotificationSettings from '@/app/settings/components/notificationSettings
 import { MAX_DEVICES } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import packageJson from '@/package.json';
-import { IconBell, IconDevices, IconSettings } from '@tabler/icons-react';
+import { IconBell, IconDevices, IconInfoCircle, IconSettings } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
 export default function Settings() {
@@ -18,6 +19,7 @@ export default function Settings() {
 
   const [toast, setToast] = useState<Toast>();
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [showChangelogHistory, setShowChangelogHistory] = useState(false);
 
   useEffect(() => {
     if (!authLoading) setHasLoadedOnce(true);
@@ -31,7 +33,29 @@ export default function Settings() {
   const accordionItems = [
     {
       title: 'Général',
-      subtitle: `v. ${packageJson.version}`,
+      subtitle: (
+        <span className="flex items-center gap-1.5">
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={e => {
+              e.stopPropagation();
+              setShowChangelogHistory(true);
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+                setShowChangelogHistory(true);
+              }
+            }}
+            className="text-foreground/40 hover:text-primary transition-colors cursor-pointer"
+            title="Notes de version"
+          >
+            <IconInfoCircle size={20} />
+          </span>
+          <span>v. {packageJson.version}</span>
+        </span>
+      ),
       icon: <IconSettings size={20} />,
       content: {
         conciergerie: <ConciergerieSettings />,
@@ -55,12 +79,15 @@ export default function Settings() {
   return (
     <div className="bg-background min-h-full max-w-2xl mx-auto px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
+      {showChangelogHistory && userType && (userType === 'employee' || userType === 'conciergerie') && (
+        <ChangelogModal userType={userType} onClose={() => setShowChangelogHistory(false)} mode="history" />
+      )}
       {!hasLoadedOnce ? (
         <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       ) : (
-        <Accordion items={accordionItems} />
+        <Accordion items={accordionItems} defaultOpenIndex={-1} />
       )}
     </div>
   );

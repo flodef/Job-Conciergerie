@@ -30,7 +30,7 @@ export default function MissionActions({
   onStartMission,
   onCompleteMission,
 }: MissionActionsProps) {
-  const { userType, conciergerieName, employeeName } = useAuth();
+  const { userType, conciergerieName, userData, getUserKey } = useAuth();
   const { missions } = useMissions();
 
   // Check if the current time is after the mission start time
@@ -38,7 +38,8 @@ export default function MissionActions({
   const hasStartTimePassed = now > mission.startDateTime;
   const isMissionInPast = mission.endDateTime < now;
   const isOwnMission = userType === 'conciergerie' && mission.conciergerieName === conciergerieName;
-  const isCurrentEmployee = mission.employeeId === employeeName;
+  const currentEmployeeId = userData && userType === 'employee' ? getUserKey(userData) : undefined;
+  const isCurrentEmployee = mission.employeeId === currentEmployeeId;
   const canAcceptMission = userType === 'employee' && !mission.employeeId && !isMissionInPast;
   const isAccepted = mission.status === 'accepted';
   const isStarted = mission.status === 'started';
@@ -46,7 +47,7 @@ export default function MissionActions({
 
   // Calculate the total points the employee has for each day of the mission
   const hasExceededPoints = useMemo(() => {
-    if (!canAcceptMission || !employeeName) return false;
+    if (!canAcceptMission || !currentEmployeeId) return false;
 
     // Get the mission points
     const { pointsPerDay } = calculateMissionPoints(mission);
@@ -66,7 +67,7 @@ export default function MissionActions({
 
     // Check each day in the range
     while (currentDate <= lastDate) {
-      const pointsForDay = calculateEmployeePointsForDay(employeeName, new Date(currentDate), missions);
+      const pointsForDay = calculateEmployeePointsForDay(currentEmployeeId, new Date(currentDate), missions);
 
       // Keep track of the maximum points for any day
       maxPointsForAnyDay = Math.max(maxPointsForAnyDay, pointsForDay);
@@ -79,7 +80,7 @@ export default function MissionActions({
     }
 
     return false;
-  }, [canAcceptMission, employeeName, mission, missions]);
+  }, [canAcceptMission, currentEmployeeId, mission, missions]);
 
   // For employees in calendar view
   return isCurrentEmployee && hasStartTimePassed && (isAccepted || isStarted) ? (

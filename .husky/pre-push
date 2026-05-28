@@ -1,0 +1,3 @@
+# Run tests before pushing to catch regressions early
+# Excludes storage.integration.test.ts which requires a Next.js request context (cookies)
+bunx vitest run --exclude='app/__tests__/storage.integration.test.ts'

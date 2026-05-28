@@ -236,6 +236,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   if (!home) return;
 
+  const hasSuccessToast = toast?.type === ToastType.Success;
+
   return (
     <>
       <ToastMessage
@@ -246,308 +248,310 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
         }}
       />
 
-      <FullScreenModal onClose={onClose} title="Détails de la mission" footer={footer} disabled={isSubmitting}>
-        {selectedImageIndex !== undefined && (
-          <FullScreenImageCarousel
-            altPrefix={`Photo de ${home.title}`}
-            imageUrls={home.images}
-            initialIndex={selectedImageIndex}
-            onClose={() => setSelectedImageIndex(undefined)}
-          />
-        )}
+      {!hasSuccessToast && (
+        <FullScreenModal onClose={onClose} title="Détails de la mission" footer={footer} disabled={isSubmitting}>
+          {selectedImageIndex !== undefined && (
+            <FullScreenImageCarousel
+              altPrefix={`Photo de ${home.title}`}
+              imageUrls={home.images}
+              initialIndex={selectedImageIndex}
+              onClose={() => setSelectedImageIndex(undefined)}
+            />
+          )}
 
-        <div className="space-y-2" data-mission-details>
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-foreground">{`${home.title} (${home.geographicZone})`}</p>
-              </div>
-              <button
-                className="cursor-pointer"
-                onClick={() => setShowHomeDetails(true)}
-                title="Voir les détails du bien"
-              >
-                <IconZoomScan size={40} />
-              </button>
-            </div>
-
-            {home.images.length ? (
-              <HomeImagePreview
-                imageUrl={getStorageImageUrl(firstHomeImage, { width: 400, quality: 80 })}
-                homeTitle={home.title}
-                onClick={() => setSelectedImageIndex(home.images.indexOf(firstHomeImage))}
-              />
-            ) : null}
-          </div>
-
-          <div>
-            <h3 className="text-sm font-medium text-light flex items-center gap-1">
-              <IconListCheck size={16} />
-              Tâches
-            </h3>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {mission.tasks.map(task => {
-                const points = getTaskPoints(task);
-                return (
-                  <span
-                    key={task}
-                    className="px-2 py-1 rounded-lg text-sm text-background flex items-center gap-1"
-                    style={{
-                      backgroundColor: `${conciergerieColor}`,
-                    }}
-                  >
-                    <span>{task}</span>
-                    {points && (
-                      <span className="ml-1 px-1.5 py-0.5 bg-background/20 rounded-full text-xs">
-                        {points} pt{points !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-light flex items-center gap-1">
-              <IconCalculator size={16} />
-              Points de mission
-              <Tooltip>
-                <p>
-                  <strong>Règle des {MAX_POINTS_PER_DAY} points par jour :</strong> Pour ne pas dépasser la capacité de
-                  travail d&apos;un prestataire, il est impossible d&apos;attribuer plus de {MAX_POINTS_PER_DAY} points
-                  de mission par jour par prestataire.
-                </p>
-              </Tooltip>
-            </h3>
-            <span className="font-medium">{calculateMissionPoints(mission).totalPoints} points</span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-light flex items-center gap-1">
-              <IconStopwatch size={16} />
-              Nombre d&apos;heures estimées
-            </h3>
-            <span className="font-medium">{formatHour(mission.hours)}</span>
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <div className="space-y-2">
-              <div>
-                <h3 className="text-sm font-medium text-light flex items-center gap-1">
-                  <IconCalendarEvent size={16} />
-                  Date de début
-                </h3>
-                <p className="text-foreground">{formatDateTime(mission.startDateTime)}</p>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-light flex items-center gap-1">
-                  <IconCalendarEvent size={16} />
-                  Date de fin
-                </h3>
-                <p className="text-foreground">{formatDateTime(mission.endDateTime)}</p>
-              </div>
-            </div>
-
-            <div className="relative h-24 flex items-center">
-              <div className="h-full w-0.5 bg-secondary mx-2"></div>
-              <div className="absolute top-0 left-0 w-4 h-0.5 bg-secondary -ml-1.5"></div>
-              <div className="absolute bottom-0 left-0 w-4 h-0.5 bg-secondary -ml-1.5"></div>
-
-              <div className="absolute top-1/2 -translate-y-1/2 left-4">
-                <div className="flex items-center">
-                  <div className="w-4 h-0.5 bg-secondary -ml-1.5"></div>
-                  <div className="ml-0 bg-secondary px-3 py-1 rounded-full text-sm font-medium text-nowrap">
-                    {(() => {
-                      const now = new Date();
-                      const startDate = new Date(mission.startDateTime);
-                      const endDate = new Date(mission.endDateTime);
-                      const hasStarted = now >= startDate;
-                      const hasEnded = now >= endDate;
-
-                      // Otherwise show total duration
-                      return hasEnded
-                        ? 'Mission terminée'
-                        : getDateRangeDifference(hasStarted ? now : startDate, endDate) +
-                            (hasStarted ? ' restant' : '');
-                    })()}
-                  </div>
+          <div className="space-y-2" data-mission-details>
+            <div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-foreground">{`${home.title} (${home.geographicZone})`}</p>
                 </div>
+                <button
+                  className="cursor-pointer"
+                  onClick={() => setShowHomeDetails(true)}
+                  title="Voir les détails du bien"
+                >
+                  <IconZoomScan size={40} />
+                </button>
               </div>
-            </div>
-          </div>
 
-          {/* Only show conciergerie name if not viewed from calendar by a conciergerie */}
-          {!(isFromCalendar && isConciergerie) && conciergerie?.name !== conciergerieName && (
+              {home.images.length ? (
+                <HomeImagePreview
+                  imageUrl={getStorageImageUrl(firstHomeImage, { width: 400, quality: 80 })}
+                  homeTitle={home.title}
+                  onClick={() => setSelectedImageIndex(home.images.indexOf(firstHomeImage))}
+                />
+              ) : null}
+            </div>
+
             <div>
               <h3 className="text-sm font-medium text-light flex items-center gap-1">
-                <IconBuildingStore size={16} />
-                Conciergerie
+                <IconListCheck size={16} />
+                Tâches
               </h3>
-              <div className="flex items-center gap-3">
-                <p className="text-lg font-bold" style={{ color: conciergerieColor }}>
-                  {conciergerie?.name || mission.conciergerieName}
-                </p>
-
-                {/* Contact buttons */}
-                <div className="flex gap-3">
-                  {conciergerie?.tel && (
-                    <a
-                      href={`tel:${conciergerie.tel}`}
-                      className="p-1 rounded-full hover:bg-gray-100"
-                      title={`Appeler ${conciergerie.name}`}
+              <div className="flex flex-wrap gap-2 mt-1">
+                {mission.tasks.map(task => {
+                  const points = getTaskPoints(task);
+                  return (
+                    <span
+                      key={task}
+                      className="px-2 py-1 rounded-lg text-sm text-background flex items-center gap-1"
+                      style={{
+                        backgroundColor: `${conciergerieColor}`,
+                      }}
                     >
-                      <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
-                    </a>
-                  )}
+                      <span>{task}</span>
+                      {points && (
+                        <span className="ml-1 px-1.5 py-0.5 bg-background/20 rounded-full text-xs">
+                          {points} pt{points !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
 
-                  {conciergerie?.email && (
-                    <a
-                      href={`mailto:${conciergerie.email}`}
-                      className="p-1 rounded-full hover:bg-gray-100"
-                      title={`Envoyer un email à ${conciergerie.name}`}
-                    >
-                      <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />
-                    </a>
-                  )}
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                <IconCalculator size={16} />
+                Points de mission
+                <Tooltip>
+                  <p>
+                    <strong>Règle des {MAX_POINTS_PER_DAY} points par jour :</strong> Pour ne pas dépasser la capacité
+                    de travail d&apos;un prestataire, il est impossible d&apos;attribuer plus de {MAX_POINTS_PER_DAY}{' '}
+                    points de mission par jour par prestataire.
+                  </p>
+                </Tooltip>
+              </h3>
+              <span className="font-medium">{calculateMissionPoints(mission).totalPoints} points</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                <IconStopwatch size={16} />
+                Nombre d&apos;heures estimées
+              </h3>
+              <span className="font-medium">{formatHour(mission.hours)}</span>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="space-y-2">
+                <div>
+                  <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                    <IconCalendarEvent size={16} />
+                    Date de début
+                  </h3>
+                  <p className="text-foreground">{formatDateTime(mission.startDateTime)}</p>
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                    <IconCalendarEvent size={16} />
+                    Date de fin
+                  </h3>
+                  <p className="text-foreground">{formatDateTime(mission.endDateTime)}</p>
+                </div>
+              </div>
+
+              <div className="relative h-24 flex items-center">
+                <div className="h-full w-0.5 bg-secondary mx-2"></div>
+                <div className="absolute top-0 left-0 w-4 h-0.5 bg-secondary -ml-1.5"></div>
+                <div className="absolute bottom-0 left-0 w-4 h-0.5 bg-secondary -ml-1.5"></div>
+
+                <div className="absolute top-1/2 -translate-y-1/2 left-4">
+                  <div className="flex items-center">
+                    <div className="w-4 h-0.5 bg-secondary -ml-1.5"></div>
+                    <div className="ml-0 bg-secondary px-3 py-1 rounded-full text-sm font-medium text-nowrap">
+                      {(() => {
+                        const now = new Date();
+                        const startDate = new Date(mission.startDateTime);
+                        const endDate = new Date(mission.endDateTime);
+                        const hasStarted = now >= startDate;
+                        const hasEnded = now >= endDate;
+
+                        // Otherwise show total duration
+                        return hasEnded
+                          ? 'Mission terminée'
+                          : getDateRangeDifference(hasStarted ? now : startDate, endDate) +
+                              (hasStarted ? ' restant' : '');
+                      })()}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          )}
 
-          {!isFromCalendar && isConciergerie && (
-            <div className="flex items-center justify-between">
-              {employee ? (
-                <>
-                  <h3 className="text-sm font-medium text-light flex items-center gap-1">
-                    <IconUserCheck size={16} />
-                    Prestataire
-                  </h3>
-                  <div
-                    onClick={() => setIsEmployeeDetailsModalOpen(true)}
-                    className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
-                  >
-                    <span className="text-right">
-                      {employee.firstName} {employee.familyName}
-                    </span>
-                    <IconInfoCircle className="min-w-4.5" size={18} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h3 className="text-sm font-medium text-light flex items-center gap-1">
-                    <IconUsersGroup size={16} />
-                    Prestataires autorisés
-                  </h3>
-                  <div className="flex items-center gap-1">
-                    <p>{mission.allowedEmployees?.length || 'Tous'}</p>
-                    {!!mission.allowedEmployees?.length && (
-                      <Tooltip>
-                        <ul className="list-disc pl-4">
-                          {mission.allowedEmployees?.map(employeeId => (
-                            <li key={employeeId}>{employeeId}</li>
-                          ))}
-                        </ul>
-                      </Tooltip>
+            {/* Only show conciergerie name if not viewed from calendar by a conciergerie */}
+            {!(isFromCalendar && isConciergerie) && conciergerie?.name !== conciergerieName && (
+              <div>
+                <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                  <IconBuildingStore size={16} />
+                  Conciergerie
+                </h3>
+                <div className="flex items-center gap-3">
+                  <p className="text-lg font-bold" style={{ color: conciergerieColor }}>
+                    {conciergerie?.name || mission.conciergerieName}
+                  </p>
+
+                  {/* Contact buttons */}
+                  <div className="flex gap-3">
+                    {conciergerie?.tel && (
+                      <a
+                        href={`tel:${conciergerie.tel}`}
+                        className="p-1 rounded-full hover:bg-gray-100"
+                        title={`Appeler ${conciergerie.name}`}
+                      >
+                        <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
+                      </a>
+                    )}
+
+                    {conciergerie?.email && (
+                      <a
+                        href={`mailto:${conciergerie.email}`}
+                        className="p-1 rounded-full hover:bg-gray-100"
+                        title={`Envoyer un email à ${conciergerie.name}`}
+                      >
+                        <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />
+                      </a>
                     )}
                   </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
+                </div>
+              </div>
+            )}
 
-        {/* Employee details modal */}
-        {isEmployeeDetailsModalOpen && employee && (
-          <EmployeeDetails employee={employee} onClose={() => setIsEmployeeDetailsModalOpen(false)} />
-        )}
-
-        {isCompletionModalOpen && (
-          <MissionCompletionModal
-            mission={mission}
-            onClose={() => setIsCompletionModalOpen(false)}
-            onComplete={handleConfirmComplete}
-          />
-        )}
-
-        <ConfirmationModal
-          isOpen={isDeleteModalOpen}
-          onConfirm={handleDelete}
-          onCancel={() => setIsDeleteModalOpen(false)}
-          title="Supprimer la mission"
-          message="Êtes-vous sûr de vouloir supprimer cette mission ?"
-          confirmText="Supprimer"
-          cancelText="Annuler"
-        />
-
-        <ConfirmationModal
-          isOpen={isCancelModalOpen}
-          onConfirm={handleCancel}
-          onCancel={() => setIsCancelModalOpen(false)}
-          title="Annuler la mission"
-          message="Êtes-vous sûr de vouloir annuler cette mission ? En annulant cette mission, elle sera retirée du planning du prestataire et retournera dans la liste des missions disponibles."
-          confirmText="Confirmer"
-          cancelText="Annuler"
-        />
-
-        <ConfirmationModal
-          isOpen={isAcceptModalOpen}
-          onConfirm={handleAcceptWithWarning}
-          onCancel={() => setIsAcceptModalOpen(false)}
-          title="Accepter la mission"
-          message="En acceptant cette mission, vous vous engagez à l'honorer. La seule façon d'annuler est de contacter directement la conciergerie."
-          confirmText="Accepter"
-          cancelText="Annuler"
-        >
-          <div className="mt-4 flex items-center justify-center w-full">
-            <label className="flex items-center cursor-pointer select-none w-full justify-center gap-2">
-              <span className={cn('text-light', dontShowAgain ? 'font-bold' : '')}>Ne plus afficher ce message</span>
-              <Switch enabled={dontShowAgain} onChange={() => setDontShowAgain(!dontShowAgain)} />
-            </label>
+            {!isFromCalendar && isConciergerie && (
+              <div className="flex items-center justify-between">
+                {employee ? (
+                  <>
+                    <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                      <IconUserCheck size={16} />
+                      Prestataire
+                    </h3>
+                    <div
+                      onClick={() => setIsEmployeeDetailsModalOpen(true)}
+                      className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
+                    >
+                      <span className="text-right">
+                        {employee.firstName} {employee.familyName}
+                      </span>
+                      <IconInfoCircle className="min-w-4.5" size={18} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                      <IconUsersGroup size={16} />
+                      Prestataires autorisés
+                    </h3>
+                    <div className="flex items-center gap-1">
+                      <p>{mission.allowedEmployees?.length || 'Tous'}</p>
+                      {!!mission.allowedEmployees?.length && (
+                        <Tooltip>
+                          <ul className="list-disc pl-4">
+                            {mission.allowedEmployees?.map(employeeId => (
+                              <li key={employeeId}>{employeeId}</li>
+                            ))}
+                          </ul>
+                        </Tooltip>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
-        </ConfirmationModal>
 
-        <ConfirmationModal
-          isOpen={isConfirmationModalOpen}
-          onConfirm={handleConfirmAccept}
-          onCancel={() => setIsConfirmationModalOpen(false)}
-          title="Accepter la mission"
-          message="Êtes-vous sûr de vouloir accepter cette mission ?"
-          confirmText="Accepter"
-          cancelText="Annuler"
-        />
+          {/* Employee details modal */}
+          {isEmployeeDetailsModalOpen && employee && (
+            <EmployeeDetails employee={employee} onClose={() => setIsEmployeeDetailsModalOpen(false)} />
+          )}
 
-        {/* Warning modal when editing a mission that has already been accepted */}
-        <ConfirmationModal
-          isOpen={isEditWarningModalOpen}
-          onConfirm={() => {
-            setIsEditWarningModalOpen(false);
-            setIsEditMode(true);
-          }}
-          onCancel={() => setIsEditWarningModalOpen(false)}
-          title="Mission déjà acceptée"
-          message="Cette mission a déjà été acceptée par un prestataire. En modifiant cette mission, elle sera retirée du planning du prestataire et retournera dans la liste des missions disponibles."
-          confirmText="Continuer"
-          cancelText="Annuler"
-          isDangerous
-        />
+          {isCompletionModalOpen && (
+            <MissionCompletionModal
+              mission={mission}
+              onClose={() => setIsCompletionModalOpen(false)}
+              onComplete={handleConfirmComplete}
+            />
+          )}
 
-        {/* Warning modal when deleting a mission that has already been accepted */}
-        <ConfirmationModal
-          isOpen={isDeleteWarningModalOpen}
-          onConfirm={() => {
-            setIsDeleteWarningModalOpen(false);
-            setIsDeleteModalOpen(true);
-          }}
-          onCancel={() => setIsDeleteWarningModalOpen(false)}
-          title="Mission déjà acceptée"
-          message="Cette mission a déjà été acceptée par un prestataire. En supprimant cette mission, elle sera retirée du planning du prestataire."
-          confirmText="Continuer"
-          cancelText="Annuler"
-          isDangerous
-        />
-      </FullScreenModal>
+          <ConfirmationModal
+            isOpen={isDeleteModalOpen}
+            onConfirm={handleDelete}
+            onCancel={() => setIsDeleteModalOpen(false)}
+            title="Supprimer la mission"
+            message="Êtes-vous sûr de vouloir supprimer cette mission ?"
+            confirmText="Supprimer"
+            cancelText="Annuler"
+          />
+
+          <ConfirmationModal
+            isOpen={isCancelModalOpen}
+            onConfirm={handleCancel}
+            onCancel={() => setIsCancelModalOpen(false)}
+            title="Annuler la mission"
+            message="Êtes-vous sûr de vouloir annuler cette mission ? En annulant cette mission, elle sera retirée du planning du prestataire et retournera dans la liste des missions disponibles."
+            confirmText="Confirmer"
+            cancelText="Annuler"
+          />
+
+          <ConfirmationModal
+            isOpen={isAcceptModalOpen}
+            onConfirm={handleAcceptWithWarning}
+            onCancel={() => setIsAcceptModalOpen(false)}
+            title="Accepter la mission"
+            message="En acceptant cette mission, vous vous engagez à l'honorer. La seule façon d'annuler est de contacter directement la conciergerie."
+            confirmText="Accepter"
+            cancelText="Annuler"
+          >
+            <div className="mt-4 flex items-center justify-center w-full">
+              <label className="flex items-center cursor-pointer select-none w-full justify-center gap-2">
+                <span className={cn('text-light', dontShowAgain ? 'font-bold' : '')}>Ne plus afficher ce message</span>
+                <Switch enabled={dontShowAgain} onChange={() => setDontShowAgain(!dontShowAgain)} />
+              </label>
+            </div>
+          </ConfirmationModal>
+
+          <ConfirmationModal
+            isOpen={isConfirmationModalOpen}
+            onConfirm={handleConfirmAccept}
+            onCancel={() => setIsConfirmationModalOpen(false)}
+            title="Accepter la mission"
+            message="Êtes-vous sûr de vouloir accepter cette mission ?"
+            confirmText="Accepter"
+            cancelText="Annuler"
+          />
+
+          {/* Warning modal when editing a mission that has already been accepted */}
+          <ConfirmationModal
+            isOpen={isEditWarningModalOpen}
+            onConfirm={() => {
+              setIsEditWarningModalOpen(false);
+              setIsEditMode(true);
+            }}
+            onCancel={() => setIsEditWarningModalOpen(false)}
+            title="Mission déjà acceptée"
+            message="Cette mission a déjà été acceptée par un prestataire. En modifiant cette mission, elle sera retirée du planning du prestataire et retournera dans la liste des missions disponibles."
+            confirmText="Continuer"
+            cancelText="Annuler"
+            isDangerous
+          />
+
+          {/* Warning modal when deleting a mission that has already been accepted */}
+          <ConfirmationModal
+            isOpen={isDeleteWarningModalOpen}
+            onConfirm={() => {
+              setIsDeleteWarningModalOpen(false);
+              setIsDeleteModalOpen(true);
+            }}
+            onCancel={() => setIsDeleteWarningModalOpen(false)}
+            title="Mission déjà acceptée"
+            message="Cette mission a déjà été acceptée par un prestataire. En supprimant cette mission, elle sera retirée du planning du prestataire."
+            confirmText="Continuer"
+            cancelText="Annuler"
+            isDangerous
+          />
+        </FullScreenModal>
+      )}
     </>
   );
 }
