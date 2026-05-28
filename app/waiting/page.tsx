@@ -180,21 +180,7 @@ export default function WaitingPage() {
     </div>
   );
 
-  // Show loading state while auth is loading or offline with no cached data
-  if (!userType) {
-    // When offline, don't show error - the app should work with cached data
-    if (!navigator.onLine) {
-      return (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-foreground">Mode hors ligne</p>
-            <p className="text-sm text-light mt-2">L&apos;application fonctionne avec les données en cache</p>
-          </div>
-        </div>
-      );
-    }
-    return <ErrorPage />;
-  }
+  if (authLoading || !userType) return authLoading ? null : <ErrorPage />;
 
   return (
     <div className="flex-1 flex items-center justify-center bg-background">
@@ -294,12 +280,10 @@ export default function WaitingPage() {
                 </p>
               </div>
               <DeviceId />
-              {timeWaiting && (
-                <p className="text-sm text-foreground ml-7">
-                  <span className="font-medium">Demande soumise il y a : </span>
-                  <span className="font-bold">{timeWaiting}</span>
-                </p>
-              )}
+              <p className={`text-sm text-foreground ml-7 ${timeWaiting ? 'visible' : 'invisible'}`}>
+                <span className="font-medium">Demande soumise il y a : </span>
+                <span className="font-bold">{timeWaiting}</span>
+              </p>
             </div>
 
             <div className="bg-primary/10 p-3 rounded-lg">
@@ -308,7 +292,7 @@ export default function WaitingPage() {
                   Pour accéder à votre compte depuis cet appareil, vous devez :
                   <ul className="list-disc list-inside">
                     <li>
-                      soit le <span className="font-semibold">valider depuis l&apos;email</span>&nbsp; envoyé sur
+                      soit le <span className="font-semibold">valider depuis l&apos;email</span>&nbsp;envoyé sur
                       l&apos;adresse associée à votre compte
                     </li>
                     <li>

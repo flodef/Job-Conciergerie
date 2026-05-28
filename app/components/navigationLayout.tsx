@@ -322,7 +322,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
             isNavigationPage && !!userType && 'pb-16',
           )}
         >
-          {isLoading || (isNavigationPage && !userType) ? (
+          {isNavigationPage && (isLoading || !userType) ? (
             <LoadingSpinner text={loadingText} />
           ) : isNavigationPage ? (
             <PageManager />

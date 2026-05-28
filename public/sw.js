@@ -2,7 +2,7 @@
 
 console.log('[SW] Service Worker script loaded!');
 
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGES_CACHE = `pages-${CACHE_VERSION}`;
 const RSC_CACHE = `rsc-${CACHE_VERSION}`;
@@ -157,27 +157,32 @@ async function handleRSCRequest(request) {
   });
 }
 
-// Handle navigation requests - always serve app shell for SPA client-side routing
+// Handle navigation requests - network first with per-route cache fallback
 async function handleNavigationRequest(request) {
-  // Always try to serve the cached app shell first (SPA pattern)
-  // Next.js handles client-side routing, so all nav requests can use the shell
-  const appShell = await caches.match('/');
-  if (appShell) return appShell;
+  const cache = await caches.open(PAGES_CACHE);
 
-  // No shell cached yet - fetch from network
-  try {
-    const response = await fetch(request.clone());
-    // Only cache successful non-redirect responses
-    if (response.ok && !response.redirected) {
-      const cache = await caches.open(PAGES_CACHE);
-      cache.put(new Request('/'), response.clone());
+  if (navigator.onLine) {
+    try {
+      const response = await fetch(request.url, { redirect: 'follow' });
+      // Only cache successful non-redirected responses
+      if (response.ok && !response.redirected) {
+        cache.put(request, response.clone());
+      }
+      return response;
+    } catch (error) {
+      // Fall through to cache
     }
-    return response;
-  } catch (error) {
-    const fallback = await caches.match('/');
-    if (fallback) return fallback;
-    return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
   }
+
+  // Offline: serve cached version for this specific route
+  const cached = await cache.match(request);
+  if (cached) return cached;
+
+  // Fall back to cached index if no route-specific cache
+  const fallback = await caches.match('/');
+  if (fallback) return fallback;
+
+  return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
 }
 
 // Handle API requests with stale-while-revalidate

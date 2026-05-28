@@ -28,7 +28,7 @@ type EmployeeFormProps = {
 };
 
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
-  const { userId, conciergeries, updateUserData, findConciergerie, refreshData, isLoading } = useAuth();
+  const { userId, conciergeries, updateUserData, findConciergerie, isLoading } = useAuth();
   const { onMenuChange } = useMenuContext();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
@@ -302,8 +302,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       // Send notification email to employee about the new device
       await EmailSender.sendNewDeviceEmail({ setToast, showSuccessToast: true }, updatedEmployee, userId);
 
-      // Wait a bit before refreshing to allow the email to be sent and a toast to be displayed
-      setTimeout(refreshData, 1500);
+      // Wait a bit before redirecting to allow the email to be sent and a toast to be displayed
+      setTimeout(() => onMenuChange(Page.Waiting), 1500);
     } else {
       onMenuChange(Page.Waiting);
     }
