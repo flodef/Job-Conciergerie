@@ -115,11 +115,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : conciergeries;
       const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
 
+      // If the DB fetch failed entirely (null returned), keep existing data to avoid wiping state
+      const effectiveConciergeries = fetchedConciergeries ?? conciergeries;
+      const effectiveEmployees = fetchedEmployees ?? employees;
+
       const findUserById = <T extends UserData>(users: T[] | null, id: string) =>
         users?.find(user => containsId(user.id, id));
 
-      const foundEmployee = findUserById(fetchedEmployees, id);
-      const newUserData = foundEmployee || findUserById(fetchedConciergeries, id);
+      const foundEmployee = findUserById(effectiveEmployees, id);
+      const newUserData = foundEmployee || findUserById(effectiveConciergeries, id);
       const isEmployee = !!newUserData && !!foundEmployee;
       const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
       const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
@@ -133,25 +137,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ? (newUserData as Employee).firstName + ' ' + (newUserData as Employee).familyName
           : employeeName
         : undefined;
-      const newPrimaryColor = fetchedConciergeries?.find(c => c.name === newConciergerieName)?.color;
+      const newPrimaryColor = effectiveConciergeries?.find(c => c.name === newConciergerieName)?.color;
 
       console.warn('Loading data from database');
 
       setConciergerieName(newConciergerieName);
-      setConciergeries(fetchedConciergeries ?? []);
+      setConciergeries(effectiveConciergeries);
       setEmployeeName(newEmployeeName);
-      setEmployees(fetchedEmployees ?? []);
+      setEmployees(effectiveEmployees);
       updateUserType(newUserType);
       setUserData(newUserData);
       setPrimaryColor(newPrimaryColor);
 
       // Special case where the userId cookie or the userId in local storage has been manually deleted
+      // Only redirect if data was actually fetched (not just preserved fallback)
       const path = window.location.pathname;
-      if (
-        (newUserData && !navigationRoutes.includes(path) && userType === 'conciergerie') ||
-        (!newUserData && navigationRoutes.includes(path))
-      )
-        refreshData();
+      if (fetchedConciergeries !== null || fetchedEmployees !== null) {
+        if (
+          (newUserData && !navigationRoutes.includes(path) && userType === 'conciergerie') ||
+          (!newUserData && navigationRoutes.includes(path))
+        )
+          refreshData();
+      }
 
       return true;
     },

@@ -19,13 +19,24 @@ type ConciergerieFormProps = {
 
 export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const { onMenuChange } = useMenuContext();
-  const { userId, setConciergerieName: setSelectedConciergerieName, conciergeries, findConciergerie } = useAuth();
+  const {
+    userId,
+    setConciergerieName: setSelectedConciergerieName,
+    conciergeries,
+    findConciergerie,
+    isLoading,
+  } = useAuth();
 
   const conciergerieNameRef = useRef<HTMLDivElement>(null);
   const [conciergerieNameError, setConciergerieNameError] = useState('');
   const errorId = 'conciergerie-error';
 
   const [conciergerieName, setConciergerieName] = useState(conciergeries?.at(0)?.name || '');
+
+  useEffect(() => {
+    if (!conciergerieName && conciergeries?.at(0)?.name) setConciergerieName(conciergeries.at(0)!.name);
+  }, [conciergeries, conciergerieName]);
+
   const [toast, setToast] = useState<Toast>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -74,6 +85,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     }
   };
 
+  if (isLoading) return null;
   if (!conciergeries?.length) return <ErrorPage message="Aucune conciergerie trouvée !" />;
 
   return (
