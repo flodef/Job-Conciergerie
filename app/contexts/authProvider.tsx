@@ -142,7 +142,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         : undefined;
       const newPrimaryColor = effectiveConciergeries?.find(c => c.name === newConciergerieName)?.color;
 
-      console.warn('Loading data from database');
+      console.warn('Loading data from database', {
+        currentUserType,
+        currentConciergerieName,
+        fetchedConciergeries: fetchedConciergeries?.length ?? 'null',
+        fetchedEmployees: fetchedEmployees?.length ?? 'null',
+        id,
+        newUserType,
+        isConciergerie,
+        newConciergerieName,
+        newUserData: !!newUserData,
+      });
 
       setConciergerieName(newConciergerieName);
       setConciergeries(effectiveConciergeries);
