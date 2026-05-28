@@ -5,6 +5,7 @@ import { insertFailedEmail } from '@/app/db/failedEmailsDb';
 import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
 import nodemailer, { SendMailOptions } from 'nodemailer';
+import packageJson from '@/package.json';
 
 // Configure nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -711,6 +712,7 @@ Informations saisies :
 - Lieu : ${data.geographicZone}
 - Conciergerie : ${data.conciergerieName}
 - Clé publique : ${data.userId}
+- Version : ${packageJson.version}
 ${
   data.existingName
     ? `
