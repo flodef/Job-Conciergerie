@@ -6,7 +6,7 @@ import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
 import { containsId, generateSimpleId } from '@/app/utils/id';
-import { useLocalStorage } from '@/app/utils/localStorage';
+import { getLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes } from '@/app/utils/navigation';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
@@ -110,6 +110,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchDataFromDatabase = useCallback(
     async (fetchType?: UserType) => {
       const id = generateId();
+      // Read directly from localStorage to avoid stale closure values from SSR hydration
+      const currentUserType = getLocalStorageItem<UserType>('user_type');
+      const currentConciergerieName = getLocalStorageItem<string>('conciergerie_name');
 
       const fetchedConciergeries =
         !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : conciergeries;
@@ -125,12 +128,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const foundEmployee = findUserById(effectiveEmployees, id);
       const newUserData = foundEmployee || findUserById(effectiveConciergeries, id);
       const isEmployee = !!newUserData && !!foundEmployee;
-      const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
+      const isConciergerie = (!!newUserData && !isEmployee) || currentUserType === 'conciergerie';
       const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
       const newConciergerieName = isConciergerie
         ? newUserData
           ? (newUserData as Conciergerie).name
-          : conciergerieName
+          : currentConciergerieName
         : undefined;
       const newEmployeeName = isEmployee
         ? newUserData
@@ -154,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const path = window.location.pathname;
       if (fetchedConciergeries !== null || fetchedEmployees !== null) {
         if (
-          (newUserData && !navigationRoutes.includes(path) && userType === 'conciergerie') ||
+          (newUserData && !navigationRoutes.includes(path) && currentUserType === 'conciergerie') ||
           (!newUserData && navigationRoutes.includes(path))
         )
           refreshData();
@@ -165,9 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [
       generateId,
       updateUserType,
-      userType,
       refreshData,
-      conciergerieName,
       setConciergerieName,
       employeeName,
       setEmployeeName,
