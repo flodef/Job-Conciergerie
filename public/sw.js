@@ -2,7 +2,7 @@
 
 console.log('[SW] Service Worker script loaded!');
 
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGES_CACHE = `pages-${CACHE_VERSION}`;
 const RSC_CACHE = `rsc-${CACHE_VERSION}`;
@@ -94,8 +94,9 @@ self.addEventListener('fetch', event => {
   // Skip cross-origin requests (except for Supabase images)
   if (url.origin !== self.location.origin && !url.hostname.includes('supabase.co')) return;
 
-  // Handle navigation requests
+  // Handle navigation requests - only intercept when offline
   if (request.mode === 'navigate') {
+    if (navigator.onLine) return; // let browser handle normally when online
     event.respondWith(handleNavigationRequest(request));
     return;
   }
@@ -157,28 +158,15 @@ async function handleRSCRequest(request) {
   });
 }
 
-// Handle navigation requests - network first with per-route cache fallback
+// Handle navigation requests - only called when offline
 async function handleNavigationRequest(request) {
   const cache = await caches.open(PAGES_CACHE);
 
-  if (navigator.onLine) {
-    try {
-      const response = await fetch(request.url, { redirect: 'follow' });
-      // Only cache successful non-redirected responses
-      if (response.ok && !response.redirected) {
-        cache.put(request, response.clone());
-      }
-      return response;
-    } catch (error) {
-      // Fall through to cache
-    }
-  }
-
-  // Offline: serve cached version for this specific route
+  // Serve cached version for this specific route
   const cached = await cache.match(request);
   if (cached) return cached;
 
-  // Fall back to cached index if no route-specific cache
+  // Fall back to cached index
   const fallback = await caches.match('/');
   if (fallback) return fallback;
 
