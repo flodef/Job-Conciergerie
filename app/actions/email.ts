@@ -19,10 +19,9 @@ const transporter = nodemailer.createTransport({
 });
 
 // Detect prod by comparing the project ID in NEXT_PUBLIC_SUPABASE_URL and DATABASE_URL.
-// If both contain the same Supabase project domain, we are in production.
+// Handles both direct (db.xxx.supabase.co) and pooler (postgres.xxx@...pooler.supabase.com) URLs.
 function extractSupabaseProjectId(url: string): string | null {
-  const match = url.match(/([a-z0-9]+)\.supabase\.co/);
-  return match ? match[1] : null;
+  return url.match(/([a-z0-9]+)\.supabase\.co/)?.[1] ?? url.match(/postgres\.([a-z0-9]+)@/)?.[1] ?? null;
 }
 const supabaseProjectId = extractSupabaseProjectId(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '');
 const dbProjectId = extractSupabaseProjectId(process.env.DATABASE_URL ?? '');

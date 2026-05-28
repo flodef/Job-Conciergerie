@@ -308,7 +308,7 @@ export default function WaitingPage() {
                   Pour accéder à votre compte depuis cet appareil, vous devez :
                   <ul className="list-disc list-inside">
                     <li>
-                      soit le <span className="font-semibold">valider depuis l&apos;email</span> envoyé sur
+                      soit le <span className="font-semibold">valider depuis l&apos;email</span>&nbsp; envoyé sur
                       l&apos;adresse associée à votre compte
                     </li>
                     <li>

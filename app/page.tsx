@@ -24,15 +24,11 @@ export default function Home() {
     [updateUserType, setShowEmployeeForm, setShowConciergerieForm],
   );
 
-  // Initialize state from auth context
+  // Initialize form state once after auth finishes loading
   useEffect(() => {
-    // Only initialize forms after auth is loaded and we've checked registration
     if (authLoading) return;
-
-    // Show appropriate form based on user type
-    // If the user is not found in the database, they should still see the form
     handleUserTypeSelect(userType);
-  }, [authLoading, userType, handleUserTypeSelect]);
+  }, [authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCloseForm = () => {
     // Reset state to show selection screen

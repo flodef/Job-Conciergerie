@@ -7,7 +7,7 @@ import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { preloadImages } from '@/app/hooks/useImageCache';
 import { Home } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
-import { Page } from '@/app/utils/navigation';
+import { navigationRoutes, Page } from '@/app/utils/navigation';
 import { getStorageImageUrl } from '@/app/utils/storage';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -92,11 +92,11 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - uses refs and state setters which are stable
 
-  // Fetch homes when needed (initial load or refresh triggered) - only for authenticated users
+  // Fetch homes when needed (initial load or refresh triggered) - only for authenticated users on nav pages
   useEffect(() => {
     if (authLoading || !needsRefreshHomes || !conciergerieName) return;
-    // Skip if already fetching
     if (isFetching.current) return;
+    if (!navigationRoutes.includes(window.location.pathname)) return;
     fetchHomesCore();
   }, [authLoading, needsRefreshHomes, conciergerieName, fetchHomesCore]);
 

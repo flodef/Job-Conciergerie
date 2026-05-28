@@ -2,7 +2,7 @@
 
 console.log('[SW] Service Worker script loaded!');
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGES_CACHE = `pages-${CACHE_VERSION}`;
 const RSC_CACHE = `rsc-${CACHE_VERSION}`;
@@ -157,37 +157,20 @@ async function handleRSCRequest(request) {
   });
 }
 
-// Handle navigation requests
+// Handle navigation requests - always serve app shell for SPA client-side routing
 async function handleNavigationRequest(request) {
-  const cache = await caches.open(PAGES_CACHE);
-  const cached = await cache.match(request);
+  // Always try to serve the cached app shell first (SPA pattern)
+  // Next.js handles client-side routing, so all nav requests can use the shell
+  const appShell = await caches.match('/');
+  if (appShell) return appShell;
 
-  // Update cache in background if online
-  if (navigator.onLine) {
-    fetch(request.url, { redirect: 'follow' })
-      .then(response => {
-        // Only cache successful non-redirect responses
-        if (response.ok && !response.redirected) {
-          cache.put(request, response.clone());
-        }
-      })
-      .catch(() => {});
-  }
-
-  // Return cached version if available
-  if (cached) return cached;
-
-  // If offline and no cache, try to return the index page
-  if (!navigator.onLine) {
-    const fallback = await caches.match('/');
-    if (fallback) return fallback;
-  }
-
+  // No shell cached yet - fetch from network
   try {
     const response = await fetch(request.clone());
     // Only cache successful non-redirect responses
     if (response.ok && !response.redirected) {
-      cache.put(request, response.clone());
+      const cache = await caches.open(PAGES_CACHE);
+      cache.put(new Request('/'), response.clone());
     }
     return response;
   } catch (error) {

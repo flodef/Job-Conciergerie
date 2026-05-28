@@ -15,7 +15,7 @@ import { formatDateTime } from '@/app/utils/date';
 import { EmailSender } from '@/app/utils/emailSender';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
-import { Page } from '@/app/utils/navigation';
+import { navigationRoutes, Page } from '@/app/utils/navigation';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 type MissionsContextType = {
@@ -159,11 +159,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - uses refs and context functions which are stable
 
-  // Fetch missions when needed (initial load or refresh triggered) - only for authenticated users
+  // Fetch missions when needed (initial load or refresh triggered) - only for authenticated users on nav pages
   useEffect(() => {
     if (authLoading || !needsRefreshMissions || !userData) return;
-    // Skip if already fetching or if we have data and we're online (data is fresh)
     if (isFetching.current) return;
+    if (!navigationRoutes.includes(window.location.pathname)) return;
     fetchMissionsCore();
   }, [authLoading, needsRefreshMissions, userData, fetchMissionsCore]);
 
