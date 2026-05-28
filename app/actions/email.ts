@@ -72,12 +72,12 @@ async function deliver(
 
   if (!isProd) {
     console.log(`[DEV] Email skipped (not prod) — type: ${type}, to: ${to}, subject: ${email.subject}`);
-    insertEmailLog(type, to, (email.subject as string) ?? null, true, 'dev: not sent');
+    await insertEmailLog(type, to, (email.subject as string) ?? null, true, 'dev: not sent');
     return true;
   }
 
   const { success, error } = await sendEmail(email);
-  insertEmailLog(type, to, (email.subject as string) ?? null, success, error);
+  await insertEmailLog(type, to, (email.subject as string) ?? null, success, error);
   if (!success && !isRetry) await insertFailedEmail(type, payload, error);
 
   return success;
