@@ -43,7 +43,7 @@ export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) 
           </button>
         </div>
       </div>
-      <AppVersion className="absolute bottom-0 left-0 right-0 justify-self-center" />
+      <AppVersion pinned />
     </div>
   );
 }

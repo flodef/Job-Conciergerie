@@ -20,7 +20,7 @@ export default function ErrorPage({
           <RefreshButton shouldDisconnect />
         </div>
       </div>
-      <AppVersion className="mt-4" />
+      <AppVersion pinned />
     </div>
   );
 }
