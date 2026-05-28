@@ -12,7 +12,7 @@ import {
 } from '@/app/db/employeeDb';
 import { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 import { normalizeName } from '@/app/utils/employee';
-import { EmployeeNotificationSettings } from '@/app/utils/notifications';
+import { defaultEmployeeSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
 
 /**
  * Fetch all employees from the database with caching
@@ -49,6 +49,7 @@ export async function lookupEmployeeByContact(
       message: row.message || '',
       conciergerieName: row.conciergerie_name || '',
       status: row.status,
+      notificationSettings: row.notification_settings || defaultEmployeeSettings,
       createdAt: row.created_at,
     },
     nameMatches,
