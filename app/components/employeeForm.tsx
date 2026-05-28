@@ -1,6 +1,6 @@
 'use client';
 
-import { createNewEmployee, updateEmployeeWithUserId } from '@/app/actions/employee';
+import { createNewEmployee, lookupEmployeeByContact, updateEmployeeWithUserId } from '@/app/actions/employee';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
@@ -49,6 +49,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
   // Contact error handling for phone/email conflict
   const [showContactButton, setShowContactButton] = useState(false);
+  const [conflictEmployee, setConflictEmployee] = useState<{ firstName: string; familyName: string } | null>(null);
 
   // Rate limiting for contact button (3 attempts, 5 min cooldown)
   const { canAttempt, remainingCooldown, attemptsRemaining, attempt } = useRateLimiter('employee_conflict', 3, 5);
@@ -104,6 +105,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       geographicZone: formData.geographicZone || '',
       conciergerieName: formData.conciergerieName || '',
       userId,
+      existingName: conflictEmployee ? `${conflictEmployee.firstName} ${conflictEmployee.familyName}` : undefined,
     })
       .then((success: boolean) => {
         if (success) {
@@ -210,36 +212,26 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       const trimmedTel = formData.tel.trim();
       const trimmedEmail = formData.email.trim();
 
-      const employee = employees.find(
-        employee =>
-          employee.firstName.toLowerCase() === trimmedFirstName.toLowerCase() &&
-          employee.familyName.toLowerCase() === trimmedFamilyName.toLowerCase(),
-      );
+      const lookup = await lookupEmployeeByContact(trimmedFirstName, trimmedFamilyName, trimmedTel, trimmedEmail);
 
-      if (employee) {
+      if (lookup) {
+        if (!lookup.nameMatches) {
+          setConflictEmployee({ firstName: lookup.employee.firstName, familyName: lookup.employee.familyName });
+          setShowContactButton(true);
+          setIsSubmitting(false);
+          return;
+        }
         try {
-          await proceedWithDeviceUpdate(employee, false);
+          await proceedWithDeviceUpdate(lookup.employee, false);
         } catch (err) {
           if (err instanceof MaxDevicesError) {
-            setMaxDevicesPrompt({ oldestId: err.oldestDevice, employee });
+            setMaxDevicesPrompt({ oldestId: err.oldestDevice, employee: lookup.employee });
             setIsSubmitting(false);
             return;
           }
           throw err;
         }
       } else {
-        // Check for existing employee by phone/email (using trimmed values)
-        const existingByContact = employees.find(
-          employee => employee.tel === trimmedTel || employee.email === trimmedEmail,
-        );
-
-        if (existingByContact) {
-          // Phone/email exists but name doesn't match - show contact button instead of revealing name
-          setShowContactButton(true);
-          setIsSubmitting(false);
-          return;
-        }
-
         // Create a new employee in the database (with trimmed values)
         const newEmployee = await createNewEmployee({
           ...formData,
@@ -252,6 +244,17 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         if (!newEmployee) throw new Error('Employé non créé dans la base de données');
 
         updateUserData(newEmployee);
+
+        // Clear saved form data so a different user on the same device starts fresh
+        setFormData({
+          firstName: '',
+          familyName: '',
+          tel: '',
+          email: '',
+          geographicZone: '',
+          conciergerieName: conciergeries?.[0]?.name || '',
+          message: '',
+        });
 
         // Send notification email to conciergerie
         const selectedConciergerie = findConciergerie(newEmployee.conciergerieName ?? null);

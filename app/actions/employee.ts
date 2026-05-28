@@ -4,6 +4,7 @@ import {
   DbEmployee,
   createEmployee,
   deleteEmployee,
+  findEmployeeByContact,
   getAllEmployees,
   updateEmployeeId,
   updateEmployeeSettings,
@@ -19,6 +20,39 @@ import { EmployeeNotificationSettings } from '@/app/utils/notifications';
  */
 export async function fetchEmployees(): Promise<Employee[] | null> {
   return await getAllEmployees();
+}
+
+/**
+ * Look up an employee by tel/email (unique identifiers).
+ * Returns the employee + whether the provided name matches.
+ * - match found + nameMatches: same person, proceed with device update
+ * - match found + !nameMatches: conflict, someone else owns this tel/email
+ * - null: no match, safe to create new employee
+ */
+export async function lookupEmployeeByContact(
+  firstName: string,
+  familyName: string,
+  tel: string,
+  email: string,
+): Promise<{ employee: Employee; nameMatches: boolean } | null> {
+  const result = await findEmployeeByContact(firstName, familyName, tel, email);
+  if (!result) return null;
+  const { employee: row, nameMatches } = result;
+  return {
+    employee: {
+      id: row.id,
+      firstName: row.first_name,
+      familyName: row.family_name,
+      tel: row.tel,
+      email: row.email,
+      geographicZone: row.geographic_zone,
+      message: row.message || '',
+      conciergerieName: row.conciergerie_name || '',
+      status: row.status,
+      createdAt: row.created_at,
+    },
+    nameMatches,
+  };
 }
 
 /**

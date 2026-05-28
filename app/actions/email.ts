@@ -689,6 +689,7 @@ type ConflictReportData = {
   geographicZone: string;
   conciergerieName: string;
   userId: string;
+  existingName?: string;
 };
 
 /**
@@ -710,7 +711,12 @@ Informations saisies :
 - Lieu : ${data.geographicZone}
 - Conciergerie : ${data.conciergerieName}
 - Clé publique : ${data.userId}
-
+${
+  data.existingName
+    ? `
+Nom enregistré en base de données : ${data.existingName}`
+    : ''
+}
 L'employé•e indique que ce numéro/email lui appartient mais le nom ne correspond pas à celui enregistré dans la base de données.
 
 Veuillez vérifier manuellement et contacter l'employé•e si nécessaire.`;
