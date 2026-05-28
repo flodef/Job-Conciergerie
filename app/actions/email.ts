@@ -272,6 +272,7 @@ function composeMissionStatusChangeEmail(
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
+          <p><strong>Heures:</strong> ${mission.hours}h</p>
           <p><strong>Employé:</strong> ${employee.firstName} ${employee.familyName}</p>
           <p><strong>Statut:</strong> ${employee.firstName} a ${statusAction} cette mission</p>
         </div>
