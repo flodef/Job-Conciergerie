@@ -28,7 +28,7 @@ type EmployeeFormProps = {
 };
 
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
-  const { userId, conciergeries, updateUserData, employees, findConciergerie, refreshData } = useAuth();
+  const { userId, conciergeries, updateUserData, findConciergerie, refreshData } = useAuth();
   const { onMenuChange } = useMenuContext();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
