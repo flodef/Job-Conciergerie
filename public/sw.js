@@ -2,7 +2,7 @@
 
 console.log('[SW] Service Worker script loaded!');
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGES_CACHE = `pages-${CACHE_VERSION}`;
 const RSC_CACHE = `rsc-${CACHE_VERSION}`;
@@ -69,6 +69,9 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // Never intercept Next.js server actions - let them go directly to the network
+  if (request.headers.has('Next-Action')) return;
 
   // Handle RSC (React Server Component) requests FIRST - Next.js uses POST for navigation
   // RSC requests are identified by the Next-Router-State-Tree header or Accept: text/x-component
