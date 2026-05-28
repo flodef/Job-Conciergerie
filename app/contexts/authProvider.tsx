@@ -64,14 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useLocalStorage<string>('user_id');
   const [userType, setUserType] = useLocalStorage<UserType>('user_type');
   const [conciergerieName, setConciergerieName] = useLocalStorage<string>('conciergerie_name');
-  const [cachedConciergeries, setCachedConciergeries] = useLocalStorage<Conciergerie[]>('conciergeries', []);
-  const [cachedEmployees, setCachedEmployees] = useLocalStorage<Employee[]>('employees', []);
-
-  // Use cached values or empty arrays
-  const conciergeries = cachedConciergeries ?? [];
-  const employees = cachedEmployees ?? [];
-  const setConciergeries = setCachedConciergeries;
-  const setEmployees = setCachedEmployees;
+  const [conciergeries, setConciergeries] = useState<Conciergerie[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
   const [employeeName, setEmployeeName] = useState<string>();
   const [userData, setUserData] = useState<UserData>();
@@ -115,86 +109,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Function to fetch data from the database and store it in the context
   const fetchDataFromDatabase = useCallback(
     async (fetchType?: UserType) => {
-      try {
-        const id = generateId();
+      const id = generateId();
 
-        // Skip fetching if offline - but still process existing data
-        let fetchedConciergeries = null;
-        let fetchedEmployees = null;
+      const fetchedConciergeries =
+        !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : conciergeries;
+      const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
 
-        if (navigator.onLine) {
-          fetchedConciergeries = !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : null;
-          fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : null;
-        } else {
-          console.warn('Offline mode: skipping auth data fetch, using cached data');
-        }
+      const findUserById = <T extends UserData>(users: T[] | null, id: string) =>
+        users?.find(user => containsId(user.id, id));
 
-        // Preserve existing data if fetch failed (offline) or use fetched data
-        const effectiveConciergeries = fetchedConciergeries ?? conciergeries;
-        const effectiveEmployees = fetchedEmployees ?? employees;
+      const foundEmployee = findUserById(fetchedEmployees, id);
+      const newUserData = foundEmployee || findUserById(fetchedConciergeries, id);
+      const isEmployee = !!newUserData && !!foundEmployee;
+      const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
+      const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
+      const newConciergerieName = isConciergerie
+        ? newUserData
+          ? (newUserData as Conciergerie).name
+          : conciergerieName
+        : undefined;
+      const newEmployeeName = isEmployee
+        ? newUserData
+          ? (newUserData as Employee).firstName + ' ' + (newUserData as Employee).familyName
+          : employeeName
+        : undefined;
+      const newPrimaryColor = fetchedConciergeries?.find(c => c.name === newConciergerieName)?.color;
 
-        const findUserById = <T extends UserData>(users: T[] | null, id: string) =>
-          users?.find(user => containsId(user.id, id));
+      console.warn('Loading data from database');
 
-        const foundEmployee = findUserById(effectiveEmployees, id);
-        const newUserData = foundEmployee || findUserById(effectiveConciergeries, id);
-        const isEmployee = !!newUserData && !!foundEmployee;
-        const isConciergerie = (!!newUserData && !isEmployee) || userType === 'conciergerie';
-        // When offline with no data, preserve localStorage userType
-        const newUserType = isEmployee
-          ? 'employee'
-          : isConciergerie
-            ? 'conciergerie'
-            : navigator.onLine
-              ? undefined
-              : userType;
-        const newConciergerieName = isConciergerie
-          ? newUserData
-            ? (newUserData as Conciergerie).name
-            : conciergerieName
-          : undefined;
-        const newEmployeeName = isEmployee
-          ? newUserData
-            ? (newUserData as Employee).firstName + ' ' + (newUserData as Employee).familyName
-            : employeeName
-          : undefined;
-        const newPrimaryColor = fetchedConciergeries?.find(c => c.name === newConciergerieName)?.color;
+      setConciergerieName(newConciergerieName);
+      setConciergeries(fetchedConciergeries ?? []);
+      setEmployeeName(newEmployeeName);
+      setEmployees(fetchedEmployees ?? []);
+      updateUserType(newUserType);
+      setUserData(newUserData);
+      setPrimaryColor(newPrimaryColor);
 
-        console.warn('Loading data from database', {
-          offline: !navigator.onLine,
-          id,
-          conciergeries: effectiveConciergeries.length,
-          employees: effectiveEmployees.length,
-          newUserType,
-          newUserData: !!newUserData,
-        });
+      // Special case where the userId cookie or the userId in local storage has been manually deleted
+      const path = window.location.pathname;
+      if (
+        (newUserData && !navigationRoutes.includes(path) && userType === 'conciergerie') ||
+        (!newUserData && navigationRoutes.includes(path))
+      )
+        refreshData();
 
-        setConciergerieName(newConciergerieName);
-        setConciergeries(effectiveConciergeries);
-        setEmployeeName(newEmployeeName);
-        setEmployees(effectiveEmployees);
-        updateUserType(newUserType);
-        setUserData(newUserData);
-        setPrimaryColor(newPrimaryColor);
-
-        // Special case where the userId cookie or the userId in local storage has been manually deleted
-        // Only redirect if we successfully fetched data (not offline)
-        const path = window.location.pathname;
-        const successfullyFetched = fetchedConciergeries !== null || fetchedEmployees !== null;
-        if (successfullyFetched) {
-          if (
-            (newUserData && !navigationRoutes.includes(path) && userType === 'conciergerie') ||
-            (!newUserData && navigationRoutes.includes(path))
-          )
-            refreshData();
-        }
-
-        return true;
-      } catch (error) {
-        // Silently fail when offline - keep existing data if available
-        console.warn('Failed to fetch auth data (possibly offline):', error);
-        return false;
-      }
+      return true;
     },
     [
       generateId,
