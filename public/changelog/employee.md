@@ -1,7 +1,11 @@
+# 2.118
+
+- **Historique** : nouvel onglet complet avec statistiques détaillées, graphiques de répartition, et filtres avancés (conciergerie, période) pour analyser vos missions passées
+- **Merci pour votre patience** : suite au changement de serveur (prod et test), merci de votre compréhension face aux bugs rencontrés — tout est maintenant stabilisé !!! Enfin j'espère 😉
+
 # 2.72
 
 - **Filtres missions** : possibilité de filtrer par mois (ex. "Mai 2026") — pratique pour la compta : combinez avec Statut = "Terminées" pour retrouver toutes vos missions d'un mois donné, par conciergerie si besoin
-- **Historique** : nouvel onglet avec des statistiques (encore en cours d'élaboration — vos retours sont les bienvenus !)
 
 # 2.71
 
