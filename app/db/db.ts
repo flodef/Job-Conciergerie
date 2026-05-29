@@ -1,16 +1,13 @@
 import { UserType } from '@/app/contexts/authProvider';
 import postgres from 'postgres';
 
-// Create SQL client using DATABASE_URL - works with any Postgres (Neon, Supabase, etc.)
-const sqlClient = postgres(process.env.DATABASE_URL!, {
-  prepare: false, // Required for Supabase connection pooling
-});
-
 /**
  * SQL template literal for database queries
- * Works with any Postgres database by just changing DATABASE_URL
+ * Works with any Postgres (Neon, Supabase, etc.) by just changing DATABASE_URL
  */
-export const sql = sqlClient;
+export const sql = postgres(process.env.DATABASE_URL!, {
+  prepare: false, // Required for Supabase connection pooling
+});
 
 /**
  * Check if a user exists and what type they are

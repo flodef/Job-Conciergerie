@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the sql client before importing the module under test
 vi.mock('@/app/db/db', () => ({ sql: vi.fn() }));
 vi.mock('@/app/utils/id', () => ({ MAX_DEVICES: 5 }));
 vi.mock('@/app/utils/notifications', () => ({
@@ -12,6 +11,8 @@ import { sql } from '@/app/db/db';
 import { findEmployeeByContact } from '@/app/db/employeeDb';
 
 const mockSql = sql as unknown as ReturnType<typeof vi.fn>;
+
+beforeEach(() => vi.clearAllMocks());
 
 const baseRow = {
   id: ['abc123'],

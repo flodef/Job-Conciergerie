@@ -1,16 +1,40 @@
 // @vitest-environment node
 import { describe, expect, test, beforeAll, afterAll } from 'vitest';
-import { createNewMission, updateMissionData } from '../actions/mission';
-import { createHome } from '@/app/db/homeDb';
-import { deleteMission } from '@/app/db/missionDb';
-import { sql } from '@/app/db/db';
-import { Mission, Task } from '@/app/types/dataTypes';
+import { config } from 'dotenv';
+import type { Mission } from '@/app/types/dataTypes';
+import { Task } from '@/app/types/dataTypes';
+
+// Load environment variables directly (vitest.setup.ts doesn't run for node env)
+config({ path: '.env.local' });
+
+// Dynamic imports to bypass any module-level mocks
+let createNewMission: typeof import('../actions/mission').createNewMission;
+let updateMissionData: typeof import('../actions/mission').updateMissionData;
+let createHome: typeof import('@/app/db/homeDb').createHome;
+let deleteMission: typeof import('@/app/db/missionDb').deleteMission;
+let sql: typeof import('@/app/db/db').sql;
 
 const TEST_HOME_ID = 'test-home-hours-fix';
 const TEST_MISSION_ID = 'test-mission-hours-fix';
 const TEST_CONCIERGERIE = 'MENTHEREGLISSE';
 
 beforeAll(async () => {
+  // Debug: log DATABASE_URL
+  console.log('DATABASE_URL in test:', process.env.DATABASE_URL?.substring(0, 60));
+
+  // Force fresh module imports by using cache-busting
+  const cacheBust = `?t=${Date.now()}`;
+  const missionModule = await import(`../actions/mission${cacheBust}`);
+  const homeDbModule = await import(`@/app/db/homeDb${cacheBust}`);
+  const missionDbModule = await import(`@/app/db/missionDb${cacheBust}`);
+  const dbModule = await import(`@/app/db/db${cacheBust}`);
+
+  createNewMission = missionModule.createNewMission;
+  updateMissionData = missionModule.updateMissionData;
+  createHome = homeDbModule.createHome;
+  deleteMission = missionDbModule.deleteMission;
+  sql = dbModule.sql;
+
   // Create a test home (required FK for missions)
   await createHome({
     id: TEST_HOME_ID,

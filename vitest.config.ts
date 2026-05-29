@@ -6,6 +6,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
     environment: 'jsdom',
+    pool: 'forks', // Use separate processes for better test isolation
   },
   resolve: {
     alias: {

@@ -1,3 +1,6 @@
 # Run tests before pushing to catch regressions early
-# Excludes storage.integration.test.ts which requires a Next.js request context (cookies)
-bunx vitest run --exclude='app/__tests__/storage.integration.test.ts'
+# Run mission tests first (uses real database, needs isolation from mocks)
+bunx vitest run app/__tests__/mission.test.ts
+
+# Run other tests (excludes mission and storage.integration which need special handling)
+bunx vitest run --exclude='app/__tests__/mission.test.ts' --exclude='app/__tests__/storage.integration.test.ts'
