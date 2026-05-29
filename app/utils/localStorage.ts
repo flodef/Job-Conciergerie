@@ -4,19 +4,21 @@ export function useLocalStorage<T>(
   key: string,
   defaultValue?: T,
 ): [T | undefined, Dispatch<SetStateAction<T | undefined>>] {
-  const state = useState<T | undefined>(() => getLocalStorageItem(key, defaultValue));
-  const value = key ? state[0] : defaultValue;
+  const [value, setValue] = useState<T | undefined>(defaultValue);
 
-  const isFirstRenderRef = useRef(true);
+  // Hydrate from localStorage after mount (client-only) to avoid SSR mismatch
+  const hasMountedRef = useRef(false);
   useEffect(() => {
-    if (isFirstRenderRef.current) {
-      isFirstRenderRef.current = false;
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      const stored = getLocalStorageItem<T>(key);
+      if (stored !== undefined) setValue(stored);
       return;
     }
     setLocalStorageItem(key, value);
   }, [value, key]);
 
-  return state;
+  return [key ? value : defaultValue, setValue];
 }
 
 export function getLocalStorageItem<T>(key: string, defaultValue?: T) {

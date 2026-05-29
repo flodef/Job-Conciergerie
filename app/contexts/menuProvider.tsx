@@ -2,7 +2,7 @@
 
 import ConfirmationModal from '@/app/components/confirmationModal';
 import { defaultPage, Page, pages, routeMap } from '@/app/utils/navigation';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 
 type MenuContext = {
@@ -22,37 +22,22 @@ const MenuContext = createContext<MenuContext | undefined>(undefined);
 
 export const MenuProvider = ({ children }: MenuProviderProps) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(defaultPage);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [shouldShowConfirmClose, setShouldShowConfirmClose] = useState(false);
   const [pendingPage, setPendingPage] = useState<Page>();
 
-  // Initialize currentPage based on URL path when component mounts
-  useEffect(() => {
-    // Function to update currentPage based on pathname
-    const updateCurrentPage = () => {
-      const path = window.location.pathname;
-      const page = Object.entries(routeMap).find(([key, route]) => key && route === path)?.[0] as Page | undefined;
-      if (page) setCurrentPage(page);
-    };
-
-    // Run once on mount
-    updateCurrentPage();
-
-    // Add event listener for popstate (history navigation)
-    window.addEventListener('popstate', updateCurrentPage);
-    return () => {
-      window.removeEventListener('popstate', updateCurrentPage);
-    };
-  }, []);
+  // Derive currentPage from current pathname - always in sync with URL
+  const currentPage = pathname
+    ? (Object.entries(routeMap).find(([key, route]) => key && route === pathname)?.[0] as Page | undefined)
+    : defaultPage;
 
   const onMenuChange = useCallback(
     (page = defaultPage) => {
       setIsMenuOpen(false);
       if (!hasUnsavedChanges) {
         router.push(routeMap[page]);
-        setCurrentPage(page);
         setPendingPage(undefined);
       } else {
         setShouldShowConfirmClose(true);
@@ -62,16 +47,7 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
     [hasUnsavedChanges, router, setPendingPage],
   );
 
-  useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname;
-      const page = pages.find(p => routeMap[p] === path);
-      if (page !== undefined) onMenuChange(page);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [onMenuChange]);
+  // No need for popstate listener - currentPage is derived from pathname automatically
 
   useEffect(() => {
     if (!hasUnsavedChanges && pendingPage) onMenuChange(pendingPage);
@@ -102,7 +78,7 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
         onMenuChange,
         isMenuOpen,
         setIsMenuOpen,
-        currentPage,
+        currentPage: currentPage || defaultPage,
         setHasUnsavedChanges,
         confirmationModal,
       }}

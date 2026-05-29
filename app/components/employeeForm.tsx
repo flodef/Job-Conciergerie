@@ -28,7 +28,7 @@ type EmployeeFormProps = {
 };
 
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
-  const { userId, conciergeries, updateUserData, findConciergerie, isLoading } = useAuth();
+  const { userId, conciergeries, updateUserData, updateUserType, findConciergerie, isLoading } = useAuth();
   const { onMenuChange } = useMenuContext();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
@@ -244,6 +244,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         if (!newEmployee) throw new Error('Employé non créé dans la base de données');
 
         updateUserData(newEmployee);
+        updateUserType('employee');
 
         // Clear saved form data so a different user on the same device starts fresh
         setFormData({
@@ -296,8 +297,9 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         id: updatedIds,
       };
 
-      // Update local user data and redirect based on status
+      // Update local user data and userType so auth context is fully set before navigating
       updateUserData(updatedEmployee);
+      updateUserType('employee');
 
       // Send notification email to employee about the new device
       await EmailSender.sendNewDeviceEmail({ setToast, showSuccessToast: true }, updatedEmployee, userId);
@@ -305,7 +307,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       // Wait a bit before redirecting to allow the email to be sent and a toast to be displayed
       setTimeout(() => onMenuChange(Page.Waiting), 1500);
     } else {
-      onMenuChange(Page.Waiting);
+      updateUserType('employee');
+      onMenuChange(employee.status === 'accepted' ? Page.Missions : Page.Waiting);
     }
   };
 

@@ -7,6 +7,7 @@ import {
   fetchAllMissions,
   updateMissionData,
 } from '@/app/actions/mission';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
@@ -16,6 +17,7 @@ import { EmailSender } from '@/app/utils/emailSender';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes, Page } from '@/app/utils/navigation';
+import { usePathname } from 'next/navigation';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 type MissionsContextType = {
@@ -54,6 +56,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [missions, setMissions] = useState<Mission[]>([]);
   const [shouldShowAcceptWarning, setShouldShowAcceptWarning] = useLocalStorage('show_accept_mission_warning', true);
+  const [toast, setToast] = useState<Toast>();
 
   const getLateMissions = (missions: Mission[]) => {
     const now = new Date();
@@ -143,14 +146,19 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           console.warn('Failed to fetch missions:', error);
           setIsLoading(false);
           isFetching.current = false;
-          // Reset needsRefresh to prevent infinite retry loops when:
-          // 1. Offline
-          // 2. Service worker returns 503 (page not cached)
-          // 3. Any fetch error that suggests the page isn't available
           const errorMsg = error?.message?.toLowerCase() || '';
+          const isMaxClientsError = errorMsg.includes('max clients') || errorMsg.includes('emaxconnsession');
           const is503Error =
             errorMsg.includes('unexpected') || errorMsg.includes('503') || errorMsg.includes('service unavailable');
-          if (!navigator.onLine || is503Error) {
+          if (isMaxClientsError) {
+            console.error('Database connection pool exhausted:', error);
+            setToast({
+              type: ToastType.Error,
+              message: 'Trop de connexions simultanées. Veuillez réessayer dans quelques instants.',
+              error,
+            });
+          }
+          if (!navigator.onLine || is503Error || isMaxClientsError) {
             updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
           }
           return false;
@@ -159,13 +167,16 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - uses refs and context functions which are stable
 
+  const pathname = usePathname();
+
   // Fetch missions when needed (initial load or refresh triggered) - only for authenticated users on nav pages
   useEffect(() => {
     if (authLoading || !needsRefreshMissions || !userData) return;
     if (isFetching.current) return;
-    if (!navigationRoutes.includes(window.location.pathname)) return;
+    if (!navigationRoutes.includes(pathname)) return;
+    setIsLoading(true); // set synchronously to prevent empty-state flash before async fetch
     fetchMissionsCore();
-  }, [authLoading, needsRefreshMissions, userData, fetchMissionsCore]);
+  }, [authLoading, needsRefreshMissions, userData, pathname, fetchMissionsCore]);
 
   // Manual refresh function - exposes the core function
   const fetchMissions = useCallback(() => fetchMissionsCore(), [fetchMissionsCore]);
@@ -476,6 +487,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         missionExists,
       }}
     >
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
       {children}
     </MissionsContext.Provider>
   );

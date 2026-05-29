@@ -2,6 +2,7 @@
 
 import { createNewHome, deleteHomeData, fetchAllHomes, updateHomeData } from '@/app/actions/home';
 import { deleteFileFromSupabase } from '@/app/actions/storage';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { preloadImages } from '@/app/hooks/useImageCache';
@@ -9,6 +10,7 @@ import { Home } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
 import { navigationRoutes, Page } from '@/app/utils/navigation';
 import { getStorageImageUrl } from '@/app/utils/storage';
+import { usePathname } from 'next/navigation';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 type HomesContextType = {
@@ -31,6 +33,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [homes, setHomes] = useState<Home[]>([]);
+  const [toast, setToast] = useState<Toast>();
 
   // Show all homes for employees, only conciergerie's own homes for conciergeries
   const myHomes = useMemo(
@@ -73,14 +76,19 @@ export function HomesProvider({ children }: { children: ReactNode }) {
       })
       .catch(error => {
         console.warn('Failed to fetch homes:', error);
-        // Reset needsRefresh to prevent infinite retry loops when:
-        // 1. Offline
-        // 2. Service worker returns 503 (page not cached)
-        // 3. Any fetch error that suggests the page isn't available
         const errorMsg = error?.message?.toLowerCase() || '';
+        const isMaxClientsError = errorMsg.includes('max clients') || errorMsg.includes('emaxconnsession');
         const is503Error =
           errorMsg.includes('unexpected') || errorMsg.includes('503') || errorMsg.includes('service unavailable');
-        if (!navigator.onLine || is503Error) {
+        if (isMaxClientsError) {
+          console.error('Database connection pool exhausted:', error);
+          setToast({
+            type: ToastType.Error,
+            message: 'Trop de connexions simultanées. Veuillez réessayer dans quelques instants.',
+            error,
+          });
+        }
+        if (!navigator.onLine || is503Error || isMaxClientsError) {
           updateFetchTime(Page.Homes);
         }
         return false;
@@ -92,13 +100,15 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - uses refs and state setters which are stable
 
+  const pathname = usePathname();
+
   // Fetch homes when needed (initial load or refresh triggered) - only for authenticated users on nav pages
   useEffect(() => {
     if (authLoading || !needsRefreshHomes || !conciergerieName) return;
     if (isFetching.current) return;
-    if (!navigationRoutes.includes(window.location.pathname)) return;
+    if (!navigationRoutes.includes(pathname)) return;
     fetchHomesCore();
-  }, [authLoading, needsRefreshHomes, conciergerieName, fetchHomesCore]);
+  }, [authLoading, needsRefreshHomes, conciergerieName, pathname, fetchHomesCore]);
 
   // Manual refresh function - exposes the core function
   const fetchHomes = useCallback(() => fetchHomesCore(), [fetchHomesCore]);
@@ -173,6 +183,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
         homeExists,
       }}
     >
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
       {children}
     </HomesContext.Provider>
   );
