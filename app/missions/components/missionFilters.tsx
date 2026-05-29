@@ -95,7 +95,7 @@ export default function MissionFilters({
         <div className={cn(rowClassName, 'my-0')}>
           <MultiSelect
             id="conciergeries-filter"
-            label="Conciergeries"
+            label="Conciergerie"
             values={selectedConciergeries}
             onChange={setSelectedConciergeries}
             options={availableConciergeries.map(conciergerie => ({
@@ -191,7 +191,7 @@ export default function MissionFilters({
       <div className={cn(rowClassName, 'my-0')}>
         <MultiSelect
           id="zones-filter"
-          label="Zones géographiques"
+          label="Zone géographique"
           values={selectedZones}
           onChange={setSelectedZones}
           options={availableZones.map(zone => ({

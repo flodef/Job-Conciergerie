@@ -1,6 +1,6 @@
 {
   "name": "job-conciergerie",
-  "version": "2.115",
+  "version": "2.116",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -25,7 +25,8 @@
     "postgres": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-markdown": "^10.1.0",
+    "react-markdown": "latest",
+    "recharts": "latest",
     "serwist": "latest",
     "tailwind-merge": "latest"
   },

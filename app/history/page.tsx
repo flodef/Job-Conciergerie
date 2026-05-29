@@ -1,36 +1,31 @@
 'use client';
 
+import Accordion from '@/app/components/accordion';
 import { Toast, ToastMessage } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { Home, Mission } from '@/app/types/dataTypes';
+import { Home, Mission, MissionSortField } from '@/app/types/dataTypes';
 import { formatDate, formatDateRange } from '@/app/utils/date';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatHour, formatNumber } from '@/app/utils/task';
 import { sortMissions } from '@/app/utils/missionFilters';
-import { MissionSortField } from '@/app/types/dataTypes';
+import HistoryFilters from '@/app/history/components/historyFilters';
+import MissionSortBar from '@/app/missions/components/missionSortBar';
 import {
-  IconAdjustmentsHorizontal,
   IconBriefcase,
   IconBuilding,
   IconCalendar,
+  IconChartLine,
   IconChevronDown,
   IconChevronUp,
   IconClock,
-  IconSortAscending,
-  IconSortDescending,
+  IconFilter,
+  IconRefresh,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 
 type SortDirection = 'asc' | 'desc';
-
-const SORT_LABELS: Record<MissionSortField, string> = {
-  date: 'Date',
-  conciergerie: 'Conciergerie',
-  geographicZone: 'Zone',
-  homeTitle: 'Bien',
-};
 
 function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
@@ -60,7 +55,11 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">
           <span className="text-sm text-light">{formatHour(mission.hours)}</span>
-          {isOpen ? <IconChevronUp size={16} className="text-light" /> : <IconChevronDown size={16} className="text-light" />}
+          {isOpen ? (
+            <IconChevronUp size={16} className="text-light" />
+          ) : (
+            <IconChevronDown size={16} className="text-light" />
+          )}
         </div>
       </button>
 
@@ -90,6 +89,226 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
   );
 }
 
+// Format month key to MM/YY format (e.g., "2026-01" -> "01/26")
+const formatShortMonthLabel = (monthKey: string): string => {
+  const [year, month] = monthKey.split('-');
+  return `${month}/${year.slice(2)}`;
+};
+
+// Helper to get month name in French with first letter capitalized
+const getMonthName = (monthKey: string): string => {
+  const [year, month] = monthKey.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+  const formatted = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  // Ensure first letter is uppercase
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+};
+
+// Interactive line chart component for monthly hours with manual SVG
+function MonthlyHoursChart({
+  missions,
+  selectedPoint,
+  onPointSelect,
+}: {
+  missions: Mission[];
+  selectedPoint: string | null;
+  onPointSelect: (month: string | null) => void;
+}) {
+  // Group missions by month
+  const monthlyData = useMemo(() => {
+    const data = new Map<string, { hours: number; count: number }>();
+
+    missions.forEach(mission => {
+      const date = new Date(mission.startDateTime);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const existing = data.get(monthKey) || { hours: 0, count: 0 };
+      data.set(monthKey, {
+        hours: existing.hours + mission.hours,
+        count: existing.count + 1,
+      });
+    });
+
+    // Sort by month
+    return Array.from(data.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([month, stats]) => ({
+        month,
+        label: formatShortMonthLabel(month),
+        ...stats,
+      }));
+  }, [missions]);
+
+  if (monthlyData.length === 0) return null;
+
+  // Calculate adaptive legend interval (aim for ~5 labels)
+  const legendInterval = Math.max(1, Math.ceil(monthlyData.length / 5));
+
+  // Selected month info
+  const selectedData = selectedPoint ? monthlyData.find(d => d.month === selectedPoint) : null;
+
+  if (monthlyData.length === 1) {
+    // Single data point - show as a dot with value
+    const { month, hours } = monthlyData[0];
+    return (
+      <div className="bg-secondary/5 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-medium text-foreground">
+            {selectedData
+              ? `${getMonthName(selectedData.month)} - ${formatHour(selectedData.hours)}`
+              : 'Heures par mois'}
+          </h3>
+          {selectedPoint && (
+            <button
+              onClick={() => onPointSelect(null)}
+              className="p-1.5 rounded-full bg-secondary/30 hover:bg-secondary/50 transition-colors"
+              title="Réinitialiser"
+            >
+              <IconRefresh size={16} className="text-light" />
+            </button>
+          )}
+        </div>
+        <div className="h-24 flex items-center justify-center">
+          <button
+            onClick={() => onPointSelect(selectedPoint === month ? null : month)}
+            className="flex flex-col items-center gap-2"
+          >
+            <div
+              className={`w-4 h-4 rounded-full transition-all ${selectedPoint === month ? 'bg-primary scale-125' : 'bg-primary/60'}`}
+            />
+            <span className="text-sm font-medium">{formatHour(hours)}</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const maxHours = Math.max(...monthlyData.map(d => d.hours));
+
+  // Calculate points for dots with equal spacing
+  const padding = 2; // 2% padding on right side only
+  const points = monthlyData.map((d, i) => {
+    const x = monthlyData.length > 1 ? (i / (monthlyData.length - 1)) * (100 - padding) : 50;
+    const y = maxHours > 0 ? 100 - (d.hours / maxHours) * 100 : 100;
+    return { x, y, ...d };
+  });
+
+  return (
+    <div className="bg-secondary/5 rounded-xl">
+      {/* Header with selected month info and reset button */}
+      <div className="flex items-center justify-between mb-3 h-7">
+        <h3 className="text-sm font-medium text-foreground">
+          {selectedData ? `${getMonthName(selectedData.month)} - ${formatHour(selectedData.hours)}` : 'Heures par mois'}
+        </h3>
+        {selectedPoint && (
+          <button
+            onClick={() => onPointSelect(null)}
+            className="p-1.5 rounded-full bg-secondary/30 hover:bg-secondary/50 transition-colors"
+            title="Réinitialiser la sélection"
+          >
+            <IconRefresh size={16} className="text-light" />
+          </button>
+        )}
+      </div>
+
+      {/* Chart area with legends */}
+      <div className="flex gap-4">
+        {/* Y-axis legend (hours) on left - 0 at bottom */}
+        <div className="flex flex-col justify-between py-1">
+          {[1, 0.75, 0.5, 0.25, 0].map(ratio => {
+            const hourValue = Math.round(maxHours * ratio);
+            return (
+              <span key={ratio} className="text-xs text-light text-right">
+                {hourValue}h
+              </span>
+            );
+          })}
+        </div>
+
+        {/* Chart */}
+        <div className="relative h-32 flex-1">
+          <svg
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            className="absolute inset-0 w-full h-full overflow-visible"
+          >
+            {/* Grid lines */}
+            {[0, 25, 50, 75, 100].map(y => (
+              <line
+                key={y}
+                x1="0"
+                y1={y}
+                x2="100"
+                y2={y}
+                stroke="currentColor"
+                strokeWidth="0.15"
+                className="text-foreground/10"
+              />
+            ))}
+
+            {/* Vertical reference line for selected point */}
+            {selectedPoint && (
+              <line
+                x1={points.find(p => p.month === selectedPoint)?.x}
+                y1="0"
+                x2={points.find(p => p.month === selectedPoint)?.x}
+                y2="100"
+                stroke="currentColor"
+                strokeWidth="0.3"
+                strokeDasharray="1 1"
+                className="text-primary/30"
+              />
+            )}
+          </svg>
+
+          {/* Data points - HTML/CSS circles for perfect roundness */}
+          {points.map(point => (
+            <button
+              key={point.month}
+              onClick={() => onPointSelect(selectedPoint === point.month ? null : point.month)}
+              className="absolute cursor-pointer transition-all duration-200 hover:scale-110"
+              style={{
+                left: `${point.x}%`,
+                top: `${point.y}%`,
+                transform: 'translate(-50%, -50%)',
+              }}
+            >
+              <div
+                className={`rounded-full transition-all duration-200 ${
+                  selectedPoint === point.month ? 'bg-primary scale-125' : 'bg-primary/60'
+                }`}
+                style={{
+                  width: selectedPoint === point.month ? '16px' : '12px',
+                  height: selectedPoint === point.month ? '16px' : '12px',
+                }}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* X-axis legend (months) at bottom - absolutely positioned to match dots */}
+      <div className="relative h-4 mt-2 ml-8">
+        {points.map((point, i) => {
+          const shouldShow = i % legendInterval === 0 || i === monthlyData.length - 1;
+          const isSelected = selectedPoint === point.month;
+          return shouldShow ? (
+            <button
+              key={point.month}
+              onClick={() => onPointSelect(isSelected ? null : point.month)}
+              className={`absolute text-xs transition-colors -translate-x-1/2 ${
+                isSelected ? 'text-primary font-medium' : 'text-light hover:text-foreground'
+              }`}
+              style={{ left: `${point.x}%` }}
+            >
+              {point.label}
+            </button>
+          ) : null;
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function HistoryPage() {
   const { missions, isLoading: missionsLoading } = useMissions();
   const { homes } = useHomes();
@@ -98,56 +317,97 @@ export default function HistoryPage() {
   const [toast, setToast] = useState<Toast>();
   const [sortField, setSortField] = useState<MissionSortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [selectedConciergeries, setSelectedConciergeries] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [selectedConciergerie, setSelectedConciergerie] = useState<string | null>(null);
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState<string | null>(null);
+  // Note: selectedTimePeriod is used for both the filter dropdown and graph selection
 
   const isLoading = authLoading || missionsLoading;
 
-  // Filter to completed missions for this employee only
+  // Filter to completed missions for this employee only (status is always "completed" for history)
   const completedMissions = useMemo(
     () => missions.filter(m => m.status === 'completed' && m.employeeId === employeeName),
     [missions, employeeName],
   );
 
-  // Available conciergeries from completed missions
-  const availableConciergeries = useMemo(
-    () => [...new Set(completedMissions.map(m => m.conciergerieName))].sort(),
-    [completedMissions],
-  );
+  // Get month key from mission date (YYYY-MM format for sorting)
+  const getMonthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
-  // Apply conciergerie filter then sort
-  const sortedMissions = useMemo(() => {
-    const filtered =
-      selectedConciergeries.length > 0
-        ? completedMissions.filter(m => selectedConciergeries.includes(m.conciergerieName))
-        : completedMissions;
-    return sortMissions(filtered, sortField, sortDirection, homes);
-  }, [completedMissions, selectedConciergeries, sortField, sortDirection, homes]);
+  // Available conciergeries (filtered by selected time period if any)
+  const availableConciergeries = useMemo(() => {
+    let missionsToFilter = completedMissions;
 
-  // Stats
-  const totalHours = useMemo(
-    () => completedMissions.reduce((sum, m) => sum + m.hours, 0),
-    [completedMissions],
-  );
-  const uniqueHomes = useMemo(
-    () => new Set(completedMissions.map(m => m.homeId)).size,
-    [completedMissions],
-  );
-  const uniqueConciergeries = useMemo(
-    () => new Set(completedMissions.map(m => m.conciergerieName)).size,
-    [completedMissions],
-  );
-
-  const handleSortField = (field: MissionSortField) => {
-    if (field === sortField) setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
-    else {
-      setSortField(field);
-      setSortDirection(field === 'date' ? 'desc' : 'asc');
+    // If a time period is selected, only show conciergeries with missions in that period
+    if (selectedTimePeriod) {
+      missionsToFilter = completedMissions.filter(m => {
+        const date = new Date(m.startDateTime);
+        return getMonthKey(date) === selectedTimePeriod;
+      });
     }
-  };
 
-  const toggleConciergerie = (name: string) =>
-    setSelectedConciergeries(prev => (prev.includes(name) ? prev.filter(c => c !== name) : [...prev, name]));
+    return [...new Set(missionsToFilter.map(m => m.conciergerieName))].sort();
+  }, [completedMissions, selectedTimePeriod]);
+
+  // Available time periods (filtered by selected conciergerie if any)
+  const availableTimePeriods = useMemo(() => {
+    let missionsToFilter = completedMissions;
+
+    // If a conciergerie is selected, only show periods with missions for that conciergerie
+    if (selectedConciergerie) {
+      missionsToFilter = completedMissions.filter(m => m.conciergerieName === selectedConciergerie);
+    }
+
+    const periods = new Set<string>();
+    missionsToFilter.forEach(m => {
+      const date = new Date(m.startDateTime);
+      periods.add(getMonthKey(date));
+    });
+    // Sort from newest to oldest (descending)
+    return Array.from(periods).sort((a, b) => b.localeCompare(a));
+  }, [completedMissions, selectedConciergerie]);
+
+  // Apply all filters
+  const filteredMissions = useMemo(() => {
+    let filtered = completedMissions;
+
+    // Filter by conciergerie
+    if (selectedConciergerie) {
+      filtered = filtered.filter(m => m.conciergerieName === selectedConciergerie);
+    }
+
+    // Filter by time period (month)
+    if (selectedTimePeriod) {
+      filtered = filtered.filter(m => {
+        const date = new Date(m.startDateTime);
+        return getMonthKey(date) === selectedTimePeriod;
+      });
+    }
+
+    return filtered;
+  }, [completedMissions, selectedConciergerie, selectedTimePeriod]);
+
+  // Sort filtered missions
+  const sortedMissions = useMemo(
+    () => sortMissions(filteredMissions, sortField, sortDirection, homes),
+    [filteredMissions, sortField, sortDirection, homes],
+  );
+
+  // Stats based on filtered missions (recalculate)
+  const stats = useMemo(() => {
+    const totalHours = filteredMissions.reduce((sum, m) => sum + m.hours, 0);
+    const uniqueHomes = new Set(filteredMissions.map(m => m.homeId)).size;
+    const uniqueConciergeries = new Set(filteredMissions.map(m => m.conciergerieName)).size;
+    return {
+      missions: filteredMissions.length,
+      hours: totalHours,
+      homes: uniqueHomes,
+      conciergeries: uniqueConciergeries,
+    };
+  }, [filteredMissions]);
+
+  const handleSortChange = (field: MissionSortField, direction: SortDirection) => {
+    setSortField(field);
+    setSortDirection(direction);
+  };
 
   if (isLoading) return null;
 
@@ -155,75 +415,53 @@ export default function HistoryPage() {
     <div className="p-4 space-y-4">
       {toast && <ToastMessage toast={toast} onClose={() => setToast(undefined)} />}
 
-      {/* Stats */}
-      {completedMissions.length > 0 && (
+      {/* Stats - recalculate based on filtered missions */}
+      {filteredMissions.length > 0 && (
         <div className="flex gap-3">
-          <StatCard label="Missions" value={String(completedMissions.length)} icon={<IconBriefcase size={20} />} />
-          <StatCard label="Heures" value={formatHour(totalHours)} icon={<IconClock size={20} />} />
-          <StatCard label="Biens" value={formatNumber(uniqueHomes)} icon={<IconCalendar size={20} />} />
-          <StatCard label="Conciergeries" value={formatNumber(uniqueConciergeries)} icon={<IconBuilding size={20} />} />
+          <StatCard label="Missions" value={String(stats.missions)} icon={<IconBriefcase size={20} />} />
+          <StatCard label="Heures" value={formatHour(stats.hours)} icon={<IconClock size={20} />} />
+          <StatCard label="Biens" value={formatNumber(stats.homes)} icon={<IconCalendar size={20} />} />
+          <StatCard label="Conciergeries" value={formatNumber(stats.conciergeries)} icon={<IconBuilding size={20} />} />
         </div>
       )}
 
-      {/* Sort & Filter bar */}
+      {/* Accordions: Graph and Filters */}
       {completedMissions.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            {(Object.keys(SORT_LABELS) as MissionSortField[]).map(field => (
-              <button
-                key={field}
-                onClick={() => handleSortField(field)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm shrink-0 transition-colors ${
-                  sortField === field
-                    ? 'bg-primary text-white'
-                    : 'bg-secondary/20 text-foreground hover:bg-secondary/40'
-                }`}
-              >
-                {SORT_LABELS[field]}
-                {sortField === field &&
-                  (sortDirection === 'asc' ? <IconSortAscending size={14} /> : <IconSortDescending size={14} />)}
-              </button>
-            ))}
-            {availableConciergeries.length > 1 && (
-              <button
-                onClick={() => setShowFilters(prev => !prev)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm shrink-0 transition-colors ml-auto ${
-                  selectedConciergeries.length > 0 ? 'bg-primary text-white' : 'bg-secondary/20 text-foreground hover:bg-secondary/40'
-                }`}
-              >
-                <IconAdjustmentsHorizontal size={14} />
-                {selectedConciergeries.length > 0 ? `Filtre (${selectedConciergeries.length})` : 'Filtres'}
-              </button>
-            )}
-          </div>
-
-          {/* Conciergerie filter chips */}
-          {showFilters && availableConciergeries.length > 1 && (
-            <div className="flex flex-wrap gap-2">
-              {availableConciergeries.map(name => {
-                const conciergerie = findConciergerie(name);
-                const color = getColorValueByName(conciergerie?.colorName);
-                const isSelected = selectedConciergeries.includes(name);
-                return (
-                  <button
-                    key={name}
-                    onClick={() => toggleConciergerie(name)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors border ${
-                      isSelected ? 'text-white border-transparent' : 'bg-background border-secondary text-foreground'
-                    }`}
-                    style={isSelected ? { backgroundColor: color, borderColor: color } : {}}
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: isSelected ? 'white' : color }}
-                    />
-                    {name}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <Accordion
+          items={[
+            {
+              title: 'Graphique des heures',
+              icon: <IconChartLine size={18} />,
+              content: (
+                <MonthlyHoursChart
+                  missions={completedMissions}
+                  selectedPoint={selectedTimePeriod}
+                  onPointSelect={setSelectedTimePeriod}
+                />
+              ),
+            },
+            {
+              title: 'Filtres',
+              icon: <IconFilter size={18} />,
+              subtitle:
+                filteredMissions.length > 0
+                  ? `${filteredMissions.length} mission${filteredMissions.length > 1 ? 's' : ''}`
+                  : undefined,
+              content: (
+                <HistoryFilters
+                  availableConciergeries={availableConciergeries}
+                  availableTimePeriods={availableTimePeriods}
+                  selectedConciergerie={selectedConciergerie}
+                  setSelectedConciergerie={setSelectedConciergerie}
+                  selectedTimePeriod={selectedTimePeriod}
+                  setSelectedTimePeriod={setSelectedTimePeriod}
+                />
+              ),
+            },
+          ]}
+          variant="card"
+          defaultOpenIndex={0}
+        />
       )}
 
       {/* Mission list */}

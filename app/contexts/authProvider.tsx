@@ -2,7 +2,9 @@
 
 import { fetchConciergeries } from '@/app/actions/conciergerie';
 import { deleteEmployeeData, fetchEmployees } from '@/app/actions/employee';
+import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
+import { isConnectionPoolError } from '@/app/utils/dbErrors';
 import { setPrimaryColor } from '@/app/utils/color';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
 import { containsId, generateSimpleId } from '@/app/utils/id';
@@ -70,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [employeeName, setEmployeeName] = useState<string>();
   const [userData, setUserData] = useState<UserData>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [toast, setToast] = useState<Toast>();
 
   const updateUserId = useCallback(
     (userId: string | undefined) => {
@@ -114,9 +117,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const currentUserType = getLocalStorageItem<UserType>('user_type');
       const currentConciergerieName = getLocalStorageItem<string>('conciergerie_name');
 
-      const fetchedConciergeries =
-        !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : conciergeries;
-      const fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
+      let fetchedConciergeries;
+      let fetchedEmployees;
+
+      try {
+        fetchedConciergeries = !fetchType || fetchType === 'conciergerie' ? await fetchConciergeries() : conciergeries;
+        fetchedEmployees = !fetchType || fetchType === 'employee' ? await fetchEmployees() : employees;
+      } catch (error) {
+        // Check if this is a connection pool exhaustion error
+        if (isConnectionPoolError(error)) {
+          console.error('Database connection pool exhausted during auth:', error);
+          setToast({
+            type: ToastType.Error,
+            message: 'Trop de connexions simultanées à la base de données. Veuillez réessayer dans quelques instants.',
+            error,
+          });
+          // Keep existing user data - don't redirect to landing page
+          setIsLoading(false);
+          return false;
+        }
+        // For other errors, log and continue (will likely result in redirect to landing)
+        console.error('Error fetching user data:', error);
+        fetchedConciergeries = null;
+        fetchedEmployees = null;
+      }
 
       // If the DB fetch failed entirely (null returned), keep existing data to avoid wiping state
       const effectiveConciergeries = fetchedConciergeries ?? conciergeries;
@@ -183,6 +207,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then(() => setIsLoading(false))
       .catch(() => setIsLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Retry connection after toast is dismissed
+  const handleToastClose = useCallback(() => {
+    setToast(undefined);
+    // Retry connection after a short delay
+    setTimeout(() => {
+      setIsLoading(true);
+      fetchDataFromDatabase()
+        .then(() => setIsLoading(false))
+        .catch(() => setIsLoading(false));
+    }, 1000);
+  }, [fetchDataFromDatabase]);
 
   const updateUserData = <T extends UserData>(updatedData: T, updateType = userType) => {
     // Update user data only if the update type matches the current user type (meaning we are updating the current user)
@@ -265,6 +301,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         nuke,
       }}
     >
+      {toast && <ToastMessage toast={toast} onClose={handleToastClose} />}
       {children}
     </AuthContext.Provider>
   );

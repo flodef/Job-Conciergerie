@@ -1,5 +1,8 @@
+import { isConnectionPoolError } from '@/app/utils/dbErrors';
 import { UserType } from '@/app/contexts/authProvider';
 import postgres from 'postgres';
+
+export { isConnectionPoolError };
 
 /**
  * SQL template literal for database queries
@@ -7,7 +10,9 @@ import postgres from 'postgres';
  */
 export const sql = postgres(process.env.DATABASE_URL!, {
   prepare: false, // Required for Supabase connection pooling
-  max: 3, // Conservative limit for Supabase free tier
+  max: 2, // Very conservative limit for Supabase free tier (15 max)
+  idle_timeout: 10, // Close idle connections after 10 seconds
+  connect_timeout: 5, // Fail fast if can't connect
 });
 
 /**

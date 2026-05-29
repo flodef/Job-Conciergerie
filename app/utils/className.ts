@@ -30,7 +30,7 @@ export const buttonClassName = (type: ButtonStyle) =>
   );
 export const selectClassName = (error: boolean | string, disabled: boolean, isFocused: boolean, isOpen: boolean) =>
   cn(
-    'w-full p-2 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer',
+    'w-full p-2 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer min-w-0',
     'focus-visible:outline-none focus-within:outline-none border-2',
     error && 'border-red-500',
     disabled && 'opacity-50 cursor-not-allowed',
@@ -51,7 +51,7 @@ export const filterButtonClassName = (shouldAppear: boolean) =>
   );
 export const optionsClassName = (openUpward: boolean) =>
   cn(
-    'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg max-h-[202px] overflow-auto',
+    'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg overflow-auto max-h-[202px]',
     openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
   );
 export const optionClassName = (isHighlighted: boolean, isSelected?: boolean) =>

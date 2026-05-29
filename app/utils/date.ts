@@ -122,13 +122,13 @@ export const toLocalDateString = (date: Date): string => {
  */
 export const getTimeRemaining = (targetDate: Date) => {
   const now = new Date();
-  
+
   // If the target date is in the past, return 'maintenant'
   if (targetDate <= now) return 'maintenant';
-  
+
   // Get the time difference in milliseconds
   const diffInMillis = targetDate.getTime() - now.getTime();
-  
+
   // Calculate hours and minutes
   const hoursLeft = Math.floor(diffInMillis / (1000 * 60 * 60));
   const minsLeft = Math.floor((diffInMillis % (1000 * 60 * 60)) / (1000 * 60));
@@ -266,4 +266,22 @@ export const formatDateRange = (startDate: Date, endDate: Date): string => {
     // Different days - show full date and time for both
     return `Du ${formatDateTime(startDate)} au ${formatDateTime(endDate)}`;
   }
+};
+
+/**
+ * Get month and year label from a month key (YYYY-MM format)
+ * Returns "Mois Année" in French (e.g., "Janvier 2026")
+ */
+export const getMonthYearLabel = (monthKey: string): string => {
+  const [year, month] = monthKey.split('-');
+  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+  return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+};
+
+/**
+ * Check if a date is in the same month and year as a month key (YYYY-MM format)
+ */
+export const isSameMonthYear = (date: Date, monthKey: string): boolean => {
+  const [year, month] = monthKey.split('-');
+  return date.getFullYear() === parseInt(year) && date.getMonth() === parseInt(month) - 1;
 };
