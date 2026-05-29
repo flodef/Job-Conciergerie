@@ -309,7 +309,7 @@ export default function WaitingPage() {
                       </b>
                     </li>
                     <li>
-                      soit l&apos;accepter depuis votre appareil déjà validé en allant dans{' '}
+                      soit l&apos;accepter depuis votre appareil déjà connecté en allant dans{' '}
                       <span className="font-semibold">Paramètres &gt; Appareils connectés</span>, puis en cliquant sur
                       l&apos;icône de validation
                       <IconCheck size={24} stroke={3} className="text-green-600 inline-block ml-1" /> correspondant à
