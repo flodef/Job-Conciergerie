@@ -35,6 +35,16 @@ export default function HistoryFilters({
   selectedTimePeriod,
   setSelectedTimePeriod,
 }: HistoryFiltersProps) {
+  const handleConciergerieChange = (value: string | null) => {
+    setSelectedConciergerie(value);
+    if (value === null) setSelectedTimePeriod(null);
+  };
+
+  const handleTimePeriodChange = (value: string | null) => {
+    setSelectedTimePeriod(value);
+    if (value === null) setSelectedConciergerie(null);
+  };
+
   return (
     <div className="flex flex-col">
       {/* Conciergerie filter */}
@@ -44,7 +54,7 @@ export default function HistoryFilters({
             id="conciergerie-filter"
             label="Conciergerie"
             value={selectedConciergerie}
-            onChange={setSelectedConciergerie}
+            onChange={handleConciergerieChange}
             options={availableConciergeries.map(conciergerie => ({
               value: conciergerie,
               label: conciergerie,
@@ -65,7 +75,7 @@ export default function HistoryFilters({
           id="time-period-filter"
           label="Période"
           value={selectedTimePeriod}
-          onChange={setSelectedTimePeriod}
+          onChange={handleTimePeriodChange}
           options={availableTimePeriods.map(period => ({
             value: period,
             label: formatPeriodLabel(period),

@@ -9,6 +9,7 @@ import {
   selectClassName,
 } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
+import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
 import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
@@ -55,6 +56,7 @@ const MultiSelect = forwardRef(
     const [isFocused, setIsFocused] = useState(false);
     const [openUpward, setOpenUpward] = useState(false);
     const selectRef = useRef<HTMLDivElement>(null);
+    const { ref: optionsRef, canScrollUp, canScrollDown } = useScrollIndicators(isOpen);
 
     // Forward the selectRef to the parent component
     useImperativeHandle(forwardedRef, () => selectRef.current as HTMLDivElement);
@@ -155,31 +157,58 @@ const MultiSelect = forwardRef(
 
           {isOpen && !disabled && (
             <div
-              id={`${id}-options`}
-              className={optionsClassName(openUpward)}
-              role="listbox"
-              aria-multiselectable="true"
+              className={cn(
+                'relative',
+                openUpward ? 'bottom-full mb-1 absolute w-full' : 'top-full mt-1 absolute w-full',
+              )}
+              style={{ zIndex: 50 }}
             >
-              {allOptions.length === 0 ? (
-                <div className="p-2 text-foreground/50 text-center">Aucune option disponible</div>
-              ) : (
-                allOptions.map(option => {
-                  const isSelected =
-                    option.value === 'all' ? values.length === 0 : values.map(v => v.toString()).includes(option.value);
+              <div
+                id={`${id}-options`}
+                ref={optionsRef}
+                className="w-full bg-background border border-foreground/20 rounded-lg shadow-lg overflow-auto max-h-[202px]"
+                role="listbox"
+                aria-multiselectable="true"
+              >
+                {allOptions.length === 0 ? (
+                  <div className="p-2 text-foreground/50 text-center">Aucune option disponible</div>
+                ) : (
+                  allOptions.map(option => {
+                    const isSelected =
+                      option.value === 'all'
+                        ? values.length === 0
+                        : values.map(v => v.toString()).includes(option.value);
 
-                  return (
-                    <div
-                      key={option.value}
-                      className={optionClassName(isSelected)}
-                      onClick={() => toggleOption(option.value)}
-                      role="option"
-                      aria-selected={isSelected}
-                    >
-                      <span className={cn(isSelected && 'font-medium text-primary')}>{option.label}</span>
-                      {isSelected && <IconCheck size={18} className="text-primary" />}
-                    </div>
-                  );
-                })
+                    return (
+                      <div
+                        key={option.value}
+                        className={optionClassName(isSelected)}
+                        onClick={() => toggleOption(option.value)}
+                        role="option"
+                        aria-selected={isSelected}
+                      >
+                        <span className={cn(isSelected && 'font-medium text-primary')}>{option.label}</span>
+                        {isSelected && <IconCheck size={18} className="text-primary" />}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              {canScrollUp && (
+                <div
+                  className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
+                  style={{ zIndex: 51 }}
+                >
+                  <IconChevronDown size={14} className="text-foreground/60 rotate-180" />
+                </div>
+              )}
+              {canScrollDown && (
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
+                  style={{ zIndex: 51 }}
+                >
+                  <IconChevronDown size={14} className="text-foreground/60" />
+                </div>
               )}
             </div>
           )}

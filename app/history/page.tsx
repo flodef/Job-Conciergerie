@@ -109,10 +109,12 @@ function MonthlyHoursChart({
   missions,
   selectedPoint,
   onPointSelect,
+  onReset,
 }: {
   missions: Mission[];
   selectedPoint: string | null;
   onPointSelect: (month: string | null) => void;
+  onReset: () => void;
 }) {
   // Group missions by month
   const monthlyData = useMemo(() => {
@@ -159,7 +161,7 @@ function MonthlyHoursChart({
           </h3>
           {selectedPoint && (
             <button
-              onClick={() => onPointSelect(null)}
+              onClick={onReset}
               className="p-1.5 rounded-full bg-secondary/30 hover:bg-secondary/50 transition-colors"
               title="Réinitialiser"
             >
@@ -418,10 +420,26 @@ export default function HistoryPage() {
       {/* Stats - recalculate based on filtered missions */}
       {filteredMissions.length > 0 && (
         <div className="flex gap-3">
-          <StatCard label="Missions" value={String(stats.missions)} icon={<IconBriefcase size={20} />} />
-          <StatCard label="Heures" value={formatHour(stats.hours)} icon={<IconClock size={20} />} />
-          <StatCard label="Biens" value={formatNumber(stats.homes)} icon={<IconCalendar size={20} />} />
-          <StatCard label="Conciergeries" value={formatNumber(stats.conciergeries)} icon={<IconBuilding size={20} />} />
+          <StatCard
+            label={stats.missions > 1 ? 'Missions' : 'Mission'}
+            value={String(stats.missions)}
+            icon={<IconBriefcase size={20} />}
+          />
+          <StatCard
+            label={stats.hours > 1 ? 'Heures' : 'Heure'}
+            value={formatNumber(stats.hours)}
+            icon={<IconClock size={20} />}
+          />
+          <StatCard
+            label={stats.homes > 1 ? 'Biens' : 'Bien'}
+            value={formatNumber(stats.homes)}
+            icon={<IconCalendar size={20} />}
+          />
+          <StatCard
+            label={stats.conciergeries > 1 ? 'Conciergeries' : 'Conciergerie'}
+            value={formatNumber(stats.conciergeries)}
+            icon={<IconBuilding size={20} />}
+          />
         </div>
       )}
 
@@ -437,6 +455,10 @@ export default function HistoryPage() {
                   missions={completedMissions}
                   selectedPoint={selectedTimePeriod}
                   onPointSelect={setSelectedTimePeriod}
+                  onReset={() => {
+                    setSelectedTimePeriod(null);
+                    setSelectedConciergerie(null);
+                  }}
                 />
               ),
             },

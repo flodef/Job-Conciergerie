@@ -5,6 +5,7 @@ import { errorClassName, optionClassName, optionsClassName, selectClassName } fr
 import { shouldOpenUpward } from '@/app/utils/select';
 import { IconCheck, IconChevronDown, IconX } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
+import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type SelectOption = {
@@ -55,10 +56,21 @@ const AutocompleteSelect = forwardRef(
     const [isFocused, setIsFocused] = useState(false);
     const [openUpward, setOpenOpenUpward] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
     const selectRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const { ref: optionsRef, canScrollUp, canScrollDown } = useScrollIndicators(isOpen);
 
     useImperativeHandle(forwardedRef, () => selectRef.current as HTMLDivElement);
+
+    const isReadonly = options.length === 1;
+
+    // Auto-select when only one option
+    useEffect(() => {
+      if (isReadonly && value !== options[0].value) {
+        onChange(options[0].value);
+      }
+    }, [isReadonly, options, value, onChange]);
 
     // Filter options based on search query
     const filteredOptions = searchQuery
@@ -89,16 +101,61 @@ const AutocompleteSelect = forwardRef(
       }
     }, [isOpen]);
 
+    // Reset highlighted index when filtered options change
+    useEffect(() => {
+      setHighlightedIndex(-1);
+    }, [searchQuery]);
+
+    // Scroll highlighted option into view
+    useEffect(() => {
+      if (highlightedIndex >= 0 && optionsRef.current) {
+        const item = optionsRef.current.children[highlightedIndex] as HTMLElement;
+        item?.scrollIntoView({ block: 'nearest' });
+      }
+    }, [highlightedIndex]);
+
     const handleSelect = (optionValue: string) => {
       onChange(optionValue);
       setIsOpen(false);
       setSearchQuery('');
+      setHighlightedIndex(-1);
     };
 
     const handleClear = (e: React.MouseEvent) => {
       e.stopPropagation();
       onChange(null);
       setSearchQuery('');
+      setHighlightedIndex(-1);
+      if (!isReadonly) {
+        // Open dropdown and focus input after clearing
+        checkPosition();
+        setIsOpen(true);
+        setIsFocused(true);
+        setTimeout(() => inputRef.current?.focus(), 0);
+      }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!isOpen) handleOpen();
+        setHighlightedIndex(i => Math.min(i + 1, filteredOptions.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setHighlightedIndex(i => Math.max(i - 1, 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (highlightedIndex >= 0 && filteredOptions[highlightedIndex]) {
+          handleSelect(filteredOptions[highlightedIndex].value);
+        }
+      } else if (e.key === 'Escape') {
+        setIsOpen(false);
+        setSearchQuery('');
+        setHighlightedIndex(-1);
+      } else if ((e.key === 'Backspace' || e.key === 'Delete') && searchQuery === '' && value) {
+        onChange(null);
+        setHighlightedIndex(-1);
+      }
     };
 
     const checkPosition = () => {
@@ -121,9 +178,20 @@ const AutocompleteSelect = forwardRef(
         checkPosition();
         setIsOpen(true);
         setIsFocused(true);
-        // Pre-fill search with current selection for quick editing
-        if (value) {
-          setSearchQuery(selectedLabel || '');
+        setSearchQuery('');
+        setHighlightedIndex(-1);
+      }
+    };
+
+    const handleChevronClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!disabled) {
+        if (isOpen) {
+          setIsOpen(false);
+          setIsFocused(false);
+          setSearchQuery('');
+        } else {
+          handleOpen();
         }
       }
     };
@@ -137,15 +205,15 @@ const AutocompleteSelect = forwardRef(
           {/* Display/Input field */}
           <div
             id={id}
-            tabIndex={disabled ? -1 : 0}
-            className={selectClassName(error, disabled, isFocused, isOpen)}
-            onClick={handleOpen}
-            onFocus={() => setIsFocused(true)}
+            tabIndex={-1}
+            className={selectClassName(error, isReadonly || disabled, isFocused, isOpen)}
+            onClick={isReadonly ? undefined : handleOpen}
+            onFocus={() => !isReadonly && setIsFocused(true)}
             onBlur={() => !isOpen && setIsFocused(false)}
-            role="combobox"
-            aria-expanded={isOpen}
-            aria-haspopup="listbox"
-            aria-controls={`${id}-options`}
+            role={isReadonly ? undefined : 'combobox'}
+            aria-expanded={isReadonly ? undefined : isOpen}
+            aria-haspopup={isReadonly ? undefined : 'listbox'}
+            aria-controls={isReadonly ? undefined : `${id}-options`}
           >
             {isOpen ? (
               <input
@@ -153,6 +221,7 @@ const AutocompleteSelect = forwardRef(
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
                 className="flex-1 bg-transparent outline-none text-foreground min-w-0"
                 placeholder={placeholder}
                 onClick={e => e.stopPropagation()}
@@ -163,7 +232,7 @@ const AutocompleteSelect = forwardRef(
               </span>
             )}
             <div className="flex items-center gap-1 shrink-0">
-              {clearable && value && !isOpen && (
+              {clearable && value && (isReadonly || !isOpen) && (
                 <button
                   onClick={handleClear}
                   className="p-0.5 hover:bg-secondary/50 rounded transition-colors"
@@ -172,39 +241,68 @@ const AutocompleteSelect = forwardRef(
                   <IconX size={16} className="text-light" />
                 </button>
               )}
-              <IconChevronDown
-                size={18}
-                className={cn('transition-transform duration-200', isOpen && 'transform rotate-180')}
-              />
+              {!isReadonly && (
+                <IconChevronDown
+                  size={18}
+                  className={cn('cursor-pointer transition-transform duration-200', isOpen && 'transform rotate-180')}
+                  onClick={handleChevronClick}
+                />
+              )}
             </div>
           </div>
 
           {/* Dropdown */}
           {isOpen && !disabled && (
             <div
-              id={`${id}-options`}
-              className={optionsClassName(openUpward)}
-              style={{ maxHeight: maxItems ? `${maxItems * 40}px` : '202px' }}
-              role="listbox"
+              className={cn(
+                'relative',
+                openUpward ? 'bottom-full mb-1 absolute w-full' : 'top-full mt-1 absolute w-full',
+              )}
+              style={{ zIndex: 50 }}
             >
-              {filteredOptions.length === 0 ? (
-                <div className="p-2 text-foreground/50 text-center">Aucune option trouvée</div>
-              ) : (
-                filteredOptions.map(option => {
-                  const isSelected = option.value === value;
-                  return (
-                    <div
-                      key={option.value}
-                      className={optionClassName(isSelected)}
-                      onClick={() => handleSelect(option.value)}
-                      role="option"
-                      aria-selected={isSelected}
-                    >
-                      <span className={cn(isSelected && 'font-medium text-primary')}>{option.label}</span>
-                      {isSelected && <IconCheck size={18} className="text-primary" />}
-                    </div>
-                  );
-                })
+              <div
+                id={`${id}-options`}
+                ref={optionsRef}
+                className="w-full bg-background border border-foreground/20 rounded-lg shadow-lg overflow-auto"
+                style={{ maxHeight: maxItems ? `${maxItems * 40}px` : '202px' }}
+                role="listbox"
+              >
+                {filteredOptions.length === 0 ? (
+                  <div className="p-2 text-foreground/50 text-center">Aucune option trouvée</div>
+                ) : (
+                  filteredOptions.map((option, i) => {
+                    const isSelected = option.value === value;
+                    const isHighlighted = i === highlightedIndex;
+                    return (
+                      <div
+                        key={option.value}
+                        className={cn(optionClassName(isSelected), isHighlighted && !isSelected && 'bg-secondary/30')}
+                        onClick={() => handleSelect(option.value)}
+                        role="option"
+                        aria-selected={isSelected}
+                      >
+                        <span className={cn(isSelected && 'font-medium text-primary')}>{option.label}</span>
+                        {isSelected && <IconCheck size={18} className="text-primary" />}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              {canScrollUp && (
+                <div
+                  className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
+                  style={{ zIndex: 51 }}
+                >
+                  <IconChevronDown size={14} className="text-foreground/60 rotate-180" />
+                </div>
+              )}
+              {canScrollDown && (
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
+                  style={{ zIndex: 51 }}
+                >
+                  <IconChevronDown size={14} className="text-foreground/60" />
+                </div>
               )}
             </div>
           )}
