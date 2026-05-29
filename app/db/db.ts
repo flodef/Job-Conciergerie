@@ -7,6 +7,7 @@ import postgres from 'postgres';
  */
 export const sql = postgres(process.env.DATABASE_URL!, {
   prepare: false, // Required for Supabase connection pooling
+  max: 3, // Conservative limit for Supabase free tier
 });
 
 /**

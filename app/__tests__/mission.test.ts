@@ -54,6 +54,8 @@ afterAll(async () => {
   await deleteMission(TEST_MISSION_ID);
   await deleteMission(TEST_MISSION_ID + '-str');
   await sql`DELETE FROM homes WHERE id = ${TEST_HOME_ID}`;
+  // Close database connection to free up pool
+  await sql.end();
 });
 
 const baseMission: Omit<Mission, 'modifiedDate'> = {
