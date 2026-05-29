@@ -454,7 +454,10 @@ export default function HistoryPage() {
                 <MonthlyHoursChart
                   missions={completedMissions}
                   selectedPoint={selectedTimePeriod}
-                  onPointSelect={setSelectedTimePeriod}
+                  onPointSelect={month => {
+                    setSelectedConciergerie(null);
+                    setSelectedTimePeriod(month);
+                  }}
                   onReset={() => {
                     setSelectedTimePeriod(null);
                     setSelectedConciergerie(null);
