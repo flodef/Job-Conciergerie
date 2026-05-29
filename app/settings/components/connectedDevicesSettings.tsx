@@ -7,9 +7,18 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { labelClassName } from '@/app/utils/className';
-import { formatId, isNewDevice } from '@/app/utils/id';
+import { containsId, formatId, isNewDevice } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
-import { IconCheck, IconCopy, IconEdit, IconTrash, IconX } from '@tabler/icons-react';
+import {
+  IconCheck,
+  IconCopy,
+  IconDeviceDesktop,
+  IconDeviceMobile,
+  IconDeviceTablet,
+  IconEdit,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -23,6 +32,17 @@ const ConnectedDevicesSettings: React.FC = () => {
 
   const [storedLabels, setStoredLabels] = useLocalStorage<Device[]>('device_labels', []);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [deviceType, setDeviceType] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
+
+  useEffect(() => {
+    const isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isTablet = /iPad|Android(?!.*Mobile)|Tablet/i.test(navigator.userAgent);
+    const width = window.innerWidth;
+
+    if (isMobile || width < 768) setDeviceType('mobile');
+    else if (isTablet || (width >= 768 && width < 1024)) setDeviceType('tablet');
+    else setDeviceType('desktop');
+  }, []);
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmTargetId, setConfirmTargetId] = useState<string>();
@@ -177,7 +197,7 @@ const ConnectedDevicesSettings: React.FC = () => {
                 <button
                   onClick={saveDeviceLabel}
                   className={cn(
-                    'p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-green-600',
+                    'p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-green-600 cursor-pointer',
                     'disabled:text-gray-200 dark:disabled:text-gray-700 disabled:hover:bg-transparent disabled:cursor-not-allowed',
                   )}
                   title="Confirmer"
@@ -187,7 +207,7 @@ const ConnectedDevicesSettings: React.FC = () => {
                 </button>
                 <button
                   onClick={cancelEdit}
-                  className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-red-600"
+                  className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-red-600 cursor-pointer"
                   title="Annuler"
                 >
                   <IconX size={24} stroke={2} />
@@ -196,27 +216,44 @@ const ConnectedDevicesSettings: React.FC = () => {
             </div>
           ) : (
             <div key={item.id} className="py-4 h-[60px] flex items-center justify-between">
-              <p className={labelClassName}>
-                {item.id === currentUserId ? 'Cet appareil' : item.label || formatId(item.id)}
-                {(item.id === currentUserId || isNewDevice(item.id)) && (
-                  <span className="ml-2 text-xs bg-primary text-white px-1.5 py-0.5 rounded-full align-text-top">
-                    {item.id === currentUserId ? 'Actuel' : 'Nouveau'}
-                  </span>
-                )}
-              </p>
+              <div className="flex flex-col">
+                <p className={labelClassName}>
+                  {currentUserId && containsId([item.id], currentUserId) ? (
+                    <>
+                      <span className="font-bold">Cet appareil</span>
+                      {deviceType === 'mobile' ? (
+                        <IconDeviceMobile size={24} className="inline-block ml-2 text-foreground/50" />
+                      ) : deviceType === 'tablet' ? (
+                        <IconDeviceTablet size={24} className="inline-block ml-2 text-foreground/50" />
+                      ) : (
+                        <IconDeviceDesktop size={24} className="inline-block ml-2 text-foreground/50" />
+                      )}
+                    </>
+                  ) : (
+                    <span className="font-mono">{item.label || formatId(item.id)}</span>
+                  )}
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  {isNewDevice(item.id) && (
+                    <span className="text-xs bg-primary text-white px-1.5 py-0.5 rounded-full animate-pulse">
+                      Nouveau
+                    </span>
+                  )}
+                </div>
+              </div>
               <div className="flex space-x-2">
                 <button
                   onClick={() => copyToClipboard(item.id)}
-                  className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                   title="Copier l'ID"
                 >
                   <IconCopy size={24} stroke={1.5} />
                 </button>
-                {item.id !== currentUserId && (
+                {(!currentUserId || !containsId([item.id], currentUserId)) && (
                   <>
                     <button
                       onClick={() => handleEditDevice(item.id)}
-                      className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                       title="Modifier"
                     >
                       <IconEdit size={24} stroke={1.5} />
@@ -224,17 +261,17 @@ const ConnectedDevicesSettings: React.FC = () => {
                     {!isValidatedId(item.id) && (
                       <button
                         onClick={() => handleAcceptDevice(item.id)}
-                        className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        className="rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                         title="Valider"
                       >
-                        <IconCheck size={24} stroke={1.5} className="text-green-600" />
+                        <IconCheck size={30} stroke={2.5} className="text-green-600" />
                       </button>
                     )}
                   </>
                 )}
                 <button
                   onClick={() => handleDeleteDevice(item.id)}
-                  className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                 >
                   <IconTrash size={24} stroke={1.5} className="text-red-600" title="Supprimer" />
                 </button>

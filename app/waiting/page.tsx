@@ -12,6 +12,7 @@ import { setPrimaryColor } from '@/app/utils/color';
 import { getTimeDifference, getTimeRemaining, isElapsedTimeLessThan } from '@/app/utils/date';
 import {
   IconAlertCircle,
+  IconCheck,
   IconCircleCheck,
   IconClock,
   IconCopy,
@@ -165,15 +166,15 @@ export default function WaitingPage() {
 
   const RefreshButtons = () => (
     <div className="flex items-center justify-center">
-      <RefreshButton disabled={refreshDisabled} onRefresh={handleRefreshWithEmail} />
-      <RefreshButton shouldDisconnect disabled={isRequestLessThanMinimumWaitingTime()} />
+      <RefreshButton className="mt-0" disabled={refreshDisabled} onRefresh={handleRefreshWithEmail} />
+      <RefreshButton className="mt-0" shouldDisconnect disabled={isRequestLessThanMinimumWaitingTime()} />
       {isRequestLessThanMinimumWaitingTime() && creationDate ? (
-        <Tooltip className="mt-4" size="large" icon={IconHelpCircle}>
+        <Tooltip size="large" icon={IconHelpCircle}>
           Pour éviter le spam, vous pourrez tenter une nouvelle demande dans{' '}
           {getTimeRemaining(new Date(creationDate.getTime() + minimumWaitingTime * 60 * 1000))}
         </Tooltip>
       ) : refreshDisabled ? (
-        <Tooltip className="mt-4" size="large" icon={IconClock}>
+        <Tooltip size="large" icon={IconClock}>
           Pour éviter le spam, vous devez attendre 1 minute avant de réessayer
         </Tooltip>
       ) : null}
@@ -197,7 +198,13 @@ export default function WaitingPage() {
             </div>
 
             <p>Un email de vérification à été envoyé à l&apos;adresse email associée à votre conciergerie.</p>
-            <p>Veuillez vérifier votre boîte de réception et suivre les instructions pour activer votre compte.</p>
+            <p>
+              Veuillez vérifier votre boîte de réception&nbsp;
+              <b>
+                <u>depuis cet appareil</u>
+              </b>
+              &nbsp;et suivre les instructions pour activer votre compte.
+            </p>
 
             <div className="bg-secondary/10 p-3 rounded-lg">
               <div className="flex items-center">
@@ -248,8 +255,11 @@ export default function WaitingPage() {
               <p>
                 Un email de vérification à été envoyé à l&apos;adresse email associée à votre compte.
                 <br />
-                Veuillez vérifier votre boîte de réception et suivre les instructions pour donner l&apos;accès à cet
-                appareil.
+                Veuillez vérifier votre boîte de réception&nbsp;
+                <b>
+                  <u>depuis cet appareil</u>
+                </b>
+                &nbsp;et suivre les instructions pour donner l&apos;accès à cet appareil.
               </p>
             )}
             {employee.status === 'rejected' && (
@@ -292,12 +302,18 @@ export default function WaitingPage() {
                   Pour accéder à votre compte depuis cet appareil, vous devez :
                   <ul className="list-disc list-inside">
                     <li>
-                      soit le <span className="font-semibold">valider depuis l&apos;email</span>&nbsp;envoyé sur
-                      l&apos;adresse associée à votre compte
+                      soit le <span className="font-semibold">valider depuis l&apos;email</span>
+                      &nbsp;envoyé sur l&apos;adresse associée à votre compte{' '}
+                      <b>
+                        <u>depuis cet appareil</u>
+                      </b>
                     </li>
                     <li>
-                      soit l&apos;accepter depuis votre appareil déjà connecté en allant dans{' '}
-                      <span className="font-semibold">Paramètres &gt; Appareils connectés</span>.
+                      soit l&apos;accepter depuis votre appareil déjà validé en allant dans{' '}
+                      <span className="font-semibold">Paramètres &gt; Appareils connectés</span>, puis en cliquant sur
+                      l&apos;icône de validation
+                      <IconCheck size={24} stroke={3} className="text-green-600 inline-block ml-1" /> correspondant à
+                      cet appareil.
                     </li>
                   </ul>
                 </span>

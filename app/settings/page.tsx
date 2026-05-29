@@ -9,13 +9,12 @@ import ConnectedDevicesSettings from '@/app/settings/components/connectedDevices
 import EmployeeSettings from '@/app/settings/components/employeeSettings';
 import NotificationSettings from '@/app/settings/components/notificationSettings';
 import { MAX_DEVICES } from '@/app/utils/id';
-import { useLocalStorage } from '@/app/utils/localStorage';
 import packageJson from '@/package.json';
 import { IconBell, IconDevices, IconInfoCircle, IconSettings } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
 export default function Settings() {
-  const { userType, isLoading: authLoading } = useAuth();
+  const { userType, isLoading: authLoading, userData } = useAuth();
 
   const [toast, setToast] = useState<Toast>();
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -25,8 +24,7 @@ export default function Settings() {
     if (!authLoading) setHasLoadedOnce(true);
   }, [authLoading]);
 
-  // Get connected devices count for the subtitle
-  const [storedLabels] = useLocalStorage<Array<{ id: string; label?: string }>>('device_labels', []);
+  const deviceCount = userData?.id?.length ?? 0;
 
   // Data is loaded by AuthProvider, no need to fetch here
 
@@ -70,7 +68,7 @@ export default function Settings() {
     },
     {
       title: 'Appareils connectés',
-      subtitle: `${storedLabels?.length || 0}/${MAX_DEVICES}`,
+      subtitle: `${deviceCount}/${MAX_DEVICES}`,
       icon: <IconDevices size={20} />,
       content: <ConnectedDevicesSettings />,
     },
