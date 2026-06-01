@@ -58,6 +58,13 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   const [shouldShowAcceptWarning, setShouldShowAcceptWarning] = useLocalStorage('show_accept_mission_warning', true);
   const [toast, setToast] = useState<Toast>();
 
+  // Keep a ref to the latest missions so callbacks/effects with stable deps can
+  // decide whether this is an initial load (no data) vs a background refresh.
+  const missionsRef = useRef<Mission[]>([]);
+  useEffect(() => {
+    missionsRef.current = missions;
+  }, [missions]);
+
   const getLateMissions = (missions: Mission[]) => {
     const now = new Date();
     return missions.filter(mission => mission.status !== 'completed' && new Date(mission.endDateTime) < now);
@@ -119,7 +126,9 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     isFetching.current = true;
     console.warn('Loading missions from database...');
-    setIsLoading(missions.length === 0);
+    // Only show the spinner on the initial load (no data yet); background
+    // refreshes update silently. Use the ref to avoid the stale closure.
+    setIsLoading(missionsRef.current.length === 0);
 
     return fetchHomes().then(homesSuccess => {
       if (!homesSuccess) {
@@ -174,7 +183,9 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     if (authLoading || !needsRefreshMissions || !userData) return;
     if (isFetching.current) return;
     if (!navigationRoutes.includes(pathname)) return;
-    setIsLoading(true); // set synchronously to prevent empty-state flash before async fetch
+    // Only flip the spinner on synchronously when there is no data yet (initial load).
+    // Background refreshes must update silently without clearing the current view.
+    if (missionsRef.current.length === 0) setIsLoading(true);
     fetchMissionsCore();
   }, [authLoading, needsRefreshMissions, userData, pathname, fetchMissionsCore]);
 
