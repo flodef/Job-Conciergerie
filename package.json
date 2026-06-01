@@ -1,6 +1,6 @@
 {
   "name": "job-conciergerie",
-  "version": "2.122",
+  "version": "2.123",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -15,6 +15,7 @@
     "db:reset": "bash scripts/reset-dev-db.sh"
   },
   "dependencies": {
+    "@alerix/m3-loading-indicator": "latest",
     "@serwist/next": "latest",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",

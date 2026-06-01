@@ -96,7 +96,6 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const { lastFetchTime, updateFetchTime } = useFetchTime();
   const [refreshToast, setRefreshToast] = useState<{ type: ToastType; message: string } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [lastManualRefresh, setLastManualRefresh] = useState<number>(0);
   const updateAvailable = useUpdateChecker();
   const {
     showModal: showChangelog,
@@ -107,7 +106,9 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   // Handle manual refresh with rate limiting
   const handleManualRefresh = useCallback(() => {
     const now = Date.now();
-    const timeSinceLastRefresh = now - lastManualRefresh;
+    const pageKey = currentPage === Page.Missions || currentPage === Page.Calendar ? Page.Missions : Page.Homes;
+    const lastFetch = lastFetchTime[pageKey] || 0;
+    const timeSinceLastRefresh = now - lastFetch;
 
     if (timeSinceLastRefresh < MIN_REFRESH_INTERVAL) {
       const remainingSeconds = Math.ceil((MIN_REFRESH_INTERVAL - timeSinceLastRefresh) / 1000);
@@ -119,9 +120,6 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       setTimeout(() => setRefreshToast(null), 3000);
       return;
     }
-
-    // Perform refresh
-    setLastManualRefresh(now);
 
     // Refresh data based on current page
     if (currentPage === Page.Missions || currentPage === Page.Calendar) {
@@ -136,7 +134,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       message: 'Données rafraîchies avec succès !',
     });
     setTimeout(() => setRefreshToast(null), 3000);
-  }, [currentPage, fetchHomes, fetchMissions, lastManualRefresh, updateFetchTime]);
+  }, [currentPage, fetchHomes, fetchMissions, lastFetchTime, updateFetchTime]);
 
   // Intercept page refresh (F5, Ctrl+R, swipe down) and trigger app refresh instead
   useEffect(() => {

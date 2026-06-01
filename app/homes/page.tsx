@@ -1,27 +1,24 @@
 'use client';
 
 import FloatingActionButton from '@/app/components/floatingActionButton';
+import LoadingSpinner from '@/app/components/loadingSpinner';
 import SearchInput from '@/app/components/searchInput';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { Toast, ToastMessage } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { useFetchTime } from '@/app/hooks/useFetchTime';
 import HomeCard from '@/app/homes/components/homeCard';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
 import { Home } from '@/app/types/dataTypes';
-import { Page } from '@/app/utils/navigation';
-import { IconPlus, IconList, IconLayoutGrid, IconLayout } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { IconLayout, IconLayoutGrid, IconList, IconPlus } from '@tabler/icons-react';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function HomesPage() {
   const { myHomes, isLoading: homesLoading, fetchHomes } = useHomes();
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
   const { isLoading: authLoading } = useAuth();
-  const { updateFetchTime, needsRefresh } = useFetchTime();
-  const needsRefreshHomes = needsRefresh[Page.Homes];
 
   const [toast, setToast] = useState<Toast>();
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -88,11 +85,7 @@ export default function HomesPage() {
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       {/* Show loading indicator while data is loading */}
-      {!hasLoadedOnce && (
-        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      )}
+      {!hasLoadedOnce && <LoadingSpinner />}
 
       {hasLoadedOnce && myHomes.length > 0 && (
         <div className="flex items-start justify-end gap-2 mb-2">

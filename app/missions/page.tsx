@@ -2,13 +2,13 @@
 
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FloatingActionButton from '@/app/components/floatingActionButton';
+import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { useHomes } from '@/app/contexts/homesProvider';
-import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeForm from '@/app/homes/components/homeForm';
+import { useFetchTime } from '@/app/hooks/useFetchTime';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import MissionFilters, { MissionFiltersType } from '@/app/missions/components/missionFilters';
 import MissionForm from '@/app/missions/components/missionForm';
@@ -30,7 +30,6 @@ export default function Missions() {
   const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
   const { homes } = useHomes();
   const { userType, isLoading: authLoading, employeeName } = useAuth();
-  const { currentPage } = useMenuContext();
   const { updateFetchTime, needsRefresh } = useFetchTime();
   const needsRefreshMissions = needsRefresh[Page.Missions];
 
@@ -239,11 +238,7 @@ export default function Missions() {
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       {/* Show loading indicator while data is loading */}
-      {isLoading && (
-        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      )}
+      {isLoading && <LoadingSpinner />}
 
       {/* Sort controls and filter toggle - only show when not loading */}
       {!isLoading && (
