@@ -1,3 +1,7 @@
+# 2.122
+
+- **Modification date mission** : il est maintenant possible de modifier les dates d'une mission directement, si celle-ci sont avantageuses pour l'auto-entrepreneur, celui-ci est notifié et conserve sa mission
+
 # 2.118
 
 - **Historique (prestataires)** : nouvel onglet complet avec statistiques détaillées, graphiques de répartition, et filtres avancés (conciergerie, période) pour analyser les missions passées de vos prestataires
