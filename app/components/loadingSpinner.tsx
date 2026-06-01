@@ -18,11 +18,13 @@ export default function LoadingSpinner({ size = 'large', text, fullPage = true, 
   };
 
   return (
-    <div className={cn('flex flex-col items-center justify-center', fullPage ? 'h-full' : '', className)}>
+    <div
+      className={cn('flex flex-col items-center justify-center', fullPage ? 'h-[calc(100vh-10rem)]' : '', className)}
+    >
       <div
         className={cn('animate-spin rounded-full border-solid border-primary border-t-transparent', sizeClasses[size])}
       />
-      {text && <p className="mt-2 text-foreground/70">{text}</p>}
+      <p className="mt-2 text-foreground/70">{text}</p>
     </div>
   );
 }

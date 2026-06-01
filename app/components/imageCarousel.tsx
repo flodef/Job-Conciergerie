@@ -4,6 +4,7 @@ import { getStorageImageUrl } from '@/app/utils/storage';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import LoadingSpinner from './loadingSpinner';
+import M3LoadingSpinner from './m3LoadingSpinner';
 
 interface ImageCarouselProps {
   imageUrls: string | string[];
@@ -159,7 +160,7 @@ export default function ImageCarousel({
         {/* Loading spinner */}
         {showSpinner && (
           <div className="absolute inset-0 flex items-center justify-center z-10">
-            <LoadingSpinner />
+            <M3LoadingSpinner />
           </div>
         )}
       </div>

@@ -28,6 +28,11 @@ type MissionsContextType = {
   fetchMissions: () => Promise<boolean>;
   addMission: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>) => Promise<boolean>;
   updateMission: (mission: Mission) => Promise<{ success: boolean; employeeNotified: boolean }>;
+  updateMissionDateTime: (
+    id: string,
+    dates: { startDateTime?: Date; endDateTime?: Date },
+    removeEmployee: boolean,
+  ) => Promise<{ success: boolean; employeeNotified: boolean }>;
   deleteMission: (id: string) => Promise<{ success: boolean; employeeNotified: boolean }>;
   cancelMission: (id: string) => Promise<{ success: boolean; employeeNotified: boolean }>;
   acceptMission: (id: string) => Promise<{ success: boolean; employeeNotified: boolean }>;
@@ -57,6 +62,13 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [shouldShowAcceptWarning, setShouldShowAcceptWarning] = useLocalStorage('show_accept_mission_warning', true);
   const [toast, setToast] = useState<Toast>();
+
+  // Keep a ref to the latest missions so callbacks/effects with stable deps can
+  // decide whether this is an initial load (no data) vs a background refresh.
+  const missionsRef = useRef<Mission[]>([]);
+  useEffect(() => {
+    missionsRef.current = missions;
+  }, [missions]);
 
   const getLateMissions = (missions: Mission[]) => {
     const now = new Date();
@@ -119,7 +131,9 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     isFetching.current = true;
     console.warn('Loading missions from database...');
-    setIsLoading(missions.length === 0);
+    // Only show the spinner on the initial load (no data yet); background
+    // refreshes update silently. Use the ref to avoid the stale closure.
+    setIsLoading(missionsRef.current.length === 0);
 
     return fetchHomes().then(homesSuccess => {
       if (!homesSuccess) {
@@ -174,7 +188,9 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     if (authLoading || !needsRefreshMissions || !userData) return;
     if (isFetching.current) return;
     if (!navigationRoutes.includes(pathname)) return;
-    setIsLoading(true); // set synchronously to prevent empty-state flash before async fetch
+    // Only flip the spinner on synchronously when there is no data yet (initial load).
+    // Background refreshes must update silently without clearing the current view.
+    if (missionsRef.current.length === 0) setIsLoading(true);
     fetchMissionsCore();
   }, [authLoading, needsRefreshMissions, userData, pathname, fetchMissionsCore]);
 
@@ -257,6 +273,63 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     );
     if (employeeNotified)
       await EmailSender.sendMissionUpdatedEmail({}, updatedMission, home!, employee!, conciergerie!, changes);
+
+    return { success: true, employeeNotified };
+  };
+
+  // Update only the start and/or end date of a mission.
+  // When `removeEmployee` is true (the conciergerie reduced the available time), the
+  // assigned prestataire is unassigned and must accept the mission again.
+  // Otherwise (extra time granted) the prestataire keeps the mission and is simply notified.
+  const updateMissionDateTime = async (
+    id: string,
+    dates: { startDateTime?: Date; endDateTime?: Date },
+    removeEmployee: boolean,
+  ) => {
+    // Only the owner conciergerie can change the dates
+    const existingMission = missions.find(m => m.id === id && m.conciergerieName === conciergerieName);
+    if (!existingMission) return { success: false, employeeNotified: false };
+
+    const newStart = dates.startDateTime ?? new Date(existingMission.startDateTime);
+    const newEnd = dates.endDateTime ?? new Date(existingMission.endDateTime);
+
+    // The employee assigned before the change (used for notification)
+    const employee = findEmployee(existingMission.employeeId);
+    const home = homes.find(h => h.id === existingMission.homeId);
+    const conciergerie = findConciergerie(existingMission.conciergerieName);
+
+    const updatedMission: Mission = {
+      ...existingMission,
+      startDateTime: newStart,
+      endDateTime: newEnd,
+      modifiedDate: new Date(),
+      employeeId: removeEmployee ? null : existingMission.employeeId,
+      status: removeEmployee ? null : existingMission.status,
+    };
+
+    const success = await setMissionData(id, updatedMission);
+    if (!success) return { success: false, employeeNotified: false };
+
+    // Nothing to notify if there was no assigned prestataire
+    if (!employee || !home || !conciergerie) return { success: true, employeeNotified: false };
+
+    let employeeNotified = false;
+    if (removeEmployee) {
+      // Less time: the prestataire loses the mission and must accept it again
+      employeeNotified = !!employee.notificationSettings?.missionsCanceled;
+      if (employeeNotified)
+        await EmailSender.sendMissionRemovedEmail({}, existingMission, home, employee, conciergerie, 'canceled');
+    } else {
+      // More time: the prestataire keeps the mission and gains extra time
+      const changes: string[] = [
+        'Bonne nouvelle : vous disposez de plus de temps pour réaliser cette mission, qui reste à votre charge.',
+      ];
+      if (dates.startDateTime) changes.push(`Nouvelle date/heure de début: ${formatDateTime(newStart)}`);
+      if (dates.endDateTime) changes.push(`Nouvelle date/heure de fin: ${formatDateTime(newEnd)}`);
+      employeeNotified = !!employee.notificationSettings?.missionChanged;
+      if (employeeNotified)
+        await EmailSender.sendMissionUpdatedEmail({}, updatedMission, home, employee, conciergerie, changes);
+    }
 
     return { success: true, employeeNotified };
   };
@@ -477,6 +550,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         fetchMissions,
         addMission,
         updateMission,
+        updateMissionDateTime,
         deleteMission,
         cancelMission,
         acceptMission,

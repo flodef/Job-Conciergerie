@@ -1,6 +1,7 @@
 'use client';
 
 import ConfirmationModal from '@/app/components/confirmationModal';
+import DateTimeInput from '@/app/components/dateTimeInput';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import Switch from '@/app/components/switch';
@@ -16,7 +17,7 @@ import MissionCompletionModal from '@/app/missions/components/missionCompletionM
 import MissionForm from '@/app/missions/components/missionForm';
 import { Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
-import { formatDateTime, getDateRangeDifference } from '@/app/utils/date';
+import { formatDateTime, getDateRangeDifference, localISOString } from '@/app/utils/date';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { useImageCache } from '@/app/hooks/useImageCache';
 import { calculateMissionPoints, formatHour, getTaskPoints } from '@/app/utils/task';
@@ -27,13 +28,14 @@ import {
   IconInfoCircle,
   IconListCheck,
   IconMail,
+  IconPencil,
   IconPhone,
   IconStopwatch,
   IconUserCheck,
   IconUsersGroup,
   IconZoomScan,
 } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
+import { cn, errorClassName, inputFieldClassName } from '@/app/utils/className';
 import { useMemo, useState } from 'react';
 
 type MissionDetailsProps = {
@@ -79,6 +81,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     startMission,
     completeMission,
     setShouldShowAcceptWarning,
+    updateMissionDateTime,
   } = useMissions();
   const { userType, conciergerieName, findConciergerie, findEmployee } = useAuth();
   const { homes } = useHomes();
@@ -97,6 +100,13 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Date edit state - allows the conciergerie to adjust only the start or end date
+  const [dateEditField, setDateEditField] = useState<'start' | 'end' | undefined>(undefined);
+  const [dateEditValue, setDateEditValue] = useState('');
+  const [dateEditError, setDateEditError] = useState('');
+  const [pendingDateChange, setPendingDateChange] = useState<{ startDateTime?: Date; endDateTime?: Date } | null>(null);
+  const [isReduceTimeWarningOpen, setIsReduceTimeWarningOpen] = useState(false);
 
   // Get the conciergerie from the mission data
   const conciergerie = useMemo(
@@ -200,6 +210,83 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
       });
       if (!isSuccess) setIsSubmitting(false);
     });
+  };
+
+  // Open the date editor for a specific field, pre-filled with the current value
+  const openDateEditor = (field: 'start' | 'end') => {
+    setDateEditError('');
+    setDateEditValue(localISOString(new Date(field === 'start' ? mission.startDateTime : mission.endDateTime)));
+    setDateEditField(field);
+  };
+
+  // Apply the date change in DB and notify the prestataire accordingly
+  const performDateChange = (dates: { startDateTime?: Date; endDateTime?: Date }, removeEmployee: boolean) => {
+    setIsSubmitting(true);
+    updateMissionDateTime(mission.id, dates, removeEmployee).then(({ success, employeeNotified }) => {
+      setToast({
+        type: success ? ToastType.Success : ToastType.Error,
+        message: success
+          ? removeEmployee
+            ? employeeNotified
+              ? 'Date modifiée ! Le prestataire a été retiré et notifié.'
+              : 'Date modifiée ! Le prestataire a été retiré de la mission.'
+            : employeeNotified
+              ? 'Date modifiée ! Le prestataire a été informé de son temps supplémentaire.'
+              : 'Date modifiée avec succès !'
+          : 'Erreur lors de la modification de la date',
+      });
+      if (!success) setIsSubmitting(false);
+    });
+  };
+
+  // Decide whether the change grants more time (keep prestataire) or reduces it (warn + remove)
+  const proceedDateChange = (dates: { startDateTime?: Date; endDateTime?: Date }, isMoreTime: boolean) => {
+    setDateEditField(undefined);
+    if (mission.employeeId && !isMoreTime) {
+      // Reducing the prestataire's time on an accepted mission - warn before removing them
+      setPendingDateChange(dates);
+      setIsReduceTimeWarningOpen(true);
+    } else {
+      // Extra time (or no prestataire assigned) - keep the prestataire
+      performDateChange(dates, false);
+    }
+  };
+
+  // Validate the chosen date then route to the correct flow
+  const handleDateEditConfirm = () => {
+    if (!dateEditField || !dateEditValue) return;
+    const newDate = new Date(dateEditValue);
+    if (isNaN(newDate.getTime())) {
+      setDateEditError('Date invalide');
+      return;
+    }
+
+    const currentStart = new Date(mission.startDateTime);
+    const currentEnd = new Date(mission.endDateTime);
+
+    if (dateEditField === 'start') {
+      if (newDate.getTime() === currentStart.getTime()) {
+        setDateEditField(undefined);
+        return;
+      }
+      if (newDate >= currentEnd) {
+        setDateEditError('La date de début doit être avant la date de fin.');
+        return;
+      }
+      // An earlier start grants more time to the prestataire
+      proceedDateChange({ startDateTime: newDate }, newDate < currentStart);
+    } else {
+      if (newDate.getTime() === currentEnd.getTime()) {
+        setDateEditField(undefined);
+        return;
+      }
+      if (newDate <= currentStart) {
+        setDateEditError('La date de fin doit être après la date de début.');
+        return;
+      }
+      // A later end grants more time to the prestataire
+      proceedDateChange({ endDateTime: newDate }, newDate > currentEnd);
+    }
   };
 
   if (isEditMode)
@@ -341,7 +428,18 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     <IconCalendarEvent size={16} />
                     Date de début
                   </h3>
-                  <p className="text-foreground">{formatDateTime(mission.startDateTime)}</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-foreground">{formatDateTime(mission.startDateTime)}</p>
+                    {isConciergerie && mission.status !== 'completed' && (
+                      <button
+                        onClick={() => openDateEditor('start')}
+                        className="p-1 rounded-full hover:bg-secondary/20 transition-colors cursor-pointer"
+                        title="Modifier la date de début"
+                      >
+                        <IconPencil size={20} />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -349,19 +447,30 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     <IconCalendarEvent size={16} />
                     Date de fin
                   </h3>
-                  <p className="text-foreground">{formatDateTime(mission.endDateTime)}</p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-foreground">{formatDateTime(mission.endDateTime)}</p>
+                    {isConciergerie && mission.status !== 'completed' && (
+                      <button
+                        onClick={() => openDateEditor('end')}
+                        className="p-1 rounded-full hover:bg-secondary/20 transition-colors cursor-pointer"
+                        title="Modifier la date de fin"
+                      >
+                        <IconPencil size={20} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
               <div className="relative h-24 flex items-center">
-                <div className="h-full w-0.5 bg-secondary mx-2"></div>
-                <div className="absolute top-0 left-0 w-4 h-0.5 bg-secondary -ml-1.5"></div>
-                <div className="absolute bottom-0 left-0 w-4 h-0.5 bg-secondary -ml-1.5"></div>
+                <div className="h-full w-0.5 bg-secondary -mx-1"></div>
+                <div className="absolute top-0 left-0 w-3 h-0.5 bg-secondary -ml-4"></div>
+                <div className="absolute bottom-0 left-0 w-3 h-0.5 bg-secondary -ml-4"></div>
 
-                <div className="absolute top-1/2 -translate-y-1/2 left-4">
+                <div className="absolute top-1/2 -translate-y-1/2 left-0.5">
                   <div className="flex items-center">
-                    <div className="w-4 h-0.5 bg-secondary -ml-1.5"></div>
-                    <div className="ml-0 bg-secondary px-3 py-1 rounded-full text-sm font-medium text-nowrap">
+                    <div className="w-4 h-0.5 bg-secondary -ml-1"></div>
+                    <div className="-ml-2 bg-secondary px-3 py-1 rounded-full text-sm font-medium text-nowrap">
                       {(() => {
                         const now = new Date();
                         const startDate = new Date(mission.startDateTime);
@@ -547,6 +656,52 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             title="Mission déjà acceptée"
             message="Cette mission a déjà été acceptée par un prestataire. En supprimant cette mission, elle sera retirée du planning du prestataire."
             confirmText="Continuer"
+            cancelText="Annuler"
+            isDangerous
+          />
+
+          {/* Date editing modal */}
+          <ConfirmationModal
+            isOpen={dateEditField !== undefined}
+            onConfirm={handleDateEditConfirm}
+            onCancel={() => setDateEditField(undefined)}
+            title={dateEditField === 'start' ? 'Modifier la date de début' : 'Modifier la date de fin'}
+            message=""
+            confirmText="Confirmer"
+            cancelText="Annuler"
+          >
+            <div className="mt-4">
+              <DateTimeInput
+                id={dateEditField === 'start' ? 'edit-start-date' : 'edit-end-date'}
+                label={dateEditField === 'start' ? 'Nouvelle date de début' : 'Nouvelle date de fin'}
+                value={dateEditValue}
+                onChange={setDateEditValue}
+                error={dateEditError}
+                onError={setDateEditError}
+                required
+                min={dateEditField === 'start' ? undefined : localISOString(new Date(mission.startDateTime))}
+                max={dateEditField === 'end' ? undefined : localISOString(new Date(mission.endDateTime))}
+              />
+            </div>
+          </ConfirmationModal>
+
+          {/* Warning modal when reducing time for an accepted mission */}
+          <ConfirmationModal
+            isOpen={isReduceTimeWarningOpen}
+            onConfirm={() => {
+              setIsReduceTimeWarningOpen(false);
+              if (pendingDateChange) {
+                performDateChange(pendingDateChange, true);
+                setPendingDateChange(null);
+              }
+            }}
+            onCancel={() => {
+              setIsReduceTimeWarningOpen(false);
+              setPendingDateChange(null);
+            }}
+            title="Réduction du temps de mission"
+            message="Cette modification réduira le temps alloué au prestataire. En confirmant, le prestataire sera retiré de la mission et recevra une notification par email."
+            confirmText="Confirmer"
             cancelText="Annuler"
             isDangerous
           />

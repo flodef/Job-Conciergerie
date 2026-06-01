@@ -35,6 +35,13 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   const [homes, setHomes] = useState<Home[]>([]);
   const [toast, setToast] = useState<Toast>();
 
+  // Keep a ref to the latest homes so the stable-deps fetch callback can decide
+  // whether this is an initial load (no data) vs a silent background refresh.
+  const homesRef = useRef<Home[]>([]);
+  useEffect(() => {
+    homesRef.current = homes;
+  }, [homes]);
+
   // Show all homes for employees, only conciergerie's own homes for conciergeries
   const myHomes = useMemo(
     () => (conciergerieName ? homes.filter(home => home.conciergerieName === conciergerieName) : homes),
@@ -56,7 +63,9 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
     isFetching.current = true;
     console.warn('Loading homes from database...');
-    setIsLoading(homes.length === 0);
+    // Only show the spinner on the initial load (no data yet); background
+    // refreshes update silently. Use the ref to avoid the stale closure.
+    setIsLoading(homesRef.current.length === 0);
 
     return fetchAllHomes()
       .then(fetchedHomes => {

@@ -28,6 +28,7 @@ import {
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import M3LoadingSpinner from './m3LoadingSpinner';
 
 // Map pages to their respective icons
 export const pageSettings: Record<Page, { icon: ReactNode; userType: UserType | undefined }> = {
@@ -96,7 +97,6 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const { lastFetchTime, updateFetchTime } = useFetchTime();
   const [refreshToast, setRefreshToast] = useState<{ type: ToastType; message: string } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [lastManualRefresh, setLastManualRefresh] = useState<number>(0);
   const updateAvailable = useUpdateChecker();
   const {
     showModal: showChangelog,
@@ -107,7 +107,9 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   // Handle manual refresh with rate limiting
   const handleManualRefresh = useCallback(() => {
     const now = Date.now();
-    const timeSinceLastRefresh = now - lastManualRefresh;
+    const pageKey = currentPage === Page.Missions || currentPage === Page.Calendar ? Page.Missions : Page.Homes;
+    const lastFetch = lastFetchTime[pageKey] || 0;
+    const timeSinceLastRefresh = now - lastFetch;
 
     if (timeSinceLastRefresh < MIN_REFRESH_INTERVAL) {
       const remainingSeconds = Math.ceil((MIN_REFRESH_INTERVAL - timeSinceLastRefresh) / 1000);
@@ -119,9 +121,6 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       setTimeout(() => setRefreshToast(null), 3000);
       return;
     }
-
-    // Perform refresh
-    setLastManualRefresh(now);
 
     // Refresh data based on current page
     if (currentPage === Page.Missions || currentPage === Page.Calendar) {
@@ -136,7 +135,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       message: 'Données rafraîchies avec succès !',
     });
     setTimeout(() => setRefreshToast(null), 3000);
-  }, [currentPage, fetchHomes, fetchMissions, lastManualRefresh, updateFetchTime]);
+  }, [currentPage, fetchHomes, fetchMissions, lastFetchTime, updateFetchTime]);
 
   // Intercept page refresh (F5, Ctrl+R, swipe down) and trigger app refresh instead
   useEffect(() => {
@@ -191,13 +190,20 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   }, [handleManualRefresh, isScrolled]);
 
   const isLoading = isAuthLoading || isLoadingMissions || isLoadingHomes;
-  const loadingText = isLoadingMissions
-    ? 'Chargement des missions...'
-    : isLoadingHomes
-      ? 'Chargement des biens...'
-      : !isLoading
-        ? 'Redirection...'
-        : 'Identification...';
+
+  // A single, continuous loading state spanning every phase (auth -> missions -> homes).
+  // We debounce hiding so the indicator never flickers/remounts between sequential
+  // provider loads, keeping ONE uninterrupted animation from app start to data ready.
+  const shouldShowLoading = isLoading || !userType;
+  const [displayLoading, setDisplayLoading] = useState(true);
+  useEffect(() => {
+    if (shouldShowLoading) {
+      setDisplayLoading(true);
+      return;
+    }
+    const timeout = setTimeout(() => setDisplayLoading(false), 250);
+    return () => clearTimeout(timeout);
+  }, [shouldShowLoading]);
 
   useEffect(() => {
     // Check if current path is a navigation page and track scroll position
@@ -322,13 +328,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
             isNavigationPage && !!userType && 'pb-16',
           )}
         >
-          {isNavigationPage && (isLoading || !userType) ? (
-            <LoadingSpinner text={loadingText} />
-          ) : isNavigationPage ? (
-            <PageManager />
-          ) : (
-            children
-          )}
+          {isNavigationPage && displayLoading ? <M3LoadingSpinner /> : isNavigationPage ? <PageManager /> : children}
         </div>
       </main>
 

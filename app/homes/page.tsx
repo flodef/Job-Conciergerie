@@ -2,43 +2,40 @@
 
 import FloatingActionButton from '@/app/components/floatingActionButton';
 import SearchInput from '@/app/components/searchInput';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { Toast, ToastMessage } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { useFetchTime } from '@/app/hooks/useFetchTime';
 import HomeCard from '@/app/homes/components/homeCard';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
 import { Home } from '@/app/types/dataTypes';
-import { Page } from '@/app/utils/navigation';
-import { IconPlus, IconList, IconLayoutGrid, IconLayout } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { IconLayout, IconLayoutGrid, IconList, IconPlus } from '@tabler/icons-react';
+import { useEffect, useMemo, useState } from 'react';
+import M3LoadingSpinner from '../components/m3LoadingSpinner';
 
 export default function HomesPage() {
   const { myHomes, isLoading: homesLoading, fetchHomes } = useHomes();
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
   const { isLoading: authLoading } = useAuth();
-  const { updateFetchTime, needsRefresh } = useFetchTime();
-  const needsRefreshHomes = needsRefresh[Page.Homes];
 
   const [toast, setToast] = useState<Toast>();
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [selectedHome, setSelectedHome] = useState<Home | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Reset unsaved changes when navigating to this page
-  useEffect(() => {
-    setHasUnsavedChanges(false);
-  }, [setHasUnsavedChanges, currentPage]);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   // Track when initial load completes
   useEffect(() => {
     if (!authLoading && !homesLoading) setHasLoadedOnce(true);
   }, [authLoading, homesLoading]);
+
+  // Reset unsaved changes when navigating to this page
+  useEffect(() => {
+    setHasUnsavedChanges(false);
+  }, [setHasUnsavedChanges, currentPage]);
 
   // Filter homes by the current conciergerie
   const filteredHomes = useMemo(
@@ -83,18 +80,13 @@ export default function HomesPage() {
 
   const [displayMode, setDisplayMode] = useState<'list' | 'grid' | 'thumb'>('thumb');
 
+  if (!hasLoadedOnce) return <M3LoadingSpinner />;
+
   return (
     <div className="bg-background min-h-full px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      {/* Show loading indicator while data is loading */}
-      {!hasLoadedOnce && (
-        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      )}
-
-      {hasLoadedOnce && myHomes.length > 0 && (
+      {myHomes.length > 0 && (
         <div className="flex items-start justify-end gap-2 mb-2">
           {myHomes.length > 1 && (
             <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
@@ -134,7 +126,7 @@ export default function HomesPage() {
         </div>
       )}
 
-      {hasLoadedOnce && filteredHomes.length === 0 && searchTerm === '' ? (
+      {filteredHomes.length === 0 && searchTerm === '' ? (
         <div
           className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8 cursor-pointer"
           onClick={handleAddHome}

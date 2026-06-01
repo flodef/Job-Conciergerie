@@ -4,11 +4,10 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import FloatingActionButton from '@/app/components/floatingActionButton';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { useHomes } from '@/app/contexts/homesProvider';
-import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeForm from '@/app/homes/components/homeForm';
+import { useFetchTime } from '@/app/hooks/useFetchTime';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import MissionFilters, { MissionFiltersType } from '@/app/missions/components/missionFilters';
 import MissionForm from '@/app/missions/components/missionForm';
@@ -25,12 +24,12 @@ import {
 } from '@/app/utils/missionFilters';
 import { Page } from '@/app/utils/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import M3LoadingSpinner from '../components/m3LoadingSpinner';
 
 export default function Missions() {
   const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
   const { homes } = useHomes();
   const { userType, isLoading: authLoading, employeeName } = useAuth();
-  const { currentPage } = useMenuContext();
   const { updateFetchTime, needsRefresh } = useFetchTime();
   const needsRefreshMissions = needsRefresh[Page.Missions];
 
@@ -39,13 +38,10 @@ export default function Missions() {
 
   // Track when initial load completes
   useEffect(() => {
-    if (!authLoading && !missionsLoading && missions.length >= 0) {
+    if (!authLoading && !missionsLoading) {
       setHasLoadedOnce(true);
     }
   }, [authLoading, missionsLoading, missions.length]);
-
-  // Show loading until initial load completes
-  const isLoading = !hasLoadedOnce;
 
   // Modal states - must be declared before any conditional returns
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -234,78 +230,65 @@ export default function Missions() {
     selectedZones.length > 0 ||
     selectedEmployees.length > 0;
 
+  if (!hasLoadedOnce) return <M3LoadingSpinner />;
+
   return (
     <div className="bg-background min-h-full px-4 pb-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
+      {/* Sort controls and filter toggle */}
+      <MissionSortControls
+        sortField={sortField}
+        sortDirection={sortDirection}
+        changeSortField={changeSortField}
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+        hasActiveFilters={hasActiveFilters}
+        filteredMissionsCount={filteredMissions.length}
+      />
+      {/* Content */}
+      <>
+        {/* Filter panel */}
+        {showFilters && (
+          <div className="mb-4">
+            <MissionFilters
+              availableConciergeries={availableConciergeries}
+              availableZones={availableZones}
+              availableTimePeriods={availableTimePeriods}
+              availableEmployees={availableEmployees}
+              selectedConciergeries={selectedConciergeries}
+              setSelectedConciergeries={setSelectedConciergeries}
+              selectedStatuses={selectedStatuses}
+              setSelectedStatuses={setSelectedStatuses}
+              selectedMissionStatuses={selectedMissionStatuses}
+              setSelectedMissionStatuses={setSelectedMissionStatuses}
+              selectedZones={selectedZones}
+              setSelectedZones={setSelectedZones}
+              selectedEmployees={selectedEmployees}
+              setSelectedEmployees={setSelectedEmployees}
+              saveFiltersToLocalStorage={saveFiltersToLocalStorage}
+              savedFilters={savedFilters}
+            />
+          </div>
+        )}
 
-      {/* Show loading indicator while data is loading */}
-      {isLoading && (
-        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      )}
-
-      {/* Sort controls and filter toggle - only show when not loading */}
-      {!isLoading && (
-        <MissionSortControls
-          sortField={sortField}
-          sortDirection={sortDirection}
-          changeSortField={changeSortField}
+        {/* Mission list */}
+        <MissionList
+          groupedMissions={groupedMissions}
+          collapsedCategories={collapsedCategories}
+          setCollapsedCategories={setCollapsedCategories}
+          setSelectedMission={setSelectedMission}
           showFilters={showFilters}
-          setShowFilters={setShowFilters}
-          hasActiveFilters={hasActiveFilters}
-          filteredMissionsCount={filteredMissions.length}
+          userType={userType}
+          handleAddMission={handleAddMission}
+          setIsEditModalOpen={setIsEditModalOpen}
+          sortField={sortField}
+          isLoading={false}
         />
-      )}
-
-      {/* Content - only show when not loading */}
-      {!isLoading && (
-        <>
-          {/* Filter panel */}
-          {showFilters && (
-            <div className="mb-4">
-              <MissionFilters
-                availableConciergeries={availableConciergeries}
-                availableZones={availableZones}
-                availableTimePeriods={availableTimePeriods}
-                availableEmployees={availableEmployees}
-                selectedConciergeries={selectedConciergeries}
-                setSelectedConciergeries={setSelectedConciergeries}
-                selectedStatuses={selectedStatuses}
-                setSelectedStatuses={setSelectedStatuses}
-                selectedMissionStatuses={selectedMissionStatuses}
-                setSelectedMissionStatuses={setSelectedMissionStatuses}
-                selectedZones={selectedZones}
-                setSelectedZones={setSelectedZones}
-                selectedEmployees={selectedEmployees}
-                setSelectedEmployees={setSelectedEmployees}
-                saveFiltersToLocalStorage={saveFiltersToLocalStorage}
-                savedFilters={savedFilters}
-              />
-            </div>
-          )}
-
-          {/* Mission list */}
-          <MissionList
-            groupedMissions={groupedMissions}
-            collapsedCategories={collapsedCategories}
-            setCollapsedCategories={setCollapsedCategories}
-            setSelectedMission={setSelectedMission}
-            showFilters={showFilters}
-            userType={userType}
-            handleAddMission={handleAddMission}
-            setIsEditModalOpen={setIsEditModalOpen}
-            sortField={sortField}
-            isLoading={false}
-          />
-        </>
-      )}
-
+      </>
       {/* Only show the floating action button for conciergerie users */}
       {(filteredMissions.length > 0 || showFilters) && userType === 'conciergerie' && (
         <FloatingActionButton onClick={handleAddMission} />
       )}
-
       {/* Mission details modal */}
       {/* Edit mission modal */}
       {missions.find(m => m.id === selectedMission) &&
@@ -324,10 +307,8 @@ export default function Missions() {
             mode="edit"
           />
         ))}
-
       {/* Add mission modal */}
       {isAddModalOpen && <MissionForm onClose={() => setIsAddModalOpen(false)} mode="add" />}
-
       {/* Add home modal */}
       {isAddHomeModalOpen && (
         <HomeForm
@@ -341,7 +322,6 @@ export default function Missions() {
           mode="add"
         />
       )}
-
       {/* No homes confirmation modal */}
       {isNoHomesModalOpen && (
         <ConfirmationModal
