@@ -9,6 +9,7 @@ import { fallbackImage, getStorageFileName, getStorageImageUrl } from '@/app/uti
 import { IconCheck, IconPhotoPlus, IconX } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
 import React, { useEffect, useRef, useState } from 'react';
+import M3LoadingSpinner from './m3LoadingSpinner';
 
 // --- Constants ---
 const MAX_FILE_SIZE_MB = 5;
@@ -404,7 +405,7 @@ const ImageUploader = React.forwardRef<
               {img.uploadStatus !== 'pending' && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-xs rounded-lg">
                   {img.uploadStatus === 'uploading' ? (
-                    <LoadingSpinner size="large" fullPage={false} className="text-white" />
+                    <M3LoadingSpinner size="large" fullPage={false} color="#ffffff" />
                   ) : (
                     <div
                       className={cn(

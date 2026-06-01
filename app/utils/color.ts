@@ -10,6 +10,11 @@ import colorOptions from '@/app/data/colors.json';
 export const defaultPrimaryColor = 'var(--color-default)';
 
 /**
+ * Default HTML color (fallback for SSR)
+ */
+export const defaultHTMLColor = '#00bba7';
+
+/**
  * Get the color value from colors.json based on colorName
  */
 export const getColorValueByName = (colorName: string | undefined): string => {

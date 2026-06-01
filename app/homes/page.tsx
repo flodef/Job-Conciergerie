@@ -1,7 +1,6 @@
 'use client';
 
 import FloatingActionButton from '@/app/components/floatingActionButton';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import SearchInput from '@/app/components/searchInput';
 import { Toast, ToastMessage } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
@@ -14,6 +13,7 @@ import { Home } from '@/app/types/dataTypes';
 import { cn } from '@/app/utils/className';
 import { IconLayout, IconLayoutGrid, IconList, IconPlus } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
+import M3LoadingSpinner from '../components/m3LoadingSpinner';
 
 export default function HomesPage() {
   const { myHomes, isLoading: homesLoading, fetchHomes } = useHomes();
@@ -21,21 +21,21 @@ export default function HomesPage() {
   const { isLoading: authLoading } = useAuth();
 
   const [toast, setToast] = useState<Toast>();
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [selectedHome, setSelectedHome] = useState<Home | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Reset unsaved changes when navigating to this page
-  useEffect(() => {
-    setHasUnsavedChanges(false);
-  }, [setHasUnsavedChanges, currentPage]);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   // Track when initial load completes
   useEffect(() => {
     if (!authLoading && !homesLoading) setHasLoadedOnce(true);
   }, [authLoading, homesLoading]);
+
+  // Reset unsaved changes when navigating to this page
+  useEffect(() => {
+    setHasUnsavedChanges(false);
+  }, [setHasUnsavedChanges, currentPage]);
 
   // Filter homes by the current conciergerie
   const filteredHomes = useMemo(
@@ -80,14 +80,13 @@ export default function HomesPage() {
 
   const [displayMode, setDisplayMode] = useState<'list' | 'grid' | 'thumb'>('thumb');
 
+  if (!hasLoadedOnce) return <M3LoadingSpinner />;
+
   return (
     <div className="bg-background min-h-full px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      {/* Show loading indicator while data is loading */}
-      {!hasLoadedOnce && <LoadingSpinner />}
-
-      {hasLoadedOnce && myHomes.length > 0 && (
+      {myHomes.length > 0 && (
         <div className="flex items-start justify-end gap-2 mb-2">
           {myHomes.length > 1 && (
             <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
@@ -127,7 +126,7 @@ export default function HomesPage() {
         </div>
       )}
 
-      {hasLoadedOnce && filteredHomes.length === 0 && searchTerm === '' ? (
+      {filteredHomes.length === 0 && searchTerm === '' ? (
         <div
           className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8 cursor-pointer"
           onClick={handleAddHome}
