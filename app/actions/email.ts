@@ -68,12 +68,12 @@ async function deliver(
 
   if (!isProd) {
     console.log(`[DEV] Email skipped (not prod) — type: ${type}, to: ${to}, subject: ${email.subject}`);
-    await insertEmailLog(type, to, (email.subject as string) ?? null, true, 'dev: not sent');
+    await insertEmailLog(type, to, (email.subject as string) ?? null, true, 'dev: not sent', email.html as string);
     return true;
   }
 
   const { success, error } = await sendEmail(email);
-  await insertEmailLog(type, to, (email.subject as string) ?? null, success, error);
+  await insertEmailLog(type, to, (email.subject as string) ?? null, success, error, email.html as string);
   if (!success && !isRetry) await insertFailedEmail(type, payload, error);
 
   return success;
@@ -103,7 +103,7 @@ function composeConciergerieVerificationEmail(conciergerie: Conciergerie, userId
   const verificationUrl = baseUrl + `/${userId}`;
   return {
     to: conciergerie.email,
-    subject: 'Vérification de votre compte conciergerie',
+    subject: '🔐 Vérification de votre compte conciergerie',
     html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333;">Vérification de votre compte conciergerie</h2>
@@ -127,7 +127,7 @@ function composeConciergerieVerificationEmail(conciergerie: Conciergerie, userId
 function composeEmployeeRegistrationEmail(conciergerie: Conciergerie, employee: Employee): SendMailOptions {
   return {
     to: conciergerie.email,
-    subject: "Nouvelle demande d'inscription employé",
+    subject: "👤 Nouvelle demande d'inscription employé",
     html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333;">Nouvelle demande d'inscription employé</h2>
@@ -156,7 +156,7 @@ function composeEmployeeRegistrationEmail(conciergerie: Conciergerie, employee: 
 function composeNewDeviceNotificationEmail(employee: Employee, userId: string): SendMailOptions {
   return {
     to: employee.email,
-    subject: 'Nouvel appareil connecté sur Job Conciergerie',
+    subject: '📱 Nouvel appareil connecté sur Job Conciergerie',
     html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #4a5568;">Nouvel appareil détecté</h2>
@@ -202,20 +202,20 @@ function composeEmployeeAcceptanceEmail(
   const status = isAccepted ? 'accepted' : wasAccepted ? 'removed' : 'rejected';
   switch (status) {
     case 'accepted': // Case 1 — New employee accepted
-      title = 'Acceptation de votre inscription';
+      title = '✅ Acceptation de votre inscription';
       statusText = 'retenue';
       extraHtml = `<p>Vous pouvez dès à présent vous connecter à l&apos;application</p>
         <p><a href="${baseUrl}" style="display:inline-block;background-color:#4F46E5;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Accéder à l&apos;application</a></p>
         <p>Ou copiez ce lien dans votre navigateur :</p><p>${baseUrl}</p>`;
       break;
     case 'rejected': // Case 2 — New employee rejected
-      title = 'Refus de votre inscription';
+      title = '❌ Refus de votre inscription';
       statusText = 'refusée';
       extraHtml = `<p>Vous n&apos;aurez plus accès à l&apos;application.</p>
         <p>Nous vous remercions pour l&apos;intérêt que vous avez porté à notre service et vous souhaitons une bonne continuation.</p>`;
       break;
     case 'removed': // Case 3 — Existing employee removed
-      title = 'Arrêt de votre inscription';
+      title = '🚫 Arrêt de votre inscription';
       statusText = 'arrêtée';
       extraHtml =
         (missionsCount > 0
@@ -225,7 +225,7 @@ function composeEmployeeAcceptanceEmail(
         <p>Nous vous remercions pour l&apos;intérêt que vous avez porté à notre service et vous souhaitons une bonne continuation.</p>`;
       break;
     default: // Invalid combo (should never happen in UI)
-      title = 'Mise à jour de votre inscription';
+      title = '🔄 Mise à jour de votre inscription';
       statusText = 'mise à jour';
       console.warn('Unexpected acceptance state: isAccepted=true & wasAccepted=true');
   }
@@ -274,7 +274,7 @@ function composeMissionStatusChangeEmail(
 
   return {
     to: conciergerie.email,
-    subject: `Mission ${statusAction}e - ${home.title}`,
+    subject: `📋 Mission ${statusAction}e - ${home.title}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">Statut de mission mis à jour</h2>
