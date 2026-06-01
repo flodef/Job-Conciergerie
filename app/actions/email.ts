@@ -4,8 +4,9 @@ import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { insertFailedEmail } from '@/app/db/failedEmailsDb';
 import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
-import nodemailer, { SendMailOptions } from 'nodemailer';
+import { extractSupabaseProjectId } from '@/app/utils/supabaseUtils';
 import packageJson from '@/package.json';
+import nodemailer, { SendMailOptions } from 'nodemailer';
 
 // Configure nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -19,13 +20,9 @@ const transporter = nodemailer.createTransport({
 });
 
 // Detect prod by comparing the project ID in NEXT_PUBLIC_SUPABASE_URL and DATABASE_URL.
-// Handles both direct (db.xxx.supabase.co) and pooler (postgres.xxx@...pooler.supabase.com) URLs.
-function extractSupabaseProjectId(url: string): string | null {
-  return url.match(/([a-z0-9]+)\.supabase\.co/)?.[1] ?? url.match(/postgres\.([a-z0-9]+)@/)?.[1] ?? null;
-}
+// Extracts the project ID from NEXT_PUBLIC_SUPABASE_URL and checks if it's present in DATABASE_URL.
 const supabaseProjectId = extractSupabaseProjectId(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '');
-const dbProjectId = extractSupabaseProjectId(process.env.DATABASE_URL ?? '');
-const isProd = !!supabaseProjectId && supabaseProjectId === dbProjectId;
+const isProd = (!!supabaseProjectId && process.env.DATABASE_URL?.includes(supabaseProjectId)) ?? false;
 
 // Low-level SMTP send - returns { success, error }
 async function sendEmail(email: SendMailOptions): Promise<{ success: boolean; error?: string }> {
