@@ -285,3 +285,89 @@ export const isSameMonthYear = (date: Date, monthKey: string): boolean => {
   const [year, month] = monthKey.split('-');
   return date.getFullYear() === parseInt(year) && date.getMonth() === parseInt(month) - 1;
 };
+
+/**
+ * Get minimum start date (now - 59 seconds to allow selecting current minute)
+ */
+export const getMinStartDate = (): Date => {
+  const now = new Date();
+  return now;
+};
+
+/**
+ * Get minimum end date (now + 1 hour)
+ */
+export const getMinEndDate = (): Date => {
+  const now = new Date();
+  now.setHours(now.getHours() + 1);
+  return now;
+};
+
+const oneHour = 3600000;
+
+/**
+ * Handle start date change with auto-adjustment of end date
+ * @param newStartDate The new start date string
+ * @param currentStartDate The current start date string
+ * @param currentEndDate The current end date string
+ * @returns Object with new start date and optionally adjusted end date
+ */
+export const handleMissionStartDateChange = (
+  newStartDate: string,
+  currentStartDate: string,
+  currentEndDate: string,
+): { startDateTime: string; endDateTime: string } => {
+  const startDate = new Date(newStartDate);
+  const minStart = getMinStartDate();
+  const finalStart = startDate < minStart ? minStart : startDate;
+
+  const currentStart = new Date(currentStartDate);
+  const currentEnd = new Date(currentEndDate);
+  const gap = currentEnd.getTime() - currentStart.getTime();
+  const isIncreasing = startDate.getTime() > currentStart.getTime();
+
+  let finalEnd = currentEndDate;
+  if (isIncreasing && gap <= oneHour) {
+    const newEndDate = new Date(finalStart.getTime() + oneHour);
+    finalEnd = localISOString(newEndDate);
+  }
+
+  return {
+    startDateTime: localISOString(finalStart),
+    endDateTime: finalEnd,
+  };
+};
+
+/**
+ * Handle end date change with auto-adjustment of start date
+ * @param newEndDate The new end date string
+ * @param currentStartDate The current start date string
+ * @param currentEndDate The current end date string
+ * @returns Object with new end date and optionally adjusted start date
+ */
+export const handleMissionEndDateChange = (
+  newEndDate: string,
+  currentStartDate: string,
+  currentEndDate: string,
+): { startDateTime: string; endDateTime: string } => {
+  const endDate = new Date(newEndDate);
+  const minEnd = getMinEndDate();
+  const finalEnd = endDate < minEnd ? minEnd : endDate;
+
+  const currentStart = new Date(currentStartDate);
+  const currentEnd = new Date(currentEndDate);
+  const gap = finalEnd.getTime() - currentStart.getTime();
+  const isDecreasing = endDate.getTime() < currentEnd.getTime();
+
+  let finalStart = currentStartDate;
+  if (isDecreasing && gap <= oneHour) {
+    const newStartDate = new Date(finalEnd.getTime() - oneHour);
+    const minStart = getMinStartDate();
+    finalStart = localISOString(newStartDate < minStart ? minStart : newStartDate);
+  }
+
+  return {
+    startDateTime: finalStart,
+    endDateTime: localISOString(finalEnd),
+  };
+};

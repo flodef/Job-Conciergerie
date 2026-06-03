@@ -18,6 +18,7 @@ interface DateTimeInputProps {
   className?: string;
   row?: boolean;
   tooltip?: ReactNode;
+  minimal?: boolean;
 }
 
 const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTimeInputProps> = (
@@ -36,6 +37,7 @@ const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTim
     className = '',
     row = false,
     tooltip,
+    minimal = false,
   },
   ref,
 ) => {
@@ -53,7 +55,11 @@ const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTim
         value={value}
         onChange={e => handleChange(e, onChange, onError)}
         onBlur={onBlur ? () => onBlur(value) : undefined}
-        className={inputFieldClassName(error)}
+        className={
+          minimal
+            ? 'bg-transparent text-foreground outline-none cursor-pointer text-base [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none'
+            : inputFieldClassName(error)
+        }
         disabled={disabled}
         required={required}
         min={min}

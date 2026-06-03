@@ -13,7 +13,16 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission, Task } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
-import { adjustMissionDateTime, getMissionDateTime, localISOString, minimumMissionTime } from '@/app/utils/date';
+import {
+  adjustMissionDateTime,
+  getMissionDateTime,
+  getMinEndDate,
+  getMinStartDate,
+  handleMissionEndDateChange,
+  handleMissionStartDateChange,
+  localISOString,
+  minimumMissionTime,
+} from '@/app/utils/date';
 import { handleChange } from '@/app/utils/form';
 import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -272,22 +281,14 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
   // Handle start date change - just update value and end date, no validation
   const handleStartDateChange = (value: string) => {
-    setStartDateTime(value);
-
-    // Create a new Date object from the selected start date
-    const startDate = new Date(value);
-
-    // Add minimum mission time to the start date for the minimum end date
-    const minEndDate = new Date(startDate);
-    minEndDate.setHours(minEndDate.getHours() + minimumMissionTime);
-
-    // Format the minimum end date as an ISO string for the input
-    const minEndDateString = localISOString(minEndDate);
-
-    // If end date is before the minimum end date or empty, set it to the minimum end date
-    if (endDateTime < minEndDateString || !endDateTime) {
-      setEndDateTime(minEndDateString);
-    }
+    const { startDateTime: newStart, endDateTime: newEnd } = handleMissionStartDateChange(
+      value,
+      startDateTime,
+      endDateTime,
+    );
+    setStartDateTime(newStart);
+    if (newEnd !== endDateTime) setEndDateTime(newEnd);
+    if (startDateTimeError) setStartDateTimeError('');
   };
 
   // Handle start date blur - validate only when leaving the field
@@ -295,14 +296,26 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
     // Validate the selected date is not in the past
     const selectedDate = new Date(value);
     const currentDate = new Date();
+    currentDate.setSeconds(currentDate.getSeconds() - 59);
 
     if (selectedDate < currentDate) {
       setStartDateTime(nowString);
       setStartDateTimeError('La date de début ne peut pas être antérieure à la date actuelle');
-      setTimeout(() => setStartDateTimeError(''), 3000);
     } else {
       setStartDateTimeError('');
     }
+  };
+
+  // Handle end date change with auto-adjustment of start date
+  const handleEndDateChange = (newEndDate: string) => {
+    const { startDateTime: newStart, endDateTime: newEnd } = handleMissionEndDateChange(
+      newEndDate,
+      startDateTime,
+      endDateTime,
+    );
+    setEndDateTime(newEnd);
+    if (newStart !== startDateTime) setStartDateTime(newStart);
+    if (endDateTimeError) setEndDateTimeError('');
   };
 
   const footer = (
@@ -311,7 +324,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       onSubmit={handleSubmit}
       onCancel={handleCancel}
       isSubmitting={isSubmitting}
-      disabled={!checkFormChanged()}
+      disabled={!checkFormChanged() || !!homeIdError || !!tasksError || !!startDateTimeError || !!endDateTimeError}
       submitType="button"
     />
   );
@@ -386,7 +399,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               onBlur={handleStartDateBlur}
               error={startDateTimeError}
               onError={setStartDateTimeError}
-              min={nowString}
+              min={localISOString(getMinStartDate())}
               disabled={isSubmitting || cannotEdit}
               required
             />
@@ -396,16 +409,10 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               label="Date et heure de fin"
               ref={endDateRef}
               value={endDateTime}
-              onChange={setEndDateTime}
+              onChange={handleEndDateChange}
               error={endDateTimeError}
               onError={setEndDateTimeError}
-              min={(() => {
-                // Calculate minimum end date (start date + 1 hour)
-                const startDate = new Date(startDateTime);
-                const minEndDate = new Date(startDate);
-                minEndDate.setHours(minEndDate.getHours() + 1);
-                return localISOString(minEndDate);
-              })()}
+              min={localISOString(getMinEndDate())}
               disabled={isSubmitting || cannotEdit}
               required
             />
