@@ -22,7 +22,7 @@ export const actionButtonClassName = 'flex flex-col items-center p-2 w-20 rounde
 
 export const buttonClassName = (type: ButtonStyle) =>
   cn(
-    'px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50',
+    'px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
     type === 'primary' && 'text-background bg-primary hover:bg-primary/80',
     type === 'secondary' && 'text-foreground bg-secondary hover:bg-secondary/80',
     type === 'dangerous' && 'text-background bg-red-500 hover:bg-red-600',
@@ -38,7 +38,7 @@ export const selectClassName = (error: boolean | string, disabled: boolean, isFo
   );
 export const inputFieldClassName = (error: boolean | string) =>
   cn(
-    'w-full px-3 py-2 rounded-lg bg-background text-foreground border-2',
+    'w-full px-3 py-2 rounded-lg bg-background text-foreground border-2 cursor-pointer',
     error ? 'border-red-500 focus-visible:outline-red-500' : 'border-secondary focus-visible:outline-primary',
   );
 export const filterButtonClassName = (shouldAppear: boolean) =>

@@ -3,7 +3,7 @@ import { cn } from '@/app/utils/className';
 
 type FormActionsProps = {
   onCancel: () => void;
-  onSubmit?: () => void;
+  onSubmit?: () => void | Promise<void>;
   isSubmitting?: boolean;
   submitText?: string;
   cancelText?: string;
@@ -33,7 +33,7 @@ export default function FormActions({
       </Button>
       <Button
         type={submitType}
-        onClick={onSubmit || (() => {})}
+        onClick={onSubmit}
         style={isDangerous ? 'dangerous' : 'primary'}
         disabled={disabled}
         loading={isSubmitting}

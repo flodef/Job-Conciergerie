@@ -169,6 +169,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   };
 
   const handleSubmit = async () => {
+    if (!checkFormChanged()) return;
     let error: ErrorField | undefined;
 
     if (!homeId.trim())
@@ -311,6 +312,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       onCancel={handleCancel}
       isSubmitting={isSubmitting}
       disabled={!checkFormChanged()}
+      submitType="button"
     />
   );
 
@@ -331,7 +333,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
           disabled={isSubmitting || isSuccess}
           footer={!isSuccess ? footer : undefined}
         >
-          <form onSubmit={handleSubmit} className="space-y-2">
+          <form className="space-y-2">
             <Combobox
               id="home-select"
               label="Bien"
@@ -363,7 +365,10 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               id="task-select"
               label="Tâches"
               ref={taskRef}
-              availableTasks={getAvailableTasks(filteredHomes.find(h => h.id === homeId)!, Object.values(Task))}
+              availableTasks={getAvailableTasks(
+                filteredHomes.find(h => h.id === homeId) || undefined,
+                Object.values(Task),
+              )}
               selectedTasks={tasks}
               onTasksChange={setTasks}
               error={tasksError}
@@ -405,33 +410,31 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               required
             />
 
-            <div>
-              <MultiSelect
-                id="prestataires-select"
-                label="Prestataires"
-                values={selectedEmployees}
-                onChange={setSelectedEmployees}
-                options={employees.map(emp => ({
-                  value: getUserKey(emp),
-                  label: getUserKey(emp),
-                }))}
-                disabled={isSubmitting || cannotEdit}
-                required
-                allOption
-                tooltip={
-                  <>
-                    {selectedEmployees.length === 0
-                      ? 'Tous les prestataires pourront voir cette mission'
-                      : 'Seuls les prestataires suivant pourront voir cette mission :'}
-                    <ul className="list-disc pl-4">
-                      {selectedEmployees.map(employeeId => (
-                        <li key={employeeId}>{employeeId}</li>
-                      ))}
-                    </ul>
-                  </>
-                }
-              />
-            </div>
+            <MultiSelect
+              id="prestataires-select"
+              label="Prestataires"
+              values={selectedEmployees}
+              onChange={setSelectedEmployees}
+              options={employees.map(emp => ({
+                value: getUserKey(emp),
+                label: getUserKey(emp),
+              }))}
+              disabled={isSubmitting || cannotEdit}
+              required
+              allOption
+              tooltip={
+                <>
+                  {selectedEmployees.length === 0
+                    ? 'Tous les prestataires pourront voir cette mission'
+                    : 'Seuls les prestataires suivant pourront voir cette mission :'}
+                  <ul className="list-disc pl-4">
+                    {selectedEmployees.map(employeeId => (
+                      <li key={employeeId}>{employeeId}</li>
+                    ))}
+                  </ul>
+                </>
+              }
+            />
 
             <ConfirmationModal
               isOpen={showConfirmDialog}

@@ -19,7 +19,7 @@ export function Button({
   loading = false,
   loadingText = 'En cours...',
 }: {
-  onClick: () => void;
+  onClick?: () => void;
   type?: ButtonType;
   style?: ButtonStyle;
   className?: string;
@@ -31,7 +31,9 @@ export function Button({
   return (
     <button
       className={cn(buttonClassName(style), className)}
-      onClick={onClick}
+      onClick={e => {
+        if (!disabled && !loading && onClick) onClick();
+      }}
       disabled={disabled || loading}
       type={type}
     >

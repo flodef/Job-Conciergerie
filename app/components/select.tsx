@@ -3,6 +3,7 @@
 import Label from '@/app/components/label';
 import { SelectOption } from '@/app/types/types';
 import {
+  cn,
   errorClassName,
   optionClassName,
   optionsClassName,
@@ -10,8 +11,8 @@ import {
   selectClassName,
 } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
+import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconChevronDown } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
 import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type SelectProps = {
@@ -53,6 +54,7 @@ const Select = forwardRef(
     const [openUpward, setOpenUpward] = useState(false);
     const selectRef = useRef<HTMLDivElement>(null);
     const optionsRef = useRef<HTMLDivElement>(null);
+    const { ref: scrollRef, canScrollUp, canScrollDown } = useScrollIndicators(isOpen);
 
     // Forward the selectRef to the parent component
     useImperativeHandle(forwardedRef, () => selectRef.current as HTMLDivElement);
@@ -184,7 +186,10 @@ const Select = forwardRef(
               }
             }}
             onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
+            onBlur={() => {
+              setIsFocused(false);
+              setIsOpen(false);
+            }}
             role="combobox"
             aria-expanded={isOpen}
             aria-haspopup="listbox"
@@ -198,24 +203,56 @@ const Select = forwardRef(
           </div>
 
           {isOpen && !disabled && (
-            <div id={`${id}-options`} ref={optionsRef} className={optionsClassName(openUpward)} role="listbox">
-              {options.map((option: string | number | SelectOption, index: number) => {
-                const optionValue = typeof option === 'object' ? option.value : option;
-                const optionLabel = typeof option === 'object' ? option.label : option;
+            <div
+              className={cn(
+                'relative',
+                openUpward ? 'bottom-full mb-1 absolute w-full' : 'top-full mt-1 absolute w-full',
+              )}
+              style={{ zIndex: 50 }}
+            >
+              <div
+                id={`${id}-options`}
+                ref={el => {
+                  optionsRef.current = el;
+                  scrollRef.current = el;
+                }}
+                className={optionsClassName(openUpward)}
+                role="listbox"
+              >
+                {options.map((option: string | number | SelectOption, index: number) => {
+                  const optionValue = typeof option === 'object' ? option.value : option;
+                  const optionLabel = typeof option === 'object' ? option.label : option;
 
-                return (
-                  <div
-                    key={optionValue}
-                    className={optionClassName(index === highlightedIndex, optionValue === value)}
-                    onClick={() => handleSelect(optionValue)}
-                    onMouseEnter={() => setHighlightedIndex(index)}
-                    role="option"
-                    aria-selected={optionValue === value}
-                  >
-                    {optionLabel}
-                  </div>
-                );
-              })}
+                  return (
+                    <div
+                      key={optionValue}
+                      className={optionClassName(index === highlightedIndex, optionValue === value)}
+                      onClick={() => handleSelect(optionValue)}
+                      onMouseEnter={() => setHighlightedIndex(index)}
+                      role="option"
+                      aria-selected={optionValue === value}
+                    >
+                      {optionLabel}
+                    </div>
+                  );
+                })}
+              </div>
+              {canScrollUp && (
+                <div
+                  className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
+                  style={{ zIndex: 51 }}
+                >
+                  <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
+                </div>
+              )}
+              {canScrollDown && (
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
+                  style={{ zIndex: 51 }}
+                >
+                  <IconChevronDown size={18} className="text-foreground/60" />
+                </div>
+              )}
             </div>
           )}
         </div>

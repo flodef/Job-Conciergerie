@@ -2,16 +2,10 @@
 
 import Label from '@/app/components/label';
 import { SelectOption } from '@/app/types/types';
-import {
-  errorClassName,
-  optionClassName,
-  optionsClassName,
-  rowClassName,
-  selectClassName,
-} from '@/app/utils/className';
+import { cn, errorClassName, optionClassName, rowClassName, selectClassName } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
+import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
 import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type ComboboxProps = {
@@ -55,6 +49,7 @@ const Combobox = forwardRef(
     const comboboxRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const optionsRef = useRef<HTMLDivElement>(null);
+    const { ref: scrollRef, canScrollUp, canScrollDown } = useScrollIndicators(isOpen);
 
     // Forward the internal inputRef to the parent component
     useImperativeHandle(forwardedRef, () => inputRef.current as HTMLInputElement);
@@ -99,15 +94,15 @@ const Combobox = forwardRef(
           e.preventDefault();
           if (highlightedIndex >= 0) {
             const selectedOption = filteredOptions[highlightedIndex];
-            const value = typeof selectedOption === 'object' ? selectedOption.label : selectedOption;
-            onChange(value.toString());
+            const optionValue = typeof selectedOption === 'object' ? selectedOption.value : selectedOption;
+            onChange(optionValue.toString());
             setSearchTerm('');
             setIsOpen(false);
           } else if (filteredOptions.length > 0) {
             // Select the first option if none is highlighted
             const selectedOption = filteredOptions[0];
-            const value = typeof selectedOption === 'object' ? selectedOption.label : selectedOption;
-            onChange(value.toString());
+            const optionValue = typeof selectedOption === 'object' ? selectedOption.value : selectedOption;
+            onChange(optionValue.toString());
             setSearchTerm('');
             setIsOpen(false);
           }
@@ -141,6 +136,17 @@ const Combobox = forwardRef(
       setSearchTerm(e.target.value);
       setIsOpen(true);
       setHighlightedIndex(-1);
+    };
+
+    const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!isOpen) {
+          checkPosition();
+          setIsOpen(true);
+          setIsFocused(true);
+        }
+      }
     };
 
     // Determine the display value based on the selected value
@@ -184,6 +190,7 @@ const Combobox = forwardRef(
               placeholder={displayValue?.toString().trim() || placeholder}
               value={isOpen ? searchTerm : displayValue}
               onChange={handleInputChange}
+              onKeyDown={handleInputKeyDown}
               onClick={() => {
                 if (!disabled) {
                   checkPosition();
@@ -192,7 +199,10 @@ const Combobox = forwardRef(
                 }
               }}
               onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
+              onBlur={() => {
+                setIsFocused(false);
+                setIsOpen(false);
+              }}
               autoComplete="off"
               disabled={disabled}
               role="combobox"
@@ -214,27 +224,58 @@ const Combobox = forwardRef(
           </div>
 
           {isOpen && !disabled && (
-            <div ref={optionsRef} className={optionsClassName(openUpward)} role="listbox">
-              {filteredOptions.length === 0 ? (
-                <div className="p-2 text-foreground/50 text-center">Aucun résultat</div>
-              ) : (
-                filteredOptions.map((option, index) => {
-                  const optionValue = typeof option === 'object' ? option.value : option;
-                  const optionLabel = typeof option === 'object' ? option.label : option;
+            <div
+              className={cn(
+                'relative',
+                openUpward ? 'bottom-full mb-1 absolute w-full' : 'top-full mt-1 absolute w-full',
+              )}
+              style={{ zIndex: 50 }}
+            >
+              <div
+                ref={el => {
+                  optionsRef.current = el;
+                  scrollRef.current = el;
+                }}
+                className="w-full bg-background border border-foreground/20 rounded-lg shadow-lg overflow-auto max-h-[202px]"
+                role="listbox"
+              >
+                {filteredOptions.length === 0 ? (
+                  <div className="p-2 text-foreground/50 text-center">Aucun résultat</div>
+                ) : (
+                  filteredOptions.map((option, index) => {
+                    const optionValue = typeof option === 'object' ? option.value : option;
+                    const optionLabel = typeof option === 'object' ? option.label : option;
 
-                  return (
-                    <div
-                      key={optionValue}
-                      className={optionClassName(index === highlightedIndex, optionValue === value)}
-                      onClick={() => handleSelect(optionValue)}
-                      onMouseEnter={() => setHighlightedIndex(index)}
-                      role="option"
-                      aria-selected={optionValue === value}
-                    >
-                      {optionLabel}
-                    </div>
-                  );
-                })
+                    return (
+                      <div
+                        key={optionValue}
+                        className={optionClassName(index === highlightedIndex, optionValue === value)}
+                        onClick={() => handleSelect(optionValue)}
+                        onMouseEnter={() => setHighlightedIndex(index)}
+                        role="option"
+                        aria-selected={optionValue === value}
+                      >
+                        {optionLabel}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              {canScrollUp && (
+                <div
+                  className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
+                  style={{ zIndex: 51 }}
+                >
+                  <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
+                </div>
+              )}
+              {canScrollDown && (
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
+                  style={{ zIndex: 51 }}
+                >
+                  <IconChevronDown size={18} className="text-foreground/60" />
+                </div>
               )}
             </div>
           )}

@@ -1,17 +1,10 @@
 'use client';
 
 import Label from '@/app/components/label';
-import {
-  errorClassName,
-  optionClassName,
-  optionsClassName,
-  rowClassName,
-  selectClassName,
-} from '@/app/utils/className';
+import { cn, errorClassName, optionClassName, rowClassName, selectClassName } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
 import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type MultiSelectOption = {
@@ -55,6 +48,7 @@ const MultiSelect = forwardRef(
     const [isOpen, setIsOpen] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const [openUpward, setOpenUpward] = useState(false);
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const selectRef = useRef<HTMLDivElement>(null);
     const { ref: optionsRef, canScrollUp, canScrollDown } = useScrollIndicators(isOpen);
 
@@ -101,6 +95,53 @@ const MultiSelect = forwardRef(
       }
     };
 
+    // Scroll highlighted option into view
+    useEffect(() => {
+      if (highlightedIndex >= 0 && optionsRef.current) {
+        const item = optionsRef.current.children[highlightedIndex] as HTMLElement;
+        item?.scrollIntoView({ block: 'nearest' });
+      }
+    }, [highlightedIndex]);
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'ArrowDown' && !isOpen) {
+        e.preventDefault();
+        checkPosition();
+        setIsOpen(true);
+        setIsFocused(true);
+        setHighlightedIndex(0);
+      } else if (e.key === 'ArrowUp' && !isOpen) {
+        e.preventDefault();
+        checkPosition();
+        setIsOpen(true);
+        setIsFocused(true);
+        setHighlightedIndex(allOptions.length - 1);
+      } else if (e.key === 'Enter' && !isOpen) {
+        e.preventDefault();
+        checkPosition();
+        setIsOpen(true);
+        setIsFocused(true);
+      } else if (e.key === 'ArrowDown' && isOpen) {
+        e.preventDefault();
+        setHighlightedIndex(i => Math.min(i + 1, allOptions.length - 1));
+      } else if (e.key === 'ArrowUp' && isOpen) {
+        e.preventDefault();
+        setHighlightedIndex(i => Math.max(i - 1, 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (isOpen && highlightedIndex >= 0) {
+          toggleOption(allOptions[highlightedIndex].value);
+        } else if (isOpen) {
+          setIsOpen(false);
+          setIsFocused(false);
+        }
+      } else if (e.key === 'Escape') {
+        setIsOpen(false);
+        setIsFocused(false);
+        setHighlightedIndex(-1);
+      }
+    };
+
     // Determine the display value based on the selected values
     const displayValue = () => {
       if (values.length === 0) return 'Tous'; // Default to "All" if nothing selected
@@ -142,7 +183,11 @@ const MultiSelect = forwardRef(
               }
             }}
             onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
+            onBlur={() => {
+              setIsFocused(false);
+              setIsOpen(false);
+            }}
+            onKeyDown={handleKeyDown}
             role="combobox"
             aria-expanded={isOpen}
             aria-haspopup="listbox"
@@ -173,17 +218,19 @@ const MultiSelect = forwardRef(
                 {allOptions.length === 0 ? (
                   <div className="p-2 text-foreground/50 text-center">Aucune option disponible</div>
                 ) : (
-                  allOptions.map(option => {
+                  allOptions.map((option, index) => {
                     const isSelected =
                       option.value === 'all'
                         ? values.length === 0
                         : values.map(v => v.toString()).includes(option.value);
+                    const isHighlighted = index === highlightedIndex;
 
                     return (
                       <div
                         key={option.value}
-                        className={optionClassName(isSelected)}
+                        className={cn(optionClassName(isSelected), isHighlighted && !isSelected && 'bg-secondary/30')}
                         onClick={() => toggleOption(option.value)}
+                        onMouseEnter={() => setHighlightedIndex(index)}
                         role="option"
                         aria-selected={isSelected}
                       >
@@ -199,7 +246,7 @@ const MultiSelect = forwardRef(
                   className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
                   style={{ zIndex: 51 }}
                 >
-                  <IconChevronDown size={14} className="text-foreground/60 rotate-180" />
+                  <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
                 </div>
               )}
               {canScrollDown && (
@@ -207,7 +254,7 @@ const MultiSelect = forwardRef(
                   className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
                   style={{ zIndex: 51 }}
                 >
-                  <IconChevronDown size={14} className="text-foreground/60" />
+                  <IconChevronDown size={18} className="text-foreground/60" />
                 </div>
               )}
             </div>

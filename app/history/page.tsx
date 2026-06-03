@@ -406,11 +406,6 @@ export default function HistoryPage() {
     };
   }, [filteredMissions]);
 
-  const handleSortChange = (field: MissionSortField, direction: SortDirection) => {
-    setSortField(field);
-    setSortDirection(direction);
-  };
-
   if (isLoading) return null;
 
   return (

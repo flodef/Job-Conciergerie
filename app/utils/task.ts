@@ -170,7 +170,8 @@ export const calculateEmployeePointsForDay = (
   }, 0);
 };
 
-export const getAvailableTasks = (home: Home, tasks = Object.values(Task)): Task[] => {
+export const getAvailableTasks = (home: Home | undefined, tasks = Object.values(Task)): Task[] => {
+  if (!home) throw new Error('Home is required');
   return tasks.filter(task => getTaskHours(home, task) > 0);
 };
 

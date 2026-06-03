@@ -138,15 +138,30 @@ const AutocompleteSelect = forwardRef(
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        if (!isOpen) handleOpen();
-        setHighlightedIndex(i => Math.min(i + 1, filteredOptions.length - 1));
+        if (!isOpen) {
+          handleOpen();
+          setHighlightedIndex(0);
+        } else {
+          setHighlightedIndex(i => Math.min(i + 1, filteredOptions.length - 1));
+        }
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setHighlightedIndex(i => Math.max(i - 1, 0));
+        if (!isOpen) {
+          handleOpen();
+          setHighlightedIndex(filteredOptions.length - 1);
+        } else {
+          setHighlightedIndex(i => Math.max(i - 1, 0));
+        }
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (highlightedIndex >= 0 && filteredOptions[highlightedIndex]) {
+        if (!isOpen) {
+          handleOpen();
+        } else if (highlightedIndex >= 0 && filteredOptions[highlightedIndex]) {
           handleSelect(filteredOptions[highlightedIndex].value);
+        } else {
+          setIsOpen(false);
+          setIsFocused(false);
+          setSearchQuery('');
         }
       } else if (e.key === 'Escape') {
         setIsOpen(false);
@@ -209,7 +224,12 @@ const AutocompleteSelect = forwardRef(
             className={selectClassName(error, isReadonly || disabled, isFocused, isOpen)}
             onClick={isReadonly ? undefined : handleOpen}
             onFocus={() => !isReadonly && setIsFocused(true)}
-            onBlur={() => !isOpen && setIsFocused(false)}
+            onBlur={() => {
+              if (!isReadonly) {
+                setIsFocused(false);
+                setIsOpen(false);
+              }
+            }}
             role={isReadonly ? undefined : 'combobox'}
             aria-expanded={isReadonly ? undefined : isOpen}
             aria-haspopup={isReadonly ? undefined : 'listbox'}
@@ -293,7 +313,7 @@ const AutocompleteSelect = forwardRef(
                   className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
                   style={{ zIndex: 51 }}
                 >
-                  <IconChevronDown size={14} className="text-foreground/60 rotate-180" />
+                  <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
                 </div>
               )}
               {canScrollDown && (
@@ -301,7 +321,7 @@ const AutocompleteSelect = forwardRef(
                   className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
                   style={{ zIndex: 51 }}
                 >
-                  <IconChevronDown size={14} className="text-foreground/60" />
+                  <IconChevronDown size={18} className="text-foreground/60" />
                 </div>
               )}
             </div>
