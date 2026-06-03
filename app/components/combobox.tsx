@@ -199,9 +199,11 @@ const Combobox = forwardRef(
                 }
               }}
               onFocus={() => setIsFocused(true)}
-              onBlur={() => {
-                setIsFocused(false);
-                setIsOpen(false);
+              onBlur={e => {
+                if (!e.relatedTarget || !comboboxRef.current?.contains(e.relatedTarget as Node)) {
+                  setIsFocused(false);
+                  setIsOpen(false);
+                }
               }}
               autoComplete="off"
               disabled={disabled}
@@ -250,7 +252,7 @@ const Combobox = forwardRef(
                       <div
                         key={optionValue}
                         className={optionClassName(index === highlightedIndex, optionValue === value)}
-                        onClick={() => handleSelect(optionValue)}
+                        onMouseDown={() => handleSelect(optionValue)}
                         onMouseEnter={() => setHighlightedIndex(index)}
                         role="option"
                         aria-selected={optionValue === value}

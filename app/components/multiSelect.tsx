@@ -183,9 +183,11 @@ const MultiSelect = forwardRef(
               }
             }}
             onFocus={() => setIsFocused(true)}
-            onBlur={() => {
-              setIsFocused(false);
-              setIsOpen(false);
+            onBlur={e => {
+              if (!e.relatedTarget || !selectRef.current?.contains(e.relatedTarget as Node)) {
+                setIsFocused(false);
+                setIsOpen(false);
+              }
             }}
             onKeyDown={handleKeyDown}
             role="combobox"
@@ -229,7 +231,7 @@ const MultiSelect = forwardRef(
                       <div
                         key={option.value}
                         className={cn(optionClassName(isSelected), isHighlighted && !isSelected && 'bg-secondary/30')}
-                        onClick={() => toggleOption(option.value)}
+                        onMouseDown={() => toggleOption(option.value)}
                         onMouseEnter={() => setHighlightedIndex(index)}
                         role="option"
                         aria-selected={isSelected}

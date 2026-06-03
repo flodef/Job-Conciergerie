@@ -224,8 +224,8 @@ const AutocompleteSelect = forwardRef(
             className={selectClassName(error, isReadonly || disabled, isFocused, isOpen)}
             onClick={isReadonly ? undefined : handleOpen}
             onFocus={() => !isReadonly && setIsFocused(true)}
-            onBlur={() => {
-              if (!isReadonly) {
+            onBlur={e => {
+              if (!isReadonly && (!e.relatedTarget || !selectRef.current?.contains(e.relatedTarget as Node))) {
                 setIsFocused(false);
                 setIsOpen(false);
               }
@@ -297,7 +297,7 @@ const AutocompleteSelect = forwardRef(
                       <div
                         key={option.value}
                         className={cn(optionClassName(isSelected), isHighlighted && !isSelected && 'bg-secondary/30')}
-                        onClick={() => handleSelect(option.value)}
+                        onMouseDown={() => handleSelect(option.value)}
                         role="option"
                         aria-selected={isSelected}
                       >
