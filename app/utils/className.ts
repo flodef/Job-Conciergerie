@@ -38,8 +38,8 @@ export const selectClassName = (error: boolean | string, disabled: boolean, isFo
   );
 export const inputFieldClassName = (error: boolean | string) =>
   cn(
-    'w-full px-3 py-2 rounded-lg bg-background text-foreground border-2 cursor-pointer',
-    error ? 'border-red-500 focus-visible:outline-red-500' : 'border-secondary focus-visible:outline-primary',
+    'w-full px-3 py-2 rounded-lg bg-background text-foreground border-2 cursor-pointer focus-visible:outline-none focus-within:outline-none',
+    error ? 'border-red-500' : 'border-secondary',
   );
 export const filterButtonClassName = (shouldAppear: boolean) =>
   cn(

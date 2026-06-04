@@ -1,5 +1,5 @@
 import Label from '@/app/components/label';
-import { errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
+import { cn, errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
 import { handleChange } from '@/app/utils/form';
 import { ForwardRefRenderFunction, ReactNode, forwardRef } from 'react';
 
@@ -57,8 +57,12 @@ const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTim
         onBlur={onBlur ? () => onBlur(value) : undefined}
         className={
           minimal
-            ? 'bg-transparent text-foreground outline-none cursor-pointer text-base [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none'
-            : inputFieldClassName(error)
+            ? 'bg-transparent text-foreground outline-none border-none focus:border-2 focus:border-primary cursor-pointer text-base pr-8 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none'
+            : cn(
+                inputFieldClassName(error),
+                'border-2',
+                '[&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0',
+              )
         }
         disabled={disabled}
         required={required}

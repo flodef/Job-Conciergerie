@@ -26,9 +26,10 @@ type HomeFormProps = {
   onCancel?: () => void;
   home?: Home;
   mode: 'add' | 'edit';
+  autoFocus?: boolean;
 };
 
-export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: HomeFormProps) {
+export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFocus = false }: HomeFormProps) {
   const { addHome, updateHome, homeExists } = useHomes();
   const { conciergerieName } = useAuth();
 
@@ -87,6 +88,13 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add' }: Home
       hoursOfGardening,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-focus title input when autoFocus is true
+  useEffect(() => {
+    if (autoFocus && titleRef.current) {
+      titleRef.current.focus();
+    }
+  }, [autoFocus]);
 
   // Check if form has been modified
   const checkFormChanged = useCallback(() => {

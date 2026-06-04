@@ -2,7 +2,7 @@
 
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
-import DateTimeInput from '@/app/components/dateTimeInput';
+import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import Label from '@/app/components/label';
@@ -71,6 +71,8 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   const { startDateTime: start, endDateTime: end } = getMissionDateTime(mission);
   const [startDateTime, setStartDateTime] = useState<string>(start);
   const [endDateTime, setEndDateTime] = useState<string>(end);
+  const [lastCommittedStart, setLastCommittedStart] = useState<string>(start);
+  const [lastCommittedEnd, setLastCommittedEnd] = useState<string>(end);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -287,7 +289,11 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       endDateTime,
     );
     setStartDateTime(newStart);
-    if (newEnd !== endDateTime) setEndDateTime(newEnd);
+    setLastCommittedStart(newStart);
+    if (newEnd !== endDateTime) {
+      setEndDateTime(newEnd);
+      setLastCommittedEnd(newEnd);
+    }
     if (startDateTimeError) setStartDateTimeError('');
   };
 
@@ -314,7 +320,11 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       endDateTime,
     );
     setEndDateTime(newEnd);
-    if (newStart !== startDateTime) setStartDateTime(newStart);
+    setLastCommittedEnd(newEnd);
+    if (newStart !== startDateTime) {
+      setStartDateTime(newStart);
+      setLastCommittedStart(newStart);
+    }
     if (endDateTimeError) setEndDateTimeError('');
   };
 
@@ -390,13 +400,17 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               required
             />
 
-            <DateTimeInput
+            <ResponsiveDateTimeInput
               id="start-date"
               label="Date et heure de début"
               ref={startDateRef}
               value={startDateTime}
               onChange={handleStartDateChange}
               onBlur={handleStartDateBlur}
+              onEscape={() => {
+                setStartDateTime(lastCommittedStart);
+                setEndDateTime(lastCommittedEnd);
+              }}
               error={startDateTimeError}
               onError={setStartDateTimeError}
               min={localISOString(getMinStartDate())}
@@ -404,12 +418,16 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
               required
             />
 
-            <DateTimeInput
+            <ResponsiveDateTimeInput
               id="end-date"
               label="Date et heure de fin"
               ref={endDateRef}
               value={endDateTime}
               onChange={handleEndDateChange}
+              onEscape={() => {
+                setStartDateTime(lastCommittedStart);
+                setEndDateTime(lastCommittedEnd);
+              }}
               error={endDateTimeError}
               onError={setEndDateTimeError}
               min={localISOString(getMinEndDate())}

@@ -1,7 +1,7 @@
 'use client';
 
 import ConfirmationModal from '@/app/components/confirmationModal';
-import DateTimeInput from '@/app/components/dateTimeInput';
+import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import Switch from '@/app/components/switch';
@@ -46,7 +46,9 @@ import {
   IconZoomScan,
 } from '@tabler/icons-react';
 import { cn, errorClassName, inputFieldClassName } from '@/app/utils/className';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import DateTimeInput from '@/app/components/dateTimeInput';
+import CustomDateTimeInput from '@/app/components/customDateTimeInput';
 
 type MissionDetailsProps = {
   mission: Mission;
@@ -115,10 +117,20 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [editingDate, setEditingDate] = useState<'start' | 'end' | null>(null);
   const [editStartDate, setEditStartDate] = useState(localISOString(new Date(mission.startDateTime)));
   const [editEndDate, setEditEndDate] = useState(localISOString(new Date(mission.endDateTime)));
+  const [lastCommittedStart, setLastCommittedStart] = useState(localISOString(new Date(mission.startDateTime)));
+  const [lastCommittedEnd, setLastCommittedEnd] = useState(localISOString(new Date(mission.endDateTime)));
   const [startDateError, setStartDateError] = useState('');
   const [endDateError, setEndDateError] = useState('');
   const [isReduceTimeWarningOpen, setIsReduceTimeWarningOpen] = useState(false);
   const [pendingDateChanges, setPendingDateChanges] = useState<{ start?: Date; end?: Date }>({});
+
+  // Sync with mission prop when it changes
+  useEffect(() => {
+    setEditStartDate(localISOString(new Date(mission.startDateTime)));
+    setEditEndDate(localISOString(new Date(mission.endDateTime)));
+    setLastCommittedStart(localISOString(new Date(mission.startDateTime)));
+    setLastCommittedEnd(localISOString(new Date(mission.endDateTime)));
+  }, [mission.startDateTime, mission.endDateTime]);
 
   // Get the conciergerie from the mission data
   const conciergerie = useMemo(
@@ -226,9 +238,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   // Start inline date editing
   const startEditingDate = (date: 'start' | 'end') => {
+    if (!isConciergerie || conciergerieName !== mission.conciergerieName) return;
     setEditingDate(date);
-    setEditStartDate(localISOString(new Date(mission.startDateTime)));
-    setEditEndDate(localISOString(new Date(mission.endDateTime)));
+    setEditStartDate(lastCommittedStart);
+    setEditEndDate(lastCommittedEnd);
     setStartDateError('');
     setEndDateError('');
   };
@@ -236,8 +249,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   // Cancel date editing - close the fullscreen modal without changes
   const cancelDateEditing = () => {
     setEditingDate(null);
-    setEditStartDate(localISOString(new Date(mission.startDateTime)));
-    setEditEndDate(localISOString(new Date(mission.endDateTime)));
+    setEditStartDate(lastCommittedStart);
+    setEditEndDate(lastCommittedEnd);
     setStartDateError('');
     setEndDateError('');
   };
@@ -260,8 +273,16 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
       });
       if (success) {
         setPendingDateChanges({});
-        setEditStartDate(localISOString(new Date(mission.startDateTime)));
-        setEditEndDate(localISOString(new Date(mission.endDateTime)));
+        const newStart = dates.startDateTime
+          ? localISOString(dates.startDateTime)
+          : localISOString(new Date(mission.startDateTime));
+        const newEnd = dates.endDateTime
+          ? localISOString(dates.endDateTime)
+          : localISOString(new Date(mission.endDateTime));
+        setEditStartDate(newStart);
+        setEditEndDate(newEnd);
+        setLastCommittedStart(newStart);
+        setLastCommittedEnd(newEnd);
       } else {
         setIsSubmitting(false);
       }
@@ -316,8 +337,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   // Cancel pending date changes and restore original values
   const handleCancelPendingDateChanges = () => {
     setPendingDateChanges({});
-    setEditStartDate(localISOString(new Date(mission.startDateTime)));
-    setEditEndDate(localISOString(new Date(mission.endDateTime)));
+    setEditStartDate(lastCommittedStart);
+    setEditEndDate(lastCommittedEnd);
     setStartDateError('');
     setEndDateError('');
   };
@@ -509,10 +530,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     <IconCalendarEvent size={16} />
                     Date de début
                   </h3>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 flex-wrap">
                     {editingDate === 'start' ? (
                       <>
-                        <DateTimeInput
+                        <ResponsiveDateTimeInput
                           id="edit-start-date"
                           label=""
                           value={editStartDate}
@@ -525,11 +546,13 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                             setEditStartDate(newStart);
                             setEditEndDate(newEnd);
                           }}
+                          onEscape={cancelDateEditing}
+                          onEnter={handleDateEditConfirm}
                           error={startDateError}
                           onError={setStartDateError}
                           required
                           min={localISOString(getMinStartDate())}
-                          className="text-sm h-[28px] content-center w-[170px]"
+                          className="text-sm h-[28px] content-center"
                           minimal
                         />
                         <button
@@ -552,7 +575,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         <p className="text-foreground mt-auto">
                           {pendingDateChanges.start
                             ? formatDateTime(pendingDateChanges.start)
-                            : formatDateTime(mission.startDateTime)}
+                            : formatDateTime(new Date(lastCommittedStart))}
                         </p>
                         {isConciergerie && mission.status !== 'completed' && (
                           <button
@@ -573,10 +596,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     <IconCalendarEvent size={16} />
                     Date de fin
                   </h3>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 flex-wrap">
                     {editingDate === 'end' ? (
                       <>
-                        <DateTimeInput
+                        <ResponsiveDateTimeInput
                           id="edit-end-date"
                           label=""
                           value={editEndDate}
@@ -589,11 +612,13 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                             setEditEndDate(newEnd);
                             setEditStartDate(newStart);
                           }}
+                          onEscape={cancelDateEditing}
+                          onEnter={handleDateEditConfirm}
                           error={endDateError}
                           onError={setEndDateError}
                           required
                           min={localISOString(getMinEndDate())}
-                          className="text-sm h-[28px] content-center w-[170px]"
+                          className="text-sm h-[28px] content-center"
                           minimal
                         />
                         <button
@@ -616,7 +641,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         <p className="text-foreground mt-auto">
                           {pendingDateChanges.end
                             ? formatDateTime(pendingDateChanges.end)
-                            : formatDateTime(mission.endDateTime)}
+                            : formatDateTime(new Date(lastCommittedEnd))}
                         </p>
                         {isConciergerie && mission.status !== 'completed' && (
                           <button

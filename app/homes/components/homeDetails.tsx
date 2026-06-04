@@ -130,7 +130,8 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
     </div>
   );
 
-  if (isEditMode) return <HomeForm home={home} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" />;
+  if (isEditMode)
+    return <HomeForm home={home} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" autoFocus />;
 
   const hasSuccessToast = toast?.type === ToastType.Success;
 
