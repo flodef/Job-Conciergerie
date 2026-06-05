@@ -52,23 +52,27 @@ export const adjustMissionDateTime = (start: string, end: string): { startDateTi
  * Format a date for display in French format (DD/MM/YYYY)
  */
 export const formatDate = (date: Date): string => {
-  return new Date(date).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    timeZone: 'Europe/Paris',
-  });
+  return new Date(date)
+    .toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'Europe/Paris',
+    })
+    .replace(/\//g, ' / ');
 };
 
 /**
  * Format a time for display in French format HH:MM (e.g., "14:30")
  */
 export const formatTime = (date: Date): string => {
-  return new Date(date).toLocaleTimeString('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Europe/Paris',
-  });
+  return new Date(date)
+    .toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Paris',
+    })
+    .replace(/:/g, ' : ');
 };
 
 /**

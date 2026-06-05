@@ -17,7 +17,14 @@ import MissionActions, { MAX_POINTS_PER_DAY } from '@/app/missions/components/mi
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
 import { Mission } from '@/app/types/dataTypes';
-import { buttonClassName, cn, containerClassName, textClassName, titleClassName } from '@/app/utils/className';
+import {
+  buttonClassName,
+  cn,
+  containerClassName,
+  iconButtonClassName,
+  textClassName,
+  titleClassName,
+} from '@/app/utils/className';
 import { getColorValueByName } from '@/app/utils/color';
 import {
   formatDateTime,
@@ -239,8 +246,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const startEditingDate = (date: 'start' | 'end') => {
     if (!isOwner) return;
     setEditingDate(date);
-    setEditStartDate(lastCommittedStart);
-    setEditEndDate(lastCommittedEnd);
     setStartDateError('');
     setEndDateError('');
   };
@@ -248,8 +253,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   // Cancel date editing - close the fullscreen modal without changes
   const cancelDateEditing = () => {
     setEditingDate(null);
-    setEditStartDate(lastCommittedStart);
-    setEditEndDate(lastCommittedEnd);
+    setEditStartDate(pendingDateChanges.start ? localISOString(pendingDateChanges.start) : lastCommittedStart);
+    setEditEndDate(pendingDateChanges.end ? localISOString(pendingDateChanges.end) : lastCommittedEnd);
     setStartDateError('');
     setEndDateError('');
   };
@@ -315,10 +320,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     }
 
     // Set pending changes and exit edit mode
-    const changes: { start?: Date; end?: Date } = {};
-    if (editingDate === 'start') changes.start = newStart;
-    if (editingDate === 'end') changes.end = newEnd;
-    setPendingDateChanges(changes);
+    setPendingDateChanges({
+      start: newStart,
+      end: newEnd,
+    });
     setEditingDate(null);
     setStartDateError('');
     setEndDateError('');
@@ -335,6 +340,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   // Cancel pending date changes and restore original values
   const handleCancelPendingDateChanges = () => {
+    setEditingDate(null);
     setPendingDateChanges({});
     setEditStartDate(lastCommittedStart);
     setEditEndDate(lastCommittedEnd);
@@ -344,6 +350,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   // Confirm pending date changes with time reduction check
   const handleConfirmPendingDateChanges = () => {
+    setEditingDate(null);
+
     const currentStart = new Date(mission.startDateTime);
     const currentEnd = new Date(mission.endDateTime);
     const isStartTimeReduced = pendingDateChanges.start && pendingDateChanges.start > currentStart;
@@ -550,14 +558,14 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         />
                         <button
                           onClick={handleDateEditConfirm}
-                          className="p-1 rounded-full hover:bg-primary/20 transition-colors cursor-pointer"
+                          className={iconButtonClassName('primary')}
                           title="Confirmer"
                         >
-                          <IconCheck size={20} className="text-primary" />
+                          <IconCheck size={20} />
                         </button>
                         <button
                           onClick={cancelDateEditing}
-                          className="p-1 rounded-full hover:bg-red-500/20 transition-colors cursor-pointer"
+                          className={iconButtonClassName('dangerous')}
                           title="Annuler"
                         >
                           <IconX size={20} className="text-red-500" />
@@ -565,7 +573,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                       </>
                     ) : (
                       <>
-                        <p className="text-foreground mt-auto">
+                        <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
                           {pendingDateChanges.start
                             ? formatDateTime(pendingDateChanges.start)
                             : formatDateTime(new Date(lastCommittedStart))}
@@ -573,7 +581,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         {isOwner && mission.status !== 'completed' && (
                           <button
                             onClick={() => startEditingDate('start')}
-                            className="p-1 rounded-full hover:bg-secondary/20 transition-colors cursor-pointer"
+                            className={iconButtonClassName('secondary')}
                             title="Modifier la date de début"
                           >
                             <IconPencil size={20} />
@@ -616,14 +624,14 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         />
                         <button
                           onClick={handleDateEditConfirm}
-                          className="p-1 rounded-full hover:bg-primary/20 transition-colors cursor-pointer"
+                          className={iconButtonClassName('primary')}
                           title="Confirmer"
                         >
-                          <IconCheck size={20} className="text-primary" />
+                          <IconCheck size={20} />
                         </button>
                         <button
                           onClick={cancelDateEditing}
-                          className="p-1 rounded-full hover:bg-red-500/20 transition-colors cursor-pointer"
+                          className={iconButtonClassName('dangerous')}
                           title="Annuler"
                         >
                           <IconX size={20} className="text-red-500" />
@@ -631,7 +639,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                       </>
                     ) : (
                       <>
-                        <p className="text-foreground mt-auto">
+                        <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
                           {pendingDateChanges.end
                             ? formatDateTime(pendingDateChanges.end)
                             : formatDateTime(new Date(lastCommittedEnd))}
@@ -639,7 +647,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         {isOwner && mission.status !== 'completed' && (
                           <button
                             onClick={() => startEditingDate('end')}
-                            className="p-1 rounded-full hover:bg-secondary/20 transition-colors cursor-pointer"
+                            className={iconButtonClassName('secondary')}
                             title="Modifier la date de fin"
                           >
                             <IconPencil size={20} />
@@ -696,7 +704,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     {conciergerie?.tel && (
                       <a
                         href={`tel:${conciergerie.tel}`}
-                        className="p-1 rounded-full hover:bg-gray-100"
+                        className={iconButtonClassName('secondary')}
                         title={`Appeler ${conciergerie.name}`}
                       >
                         <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
@@ -706,7 +714,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     {conciergerie?.email && (
                       <a
                         href={`mailto:${conciergerie.email}`}
-                        className="p-1 rounded-full hover:bg-gray-100"
+                        className={iconButtonClassName('secondary')}
                         title={`Envoyer un email à ${conciergerie.name}`}
                       >
                         <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />

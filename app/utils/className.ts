@@ -23,9 +23,18 @@ export const actionButtonBarClassName =
   'flex justify-end gap-2 bg-background border-t border-secondary px-2 py-2 rounded-b-lg cursor-pointer';
 export const actionButtonClassName = 'flex flex-col items-center p-2 w-20 rounded-lg hover:opacity-80 cursor-pointer';
 
+export const iconButtonClassName = (type?: ButtonStyle) =>
+  cn(
+    'p-1 rounded-full hover:bg-light/30 transition-colors cursor-pointer disabled:hover:bg-transparent disabled:cursor-not-allowed',
+    type === 'primary' && 'hover:bg-primary/30',
+    type === 'secondary' && 'hover:bg-secondary/30',
+    type === 'dangerous' && 'hover:bg-red-500/30',
+    type === 'inferno' && 'hover:bg-red-700/30',
+  );
+
 export const buttonClassName = (type: ButtonStyle) =>
   cn(
-    'px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
+    'px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-50',
     type === 'primary' && 'text-background bg-primary hover:bg-primary/80',
     type === 'secondary' && 'text-foreground bg-secondary hover:bg-secondary/80',
     type === 'dangerous' && 'text-background bg-red-500 hover:bg-red-600',

@@ -359,6 +359,8 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
 
     const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
+    const segmentClassName = 'pl-1 pr-[5px] rounded transition-colors cursor-pointer';
+
     return (
       <div className={row ? rowClassName : className} ref={containerRef}>
         <Label id={id} required={required} tooltip={tooltip}>
@@ -395,10 +397,7 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
             )}
           >
             <span
-              className={cn(
-                'px-1 rounded transition-colors cursor-pointer',
-                focusedSegment === 'day' && isFocused && 'bg-primary/20',
-              )}
+              className={cn(segmentClassName, focusedSegment === 'day' && isFocused && 'bg-primary/30')}
               onClick={e => {
                 e.stopPropagation();
                 setFocusedSegment('day');
@@ -407,12 +406,9 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
             >
               {String(currentDate.getDate()).padStart(2, '0')}
             </span>
-            <span className="text-foreground/50">/</span>
+            <span>/</span>
             <span
-              className={cn(
-                'px-1 rounded transition-colors cursor-pointer',
-                focusedSegment === 'month' && isFocused && 'bg-primary/20',
-              )}
+              className={cn(segmentClassName, focusedSegment === 'month' && isFocused && 'bg-primary/30')}
               onClick={e => {
                 e.stopPropagation();
                 setFocusedSegment('month');
@@ -421,12 +417,9 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
             >
               {String(currentDate.getMonth() + 1).padStart(2, '0')}
             </span>
-            <span className="text-foreground/50">/</span>
+            <span>/</span>
             <span
-              className={cn(
-                'px-1 rounded transition-colors cursor-pointer',
-                focusedSegment === 'year' && isFocused && 'bg-primary/20',
-              )}
+              className={cn(segmentClassName, focusedSegment === 'year' && isFocused && 'bg-primary/30')}
               onClick={e => {
                 e.stopPropagation();
                 setFocusedSegment('year');
@@ -435,12 +428,9 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
             >
               {currentDate.getFullYear()}
             </span>
-            <span className="text-foreground/50 mx-1">à</span>
+            <span>à</span>
             <span
-              className={cn(
-                'px-1 rounded transition-colors cursor-pointer',
-                focusedSegment === 'hour' && isFocused && 'bg-primary/20',
-              )}
+              className={cn(segmentClassName, focusedSegment === 'hour' && isFocused && 'bg-primary/30')}
               onClick={e => {
                 e.stopPropagation();
                 setFocusedSegment('hour');
@@ -449,12 +439,9 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
             >
               {String(currentDate.getHours()).padStart(2, '0')}
             </span>
-            <span className="text-foreground/50">:</span>
+            <span>:</span>
             <span
-              className={cn(
-                'px-1 rounded transition-colors cursor-pointer',
-                focusedSegment === 'minute' && isFocused && 'bg-primary/20',
-              )}
+              className={cn(segmentClassName, focusedSegment === 'minute' && isFocused && 'bg-primary/30')}
               onClick={e => {
                 e.stopPropagation();
                 setFocusedSegment('minute');

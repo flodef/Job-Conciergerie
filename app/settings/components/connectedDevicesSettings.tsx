@@ -6,7 +6,7 @@ import Switch from '@/app/components/switch';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
-import { labelClassName } from '@/app/utils/className';
+import { iconButtonClassName, labelClassName } from '@/app/utils/className';
 import { containsId, formatId, isNewDevice } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import {
@@ -196,10 +196,7 @@ const ConnectedDevicesSettings: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={saveDeviceLabel}
-                  className={cn(
-                    'p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-green-600 cursor-pointer',
-                    'disabled:text-gray-200 dark:disabled:text-gray-700 disabled:hover:bg-transparent disabled:cursor-not-allowed',
-                  )}
+                  className={cn(iconButtonClassName(), 'text-green-600 disabled:text-light')}
                   title="Confirmer"
                   disabled={editLabel === item.label}
                 >
@@ -207,7 +204,7 @@ const ConnectedDevicesSettings: React.FC = () => {
                 </button>
                 <button
                   onClick={cancelEdit}
-                  className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-red-600 cursor-pointer"
+                  className={cn(iconButtonClassName('dangerous'), 'text-red-600')}
                   title="Annuler"
                 >
                   <IconX size={24} stroke={2} />
@@ -242,18 +239,14 @@ const ConnectedDevicesSettings: React.FC = () => {
                 </div>
               </div>
               <div className="flex space-x-2">
-                <button
-                  onClick={() => copyToClipboard(item.id)}
-                  className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-                  title="Copier l'ID"
-                >
+                <button onClick={() => copyToClipboard(item.id)} className={iconButtonClassName()} title="Copier l'ID">
                   <IconCopy size={24} stroke={1.5} />
                 </button>
                 {(!currentUserId || !containsId([item.id], currentUserId)) && (
                   <>
                     <button
                       onClick={() => handleEditDevice(item.id)}
-                      className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                      className={iconButtonClassName()}
                       title="Modifier"
                     >
                       <IconEdit size={24} stroke={1.5} />
@@ -261,7 +254,7 @@ const ConnectedDevicesSettings: React.FC = () => {
                     {!isValidatedId(item.id) && (
                       <button
                         onClick={() => handleAcceptDevice(item.id)}
-                        className="rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                        className={cn(iconButtonClassName(), 'p-0')}
                         title="Valider"
                       >
                         <IconCheck size={30} stroke={2.5} className="text-green-600" />
@@ -271,9 +264,10 @@ const ConnectedDevicesSettings: React.FC = () => {
                 )}
                 <button
                   onClick={() => handleDeleteDevice(item.id)}
-                  className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                  className={iconButtonClassName('dangerous')}
+                  title="Supprimer"
                 >
-                  <IconTrash size={24} stroke={1.5} className="text-red-600" title="Supprimer" />
+                  <IconTrash size={24} stroke={1.5} className="text-red-600" />
                 </button>
               </div>
             </div>
