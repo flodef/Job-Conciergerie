@@ -9,6 +9,7 @@ import { ForwardedRef, forwardRef, ReactNode, useEffect, useState } from 'react'
 interface ResponsiveDateTimeInputProps {
   id: string;
   label: ReactNode;
+  name?: string;
   value: string;
   onChange: (value: string) => void;
   error: string;

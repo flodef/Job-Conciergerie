@@ -57,11 +57,12 @@ const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTim
         onBlur={onBlur ? () => onBlur(value) : undefined}
         className={
           minimal
-            ? 'bg-transparent text-foreground outline-none border-none focus:border-2 focus:border-primary cursor-pointer text-base [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0'
+            ? 'bg-transparent text-foreground outline-none border-none focus:border-2 focus:border-primary cursor-pointer text-base [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:pointer-events-none [&::-webkit-clear-button]:hidden [&::-webkit-clear-button]:appearance-none'
             : cn(
                 inputFieldClassName(error),
                 'border-2',
                 '[&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert',
+                '[&::-webkit-clear-button]:hidden [&::-webkit-clear-button]:appearance-none',
               )
         }
         disabled={disabled}

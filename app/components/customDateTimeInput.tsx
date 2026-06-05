@@ -8,6 +8,7 @@ import { forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState
 interface CustomDateTimeInputProps {
   id: string;
   label: ReactNode;
+  name?: string;
   value: string;
   onChange: (value: string) => void;
   error: string;
@@ -32,6 +33,7 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
     {
       id,
       label,
+      name,
       value,
       onChange,
       error,
@@ -63,17 +65,9 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
     const customInputRef = useRef<HTMLDivElement>(null);
     const calendarButtonRef = useRef<HTMLButtonElement>(null);
 
-    useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
+    name = label?.toString() || id;
 
-    // Format date to French format (dd/mm/yyyy HH:MM)
-    const formatDateTime = (date: Date): string => {
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${day}/${month}/${year} ${hours}:${minutes}`;
-    };
+    useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
 
     // Parse French format to Date
     const parseDateTime = (value: string): Date | null => {
