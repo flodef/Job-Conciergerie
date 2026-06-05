@@ -518,7 +518,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                       <>
                         <ResponsiveDateTimeInput
                           id="edit-start-date"
-                          label="Date de début"
+                          label=""
+                          name="Date de début"
                           value={editStartDate}
                           onChange={value => {
                             const { startDateTime: newStart, endDateTime: newEnd } = handleMissionStartDateChange(
@@ -582,7 +583,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                       <>
                         <ResponsiveDateTimeInput
                           id="edit-end-date"
-                          label="Date de fin"
+                          label=""
+                          name="Date de fin"
                           value={editEndDate}
                           onChange={value => {
                             const { startDateTime: newStart, endDateTime: newEnd } = handleMissionEndDateChange(
