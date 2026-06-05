@@ -650,7 +650,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         // Otherwise show total duration
                         return hasEnded
                           ? 'Mission terminée'
-                          : getDateRangeDifference(hasStarted ? now : startDate, endDate) +
+                          : getDateRangeDifference(hasStarted ? now : new Date(editStartDate), new Date(editEndDate)) +
                               (hasStarted ? ' restant' : '');
                       })()}
                     </div>
