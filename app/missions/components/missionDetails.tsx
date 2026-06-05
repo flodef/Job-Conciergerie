@@ -245,6 +245,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   // Start inline date editing
   const startEditingDate = (date: 'start' | 'end') => {
     if (!isOwner) return;
+    cancelDateEditing();
     setEditingDate(date);
     setStartDateError('');
     setEndDateError('');
