@@ -5,13 +5,12 @@ import { Toast, ToastMessage } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { Home, Mission, MissionSortField } from '@/app/types/dataTypes';
-import { formatDate, formatDateRange } from '@/app/utils/date';
-import { getColorValueByName } from '@/app/utils/color';
-import { formatHour, formatNumber } from '@/app/utils/task';
-import { sortMissions } from '@/app/utils/missionFilters';
 import HistoryFilters from '@/app/history/components/historyFilters';
-import MissionSortBar from '@/app/missions/components/missionSortBar';
+import { Home, Mission, MissionSortField } from '@/app/types/dataTypes';
+import { getColorValueByName } from '@/app/utils/color';
+import { formatDate, formatDateRange } from '@/app/utils/date';
+import { sortMissions } from '@/app/utils/missionFilters';
+import { formatHour, formatNumber } from '@/app/utils/task';
 import {
   IconBriefcase,
   IconBuilding,
@@ -24,6 +23,7 @@ import {
   IconRefresh,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
+import { descriptionClassName, textClassName } from '../utils/className';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -50,38 +50,38 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
           <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
           <div className="min-w-0">
             <p className="font-medium text-foreground truncate">{home?.title ?? 'Bien inconnu'}</p>
-            <p className="text-sm text-light">{formatDate(new Date(mission.startDateTime))}</p>
+            <p className={descriptionClassName}>{formatDate(new Date(mission.startDateTime))}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">
-          <span className="text-sm text-light">{formatHour(mission.hours)}</span>
+          <span className={descriptionClassName}>{formatHour(mission.hours)}</span>
           {isOpen ? (
-            <IconChevronUp size={16} className="text-light" />
+            <IconChevronUp size={16} className={descriptionClassName} />
           ) : (
-            <IconChevronDown size={16} className="text-light" />
+            <IconChevronDown size={16} className={descriptionClassName} />
           )}
         </div>
       </button>
 
       {isOpen && (
         <div className="px-3 pb-3 space-y-1 text-sm border-t border-secondary pt-2">
-          <p className="text-light">
-            <span className="font-medium text-foreground">Dates :</span>{' '}
+          <p className={descriptionClassName}>
+            <span className={textClassName}>Dates :</span>{' '}
             {formatDateRange(new Date(mission.startDateTime), new Date(mission.endDateTime))}
           </p>
           {home?.geographicZone && (
-            <p className="text-light">
-              <span className="font-medium text-foreground">Zone :</span> {home.geographicZone}
+            <p className={descriptionClassName}>
+              <span className={textClassName}>Zone :</span> {home.geographicZone}
             </p>
           )}
-          <p className="text-light">
-            <span className="font-medium text-foreground">Conciergerie :</span> {mission.conciergerieName}
+          <p className={descriptionClassName}>
+            <span className={textClassName}>Conciergerie :</span> {mission.conciergerieName}
           </p>
-          <p className="text-light">
-            <span className="font-medium text-foreground">Tâches :</span> {mission.tasks.join(', ')}
+          <p className={descriptionClassName}>
+            <span className={textClassName}>Tâches :</span> {mission.tasks.join(', ')}
           </p>
-          <p className="text-light">
-            <span className="font-medium text-foreground">Durée :</span> {formatHour(mission.hours)}
+          <p className={descriptionClassName}>
+            <span className={textClassName}>Durée :</span> {formatHour(mission.hours)}
           </p>
         </div>
       )}
@@ -154,7 +154,7 @@ function MonthlyHoursChart({
     return (
       <div className="bg-secondary/5 rounded-xl p-4">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-medium text-foreground">
+          <h3 className={textClassName}>
             {selectedData
               ? `${getMonthName(selectedData.month)} - ${formatHour(selectedData.hours)}`
               : 'Heures par mois'}
@@ -177,7 +177,7 @@ function MonthlyHoursChart({
             <div
               className={`w-4 h-4 rounded-full transition-all ${selectedPoint === month ? 'bg-primary scale-125' : 'bg-primary/60'}`}
             />
-            <span className="text-sm font-medium">{formatHour(hours)}</span>
+            <span className={descriptionClassName}>{formatHour(hours)}</span>
           </button>
         </div>
       </div>
@@ -198,7 +198,7 @@ function MonthlyHoursChart({
     <div className="bg-secondary/5 rounded-xl">
       {/* Header with selected month info and reset button */}
       <div className="flex items-center justify-between mb-3 h-7">
-        <h3 className="text-sm font-medium text-foreground">
+        <h3 className={textClassName}>
           {selectedData ? `${getMonthName(selectedData.month)} - ${formatHour(selectedData.hours)}` : 'Heures par mois'}
         </h3>
         {selectedPoint && (

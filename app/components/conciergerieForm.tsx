@@ -5,7 +5,7 @@ import FormActions from '@/app/components/formActions';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { cn } from '@/app/utils/className';
+import { cn, textClassName } from '@/app/utils/className';
 import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
 import { EmailSender } from '@/app/utils/emailSender';
 import { Page } from '@/app/utils/navigation';
@@ -109,7 +109,8 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
                   setConciergerieNameError('');
                 }}
                 className={cn(
-                  'relative flex flex-col items-center gap-2 p-3 border rounded-lg transition-all text-sm font-medium',
+                  textClassName,
+                  'relative flex flex-col items-center gap-2 p-3 border rounded-lg transition-all',
                   isSelected
                     ? 'ring-2 ring-(--btn-color) border-(--btn-color)'
                     : 'border-secondary hover:bg-secondary/10',

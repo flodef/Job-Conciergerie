@@ -3,6 +3,7 @@
 import { useAuth } from '@/app/contexts/authProvider';
 import MissionCard from '@/app/missions/components/missionCard';
 import { Mission, MissionSortField } from '@/app/types/dataTypes';
+import { cn, titleClassName } from '@/app/utils/className';
 import {
   IconBriefcase,
   IconCalendar,
@@ -12,7 +13,6 @@ import {
   IconPlus,
   IconUser,
 } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
 import React from 'react';
 
 interface MissionListProps {
@@ -70,7 +70,7 @@ export default function MissionList({
         onClick={userType === 'conciergerie' ? handleAddMission : undefined}
       >
         <div className="text-center">
-          <h3 className="text-lg font-medium mb-2">Aucune mission</h3>
+          <h3 className={titleClassName}>Aucune mission</h3>
           {userType === 'conciergerie' ? (
             <>
               <p className="text-light mb-4">Ajoutez votre première mission</p>

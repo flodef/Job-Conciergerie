@@ -6,7 +6,10 @@ export function cn(...inputs: any[]) {
 }
 
 export const rowClassName = 'flex flex-row justify-between my-4 gap-4 items-center';
+export const titleClassName = 'text-lg font-medium';
+export const textClassName = 'text-sm font-medium text-foreground';
 export const descriptionClassName = 'text-sm font-medium text-light';
+export const containerClassName = descriptionClassName + ' flex items-center gap-1';
 export const labelClassName = 'text-base font-medium text-foreground whitespace-nowrap';
 export const errorClassName = 'text-red-500 text-sm mt-1';
 export const textAreaCharCountClassName = 'text-right text-sm text-foreground/50 -mt-1.5';

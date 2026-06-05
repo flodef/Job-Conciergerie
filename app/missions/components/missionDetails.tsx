@@ -1,9 +1,9 @@
 'use client';
 
 import ConfirmationModal from '@/app/components/confirmationModal';
-import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
+import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import Switch from '@/app/components/switch';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
@@ -12,10 +12,12 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import HomeDetails from '@/app/homes/components/homeDetails';
+import { useImageCache } from '@/app/hooks/useImageCache';
 import MissionActions, { MAX_POINTS_PER_DAY } from '@/app/missions/components/missionActions';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
 import { Mission } from '@/app/types/dataTypes';
+import { buttonClassName, cn, containerClassName, textClassName, titleClassName } from '@/app/utils/className';
 import { getColorValueByName } from '@/app/utils/color';
 import {
   formatDateTime,
@@ -27,7 +29,6 @@ import {
   localISOString,
 } from '@/app/utils/date';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
-import { useImageCache } from '@/app/hooks/useImageCache';
 import { calculateMissionPoints, formatHour, getTaskPoints } from '@/app/utils/task';
 import {
   IconBuildingStore,
@@ -45,10 +46,7 @@ import {
   IconX,
   IconZoomScan,
 } from '@tabler/icons-react';
-import { cn, errorClassName, inputFieldClassName } from '@/app/utils/className';
 import { useEffect, useMemo, useState } from 'react';
-import DateTimeInput from '@/app/components/dateTimeInput';
-import CustomDateTimeInput from '@/app/components/customDateTimeInput';
 
 type MissionDetailsProps = {
   mission: Mission;
@@ -143,6 +141,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const home = homes.find(h => h.id === mission.homeId);
 
   const isConciergerie = userType === 'conciergerie';
+  const isOwner = isConciergerie && mission.conciergerieName === conciergerieName;
 
   const handleDelete = () => {
     setIsSubmitting(true);
@@ -238,7 +237,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   // Start inline date editing
   const startEditingDate = (date: 'start' | 'end') => {
-    if (!isConciergerie || conciergerieName !== mission.conciergerieName) return;
+    if (!isOwner) return;
     setEditingDate(date);
     setEditStartDate(lastCommittedStart);
     setEditEndDate(lastCommittedEnd);
@@ -392,16 +391,10 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const footer =
     Object.keys(pendingDateChanges).length > 0 ? (
       <div className="flex justify-end gap-2 bg-background border-t border-secondary px-2 py-2 rounded-b-lg">
-        <button
-          onClick={handleCancelPendingDateChanges}
-          className="px-4 py-2 rounded-lg text-foreground bg-secondary hover:bg-secondary/80 cursor-pointer"
-        >
+        <button onClick={handleCancelPendingDateChanges} className={buttonClassName('secondary')}>
           Annuler
         </button>
-        <button
-          onClick={handleConfirmPendingDateChanges}
-          className="px-4 py-2 rounded-lg text-background bg-primary hover:bg-primary/80 cursor-pointer"
-        >
+        <button onClick={handleConfirmPendingDateChanges} className={buttonClassName('primary')}>
           Confirmer
         </button>
       </div>
@@ -473,7 +466,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-light flex items-center gap-1">
+              <h3 className={containerClassName}>
                 <IconListCheck size={16} />
                 Tâches
               </h3>
@@ -501,7 +494,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             </div>
 
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-light flex items-center gap-1">
+              <h3 className={containerClassName}>
                 <IconCalculator size={16} />
                 Points de mission
                 <Tooltip>
@@ -516,7 +509,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             </div>
 
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-light flex items-center gap-1">
+              <h3 className={containerClassName}>
                 <IconStopwatch size={16} />
                 Nombre d&apos;heures estimées
               </h3>
@@ -526,7 +519,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             <div className="flex items-center space-x-4">
               <div className="space-y-2">
                 <div>
-                  <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                  <h3 className={containerClassName}>
                     <IconCalendarEvent size={16} />
                     Date de début
                   </h3>
@@ -577,7 +570,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                             ? formatDateTime(pendingDateChanges.start)
                             : formatDateTime(new Date(lastCommittedStart))}
                         </p>
-                        {isConciergerie && mission.status !== 'completed' && (
+                        {isOwner && mission.status !== 'completed' && (
                           <button
                             onClick={() => startEditingDate('start')}
                             className="p-1 rounded-full hover:bg-secondary/20 transition-colors cursor-pointer"
@@ -592,7 +585,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                  <h3 className={containerClassName}>
                     <IconCalendarEvent size={16} />
                     Date de fin
                   </h3>
@@ -643,7 +636,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                             ? formatDateTime(pendingDateChanges.end)
                             : formatDateTime(new Date(lastCommittedEnd))}
                         </p>
-                        {isConciergerie && mission.status !== 'completed' && (
+                        {isOwner && mission.status !== 'completed' && (
                           <button
                             onClick={() => startEditingDate('end')}
                             className="p-1 rounded-full hover:bg-secondary/20 transition-colors cursor-pointer"
@@ -666,7 +659,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                 <div className="absolute top-1/2 -translate-y-1/2 left-0.5">
                   <div className="flex items-center">
                     <div className="w-4 h-0.5 bg-secondary -ml-1"></div>
-                    <div className="-ml-2 bg-secondary px-3 py-1 rounded-full text-sm font-medium text-nowrap">
+                    <div className={cn(textClassName, '-ml-2 bg-secondary px-3 py-1 rounded-full text-nowrap')}>
                       {(() => {
                         const now = new Date();
                         const startDate = new Date(mission.startDateTime);
@@ -687,14 +680,14 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             </div>
 
             {/* Only show conciergerie name if not viewed from calendar by a conciergerie */}
-            {!(isFromCalendar && isConciergerie) && conciergerie?.name !== conciergerieName && (
+            {(!isFromCalendar || !isConciergerie) && !isOwner && (
               <div>
-                <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                <h3 className={containerClassName}>
                   <IconBuildingStore size={16} />
                   Conciergerie
                 </h3>
                 <div className="flex items-center gap-3">
-                  <p className="text-lg font-bold" style={{ color: conciergerieColor }}>
+                  <p className={titleClassName} style={{ color: conciergerieColor }}>
                     {conciergerie?.name || mission.conciergerieName}
                   </p>
 
@@ -728,7 +721,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
               <div className="flex items-center justify-between">
                 {employee ? (
                   <>
-                    <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                    <h3 className={containerClassName}>
                       <IconUserCheck size={16} />
                       Prestataire
                     </h3>
@@ -744,7 +737,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                   </>
                 ) : (
                   <>
-                    <h3 className="text-sm font-medium text-light flex items-center gap-1">
+                    <h3 className={containerClassName}>
                       <IconUsersGroup size={16} />
                       Prestataires autorisés
                     </h3>

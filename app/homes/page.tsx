@@ -10,7 +10,7 @@ import HomeCard from '@/app/homes/components/homeCard';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
 import { Home } from '@/app/types/dataTypes';
-import { cn } from '@/app/utils/className';
+import { cn, titleClassName } from '@/app/utils/className';
 import { IconLayout, IconLayoutGrid, IconList, IconPlus } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
@@ -132,7 +132,7 @@ export default function HomesPage() {
           onClick={handleAddHome}
         >
           <div className="text-center">
-            <h3 className="text-lg font-medium mb-2">Aucun bien</h3>
+            <h3 className={titleClassName}>Aucun bien</h3>
             <p className="text-light mb-4">Ajoutez votre premier bien</p>
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
               <IconPlus size={32} />

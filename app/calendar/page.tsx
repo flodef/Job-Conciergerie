@@ -2,13 +2,14 @@
 
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
+import { useFetchTime } from '@/app/hooks/useFetchTime';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import { Mission } from '@/app/types/dataTypes';
 import { formatCalendarDate, formatMissionTimeForCalendar, groupMissionsByDate } from '@/app/utils/calendar';
+import { cn, containerClassName, titleClassName } from '@/app/utils/className';
 import { getColorValueByName } from '@/app/utils/color';
 import { isPastDate, isToday, sortDates } from '@/app/utils/date';
 import { Page } from '@/app/utils/navigation';
@@ -20,7 +21,6 @@ import {
   getTaskPoints,
 } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function Calendar() {
@@ -122,7 +122,7 @@ export default function Calendar() {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100dvh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8">
         <div className="flex flex-col items-center justify-center text-center gap-2">
-          <h3 className="text-lg font-medium">{isEmployee ? 'Aucune mission acceptée' : 'Aucune mission en cours'}</h3>
+          <h3 className={titleClassName}>{isEmployee ? 'Aucune mission acceptée' : 'Aucune mission en cours'}</h3>
           <p className="text-light">
             {isEmployee
               ? "Vous n'avez pas encore accepté de missions"
@@ -252,7 +252,7 @@ export default function Calendar() {
                       )}
                       <div className="flex justify-between items-start mb-2">
                         <span className="font-medium">{`${home?.title} (${home?.geographicZone})`}</span>
-                        <div className="text-sm flex items-center self-center gap-1">
+                        <div className={containerClassName}>
                           <IconClock className="min-w-4" size={16} />
                           <span className="whitespace-nowrap">{formatMissionTimeForCalendar(mission, date)}</span>
                         </div>

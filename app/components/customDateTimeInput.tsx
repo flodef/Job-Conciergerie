@@ -1,10 +1,9 @@
 'use client';
 
 import Label from '@/app/components/label';
-import { errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
+import { cn, descriptionClassName, errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
 import { IconCalendar, IconChevronDown, IconClock } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
-import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 interface CustomDateTimeInputProps {
   id: string;
@@ -557,7 +556,7 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
               <div className="mb-3">
                 <div className="flex items-center gap-2 mb-2">
                   <IconClock size={14} className="text-foreground/40" />
-                  <span className="text-sm font-medium text-foreground/70">Heure</span>
+                  <span className={descriptionClassName}>Heure</span>
                 </div>
                 <div className="flex gap-2">
                   <div className="flex-1">
@@ -596,7 +595,7 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <IconCalendar size={14} className="text-foreground/40" />
-                    <span className="text-sm font-medium text-foreground/70">Raccourcis</span>
+                    <span className={descriptionClassName}>Raccourcis</span>
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     <button

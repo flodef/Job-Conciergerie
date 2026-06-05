@@ -1,7 +1,7 @@
 'use client';
 
+import { cn, descriptionClassName, titleClassName } from '@/app/utils/className';
 import { IconChevronDown } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
 import React from 'react';
 
 type AccordionVariant = 'default' | 'card';
@@ -53,7 +53,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
           >
             <div className="flex items-center gap-2">
               {icon && icon}
-              <span className="text-sm font-medium text-light">{title}</span>
+              <span className={descriptionClassName}>{title}</span>
             </div>
             <div className="flex items-center gap-2">
               {subtitle && <span className="text-sm text-gray-500">{subtitle}</span>}
@@ -87,7 +87,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({
         >
           <div className="flex items-center gap-2">
             {icon && icon}
-            <span className="text-lg font-medium">{title}</span>
+            <span className={titleClassName}>{title}</span>
           </div>
           <div className="flex items-center gap-2">
             {subtitle && <span className="text-sm text-gray-500">{subtitle}</span>}

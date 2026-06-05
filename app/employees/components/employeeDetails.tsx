@@ -10,6 +10,7 @@ import {
   actionButtonBarClassName,
   actionButtonClassName,
   cn,
+  containerClassName,
   descriptionClassName,
   labelClassName,
 } from '@/app/utils/className';
@@ -91,7 +92,7 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
             />
           )}
           <div>
-            <div className={cn(descriptionClassName, 'flex items-center gap-1')}>
+            <div className={containerClassName}>
               Statut :
               <span
                 className={cn(
@@ -144,7 +145,7 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
             </div>
           )}
 
-          <div className={cn(descriptionClassName, 'flex items-center gap-1')}>
+          <div className={containerClassName}>
             Date d&apos;inscription :<span className={labelClassName}>{formatDate(new Date(employee.createdAt))}</span>
           </div>
         </FullScreenModal>

@@ -6,16 +6,14 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import SearchInput from '@/app/components/searchInput';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useFetchTime } from '@/app/hooks/useFetchTime';
-import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
 import { filterEmployees, filterEmployeesByConciergerie, sortEmployees } from '@/app/utils/employee';
-import { Page } from '@/app/utils/navigation';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
 import { ReactNode, useEffect, useState } from 'react';
+import { cn, textClassName } from '../utils/className';
 
 export default function EmployeesList() {
   const {
@@ -258,19 +256,19 @@ function EmployeeRow({
   return (
     <tr className="hover:bg-secondary/5 cursor-pointer transition-colors overflow-x-hidden" onClick={onClick}>
       <td className="px-1 py-1 pl-0">
-        <div className="flex flex-col text-sm font-medium text-foreground truncate text-wrap max-w-28 sm:max-w-full">
+        <div className={cn(textClassName, 'flex flex-col truncate text-wrap max-w-28 sm:max-w-full')}>
           <div>
             {employee.firstName} {employee.familyName}
           </div>
         </div>
       </td>
       <td className="px-1 py-1 whitespace-nowrap">
-        <div className="flex flex-col text-sm font-medium text-foreground truncate max-w-28 sm:max-w-full">
+        <div className={cn(textClassName, 'flex flex-col truncate max-w-28 sm:max-w-full')}>
           <div>{employee.email}</div>
           <div>{employee.tel}</div>
         </div>
       </td>
-      <td className="px-1 py-1 pr-0 whitespace-nowrap justify-items-center text-sm font-medium">
+      <td className={cn(textClassName, 'px-1 py-1 pr-0 whitespace-nowrap justify-items-center')}>
         <div className="flex space-x-2 justify-center" onClick={e => e.stopPropagation()}>
           {employee.status !== 'accepted' && (
             <button

@@ -4,6 +4,7 @@ import Switch from '@/app/components/switch';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
+import { textClassName } from '@/app/utils/className';
 import {
   ConciergerieNotificationSettings,
   defaultConciergerieSettings,
@@ -100,8 +101,8 @@ const NotificationSettings: React.FC = () => {
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
       <div className="space-y-1">
-        <h3 className="text-sm font-medium mb-2">Recevoir un email lorsque :</h3>
-        <div className="space-y-1 divide-y divide-secondary">
+        <h3 className={textClassName}>Recevoir un email lorsque :</h3>
+        <div className="space-y-1 divide-y divide-secondary mt-2">
           {options.map(option => (
             <div
               key={option.key}
