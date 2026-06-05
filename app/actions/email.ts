@@ -4,7 +4,7 @@ import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { insertFailedEmail } from '@/app/db/failedEmailsDb';
 import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
-import { extractSupabaseProjectId } from '@/app/utils/supabaseUtils';
+import { isProduction } from '@/app/actions/environment';
 import packageJson from '@/package.json';
 import nodemailer, { SendMailOptions } from 'nodemailer';
 
@@ -18,11 +18,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.SMTP_PASSWORD,
   },
 });
-
-// Detect prod by comparing the project ID in NEXT_PUBLIC_SUPABASE_URL and DATABASE_URL.
-// Extracts the project ID from NEXT_PUBLIC_SUPABASE_URL and checks if it's present in DATABASE_URL.
-const supabaseProjectId = extractSupabaseProjectId(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '');
-const isProd = (!!supabaseProjectId && process.env.DATABASE_URL?.includes(supabaseProjectId)) ?? false;
 
 // Low-level SMTP send - returns { success, error }
 async function sendEmail(email: SendMailOptions): Promise<{ success: boolean; error?: string }> {
@@ -65,6 +60,7 @@ async function deliver(
   isRetry: boolean,
 ): Promise<boolean> {
   const to = Array.isArray(email.to) ? email.to.join(', ') : (email.to as string);
+  const isProd = await isProduction();
 
   if (!isProd) {
     console.log(`[DEV] Email skipped (not prod) — type: ${type}, to: ${to}, subject: ${email.subject}`);
