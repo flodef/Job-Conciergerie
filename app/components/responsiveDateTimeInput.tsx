@@ -1,15 +1,14 @@
 'use client';
 
-import DateTimeInput from '@/app/components/dateTimeInput';
 import CustomDateTimeInput from '@/app/components/customDateTimeInput';
+import DateTimeInput from '@/app/components/dateTimeInput';
 import { cn } from '@/app/utils/className';
 import { isMobile } from '@/app/utils/device';
-import { ForwardedRef, forwardRef, ReactNode, useEffect, useState } from 'react';
+import { forwardRef, ReactNode, useEffect, useState } from 'react';
 
 interface ResponsiveDateTimeInputProps {
   id: string;
   label: ReactNode;
-  name?: string;
   value: string;
   onChange: (value: string) => void;
   error: string;
