@@ -29,7 +29,7 @@ import M3LoadingSpinner from '../components/m3LoadingSpinner';
 export default function Missions() {
   const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
   const { homes } = useHomes();
-  const { userType, isLoading: authLoading, employeeName } = useAuth();
+  const { userType, isLoading: authLoading, employeeName, conciergerieName } = useAuth();
   const { updateFetchTime, needsRefresh } = useFetchTime();
   const needsRefreshMissions = needsRefresh[Page.Missions];
 
@@ -215,7 +215,7 @@ export default function Missions() {
 
   // Handle adding a new mission
   const handleAddMission = () => {
-    if (homes.length === 0) {
+    if (homes.filter(h => h.conciergerieName === conciergerieName).length === 0) {
       setIsNoHomesModalOpen(true);
     } else {
       setIsAddModalOpen(true);
