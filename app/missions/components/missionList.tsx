@@ -1,5 +1,6 @@
 'use client';
 
+import M3LoadingSpinner from '@/app/components/m3LoadingSpinner';
 import { useAuth } from '@/app/contexts/authProvider';
 import MissionCard from '@/app/missions/components/missionCard';
 import { Mission, MissionSortField } from '@/app/types/dataTypes';
@@ -49,11 +50,7 @@ export default function MissionList({
 
   // Show loading spinner instead of empty state during loading
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[calc(100dvh-10rem)]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <M3LoadingSpinner fullPage={false} />;
   }
 
   return Object.keys(groupedMissions).length === 0 ? (

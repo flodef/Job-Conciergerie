@@ -2,6 +2,7 @@
 
 import Accordion from '@/app/components/accordion';
 import ChangelogModal from '@/app/components/changelogModal';
+import M3LoadingSpinner from '@/app/components/m3LoadingSpinner';
 import { Toast, ToastMessage } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import ConciergerieSettings from '@/app/settings/components/conciergerieSettings';
@@ -74,19 +75,15 @@ export default function Settings() {
     },
   ];
 
+  if (!hasLoadedOnce) return <M3LoadingSpinner />;
+
   return (
     <div className="bg-background min-h-full max-w-2xl mx-auto px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
       {showChangelogHistory && userType && (userType === 'employee' || userType === 'conciergerie') && (
         <ChangelogModal userType={userType} onClose={() => setShowChangelogHistory(false)} mode="history" />
       )}
-      {!hasLoadedOnce ? (
-        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      ) : (
-        <Accordion items={accordionItems} defaultOpenIndex={-1} />
-      )}
+      <Accordion items={accordionItems} defaultOpenIndex={-1} />
     </div>
   );
 }

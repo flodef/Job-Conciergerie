@@ -3,6 +3,7 @@
 import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import Accordion from '@/app/components/accordion';
 import ConfirmationModal from '@/app/components/confirmationModal';
+import M3LoadingSpinner from '@/app/components/m3LoadingSpinner';
 import SearchInput from '@/app/components/searchInput';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
@@ -173,17 +174,13 @@ export default function EmployeesList() {
     );
   };
 
+  if (!hasLoadedOnce) return <M3LoadingSpinner />;
+
   return (
     <div className="bg-background min-h-full px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
 
-      {!hasLoadedOnce && (
-        <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        </div>
-      )}
-
-      {hasLoadedOnce && employees.length > 1 && (
+      {employees.length > 1 && (
         <SearchInput
           className="mb-2"
           placeholder="Rechercher un prestataire..."
@@ -193,29 +190,27 @@ export default function EmployeesList() {
       )}
 
       {/* Render employee tables in an accordion */}
-      {hasLoadedOnce && (
-        <div className="w-full">
-          <Accordion
-            items={[
-              {
-                title: `En attente (${pendingEmployees.length})`,
-                icon: <IconUser size={20} />,
-                content: renderEmployeeTable(pendingEmployees, 'en attente'),
-              },
-              {
-                title: `Acceptés (${acceptedEmployees.length})`,
-                icon: <IconUserCheck size={20} />,
-                content: renderEmployeeTable(acceptedEmployees, 'accepté'),
-              },
-              {
-                title: `Rejetés (${rejectedEmployees.length})`,
-                icon: <IconUserX size={20} />,
-                content: renderEmployeeTable(rejectedEmployees, 'rejeté'),
-              },
-            ]}
-          />
-        </div>
-      )}
+      <div className="w-full">
+        <Accordion
+          items={[
+            {
+              title: `En attente (${pendingEmployees.length})`,
+              icon: <IconUser size={20} />,
+              content: renderEmployeeTable(pendingEmployees, 'en attente'),
+            },
+            {
+              title: `Acceptés (${acceptedEmployees.length})`,
+              icon: <IconUserCheck size={20} />,
+              content: renderEmployeeTable(acceptedEmployees, 'accepté'),
+            },
+            {
+              title: `Rejetés (${rejectedEmployees.length})`,
+              icon: <IconUserX size={20} />,
+              content: renderEmployeeTable(rejectedEmployees, 'rejeté'),
+            },
+          ]}
+        />
+      </div>
 
       {/* Employee details modal */}
       {selectedEmployee && <EmployeeDetails employee={selectedEmployee} onClose={closeEmployeeDetails} />}

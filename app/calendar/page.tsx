@@ -22,6 +22,7 @@ import {
 } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import M3LoadingSpinner from '../components/m3LoadingSpinner';
 
 export default function Calendar() {
   const {
@@ -116,7 +117,7 @@ export default function Calendar() {
   };
 
   // Only show empty state if not loading and we've confirmed there are no missions
-  if (!hasLoadedOnce) return null;
+  if (!hasLoadedOnce) return <M3LoadingSpinner />;
 
   if (acceptedMissions.length === 0) {
     return (

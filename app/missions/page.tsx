@@ -38,9 +38,7 @@ export default function Missions() {
 
   // Track when initial load completes
   useEffect(() => {
-    if (!authLoading && !missionsLoading) {
-      setHasLoadedOnce(true);
-    }
+    if (!authLoading && !missionsLoading) setHasLoadedOnce(true);
   }, [authLoading, missionsLoading, missions.length]);
 
   // Modal states - must be declared before any conditional returns
