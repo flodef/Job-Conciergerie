@@ -51,7 +51,7 @@ export const adjustMissionDateTime = (start: string, end: string): { startDateTi
 /**
  * Format a date for display in French format (DD/MM/YYYY)
  */
-export const formatDate = (date: Date): string => {
+export const formatDate = (date: Date, useSpacing = false): string => {
   return new Date(date)
     .toLocaleDateString('fr-FR', {
       day: '2-digit',
@@ -59,28 +59,28 @@ export const formatDate = (date: Date): string => {
       year: 'numeric',
       timeZone: 'Europe/Paris',
     })
-    .replace(/\//g, ' / ');
+    .replace(/\//g, useSpacing ? ' / ' : '/');
 };
 
 /**
  * Format a time for display in French format HH:MM (e.g., "14:30")
  */
-export const formatTime = (date: Date): string => {
+export const formatTime = (date: Date, useSpacing = false): string => {
   return new Date(date)
     .toLocaleTimeString('fr-FR', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'Europe/Paris',
     })
-    .replace(/:/g, ' : ');
+    .replace(/:/g, useSpacing ? ' : ' : ':');
 };
 
 /**
  * Format a datetime for display in French format (DD/MM/YYYY à HH:MM)
  */
-export const formatDateTime = (date: Date): string => {
-  const dateStr = formatDate(date);
-  const timeStr = formatTime(date);
+export const formatDateTime = (date: Date, useSpacing = false): string => {
+  const dateStr = formatDate(date, useSpacing);
+  const timeStr = formatTime(date, useSpacing);
   return `${dateStr} à ${timeStr}`;
 };
 
