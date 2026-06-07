@@ -16,15 +16,22 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 export type UserType = 'conciergerie' | 'employee';
 export type UserData = Conciergerie | Employee;
 
+export const getUserKey = <T extends UserData>(user: T): string => {
+  if ('name' in user) return user.name;
+  if ('firstName' in user && 'familyName' in user) return `${user.firstName} ${user.familyName}`;
+  throw new Error('Invalid UserData type');
+};
+
 interface AuthContextType {
   userId: string | undefined;
   userType: UserType | undefined;
   userData: UserData | undefined;
+  isEmployee: boolean;
+  isConciergerie: boolean;
   updateUserType: (userType: UserType | undefined) => void;
   conciergerieName: string | undefined;
   setConciergerieName: (name: string | undefined) => void;
   employeeName: string | undefined;
-  getUserKey: <T extends UserData>(user: T) => string;
   findEmployee: (id: string | null | undefined) => Employee | undefined;
   findConciergerie: (id: string | null | undefined) => Conciergerie | undefined;
   deleteEmployee: (employee: Employee) => Promise<boolean>;
@@ -43,11 +50,12 @@ const AuthContext = createContext<AuthContextType>({
   userId: undefined,
   userType: undefined,
   userData: undefined,
+  isEmployee: false,
+  isConciergerie: false,
   updateUserType: () => {},
   conciergerieName: undefined,
   setConciergerieName: () => {},
   employeeName: undefined,
-  getUserKey: () => '',
   findEmployee: () => undefined,
   findConciergerie: () => undefined,
   deleteEmployee: () => Promise.resolve(false),
@@ -73,6 +81,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userData, setUserData] = useState<UserData>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [toast, setToast] = useState<Toast>();
+
+  const isEmployee = userType === 'employee';
+  const isConciergerie = userType === 'conciergerie';
 
   const updateUserId = useCallback(
     (userId: string | undefined) => {
@@ -243,12 +254,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const getUserKey = <T extends UserData>(user: T): string => {
-    if ('name' in user) return user.name;
-    if ('firstName' in user && 'familyName' in user) return `${user.firstName} ${user.familyName}`;
-    throw new Error('Invalid UserData type');
-  };
-
   const findEmployee = (id: string | null | undefined) => (id ? employees.find(e => getUserKey(e) === id) : undefined);
   const findConciergerie = (id: string | null | undefined) =>
     id ? conciergeries.find(c => getUserKey(c) === id) : undefined;
@@ -283,11 +288,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userId,
         userType,
         userData,
+        isEmployee,
+        isConciergerie,
         updateUserType,
         conciergerieName,
         setConciergerieName,
         employeeName,
-        getUserKey,
         findEmployee,
         findConciergerie,
         deleteEmployee,

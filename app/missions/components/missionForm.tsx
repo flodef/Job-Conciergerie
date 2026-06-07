@@ -2,26 +2,25 @@
 
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
-import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import Label from '@/app/components/label';
 import MultiSelect from '@/app/components/multiSelect';
+import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import TaskSelector from '@/app/components/taskSelector';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
-import { useAuth } from '@/app/contexts/authProvider';
+import { getUserKey, useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission, Task } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import {
   adjustMissionDateTime,
-  getMissionDateTime,
   getMinEndDate,
   getMinStartDate,
+  getMissionDateTime,
   handleMissionEndDateChange,
   handleMissionStartDateChange,
   localISOString,
-  minimumMissionTime,
 } from '@/app/utils/date';
 import { handleChange } from '@/app/utils/form';
 import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
@@ -36,7 +35,7 @@ type MissionFormProps = {
 
 export default function MissionForm({ mission, onClose, onCancel, mode }: MissionFormProps) {
   const { homes, addMission, updateMission, missionExists } = useMissions();
-  const { conciergerieName, employees: allEmployees, getUserKey } = useAuth();
+  const { conciergerieName, employees: allEmployees } = useAuth();
 
   // Filter homes by the current conciergerie
   const filteredHomes = useMemo(

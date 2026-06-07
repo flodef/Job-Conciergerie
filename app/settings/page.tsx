@@ -80,7 +80,7 @@ export default function Settings() {
   return (
     <div className="bg-background min-h-full max-w-2xl mx-auto px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-      {showChangelogHistory && userType && (userType === 'employee' || userType === 'conciergerie') && (
+      {showChangelogHistory && userType && (
         <ChangelogModal userType={userType} onClose={() => setShowChangelogHistory(false)} mode="history" />
       )}
       <Accordion items={accordionItems} defaultOpenIndex={-1} />

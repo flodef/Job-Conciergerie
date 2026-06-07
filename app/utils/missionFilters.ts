@@ -40,20 +40,40 @@ export function getAvailableTimePeriods(missions: Mission[]): string[] {
 }
 
 /**
+ * Whether a mission is "duo-open": the first binôme slot is filled but the second
+ * is still free, the home allows duos, and the mission is not finished. Such a
+ * mission stays visible to other providers so a second one can join.
+ */
+export function isMissionDuoOpen(mission: Mission, homes: Home[]): boolean {
+  if (!mission.employeeId || mission.employeeId2) return false;
+  if (mission.status === 'completed') return false;
+  if (new Date(mission.endDateTime) < new Date()) return false;
+  const home = homes.find(h => h.id === mission.homeId);
+  return !!home?.allowDuo;
+}
+
+/**
  * Filter missions based on user type
  */
-export function filterMissionsByUserType(missions: Mission[], employeeName: string | undefined): Mission[] {
+export function filterMissionsByUserType(
+  missions: Mission[],
+  employeeName: string | undefined,
+  homes: Home[] = [],
+): Mission[] {
   return missions.filter(mission => {
     // For employee users, show only missions they have access to
     if (employeeName) {
       // If the mission has prestataires specified, check if the current employee is in the list
       if (mission.allowedEmployees?.length) return mission.allowedEmployees.includes(employeeName);
 
-      if (mission.employeeId) return mission.employeeId === employeeName;
-      else return new Date(mission.endDateTime) >= new Date();
+      // Missions the employee is already part of (either binôme slot)
+      if (mission.employeeId === employeeName || mission.employeeId2 === employeeName) return true;
 
-      // If no prestataires specified, show to all
-      return true;
+      // Mission assigned to someone else: only visible if it's duo-open (so they can join as 2nd)
+      if (mission.employeeId) return isMissionDuoOpen(mission, homes);
+
+      // Unassigned mission: visible while not in the past
+      return new Date(mission.endDateTime) >= new Date();
     }
 
     // For conciergerie users, show all the missions
@@ -103,12 +123,15 @@ export function applyMissionFilters(
     // Filter by mission status (skip if employee filter is active — shows all their missions)
     if (selectedMissionStatuses.length > 0 && selectedEmployees.length === 0) {
       // Check if the mission matches the selected status filter
-      // 'available' means no employee is assigned (employeeId is empty) AND mission is not in the past
+      // 'available' means no employee is assigned (employeeId is empty) OR duo-open (1/2) AND mission is not in the past
       // 'accepted', 'started', 'completed' match the actual mission status
-      const isAvailable = !mission.employeeId && new Date(mission.endDateTime) >= new Date();
+      const isAvailable =
+        (!mission.employeeId || isMissionDuoOpen(mission, homes)) && new Date(mission.endDateTime) >= new Date();
       const isAccepted = mission.status === 'accepted';
       const isStarted = mission.status === 'started';
-      const isCompleted = mission.status === 'completed' && (!employeeName || mission.employeeId === employeeName);
+      const isCompleted =
+        mission.status === 'completed' &&
+        (!employeeName || mission.employeeId === employeeName || mission.employeeId2 === employeeName);
 
       const matchesMissionStatus =
         (selectedMissionStatuses.includes('available') && isAvailable) ||
@@ -127,9 +150,13 @@ export function applyMissionFilters(
       }
     }
 
-    // Filter by employee
+    // Filter by employee (matches either binôme slot)
     if (selectedEmployees.length > 0) {
-      if (!mission.employeeId || !selectedEmployees.includes(mission.employeeId)) return false;
+      if (
+        (!mission.employeeId || !selectedEmployees.includes(mission.employeeId)) &&
+        (!mission.employeeId2 || !selectedEmployees.includes(mission.employeeId2))
+      )
+        return false;
     }
 
     return true;

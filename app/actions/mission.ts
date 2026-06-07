@@ -31,6 +31,7 @@ export async function createNewMission(data: Mission): Promise<Mission | null> {
     start_date_time: data.startDateTime,
     end_date_time: data.endDateTime,
     employee_id: data.employeeId,
+    employee_id_2: data.employeeId2 ?? null,
     conciergerie_name: data.conciergerieName,
     status: data.status,
     allowed_employees: data.allowedEmployees,
@@ -52,6 +53,7 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
   if (data.startDateTime !== undefined) dbData.start_date_time = data.startDateTime;
   if (data.endDateTime !== undefined) dbData.end_date_time = data.endDateTime;
   if (data.employeeId !== undefined) dbData.employee_id = data.employeeId;
+  if (data.employeeId2 !== undefined) dbData.employee_id_2 = data.employeeId2;
   if (data.conciergerieName !== undefined) dbData.conciergerie_name = data.conciergerieName;
   if (data.status !== undefined) dbData.status = data.status;
   if (data.allowedEmployees !== undefined) dbData.allowed_employees = data.allowedEmployees;

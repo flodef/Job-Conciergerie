@@ -43,6 +43,25 @@ const calculatePointsPerDayWithCap = (
   return Math.min(totalPoints / days, maxPointsPerDay);
 };
 
+/**
+ * Number of providers sharing a mission: 2 when the binôme is complete
+ * (both slots filled), otherwise 1.
+ */
+export const getMissionProviderCount = (mission: Mission): number =>
+  (mission.employeeId ? 1 : 0) + (mission.employeeId2 ? 1 : 0);
+
+/**
+ * Whether the binôme is complete (both provider slots filled).
+ */
+export const isDuoComplete = (mission: Mission): boolean => getMissionProviderCount(mission) === 2;
+
+/**
+ * Hours a single provider must work for a mission. When the binôme is complete,
+ * the total hours are split evenly between the two providers.
+ */
+export const getMissionHoursPerProvider = (mission: Mission): number =>
+  mission.hours / getMissionProviderCount(mission);
+
 // Calculate mission points including points per day
 export const calculateMissionPoints = (mission: Mission): MissionPoints => {
   // Calculate total points for all objectives in the mission
@@ -105,8 +124,9 @@ const filterEmployeeMissionsForDate = (
     // Skip this mission if it's the one we want to exclude
     if (excludeMissionId && mission.id === excludeMissionId) return false;
 
-    // Only include missions assigned to this employee
-    if (mission.employeeId !== employeeId || mission.status === 'completed') return false;
+    // Only include missions assigned to this employee (either binôme slot)
+    if ((mission.employeeId !== employeeId && mission.employeeId2 !== employeeId) || mission.status === 'completed')
+      return false;
 
     // Check if the mission spans the target date
     const startDate = new Date(mission.startDateTime);
@@ -146,15 +166,19 @@ export const calculateEmployeePointsForDay = (
     const today = normalizeDate(new Date());
     const endDate = normalizeDate(mission.endDateTime);
 
+    // When the binôme is complete, the points are split evenly between providers
+    const providerCount = getMissionProviderCount(mission);
+
+    let points: number;
     // If the target date is today or a future date
     if (targetDate >= today) {
       // Calculate points for the day based on remaining days from today
-      return total + calculateRemainingPointsPerDay(mission, today);
+      points = calculateRemainingPointsPerDay(mission, today);
     }
     // If the target date is the last day of the mission and it's in the past
     else if (targetDate.getTime() === endDate.getTime()) {
       // For past, last day of mission, allocate all remaining points
-      return total + calculateMissionPoints(mission).totalPoints;
+      points = calculateMissionPoints(mission).totalPoints;
     }
     // If it's a past date but not the last day of the mission
     else {
@@ -165,8 +189,10 @@ export const calculateEmployeePointsForDay = (
       };
 
       // Use existing mission points calculation logic
-      return total + calculateMissionPoints(historicalMission).pointsPerDay;
+      points = calculateMissionPoints(historicalMission).pointsPerDay;
     }
+
+    return total + points / providerCount;
   }, 0);
 };
 
@@ -199,9 +225,9 @@ export const calculateEmployeeHoursForDay = (
   // Filter missions that belong to the employee and include the target date
   const employeeMissions = filterEmployeeMissionsForDate(employeeId, date, missions, excludeMissionId);
 
-  // Calculate the total hours for the day
+  // Calculate the total hours for the day (split between providers when binôme is complete)
   return employeeMissions.reduce((total, mission) => {
-    return total + mission.hours;
+    return total + getMissionHoursPerProvider(mission);
   }, 0);
 };
 

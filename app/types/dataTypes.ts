@@ -35,6 +35,7 @@ export interface Home {
   hoursOfCleaning: number; // Hours of cleaning required
   hoursOfGardening: number; // Hours of gardening required
   conciergerieName: string; // Reference to the conciergerie by name
+  allowDuo: boolean; // Whether missions on this home can be done by a duo (2 providers)
 }
 
 export enum Task {
@@ -56,6 +57,7 @@ export interface Mission {
   startDateTime: Date;
   endDateTime: Date;
   employeeId: string | null; // ID of the employee assigned to this mission
+  employeeId2?: string | null; // ID of the second binôme member (employee or conciergerie name), null if none
   modifiedDate: Date;
   conciergerieName: string; // Reference to the conciergerie by name
   status: MissionStatus | null; // Default is 'pending' if not specified

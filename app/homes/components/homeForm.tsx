@@ -9,6 +9,7 @@ import ImageUploader from '@/app/components/imageUploader';
 import Input from '@/app/components/input';
 import ObjectiveList from '@/app/components/objectiveList';
 import Select from '@/app/components/select';
+import Switch from '@/app/components/switch';
 import TextArea from '@/app/components/textArea';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
@@ -45,6 +46,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
   const [geographicZone, setGeographicZone] = useState<string>(home?.geographicZone || '');
   const [hoursOfCleaning, setHoursOfCleaning] = useState<number>(home?.hoursOfCleaning || 0);
   const [hoursOfGardening, setHoursOfGardening] = useState<number>(home?.hoursOfGardening || 0);
+  const [allowDuo, setAllowDuo] = useState<boolean>(home?.allowDuo ?? false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [toast, setToast] = useState<Toast>();
@@ -56,6 +58,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
     geographicZone: string;
     hoursOfCleaning: number;
     hoursOfGardening: number;
+    allowDuo: boolean;
   }>();
 
   // Validation states
@@ -86,6 +89,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
       geographicZone,
       hoursOfCleaning,
       hoursOfGardening,
+      allowDuo,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -108,6 +112,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
     const geographicZoneChanged = geographicZone !== initialFormValues.geographicZone;
     const hoursOfCleaningChanged = hoursOfCleaning !== initialFormValues.hoursOfCleaning;
     const hoursOfGardeningChanged = hoursOfGardening !== initialFormValues.hoursOfGardening;
+    const allowDuoChanged = allowDuo !== initialFormValues.allowDuo;
 
     return (
       titleChanged ||
@@ -116,7 +121,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
       imagesChanged ||
       geographicZoneChanged ||
       hoursOfCleaningChanged ||
-      hoursOfGardeningChanged
+      hoursOfGardeningChanged ||
+      allowDuoChanged
     );
   }, [
     title,
@@ -126,6 +132,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
     geographicZone,
     hoursOfCleaning,
     hoursOfGardening,
+    allowDuo,
     initialFormValues,
   ]);
 
@@ -226,10 +233,11 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
           title,
           description,
           objectives: objectives.filter(objective => objective.trim() !== ''),
-          images: imageCIDs, // Use the CIDs from the upload
+          images: imageCIDs,
           geographicZone,
           hoursOfCleaning,
           hoursOfGardening,
+          allowDuo,
         });
         if (!result) throw new Error("Impossible d'ajouter le bien");
 
@@ -247,6 +255,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
           geographicZone,
           hoursOfCleaning,
           hoursOfGardening,
+          allowDuo,
         });
         if (!result) throw new Error('Impossible de mettre à jour le bien');
 
@@ -381,6 +390,13 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
               required
               row
             />
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center cursor-pointer select-none">
+                <span className="text-foreground">Autoriser binôme</span>
+              </label>
+              <Switch enabled={allowDuo} onChange={() => setAllowDuo(!allowDuo)} />
+            </div>
 
             <ObjectiveList
               id="objectives"

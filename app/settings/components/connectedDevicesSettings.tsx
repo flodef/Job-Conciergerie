@@ -28,7 +28,7 @@ type Device = {
 };
 
 const ConnectedDevicesSettings: React.FC = () => {
-  const { disconnect, nuke, userData, userId: currentUserId, userType, updateUserData } = useAuth();
+  const { disconnect, nuke, userData, userId: currentUserId, updateUserData, isEmployee, isConciergerie } = useAuth();
 
   const [storedLabels, setStoredLabels] = useLocalStorage<Device[]>('device_labels', []);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -133,10 +133,9 @@ const ConnectedDevicesSettings: React.FC = () => {
     if (!userData) return;
 
     const newIds = transform(userData.id);
-    const updateAction =
-      userType === 'employee'
-        ? () => updateEmployeeWithUserId(userData as Employee, newIds)
-        : () => updateConciergerieWithUserId(userData as Conciergerie, newIds);
+    const updateAction = isEmployee
+      ? () => updateEmployeeWithUserId(userData as Employee, newIds)
+      : () => updateConciergerieWithUserId(userData as Conciergerie, newIds);
     const updatedIds = await updateAction();
     if (updatedIds) {
       // Create an updated Device[] based on the newIds

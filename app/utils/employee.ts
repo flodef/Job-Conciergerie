@@ -1,4 +1,5 @@
-import { Employee, EmployeeStatus } from '@/app/types/dataTypes';
+import { Employee, EmployeeStatus, Mission } from '@/app/types/dataTypes';
+import { getUserKey } from '../contexts/authProvider';
 
 /**
  * Normalize a name by capitalizing the first letter of each part
@@ -83,3 +84,7 @@ export function filterEmployeesByConciergerie(employees: Employee[], conciergeri
       !employee.conciergerieName || employee.conciergerieName?.toLowerCase() === conciergerieName?.toLowerCase(),
   );
 }
+
+// Count missions assigned to an employee
+export const countEmployeeMissions = (employee: Employee, missions: Mission[]): number =>
+  missions.filter(mission => getUserKey(employee) === mission.employeeId).length;

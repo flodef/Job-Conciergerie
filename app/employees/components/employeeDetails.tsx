@@ -1,11 +1,12 @@
 'use client';
 
+import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
-import { useAuth } from '@/app/contexts/authProvider';
+import { getUserKey, useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { Employee, MissionStatus } from '@/app/types/dataTypes';
+import { Employee, Mission, MissionStatus } from '@/app/types/dataTypes';
 import {
   actionButtonBarClassName,
   actionButtonClassName,
@@ -15,19 +16,23 @@ import {
   labelClassName,
 } from '@/app/utils/className';
 import { formatDate } from '@/app/utils/date';
-import { IconMail, IconMapPin, IconPhone, IconTrash } from '@tabler/icons-react';
+import { countEmployeeMissions } from '@/app/utils/employee';
+import { IconCheck, IconMail, IconMapPin, IconPhone, IconTrash, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 
 type EmployeeDetailsProps = {
   employee: Employee;
   onClose: () => void;
+  mission?: Mission;
 };
 
-export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsProps) {
-  const { getUserKey, deleteEmployee } = useAuth();
-  const { missions } = useMissions();
+export default function EmployeeDetails({ employee, onClose, mission }: EmployeeDetailsProps) {
+  const { deleteEmployee, updateUserData } = useAuth();
+  const { missions, removeSecondProvider, updateMission } = useMissions();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isRemoveFromMissionModalOpen, setIsRemoveFromMissionModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [toast, setToast] = useState<Toast>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,6 +42,51 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
     if (!employeeId) return 0;
 
     return missions.filter(mission => mission.employeeId === employeeId && mission.status === status).length;
+  };
+
+  const handleAccept = () => {
+    setIsSubmitting(true);
+    updateEmployeeStatusAction(employee, 'accepted')
+      .then(updatedEmployee => {
+        if (!updatedEmployee) throw new Error("Le prestataire à modifier n'a pas été trouvé");
+        updateUserData(updatedEmployee, 'employee');
+        setToast({
+          type: ToastType.Success,
+          message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été accepté`,
+        });
+        onClose();
+      })
+      .catch(error => {
+        console.error('Error accepting employee:', error);
+        setToast({
+          type: ToastType.Error,
+          message: "Erreur lors de l'acceptation du prestataire",
+        });
+        setIsSubmitting(false);
+      });
+  };
+
+  const handleReject = () => {
+    setIsSubmitting(true);
+    setIsRejectModalOpen(false);
+    updateEmployeeStatusAction(employee, 'rejected')
+      .then(updatedEmployee => {
+        if (!updatedEmployee) throw new Error("Le prestataire à modifier n'a pas été trouvé");
+        updateUserData(updatedEmployee, 'employee');
+        setToast({
+          type: ToastType.Success,
+          message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été rejeté`,
+        });
+        onClose();
+      })
+      .catch(error => {
+        console.error('Error rejecting employee:', error);
+        setToast({
+          type: ToastType.Error,
+          message: 'Erreur lors du rejet du prestataire',
+        });
+        setIsSubmitting(false);
+      });
   };
 
   const handleDelete = () => {
@@ -51,15 +101,74 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
     });
   };
 
+  const handleRemoveFromMission = () => {
+    if (!mission) return;
+
+    setIsSubmitting(true);
+    setIsRemoveFromMissionModalOpen(false);
+
+    const employeeId = getUserKey(employee);
+    if (!employeeId) {
+      setToast({ type: ToastType.Error, message: "Impossible d'identifier le prestataire" });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const showResult = ({ success }: { success: boolean }) => {
+      setToast({
+        type: success ? ToastType.Success : ToastType.Error,
+        message: success ? 'Prestataire retiré de la mission' : 'Erreur lors du retrait du prestataire',
+      });
+      if (success) onClose();
+      else setIsSubmitting(false);
+    };
+
+    if (mission.employeeId === employeeId) {
+      updateMission({ ...mission, employeeId: null, status: null }).then(showResult);
+    } else if (mission.employeeId2 === employeeId) {
+      removeSecondProvider(mission.id).then(showResult);
+    } else {
+      setToast({ type: ToastType.Error, message: "Le prestataire n'est pas assigné à cette mission" });
+      setIsSubmitting(false);
+    }
+  };
+
   const footer = (
     <div className={actionButtonBarClassName}>
-      <button
-        onClick={() => setIsDeleteModalOpen(true)}
-        className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}
-      >
-        <IconTrash />
-        Supprimer
-      </button>
+      {mission ? (
+        <button
+          onClick={() => setIsRemoveFromMissionModalOpen(true)}
+          className={cn(actionButtonClassName, 'bg-orange-100 text-orange-700')}
+        >
+          <IconX />
+          Retirer
+        </button>
+      ) : (
+        <>
+          {(employee.status === 'accepted' || employee.status === 'pending') && (
+            <button
+              onClick={() => setIsRejectModalOpen(true)}
+              className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}
+            >
+              <IconX />
+              Rejeter
+            </button>
+          )}
+          {(employee.status === 'rejected' || employee.status === 'pending') && (
+            <button onClick={handleAccept} className={cn(actionButtonClassName, 'bg-green-100 text-green-700')}>
+              <IconCheck />
+              Accepter
+            </button>
+          )}
+          <button
+            onClick={() => setIsDeleteModalOpen(true)}
+            className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}
+          >
+            <IconTrash />
+            Supprimer
+          </button>
+        </>
+      )}
     </div>
   );
 
@@ -82,15 +191,6 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
           footer={footer}
           disabled={isSubmitting}
         >
-          {isDeleteModalOpen && (
-            <ConfirmationModal
-              title="Supprimer l'employé"
-              message="Êtes-vous sûr de vouloir supprimer cet employé ? Cette action est irréversible."
-              onConfirm={handleDelete}
-              onCancel={() => setIsDeleteModalOpen(false)}
-              isOpen={isDeleteModalOpen}
-            />
-          )}
           <div>
             <div className={containerClassName}>
               Statut :
@@ -148,6 +248,36 @@ export default function EmployeeDetails({ employee, onClose }: EmployeeDetailsPr
           <div className={containerClassName}>
             Date d&apos;inscription :<span className={labelClassName}>{formatDate(new Date(employee.createdAt))}</span>
           </div>
+
+          <ConfirmationModal
+            isOpen={isRemoveFromMissionModalOpen}
+            title="Retirer de la mission"
+            message="Êtes-vous sûr de vouloir retirer ce prestataire de la mission ?"
+            onConfirm={handleRemoveFromMission}
+            onCancel={() => setIsRemoveFromMissionModalOpen(false)}
+          />
+          <ConfirmationModal
+            isOpen={isRejectModalOpen}
+            title="Rejeter le prestataire"
+            message={
+              employee
+                ? `Vous êtes sur le point de rejeter ${employee.firstName} ${employee.familyName}.${
+                    countEmployeeMissions(employee, missions) > 0
+                      ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employee, missions)} mission(s).`
+                      : ''
+                  } Il ne pourra plus accéder à l'application.`
+                : ''
+            }
+            onConfirm={handleReject}
+            onCancel={() => setIsRejectModalOpen(false)}
+          />
+          <ConfirmationModal
+            isOpen={isDeleteModalOpen}
+            title="Supprimer l'employé"
+            message="Êtes-vous sûr de vouloir supprimer cet employé de l'application ? ATTENTION : Cette action est irréversible !!"
+            onConfirm={handleDelete}
+            onCancel={() => setIsDeleteModalOpen(false)}
+          />
         </FullScreenModal>
       )}
     </>

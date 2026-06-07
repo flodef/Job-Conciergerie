@@ -29,7 +29,7 @@ import M3LoadingSpinner from '../components/m3LoadingSpinner';
 export default function Missions() {
   const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
   const { homes } = useHomes();
-  const { userType, isLoading: authLoading, employeeName, conciergerieName } = useAuth();
+  const { userType, isLoading: authLoading, employeeName, conciergerieName, isEmployee, isConciergerie } = useAuth();
   const { updateFetchTime, needsRefresh } = useFetchTime();
   const needsRefreshMissions = needsRefresh[Page.Missions];
 
@@ -104,8 +104,8 @@ export default function Missions() {
   // Basic filtered missions (by user type) - must be declared before any conditional returns
   const basicFilteredMissions = useMemo(() => {
     if (missionsLoading) return [];
-    return filterMissionsByUserType(missions, userType === 'employee' ? employeeName : undefined);
-  }, [missions, userType, missionsLoading, employeeName]);
+    return filterMissionsByUserType(missions, isEmployee ? employeeName : undefined, homes);
+  }, [missions, isEmployee, missionsLoading, employeeName, homes]);
 
   // Apply additional filters (conciergerie, status, zones) - must be declared before any conditional returns
   const filteredMissions = useMemo(() => {
@@ -117,8 +117,8 @@ export default function Missions() {
       selectedMissionStatuses,
       selectedZones,
       homes,
-      userType === 'employee' ? employeeName : undefined,
-      userType === 'conciergerie' ? selectedEmployees : [],
+      isEmployee ? employeeName : undefined,
+      isConciergerie ? selectedEmployees : [],
     );
   }, [
     basicFilteredMissions,
@@ -129,7 +129,7 @@ export default function Missions() {
     selectedEmployees,
     homes,
     missionsLoading,
-    userType,
+    isEmployee,
     employeeName,
   ]);
 
@@ -158,15 +158,16 @@ export default function Missions() {
   }, [basicFilteredMissions, missionsLoading]);
 
   // Get available employees for filtering (conciergerie only) - must be declared before any conditional returns
-  // Scan all missions (not just status-filtered) to find employees with any assigned mission
+  // Scan all missions (not just status-filtered) to find employees with any assigned mission (either binôme slot)
   const availableEmployees = useMemo(() => {
-    if (missionsLoading || userType !== 'conciergerie') return [];
+    if (missionsLoading || !isConciergerie) return [];
     const employeeIds = new Set<string>();
     missions.forEach(mission => {
       if (mission.employeeId) employeeIds.add(mission.employeeId);
+      if (mission.employeeId2) employeeIds.add(mission.employeeId2);
     });
     return Array.from(employeeIds).sort();
-  }, [missions, missionsLoading, userType]);
+  }, [missions, missionsLoading, isConciergerie]);
 
   // Get available geographic zones for filtering - must be declared before any conditional returns
   const availableZones = useMemo(() => {
@@ -284,7 +285,7 @@ export default function Missions() {
         />
       </>
       {/* Only show the floating action button for conciergerie users */}
-      {(filteredMissions.length > 0 || showFilters) && userType === 'conciergerie' && (
+      {(filteredMissions.length > 0 || showFilters) && isConciergerie && (
         <FloatingActionButton onClick={handleAddMission} />
       )}
       {/* Mission details modal */}

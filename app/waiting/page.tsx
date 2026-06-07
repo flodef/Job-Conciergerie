@@ -4,7 +4,7 @@ import { RefreshButton } from '@/app/components/button';
 import ErrorPage from '@/app/components/error';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
-import { useAuth } from '@/app/contexts/authProvider';
+import { getUserKey, useAuth } from '@/app/contexts/authProvider';
 import { formatId } from '@/app/utils/id';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
@@ -33,7 +33,6 @@ export default function WaitingPage() {
     isLoading: authLoading,
     userData,
     conciergerieName,
-    getUserKey,
     findEmployee,
     findConciergerie,
   } = useAuth();
@@ -63,7 +62,7 @@ export default function WaitingPage() {
     setMinimumWaitingTime(EMPLOYEE_MINIMUM_WAITING_TIME);
 
     setIsLoading(false);
-  }, [userData, findEmployee, getUserKey]);
+  }, [userData, findEmployee]);
 
   // Use a ref to track if we've already loaded the data to prevent infinite loops
   const hasLoadedDataRef = useRef(false);

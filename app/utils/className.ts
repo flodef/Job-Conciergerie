@@ -8,6 +8,7 @@ export function cn(...inputs: any[]) {
 export const rowClassName = 'flex flex-row justify-between my-4 gap-4 items-center';
 export const titleClassName = 'text-lg font-medium';
 export const textClassName = 'text-sm font-medium text-foreground';
+export const textPulseClassName = textClassName + ' italic animate-pulse';
 export const descriptionClassName = 'text-sm font-medium text-light';
 export const containerClassName = descriptionClassName + ' flex items-center gap-1';
 export const labelClassName = 'text-base font-medium text-foreground whitespace-nowrap';

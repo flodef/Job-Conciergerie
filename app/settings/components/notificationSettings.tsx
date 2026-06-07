@@ -34,13 +34,13 @@ const getDefaultSettings = (userType: UserType | undefined) => {
 };
 
 const NotificationSettings: React.FC = () => {
-  const { userType, userData, updateUserData } = useAuth();
+  const { userType, userData, updateUserData, isConciergerie } = useAuth();
 
   const [toast, setToast] = useState<Toast>();
   const [settings, setSettings] = useState<ConciergerieNotificationSettings | EmployeeNotificationSettings>(
     userData?.notificationSettings || getDefaultSettings(userType),
   );
-  const options = userType === 'conciergerie' ? conciergerieOptions : employeeOptions;
+  const options = isConciergerie ? conciergerieOptions : employeeOptions;
 
   const handleToggle = <T extends ConciergerieNotificationSettings | EmployeeNotificationSettings>(key: keyof T) => {
     if (!userType) return;

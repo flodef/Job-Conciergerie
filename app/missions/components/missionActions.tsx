@@ -1,12 +1,24 @@
 'use client';
 
-import { useAuth } from '@/app/contexts/authProvider';
+import { getUserKey, useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission } from '@/app/types/dataTypes';
-import { actionButtonBarClassName, actionButtonClassName } from '@/app/utils/className';
-import { calculateEmployeePointsForDay, calculateMissionPoints } from '@/app/utils/task';
-import { IconAlertTriangle, IconCancel, IconCheck, IconPencil, IconPlayerPlay, IconTrash } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
+import { actionButtonBarClassName, actionButtonClassName, cn } from '@/app/utils/className';
+import {
+  calculateEmployeePointsForDay,
+  calculateMissionPoints,
+  getMissionProviderCount,
+  isDuoComplete,
+} from '@/app/utils/task';
+import {
+  IconAlertTriangle,
+  IconCancel,
+  IconCheck,
+  IconPencil,
+  IconPlayerPlay,
+  IconTrash,
+  IconUserPlus,
+} from '@tabler/icons-react';
 import { useMemo } from 'react';
 
 export const MAX_POINTS_PER_DAY = 100;
@@ -17,6 +29,9 @@ type MissionActionsProps = {
   onDelete: () => void;
   onRemoveEmployee: () => void;
   onAcceptMission: () => void;
+  onAcceptMission2?: () => void;
+  onAssignSecondProvider?: () => void;
+  onRemoveSecondProvider?: () => void;
   onStartMission: () => void;
   onCompleteMission: () => void;
 };
@@ -27,20 +42,27 @@ export default function MissionActions({
   onDelete,
   onRemoveEmployee,
   onAcceptMission,
+  onAcceptMission2,
   onStartMission,
   onCompleteMission,
 }: MissionActionsProps) {
-  const { userType, conciergerieName, userData, getUserKey } = useAuth();
+  const { conciergerieName, userData, isConciergerie, isEmployee } = useAuth();
   const { missions } = useMissions();
 
   // Check if the current time is after the mission start time
   const now = new Date();
   const hasStartTimePassed = now > mission.startDateTime;
   const isMissionInPast = mission.endDateTime < now;
-  const isOwnMission = userType === 'conciergerie' && mission.conciergerieName === conciergerieName;
-  const currentEmployeeId = userData && userType === 'employee' ? getUserKey(userData) : undefined;
-  const isCurrentEmployee = mission.employeeId === currentEmployeeId;
-  const canAcceptMission = userType === 'employee' && !mission.employeeId && !isMissionInPast;
+  const isOwnMission = isConciergerie && mission.conciergerieName === conciergerieName;
+  const currentEmployeeId = userData && isEmployee ? getUserKey(userData) : undefined;
+  const isCurrentEmployee = mission.employeeId === currentEmployeeId || mission.employeeId2 === currentEmployeeId;
+  const canAcceptMission = isEmployee && !mission.employeeId && !isMissionInPast;
+  const canAcceptMission2 =
+    isEmployee &&
+    mission.employeeId &&
+    !mission.employeeId2 &&
+    !isMissionInPast &&
+    mission.employeeId !== currentEmployeeId;
   const isAccepted = mission.status === 'accepted';
   const isStarted = mission.status === 'started';
   const isCompleted = mission.status === 'completed';
@@ -119,6 +141,13 @@ export default function MissionActions({
       >
         <IconCheck />
         Accepter
+      </button>
+    </div>
+  ) : canAcceptMission2 && onAcceptMission2 ? (
+    <div className={actionButtonBarClassName}>
+      <button onClick={onAcceptMission2} className={cn(actionButtonClassName, 'bg-purple-100 text-purple-700')}>
+        <IconUserPlus />
+        Rejoindre
       </button>
     </div>
   ) : isOwnMission && !isCompleted ? (

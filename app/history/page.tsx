@@ -23,7 +23,7 @@ import {
   IconRefresh,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
-import { descriptionClassName, textClassName } from '../utils/className';
+import { cn, descriptionClassName, textClassName, titleClassName } from '../utils/className';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -49,7 +49,7 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
           <div className="min-w-0">
-            <p className="font-medium text-foreground truncate">{home?.title ?? 'Bien inconnu'}</p>
+            <p className={cn(titleClassName, 'truncate')}>{home?.title ?? 'Bien inconnu'}</p>
             <p className={descriptionClassName}>{formatDate(new Date(mission.startDateTime))}</p>
           </div>
         </div>

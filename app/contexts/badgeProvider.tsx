@@ -19,7 +19,7 @@ const checkingInterval = 60; // 1 minute
 const BadgeContext = createContext<BadgeContextType | undefined>(undefined);
 
 export function BadgeProvider({ children }: { children: ReactNode }) {
-  const { userType, conciergerieName, employeeName, employees: allEmployees } = useAuth();
+  const { userType, conciergerieName, employeeName, employees: allEmployees, isEmployee, isConciergerie } = useAuth();
   const { missions } = useMissions();
 
   const [employeesLastChecked, setEmployeesLastChecked] = useLocalStorage('last_checked_employees', '');
@@ -32,7 +32,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
 
   // Load and update pending employees count for conciergerie
   useEffect(() => {
-    if (userType === 'conciergerie') {
+    if (isConciergerie) {
       // Function to count pending employees
       const countPendingEmployees = () => {
         // Filter employees by conciergerie and pending status
@@ -53,7 +53,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
 
       return () => clearInterval(interval);
     }
-  }, [userType, conciergerieName, allEmployees, employeesLastChecked]);
+  }, [isConciergerie, conciergerieName, allEmployees, employeesLastChecked]);
 
   // Load and update new missions count
   useEffect(() => {
@@ -64,16 +64,15 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
       // Get the last checked timestamp from localStorage
       const lastCheckedDate = new Date(missionsLastChecked ?? 0);
 
-      const missionFilter =
-        userType === 'conciergerie'
-          ? (mission: Mission) =>
-              mission.conciergerieName === conciergerieName &&
-              mission.employeeId && // Has an employee (accepted)
-              new Date(mission.modifiedDate) > lastCheckedDate
-          : (mission: Mission) =>
-              !mission.employeeId && // Not assigned to anyone
-              new Date(mission.modifiedDate) > lastCheckedDate &&
-              new Date(mission.endDateTime).getTime() >= new Date().getTime(); // Not expired
+      const missionFilter = isConciergerie
+        ? (mission: Mission) =>
+            mission.conciergerieName === conciergerieName &&
+            mission.employeeId && // Has an employee (accepted)
+            new Date(mission.modifiedDate) > lastCheckedDate
+        : (mission: Mission) =>
+            !mission.employeeId && // Not assigned to anyone
+            new Date(mission.modifiedDate) > lastCheckedDate &&
+            new Date(mission.endDateTime).getTime() >= new Date().getTime(); // Not expired
 
       const newMissions = missions.filter(missionFilter);
       setNewMissionsCount(newMissions.length);
@@ -86,12 +85,12 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
     const interval = setInterval(countNewMissions, checkingInterval * 1000);
 
     return () => clearInterval(interval);
-  }, [missions, userType, conciergerieName, missionsLastChecked]);
+  }, [missions, isConciergerie, conciergerieName, missionsLastChecked]);
 
   // Count missions for today
   useEffect(() => {
     const countTodayMissions = () => {
-      if (!missions.length || userType !== 'employee') return;
+      if (!missions.length || !isEmployee) return;
 
       // Find missions that are scheduled for today
       const today = new Date();
@@ -113,7 +112,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
 
     // Count started missions for conciergeries
     const countStartedMissions = () => {
-      if (!missions.length || userType !== 'conciergerie') return;
+      if (!missions.length || !isConciergerie) return;
 
       // Filter missions that are from this conciergerie, have an employee assigned, and are in started status
       const startedMissions = missions.filter(
@@ -134,7 +133,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
     }, checkingInterval * 1000);
 
     return () => clearInterval(interval);
-  }, [missions, employeeName, userType, conciergerieName]);
+  }, [missions, employeeName, isConciergerie, conciergerieName]);
 
   // Reset functions
   const resetPendingEmployeesCount = () => {

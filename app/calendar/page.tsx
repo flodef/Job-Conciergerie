@@ -1,15 +1,14 @@
 'use client';
 
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
-import { useAuth } from '@/app/contexts/authProvider';
+import { getUserKey, useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
-import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import { Mission } from '@/app/types/dataTypes';
 import { formatCalendarDate, formatMissionTimeForCalendar, groupMissionsByDate } from '@/app/utils/calendar';
-import { cn, containerClassName, titleClassName } from '@/app/utils/className';
+import { cn, containerClassName, textPulseClassName, titleClassName } from '@/app/utils/className';
 import { getColorValueByName } from '@/app/utils/color';
 import { isPastDate, isToday, sortDates } from '@/app/utils/date';
 import { Page } from '@/app/utils/navigation';
@@ -20,22 +19,23 @@ import {
   formatNumber,
   getTaskPoints,
 } from '@/app/utils/task';
-import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay } from '@tabler/icons-react';
+import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay, IconUsers } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
 
 export default function Calendar() {
   const {
-    userType,
     conciergerieName,
+    isEmployee,
+    isConciergerie,
     isLoading: authLoading,
     employeeName,
     findEmployee,
     findConciergerie,
+    userData,
   } = useAuth();
   const { missions, isLoading: missionsLoading, fetchMissions, getLateMissions } = useMissions();
   const { homes } = useHomes();
-  const { currentPage } = useMenuContext();
   const { needsRefresh, updateFetchTime } = useFetchTime();
   const needsRefreshCalendar = needsRefresh[Page.Calendar];
   const [toast, setToast] = useState<Toast>();
@@ -53,11 +53,9 @@ export default function Calendar() {
 
   const [startedMissionsCount, setStartedMissionsCount] = useState(0);
   const [lateMissionsCount, setLateMissionsCount] = useState(0);
+  const [missingPartnerMissionsCount, setMissingPartnerMissionsCount] = useState(0);
 
   const lateMissions = useMemo(() => getLateMissions(acceptedMissions), [acceptedMissions, getLateMissions]);
-
-  const isEmployee = userType === 'employee';
-  const isConciergerie = userType === 'conciergerie';
 
   // Reload missions when needed
   const isFetching = useRef(false);
@@ -96,6 +94,17 @@ export default function Calendar() {
     // Count late missions (ended without being started)
     const lateCount = getLateMissions(filteredMissions).length;
     setLateMissionsCount(lateCount);
+
+    // Count missions missing a partner (duo missions with only one employee assigned)
+    if (isConciergerie) {
+      const missingPartner = filteredMissions.filter(mission => {
+        const home = homes.find(h => h.id === mission.homeId);
+        return (
+          (home?.allowDuo && mission.employeeId && !mission.employeeId2) || (!mission.employeeId && mission.employeeId2)
+        );
+      });
+      setMissingPartnerMissionsCount(missingPartner.length);
+    }
 
     setAcceptedMissions(filteredMissions);
 
@@ -140,8 +149,9 @@ export default function Calendar() {
   return (
     <div className="bg-background min-h-full px-4">
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
+
       {/* Badge for started missions */}
-      {startedMissionsCount + lateMissionsCount > 0 && (
+      {startedMissionsCount + lateMissionsCount + missingPartnerMissionsCount > 0 && (
         <div className="sticky top-0 z-20 bg-background space-y-2 mb-4">
           {startedMissionsCount > 0 && (
             <div className="p-2 border border-blue-200 rounded-lg flex items-center justify-between">
@@ -166,11 +176,25 @@ export default function Calendar() {
               </div>
             </div>
           )}
+
+          {missingPartnerMissionsCount > 0 && (
+            <div className="p-2 border border-orange-200 bg-orange-50 dark:bg-orange-950/10 rounded-lg flex items-center justify-between">
+              <div className="flex items-center">
+                <IconAlertTriangle className="text-orange-500 mr-2" />
+                <span>
+                  <span className="font-medium">{missingPartnerMissionsCount}</span> mission
+                  {missingPartnerMissionsCount > 1 ? 's' : ''} duo sans partenaire
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
+
       {selectedMission && (
         <MissionDetails mission={selectedMission} onClose={handleCloseDetails} isFromCalendar={true} />
       )}
+
       <div className="space-y-4">
         {sortedDates.map(dateStr => {
           // Create a date object from the date string (which is in YYYY-MM-DD format)
@@ -223,6 +247,7 @@ export default function Calendar() {
                   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
                   const home = homes.find(h => h.id === mission.homeId);
                   const employee = findEmployee(mission.employeeId);
+                  const employee2 = findEmployee(mission.employeeId2);
                   const { totalPoints } = calculateMissionPoints(mission);
 
                   return (
@@ -252,7 +277,7 @@ export default function Calendar() {
                         </div>
                       )}
                       <div className="flex justify-between items-start mb-2">
-                        <span className="font-medium">{`${home?.title} (${home?.geographicZone})`}</span>
+                        <span>{`${home?.title} (${home?.geographicZone})`}</span>
                         <div className={containerClassName}>
                           <IconClock className="min-w-4" size={16} />
                           <span className="whitespace-nowrap">{formatMissionTimeForCalendar(mission, date)}</span>
@@ -285,19 +310,65 @@ export default function Calendar() {
                             <span className="font-medium">{formatHour(mission.hours)}</span>
                           </div>
                         </div>
-                        {userType === 'conciergerie' ? (
+                        {home?.allowDuo ? (
+                          <div className="flex items-center justify-between">
+                            <IconUsers className="min-w-4 mr-1" size={16} />
+                            <span className="text-light text-nowrap">Binôme :&nbsp;</span>
+                            {isConciergerie ? (
+                              <>
+                                {employee && employee2 ? (
+                                  <span>
+                                    {employee.firstName} {employee.familyName} + {employee2.firstName}{' '}
+                                    {employee2.familyName}
+                                  </span>
+                                ) : employee ? (
+                                  <span className="animate-pulse">
+                                    ⚠️ {employee.firstName} {employee.familyName} ⚠️
+                                  </span>
+                                ) : employee2 ? (
+                                  <span className="animate-pulse">
+                                    ⚠️ {employee2.firstName} {employee2.familyName} ⚠️
+                                  </span>
+                                ) : (
+                                  <span>-</span>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                {employee && userData && getUserKey(userData) === getUserKey(employee) ? (
+                                  employee2 ? (
+                                    <span>
+                                      {employee2.firstName} {employee2.familyName}
+                                    </span>
+                                  ) : (
+                                    <span className={textPulseClassName}>En attente...</span>
+                                  )
+                                ) : employee2 && userData && getUserKey(userData) === getUserKey(employee2) ? (
+                                  employee ? (
+                                    <span>
+                                      {employee.firstName} {employee.familyName}
+                                    </span>
+                                  ) : (
+                                    <span className={textPulseClassName}>En attente...</span>
+                                  )
+                                ) : (
+                                  <span>-</span>
+                                )}
+                                <div className="flex items-center">
+                                  <span className="text-light text-nowrap">Conciergerie :&nbsp;</span>
+                                  <span className="font-medium">{mission.conciergerieName}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ) : isConciergerie ? (
                           <div className="flex items-center">
                             <span className="text-light text-nowrap">Prestataire :&nbsp;</span>
-                            <span className="font-medium">
+                            <span>
                               {employee?.firstName} {employee?.familyName}
                             </span>
                           </div>
-                        ) : (
-                          <div className="flex items-center">
-                            <span className="text-light text-nowrap">Conciergerie :&nbsp;</span>
-                            <span className="font-medium">{mission.conciergerieName}</span>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   );

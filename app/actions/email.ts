@@ -250,6 +250,8 @@ function composeMissionStatusChangeEmail(
 ): SendMailOptions {
   const startDate = formatDateTime(mission.startDateTime);
   const endDate = formatDateTime(mission.endDateTime);
+  const isDuo = !!mission.employeeId2;
+  const hoursPerProvider = isDuo ? mission.hours / 2 : mission.hours;
 
   let statusMessage = '';
   let statusAction = '';
@@ -275,15 +277,17 @@ function composeMissionStatusChangeEmail(
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">Statut de mission mis à jour</h2>
         <p>Bonjour ${conciergerie.name},</p>
-        <p>Une mission pour <strong>${home.title}</strong> ${statusMessage} par ${employee.firstName} ${employee.familyName}.</p>
+        <p>Une mission pour <strong>${home.title}</strong> ${statusMessage} par ${employee.firstName} ${employee.familyName}${isDuo ? ' (binôme)' : ''}.</p>
         <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
           <h3 style="margin-top: 0; color: #4F46E5;">Détails de la mission</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
-          <p><strong>Heures:</strong> ${mission.hours}h</p>
+          <p><strong>Heures totales:</strong> ${mission.hours}h</p>
+          ${isDuo ? `<p><strong>Heures par prestataire:</strong> ${hoursPerProvider}h (binôme)</p>` : ''}
           <p><strong>Employé:</strong> ${employee.firstName} ${employee.familyName}</p>
+          ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Statut:</strong> ${employee.firstName} a ${statusAction} cette mission</p>
         </div>
         <p>Vous pouvez consulter les détails complets de cette mission dans votre espace conciergerie.</p>
@@ -306,6 +310,7 @@ function composeLateCompletionEmail(
 ): SendMailOptions {
   const startDate = formatDateTime(mission.startDateTime);
   const endDate = formatDateTime(mission.endDateTime);
+  const isDuo = !!mission.employeeId2;
 
   const statusLabel = {
     accepted: 'acceptée mais non démarrée',
@@ -334,6 +339,7 @@ function composeLateCompletionEmail(
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
           <p><strong>Employé:</strong> ${employee.firstName} ${employee.familyName}</p>
+          ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Statut actuel:</strong> ${statusLabel}</p>
         </div>
         <p>Vous pouvez vérifier l'état de cette mission via votre espace conciergerie.</p>
@@ -356,7 +362,9 @@ function composeMissionAcceptanceToEmployeeEmail(
 ): SendMailOptions {
   const startDate = formatDateTime(mission.startDateTime);
   const endDate = formatDateTime(mission.endDateTime);
-  const hours = mission.hours === 1 ? '1 heure' : `${mission.hours} heures`;
+  const isDuo = !!mission.employeeId2;
+  const hoursPerProvider = isDuo ? mission.hours / 2 : mission.hours;
+  const hoursText = hoursPerProvider === 1 ? '1 heure' : `${hoursPerProvider} heures`;
 
   return {
     to: employee.email,
@@ -366,14 +374,15 @@ function composeMissionAcceptanceToEmployeeEmail(
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #4F46E5;">Confirmation de mission</h2>
         <p>Bonjour ${employee.firstName},</p>
-        <p>Vous avez accepté une mission pour <strong>${home.title}</strong>. Voici un récapitulatif des détails :</p>
+        <p>Vous avez accepté une mission pour <strong>${home.title}</strong>${isDuo ? ' en binôme' : ''}. Voici un récapitulatif des détails :</p>
         <div style="background-color: #f5f7ff; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #4F46E5;">
           <h3 style="margin-top: 0; color: #4F46E5;">Récapitulatif de la mission</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
           <p><strong>Conciergerie:</strong> ${conciergerie.name}</p>
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
-          <p><strong>Durée estimée:</strong> ${hours}</p>
+          <p><strong>Durée estimée:</strong> ${hoursText}${isDuo ? ' (par prestataire)' : ''}</p>
+          ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
         </div>
         <p><strong>Rappel important:</strong></p>
@@ -404,7 +413,9 @@ function composeMissionUpdatedToEmployeeEmail(
 ): SendMailOptions {
   const startDate = formatDateTime(mission.startDateTime);
   const endDate = formatDateTime(mission.endDateTime);
-  const hours = mission.hours === 1 ? '1 heure' : `${mission.hours} heures`;
+  const isDuo = !!mission.employeeId2;
+  const hoursPerProvider = isDuo ? mission.hours / 2 : mission.hours;
+  const hoursText = hoursPerProvider === 1 ? '1 heure' : `${hoursPerProvider} heures`;
 
   return {
     to: employee.email,
@@ -427,7 +438,8 @@ function composeMissionUpdatedToEmployeeEmail(
           <p><strong>Conciergerie:</strong> ${conciergerie.name}</p>
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
-          <p><strong>Durée estimée:</strong> ${hours}</p>
+          <p><strong>Durée estimée:</strong> ${hoursText}${isDuo ? ' (par prestataire)' : ''}</p>
+          ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
         </div>
         <p><strong>Important :</strong> Suite à ces modifications, votre assignation à cette mission a été annulée.</p>
@@ -453,6 +465,7 @@ function composeMissionRemovedToEmployeeEmail(
 ): SendMailOptions {
   const startDate = formatDateTime(mission.startDateTime);
   const endDate = formatDateTime(mission.endDateTime);
+  const isDuo = !!mission.employeeId2;
 
   const config = {
     deleted: {
@@ -481,7 +494,7 @@ function composeMissionRemovedToEmployeeEmail(
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: ${config.color};">${config.title}</h2>
         <p>Bonjour ${employee.firstName},</p>
-        <p>Nous vous informons que la mission pour <strong>${home.title}</strong> a été ${config.action} par la conciergerie ${conciergerie.name}.</p>
+        <p>Nous vous informons que la mission pour <strong>${home.title}</strong> a été ${config.action} par la conciergerie ${conciergerie.name}${isDuo ? ' (binôme)' : ''}.</p>
         <div style="background-color: ${config.bgColor}; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid ${config.color};">
           <h3 style="margin-top: 0; color: ${config.color};">Détails de la mission ${config.action}</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
@@ -489,6 +502,7 @@ function composeMissionRemovedToEmployeeEmail(
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
+          ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
         </div>
         <p>Pour toute question concernant cette ${config.actionNoun}, veuillez contacter directement la conciergerie.</p>
         <p>Vous pouvez consulter vos autres missions via l'application :</p>

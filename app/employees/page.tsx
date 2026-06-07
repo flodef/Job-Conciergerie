@@ -6,25 +6,23 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import M3LoadingSpinner from '@/app/components/m3LoadingSpinner';
 import SearchInput from '@/app/components/searchInput';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
-import { useAuth } from '@/app/contexts/authProvider';
+import { getUserKey, useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
-import { filterEmployees, filterEmployeesByConciergerie, sortEmployees } from '@/app/utils/employee';
+import {
+  countEmployeeMissions,
+  filterEmployees,
+  filterEmployeesByConciergerie,
+  sortEmployees,
+} from '@/app/utils/employee';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
 import { ReactNode, useEffect, useState } from 'react';
 import { cn, textClassName } from '../utils/className';
 
 export default function EmployeesList() {
-  const {
-    userData,
-    conciergerieName,
-    isLoading: authLoading,
-    employees: authEmployees,
-    getUserKey,
-    updateUserData,
-  } = useAuth();
+  const { userData, conciergerieName, isLoading: authLoading, employees: authEmployees, updateUserData } = useAuth();
   const { missions } = useMissions();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -62,11 +60,6 @@ export default function EmployeesList() {
     emp => emp.status === 'rejected' && (searchTerm ? filterEmployees([emp], searchTerm).length > 0 : true),
   );
 
-  // Count missions assigned to an employee
-  const countEmployeeMissions = (employee: Employee): number => {
-    return missions.filter(mission => getUserKey(employee) === mission.employeeId).length;
-  };
-
   // Handle status change
   const handleStatusChange = (employee: Employee, newStatus: 'accepted' | 'rejected') => {
     // For rejection, show confirmation modal first
@@ -94,7 +87,7 @@ export default function EmployeesList() {
           { setToast },
           employee,
           conciergerie,
-          countEmployeeMissions(employee),
+          countEmployeeMissions(employee, missions),
           newStatus === 'accepted',
         ).then(emailSent => {
           setToast({
@@ -220,12 +213,12 @@ export default function EmployeesList() {
         isOpen={isRejectModalOpen}
         onConfirm={handleConfirmRejection}
         onCancel={handleDeleteRejection}
-        title="Confirmer le rejet de l'employé"
+        title="Rejeter le prestataire"
         message={
           employeeToReject
             ? `Vous êtes sur le point de rejeter ${employeeToReject.firstName} ${employeeToReject.familyName}.${
-                countEmployeeMissions(employeeToReject) > 0
-                  ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employeeToReject)} mission(s).`
+                countEmployeeMissions(employeeToReject, missions) > 0
+                  ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employeeToReject, missions)} mission(s).`
                   : ''
               } Il ne pourra plus accéder à l'application.`
             : ''

@@ -7,7 +7,7 @@ import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import Switch from '@/app/components/switch';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
-import { useAuth } from '@/app/contexts/authProvider';
+import { getUserKey, useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
@@ -16,13 +16,14 @@ import { useImageCache } from '@/app/hooks/useImageCache';
 import MissionActions, { MAX_POINTS_PER_DAY } from '@/app/missions/components/missionActions';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
-import { Mission } from '@/app/types/dataTypes';
+import { Employee, Mission } from '@/app/types/dataTypes';
 import {
   buttonClassName,
   cn,
   containerClassName,
   iconButtonClassName,
   textClassName,
+  textPulseClassName,
   titleClassName,
 } from '@/app/utils/className';
 import { getColorValueByName } from '@/app/utils/color';
@@ -36,7 +37,7 @@ import {
   localISOString,
 } from '@/app/utils/date';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
-import { calculateMissionPoints, formatHour, getTaskPoints } from '@/app/utils/task';
+import { calculateMissionPoints, formatHour, getMissionProviderCount, getTaskPoints } from '@/app/utils/task';
 import {
   IconBuildingStore,
   IconCalculator,
@@ -95,12 +96,15 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     deleteMission,
     cancelMission,
     acceptMission,
+    acceptMission2,
+    assignSecondProvider,
+    removeSecondProvider,
     startMission,
     completeMission,
     setShouldShowAcceptWarning,
     updateMissionDateTime,
   } = useMissions();
-  const { userType, conciergerieName, findConciergerie, findEmployee } = useAuth();
+  const { conciergerieName, findConciergerie, findEmployee, userData, isConciergerie } = useAuth();
   const { homes } = useHomes();
 
   const [toast, setToast] = useState<Toast>();
@@ -114,6 +118,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [isEditWarningModalOpen, setIsEditWarningModalOpen] = useState(false);
   const [isDeleteWarningModalOpen, setIsDeleteWarningModalOpen] = useState(false);
   const [isEmployeeDetailsModalOpen, setIsEmployeeDetailsModalOpen] = useState(false);
+  const [selectedEmployeeForDetails, setSelectedEmployeeForDetails] = useState<typeof employee>(undefined);
   const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,7 +129,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     [mission.conciergerieName, findConciergerie],
   );
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
-  const isConciergerie = userType === 'conciergerie';
   const isOwner = isConciergerie && mission.conciergerieName === conciergerieName;
 
   // Date helpers
@@ -196,6 +200,53 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             ? 'Mission acceptée ! Un email de confirmation vous a été envoyé.'
             : 'Mission acceptée ! Retrouvez-la dans votre calendrier.'
           : "Erreur lors de l'acceptation de la mission",
+      });
+      if (!success) setIsSubmitting(false);
+    });
+  };
+
+  const handleAccept2 = () => {
+    setIsSubmitting(true);
+    acceptMission2(mission.id).then(({ success, employeeNotified }) => {
+      setToast({
+        type: success ? ToastType.Success : ToastType.Error,
+        message: success
+          ? employeeNotified
+            ? 'Binôme rejoint ! Un email de confirmation vous a été envoyé.'
+            : 'Binôme rejoint !'
+          : "Erreur lors de l'acceptation du binôme",
+      });
+      if (!success) setIsSubmitting(false);
+    });
+  };
+
+  const handleAssignSecondProvider = () => {
+    const providerId = prompt('Entrez l&apos;identifiant du prestataire (nom complet ou email) :');
+    if (!providerId) return;
+    setIsSubmitting(true);
+    assignSecondProvider(mission.id, providerId).then(({ success, employeeNotified }) => {
+      setToast({
+        type: success ? ToastType.Success : ToastType.Error,
+        message: success
+          ? employeeNotified
+            ? '2ème prestataire assigné ! Un email de confirmation lui a été envoyé.'
+            : '2ème prestataire assigné !'
+          : "Erreur lors de l'assignation du 2ème prestataire",
+      });
+      if (!success) setIsSubmitting(false);
+    });
+  };
+
+  const handleRemoveSecondProvider = () => {
+    setIsSubmitting(true);
+    removeSecondProvider(mission.id).then(({ success, employeeNotified }) => {
+      setToast({
+        type: success ? ToastType.Success : ToastType.Error,
+        message: success
+          ? employeeNotified
+            ? '2ème prestataire retiré ! Il a été notifié.'
+            : '2ème prestataire retiré !'
+          : 'Erreur lors du retrait du 2ème prestataire',
       });
       if (!success) setIsSubmitting(false);
     });
@@ -374,6 +425,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const firstHomeImage = home?.images?.length ? home.images[0] : '';
   const employee = findEmployee(mission.employeeId);
+  const employee2 = findEmployee(mission.employeeId2);
+  const providerCount = getMissionProviderCount(mission);
 
   const hasPendingChanges =
     (pendingDateChanges.start && pendingDateChanges.start.getTime() !== startDate.getTime()) ||
@@ -401,6 +454,9 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
       }}
       onRemoveEmployee={() => setIsCancelModalOpen(true)}
       onAcceptMission={handleAccept}
+      onAcceptMission2={handleAccept2}
+      onAssignSecondProvider={handleAssignSecondProvider}
+      onRemoveSecondProvider={handleRemoveSecondProvider}
       onStartMission={handleStart}
       onCompleteMission={handleComplete}
     />
@@ -556,7 +612,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     ) : (
                       <>
                         <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
-                          {formatDateTime(new Date(editStartDate))}
+                          {formatDateTime(new Date(editStartDate), true)}
                         </p>
                         {isDateEditable && (
                           <button
@@ -620,7 +676,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     ) : (
                       <>
                         <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
-                          {formatDateTime(new Date(editEndDate))}
+                          {formatDateTime(new Date(editEndDate), true)}
                         </p>
                         {isDateEditable && (
                           <button
@@ -667,7 +723,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                   Conciergerie
                 </h3>
                 <div className="flex items-center gap-3">
-                  <p className={titleClassName} style={{ color: conciergerieColor }}>
+                  <p className={cn(titleClassName, 'h-6')} style={{ color: conciergerieColor }}>
                     {conciergerie?.name || mission.conciergerieName}
                   </p>
 
@@ -676,7 +732,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     {conciergerie?.tel && (
                       <a
                         href={`tel:${conciergerie.tel}`}
-                        className={iconButtonClassName('secondary')}
+                        className={cn(iconButtonClassName('secondary'), 'p-0')}
                         title={`Appeler ${conciergerie.name}`}
                       >
                         <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
@@ -686,7 +742,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     {conciergerie?.email && (
                       <a
                         href={`mailto:${conciergerie.email}`}
-                        className={iconButtonClassName('secondary')}
+                        className={cn(iconButtonClassName('secondary'), 'p-0')}
                         title={`Envoyer un email à ${conciergerie.name}`}
                       >
                         <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />
@@ -703,16 +759,38 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                   <>
                     <h3 className={containerClassName}>
                       <IconUserCheck size={16} />
-                      Prestataire
+                      {providerCount > 1 ? 'Prestataire' : 'Binôme'}
                     </h3>
-                    <div
-                      onClick={() => setIsEmployeeDetailsModalOpen(true)}
-                      className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
-                    >
-                      <span className="text-right">
-                        {employee.firstName} {employee.familyName}
-                      </span>
-                      <IconInfoCircle className="min-w-4.5" size={18} />
+                    <div className="flex items-center gap-2">
+                      <div
+                        onClick={() => {
+                          setSelectedEmployeeForDetails(employee);
+                          setIsEmployeeDetailsModalOpen(true);
+                        }}
+                        className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
+                      >
+                        <span className="text-right">
+                          {employee.firstName} {employee.familyName}
+                        </span>
+                        <IconInfoCircle className="min-w-4.5" size={18} />
+                      </div>
+                      {employee2 && (
+                        <>
+                          <span className="text-light">+</span>
+                          <div
+                            onClick={() => {
+                              setSelectedEmployeeForDetails(employee2);
+                              setIsEmployeeDetailsModalOpen(true);
+                            }}
+                            className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
+                          >
+                            <span className="text-right">
+                              {employee2.firstName} {employee2.familyName}
+                            </span>
+                            <IconInfoCircle className="min-w-4.5" size={18} />
+                          </div>
+                        </>
+                      )}
                     </div>
                   </>
                 ) : (
@@ -737,11 +815,44 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                 )}
               </div>
             )}
+
+            {home.allowDuo && !isConciergerie && (
+              <div className="flex items-center justify-between">
+                <h3 className={containerClassName}>
+                  <IconUserCheck size={16} />
+                  Binôme
+                </h3>
+
+                {employee && userData && getUserKey(userData) === getUserKey(employee) ? (
+                  employee2 ? (
+                    <span className={textClassName}>
+                      {employee2.firstName} {employee2.familyName}
+                    </span>
+                  ) : (
+                    <span className={textPulseClassName}>En attente...</span>
+                  )
+                ) : employee2 && userData && getUserKey(userData) === getUserKey(employee2) ? (
+                  <span className={textClassName}>
+                    {employee?.firstName} {employee?.familyName}
+                  </span>
+                ) : employee ? (
+                  <span className={textClassName}>
+                    {employee.firstName} {employee.familyName}
+                  </span>
+                ) : (
+                  <span className={textPulseClassName}>En attente...</span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Employee details modal */}
-          {isEmployeeDetailsModalOpen && employee && (
-            <EmployeeDetails employee={employee} onClose={() => setIsEmployeeDetailsModalOpen(false)} />
+          {isEmployeeDetailsModalOpen && selectedEmployeeForDetails && (
+            <EmployeeDetails
+              employee={selectedEmployeeForDetails}
+              onClose={() => setIsEmployeeDetailsModalOpen(false)}
+              mission={mission}
+            />
           )}
 
           {isCompletionModalOpen && (

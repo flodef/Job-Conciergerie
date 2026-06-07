@@ -19,7 +19,8 @@ type PendingUpdate =
 export default function IdPage({ params }: { params: Promise<{ id: string }> }) {
   const {
     userId,
-    userType,
+    isEmployee,
+    isConciergerie,
     employeeName,
     conciergerieName,
     isLoading,
@@ -68,7 +69,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
           throw new Error('Identifiant non trouvée ou incorrect. Veuillez vous reconnecter.');
 
         // Check if the conciergerie or employee whose name is stored in localStorage exists in the database
-        if (userType === 'employee') {
+        if (isEmployee) {
           const employee = findEmployee(employeeName);
           if (!employee) throw new Error('Prestataire non trouvée. Veuillez vous reconnecter.');
 
@@ -84,7 +85,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
               throw err;
             }
           }
-        } else if (userType === 'conciergerie') {
+        } else if (isConciergerie) {
           const conciergerie = findConciergerie(conciergerieName);
           if (!conciergerie) throw new Error('Conciergerie non trouvée. Veuillez vous reconnecter.');
 
@@ -117,7 +118,8 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
   }, [
     id,
     userId,
-    userType,
+    isEmployee,
+    isConciergerie,
     employeeName,
     conciergerieName,
     isLoading,

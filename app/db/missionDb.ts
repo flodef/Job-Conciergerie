@@ -10,6 +10,7 @@ export interface DbMission {
   start_date_time: Date;
   end_date_time: Date;
   employee_id: string | null;
+  employee_id_2: string | null;
   modified_date: Date;
   conciergerie_name: string;
   status: MissionStatus | null;
@@ -28,6 +29,7 @@ function formatMission(dbMission: DbMission): Mission {
     startDateTime: dbMission.start_date_time,
     endDateTime: dbMission.end_date_time,
     employeeId: dbMission.employee_id,
+    employeeId2: dbMission.employee_id_2,
     modifiedDate: dbMission.modified_date,
     conciergerieName: dbMission.conciergerie_name,
     status: dbMission.status,
@@ -42,7 +44,7 @@ function formatMission(dbMission: DbMission): Mission {
 export const getAllMissions = async () => {
   try {
     const result = await sql`
-      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
+      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours
       FROM missions
       ORDER BY start_date_time ASC
     `;
@@ -60,7 +62,7 @@ export const getAllMissions = async () => {
 export const getMissionById = async (id: string) => {
   try {
     const result = await sql`
-      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
+      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours
       FROM missions
       WHERE id = ${id}
     `;
@@ -78,7 +80,7 @@ export const getMissionById = async (id: string) => {
 export const getMissionsByHomeId = async (homeId: string) => {
   try {
     const result = await sql`
-      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
+      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours
       FROM missions
       WHERE home_id = ${homeId}
       ORDER BY start_date_time ASC
@@ -97,7 +99,7 @@ export const getMissionsByHomeId = async (homeId: string) => {
 export const getMissionsByConciergerieName = async (conciergerieName: string) => {
   try {
     const result = await sql`
-      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
+      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours
       FROM missions
       WHERE conciergerie_name = ${conciergerieName}
       ORDER BY start_date_time ASC
@@ -116,7 +118,7 @@ export const getMissionsByConciergerieName = async (conciergerieName: string) =>
 export const getMissionsByEmployeeId = async (employeeId: string) => {
   try {
     const result = await sql`
-      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
+      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours
       FROM missions
       WHERE employee_id = ${employeeId}
       ORDER BY start_date_time ASC
@@ -136,7 +138,7 @@ export const getMissionsByEmployeeId = async (employeeId: string) => {
 export const getAvailableMissionsForEmployee = async (employeeId: string) => {
   try {
     const result = await sql`
-      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
+      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours
       FROM missions
       WHERE 
         (employee_id IS NULL OR employee_id = ${employeeId})
@@ -168,7 +170,7 @@ export const createMission = async (data: Omit<DbMission, 'modified_date'>) => {
         ${data.employee_id || null}, ${data.conciergerie_name ?? null}, ${data.status ?? null},
         ${data.allowed_employees ?? null}, ${typeof data.hours === 'string' ? parseFloat(data.hours) : data.hours}
       )
-      RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
+      RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours
     `;
 
     return result.length > 0 ? formatMission(result[0] as DbMission) : null;
@@ -205,6 +207,10 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
       if (data.employee_id === null) parts.push('employee_id = NULL');
       else addField('employee_id', data.employee_id, 'text');
     }
+    if (data.employee_id_2 !== undefined) {
+      if (data.employee_id_2 === null) parts.push('employee_id_2 = NULL');
+      else addField('employee_id_2', data.employee_id_2, 'text');
+    }
     if (data.conciergerie_name !== undefined) addField('conciergerie_name', data.conciergerie_name, 'text');
     if (data.status !== undefined) {
       if (data.status === null) parts.push('status = NULL');
@@ -225,7 +231,7 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
       UPDATE missions
       SET ${parts.join(', ')}
       WHERE id = $${values.length}
-      RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
+      RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours
     `;
 
     const result = await sql.unsafe(query, values as postgres.ParameterOrJSON<never>[]);
@@ -246,7 +252,7 @@ export const updateMissionStatus = async (id: string, status: MissionStatus) => 
       UPDATE missions
       SET status = ${status}, modified_date = NOW()
       WHERE id = ${id}
-      RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
+      RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours
     `;
 
     return result.length > 0 ? formatMission(result[0] as DbMission) : null;
@@ -265,7 +271,7 @@ export const assignEmployeeToMission = async (missionId: string, employeeId: str
       UPDATE missions
       SET employee_id = ${employeeId}, modified_date = NOW()
       WHERE id = ${missionId}
-      RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, modified_date, conciergerie_name, status, allowed_employees, hours
+      RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours
     `;
 
     return result.length > 0 ? formatMission(result[0] as DbMission) : null;

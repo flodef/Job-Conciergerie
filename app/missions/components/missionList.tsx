@@ -41,7 +41,7 @@ export default function MissionList({
   sortField,
   isLoading,
 }: MissionListProps) {
-  const { conciergerieName } = useAuth();
+  const { conciergerieName, isConciergerie } = useAuth();
 
   // Toggle category collapse
   const toggleCategory = (category: string) => {
@@ -62,13 +62,13 @@ export default function MissionList({
       <div
         className={cn(
           'flex flex-col items-center justify-center h-[calc(100dvh-13rem)] border-2 border-dashed border-secondary rounded-lg p-8',
-          userType === 'conciergerie' ? 'cursor-pointer' : '',
+          isConciergerie ? 'cursor-pointer' : '',
         )}
-        onClick={userType === 'conciergerie' ? handleAddMission : undefined}
+        onClick={isConciergerie ? handleAddMission : undefined}
       >
         <div className="text-center">
           <h3 className={titleClassName}>Aucune mission</h3>
-          {userType === 'conciergerie' ? (
+          {isConciergerie ? (
             <>
               <p className="text-light mb-4">Ajoutez votre première mission</p>
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">

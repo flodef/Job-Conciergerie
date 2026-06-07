@@ -64,7 +64,7 @@ const HomeImageGrid = React.memo(function HomeImageGrid({
 export default function HomeDetails({ home, onClose, isFromCalendar = false }: HomeDetailsProps) {
   const { deleteHome, homes: allHomes } = useHomes();
   const { missions } = useMissions();
-  const { userType, conciergerieName } = useAuth();
+  const { conciergerieName, isEmployee, isConciergerie } = useAuth();
 
   const [toast, setToast] = useState<Toast>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,8 +74,6 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
   const [isReadOnly, setIsReadOnly] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [associatedMissions, setAssociatedMissions] = useState<string[]>([]);
-
-  const isEmployee = userType === 'employee';
 
   useEffect(() => {
     setIsReadOnly(home.conciergerieName !== conciergerieName);
@@ -174,7 +172,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
                       },
                     ]
                   : []),
-                ...(userType === 'conciergerie' || (userType === 'employee' && isFromCalendar)
+                ...(isConciergerie || (isEmployee && isFromCalendar)
                   ? [
                       {
                         title: 'Description',

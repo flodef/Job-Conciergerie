@@ -2,7 +2,6 @@
 
 import ChangelogModal from '@/app/components/changelogModal';
 import InstallToast from '@/app/components/installToast';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import { PageManager } from '@/app/components/pageManager';
 import { TimeAgoDisplay } from '@/app/components/timeAgoDisplay';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
@@ -46,7 +45,7 @@ export const pageSettings: Record<Page, { icon: ReactNode; userType: UserType | 
 const MIN_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 export default function NavigationLayout({ children }: { children: ReactNode }) {
-  const { userType: authUserType, isLoading: isAuthLoading } = useAuth();
+  const { userType: authUserType, isLoading: isAuthLoading, isEmployee, isConciergerie } = useAuth();
 
   // Add nice scrollbar styling
   React.useEffect(() => {
@@ -310,7 +309,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {isNavigationPage && !!userType && <InstallToast />}
 
       {/* Changelog modal - auto-shown once per new version */}
-      {showChangelog && userType && (userType === 'employee' || userType === 'conciergerie') && (
+      {showChangelog && userType && (
         <ChangelogModal userType={userType} onClose={dismissChangelog} mode="current" entries={changelogEntries} />
       )}
 
@@ -378,13 +377,13 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
                     {/* Badge for today's missions (employee) or started missions (conciergerie) */}
                     {page === Page.Calendar &&
-                      (userType === 'employee' && todayMissionsCount > 0 ? (
+                      (isEmployee && todayMissionsCount > 0 ? (
                         <div className="relative ml-auto z-10">
                           <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                             {todayMissionsCount > 9 ? '9+' : todayMissionsCount}
                           </div>
                         </div>
-                      ) : userType === 'conciergerie' && startedMissionsCount > 0 ? (
+                      ) : isConciergerie && startedMissionsCount > 0 ? (
                         <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                           {startedMissionsCount > 9 ? '9+' : startedMissionsCount}
                         </div>

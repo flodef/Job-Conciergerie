@@ -3,9 +3,10 @@
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { Conciergerie, Mission } from '@/app/types/dataTypes';
+import { cn, titleClassName } from '@/app/utils/className';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
-import { formatHour } from '@/app/utils/task';
+import { formatHour, getMissionProviderCount } from '@/app/utils/task';
 import { useEffect, useState } from 'react';
 
 type MissionCardProps = {
@@ -22,6 +23,8 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
   const home = homes.find(h => h.id === mission.homeId);
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
   const employee = findEmployee(mission.employeeId);
+  const employee2 = findEmployee(mission.employeeId2);
+  const providerCount = getMissionProviderCount(mission);
 
   // Fetch conciergerie data when mission changes
   useEffect(() => {
@@ -54,7 +57,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         <div
           className="absolute top-0 right-0 w-0 h-0 border-t-56 border-l-56 border-t-[conciergerieColor] border-l-transparent rounded-tr-lg"
           style={{
-            borderTopColor: conciergerieColor, // Fallback for Tailwind dynamic color
+            borderTopColor: conciergerieColor,
             borderLeftColor: 'transparent',
           }}
         ></div>
@@ -62,6 +65,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
           {formatHour(mission.hours)}
         </span>
       </div>
+
       {/* Diagonal label for taken missions */}
       {employee && (
         <div
@@ -78,11 +82,17 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
             }}
           >
             {employee.firstName} {employee.familyName}
+            {employee2 && ` + ${employee2.firstName} ${employee2.familyName}`}
           </div>
         </div>
       )}
 
-      <h3 className="font-medium text-foreground">{`${home.title} (${home.geographicZone})`}</h3>
+      {/* Binôme status badge */}
+      {home.allowDuo && (
+        <div className="absolute top-0 left-0 text-purple-700 text-sm font-bold px-2 py-2">{providerCount}/2</div>
+      )}
+
+      <h3 className={cn(titleClassName, 'mx-3 text-center')}>{`${home.title} (${home.geographicZone})`}</h3>
 
       <div className="flex flex-wrap gap-1 mt-2">
         {mission.tasks.map(task => (

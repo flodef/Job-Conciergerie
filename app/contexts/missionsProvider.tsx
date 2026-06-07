@@ -8,7 +8,7 @@ import {
   updateMissionData,
 } from '@/app/actions/mission';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
-import { useAuth } from '@/app/contexts/authProvider';
+import { getUserKey, useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
@@ -36,6 +36,9 @@ type MissionsContextType = {
   deleteMission: (id: string) => Promise<{ success: boolean; employeeNotified: boolean }>;
   cancelMission: (id: string) => Promise<{ success: boolean; employeeNotified: boolean }>;
   acceptMission: (id: string) => Promise<{ success: boolean; employeeNotified: boolean }>;
+  acceptMission2: (id: string) => Promise<{ success: boolean; employeeNotified: boolean }>;
+  assignSecondProvider: (id: string, providerId: string) => Promise<{ success: boolean; employeeNotified: boolean }>;
+  removeSecondProvider: (id: string) => Promise<{ success: boolean; employeeNotified: boolean }>;
   startMission: (id: string) => Promise<boolean>;
   completeMission: (id: string) => Promise<boolean>;
   shouldShowAcceptWarning: boolean | undefined;
@@ -53,7 +56,7 @@ export function MissionsProviderWrapper({ children }: { children: ReactNode }) {
 }
 
 function MissionsProvider({ children }: { children: ReactNode }) {
-  const { userData, conciergerieName, getUserKey, findConciergerie, findEmployee, isLoading: authLoading } = useAuth();
+  const { userData, conciergerieName, findConciergerie, findEmployee, isLoading: authLoading } = useAuth();
   const { homes, fetchHomes } = useHomes();
   const { needsRefresh, updateFetchTime } = useFetchTime();
   const needsRefreshMissions = needsRefresh[Page.Missions] || needsRefresh[Page.Calendar];
@@ -389,7 +392,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       return { success: false, employeeNotified: false };
     }
 
-    console.log('acceptMission: Accepting mission', id, 'for employee', getUserKey(employee));
     const success = await setMissionData(id, {
       ...missionToAccept,
       employeeId: getUserKey(employee),
@@ -409,6 +411,95 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const employeeNotified = !!(employee.notificationSettings?.acceptedMissions && home && conciergerie);
     if (employeeNotified)
       await EmailSender.sendMissionAcceptanceEmail({}, missionToAccept, home!, employee, conciergerie!);
+
+    return { success: true, employeeNotified };
+  };
+
+  const acceptMission2 = async (id: string) => {
+    const missionToAccept = missions.find(m => m.id === id);
+    if (!missionToAccept) {
+      console.error('acceptMission2: Mission not found', id);
+      return { success: false, employeeNotified: false };
+    }
+
+    const employee = userData as Employee;
+    if (!employee) {
+      console.error('acceptMission2: No employee userData');
+      return { success: false, employeeNotified: false };
+    }
+
+    // Can only accept as 2nd if 1st slot is filled and 2nd is empty
+    if (!missionToAccept.employeeId || missionToAccept.employeeId2) {
+      console.error('acceptMission2: Mission not duo-open', id);
+      return { success: false, employeeNotified: false };
+    }
+
+    console.log('acceptMission2: Accepting mission as 2nd binôme', id, 'for employee', getUserKey(employee));
+    const success = await setMissionData(id, {
+      ...missionToAccept,
+      employeeId2: getUserKey(employee),
+    });
+    if (!success) {
+      console.error('acceptMission2: setMissionData failed');
+      return { success: false, employeeNotified: false };
+    }
+
+    // Notify the conciergerie
+    await sendMissionStatusNotification(missionToAccept, employee, 'accepted');
+
+    // Send confirmation email to the employee
+    const home = homes.find(h => h.id === missionToAccept.homeId);
+    const conciergerie = findConciergerie(missionToAccept.conciergerieName);
+    const employeeNotified = !!(employee.notificationSettings?.acceptedMissions && home && conciergerie);
+    if (employeeNotified)
+      await EmailSender.sendMissionAcceptanceEmail({}, missionToAccept, home!, employee, conciergerie!);
+
+    return { success: true, employeeNotified };
+  };
+
+  const assignSecondProvider = async (id: string, providerId: string) => {
+    const mission = missions.find(m => m.id === id && m.conciergerieName === conciergerieName);
+    if (!mission) {
+      console.error('assignSecondProvider: Mission not found or not owned', id);
+      return { success: false, employeeNotified: false };
+    }
+
+    if (mission.employeeId2) {
+      console.error('assignSecondProvider: Second slot already filled', id);
+      return { success: false, employeeNotified: false };
+    }
+
+    const success = await setMissionData(id, { ...mission, employeeId2: providerId });
+    if (!success) return { success: false, employeeNotified: false };
+
+    // Notify the assigned provider if it's an employee
+    const employee = findEmployee(providerId);
+    const home = homes.find(h => h.id === mission.homeId);
+    const conciergerie = findConciergerie(mission.conciergerieName);
+    const employeeNotified = Boolean(employee?.notificationSettings?.acceptedMissions && home && conciergerie);
+    if (employeeNotified && employee)
+      await EmailSender.sendMissionAcceptanceEmail({}, mission, home!, employee, conciergerie!);
+
+    return { success: true, employeeNotified };
+  };
+
+  const removeSecondProvider = async (id: string) => {
+    const mission = missions.find(m => m.id === id && m.conciergerieName === conciergerieName);
+    if (!mission) {
+      console.error('removeSecondProvider: Mission not found or not owned', id);
+      return { success: false, employeeNotified: false };
+    }
+
+    const success = await setMissionData(id, { ...mission, employeeId2: null });
+    if (!success) return { success: false, employeeNotified: false };
+
+    // Notify the removed provider if it's an employee
+    const employee = findEmployee(mission.employeeId2);
+    const home = homes.find(h => h.id === mission.homeId);
+    const conciergerie = findConciergerie(mission.conciergerieName);
+    const employeeNotified = Boolean(employee?.notificationSettings?.missionsCanceled && home && conciergerie);
+    if (employeeNotified)
+      await EmailSender.sendMissionRemovedEmail({}, mission, home!, employee!, conciergerie!, 'canceled');
 
     return { success: true, employeeNotified };
   };
@@ -554,6 +645,9 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         deleteMission,
         cancelMission,
         acceptMission,
+        acceptMission2,
+        assignSecondProvider,
+        removeSecondProvider,
         startMission,
         completeMission,
         shouldShowAcceptWarning,
