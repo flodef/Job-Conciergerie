@@ -311,8 +311,8 @@ export default function Calendar() {
                           </div>
                         </div>
                         {home?.allowDuo ? (
-                          <div className="flex items-center justify-between">
-                            <IconUsers className="min-w-4 mr-1" size={16} />
+                          <div className="flex items-center">
+                            <IconUsers className="mr-1" size={16} />
                             <span className="text-light text-nowrap">Binôme :&nbsp;</span>
                             {isConciergerie ? (
                               <>

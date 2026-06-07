@@ -6,7 +6,7 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import Tooltip from './tooltip';
 
 interface FullScreenModalProps {
-  title: string;
+  title: string | ReactNode;
   children: ReactNode;
   onClose: () => void;
   footer: ReactNode;

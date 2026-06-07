@@ -4,18 +4,18 @@ import Accordion from '@/app/components/accordion';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
+import HomeTitle from '@/app/components/homeTitle';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeForm from '@/app/homes/components/homeForm';
+import { useImageCache } from '@/app/hooks/useImageCache';
 import { Home } from '@/app/types/dataTypes';
-import { actionButtonBarClassName, actionButtonClassName } from '@/app/utils/className';
+import { actionButtonBarClassName, actionButtonClassName, cn } from '@/app/utils/className';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { IconFileDescription, IconListCheck, IconPencil, IconPhoto, IconTrash } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useImageCache } from '@/app/hooks/useImageCache';
 
 type HomeDetailsProps = {
   home: Home;
@@ -144,12 +144,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
       />
 
       {!hasSuccessToast && (
-        <FullScreenModal
-          title={`${home.title} (${home.geographicZone})`}
-          onClose={onClose}
-          footer={footer}
-          disabled={isSubmitting}
-        >
+        <FullScreenModal title={<HomeTitle home={home} />} onClose={onClose} footer={footer} disabled={isSubmitting}>
           {selectedImageIndex !== undefined && (
             <FullScreenImageCarousel
               altPrefix={`Photo de ${home.title}`}

@@ -11,12 +11,13 @@ import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
 import { Home } from '@/app/types/dataTypes';
 import { cn, titleClassName } from '@/app/utils/className';
+import { useLocalStorage } from '@/app/utils/localStorage';
 import { IconLayout, IconLayoutGrid, IconList, IconPlus } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
 
 export default function HomesPage() {
-  const { myHomes, isLoading: homesLoading, fetchHomes } = useHomes();
+  const { myHomes, isLoading: homesLoading } = useHomes();
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
   const { isLoading: authLoading } = useAuth();
 
@@ -78,7 +79,7 @@ export default function HomesPage() {
     setSelectedHome(null);
   };
 
-  const [displayMode, setDisplayMode] = useState<'list' | 'grid' | 'thumb'>('thumb');
+  const [displayMode, setDisplayMode] = useLocalStorage<'list' | 'grid' | 'thumb'>('homes_display_mode', 'thumb');
 
   if (!hasLoadedOnce) return <M3LoadingSpinner />;
 

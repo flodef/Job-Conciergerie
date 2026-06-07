@@ -2,7 +2,10 @@
 
 import { Home } from '@/app/types/dataTypes';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
-import React from 'react';
+import { IconUsers } from '@tabler/icons-react';
+import { useImageCache } from '@/app/hooks/useImageCache';
+import HomeTitle from '@/app/components/homeTitle';
+import React, { useMemo } from 'react';
 
 type HomeCardProps = {
   home: Home;
@@ -22,13 +25,19 @@ const HomeImage = React.memo(function HomeImage({
   altText: string;
   className?: string;
 }) {
+  const imageUrl = useMemo(
+    () =>
+      home.images && home.images.length > 0
+        ? getStorageImageUrl(home.images[0], { width: 400, quality: 80 })
+        : fallbackImage,
+    [home.images],
+  );
+  const { getCachedUrl } = useImageCache([imageUrl]);
+  const cachedUrl = getCachedUrl(imageUrl);
+
   return (
     <img
-      src={
-        home.images && home.images.length > 0
-          ? getStorageImageUrl(home.images[0], { width: 400, quality: 80 })
-          : fallbackImage
-      }
+      src={cachedUrl}
       alt={altText}
       className={`object-cover w-full h-full ${className ?? ''}`}
       onError={e => {
@@ -57,6 +66,7 @@ const HomeCard = React.memo(function HomeCard({ home, onClick, onEdit, displayMo
             <div className="relative w-8 h-8 overflow-hidden rounded-md shrink-0">
               <HomeImage home={home} altText={`Miniature de ${home.title}`} />
             </div>
+            {home.allowDuo && <IconUsers size={20} />}
             <span className="text-foreground font-medium truncate">{home.title}</span>
           </div>
           <span className="text-light text-sm shrink-0">{home.geographicZone}</span>
@@ -69,6 +79,9 @@ const HomeCard = React.memo(function HomeCard({ home, onClick, onEdit, displayMo
           onClick={onClick}
           onContextMenu={handleContextMenu}
         >
+          {home.allowDuo && (
+            <IconUsers size={24} className="absolute top-1 left-1 bg-white/80 rounded p-1 text-black" />
+          )}
           <HomeImage home={home} altText={`Photo de ${home.title}`} className="rounded-md" />
         </div>
       );
@@ -80,7 +93,7 @@ const HomeCard = React.memo(function HomeCard({ home, onClick, onEdit, displayMo
           onClick={onClick}
           onContextMenu={handleContextMenu}
         >
-          <h3 className="text-xl font-medium text-foreground overflow-hidden max-w-full mb-4">{`${home.title} (${home.geographicZone})`}</h3>
+          <HomeTitle home={home} />
 
           <div className="relative aspect-video w-full overflow-hidden rounded-lg mt-auto">
             <HomeImage home={home} altText={`Photo de ${home.title}`} className="rounded-md" />

@@ -16,7 +16,8 @@ import { useImageCache } from '@/app/hooks/useImageCache';
 import MissionActions, { MAX_POINTS_PER_DAY } from '@/app/missions/components/missionActions';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
-import { Employee, Mission } from '@/app/types/dataTypes';
+import HomeTitle from '@/app/components/homeTitle';
+import { Mission } from '@/app/types/dataTypes';
 import {
   buttonClassName,
   cn,
@@ -24,7 +25,6 @@ import {
   iconButtonClassName,
   textClassName,
   textPulseClassName,
-  titleClassName,
 } from '@/app/utils/className';
 import { getColorValueByName } from '@/app/utils/color';
 import {
@@ -50,11 +50,12 @@ import {
   IconPhone,
   IconStopwatch,
   IconUserCheck,
+  IconUsers,
   IconUsersGroup,
   IconX,
   IconZoomScan,
 } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 type MissionDetailsProps = {
   mission: Mission;
@@ -490,9 +491,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           <div className="space-y-2" data-mission-details>
             <div>
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-foreground">{`${home.title} (${home.geographicZone})`}</p>
-                </div>
+                <HomeTitle home={home} />
                 <button
                   className="cursor-pointer"
                   onClick={() => setShowHomeDetails(true)}
@@ -723,7 +722,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                   Conciergerie
                 </h3>
                 <div className="flex items-center gap-3">
-                  <p className={cn(titleClassName, 'h-6')} style={{ color: conciergerieColor }}>
+                  <p className={cn(textClassName, 'h-6')} style={{ color: conciergerieColor }}>
                     {conciergerie?.name || mission.conciergerieName}
                   </p>
 
@@ -758,8 +757,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                 {employee ? (
                   <>
                     <h3 className={containerClassName}>
-                      <IconUserCheck size={16} />
-                      {providerCount > 1 ? 'Prestataire' : 'Binôme'}
+                      {!home.allowDuo ? <IconUserCheck size={16} /> : <IconUsers size={16} />}
+                      {!home.allowDuo ? 'Prestataire' : 'Binôme'}
                     </h3>
                     <div className="flex items-center gap-2">
                       <div

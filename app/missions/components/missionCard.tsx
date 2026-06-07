@@ -1,9 +1,9 @@
 'use client';
 
+import HomeTitle from '@/app/components/homeTitle';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { Conciergerie, Mission } from '@/app/types/dataTypes';
-import { cn, titleClassName } from '@/app/utils/className';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
 import { formatHour, getMissionProviderCount } from '@/app/utils/task';
@@ -92,7 +92,9 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         <div className="absolute top-0 left-0 text-purple-700 text-sm font-bold px-2 py-2">{providerCount}/2</div>
       )}
 
-      <h3 className={cn(titleClassName, 'mx-3 text-center')}>{`${home.title} (${home.geographicZone})`}</h3>
+      <div className="mx-3 text-center">
+        <HomeTitle home={home} />
+      </div>
 
       <div className="flex flex-wrap gap-1 mt-2">
         {mission.tasks.map(task => (
