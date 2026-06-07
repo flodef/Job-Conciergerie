@@ -263,11 +263,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
         // Use EmailSender for consistent retry mechanism
-        await EmailSender.sendRegistrationEmail(
-          { setToast, showSuccessToast: true },
-          selectedConciergerie,
-          newEmployee,
-        );
+        await EmailSender.sendRegistrationEmail(selectedConciergerie, newEmployee);
+        setToast({ type: ToastType.Success, message: "L'email de notification a été envoyé avec succès" });
 
         // Wait a bit before redirecting to allow the email to be sent and a toast to be displayed
         setTimeout(() => onMenuChange(Page.Waiting), 1500);
@@ -302,7 +299,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       updateUserType('employee');
 
       // Send notification email to employee about the new device
-      await EmailSender.sendNewDeviceEmail({ setToast, showSuccessToast: true }, updatedEmployee, userId);
+      await EmailSender.sendNewDeviceEmail(updatedEmployee, userId);
+      setToast({
+        type: ToastType.Success,
+        message: "L'email de notification de nouvel appareil a été envoyé avec succès",
+      });
 
       // Wait a bit before redirecting to allow the email to be sent and a toast to be displayed
       setTimeout(() => onMenuChange(Page.Waiting), 1500);

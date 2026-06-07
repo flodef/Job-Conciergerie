@@ -146,19 +146,24 @@ export default function WaitingPage() {
 
   const handleRefreshWithEmail = useCallback(() => {
     if (conciergerie && userId)
-      return EmailSender.sendVerificationEmail({ setToast, showSuccessToast: true }, conciergerie, userId);
+      return EmailSender.sendVerificationEmail(conciergerie, userId).then(() => {
+        setToast({ type: ToastType.Success, message: "L'email de vérification a été envoyé avec succès" });
+      });
 
     if (employee && userId) {
       if (employee.status === 'pending') {
         const selectedConciergerie = findConciergerie(employee.conciergerieName ?? null);
         if (selectedConciergerie)
-          return EmailSender.sendRegistrationEmail(
-            { setToast, showSuccessToast: true },
-            selectedConciergerie,
-            employee,
-          );
+          return EmailSender.sendRegistrationEmail(selectedConciergerie, employee).then(() => {
+            setToast({ type: ToastType.Success, message: "L'email de notification a été envoyé avec succès" });
+          });
       } else if (employee.status === 'accepted') {
-        return EmailSender.sendNewDeviceEmail({ setToast, showSuccessToast: true }, employee, userId);
+        return EmailSender.sendNewDeviceEmail(employee, userId).then(() => {
+          setToast({
+            type: ToastType.Success,
+            message: "L'email de notification de nouvel appareil a été envoyé avec succès",
+          });
+        });
       }
     }
   }, [conciergerie, employee, userId, findConciergerie]);

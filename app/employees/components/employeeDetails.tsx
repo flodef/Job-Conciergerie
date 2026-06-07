@@ -46,7 +46,7 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
   const handleStatusChange = (newStatus: 'accepted' | 'rejected') => {
     setIsSubmitting(true);
     if (newStatus === 'rejected') setIsRejectModalOpen(false);
-    updateEmployeeStatus(employee, newStatus, userData, missions, updateUserData, setToast)
+    updateEmployeeStatus(employee, newStatus, userData, missions, updateUserData)
       .then(({ updatedEmployee, emailSent }) => {
         setToast({
           type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
@@ -54,7 +54,6 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
             newStatus === 'accepted' ? 'accepté' : 'rejeté'
           }${emailSent ? ". L'employé a été notifié par email." : '.'}`,
         });
-        onClose();
       })
       .catch(error => {
         setToast({

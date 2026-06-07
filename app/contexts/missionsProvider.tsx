@@ -112,7 +112,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           if (!home || !employee) continue;
 
           const claimed = await claimLateNotificationForMission(mission.id);
-          if (claimed) await EmailSender.sendLateCompletionEmail({}, mission, home, employee, conciergerie);
+          if (claimed) await EmailSender.sendLateCompletionEmail(mission, home, employee, conciergerie);
         }
       }
     },
@@ -275,7 +275,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       conciergerie
     );
     if (employeeNotified)
-      await EmailSender.sendMissionUpdatedEmail({}, updatedMission, home!, employee!, conciergerie!, changes);
+      await EmailSender.sendMissionUpdatedEmail(updatedMission, home!, employee!, conciergerie!, changes);
 
     return { success: true, employeeNotified };
   };
@@ -321,7 +321,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       // Less time: the prestataire loses the mission and must accept it again
       employeeNotified = !!employee.notificationSettings?.missionsCanceled;
       if (employeeNotified)
-        await EmailSender.sendMissionRemovedEmail({}, existingMission, home, employee, conciergerie, 'canceled');
+        await EmailSender.sendMissionRemovedEmail(existingMission, home, employee, conciergerie, 'canceled');
     } else {
       // More time: the prestataire keeps the mission and gains extra time
       const changes: string[] = [
@@ -331,7 +331,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       if (dates.endDateTime) changes.push(`Nouvelle date/heure de fin: ${formatDateTime(newEnd)}`);
       employeeNotified = !!employee.notificationSettings?.missionChanged;
       if (employeeNotified)
-        await EmailSender.sendMissionUpdatedEmail({}, updatedMission, home, employee, conciergerie, changes);
+        await EmailSender.sendMissionUpdatedEmail(updatedMission, home, employee, conciergerie, changes);
     }
 
     return { success: true, employeeNotified };
@@ -354,7 +354,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     const employeeNotified = !!(employee?.notificationSettings?.missionDeleted && home && conciergerie);
     if (employeeNotified)
-      await EmailSender.sendMissionRemovedEmail({}, missionToDelete, home!, employee!, conciergerie!, 'deleted');
+      await EmailSender.sendMissionRemovedEmail(missionToDelete, home!, employee!, conciergerie!, 'deleted');
 
     return { success: true, employeeNotified };
   };
@@ -374,7 +374,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     const employeeNotified = !!(employee?.notificationSettings?.missionsCanceled && home && conciergerie);
     if (employeeNotified)
-      await EmailSender.sendMissionRemovedEmail({}, missionToCancel, home!, employee!, conciergerie!, 'canceled');
+      await EmailSender.sendMissionRemovedEmail(missionToCancel, home!, employee!, conciergerie!, 'canceled');
 
     return { success: true, employeeNotified };
   };
@@ -409,8 +409,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const home = homes.find(h => h.id === missionToAccept.homeId);
     const conciergerie = findConciergerie(missionToAccept.conciergerieName);
     const employeeNotified = !!(employee.notificationSettings?.acceptedMissions && home && conciergerie);
-    if (employeeNotified)
-      await EmailSender.sendMissionAcceptanceEmail({}, missionToAccept, home!, employee, conciergerie!);
+    if (employeeNotified) await EmailSender.sendMissionAcceptanceEmail(missionToAccept, home!, employee, conciergerie!);
 
     return { success: true, employeeNotified };
   };
@@ -451,8 +450,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const home = homes.find(h => h.id === missionToAccept.homeId);
     const conciergerie = findConciergerie(missionToAccept.conciergerieName);
     const employeeNotified = !!(employee.notificationSettings?.acceptedMissions && home && conciergerie);
-    if (employeeNotified)
-      await EmailSender.sendMissionAcceptanceEmail({}, missionToAccept, home!, employee, conciergerie!);
+    if (employeeNotified) await EmailSender.sendMissionAcceptanceEmail(missionToAccept, home!, employee, conciergerie!);
 
     return { success: true, employeeNotified };
   };
@@ -478,7 +476,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const conciergerie = findConciergerie(mission.conciergerieName);
     const employeeNotified = Boolean(employee?.notificationSettings?.acceptedMissions && home && conciergerie);
     if (employeeNotified && employee)
-      await EmailSender.sendMissionAcceptanceEmail({}, mission, home!, employee, conciergerie!);
+      await EmailSender.sendMissionAcceptanceEmail(mission, home!, employee, conciergerie!);
 
     return { success: true, employeeNotified };
   };
@@ -499,7 +497,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const conciergerie = findConciergerie(mission.conciergerieName);
     const employeeNotified = Boolean(employee?.notificationSettings?.missionsCanceled && home && conciergerie);
     if (employeeNotified)
-      await EmailSender.sendMissionRemovedEmail({}, mission, home!, employee!, conciergerie!, 'canceled');
+      await EmailSender.sendMissionRemovedEmail(mission, home!, employee!, conciergerie!, 'canceled');
 
     return { success: true, employeeNotified };
   };
@@ -628,7 +626,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     // If we have all the required data, send the notification email
     if (home && conciergerie?.notificationSettings?.[notificationSetting])
-      await EmailSender.sendMissionStatusEmail({}, mission, home, employee, conciergerie, status);
+      await EmailSender.sendMissionStatusEmail(mission, home, employee, conciergerie, status);
   };
 
   return (
