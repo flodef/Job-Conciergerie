@@ -40,6 +40,7 @@ const TaskSelectorComponent: ForwardRefRenderFunction<HTMLDivElement, TaskSelect
   const toggleTask = (task: Task) => {
     setError('');
     if (selectedTasks.includes(task)) {
+      if (selectedTasks.length === 1) return;
       onTasksChange(selectedTasks.filter(t => t !== task));
     } else {
       onTasksChange([...selectedTasks, task]);
@@ -51,35 +52,24 @@ const TaskSelectorComponent: ForwardRefRenderFunction<HTMLDivElement, TaskSelect
       <Label id={id} required={required} tooltip={tooltip}>
         {label}
       </Label>
-      <div ref={ref} className="grid grid-cols-2 gap-2">
-        {availableTasks.map(task => {
-          const points = getTaskPoints(task);
-          return (
-            <button
-              type="button"
-              key={task}
-              onClick={() => toggleTask(task)}
-              disabled={disabled}
-              className={cn(
-                'p-2 border rounded-lg text-sm flex justify-between items-center',
-                'border-foreground/20 focus-visible:outline-primary',
-                selectedTasks.includes(task)
-                  ? 'bg-primary text-background border-primary'
-                  : 'bg-background text-foreground border-secondary',
-              )}
-            >
-              <span>{task}</span>
-              <span
-                className={cn(
-                  'px-1.5 py-0.5 rounded-full text-xs',
-                  selectedTasks.includes(task) ? 'bg-background/20 text-background' : 'bg-primary/10 text-primary',
-                )}
-              >
-                {points} pt{points !== 1 ? 's' : ''}
-              </span>
-            </button>
-          );
-        })}
+      <div ref={ref} className="grid grid-cols-3 gap-2">
+        {availableTasks.map(task => (
+          <button
+            type="button"
+            key={task}
+            onClick={() => toggleTask(task)}
+            disabled={disabled}
+            className={cn(
+              'p-2 border rounded-lg text-sm flex justify-center items-center',
+              'border-foreground/20 focus-visible:outline-primary',
+              selectedTasks.includes(task)
+                ? 'bg-primary text-background border-primary'
+                : 'bg-background text-foreground border-secondary',
+            )}
+          >
+            <span>{task}</span>
+          </button>
+        ))}
       </div>
       {error && <p className={errorClassName}>{error}</p>}
     </div>

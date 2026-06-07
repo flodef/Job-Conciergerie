@@ -516,25 +516,17 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                 Tâches
               </h3>
               <div className="flex flex-wrap gap-2 mt-1">
-                {mission.tasks.map(task => {
-                  const points = getTaskPoints(task);
-                  return (
-                    <span
-                      key={task}
-                      className="px-2 py-1 rounded-lg text-sm text-background flex items-center gap-1"
-                      style={{
-                        backgroundColor: `${conciergerieColor}`,
-                      }}
-                    >
-                      <span>{task}</span>
-                      {points && (
-                        <span className="ml-1 px-1.5 py-0.5 bg-background/20 rounded-full text-xs">
-                          {points} pt{points !== 1 ? 's' : ''}
-                        </span>
-                      )}
-                    </span>
-                  );
-                })}
+                {mission.tasks.map(task => (
+                  <span
+                    key={task}
+                    className="px-2 py-1 rounded-lg text-sm text-background"
+                    style={{
+                      backgroundColor: `${conciergerieColor}`,
+                    }}
+                  >
+                    {task}
+                  </span>
+                ))}
               </div>
             </div>
 

@@ -46,7 +46,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   // Initialize form values
   const [homeId, setHomeId] = useState<string>(mission?.homeId || filteredHomes[0]?.id || '');
   const [missionHours, setMissionHours] = useState(mission?.hours || 0);
-  const [tasks, setTasks] = useState<Task[]>(mission?.tasks || []);
+  const [tasks, setTasks] = useState<Task[]>(mission?.tasks || (mode === 'add' ? [Task.Cleaning] : []));
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>(mission?.allowedEmployees || []);
   const [initialFormValues, setInitialFormValues] = useState<{
     homeId: string;

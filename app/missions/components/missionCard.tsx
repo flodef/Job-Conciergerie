@@ -88,9 +88,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
       )}
 
       {/* Binôme status badge */}
-      {home.allowDuo && (
-        <div className="absolute top-0 left-0 text-purple-700 text-sm font-bold px-2 py-2">{providerCount}/2</div>
-      )}
+      {home.allowDuo && <div className="absolute top-0 left-0 font-bold px-1 py-1">{providerCount}/2</div>}
 
       <div className="mx-3 text-center">
         <HomeTitle home={home} />

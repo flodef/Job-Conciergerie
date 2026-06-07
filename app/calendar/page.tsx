@@ -8,17 +8,17 @@ import { useFetchTime } from '@/app/hooks/useFetchTime';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import { Mission } from '@/app/types/dataTypes';
 import { formatCalendarDate, formatMissionTimeForCalendar, groupMissionsByDate } from '@/app/utils/calendar';
-import { cn, containerClassName, textPulseClassName, titleClassName } from '@/app/utils/className';
+import {
+  cn,
+  containerClassName,
+  descriptionClassName,
+  textPulseClassName,
+  titleClassName,
+} from '@/app/utils/className';
 import { getColorValueByName } from '@/app/utils/color';
 import { isPastDate, isToday, sortDates } from '@/app/utils/date';
 import { Page } from '@/app/utils/navigation';
-import {
-  calculateEmployeeHoursForDay,
-  calculateMissionPoints,
-  formatHour,
-  formatNumber,
-  getTaskPoints,
-} from '@/app/utils/task';
+import { calculateEmployeeHoursForDay, formatHour } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay, IconUsers } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
@@ -248,7 +248,6 @@ export default function Calendar() {
                   const home = homes.find(h => h.id === mission.homeId);
                   const employee = findEmployee(mission.employeeId);
                   const employee2 = findEmployee(mission.employeeId2);
-                  const { totalPoints } = calculateMissionPoints(mission);
 
                   return (
                     <div
@@ -284,92 +283,86 @@ export default function Calendar() {
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-1 mt-2 mb-2">
-                        {mission.tasks.map(task => (
-                          <span
-                            key={mission.id + task}
-                            className="px-2 py-0.5 text-background rounded-full text-xs flex items-center gap-1"
-                            style={{ backgroundColor: conciergerieColor }}
-                          >
-                            <span>{task}</span>
-                            <span className="ml-1 px-1 py-0.5 bg-background/20 rounded-full text-xs">
-                              {getTaskPoints(task)} pt
+                      <div className="flex items-center justify-between text-sm mt-2 mb-2">
+                        <div className="flex flex-wrap gap-1">
+                          {mission.tasks.map(task => (
+                            <span
+                              key={mission.id + task}
+                              className="px-2 py-0.5 text-background rounded-full text-xs"
+                              style={{ backgroundColor: conciergerieColor }}
+                            >
+                              {task}
                             </span>
-                          </span>
-                        ))}
+                          ))}
+                        </div>
+                        <div className="flex items-center">
+                          <span className="text-light text-nowrap">Heures :&nbsp;</span>
+                          <span className="font-medium">{formatHour(mission.hours)}</span>
+                        </div>
                       </div>
 
-                      <div className="flex flex-col justify-between text-sm">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <span className="text-light text-nowrap">Points :&nbsp;</span>
-                            <span className="font-medium">{formatNumber(totalPoints)}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="text-light text-nowrap">Heures :&nbsp;</span>
-                            <span className="font-medium">{formatHour(mission.hours)}</span>
-                          </div>
+                      {isEmployee && (
+                        <div className="flex items-center text-sm">
+                          <span className={descriptionClassName}>Conciergerie :&nbsp;</span>
+                          <span>{mission.conciergerieName}</span>
                         </div>
-                        {home?.allowDuo ? (
-                          <div className="flex items-center">
-                            <IconUsers className="mr-1" size={16} />
-                            <span className="text-light text-nowrap">Binôme :&nbsp;</span>
-                            {isConciergerie ? (
-                              <>
-                                {employee && employee2 ? (
+                      )}
+
+                      {home?.allowDuo ? (
+                        <div className="flex items-center text-sm mt-1">
+                          <IconUsers className="mr-1" size={16} />
+                          <span className={cn(descriptionClassName, 'text-nowrap')}>Binôme :&nbsp;</span>
+                          {isConciergerie ? (
+                            <>
+                              {employee && employee2 ? (
+                                <span>
+                                  {employee.firstName} {employee.familyName} + {employee2.firstName}{' '}
+                                  {employee2.familyName}
+                                </span>
+                              ) : employee ? (
+                                <span className="animate-pulse">
+                                  ⚠️ {employee.firstName} {employee.familyName} ⚠️
+                                </span>
+                              ) : employee2 ? (
+                                <span className="animate-pulse">
+                                  ⚠️ {employee2.firstName} {employee2.familyName} ⚠️
+                                </span>
+                              ) : (
+                                <span>-</span>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {employee && userData && getUserKey(userData) === getUserKey(employee) ? (
+                                employee2 ? (
                                   <span>
-                                    {employee.firstName} {employee.familyName} + {employee2.firstName}{' '}
-                                    {employee2.familyName}
-                                  </span>
-                                ) : employee ? (
-                                  <span className="animate-pulse">
-                                    ⚠️ {employee.firstName} {employee.familyName} ⚠️
-                                  </span>
-                                ) : employee2 ? (
-                                  <span className="animate-pulse">
-                                    ⚠️ {employee2.firstName} {employee2.familyName} ⚠️
+                                    {employee2.firstName} {employee2.familyName}
                                   </span>
                                 ) : (
-                                  <span>-</span>
-                                )}
-                              </>
-                            ) : (
-                              <>
-                                {employee && userData && getUserKey(userData) === getUserKey(employee) ? (
-                                  employee2 ? (
-                                    <span>
-                                      {employee2.firstName} {employee2.familyName}
-                                    </span>
-                                  ) : (
-                                    <span className={textPulseClassName}>En attente...</span>
-                                  )
-                                ) : employee2 && userData && getUserKey(userData) === getUserKey(employee2) ? (
-                                  employee ? (
-                                    <span>
-                                      {employee.firstName} {employee.familyName}
-                                    </span>
-                                  ) : (
-                                    <span className={textPulseClassName}>En attente...</span>
-                                  )
+                                  <span className={textPulseClassName}>En attente...</span>
+                                )
+                              ) : employee2 && userData && getUserKey(userData) === getUserKey(employee2) ? (
+                                employee ? (
+                                  <span>
+                                    {employee.firstName} {employee.familyName}
+                                  </span>
                                 ) : (
-                                  <span>-</span>
-                                )}
-                                <div className="flex items-center">
-                                  <span className="text-light text-nowrap">Conciergerie :&nbsp;</span>
-                                  <span className="font-medium">{mission.conciergerieName}</span>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        ) : isConciergerie ? (
-                          <div className="flex items-center">
-                            <span className="text-light text-nowrap">Prestataire :&nbsp;</span>
-                            <span>
-                              {employee?.firstName} {employee?.familyName}
-                            </span>
-                          </div>
-                        ) : null}
-                      </div>
+                                  <span className={textPulseClassName}>En attente...</span>
+                                )
+                              ) : (
+                                <span>-</span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ) : isConciergerie ? (
+                        <div className="flex items-center text-sm">
+                          <span className="text-light text-nowrap">Prestataire :&nbsp;</span>
+                          <span>
+                            {employee?.firstName} {employee?.familyName}
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}
