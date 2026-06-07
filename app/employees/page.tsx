@@ -1,6 +1,5 @@
 'use client';
 
-import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import Accordion from '@/app/components/accordion';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import M3LoadingSpinner from '@/app/components/m3LoadingSpinner';
@@ -9,13 +8,13 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { getUserKey, useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
-import { Conciergerie, Employee } from '@/app/types/dataTypes';
-import { EmailSender } from '@/app/utils/emailSender';
+import { Employee } from '@/app/types/dataTypes';
 import {
   countEmployeeMissions,
   filterEmployees,
   filterEmployeesByConciergerie,
   sortEmployees,
+  updateEmployeeStatus,
 } from '@/app/utils/employee';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
 import { ReactNode, useEffect, useState } from 'react';
@@ -67,51 +66,45 @@ export default function EmployeesList() {
       setEmployeeToReject(employee);
       setIsRejectModalOpen(true);
     } else {
-      updateEmployeeStatus(employee, newStatus);
-    }
-  };
-
-  const updateEmployeeStatus = (employee: Employee, newStatus: 'accepted' | 'rejected') => {
-    // For acceptance, proceed directly
-    updateEmployeeStatusAction(employee, newStatus)
-      .then(updatedEmployee => {
-        if (!updatedEmployee) throw new Error("L'employé à modifier n'a pas été trouvé");
-
-        // Update local state
-        updateUserData(updatedEmployee, 'employee');
-
-        const conciergerie = userData as Conciergerie;
-        if (!conciergerie) throw new Error('Conciergerie non trouvée');
-
-        EmailSender.sendAcceptanceEmail(
-          { setToast },
-          employee,
-          conciergerie,
-          countEmployeeMissions(employee, missions),
-          newStatus === 'accepted',
-        ).then(emailSent => {
+      updateEmployeeStatus(employee, newStatus, userData, missions, updateUserData, setToast)
+        .then(({ updatedEmployee, emailSent }) => {
           setToast({
             type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
             message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été ${
               newStatus === 'accepted' ? 'accepté' : 'rejeté'
             }${emailSent ? ". L'employé a été notifié par email." : '.'}`,
           });
+        })
+        .catch(error => {
+          setToast({
+            type: ToastType.Error,
+            message: error.toString(),
+            error,
+          });
         });
-      })
-      .catch(error => {
-        setToast({
-          type: ToastType.Error,
-          message: error.toString(),
-          error,
-        });
-      });
+    }
   };
 
   // Handle confirmation of employee rejection
   const handleConfirmRejection = () => {
     if (employeeToReject) {
-      updateEmployeeStatus(employeeToReject, 'rejected');
-      handleDeleteRejection();
+      updateEmployeeStatus(employeeToReject, 'rejected', userData, missions, updateUserData, setToast)
+        .then(({ updatedEmployee, emailSent }) => {
+          setToast({
+            type: ToastType.Info,
+            message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été rejeté${
+              emailSent ? ". L'employé a été notifié par email." : '.'
+            }`,
+          });
+          handleDeleteRejection();
+        })
+        .catch(error => {
+          setToast({
+            type: ToastType.Error,
+            message: error.toString(),
+            error,
+          });
+        });
     }
   };
 

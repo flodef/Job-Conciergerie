@@ -1,5 +1,8 @@
 import { Employee, EmployeeStatus, Mission } from '@/app/types/dataTypes';
+import { Conciergerie } from '@/app/types/dataTypes';
 import { getUserKey } from '../contexts/authProvider';
+import { updateEmployeeStatusAction } from '@/app/actions/employee';
+import { EmailSender } from '@/app/utils/emailSender';
 
 /**
  * Normalize a name by capitalizing the first letter of each part
@@ -88,3 +91,30 @@ export function filterEmployeesByConciergerie(employees: Employee[], conciergeri
 // Count missions assigned to an employee
 export const countEmployeeMissions = (employee: Employee, missions: Mission[]): number =>
   missions.filter(mission => getUserKey(employee) === mission.employeeId).length;
+
+// Update employee status with email notification
+export const updateEmployeeStatus = async (
+  employee: Employee,
+  newStatus: 'accepted' | 'rejected',
+  userData: Conciergerie | Employee | undefined,
+  missions: Mission[],
+  updateUserData: (data: Employee, type: 'employee') => void,
+  setToast?: (toast: any) => void,
+) => {
+  const updatedEmployee = await updateEmployeeStatusAction(employee, newStatus);
+  if (!updatedEmployee) throw new Error("Le prestataire à modifier n'a pas été trouvé");
+
+  updateUserData(updatedEmployee, 'employee');
+
+  const conciergerie = userData as Conciergerie;
+  if (!conciergerie) throw new Error('Conciergerie non trouvée');
+
+  const emailSent = await EmailSender.sendAcceptanceEmail(
+    { setToast },
+    employee,
+    conciergerie,
+    countEmployeeMissions(employee, missions),
+    newStatus === 'accepted',
+  );
+  return { updatedEmployee, emailSent };
+};

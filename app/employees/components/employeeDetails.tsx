@@ -1,6 +1,5 @@
 'use client';
 
-import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
@@ -16,7 +15,7 @@ import {
   labelClassName,
 } from '@/app/utils/className';
 import { formatDate } from '@/app/utils/date';
-import { countEmployeeMissions } from '@/app/utils/employee';
+import { countEmployeeMissions, updateEmployeeStatus } from '@/app/utils/employee';
 import { IconCheck, IconMail, IconMapPin, IconPhone, IconTrash, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 
@@ -27,7 +26,7 @@ type EmployeeDetailsProps = {
 };
 
 export default function EmployeeDetails({ employee, onClose, mission }: EmployeeDetailsProps) {
-  const { deleteEmployee, updateUserData } = useAuth();
+  const { deleteEmployee, updateUserData, userData } = useAuth();
   const { missions, removeSecondProvider, updateMission } = useMissions();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -44,46 +43,24 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
     return missions.filter(mission => mission.employeeId === employeeId && mission.status === status).length;
   };
 
-  const handleAccept = () => {
+  const handleStatusChange = (newStatus: 'accepted' | 'rejected') => {
     setIsSubmitting(true);
-    updateEmployeeStatusAction(employee, 'accepted')
-      .then(updatedEmployee => {
-        if (!updatedEmployee) throw new Error("Le prestataire à modifier n'a pas été trouvé");
-        updateUserData(updatedEmployee, 'employee');
+    if (newStatus === 'rejected') setIsRejectModalOpen(false);
+    updateEmployeeStatus(employee, newStatus, userData, missions, updateUserData, setToast)
+      .then(({ updatedEmployee, emailSent }) => {
         setToast({
-          type: ToastType.Success,
-          message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été accepté`,
+          type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
+          message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été ${
+            newStatus === 'accepted' ? 'accepté' : 'rejeté'
+          }${emailSent ? ". L'employé a été notifié par email." : '.'}`,
         });
         onClose();
       })
       .catch(error => {
-        console.error('Error accepting employee:', error);
         setToast({
           type: ToastType.Error,
-          message: "Erreur lors de l'acceptation du prestataire",
-        });
-        setIsSubmitting(false);
-      });
-  };
-
-  const handleReject = () => {
-    setIsSubmitting(true);
-    setIsRejectModalOpen(false);
-    updateEmployeeStatusAction(employee, 'rejected')
-      .then(updatedEmployee => {
-        if (!updatedEmployee) throw new Error("Le prestataire à modifier n'a pas été trouvé");
-        updateUserData(updatedEmployee, 'employee');
-        setToast({
-          type: ToastType.Success,
-          message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été rejeté`,
-        });
-        onClose();
-      })
-      .catch(error => {
-        console.error('Error rejecting employee:', error);
-        setToast({
-          type: ToastType.Error,
-          message: 'Erreur lors du rejet du prestataire',
+          message: error.toString(),
+          error,
         });
         setIsSubmitting(false);
       });
@@ -155,7 +132,10 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
             </button>
           )}
           {(employee.status === 'rejected' || employee.status === 'pending') && (
-            <button onClick={handleAccept} className={cn(actionButtonClassName, 'bg-green-100 text-green-700')}>
+            <button
+              onClick={() => handleStatusChange('accepted')}
+              className={cn(actionButtonClassName, 'bg-green-100 text-green-700')}
+            >
               <IconCheck />
               Accepter
             </button>
@@ -268,7 +248,7 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
                   } Il ne pourra plus accéder à l'application.`
                 : ''
             }
-            onConfirm={handleReject}
+            onConfirm={() => handleStatusChange('rejected')}
             onCancel={() => setIsRejectModalOpen(false)}
           />
           <ConfirmationModal
