@@ -3,6 +3,7 @@
 import ConfirmationModal from '@/app/components/confirmationModal';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
+import HomeTitle from '@/app/components/homeTitle';
 import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import Switch from '@/app/components/switch';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
@@ -13,10 +14,9 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import { useImageCache } from '@/app/hooks/useImageCache';
-import MissionActions, { MAX_POINTS_PER_DAY } from '@/app/missions/components/missionActions';
+import MissionActions from '@/app/missions/components/missionActions';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
-import HomeTitle from '@/app/components/homeTitle';
 import { Mission } from '@/app/types/dataTypes';
 import {
   buttonClassName,
@@ -25,6 +25,7 @@ import {
   iconButtonClassName,
   textClassName,
   textPulseClassName,
+  titleClassName,
 } from '@/app/utils/className';
 import { getColorValueByName } from '@/app/utils/color';
 import {
@@ -37,10 +38,9 @@ import {
   localISOString,
 } from '@/app/utils/date';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
-import { calculateMissionPoints, formatHour, getMissionProviderCount, getTaskPoints } from '@/app/utils/task';
+import { formatHour, getMissionProviderCount } from '@/app/utils/task';
 import {
   IconBuildingStore,
-  IconCalculator,
   IconCalendarEvent,
   IconCheck,
   IconInfoCircle,
@@ -510,12 +510,12 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
               ) : null}
             </div>
 
-            <div>
+            <div className="flex items-center justify-between">
               <h3 className={containerClassName}>
                 <IconListCheck size={16} />
                 Tâches
               </h3>
-              <div className="flex flex-wrap gap-2 mt-1">
+              <div className="flex flex-wrap gap-2 justify-end">
                 {mission.tasks.map(task => (
                   <span
                     key={task}
@@ -528,21 +528,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                   </span>
                 ))}
               </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <h3 className={containerClassName}>
-                <IconCalculator size={16} />
-                Points de mission
-                <Tooltip>
-                  <p>
-                    <strong>Règle des {MAX_POINTS_PER_DAY} points par jour :</strong> Pour ne pas dépasser la capacité
-                    de travail d&apos;un prestataire, il est impossible d&apos;attribuer plus de {MAX_POINTS_PER_DAY}{' '}
-                    points de mission par jour par prestataire.
-                  </p>
-                </Tooltip>
-              </h3>
-              <span className="font-medium">{calculateMissionPoints(mission).totalPoints} points</span>
             </div>
 
             <div className="flex items-center justify-between">
@@ -714,7 +699,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                   Conciergerie
                 </h3>
                 <div className="flex items-center gap-3">
-                  <p className={cn(textClassName, 'h-6')} style={{ color: conciergerieColor }}>
+                  <p className={cn(titleClassName, 'h-6 font-bold')} style={{ color: conciergerieColor }}>
                     {conciergerie?.name || mission.conciergerieName}
                   </p>
 
