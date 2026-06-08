@@ -26,5 +26,6 @@ export const insertEmailLog = async (
     `;
   } catch (err) {
     console.error('Error inserting email log:', err);
+    throw err;
   }
 };

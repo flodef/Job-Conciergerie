@@ -35,7 +35,7 @@ export default function Calendar() {
     findConciergerie,
     userData,
   } = useAuth();
-  const { missions, isLoading: missionsLoading, fetchMissions, getLateMissions } = useMissions();
+  const { missions, isLoading: missionsLoading, fetchMissions, getLateMissions, completeMission } = useMissions();
   const { homes } = useHomes();
   const { needsRefresh, updateFetchTime } = useFetchTime();
   const needsRefreshCalendar = needsRefresh[Page.Calendar];
@@ -143,11 +143,26 @@ export default function Calendar() {
     }, 100);
   };
 
-  const handleCompleteMission = () => {
-    // This will be called when objectives are confirmed
-    // The MissionCompletionModal will handle the actual completion
-    setIsCompletionModalOpen(false);
-    setSelectedMission(null);
+  const handleCompleteMission = async () => {
+    console.log('handleCompleteMission called in calendar');
+    if (!selectedMission) return;
+
+    const isSuccess = await completeMission(selectedMission.id);
+    if (isSuccess) {
+      setToast({
+        type: ToastType.Success,
+        message: 'Mission terminée ! Félicitations !',
+      });
+      setIsCompletionModalOpen(false);
+      setSelectedMission(null);
+      // Refresh missions
+      fetchMissions();
+    } else {
+      setToast({
+        type: ToastType.Error,
+        message: 'Erreur lors de la validation de la mission',
+      });
+    }
   };
 
   // Only show empty state if not loading and we've confirmed there are no missions

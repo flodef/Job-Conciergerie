@@ -70,7 +70,11 @@ export default function FullScreenModal({
         <div className="shrink-0 z-20 bg-background p-4 border-b border-secondary flex justify-between items-center rounded-t-lg">
           <div className="flex items-center">
             <h2 className="text-xl font-bold overflow-hidden">{title}</h2>
-            {tooltip && <Tooltip>{tooltip}</Tooltip>}
+            {tooltip && (
+              <Tooltip size="large" className="text-foreground">
+                {tooltip}
+              </Tooltip>
+            )}
           </div>
           <CloseButton onClose={!disabled ? handleClose : () => {}} />
         </div>

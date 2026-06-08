@@ -28,7 +28,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
 
 export default function Missions() {
-  const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
+  const { missions, isLoading: missionsLoading, fetchMissions, completeMission } = useMissions();
   const { homes } = useHomes();
   const { userType, isLoading: authLoading, employeeName, conciergerieName, isEmployee, isConciergerie } = useAuth();
   const { updateFetchTime, needsRefresh } = useFetchTime();
@@ -62,11 +62,27 @@ export default function Missions() {
     }, 100);
   };
 
-  const handleCompleteMission = () => {
-    // This will be called when objectives are confirmed
-    // The MissionCompletionModal will handle the actual completion
-    setIsCompletionModalOpen(false);
-    setSelectedMission(null);
+  const handleCompleteMission = async () => {
+    console.log('handleCompleteMission called in missions page');
+    const mission = missions.find(m => m.id === selectedMission);
+    if (!mission) return;
+
+    const isSuccess = await completeMission(mission.id);
+    if (isSuccess) {
+      setToast({
+        type: ToastType.Success,
+        message: 'Mission terminée ! Félicitations !',
+      });
+      setIsCompletionModalOpen(false);
+      setSelectedMission(null);
+      // Refresh missions
+      fetchMissions();
+    } else {
+      setToast({
+        type: ToastType.Error,
+        message: 'Erreur lors de la validation de la mission',
+      });
+    }
   };
 
   const handleCloseDetails = (reopenAfter = false) => {
