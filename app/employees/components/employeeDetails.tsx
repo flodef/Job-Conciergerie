@@ -15,7 +15,12 @@ import {
   labelClassName,
 } from '@/app/utils/className';
 import { formatDate } from '@/app/utils/date';
-import { countEmployeeMissions, getEmployeeFullName, updateEmployeeStatus } from '@/app/utils/employee';
+import {
+  countEmployeeMissions,
+  getEmployeeFullName,
+  removeEmployeeFromMissions,
+  updateEmployeeStatus,
+} from '@/app/utils/employee';
 import { IconCheck, IconMail, IconMapPin, IconPhone, IconTrash, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 
@@ -26,7 +31,7 @@ type EmployeeDetailsProps = {
 };
 
 export default function EmployeeDetails({ employee, onClose, mission }: EmployeeDetailsProps) {
-  const { deleteEmployee, updateUserData, userData } = useAuth();
+  const { deleteEmployee, updateUserData, userData, employees } = useAuth();
   const { missions, removeSecondProvider, updateMission } = useMissions();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -46,7 +51,7 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
   const handleStatusChange = (newStatus: 'accepted' | 'rejected') => {
     setIsSubmitting(true);
     if (newStatus === 'rejected') setIsRejectModalOpen(false);
-    updateEmployeeStatus(employee, newStatus, userData, missions, updateUserData)
+    updateEmployeeStatus(employee, newStatus, userData, missions, employees || [], updateUserData)
       .then(({ updatedEmployee, emailSent }) => {
         setToast({
           type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
@@ -65,9 +70,13 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
       });
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     setIsSubmitting(true);
     setIsDeleteModalOpen(false);
+
+    // Remove employee from all missions first
+    await removeEmployeeFromMissions(employee, missions, employees || []);
+
     deleteEmployee(employee).then(isSuccess => {
       setToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,

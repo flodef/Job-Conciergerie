@@ -67,7 +67,7 @@ export default function EmployeesList() {
       setEmployeeToReject(employee);
       setIsRejectModalOpen(true);
     } else {
-      updateEmployeeStatus(employee, newStatus, userData, missions, updateUserData)
+      updateEmployeeStatus(employee, newStatus, userData, missions, employees, updateUserData)
         .then(({ updatedEmployee, emailSent }) => {
           setToast({
             type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
@@ -89,7 +89,7 @@ export default function EmployeesList() {
   // Handle confirmation of employee rejection
   const handleConfirmRejection = () => {
     if (employeeToReject) {
-      updateEmployeeStatus(employeeToReject, 'rejected', userData, missions, updateUserData)
+      updateEmployeeStatus(employeeToReject, 'rejected', userData, missions, employees, updateUserData)
         .then(({ updatedEmployee, emailSent }) => {
           setToast({
             type: ToastType.Info,

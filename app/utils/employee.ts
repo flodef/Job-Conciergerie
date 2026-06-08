@@ -1,7 +1,8 @@
 import { Employee, EmployeeStatus, Mission } from '@/app/types/dataTypes';
 import { Conciergerie } from '@/app/types/dataTypes';
-import { getUserKey } from '../contexts/authProvider';
+import { getUserKey, isEmployee } from '../contexts/authProvider';
 import { updateEmployeeStatusAction } from '@/app/actions/employee';
+import { updateMissionData } from '@/app/actions/mission';
 import { EmailSender } from '@/app/utils/emailSender';
 
 /**
@@ -101,12 +102,51 @@ export function filterEmployeesByConciergerie(employees: Employee[], conciergeri
 export const countEmployeeMissions = (employee: Employee, missions: Mission[]): number =>
   missions.filter(mission => getUserKey(employee) === mission.employeeId).length;
 
+// Remove employee from all their assigned missions
+export const removeEmployeeFromMissions = async (employee: Employee, missions: Mission[], employees: Employee[]) => {
+  const employeeKey = getUserKey(employee);
+  const missionsToUpdate = missions.filter(
+    mission => mission.employeeId === employeeKey || mission.employeeId2 === employeeKey,
+  );
+
+  for (const mission of missionsToUpdate) {
+    // Don't remove from completed missions (for archive purposes)
+    if (mission.status === 'completed') continue;
+
+    let updatedMission: Partial<Mission> = { ...mission, modifiedDate: new Date() };
+
+    if (mission.employeeId === employeeKey) {
+      // Employee is primary
+      if (mission.employeeId2) {
+        // Duo mission - check if secondary is an employee or conciergerie
+        const isEmployee2 = employees.some(emp => getUserKey(emp) === mission.employeeId2);
+        if (!isEmployee2) {
+          // Secondary is a conciergerie, remove both and set status to null
+          updatedMission = { ...updatedMission, employeeId: null, employeeId2: null, status: null };
+        } else {
+          // Secondary is an employee, promote to primary
+          updatedMission = { ...updatedMission, employeeId: mission.employeeId2, employeeId2: null };
+        }
+      } else {
+        // Non-duo mission, set status to null
+        updatedMission = { ...updatedMission, employeeId: null, status: null };
+      }
+    } else if (mission.employeeId2 === employeeKey) {
+      // Employee is secondary in duo mission, set status to null
+      updatedMission = { ...updatedMission, employeeId2: null, status: null };
+    }
+
+    await updateMissionData(mission.id, updatedMission);
+  }
+};
+
 // Update employee status
 export const updateEmployeeStatus = async (
   employee: Employee,
   newStatus: 'accepted' | 'rejected',
   userData: Conciergerie | Employee | undefined,
   missions: Mission[],
+  employees: Employee[],
   updateUserData: (data: Employee, type: 'employee') => void,
 ) => {
   const updatedEmployee = await updateEmployeeStatusAction(employee, newStatus);
@@ -114,6 +154,12 @@ export const updateEmployeeStatus = async (
   updateUserData(updatedEmployee, 'employee');
   const conciergerie = userData as Conciergerie;
   if (!conciergerie) throw new Error('Conciergerie non trouvée');
+
+  // Remove employee from missions if rejected
+  if (newStatus === 'rejected') {
+    await removeEmployeeFromMissions(employee, missions, employees);
+  }
+
   const emailSent = await EmailSender.sendAcceptanceEmail(
     employee,
     conciergerie,

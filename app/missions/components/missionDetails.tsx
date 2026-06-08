@@ -275,10 +275,21 @@ export default function MissionDetails({
     if (!employeeFieldToRemove) return;
     setIsSubmitting(true);
 
+    // Don't remove employees from completed missions (for archive purposes)
+    if (mission.status === 'completed') {
+      setToast({
+        type: ToastType.Error,
+        message: "Impossible de retirer un prestataire d'une mission terminée",
+      });
+      setIsRemoveEmployeeModalOpen(false);
+      setEmployeeFieldToRemove(null);
+      setIsSubmitting(false);
+      return;
+    }
+
     let updatedMission = {
       ...mission,
       [employeeFieldToRemove]: null,
-      ...(employeeFieldToRemove === 'employeeId' ? { status: null } : {}),
       modifiedDate: new Date(),
     };
 
@@ -286,7 +297,6 @@ export default function MissionDetails({
     if (employeeFieldToRemove === 'employeeId' && mission.employeeId2 && employee2) {
       // If removing primary employee in a duo mission
       const isConciergerie2 = !isEmployee(employee2);
-      const isCurrentUserConciergerie = isConciergerie;
 
       if (isConciergerie2) {
         // If secondary is a conciergerie, remove both and set status to null
@@ -295,14 +305,27 @@ export default function MissionDetails({
           employeeId2: null,
           status: null,
         };
-      } else if (isCurrentUserConciergerie) {
-        // If conciergerie is removing primary employee, promote secondary to primary
+      } else {
+        // If secondary is an employee, promote to primary
         updatedMission = {
           ...updatedMission,
           employeeId: mission.employeeId2,
           employeeId2: null,
         };
       }
+    } else if (employeeFieldToRemove === 'employeeId2' && mission.employeeId) {
+      // If removing secondary employee in a duo mission, set status to null
+      // (because a duo mission needs 2 employees to be accepted)
+      updatedMission = {
+        ...updatedMission,
+        status: null,
+      };
+    } else if (employeeFieldToRemove === 'employeeId' && !mission.employeeId2) {
+      // If removing primary employee in a non-duo mission, set status to null
+      updatedMission = {
+        ...updatedMission,
+        status: null,
+      };
     }
 
     updateMission(updatedMission).then(({ success }) => {
