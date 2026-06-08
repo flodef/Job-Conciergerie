@@ -795,7 +795,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         </div>
                         {employee2 && (
                           <div className="flex items-center justify-between gap-2">
-                            {isEmployee(employee2) && (
+                            {isEmployee(employee2) ? (
                               <div
                                 onClick={() => {
                                   setSelectedEmployeeForDetails(employee2 as Employee);
@@ -806,6 +806,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                                 <span className="text-right">{getUserKey(employee2)}</span>
                                 <IconInfoCircle className="min-w-4.5" size={18} />
                               </div>
+                            ) : (
+                              <span className="text-right">{getUserKey(employee2)}</span>
                             )}
                             <button
                               onClick={() => handleRemoveEmployee('employeeId2')}
