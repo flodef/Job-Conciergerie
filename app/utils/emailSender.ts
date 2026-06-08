@@ -12,6 +12,7 @@ import {
   sendNewDeviceNotificationEmail,
 } from '@/app/actions/email';
 import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
+import { UserData } from '../contexts/authProvider';
 
 // Client-side wrapper around the email server actions.
 // Server-side now persists failed sends in the failed_emails DB queue
@@ -45,7 +46,7 @@ export const EmailSender = {
   sendLateCompletionEmail: (mission: Mission, home: Home, employee: Employee, conciergerie: Conciergerie) =>
     handleEmailSending(sendLateCompletionEmail, [mission, home, employee, conciergerie]),
 
-  sendMissionAcceptanceEmail: (mission: Mission, home: Home, employee: Employee, conciergerie: Conciergerie) =>
+  sendMissionAcceptanceEmail: (mission: Mission, home: Home, employee: UserData, conciergerie: Conciergerie) =>
     handleEmailSending(sendMissionAcceptanceToEmployeeEmail, [mission, home, employee, conciergerie]),
 
   sendMissionUpdatedEmail: (

@@ -16,6 +16,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 export type UserType = 'conciergerie' | 'employee';
 export type UserData = Conciergerie | Employee;
 
+export const isEmployee = <T extends UserData>(user: T): boolean => 'firstName' in user && 'familyName' in user;
 export const getUserKey = <T extends UserData>(user: T): string => {
   if ('name' in user) return user.name;
   if ('firstName' in user && 'familyName' in user) return `${user.firstName} ${user.familyName}`;

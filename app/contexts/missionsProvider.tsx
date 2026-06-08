@@ -11,7 +11,7 @@ import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { getUserKey, useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
-import { Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
+import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
 import { EmailSender } from '@/app/utils/emailSender';
 import { generateSimpleId } from '@/app/utils/id';
@@ -453,23 +453,19 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       return { success: false, employeeNotified: false };
     }
 
-    // Only send notifications if an employee joined (not conciergerie)
+    // Send notifications
+    const home = homes.find(h => h.id === missionToAccept.homeId);
+    const conciergerie = findConciergerie(missionToAccept.conciergerieName);
+    const employeeNotified = !!(userData.notificationSettings?.acceptedMissions && home && conciergerie);
+
+    if (employeeNotified) await EmailSender.sendMissionAcceptanceEmail(missionToAccept, home!, userData, conciergerie!);
+
+    // Notify the conciergerie if an employee joined
     if (isEmployee) {
-      const employee = userData as Employee;
-
-      // Notify the conciergerie
-      await sendMissionStatusNotification(missionToAccept, employee, 'accepted');
-
-      // Send confirmation email to the employee
-      const home = homes.find(h => h.id === missionToAccept.homeId);
-      const conciergerie = findConciergerie(missionToAccept.conciergerieName);
-      const employeeNotified = !!(employee.notificationSettings?.acceptedMissions && home && conciergerie);
-      if (employeeNotified)
-        await EmailSender.sendMissionAcceptanceEmail(missionToAccept, home!, employee, conciergerie!);
-      return { success: true, employeeNotified };
+      await sendMissionStatusNotification(missionToAccept, userData as Employee, 'accepted');
     }
 
-    return { success: true, employeeNotified: false };
+    return { success: true, employeeNotified: isEmployee && employeeNotified };
   };
 
   const assignSecondProvider = async (id: string, providerId: string) => {

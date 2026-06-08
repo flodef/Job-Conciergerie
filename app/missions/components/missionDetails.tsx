@@ -8,7 +8,7 @@ import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import Switch from '@/app/components/switch';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
-import { getUserKey, useAuth } from '@/app/contexts/authProvider';
+import { getUserKey, isEmployee, useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
@@ -17,7 +17,7 @@ import { useImageCache } from '@/app/hooks/useImageCache';
 import MissionActions from '@/app/missions/components/missionActions';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
-import { Mission } from '@/app/types/dataTypes';
+import { Mission, Employee, Conciergerie } from '@/app/types/dataTypes';
 import {
   buttonClassName,
   cn,
@@ -456,7 +456,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
   const firstHomeImage = home?.images?.length ? home.images[0] : '';
   const employee = findEmployee(mission.employeeId);
-  const employee2 = findEmployee(mission.employeeId2);
+  const employee2 = findEmployee(mission.employeeId2) || findConciergerie(mission.employeeId2);
 
   const hasPendingChanges =
     (pendingDateChanges.start && pendingDateChanges.start.getTime() !== startDate.getTime()) ||
@@ -795,16 +795,18 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         </div>
                         {employee2 && (
                           <div className="flex items-center justify-between gap-2">
-                            <div
-                              onClick={() => {
-                                setSelectedEmployeeForDetails(employee2);
-                                setIsEmployeeDetailsModalOpen(true);
-                              }}
-                              className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
-                            >
-                              <span className="text-right">{getUserKey(employee2)}</span>
-                              <IconInfoCircle className="min-w-4.5" size={18} />
-                            </div>
+                            {isEmployee(employee2) && (
+                              <div
+                                onClick={() => {
+                                  setSelectedEmployeeForDetails(employee2 as Employee);
+                                  setIsEmployeeDetailsModalOpen(true);
+                                }}
+                                className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
+                              >
+                                <span className="text-right">{getUserKey(employee2)}</span>
+                                <IconInfoCircle className="min-w-4.5" size={18} />
+                              </div>
+                            )}
                             <button
                               onClick={() => handleRemoveEmployee('employeeId2')}
                               className={iconButtonClassName('dangerous')}
@@ -829,21 +831,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                               >
                                 <IconUserPlus size={20} />
                                 <span>Rejoindre</span>
-                              </button>
-                            </div>
-                          )}
-                        {home.allowDuo &&
-                          !employee2 &&
-                          mission.employeeId2 &&
-                          mission.employeeId2 === conciergerieName && (
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-right">{conciergerieName}</span>
-                              <button
-                                onClick={() => handleRemoveEmployee('employeeId2')}
-                                className={iconButtonClassName('dangerous')}
-                                title="Retirer de la mission"
-                              >
-                                <IconUserMinus size={24} />
                               </button>
                             </div>
                           )}
@@ -887,7 +874,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     <span className={textPulseClassName}>En attente...</span>
                   )
                 ) : employee2 && userData && getUserKey(userData) === getUserKey(employee2) ? (
-                  <span className={textClassName}>{getUserKey(employee2)}</span>
+                  <span className={textClassName}>{employee ? getUserKey(employee) : '-'}</span>
                 ) : employee ? (
                   <span className={textClassName}>{getUserKey(employee)}</span>
                 ) : (
@@ -898,7 +885,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           </div>
 
           {/* Employee details modal */}
-          {isEmployeeDetailsModalOpen && selectedEmployeeForDetails && (
+          {isEmployeeDetailsModalOpen && selectedEmployeeForDetails && 'firstName' in selectedEmployeeForDetails && (
             <EmployeeDetails
               employee={selectedEmployeeForDetails}
               onClose={() => setIsEmployeeDetailsModalOpen(false)}

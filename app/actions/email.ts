@@ -1,12 +1,13 @@
 'use server';
 
+import { isProduction } from '@/app/actions/environment';
 import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { insertFailedEmail } from '@/app/db/failedEmailsDb';
 import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
-import { isProduction } from '@/app/actions/environment';
 import packageJson from '@/package.json';
 import nodemailer, { SendMailOptions } from 'nodemailer';
+import { getUserKey, UserData } from '../contexts/authProvider';
 import { getEmployeeFullName } from '../utils/employee';
 
 // Configure nodemailer transporter
@@ -358,7 +359,7 @@ function composeLateCompletionEmail(
 function composeMissionAcceptanceToEmployeeEmail(
   mission: Mission,
   home: Home,
-  employee: Employee,
+  employee: UserData,
   conciergerie: Conciergerie,
 ): SendMailOptions {
   const startDate = formatDateTime(mission.startDateTime);
@@ -374,7 +375,7 @@ function composeMissionAcceptanceToEmployeeEmail(
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #4F46E5;">Confirmation de mission</h2>
-        <p>Bonjour ${employee.firstName},</p>
+        <p>Bonjour ${getUserKey(employee)},</p>
         <p>Vous avez accepté une mission pour <strong>${home.title}</strong>${isDuo ? ' en binôme' : ''}. Voici un récapitulatif des détails :</p>
         <div style="background-color: #f5f7ff; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #4F46E5;">
           <h3 style="margin-top: 0; color: #4F46E5;">Récapitulatif de la mission</h3>
@@ -607,7 +608,7 @@ export async function sendLateCompletionEmail(
 export async function sendMissionAcceptanceToEmployeeEmail(
   mission: Mission,
   home: Home,
-  employee: Employee,
+  employee: UserData,
   conciergerie: Conciergerie,
   isRetry = false,
 ): Promise<boolean> {
