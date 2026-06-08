@@ -9,6 +9,7 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import MissionDetails from '@/app/missions/components/missionDetails';
+import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionFilters, { MissionFiltersType } from '@/app/missions/components/missionFilters';
 import MissionForm from '@/app/missions/components/missionForm';
 import MissionList from '@/app/missions/components/missionList';
@@ -47,6 +48,32 @@ export default function Missions() {
   const [isAddHomeModalOpen, setIsAddHomeModalOpen] = useState(false);
   const [isNoHomesModalOpen, setIsNoHomesModalOpen] = useState(false);
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
+  const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
+
+  const handleOpenCompletionModal = () => {
+    setIsCompletionModalOpen(true);
+  };
+
+  const handleCloseCompletionModal = () => {
+    setIsCompletionModalOpen(false);
+    // Reopen mission details after a small delay
+    setTimeout(() => {
+      // Mission details will reopen because selectedMission is still set
+    }, 100);
+  };
+
+  const handleCompleteMission = () => {
+    // This will be called when objectives are confirmed
+    // The MissionCompletionModal will handle the actual completion
+    setIsCompletionModalOpen(false);
+    setSelectedMission(null);
+  };
+
+  const handleCloseDetails = (reopenAfter = false) => {
+    if (!reopenAfter) {
+      setSelectedMission(null);
+    }
+  };
 
   // Sorting state - must be declared before any conditional returns
   const [sortField, setSortField] = useState<MissionSortField>('date');
@@ -295,6 +322,7 @@ export default function Missions() {
           <MissionDetails
             mission={missions.find(m => m.id === selectedMission) as Mission}
             onClose={() => setSelectedMission(null)}
+            onOpenCompletionModal={handleOpenCompletionModal}
           />
         ) : (
           <MissionForm
@@ -306,6 +334,14 @@ export default function Missions() {
             mode="edit"
           />
         ))}
+      {/* Mission completion modal */}
+      {isCompletionModalOpen && missions.find(m => m.id === selectedMission) && (
+        <MissionCompletionModal
+          mission={missions.find(m => m.id === selectedMission) as Mission}
+          onClose={handleCloseCompletionModal}
+          onComplete={handleCompleteMission}
+        />
+      )}
       {/* Add mission modal */}
       {isAddModalOpen && <MissionForm onClose={() => setIsAddModalOpen(false)} mode="add" />}
       {/* Add home modal */}

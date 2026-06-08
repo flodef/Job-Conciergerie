@@ -6,6 +6,7 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import MissionDetails from '@/app/missions/components/missionDetails';
+import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import { Mission } from '@/app/types/dataTypes';
 import { formatCalendarDate, formatMissionTimeForCalendar, groupMissionsByDate } from '@/app/utils/calendar';
 import {
@@ -50,6 +51,7 @@ export default function Calendar() {
   const [missionsByDate, setMissionsByDate] = useState<Map<string, Mission[]>>(new Map());
   const [sortedDates, setSortedDates] = useState<string[]>([]);
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
+  const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
 
   const [startedMissionsCount, setStartedMissionsCount] = useState(0);
   const [lateMissionsCount, setLateMissionsCount] = useState(0);
@@ -123,7 +125,28 @@ export default function Calendar() {
     setSelectedMission(mission);
   };
 
-  const handleCloseDetails = () => {
+  const handleCloseDetails = (reopenAfter = false) => {
+    if (!reopenAfter) {
+      setSelectedMission(null);
+    }
+  };
+
+  const handleOpenCompletionModal = () => {
+    setIsCompletionModalOpen(true);
+  };
+
+  const handleCloseCompletionModal = () => {
+    setIsCompletionModalOpen(false);
+    // Reopen mission details after a small delay
+    setTimeout(() => {
+      // Mission details will reopen because selectedMission is still set
+    }, 100);
+  };
+
+  const handleCompleteMission = () => {
+    // This will be called when objectives are confirmed
+    // The MissionCompletionModal will handle the actual completion
+    setIsCompletionModalOpen(false);
     setSelectedMission(null);
   };
 
@@ -194,7 +217,20 @@ export default function Calendar() {
       )}
 
       {selectedMission && (
-        <MissionDetails mission={selectedMission} onClose={handleCloseDetails} isFromCalendar={true} />
+        <MissionDetails
+          mission={selectedMission}
+          onClose={handleCloseDetails}
+          isFromCalendar={true}
+          onOpenCompletionModal={handleOpenCompletionModal}
+        />
+      )}
+
+      {isCompletionModalOpen && selectedMission && (
+        <MissionCompletionModal
+          mission={selectedMission}
+          onClose={handleCloseCompletionModal}
+          onComplete={handleCompleteMission}
+        />
       )}
 
       <div className="space-y-4">

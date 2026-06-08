@@ -61,8 +61,9 @@ import { useMemo, useState } from 'react';
 
 type MissionDetailsProps = {
   mission: Mission;
-  onClose: () => void;
+  onClose: (reopenAfter?: boolean) => void;
   isFromCalendar?: boolean;
+  onOpenCompletionModal?: () => void;
 };
 
 // Cached image preview component
@@ -93,7 +94,12 @@ function HomeImagePreview({
   );
 }
 
-export default function MissionDetails({ mission, onClose, isFromCalendar = false }: MissionDetailsProps) {
+export default function MissionDetails({
+  mission,
+  onClose,
+  isFromCalendar = false,
+  onOpenCompletionModal,
+}: MissionDetailsProps) {
   const {
     shouldShowAcceptWarning,
     deleteMission,
@@ -306,8 +312,17 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   };
 
   const handleComplete = () => {
-    // Open the completion modal instead of immediately completing the mission
-    setIsCompletionModalOpen(true);
+    // Close the mission details modal but keep the mission selected for completion modal
+    onClose(true);
+    // Small delay to allow the mission details modal to close before opening completion modal
+    setTimeout(() => {
+      if (onOpenCompletionModal) {
+        onOpenCompletionModal();
+      } else {
+        // Fallback for backward compatibility
+        setIsCompletionModalOpen(true);
+      }
+    }, 100);
   };
 
   const handleConfirmComplete = () => {
