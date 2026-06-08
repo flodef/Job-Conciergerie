@@ -234,6 +234,8 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
             message="Êtes-vous sûr de vouloir retirer ce prestataire de la mission ?"
             onConfirm={handleRemoveFromMission}
             onCancel={() => setIsRemoveFromMissionModalOpen(false)}
+            confirmText="Retirer"
+            isDangerous
           />
           <ConfirmationModal
             isOpen={isRejectModalOpen}
@@ -249,6 +251,8 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
             }
             onConfirm={() => handleStatusChange('rejected')}
             onCancel={() => setIsRejectModalOpen(false)}
+            confirmText="Rejeter"
+            isDangerous
           />
           <ConfirmationModal
             isOpen={isDeleteModalOpen}
@@ -256,6 +260,8 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
             message="Êtes-vous sûr de vouloir supprimer cet employé de l'application ? ATTENTION : Cette action est irréversible !!"
             onConfirm={handleDelete}
             onCancel={() => setIsDeleteModalOpen(false)}
+            confirmText="Supprimer"
+            isDangerous
           />
         </FullScreenModal>
       )}

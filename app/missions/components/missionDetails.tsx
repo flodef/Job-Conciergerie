@@ -38,7 +38,7 @@ import {
   localISOString,
 } from '@/app/utils/date';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
-import { formatHour, getMissionProviderCount } from '@/app/utils/task';
+import { formatHour } from '@/app/utils/task';
 import {
   IconBuildingStore,
   IconCalendarEvent,
@@ -50,6 +50,7 @@ import {
   IconPhone,
   IconStopwatch,
   IconUserCheck,
+  IconUserMinus,
   IconUsers,
   IconUsersGroup,
   IconX,
@@ -104,6 +105,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     completeMission,
     setShouldShowAcceptWarning,
     updateMissionDateTime,
+    updateMission,
   } = useMissions();
   const { conciergerieName, findConciergerie, findEmployee, userData, isConciergerie } = useAuth();
   const { homes } = useHomes();
@@ -122,6 +124,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [selectedEmployeeForDetails, setSelectedEmployeeForDetails] = useState<typeof employee>(undefined);
   const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isRemoveEmployeeModalOpen, setIsRemoveEmployeeModalOpen] = useState(false);
+  const [employeeFieldToRemove, setEmployeeFieldToRemove] = useState<'employeeId' | 'employeeId2' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get the conciergerie from the mission data
@@ -249,6 +253,31 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             : '2ème prestataire retiré !'
           : 'Erreur lors du retrait du 2ème prestataire',
       });
+      if (!success) setIsSubmitting(false);
+    });
+  };
+
+  const handleRemoveEmployee = (field: 'employeeId' | 'employeeId2') => {
+    setEmployeeFieldToRemove(field);
+    setIsRemoveEmployeeModalOpen(true);
+  };
+
+  const handleConfirmRemoveEmployee = () => {
+    if (!employeeFieldToRemove) return;
+    setIsSubmitting(true);
+    const updatedMission = {
+      ...mission,
+      [employeeFieldToRemove]: null,
+      ...(employeeFieldToRemove === 'employeeId' ? { status: null } : {}),
+      modifiedDate: new Date(),
+    };
+    updateMission(updatedMission).then(({ success }) => {
+      setToast({
+        type: success ? ToastType.Success : ToastType.Error,
+        message: success ? 'Prestataire retiré de la mission' : 'Erreur lors du retrait du prestataire',
+      });
+      setIsRemoveEmployeeModalOpen(false);
+      setEmployeeFieldToRemove(null);
       if (!success) setIsSubmitting(false);
     });
   };
@@ -427,7 +456,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const firstHomeImage = home?.images?.length ? home.images[0] : '';
   const employee = findEmployee(mission.employeeId);
   const employee2 = findEmployee(mission.employeeId2);
-  const providerCount = getMissionProviderCount(mission);
 
   const hasPendingChanges =
     (pendingDateChanges.start && pendingDateChanges.start.getTime() !== startDate.getTime()) ||
@@ -738,35 +766,53 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                       {!home.allowDuo ? 'Prestataire' : 'Binôme'}
                     </h3>
                     <div className="flex items-center gap-2">
-                      <div
-                        onClick={() => {
-                          setSelectedEmployeeForDetails(employee);
-                          setIsEmployeeDetailsModalOpen(true);
-                        }}
-                        className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
-                      >
-                        <span className="text-right">
-                          {employee.firstName} {employee.familyName}
-                        </span>
-                        <IconInfoCircle className="min-w-4.5" size={18} />
-                      </div>
-                      {employee2 && (
-                        <>
-                          <span className="text-light">+</span>
+                      {employee2 && <span className="text-light">+</span>}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
                           <div
                             onClick={() => {
-                              setSelectedEmployeeForDetails(employee2);
+                              setSelectedEmployeeForDetails(employee);
                               setIsEmployeeDetailsModalOpen(true);
                             }}
                             className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
                           >
                             <span className="text-right">
-                              {employee2.firstName} {employee2.familyName}
+                              {employee.firstName} {employee.familyName}
                             </span>
                             <IconInfoCircle className="min-w-4.5" size={18} />
                           </div>
-                        </>
-                      )}
+                          <button
+                            onClick={() => handleRemoveEmployee('employeeId')}
+                            className="p-1 rounded hover:bg-red-100 text-red-600 transition-colors"
+                            title="Retirer de la mission"
+                          >
+                            <IconUserMinus size={24} />
+                          </button>
+                        </div>
+                        {employee2 && (
+                          <div className="flex items-center gap-2">
+                            <div
+                              onClick={() => {
+                                setSelectedEmployeeForDetails(employee2);
+                                setIsEmployeeDetailsModalOpen(true);
+                              }}
+                              className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
+                            >
+                              <span className="text-right">
+                                {employee2.firstName} {employee2.familyName}
+                              </span>
+                              <IconInfoCircle className="min-w-4.5" size={18} />
+                            </div>
+                            <button
+                              onClick={() => handleRemoveEmployee('employeeId2')}
+                              className="p-1 rounded hover:bg-red-100 text-red-600 transition-colors"
+                              title="Retirer de la mission"
+                            >
+                              <IconUserMinus size={24} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </>
                 ) : (
@@ -846,7 +892,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             title="Supprimer la mission"
             message="Êtes-vous sûr de vouloir supprimer cette mission ?"
             confirmText="Supprimer"
-            cancelText="Annuler"
           />
 
           <ConfirmationModal
@@ -855,8 +900,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             onCancel={() => setIsCancelModalOpen(false)}
             title="Annuler la mission"
             message="Êtes-vous sûr de vouloir annuler cette mission ? En annulant cette mission, elle sera retirée du planning du prestataire et retournera dans la liste des missions disponibles."
-            confirmText="Confirmer"
-            cancelText="Annuler"
           />
 
           <ConfirmationModal
@@ -866,7 +909,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             title="Accepter la mission"
             message="En acceptant cette mission, vous vous engagez à l'honorer. La seule façon d'annuler est de contacter directement la conciergerie."
             confirmText="Accepter"
-            cancelText="Annuler"
           >
             <div className="mt-4 flex items-center justify-center w-full">
               <label className="flex items-center cursor-pointer select-none w-full justify-center gap-2">
@@ -883,7 +925,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             title="Accepter la mission"
             message="Êtes-vous sûr de vouloir accepter cette mission ?"
             confirmText="Accepter"
-            cancelText="Annuler"
           />
 
           {/* Warning modal when editing a mission that has already been accepted */}
@@ -925,6 +966,20 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             message="Cette modification réduira le temps alloué au prestataire. En confirmant, le prestataire sera retiré de la mission et recevra une notification par email."
             confirmText="Confirmer"
             cancelText="Annuler"
+            isDangerous
+          />
+
+          {/* Confirmation modal for removing employee from mission */}
+          <ConfirmationModal
+            isOpen={isRemoveEmployeeModalOpen}
+            onConfirm={handleConfirmRemoveEmployee}
+            onCancel={() => {
+              setIsRemoveEmployeeModalOpen(false);
+              setEmployeeFieldToRemove(null);
+            }}
+            title="Retirer de la mission"
+            message="Êtes-vous sûr de vouloir retirer ce prestataire de la mission ?"
+            confirmText="Retirer"
             isDangerous
           />
         </FullScreenModal>
