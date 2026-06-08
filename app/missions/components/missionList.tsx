@@ -124,7 +124,7 @@ export default function MissionList({
           <div
             className={cn(
               'overflow-hidden transition-all duration-300 ease-in-out',
-              collapsedCategories.includes(category) ? 'max-h-0 opacity-0' : 'max-h-[5000px] opacity-100',
+              collapsedCategories.includes(category) ? 'max-h-0 opacity-0' : 'max-h-none opacity-100',
             )}
           >
             <div className="pt-2 space-y-2">
