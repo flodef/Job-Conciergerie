@@ -274,12 +274,37 @@ export default function MissionDetails({
   const handleConfirmRemoveEmployee = () => {
     if (!employeeFieldToRemove) return;
     setIsSubmitting(true);
-    const updatedMission = {
+
+    let updatedMission = {
       ...mission,
       [employeeFieldToRemove]: null,
       ...(employeeFieldToRemove === 'employeeId' ? { status: null } : {}),
       modifiedDate: new Date(),
     };
+
+    // Handle duo mission special cases
+    if (employeeFieldToRemove === 'employeeId' && mission.employeeId2 && employee2) {
+      // If removing primary employee in a duo mission
+      const isConciergerie2 = !isEmployee(employee2);
+      const isCurrentUserConciergerie = isConciergerie;
+
+      if (isConciergerie2) {
+        // If secondary is a conciergerie, remove both and set status to null
+        updatedMission = {
+          ...updatedMission,
+          employeeId2: null,
+          status: null,
+        };
+      } else if (isCurrentUserConciergerie) {
+        // If conciergerie is removing primary employee, promote secondary to primary
+        updatedMission = {
+          ...updatedMission,
+          employeeId: mission.employeeId2,
+          employeeId2: null,
+        };
+      }
+    }
+
     updateMission(updatedMission).then(({ success }) => {
       setToast({
         type: success ? ToastType.Success : ToastType.Error,
