@@ -69,9 +69,12 @@ export default function MissionCompletionModal({ mission, onClose, onComplete }:
 
   if (!home) return null;
 
+  const checkedCount = Object.values(checkedObjectives).filter(Boolean).length;
+  const totalCount = home.objectives.length;
+
   return (
     <FullScreenModal
-      title="Points particuliers"
+      title={`Points particuliers (${checkedCount}/${totalCount})`}
       tooltip="Veuillez confirmer que tous les points particuliers suivants ont été réalisés"
       onClose={onClose}
       footer={footer}
