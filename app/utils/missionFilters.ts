@@ -124,10 +124,17 @@ export function applyMissionFilters(
     if (selectedMissionStatuses.length > 0 && selectedEmployees.length === 0) {
       // Check if the mission matches the selected status filter
       // 'available' means no employee is assigned (employeeId is empty) OR duo-open (1/2) AND mission is not in the past
+      // AND the current employee is not already assigned to either slot
       // 'accepted', 'started', 'completed' match the actual mission status
       const isAvailable =
-        (!mission.employeeId || isMissionDuoOpen(mission, homes)) && new Date(mission.endDateTime) >= new Date();
-      const isAccepted = mission.status === 'accepted';
+        (!mission.employeeId ||
+          (isMissionDuoOpen(mission, homes) &&
+            mission.employeeId !== employeeName &&
+            mission.employeeId2 !== employeeName)) &&
+        new Date(mission.endDateTime) >= new Date();
+      const isAccepted =
+        mission.status === 'accepted' &&
+        (!employeeName || mission.employeeId === employeeName || mission.employeeId2 === employeeName);
       const isStarted = mission.status === 'started';
       const isCompleted =
         mission.status === 'completed' &&
