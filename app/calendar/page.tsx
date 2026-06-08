@@ -249,8 +249,7 @@ export default function Calendar() {
                   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
                   const home = homes.find(h => h.id === mission.homeId);
                   const employee = findEmployee(mission.employeeId);
-                  const employee2 = findEmployee(mission.employeeId2);
-                  const conciergerie2 = findConciergerie(mission.employeeId2);
+                  const employee2 = findEmployee(mission.employeeId2) || findConciergerie(mission.employeeId2);
 
                   return (
                     <div
@@ -317,14 +316,14 @@ export default function Calendar() {
                           <span className={cn(descriptionClassName, 'text-nowrap')}>Binôme :&nbsp;</span>
                           {isConciergerie ? (
                             <>
-                              {employee && (employee2 || conciergerie2) ? (
+                              {employee && employee2 ? (
                                 <span>
-                                  {getUserKey(employee)} + {getUserKey(employee2 || conciergerie2!)}
+                                  {getUserKey(employee)} + {getUserKey(employee2)}
                                 </span>
                               ) : employee ? (
                                 <span className="animate-pulse">⚠️ {getUserKey(employee)} ⚠️</span>
-                              ) : employee2 || conciergerie2 ? (
-                                <span className="animate-pulse">⚠️ {getUserKey(employee2 || conciergerie2!)} ⚠️</span>
+                              ) : employee2 ? (
+                                <span className="animate-pulse">⚠️ {getUserKey(employee2)} ⚠️</span>
                               ) : (
                                 <span>-</span>
                               )}
@@ -332,14 +331,12 @@ export default function Calendar() {
                           ) : (
                             <>
                               {employee && userData && getUserKey(userData) === getUserKey(employee) ? (
-                                employee2 || conciergerie2 ? (
-                                  <span>{getUserKey(employee2 || conciergerie2!)}</span>
+                                employee2 ? (
+                                  <span>{getUserKey(employee2)}</span>
                                 ) : (
                                   <span className={textPulseClassName}>En attente...</span>
                                 )
-                              ) : (employee2 || conciergerie2) &&
-                                userData &&
-                                getUserKey(userData) === getUserKey(employee2 || conciergerie2!) ? (
+                              ) : employee2 && userData && getUserKey(userData) === getUserKey(employee2) ? (
                                 employee ? (
                                   <span>{getUserKey(employee)}</span>
                                 ) : (

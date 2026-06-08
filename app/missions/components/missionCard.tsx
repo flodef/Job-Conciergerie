@@ -23,8 +23,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
   const home = homes.find(h => h.id === mission.homeId);
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
   const employee = findEmployee(mission.employeeId);
-  const employee2 = findEmployee(mission.employeeId2);
-  const conciergerie2 = findConciergerie(mission.employeeId2);
+  const employee2 = findEmployee(mission.employeeId2) || findConciergerie(mission.employeeId2);
   const providerCount = getMissionProviderCount(mission);
 
   // Fetch conciergerie data when mission changes
@@ -83,7 +82,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
             }}
           >
             {getUserKey(employee)}
-            {(employee2 || conciergerie2) && ` + ${getUserKey(employee2 || conciergerie2!)}`}
+            {employee2 && ` + ${getUserKey(employee2)}`}
           </div>
         </div>
       )}
