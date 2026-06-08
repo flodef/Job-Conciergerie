@@ -1,3 +1,8 @@
+# 2.165
+
+- **Nouveau : Binôme** : missions en duo possibles — un employé peut rejoindre une mission déjà acceptée par un autre employé ou une conciergerie
+- **Améliorations UI** : meilleure gestion de l'affichage des prestataires, répartition des heures équitable entre partenaires, et indicateurs de progression dans les tâches
+
 # 2.122
 
 - **Modification date mission** : il est maintenant possible de modifier les dates d'une mission directement, si celle-ci sont avantageuses pour l'auto-entrepreneur, celui-ci est notifié et conserve sa mission

@@ -1,3 +1,8 @@
+# 2.165
+
+- **Nouveau : Binôme** : missions en duo possibles — un employé peut rejoindre une mission déjà acceptée par un autre employé ou une conciergerie
+- **Améliorations UI** : meilleure gestion de l'affichage des prestataires, répartition des heures équitable entre partenaires, et indicateurs de progression dans les tâches
+
 # 2.118
 
 - **Historique** : nouvel onglet complet avec statistiques détaillées, graphiques de répartition, et filtres avancés (conciergerie, période) pour analyser vos missions passées
