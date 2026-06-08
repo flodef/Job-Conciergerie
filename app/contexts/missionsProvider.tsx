@@ -56,7 +56,15 @@ export function MissionsProviderWrapper({ children }: { children: ReactNode }) {
 }
 
 function MissionsProvider({ children }: { children: ReactNode }) {
-  const { userData, conciergerieName, findConciergerie, findEmployee, isLoading: authLoading } = useAuth();
+  const {
+    userData,
+    conciergerieName,
+    findConciergerie,
+    findEmployee,
+    isLoading: authLoading,
+    userType,
+    isEmployee,
+  } = useAuth();
   const { homes, fetchHomes } = useHomes();
   const { needsRefresh, updateFetchTime } = useFetchTime();
   const needsRefreshMissions = needsRefresh[Page.Missions] || needsRefresh[Page.Calendar];
@@ -421,38 +429,47 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       return { success: false, employeeNotified: false };
     }
 
-    const employee = userData as Employee;
-    if (!employee) {
-      console.error('acceptMission2: No employee userData');
-      return { success: false, employeeNotified: false };
-    }
-
     // Can only accept as 2nd if 1st slot is filled and 2nd is empty
     if (!missionToAccept.employeeId || missionToAccept.employeeId2) {
       console.error('acceptMission2: Mission not duo-open', id);
       return { success: false, employeeNotified: false };
     }
 
-    console.log('acceptMission2: Accepting mission as 2nd binôme', id, 'for employee', getUserKey(employee));
+    // Handle both employee and conciergerie joining as second employee
+    if (!userData) {
+      console.error('acceptMission2: No userData');
+      return { success: false, employeeNotified: false };
+    }
+
+    const employeeId2 = getUserKey(userData);
+
+    console.log('acceptMission2: Accepting mission as 2nd binôme', id, 'for', userType, employeeId2);
     const success = await setMissionData(id, {
       ...missionToAccept,
-      employeeId2: getUserKey(employee),
+      employeeId2,
     });
     if (!success) {
       console.error('acceptMission2: setMissionData failed');
       return { success: false, employeeNotified: false };
     }
 
-    // Notify the conciergerie
-    await sendMissionStatusNotification(missionToAccept, employee, 'accepted');
+    // Only send notifications if an employee joined (not conciergerie)
+    if (isEmployee) {
+      const employee = userData as Employee;
 
-    // Send confirmation email to the employee
-    const home = homes.find(h => h.id === missionToAccept.homeId);
-    const conciergerie = findConciergerie(missionToAccept.conciergerieName);
-    const employeeNotified = !!(employee.notificationSettings?.acceptedMissions && home && conciergerie);
-    if (employeeNotified) await EmailSender.sendMissionAcceptanceEmail(missionToAccept, home!, employee, conciergerie!);
+      // Notify the conciergerie
+      await sendMissionStatusNotification(missionToAccept, employee, 'accepted');
 
-    return { success: true, employeeNotified };
+      // Send confirmation email to the employee
+      const home = homes.find(h => h.id === missionToAccept.homeId);
+      const conciergerie = findConciergerie(missionToAccept.conciergerieName);
+      const employeeNotified = !!(employee.notificationSettings?.acceptedMissions && home && conciergerie);
+      if (employeeNotified)
+        await EmailSender.sendMissionAcceptanceEmail(missionToAccept, home!, employee, conciergerie!);
+      return { success: true, employeeNotified };
+    }
+
+    return { success: true, employeeNotified: false };
   };
 
   const assignSecondProvider = async (id: string, providerId: string) => {

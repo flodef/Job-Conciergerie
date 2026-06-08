@@ -51,6 +51,7 @@ import {
   IconStopwatch,
   IconUserCheck,
   IconUserMinus,
+  IconUserPlus,
   IconUsers,
   IconUsersGroup,
   IconX,
@@ -766,9 +767,14 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                       {!home.allowDuo ? 'Prestataire' : 'Binôme'}
                     </h3>
                     <div className="flex items-center gap-2">
-                      {employee2 && <span className="text-light">+</span>}
+                      {(employee2 ||
+                        (home.allowDuo &&
+                          !employee2 &&
+                          mission.employeeId &&
+                          !mission.employeeId2 &&
+                          new Date(mission.endDateTime) >= new Date())) && <span className={titleClassName}>+</span>}
                       <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between gap-2">
                           <div
                             onClick={() => {
                               setSelectedEmployeeForDetails(employee);
@@ -790,7 +796,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                           </button>
                         </div>
                         {employee2 && (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center justify-between gap-2">
                             <div
                               onClick={() => {
                                 setSelectedEmployeeForDetails(employee2);
@@ -812,6 +818,21 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                             </button>
                           </div>
                         )}
+                        {home.allowDuo &&
+                          !employee2 &&
+                          mission.employeeId &&
+                          !mission.employeeId2 &&
+                          new Date(mission.endDateTime) >= new Date() && (
+                            <div className="flex items-center justify-between gap-2">
+                              <button
+                                onClick={() => handleAccept2()}
+                                className="flex items-center gap-1 px-2 py-1 rounded bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+                              >
+                                <IconUserPlus size={16} />
+                                <span>Rejoindre</span>
+                              </button>
+                            </div>
+                          )}
                       </div>
                     </div>
                   </>
