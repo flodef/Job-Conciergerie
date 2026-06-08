@@ -250,6 +250,7 @@ export default function Calendar() {
                   const home = homes.find(h => h.id === mission.homeId);
                   const employee = findEmployee(mission.employeeId);
                   const employee2 = findEmployee(mission.employeeId2);
+                  const conciergerie2 = findConciergerie(mission.employeeId2);
 
                   return (
                     <div
@@ -316,19 +317,14 @@ export default function Calendar() {
                           <span className={cn(descriptionClassName, 'text-nowrap')}>Binôme :&nbsp;</span>
                           {isConciergerie ? (
                             <>
-                              {employee && employee2 ? (
+                              {employee && (employee2 || conciergerie2) ? (
                                 <span>
-                                  {employee.firstName} {employee.familyName} + {employee2.firstName}{' '}
-                                  {employee2.familyName}
+                                  {getUserKey(employee)} + {getUserKey(employee2 || conciergerie2!)}
                                 </span>
                               ) : employee ? (
-                                <span className="animate-pulse">
-                                  ⚠️ {employee.firstName} {employee.familyName} ⚠️
-                                </span>
-                              ) : employee2 ? (
-                                <span className="animate-pulse">
-                                  ⚠️ {employee2.firstName} {employee2.familyName} ⚠️
-                                </span>
+                                <span className="animate-pulse">⚠️ {getUserKey(employee)} ⚠️</span>
+                              ) : employee2 || conciergerie2 ? (
+                                <span className="animate-pulse">⚠️ {getUserKey(employee2 || conciergerie2!)} ⚠️</span>
                               ) : (
                                 <span>-</span>
                               )}
@@ -336,18 +332,16 @@ export default function Calendar() {
                           ) : (
                             <>
                               {employee && userData && getUserKey(userData) === getUserKey(employee) ? (
-                                employee2 ? (
-                                  <span>
-                                    {employee2.firstName} {employee2.familyName}
-                                  </span>
+                                employee2 || conciergerie2 ? (
+                                  <span>{getUserKey(employee2 || conciergerie2!)}</span>
                                 ) : (
                                   <span className={textPulseClassName}>En attente...</span>
                                 )
-                              ) : employee2 && userData && getUserKey(userData) === getUserKey(employee2) ? (
+                              ) : (employee2 || conciergerie2) &&
+                                userData &&
+                                getUserKey(userData) === getUserKey(employee2 || conciergerie2!) ? (
                                 employee ? (
-                                  <span>
-                                    {employee.firstName} {employee.familyName}
-                                  </span>
+                                  <span>{getUserKey(employee)}</span>
                                 ) : (
                                   <span className={textPulseClassName}>En attente...</span>
                                 )
@@ -360,9 +354,7 @@ export default function Calendar() {
                       ) : isConciergerie ? (
                         <div className="flex items-center text-sm">
                           <span className="text-light text-nowrap">Prestataire :&nbsp;</span>
-                          <span>
-                            {employee?.firstName} {employee?.familyName}
-                          </span>
+                          <span>{employee ? getUserKey(employee) : '-'}</span>
                         </div>
                       ) : null}
                     </div>

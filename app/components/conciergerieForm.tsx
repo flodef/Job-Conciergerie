@@ -112,7 +112,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
                 }}
                 className={cn(
                   textClassName,
-                  'relative flex flex-col items-center gap-2 p-3 border rounded-lg transition-all',
+                  'relative flex flex-col items-center gap-2 p-3 border rounded-lg transition-all cursor-pointer',
                   isSelected
                     ? 'ring-2 ring-(--btn-color) border-(--btn-color)'
                     : 'border-secondary hover:bg-secondary/10',

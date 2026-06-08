@@ -1,6 +1,7 @@
 'use client';
 
 import { MissionSortField } from '@/app/types/dataTypes';
+import { cn } from '@/app/utils/className';
 import { IconSortAscending, IconSortDescending } from '@tabler/icons-react';
 import React from 'react';
 
@@ -37,16 +38,15 @@ export default function MissionSortBar({
   };
 
   return (
-    <div className={`flex items-center gap-2 overflow-x-auto pb-1 ${className}`}>
+    <div className={cn('flex items-center gap-2 overflow-x-auto pb-1', className)}>
       {availableFields.map(field => (
         <button
           key={field}
           onClick={() => handleSortField(field)}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm shrink-0 transition-colors ${
-            sortField === field
-              ? 'bg-primary text-white'
-              : 'bg-secondary/20 text-foreground hover:bg-secondary/40'
-          }`}
+          className={cn(
+            'flex items-center gap-1 px-3 py-1.5 rounded-full text-sm shrink-0 transition-colors cursor-pointer',
+            sortField === field ? 'bg-primary text-white' : 'bg-secondary/20 text-foreground hover:bg-secondary/40',
+          )}
         >
           {SORT_LABELS[field]}
           {sortField === field &&

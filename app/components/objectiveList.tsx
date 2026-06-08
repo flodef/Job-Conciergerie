@@ -151,7 +151,7 @@ const ObjectiveList = forwardRef(
             objectives.length < maxObjectives && (
               <button
                 type="button"
-                className="text-sm bg-foreground/10 text-foreground px-3 rounded-md hover:bg-foreground/20 transition-colors"
+                className="text-sm bg-foreground/10 text-foreground px-3 rounded-md hover:bg-foreground/20 transition-colors cursor-pointer"
                 onClick={addObjective}
                 disabled={disabled}
               >
@@ -197,7 +197,7 @@ const ObjectiveList = forwardRef(
                 <button
                   type="button"
                   onClick={() => deleteObjective(index)}
-                  className="text-red-500 hover:text-red-600 pl-1.5 text-3xl rounded-md"
+                  className="text-red-500 hover:text-red-600 pl-1.5 text-3xl rounded-md cursor-pointer"
                   aria-label="Supprimer"
                   disabled={disabled}
                 >

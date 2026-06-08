@@ -16,6 +16,8 @@ interface MissionSortControlsProps {
   filteredMissionsCount: number;
 }
 
+const sortButtonClassName = 'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer';
+
 export default function MissionSortControls({
   sortField,
   sortDirection,
@@ -33,7 +35,7 @@ export default function MissionSortControls({
           <button
             onClick={() => changeSortField('date')}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer',
+              sortButtonClassName,
               sortField === 'date' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
             )}
           >
@@ -44,7 +46,7 @@ export default function MissionSortControls({
           <button
             onClick={() => changeSortField('conciergerie')}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer',
+              sortButtonClassName,
               sortField === 'conciergerie' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
             )}
           >
@@ -55,7 +57,7 @@ export default function MissionSortControls({
           <button
             onClick={() => changeSortField('geographicZone')}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer',
+              sortButtonClassName,
               sortField === 'geographicZone' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
             )}
           >
@@ -66,7 +68,7 @@ export default function MissionSortControls({
           <button
             onClick={() => changeSortField('homeTitle')}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer',
+              sortButtonClassName,
               sortField === 'homeTitle' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
             )}
           >

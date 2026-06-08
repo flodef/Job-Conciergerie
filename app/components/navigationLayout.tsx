@@ -268,7 +268,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
           <span>Une nouvelle version est disponible</span>
           <button
             onClick={() => window.location.reload()}
-            className="flex items-center gap-1 font-semibold underline underline-offset-2 whitespace-nowrap"
+            className="flex items-center gap-1 font-semibold underline underline-offset-2 whitespace-nowrap cursor-pointer"
           >
             <IconRefresh size={14} />
             Mettre à jour

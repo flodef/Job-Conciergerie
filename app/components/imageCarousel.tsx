@@ -3,7 +3,7 @@
 import { getStorageImageUrl } from '@/app/utils/storage';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import LoadingSpinner from './loadingSpinner';
+import { cn } from '../utils/className';
 import M3LoadingSpinner from './m3LoadingSpinner';
 
 interface ImageCarouselProps {
@@ -173,7 +173,7 @@ export default function ImageCarousel({
               e.stopPropagation();
               goToPrevious();
             }}
-            className="absolute left-4 p-1 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors z-20"
+            className="absolute left-4 p-1 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors z-20 cursor-pointer"
             aria-label="Image précédente"
           >
             <IconChevronLeft className="text-white cursor-pointer" size={32} />
@@ -183,7 +183,7 @@ export default function ImageCarousel({
               e.stopPropagation();
               goToNext();
             }}
-            className="absolute right-4 p-1 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors z-20"
+            className="absolute right-4 p-1 rounded-full bg-black/50 hover:bg-black/75 text-foreground transition-colors z-20 cursor-pointer"
             aria-label="Image suivante"
           >
             <IconChevronRight className="text-white cursor-pointer" size={32} />
@@ -196,9 +196,10 @@ export default function ImageCarousel({
                   e.stopPropagation();
                   goToIndex(index);
                 }}
-                className={`w-2 h-2 rounded-full transition-colors z-20 cursor-pointer ${
-                  index === currentIndex ? 'bg-white' : 'bg-white/50 hover:bg-white/75'
-                }`}
+                className={cn(
+                  'w-2 h-2 rounded-full transition-colors z-20 cursor-pointer',
+                  index === currentIndex ? 'bg-white' : 'bg-white/50 hover:bg-white/75',
+                )}
                 aria-label={`Aller à l&apos;image ${index + 1}`}
               />
             ))}

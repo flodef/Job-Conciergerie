@@ -22,7 +22,7 @@ export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) 
           <button
             onClick={() => onSelect('conciergerie')}
             className={cn(
-              'flex flex-col items-center justify-center p-6 gap-4 border-2 rounded-lg transition-all',
+              'flex flex-col items-center justify-center p-6 gap-4 border-2 rounded-lg transition-all cursor-pointer',
               'border-secondary hover:border-primary/50 hover:bg-primary/5',
             )}
           >
@@ -34,7 +34,7 @@ export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) 
           <button
             onClick={() => onSelect('employee')}
             className={cn(
-              'flex flex-col items-center justify-center p-6 gap-4 border-2 rounded-lg transition-all',
+              'flex flex-col items-center justify-center p-6 gap-4 border-2 rounded-lg transition-all cursor-pointer',
               'border-secondary hover:border-primary/50 hover:bg-primary/5',
             )}
           >

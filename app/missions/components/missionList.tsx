@@ -98,7 +98,7 @@ export default function MissionList({
         >
           <button
             onClick={() => toggleCategory(category)}
-            className="w-full px-4 py-3 flex items-center justify-between bg-foreground/5"
+            className="w-full px-4 py-3 flex items-center justify-between bg-foreground/5 cursor-pointer"
           >
             <div className="flex items-center gap-2">
               {

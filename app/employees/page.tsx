@@ -13,12 +13,13 @@ import {
   countEmployeeMissions,
   filterEmployees,
   filterEmployeesByConciergerie,
+  getEmployeeFullName,
   sortEmployees,
   updateEmployeeStatus,
 } from '@/app/utils/employee';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
 import { ReactNode, useEffect, useState } from 'react';
-import { cn, textClassName } from '../utils/className';
+import { cn, iconButtonClassName, textClassName } from '../utils/className';
 
 export default function EmployeesList() {
   const { userData, conciergerieName, isLoading: authLoading, employees: authEmployees, updateUserData } = useAuth();
@@ -70,7 +71,7 @@ export default function EmployeesList() {
         .then(({ updatedEmployee, emailSent }) => {
           setToast({
             type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
-            message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été ${
+            message: `${getEmployeeFullName(updatedEmployee)} a été ${
               newStatus === 'accepted' ? 'accepté' : 'rejeté'
             }${emailSent ? ". L'employé a été notifié par email." : '.'}`,
           });
@@ -92,7 +93,7 @@ export default function EmployeesList() {
         .then(({ updatedEmployee, emailSent }) => {
           setToast({
             type: ToastType.Info,
-            message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été rejeté${
+            message: `${getEmployeeFullName(updatedEmployee)} a été rejeté${
               emailSent ? ". L'employé a été notifié par email." : '.'
             }`,
           });
@@ -209,7 +210,7 @@ export default function EmployeesList() {
         title="Rejeter le prestataire"
         message={
           employeeToReject
-            ? `Vous êtes sur le point de rejeter ${employeeToReject.firstName} ${employeeToReject.familyName}.${
+            ? `Vous êtes sur le point de rejeter ${getEmployeeFullName(employeeToReject)}.${
                 countEmployeeMissions(employeeToReject, missions) > 0
                   ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employeeToReject, missions)} mission(s).`
                   : ''
@@ -238,9 +239,7 @@ function EmployeeRow({
     <tr className="hover:bg-secondary/5 cursor-pointer transition-colors overflow-x-hidden" onClick={onClick}>
       <td className="px-1 py-1 pl-0">
         <div className={cn(textClassName, 'flex flex-col truncate text-wrap max-w-28 sm:max-w-full')}>
-          <div>
-            {employee.firstName} {employee.familyName}
-          </div>
+          {getEmployeeFullName(employee)}
         </div>
       </td>
       <td className="px-1 py-1 whitespace-nowrap">
@@ -254,7 +253,7 @@ function EmployeeRow({
           {employee.status !== 'accepted' && (
             <button
               onClick={() => onStatusChange(employee, 'accepted')}
-              className="text-green-600 hover:text-green-900 p-1.5 rounded-full cursor-pointer"
+              className={iconButtonClassName('success')}
               title="Accepter"
             >
               <IconCheck size={28} />
@@ -263,7 +262,7 @@ function EmployeeRow({
           {employee.status !== 'rejected' && (
             <button
               onClick={() => onStatusChange(employee, 'rejected')}
-              className="text-red-600 hover:text-red-900 p-1.5 rounded-full cursor-pointer"
+              className={iconButtonClassName('dangerous')}
               title="Rejeter"
             >
               <IconX size={28} />

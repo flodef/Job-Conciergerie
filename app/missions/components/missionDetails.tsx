@@ -601,17 +601,17 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         />
                         <button
                           onClick={handleDateEditConfirm}
-                          className={iconButtonClassName('primary')}
+                          className={iconButtonClassName('success')}
                           title="Confirmer"
                         >
-                          <IconCheck size={20} className="text-green-500" />
+                          <IconCheck size={20} />
                         </button>
                         <button
                           onClick={cancelDateEditing}
                           className={iconButtonClassName('dangerous')}
                           title="Annuler"
                         >
-                          <IconX size={20} className="text-red-500" />
+                          <IconX size={20} />
                         </button>
                       </>
                     ) : (
@@ -622,7 +622,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         {isDateEditable && (
                           <button
                             onClick={() => startEditingDate('start')}
-                            className={iconButtonClassName('secondary')}
+                            className={iconButtonClassName()}
                             title="Modifier la date de début"
                           >
                             <IconPencil size={20} />
@@ -665,17 +665,17 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         />
                         <button
                           onClick={handleDateEditConfirm}
-                          className={iconButtonClassName('primary')}
+                          className={iconButtonClassName('success')}
                           title="Confirmer"
                         >
-                          <IconCheck size={20} className="text-green-500" />
+                          <IconCheck size={20} />
                         </button>
                         <button
                           onClick={cancelDateEditing}
                           className={iconButtonClassName('dangerous')}
                           title="Annuler"
                         >
-                          <IconX size={20} className="text-red-500" />
+                          <IconX size={20} />
                         </button>
                       </>
                     ) : (
@@ -686,7 +686,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         {isDateEditable && (
                           <button
                             onClick={() => startEditingDate('end')}
-                            className={iconButtonClassName('secondary')}
+                            className={iconButtonClassName()}
                             title="Modifier la date de fin"
                           >
                             <IconPencil size={20} />
@@ -737,7 +737,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     {conciergerie?.tel && (
                       <a
                         href={`tel:${conciergerie.tel}`}
-                        className={cn(iconButtonClassName('secondary'), 'p-0')}
+                        className={cn(iconButtonClassName(), 'p-0 hover:bg-transparent')}
                         title={`Appeler ${conciergerie.name}`}
                       >
                         <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
@@ -747,7 +747,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                     {conciergerie?.email && (
                       <a
                         href={`mailto:${conciergerie.email}`}
-                        className={cn(iconButtonClassName('secondary'), 'p-0')}
+                        className={cn(iconButtonClassName(), 'p-0 hover:bg-transparent')}
                         title={`Envoyer un email à ${conciergerie.name}`}
                       >
                         <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />
@@ -782,14 +782,12 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                             }}
                             className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
                           >
-                            <span className="text-right">
-                              {employee.firstName} {employee.familyName}
-                            </span>
+                            <span className="text-right">{getUserKey(employee)}</span>
                             <IconInfoCircle className="min-w-4.5" size={18} />
                           </div>
                           <button
                             onClick={() => handleRemoveEmployee('employeeId')}
-                            className="p-1 rounded hover:bg-red-100 text-red-600 transition-colors"
+                            className={iconButtonClassName('dangerous')}
                             title="Retirer de la mission"
                           >
                             <IconUserMinus size={24} />
@@ -804,14 +802,12 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                               }}
                               className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
                             >
-                              <span className="text-right">
-                                {employee2.firstName} {employee2.familyName}
-                              </span>
+                              <span className="text-right">{getUserKey(employee2)}</span>
                               <IconInfoCircle className="min-w-4.5" size={18} />
                             </div>
                             <button
                               onClick={() => handleRemoveEmployee('employeeId2')}
-                              className="p-1 rounded hover:bg-red-100 text-red-600 transition-colors"
+                              className={iconButtonClassName('dangerous')}
                               title="Retirer de la mission"
                             >
                               <IconUserMinus size={24} />
@@ -826,10 +822,28 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                             <div className="flex items-center justify-between gap-2">
                               <button
                                 onClick={() => handleAccept2()}
-                                className="flex items-center gap-1 px-2 py-1 rounded bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+                                className={cn(
+                                  buttonClassName('primary'),
+                                  'px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200',
+                                )}
                               >
-                                <IconUserPlus size={16} />
+                                <IconUserPlus size={20} />
                                 <span>Rejoindre</span>
+                              </button>
+                            </div>
+                          )}
+                        {home.allowDuo &&
+                          !employee2 &&
+                          mission.employeeId2 &&
+                          mission.employeeId2 === conciergerieName && (
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-right">{conciergerieName}</span>
+                              <button
+                                onClick={() => handleRemoveEmployee('employeeId2')}
+                                className={iconButtonClassName('dangerous')}
+                                title="Retirer de la mission"
+                              >
+                                <IconUserMinus size={24} />
                               </button>
                             </div>
                           )}
@@ -868,20 +882,14 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
 
                 {employee && userData && getUserKey(userData) === getUserKey(employee) ? (
                   employee2 ? (
-                    <span className={textClassName}>
-                      {employee2.firstName} {employee2.familyName}
-                    </span>
+                    <span className={textClassName}>{getUserKey(employee2)}</span>
                   ) : (
                     <span className={textPulseClassName}>En attente...</span>
                   )
                 ) : employee2 && userData && getUserKey(userData) === getUserKey(employee2) ? (
-                  <span className={textClassName}>
-                    {employee?.firstName} {employee?.familyName}
-                  </span>
+                  <span className={textClassName}>{getUserKey(employee2)}</span>
                 ) : employee ? (
-                  <span className={textClassName}>
-                    {employee.firstName} {employee.familyName}
-                  </span>
+                  <span className={textClassName}>{getUserKey(employee)}</span>
                 ) : (
                   <span className={textPulseClassName}>En attente...</span>
                 )}

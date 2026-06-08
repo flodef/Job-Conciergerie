@@ -195,17 +195,13 @@ const ConnectedDevicesSettings: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <button
                   onClick={saveDeviceLabel}
-                  className={cn(iconButtonClassName(), 'text-green-600 disabled:text-light')}
+                  className={iconButtonClassName('success')}
                   title="Confirmer"
                   disabled={editLabel === item.label}
                 >
                   <IconCheck size={24} stroke={2} />
                 </button>
-                <button
-                  onClick={cancelEdit}
-                  className={cn(iconButtonClassName('dangerous'), 'text-red-600')}
-                  title="Annuler"
-                >
+                <button onClick={cancelEdit} className={iconButtonClassName('dangerous')} title="Annuler">
                   <IconX size={24} stroke={2} />
                 </button>
               </div>
@@ -253,10 +249,10 @@ const ConnectedDevicesSettings: React.FC = () => {
                     {!isValidatedId(item.id) && (
                       <button
                         onClick={() => handleAcceptDevice(item.id)}
-                        className={cn(iconButtonClassName(), 'p-0')}
+                        className={cn(iconButtonClassName('success'), 'p-0')}
                         title="Valider"
                       >
-                        <IconCheck size={30} stroke={2.5} className="text-green-600" />
+                        <IconCheck size={30} stroke={2.5} />
                       </button>
                     )}
                   </>
@@ -266,7 +262,7 @@ const ConnectedDevicesSettings: React.FC = () => {
                   className={iconButtonClassName('dangerous')}
                   title="Supprimer"
                 >
-                  <IconTrash size={24} stroke={1.5} className="text-red-600" />
+                  <IconTrash size={24} stroke={1.5} />
                 </button>
               </div>
             </div>

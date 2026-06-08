@@ -5,6 +5,15 @@ import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import { EmailSender } from '@/app/utils/emailSender';
 
 /**
+ * Get the full name of an employee
+ * @param employee Employee
+ * @returns Full name
+ */
+export const getEmployeeFullName = (employee: Employee) => {
+  return `${employee.firstName} ${employee.familyName}`;
+};
+
+/**
  * Normalize a name by capitalizing the first letter of each part
  * separated by spaces or dashes
  * @param name Name to normalize

@@ -26,11 +26,12 @@ export const actionButtonClassName = 'flex flex-col items-center p-2 w-20 rounde
 
 export const iconButtonClassName = (type?: ButtonStyle) =>
   cn(
-    'p-1 rounded-full hover:bg-light/30 transition-colors cursor-pointer disabled:hover:bg-transparent disabled:cursor-not-allowed',
-    type === 'primary' && 'hover:bg-primary/30',
-    type === 'secondary' && 'hover:bg-secondary/30',
-    type === 'dangerous' && 'hover:bg-red-500/30',
-    type === 'inferno' && 'hover:bg-red-700/30',
+    'p-1 rounded-full hover:bg-light/30 transition-colors cursor-pointer disabled:text-light disabled:hover:bg-transparent disabled:cursor-not-allowed',
+    type === 'primary' && 'hover:bg-primary/30 text-primary',
+    type === 'secondary' && 'hover:bg-secondary/30 text-secondary',
+    type === 'success' && 'hover:bg-green-500/30 text-green-500',
+    type === 'dangerous' && 'hover:bg-red-500/30 text-red-500',
+    type === 'inferno' && 'hover:bg-red-700/30 text-red-700',
   );
 
 export const buttonClassName = (type: ButtonStyle) =>
@@ -38,8 +39,9 @@ export const buttonClassName = (type: ButtonStyle) =>
     'px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-50',
     type === 'primary' && 'text-background bg-primary hover:bg-primary/80',
     type === 'secondary' && 'text-foreground bg-secondary hover:bg-secondary/80',
-    type === 'dangerous' && 'text-background bg-red-500 hover:bg-red-600',
-    type === 'inferno' && 'text-background bg-red-700 hover:bg-red-800',
+    type === 'success' && 'text-background bg-green-500 hover:bg-green-500/80',
+    type === 'dangerous' && 'text-background bg-red-500 hover:bg-red-500/80',
+    type === 'inferno' && 'text-background bg-red-700 hover:bg-red-700/80',
   );
 export const selectClassName = (error: boolean | string, disabled: boolean, isFocused: boolean, isOpen: boolean) =>
   cn(

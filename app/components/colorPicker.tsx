@@ -71,7 +71,7 @@ const ColorPickerComponent: ForwardRefRenderFunction<HTMLDivElement, ColorPicker
               }}
               disabled={(isUsed && !isSelected) || disabled}
               className={cn(
-                'relative flex flex-col items-center space-y-1 p-2 border rounded-md transition-all',
+                'relative flex flex-col items-center space-y-1 p-2 border rounded-md transition-all cursor-pointer',
                 isSelected ? 'ring-2 ring-primary border-primary' : 'border-secondary',
                 isUsed && !isSelected ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary/10',
               )}

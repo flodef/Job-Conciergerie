@@ -15,7 +15,7 @@ import {
   labelClassName,
 } from '@/app/utils/className';
 import { formatDate } from '@/app/utils/date';
-import { countEmployeeMissions, updateEmployeeStatus } from '@/app/utils/employee';
+import { countEmployeeMissions, getEmployeeFullName, updateEmployeeStatus } from '@/app/utils/employee';
 import { IconCheck, IconMail, IconMapPin, IconPhone, IconTrash, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 
@@ -50,7 +50,7 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
       .then(({ updatedEmployee, emailSent }) => {
         setToast({
           type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
-          message: `${updatedEmployee.firstName} ${updatedEmployee.familyName} a été ${
+          message: `${getEmployeeFullName(updatedEmployee)} a été ${
             newStatus === 'accepted' ? 'accepté' : 'rejeté'
           }${emailSent ? ". L'employé a été notifié par email." : '.'}`,
         });
@@ -165,7 +165,7 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
 
       {!hasSuccessToast && (
         <FullScreenModal
-          title={`${employee.firstName} ${employee.familyName}`}
+          title={getEmployeeFullName(employee)}
           onClose={onClose}
           footer={footer}
           disabled={isSubmitting}
@@ -242,7 +242,7 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
             title="Rejeter le prestataire"
             message={
               employee
-                ? `Vous êtes sur le point de rejeter ${employee.firstName} ${employee.familyName}.${
+                ? `Vous êtes sur le point de rejeter ${getEmployeeFullName(employee)}.${
                     countEmployeeMissions(employee, missions) > 0
                       ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employee, missions)} mission(s).`
                       : ''

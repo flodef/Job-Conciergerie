@@ -1,6 +1,7 @@
 'use client';
 
 import { createNewEmployee, lookupEmployeeByContact, updateEmployeeWithUserId } from '@/app/actions/employee';
+import AppVersion from '@/app/components/appVersion';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
@@ -12,16 +13,16 @@ import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import geographicZones from '@/app/data/geographicZone.json';
+import { useRateLimiter } from '@/app/hooks/useRateLimiter';
 import { Employee } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import { EmailSender } from '@/app/utils/emailSender';
-import { formatId, getDevices, MaxDevicesError, MAX_DEVICES } from '@/app/utils/id';
+import { formatId, getDevices, MAX_DEVICES, MaxDevicesError } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
-import { useRateLimiter } from '@/app/hooks/useRateLimiter';
-import AppVersion from '@/app/components/appVersion';
 import React, { useRef, useState } from 'react';
+import { buttonClassName, cn } from '../utils/className';
 
 type EmployeeFormProps = {
   onClose: () => void;
@@ -457,7 +458,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
                 type="button"
                 onClick={sendConflictReport}
                 disabled={!canAttempt || isSubmitting}
-                className="w-full py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className={cn(buttonClassName('primary'), 'w-full')}
               >
                 {remainingCooldown > 0
                   ? `Réessayez dans ${Math.ceil(remainingCooldown / 60)} min`
@@ -468,7 +469,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
               <button
                 type="button"
                 onClick={() => setShowContactButton(false)}
-                className="text-sm text-gray-500 hover:text-gray-700 underline"
+                className="text-sm text-gray-500 hover:text-gray-700 underline cursor-pointer"
               >
                 Retour au formulaire
               </button>

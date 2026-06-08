@@ -12,7 +12,7 @@ export const MenuButton = ({ className }: { className?: string }) => {
   return (
     <button
       className={cn(
-        'flex flex-col h-12 w-12 border-0 border-black dark:border-foreground rounded justify-center items-center group ml-0',
+        'flex flex-col h-12 w-12 border-0 border-black dark:border-foreground rounded justify-center items-center group ml-0 cursor-pointer',
         className,
       )}
       onClick={handleClick}

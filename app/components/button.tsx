@@ -6,7 +6,7 @@ import { IconX } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
 import { useState } from 'react';
 
-export type ButtonStyle = 'primary' | 'secondary' | 'dangerous' | 'inferno';
+export type ButtonStyle = 'primary' | 'secondary' | 'success' | 'dangerous' | 'inferno';
 export type ButtonType = 'button' | 'submit' | 'reset';
 
 export function Button({

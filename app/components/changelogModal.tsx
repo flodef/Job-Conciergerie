@@ -60,7 +60,7 @@ export default function ChangelogModal({ userType, onClose, mode, entries: initi
   const footer = hasMore ? (
     <button
       onClick={() => setShowAll(v => !v)}
-      className="w-full flex items-center justify-center gap-1 py-3 text-sm text-foreground/60 hover:text-foreground transition-colors"
+      className="w-full flex items-center justify-center gap-1 py-3 text-sm text-foreground/60 hover:text-foreground transition-colors cursor-pointer"
     >
       {showAll ? (
         <>

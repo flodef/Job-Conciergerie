@@ -7,6 +7,7 @@ import { formatDateTime } from '@/app/utils/date';
 import { isProduction } from '@/app/actions/environment';
 import packageJson from '@/package.json';
 import nodemailer, { SendMailOptions } from 'nodemailer';
+import { getEmployeeFullName } from '../utils/employee';
 
 // Configure nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -131,7 +132,7 @@ function composeEmployeeRegistrationEmail(conciergerie: Conciergerie, employee: 
           <p>Un nouvel employé a demandé à rejoindre votre conciergerie sur notre plateforme Job Conciergerie.</p>
           <p><strong>Détails de l'employé :</strong></p>
           <ul>
-            <li><strong>Nom :</strong> ${employee.firstName} ${employee.familyName}</li>
+            <li><strong>Nom :</strong> ${getEmployeeFullName(employee)}</li>
             <li><strong>Email :</strong> ${employee.email}</li>
             <li><strong>Téléphone :</strong> ${employee.tel}</li>
             <li><strong>Lieu de vie :</strong> ${employee.geographicZone}</li>
@@ -277,7 +278,7 @@ function composeMissionStatusChangeEmail(
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">Statut de mission mis à jour</h2>
         <p>Bonjour ${conciergerie.name},</p>
-        <p>Une mission pour <strong>${home.title}</strong> ${statusMessage} par ${employee.firstName} ${employee.familyName}${isDuo ? ' (binôme)' : ''}.</p>
+        <p>Une mission pour <strong>${home.title}</strong> ${statusMessage} par ${getEmployeeFullName(employee)}${isDuo ? ' (binôme)' : ''}.</p>
         <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 15px 0;">
           <h3 style="margin-top: 0; color: #4F46E5;">Détails de la mission</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
@@ -286,7 +287,7 @@ function composeMissionStatusChangeEmail(
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
           <p><strong>Heures totales:</strong> ${mission.hours}h</p>
           ${isDuo ? `<p><strong>Heures par prestataire:</strong> ${hoursPerProvider}h (binôme)</p>` : ''}
-          <p><strong>Employé:</strong> ${employee.firstName} ${employee.familyName}</p>
+          <p><strong>Employé:</strong> ${getEmployeeFullName(employee)}</p>
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Statut:</strong> ${employee.firstName} a ${statusAction} cette mission</p>
         </div>
@@ -338,7 +339,7 @@ function composeLateCompletionEmail(
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
-          <p><strong>Employé:</strong> ${employee.firstName} ${employee.familyName}</p>
+          <p><strong>Employé:</strong> ${getEmployeeFullName(employee)}</p>
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Statut actuel:</strong> ${statusLabel}</p>
         </div>

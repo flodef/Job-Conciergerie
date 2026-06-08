@@ -167,12 +167,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
       const newConciergerieName = isConciergerie
         ? newUserData
-          ? (newUserData as Conciergerie).name
+          ? getUserKey(newUserData as Conciergerie)
           : currentConciergerieName
         : undefined;
       const newEmployeeName = isEmployee
         ? newUserData
-          ? (newUserData as Employee).firstName + ' ' + (newUserData as Employee).familyName
+          ? getUserKey(newUserData as Employee)
           : employeeName
         : undefined;
       const newPrimaryColor = effectiveConciergeries?.find(c => c.name === newConciergerieName)?.color;

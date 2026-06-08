@@ -215,7 +215,7 @@ const Combobox = forwardRef(
             <button
               type="button"
               onClick={() => !disabled && setIsOpen(!isOpen)}
-              className="focus:outline-none"
+              className="focus:outline-none cursor-pointer"
               tabIndex={-1}
             >
               <IconChevronDown

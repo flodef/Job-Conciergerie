@@ -341,7 +341,11 @@ const ImageUploader = React.forwardRef<
             {label}
             <div>
               {imageIds.length + localImages.length > 1 && (
-                <button type="button" onClick={deleteAll} className="text-sm text-red-500 hover:text-red-600">
+                <button
+                  type="button"
+                  onClick={deleteAll}
+                  className="text-sm text-red-500 hover:text-red-600 cursor-pointer"
+                >
                   Tout supprimer
                 </button>
               )}
@@ -381,7 +385,7 @@ const ImageUploader = React.forwardRef<
                   <button
                     type="button"
                     onClick={() => handleDeleteCommitted(filePath)}
-                    className="absolute -top-2 -right-2 p-1 bg-red-500 text-background rounded-full hover:bg-red-600 transition-colors"
+                    className="absolute -top-2 -right-2 p-1 bg-red-500 text-background rounded-full hover:bg-red-600 transition-colors cursor-pointer"
                     aria-label={`Supprimer l'image ${index + 1}`}
                   >
                     <IconX size={16} />
@@ -424,7 +428,7 @@ const ImageUploader = React.forwardRef<
                 <button
                   type="button"
                   onClick={() => handleDeleteLocal(img.id)}
-                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-background rounded-full hover:bg-red-600 transition-colors"
+                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-background rounded-full hover:bg-red-600 transition-colors cursor-pointer"
                   aria-label={`Supprimer l'image ${imageIds.length + index + 1}`}
                 >
                   <IconX size={16} />
@@ -440,7 +444,7 @@ const ImageUploader = React.forwardRef<
                 type="button"
                 onClick={() => uploadButtonRef.current?.click()}
                 className={cn(
-                  'aspect-square border-2 border-dashed border-secondary rounded-lg flex flex-col items-center justify-center text-foreground/50 hover:border-primary hover:text-primary transition-colors',
+                  'aspect-square border-2 border-dashed border-secondary rounded-lg flex flex-col items-center justify-center text-foreground/50 hover:border-primary hover:text-primary transition-colors cursor-pointer',
                 )}
                 aria-label="Ajouter une image"
               >

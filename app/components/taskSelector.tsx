@@ -61,7 +61,7 @@ const TaskSelectorComponent: ForwardRefRenderFunction<HTMLDivElement, TaskSelect
             disabled={disabled}
             className={cn(
               'p-2 border rounded-lg text-sm flex justify-center items-center',
-              'border-foreground/20 focus-visible:outline-primary',
+              'border-foreground/20 focus-visible:outline-primary cursor-pointer',
               selectedTasks.includes(task)
                 ? 'bg-primary text-background border-primary'
                 : 'bg-background text-foreground border-secondary',

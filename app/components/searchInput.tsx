@@ -29,7 +29,10 @@ export default function SearchInput({
       />
       <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-light" size={18} />
       {value && (
-        <button onClick={() => onChange('')} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-light">
+        <button
+          onClick={() => onChange('')}
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-light cursor-pointer"
+        >
           <IconX size={18} />
         </button>
       )}

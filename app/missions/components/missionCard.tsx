@@ -1,7 +1,7 @@
 'use client';
 
 import HomeTitle from '@/app/components/homeTitle';
-import { useAuth } from '@/app/contexts/authProvider';
+import { getUserKey, useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { Conciergerie, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
@@ -24,6 +24,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
   const employee = findEmployee(mission.employeeId);
   const employee2 = findEmployee(mission.employeeId2);
+  const conciergerie2 = findConciergerie(mission.employeeId2);
   const providerCount = getMissionProviderCount(mission);
 
   // Fetch conciergerie data when mission changes
@@ -81,8 +82,8 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
               textAlign: 'center',
             }}
           >
-            {employee.firstName} {employee.familyName}
-            {employee2 && ` + ${employee2.firstName} ${employee2.familyName}`}
+            {getUserKey(employee)}
+            {(employee2 || conciergerie2) && ` + ${getUserKey(employee2 || conciergerie2!)}`}
           </div>
         </div>
       )}

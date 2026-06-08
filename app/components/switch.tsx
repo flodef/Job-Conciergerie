@@ -37,7 +37,7 @@ const Switch: React.FC<SwitchProps> = ({ enabled, onChange, size = 'md', id }) =
     <button
       id={id}
       type="button"
-      className={'relative inline-flex items-center focus:outline-none rounded-full'}
+      className={'relative inline-flex items-center focus:outline-none rounded-full cursor-pointer'}
       onClick={onChange}
       role="switch"
       aria-checked={enabled}

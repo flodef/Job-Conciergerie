@@ -1,15 +1,16 @@
 'use client';
 
+import AppVersion from '@/app/components/appVersion';
 import { RefreshButton } from '@/app/components/button';
 import ErrorPage from '@/app/components/error';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { getUserKey, useAuth } from '@/app/contexts/authProvider';
-import { formatId } from '@/app/utils/id';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
-import { EmailSender } from '@/app/utils/emailSender';
 import { setPrimaryColor } from '@/app/utils/color';
 import { getTimeDifference, getTimeRemaining, isElapsedTimeLessThan } from '@/app/utils/date';
+import { EmailSender } from '@/app/utils/emailSender';
+import { formatId } from '@/app/utils/id';
 import {
   IconAlertCircle,
   IconCheck,
@@ -19,8 +20,8 @@ import {
   IconHelpCircle,
   IconMailForward,
 } from '@tabler/icons-react';
-import AppVersion from '@/app/components/appVersion';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { getEmployeeFullName } from '../utils/employee';
 
 const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
 const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
@@ -135,7 +136,7 @@ export default function WaitingPage() {
         <span className="font-mono self-end">{formatId(userId)}</span>
         <button
           onClick={() => copyToClipboard(userId)}
-          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
           title="Copier l'ID"
         >
           <IconCopy size={14} stroke={1.5} />
@@ -241,11 +242,7 @@ export default function WaitingPage() {
             </h1>
 
             <p>
-              Bonjour{' '}
-              <span className="font-semibold">
-                {employee.firstName} {employee.familyName}
-              </span>
-              ,
+              Bonjour <span className="font-semibold">{getEmployeeFullName(employee)}</span>,
             </p>
 
             {employee.status === 'pending' && (

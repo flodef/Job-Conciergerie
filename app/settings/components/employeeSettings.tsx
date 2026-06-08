@@ -8,6 +8,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { Employee } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
+import { getEmployeeFullName } from '@/app/utils/employee';
 import { handleChange } from '@/app/utils/form';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
@@ -44,7 +45,7 @@ const EmployeeSettings: React.FC = () => {
     if (!employee) return;
 
     // Set employee data for form
-    setName(employee.firstName + ' ' + employee.familyName);
+    setName(getEmployeeFullName(employee));
     setEmail(employee.email);
     setTel(employee.tel);
     setGeographicZone(employee.geographicZone || '');

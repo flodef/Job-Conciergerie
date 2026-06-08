@@ -23,7 +23,7 @@ import {
   IconRefresh,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
-import { cn, descriptionClassName, textClassName, titleClassName } from '../utils/className';
+import { cn, descriptionClassName, iconButtonClassName, textClassName, titleClassName } from '../utils/className';
 
 type SortDirection = 'asc' | 'desc';
 
@@ -45,7 +45,7 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
   return (
     <div className="border border-secondary rounded-lg overflow-hidden">
       <button
-        className="w-full flex items-center justify-between p-3 text-left hover:bg-secondary/10 transition-colors"
+        className="w-full flex items-center justify-between p-3 text-left hover:bg-secondary/10 transition-colors cursor-pointer"
         onClick={() => setIsOpen(prev => !prev)}
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -163,11 +163,7 @@ function MonthlyHoursChart({
               : 'Heures par mois'}
           </h3>
           {selectedPoint && (
-            <button
-              onClick={onReset}
-              className="p-1.5 rounded-full bg-secondary/30 hover:bg-secondary/50 transition-colors"
-              title="Réinitialiser"
-            >
+            <button onClick={onReset} className={iconButtonClassName('secondary')} title="Réinitialiser">
               <IconRefresh size={16} className="text-light" />
             </button>
           )}
@@ -175,7 +171,7 @@ function MonthlyHoursChart({
         <div className="h-24 flex items-center justify-center">
           <button
             onClick={() => onPointSelect(selectedPoint === month ? null : month)}
-            className="flex flex-col items-center gap-2"
+            className="flex flex-col items-center gap-2 cursor-pointer"
           >
             <div
               className={`w-4 h-4 rounded-full transition-all ${selectedPoint === month ? 'bg-primary scale-125' : 'bg-primary/60'}`}
@@ -207,7 +203,7 @@ function MonthlyHoursChart({
         {selectedPoint && (
           <button
             onClick={() => onPointSelect(null)}
-            className="p-1.5 rounded-full bg-secondary/30 hover:bg-secondary/50 transition-colors"
+            className={iconButtonClassName('secondary')}
             title="Réinitialiser la sélection"
           >
             <IconRefresh size={16} className="text-light" />
@@ -270,7 +266,7 @@ function MonthlyHoursChart({
             <button
               key={point.month}
               onClick={() => onPointSelect(selectedPoint === point.month ? null : point.month)}
-              className="absolute cursor-pointer transition-all duration-200 hover:scale-110"
+              className="absolute transition-all duration-200 hover:scale-110 cursor-pointer"
               style={{
                 left: `${point.x}%`,
                 top: `${point.y}%`,
@@ -300,9 +296,10 @@ function MonthlyHoursChart({
             <button
               key={point.month}
               onClick={() => onPointSelect(isSelected ? null : point.month)}
-              className={`absolute text-xs transition-colors -translate-x-1/2 ${
-                isSelected ? 'text-primary font-medium' : 'text-light hover:text-foreground'
-              }`}
+              className={cn(
+                'absolute text-xs transition-colors -translate-x-1/2 cursor-pointer',
+                isSelected ? 'text-primary font-medium' : 'text-light hover:text-foreground',
+              )}
               style={{ left: `${point.x}%` }}
             >
               {point.label}

@@ -28,6 +28,9 @@ interface CustomDateTimeInputProps {
   showPresets?: boolean;
 }
 
+const calendarButtonClassName =
+  'p-2 hover:bg-secondary/50 rounded transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer';
+
 const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProps>(
   (
     {
@@ -324,7 +327,7 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
             type="button"
             onClick={() => handleDateClick(day)}
             className={cn(
-              'p-2 rounded-full hover:bg-secondary/50 transition-all duration-200 min-h-[40px]',
+              'p-2 rounded-full hover:bg-secondary/50 transition-all duration-200 min-h-[40px] cursor-pointer',
               isCurrentDate && 'bg-primary text-white hover:bg-primary/90 shadow-md',
             )}
           >
@@ -451,7 +454,7 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
               type="button"
               onClick={handleToggle}
               disabled={disabled}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/50 hover:text-foreground transition-colors cursor-pointer"
               aria-label="Ouvrir le calendrier"
             >
               <IconChevronDown
@@ -473,19 +476,11 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
                 {/* Month/Year selector */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleMonthChange(-1)}
-                      className="p-2 hover:bg-secondary/50 rounded transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
-                    >
+                    <button type="button" onClick={() => handleMonthChange(-1)} className={calendarButtonClassName}>
                       <IconChevronDown size={16} className="rotate-90" />
                     </button>
                     <span className="font-medium min-w-[120px] text-center text-sm">{monthNames[selectedMonth]}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleMonthChange(1)}
-                      className="p-2 hover:bg-secondary/50 rounded transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
-                    >
+                    <button type="button" onClick={() => handleMonthChange(1)} className={calendarButtonClassName}>
                       <IconChevronDown size={16} className="-rotate-90" />
                     </button>
                   </div>
@@ -498,25 +493,17 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
                       setSelectedYear(today.getFullYear());
                       setSelectedMonth(today.getMonth());
                     }}
-                    className="p-2 hover:bg-primary/20 rounded-lg text-primary transition-colors cursor-pointer"
+                    className={calendarButtonClassName}
                     title="Aujourd'hui"
                   >
                     <IconCalendar size={24} />
                   </button>
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleYearChange(-1)}
-                      className="p-2 hover:bg-secondary/50 rounded transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
-                    >
+                    <button type="button" onClick={() => handleYearChange(-1)} className={calendarButtonClassName}>
                       <IconChevronDown size={16} className="rotate-90" />
                     </button>
                     <span className="font-medium min-w-[50px] text-center text-sm">{selectedYear}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleYearChange(1)}
-                      className="p-2 hover:bg-secondary/50 rounded transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
-                    >
+                    <button type="button" onClick={() => handleYearChange(1)} className={calendarButtonClassName}>
                       <IconChevronDown size={16} className="-rotate-90" />
                     </button>
                   </div>
@@ -570,53 +557,6 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
                   </div>
                 </div>
               </div>
-
-              {/* Quick presets */}
-              {showPresets && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <IconCalendar size={14} className="text-foreground/40" />
-                    <span className={descriptionClassName}>Raccourcis</span>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => handlePreset(1)}
-                      className="px-3 py-1.5 bg-secondary/10 hover:bg-secondary/20 rounded-xl text-sm transition-all duration-200 border border-foreground/5"
-                    >
-                      +1h
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handlePreset(2)}
-                      className="px-3 py-1.5 bg-secondary/10 hover:bg-secondary/20 rounded-xl text-sm transition-all duration-200 border border-foreground/5"
-                    >
-                      +2h
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handlePreset(4)}
-                      className="px-3 py-1.5 bg-secondary/10 hover:bg-secondary/20 rounded-xl text-sm transition-all duration-200 border border-foreground/5"
-                    >
-                      +4h
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handlePreset(8)}
-                      className="px-3 py-1.5 bg-secondary/10 hover:bg-secondary/20 rounded-xl text-sm transition-all duration-200 border border-foreground/5"
-                    >
-                      +8h
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handlePreset(24)}
-                      className="px-3 py-1.5 bg-secondary/10 hover:bg-secondary/20 rounded-xl text-sm transition-all duration-200 border border-foreground/5"
-                    >
-                      +24h
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>

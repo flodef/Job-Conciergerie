@@ -255,7 +255,7 @@ const AutocompleteSelect = forwardRef(
               {clearable && value && (isReadonly || !isOpen) && (
                 <button
                   onClick={handleClear}
-                  className="p-0.5 hover:bg-secondary/50 rounded transition-colors"
+                  className="p-0.5 hover:bg-secondary/50 rounded transition-colors cursor-pointer"
                   aria-label="Clear selection"
                 >
                   <IconX size={16} className="text-light" />
