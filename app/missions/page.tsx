@@ -10,11 +10,12 @@ import HomeForm from '@/app/homes/components/homeForm';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
+import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import MissionFilters, { MissionFiltersType } from '@/app/missions/components/missionFilters';
 import MissionForm from '@/app/missions/components/missionForm';
 import MissionList from '@/app/missions/components/missionList';
 import MissionSortControls from '@/app/missions/components/missionSortControls';
-import { Mission, MissionSortField } from '@/app/types/dataTypes';
+import { Employee, Mission, MissionSortField } from '@/app/types/dataTypes';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import {
   applyMissionFilters,
@@ -49,6 +50,9 @@ export default function Missions() {
   const [isNoHomesModalOpen, setIsNoHomesModalOpen] = useState(false);
   const [selectedMission, setSelectedMission] = useState<string | null>(null);
   const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
+  const [selectedEmployeeForDetails, setSelectedEmployeeForDetails] = useState<Employee | null>(null);
+  const [missionForEmployeeDetails, setMissionForEmployeeDetails] = useState<Mission | null>(null);
+  const [missionToRestore, setMissionToRestore] = useState<string | null>(null);
 
   const handleOpenCompletionModal = () => {
     setIsCompletionModalOpen(true);
@@ -88,6 +92,27 @@ export default function Missions() {
   const handleCloseDetails = (reopenAfter = false) => {
     if (!reopenAfter) {
       setSelectedMission(null);
+    } else {
+      setMissionToRestore(selectedMission);
+      setSelectedMission(null);
+    }
+  };
+
+  const handleOpenEmployeeDetails = (employee: Employee) => {
+    const mission = missions.find(m => m.id === selectedMission);
+    setSelectedEmployeeForDetails(employee);
+    setMissionForEmployeeDetails(mission || null);
+    setMissionToRestore(selectedMission);
+    setSelectedMission(null);
+  };
+
+  const handleCloseEmployeeDetails = () => {
+    setSelectedEmployeeForDetails(null);
+    setMissionForEmployeeDetails(null);
+    // Reopen mission details immediately
+    if (missionToRestore) {
+      setSelectedMission(missionToRestore);
+      setMissionToRestore(null);
     }
   };
 
@@ -337,8 +362,9 @@ export default function Missions() {
         (!isEditModalOpen ? (
           <MissionDetails
             mission={missions.find(m => m.id === selectedMission) as Mission}
-            onClose={() => setSelectedMission(null)}
+            onClose={handleCloseDetails}
             onOpenCompletionModal={handleOpenCompletionModal}
+            onOpenEmployeeDetails={handleOpenEmployeeDetails}
           />
         ) : (
           <MissionForm
@@ -356,6 +382,15 @@ export default function Missions() {
           mission={missions.find(m => m.id === selectedMission) as Mission}
           onClose={handleCloseCompletionModal}
           onComplete={handleCompleteMission}
+        />
+      )}
+
+      {/* Employee details modal */}
+      {selectedEmployeeForDetails && missionForEmployeeDetails && (
+        <EmployeeDetails
+          employee={selectedEmployeeForDetails}
+          mission={missionForEmployeeDetails}
+          onClose={handleCloseEmployeeDetails}
         />
       )}
       {/* Add mission modal */}

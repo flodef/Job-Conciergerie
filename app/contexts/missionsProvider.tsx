@@ -267,11 +267,13 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const home = updatedHome || existingHome;
 
     // First update the mission
-    const success = await setMissionData(updatedMission.id, {
+    // Only preserve employeeId and status if they're not being explicitly changed
+    const dataToUpdate = {
       ...updatedMission,
-      employeeId: existingMission.employeeId,
-      status: existingMission.status,
-    });
+      employeeId: updatedMission.employeeId !== undefined ? updatedMission.employeeId : existingMission.employeeId,
+      status: updatedMission.status !== undefined ? updatedMission.status : existingMission.status,
+    };
+    const success = await setMissionData(updatedMission.id, dataToUpdate);
     if (!success) return { success: false, employeeNotified: false };
 
     // If successful and there's an employee assigned who has notifications enabled, send email

@@ -7,7 +7,8 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import MissionDetails from '@/app/missions/components/missionDetails';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
-import { Mission } from '@/app/types/dataTypes';
+import EmployeeDetails from '@/app/employees/components/employeeDetails';
+import { Employee, Mission } from '@/app/types/dataTypes';
 import { formatCalendarDate, formatMissionTimeForCalendar, groupMissionsByDate } from '@/app/utils/calendar';
 import {
   cn,
@@ -52,6 +53,9 @@ export default function Calendar() {
   const [sortedDates, setSortedDates] = useState<string[]>([]);
   const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
   const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
+  const [selectedEmployeeForDetails, setSelectedEmployeeForDetails] = useState<Employee | null>(null);
+  const [missionForEmployeeDetails, setMissionForEmployeeDetails] = useState<Mission | null>(null);
+  const [missionToRestore, setMissionToRestore] = useState<Mission | null>(null);
 
   const [startedMissionsCount, setStartedMissionsCount] = useState(0);
   const [lateMissionsCount, setLateMissionsCount] = useState(0);
@@ -128,6 +132,9 @@ export default function Calendar() {
   const handleCloseDetails = (reopenAfter = false) => {
     if (!reopenAfter) {
       setSelectedMission(null);
+    } else {
+      setMissionToRestore(selectedMission);
+      setSelectedMission(null);
     }
   };
 
@@ -162,6 +169,23 @@ export default function Calendar() {
         type: ToastType.Error,
         message: 'Erreur lors de la validation de la mission',
       });
+    }
+  };
+
+  const handleOpenEmployeeDetails = (employee: Employee) => {
+    setSelectedEmployeeForDetails(employee);
+    setMissionForEmployeeDetails(selectedMission);
+    setMissionToRestore(selectedMission);
+    setSelectedMission(null);
+  };
+
+  const handleCloseEmployeeDetails = () => {
+    setSelectedEmployeeForDetails(null);
+    setMissionForEmployeeDetails(null);
+    // Reopen mission details immediately
+    if (missionToRestore) {
+      setSelectedMission(missionToRestore);
+      setMissionToRestore(null);
     }
   };
 
@@ -237,6 +261,7 @@ export default function Calendar() {
           onClose={handleCloseDetails}
           isFromCalendar={true}
           onOpenCompletionModal={handleOpenCompletionModal}
+          onOpenEmployeeDetails={handleOpenEmployeeDetails}
         />
       )}
 
@@ -245,6 +270,14 @@ export default function Calendar() {
           mission={selectedMission}
           onClose={handleCloseCompletionModal}
           onComplete={handleCompleteMission}
+        />
+      )}
+
+      {selectedEmployeeForDetails && missionForEmployeeDetails && (
+        <EmployeeDetails
+          employee={selectedEmployeeForDetails}
+          mission={missionForEmployeeDetails}
+          onClose={handleCloseEmployeeDetails}
         />
       )}
 

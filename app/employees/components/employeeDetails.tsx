@@ -100,7 +100,8 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
     };
 
     if (mission.employeeId === employeeId) {
-      updateMission({ ...mission, employeeId: null, status: null }).then(showResult);
+      const updatedMission = { ...mission, employeeId: null, status: null };
+      updateMission(updatedMission).then(showResult);
     } else if (mission.employeeId2 === employeeId) {
       removeSecondProvider(mission.id).then(showResult);
     } else {

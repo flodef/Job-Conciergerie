@@ -64,6 +64,7 @@ type MissionDetailsProps = {
   onClose: (reopenAfter?: boolean) => void;
   isFromCalendar?: boolean;
   onOpenCompletionModal?: () => void;
+  onOpenEmployeeDetails?: (employee: Employee) => void;
 };
 
 // Cached image preview component
@@ -99,6 +100,7 @@ export default function MissionDetails({
   onClose,
   isFromCalendar = false,
   onOpenCompletionModal,
+  onOpenEmployeeDetails,
 }: MissionDetailsProps) {
   const {
     shouldShowAcceptWarning,
@@ -793,7 +795,12 @@ export default function MissionDetails({
                           <div
                             onClick={() => {
                               setSelectedEmployeeForDetails(employee);
-                              setIsEmployeeDetailsModalOpen(true);
+                              if (onOpenEmployeeDetails) {
+                                onClose(true);
+                                onOpenEmployeeDetails(employee);
+                              } else {
+                                setIsEmployeeDetailsModalOpen(true);
+                              }
                             }}
                             className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
                           >
@@ -814,7 +821,12 @@ export default function MissionDetails({
                               <div
                                 onClick={() => {
                                   setSelectedEmployeeForDetails(employee2 as Employee);
-                                  setIsEmployeeDetailsModalOpen(true);
+                                  if (onOpenEmployeeDetails) {
+                                    onClose(true);
+                                    onOpenEmployeeDetails(employee2 as Employee);
+                                  } else {
+                                    setIsEmployeeDetailsModalOpen(true);
+                                  }
                                 }}
                                 className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
                               >

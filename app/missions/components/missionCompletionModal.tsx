@@ -52,7 +52,6 @@ export default function MissionCompletionModal({ mission, onClose, onComplete }:
   };
 
   const handleConfirm = () => {
-    console.log('handleConfirm called, allChecked:', allChecked);
     // Call the onComplete callback when all objectives are completed
     onComplete();
     onClose();
