@@ -59,8 +59,10 @@ export const isDuoComplete = (mission: Mission): boolean => getMissionProviderCo
  * Hours a single provider must work for a mission. When the binôme is complete,
  * the total hours are split evenly between the two providers.
  */
-export const getMissionHoursPerProvider = (mission: Mission): number =>
-  mission.hours / getMissionProviderCount(mission);
+export const getMissionHoursPerProvider = (mission: Mission): number => {
+  const providerCount = getMissionProviderCount(mission);
+  return providerCount > 0 ? mission.hours / providerCount : 0;
+};
 
 // Calculate mission points including points per day
 export const calculateMissionPoints = (mission: Mission): MissionPoints => {

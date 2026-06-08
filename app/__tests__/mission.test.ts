@@ -25,10 +25,10 @@ beforeAll(async () => {
 
   // Force fresh module imports by using cache-busting
   const cacheBust = `?t=${Date.now()}`;
-  const missionModule = await import(`../actions/mission${cacheBust}`);
-  const homeDbModule = await import(`@/app/db/homeDb${cacheBust}`);
-  const missionDbModule = await import(`@/app/db/missionDb${cacheBust}`);
-  const dbModule = await import(`@/app/db/db${cacheBust}`);
+  const missionModule = await import(`../actions/mission.ts${cacheBust}`);
+  const homeDbModule = await import(`@/app/db/homeDb.ts${cacheBust}`);
+  const missionDbModule = await import(`@/app/db/missionDb.ts${cacheBust}`);
+  const dbModule = await import(`@/app/db/db.ts${cacheBust}`);
 
   createNewMission = missionModule.createNewMission;
   updateMissionData = missionModule.updateMissionData;
