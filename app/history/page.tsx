@@ -10,7 +10,7 @@ import { Home, Mission, MissionSortField } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDate, formatDateRange } from '@/app/utils/date';
 import { sortMissions } from '@/app/utils/missionFilters';
-import { formatHour, formatNumber } from '@/app/utils/task';
+import { formatHour, formatNumber, getMissionHoursPerProvider, getMissionProviderCount } from '@/app/utils/task';
 import {
   IconBriefcase,
   IconBuilding,
@@ -39,6 +39,8 @@ function StatCard({ label, value, icon }: { label: string; value: string; icon: 
 
 function MissionRow({ mission, home, color }: { mission: Mission; home: Home | undefined; color: string }) {
   const [isOpen, setIsOpen] = useState(false);
+  const hoursPerProvider = getMissionHoursPerProvider(mission);
+  const isDuo = getMissionProviderCount(mission) === 2;
 
   return (
     <div className="border border-secondary rounded-lg overflow-hidden">
@@ -54,7 +56,7 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">
-          <span className={descriptionClassName}>{formatHour(mission.hours)}</span>
+          <span className={descriptionClassName}>{formatHour(hoursPerProvider)}</span>
           {isOpen ? (
             <IconChevronUp size={16} className={descriptionClassName} />
           ) : (
@@ -81,7 +83,8 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
             <span className={textClassName}>Tâches :</span> {mission.tasks.join(', ')}
           </p>
           <p className={descriptionClassName}>
-            <span className={textClassName}>Durée :</span> {formatHour(mission.hours)}
+            <span className={textClassName}>Durée :</span> {formatHour(hoursPerProvider)}
+            {isDuo && <span className="text-light ml-1">(binôme)</span>}
           </p>
         </div>
       )}
@@ -125,7 +128,7 @@ function MonthlyHoursChart({
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       const existing = data.get(monthKey) || { hours: 0, count: 0 };
       data.set(monthKey, {
-        hours: existing.hours + mission.hours,
+        hours: existing.hours + getMissionHoursPerProvider(mission),
         count: existing.count + 1,
       });
     });
@@ -327,7 +330,10 @@ export default function HistoryPage() {
 
   // Filter to completed missions for this employee only (status is always "completed" for history)
   const completedMissions = useMemo(
-    () => missions.filter(m => m.status === 'completed' && m.employeeId === employeeName),
+    () =>
+      missions.filter(
+        m => m.status === 'completed' && (m.employeeId === employeeName || m.employeeId2 === employeeName),
+      ),
     [missions, employeeName],
   );
 
@@ -395,7 +401,7 @@ export default function HistoryPage() {
 
   // Stats based on filtered missions (recalculate)
   const stats = useMemo(() => {
-    const totalHours = filteredMissions.reduce((sum, m) => sum + m.hours, 0);
+    const totalHours = filteredMissions.reduce((sum, m) => sum + getMissionHoursPerProvider(m), 0);
     const uniqueHomes = new Set(filteredMissions.map(m => m.homeId)).size;
     const uniqueConciergeries = new Set(filteredMissions.map(m => m.conciergerieName)).size;
     return {

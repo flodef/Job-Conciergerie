@@ -3,6 +3,7 @@ import { describe, expect, test, beforeAll, afterAll } from 'vitest';
 import { config } from 'dotenv';
 import type { Mission } from '@/app/types/dataTypes';
 import { Task } from '@/app/types/dataTypes';
+import { getMissionHoursPerProvider, getMissionProviderCount } from '@/app/utils/task';
 
 // Load environment variables directly (vitest.setup.ts doesn't run for node env)
 config({ path: '.env.local' });
@@ -46,6 +47,7 @@ beforeAll(async () => {
     hours_of_cleaning: 2,
     hours_of_gardening: 0,
     conciergerie_name: TEST_CONCIERGERIE,
+    allow_duo: true,
   });
 });
 
@@ -123,5 +125,85 @@ describe('Mission Actions - hours type conversion', () => {
     expect(result?.hours).toBe(4);
     expect(typeof result?.hours).toBe('number');
     expect(result?.status).toBe('accepted');
+  });
+});
+
+describe('getMissionHoursPerProvider - duo mission hours splitting', () => {
+  test('returns full hours for single provider mission', () => {
+    const singleProviderMission: Mission = {
+      ...baseMission,
+      employeeId: 'employee1',
+      employeeId2: null,
+      hours: 4,
+      modifiedDate: new Date(),
+    };
+
+    expect(getMissionHoursPerProvider(singleProviderMission)).toBe(4);
+    expect(getMissionProviderCount(singleProviderMission)).toBe(1);
+  });
+
+  test('returns half hours for complete duo mission', () => {
+    const duoMission: Mission = {
+      ...baseMission,
+      employeeId: 'employee1',
+      employeeId2: 'employee2',
+      hours: 4,
+      modifiedDate: new Date(),
+    };
+
+    expect(getMissionHoursPerProvider(duoMission)).toBe(2);
+    expect(getMissionProviderCount(duoMission)).toBe(2);
+  });
+
+  test('returns half hours for duo mission with odd hours', () => {
+    const duoMission: Mission = {
+      ...baseMission,
+      employeeId: 'employee1',
+      employeeId2: 'employee2',
+      hours: 5,
+      modifiedDate: new Date(),
+    };
+
+    expect(getMissionHoursPerProvider(duoMission)).toBe(2.5);
+    expect(getMissionProviderCount(duoMission)).toBe(2);
+  });
+
+  test('returns full hours for mission with only second provider', () => {
+    const secondProviderOnlyMission: Mission = {
+      ...baseMission,
+      employeeId: null,
+      employeeId2: 'employee2',
+      hours: 3,
+      modifiedDate: new Date(),
+    };
+
+    expect(getMissionHoursPerProvider(secondProviderOnlyMission)).toBe(3);
+    expect(getMissionProviderCount(secondProviderOnlyMission)).toBe(1);
+  });
+
+  test('handles zero hours for duo mission', () => {
+    const duoMission: Mission = {
+      ...baseMission,
+      employeeId: 'employee1',
+      employeeId2: 'employee2',
+      hours: 0,
+      modifiedDate: new Date(),
+    };
+
+    expect(getMissionHoursPerProvider(duoMission)).toBe(0);
+    expect(getMissionProviderCount(duoMission)).toBe(2);
+  });
+
+  test('returns 0 for mission with no providers', () => {
+    const noProviderMission: Mission = {
+      ...baseMission,
+      employeeId: null,
+      employeeId2: null,
+      hours: 4,
+      modifiedDate: new Date(),
+    };
+
+    expect(getMissionHoursPerProvider(noProviderMission)).toBe(0);
+    expect(getMissionProviderCount(noProviderMission)).toBe(0);
   });
 });
