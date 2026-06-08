@@ -84,7 +84,9 @@ export default function Calendar() {
       mission =>
         mission.status &&
         mission.status !== 'completed' &&
-        (isEmployee ? mission.employeeId === employeeName : mission.conciergerieName === conciergerieName),
+        (isEmployee
+          ? mission.employeeId === employeeName || mission.employeeId2 === employeeName
+          : mission.conciergerieName === conciergerieName),
     );
 
     // Count started missions
