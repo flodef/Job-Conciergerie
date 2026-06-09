@@ -62,6 +62,14 @@ export default function Calendar() {
   const [lateMissionsCount, setLateMissionsCount] = useState(0);
   const [missingPartnerMissionsCount, setMissingPartnerMissionsCount] = useState(0);
 
+  const [startedMissions, setStartedMissions] = useState<Mission[]>([]);
+  const [lateMissionsList, setLateMissionsList] = useState<Mission[]>([]);
+  const [missingPartnerMissionsList, setMissingPartnerMissionsList] = useState<Mission[]>([]);
+
+  const [startedMissionIndex, setStartedMissionIndex] = useState(0);
+  const [lateMissionIndex, setLateMissionIndex] = useState(0);
+  const [missingPartnerMissionIndex, setMissingPartnerMissionIndex] = useState(0);
+
   const lateMissions = useMemo(() => getLateMissions(acceptedMissions), [acceptedMissions, getLateMissions]);
 
   // Reload missions when needed
@@ -97,12 +105,14 @@ export default function Calendar() {
     );
 
     // Count started missions
-    const startedCount = filteredMissions.filter(mission => mission.status === 'started').length;
-    setStartedMissionsCount(startedCount);
+    const started = filteredMissions.filter(mission => mission.status === 'started');
+    setStartedMissionsCount(started.length);
+    setStartedMissions(started);
 
     // Count late missions (ended without being started)
-    const lateCount = getLateMissions(filteredMissions).length;
-    setLateMissionsCount(lateCount);
+    const late = getLateMissions(filteredMissions).sort((a, b) => a.endDateTime.getTime() - b.endDateTime.getTime());
+    setLateMissionsCount(late.length);
+    setLateMissionsList(late);
 
     // Count missions missing a partner (duo missions with only one employee assigned)
     if (isConciergerie) {
@@ -113,6 +123,7 @@ export default function Calendar() {
         );
       });
       setMissingPartnerMissionsCount(missingPartner.length);
+      setMissingPartnerMissionsList(missingPartner);
     }
 
     setAcceptedMissions(filteredMissions);
@@ -128,6 +139,35 @@ export default function Calendar() {
 
   const handleMissionClick = (mission: Mission) => {
     setSelectedMission(mission);
+  };
+
+  const handleBadgeClick = (type: 'started' | 'late' | 'missingPartner') => {
+    let missions: Mission[] = [];
+    let index = 0;
+
+    if (type === 'started' && startedMissions.length > 0) {
+      missions = startedMissions;
+      index = startedMissionIndex;
+      setStartedMissionIndex(prev => (prev + 1) % startedMissions.length);
+    } else if (type === 'late' && lateMissionsList.length > 0) {
+      missions = lateMissionsList;
+      index = lateMissionIndex;
+      setLateMissionIndex(prev => (prev + 1) % lateMissionsList.length);
+    } else if (type === 'missingPartner' && missingPartnerMissionsList.length > 0) {
+      missions = missingPartnerMissionsList;
+      index = missingPartnerMissionIndex;
+      setMissingPartnerMissionIndex(prev => (prev + 1) % missingPartnerMissionsList.length);
+    }
+
+    if (missions.length > 0) {
+      const mission = missions[index];
+      const element = document.getElementById(`mission-${mission.id}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.classList.add('ring-2', 'ring-primary');
+        setTimeout(() => element.classList.remove('ring-2', 'ring-primary'), 2000);
+      }
+    }
   };
 
   const handleCloseDetails = (reopenAfter = false) => {
@@ -219,7 +259,10 @@ export default function Calendar() {
       {startedMissionsCount + lateMissionsCount + missingPartnerMissionsCount > 0 && (
         <div className="sticky top-0 z-20 bg-background space-y-2 mb-4">
           {startedMissionsCount > 0 && (
-            <div className="p-2 border border-blue-200 rounded-lg flex items-center justify-between">
+            <div
+              className="p-2 border border-blue-200 rounded-lg flex items-center justify-between cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-950/10 transition-colors"
+              onClick={() => handleBadgeClick('started')}
+            >
               <div className="flex items-center">
                 <IconPlayerPlay className="text-blue-500 mr-2" />
                 <span>
@@ -231,7 +274,10 @@ export default function Calendar() {
           )}
 
           {lateMissionsCount > 0 && (
-            <div className="p-2 border border-red-200 bg-red-50 dark:bg-red-950/10 rounded-lg flex items-center justify-between">
+            <div
+              className="p-2 border border-red-200 bg-red-50 dark:bg-red-950/10 rounded-lg flex items-center justify-between cursor-pointer hover:bg-red-100 dark:hover:bg-red-950/20 transition-colors"
+              onClick={() => handleBadgeClick('late')}
+            >
               <div className="flex items-center">
                 <IconAlertTriangle className="text-red-500 mr-2" />
                 <span>
@@ -243,7 +289,10 @@ export default function Calendar() {
           )}
 
           {missingPartnerMissionsCount > 0 && (
-            <div className="p-2 border border-orange-200 bg-orange-50 dark:bg-orange-950/10 rounded-lg flex items-center justify-between">
+            <div
+              className="p-2 border border-orange-200 bg-orange-50 dark:bg-orange-950/10 rounded-lg flex items-center justify-between cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-950/20 transition-colors"
+              onClick={() => handleBadgeClick('missingPartner')}
+            >
               <div className="flex items-center">
                 <IconAlertTriangle className="text-orange-500 mr-2" />
                 <span>
@@ -338,6 +387,7 @@ export default function Calendar() {
 
                   return (
                     <div
+                      id={`mission-${mission.id}`}
                       key={mission.id}
                       className={cn(
                         'p-3 hover:bg-secondary/10 cursor-pointer transition-colors relative',

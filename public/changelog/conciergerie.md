@@ -1,3 +1,9 @@
+# 2.181
+
+- **Améliorations UI** : meilleure gestion de l'affichage des prestataires autorisés
+- **Missions non terminées à temps** : vérification et envoi d'un email toutes les 10 minutes
+- **Amélioration navigation** : dans le calendrier, il est possible de cliquer sur les badges en haut de page (mission non terminées, mission démarrée, mission duo sans partenaire) afin de voir les missions concernées.
+
 # 2.165
 
 - **Nouveau : Binôme** : missions en duo possibles — un employé peut rejoindre une mission déjà acceptée par un autre employé ou une conciergerie
