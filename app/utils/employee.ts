@@ -15,19 +15,40 @@ export const getEmployeeFullName = (employee: Employee, isShort = false) =>
   isShort ? `${employee.firstName[0]}. ${employee.familyName}` : `${employee.firstName} ${employee.familyName}`;
 
 /**
- * Normalize a name by capitalizing the first letter of each part
- * separated by spaces or dashes
- * @param name Name to normalize
- * @returns Normalized name
+ * Normalize a first name:
+ * - Everything lowercase except first letter
+ * - Spaces replaced with hyphens
+ * - After hyphens, next letter is uppercase
+ * @param firstName First name to normalize
+ * @returns Normalized first name
  */
-export const normalizeName = function (name: string) {
-  // Handle names with spaces or dashes by capitalizing each part
-  return name
+export const normalizeFirstName = function (firstName: string) {
+  return firstName
     .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .split('-')
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('-');
+};
+
+/**
+ * Normalize a family name:
+ * - Everything lowercase except first letter
+ * - Spaces and hyphens are kept
+ * - After hyphens or spaces, next letter is uppercase
+ * @param familyName Family name to normalize
+ * @returns Normalized family name
+ */
+export const normalizeFamilyName = function (familyName: string) {
+  return familyName
+    .trim()
+    .toLowerCase()
     .split(/[ -]/)
     .filter(Boolean)
-    .map(part => (part.charAt(0).toUpperCase() + part.slice(1)).trim())
-    .join(name.includes('-') ? '-' : ' ');
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(familyName.includes('-') ? '-' : ' ');
 };
 
 /**

@@ -21,6 +21,7 @@ import { formatId, getDevices, MAX_DEVICES, MaxDevicesError } from '@/app/utils/
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
+import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
 import React, { useRef, useState } from 'react';
 import { buttonClassName, cn } from '../utils/className';
 
@@ -75,9 +76,15 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
   const handleFormChange = (name: string, value: string) => {
     setIsFormChanged(true);
+    let formattedValue = value;
+    if (name === 'firstName') {
+      formattedValue = normalizeFirstName(value);
+    } else if (name === 'familyName') {
+      formattedValue = normalizeFamilyName(value);
+    }
     setFormData(prev => ({
       ...prev!,
-      [name]: value,
+      [name]: formattedValue,
     }));
   };
 
