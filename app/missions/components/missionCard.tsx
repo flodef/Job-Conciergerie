@@ -6,6 +6,7 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import { Conciergerie, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
+import { getEmployeeFullName } from '@/app/utils/employee';
 import { formatHour, getMissionProviderCount } from '@/app/utils/task';
 import { useEffect, useState } from 'react';
 
@@ -16,7 +17,7 @@ type MissionCardProps = {
 };
 
 export default function MissionCard({ mission, onClick, onEdit }: MissionCardProps) {
-  const { findConciergerie, findEmployee } = useAuth();
+  const { findConciergerie, findEmployee, isConciergerie } = useAuth();
   const { homes } = useHomes();
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
 
@@ -25,6 +26,15 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
   const employee = findEmployee(mission.employeeId);
   const employee2 = findEmployee(mission.employeeId2) || findConciergerie(mission.employeeId2);
   const providerCount = getMissionProviderCount(mission);
+
+  // Check if mission is fully accepted
+  const isFullyAccepted = home?.allowDuo ? providerCount === 2 : providerCount === 1;
+
+  // Get reserved employees (excluding those who have already accepted the mission)
+  const reservedEmployees = mission.allowedEmployees
+    ?.filter(id => id !== mission.employeeId && id !== mission.employeeId2)
+    .map(findEmployee)
+    .map(employee => employee && getEmployeeFullName(employee, true));
 
   // Fetch conciergerie data when mission changes
   useEffect(() => {
@@ -110,6 +120,12 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         <div className="flex justify-between items-center">
           <span>{formatDateRange(new Date(mission.startDateTime), new Date(mission.endDateTime))}</span>
         </div>
+        {isConciergerie && reservedEmployees?.length && !isFullyAccepted && (
+          <div className="flex items-center gap-1 mt-1 truncate">
+            <span className="font-medium">Réservé à :</span>
+            <span className="truncate">{reservedEmployees.join(', ')}</span>
+          </div>
+        )}
       </div>
     </div>
   );

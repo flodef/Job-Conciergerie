@@ -8,11 +8,11 @@ import { EmailSender } from '@/app/utils/emailSender';
 /**
  * Get the full name of an employee
  * @param employee Employee
+ * @param isShort Whether to return the short name (first letter of first name + last name)
  * @returns Full name
  */
-export const getEmployeeFullName = (employee: Employee) => {
-  return `${employee.firstName} ${employee.familyName}`;
-};
+export const getEmployeeFullName = (employee: Employee, isShort = false) =>
+  isShort ? `${employee.firstName[0]}. ${employee.familyName}` : `${employee.firstName} ${employee.familyName}`;
 
 /**
  * Normalize a name by capitalizing the first letter of each part

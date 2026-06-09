@@ -925,16 +925,26 @@ export default function MissionDetails({
                       Prestataires autorisés
                     </h3>
                     <div className="flex items-center gap-1">
-                      <p>{mission.allowedEmployees?.length || 'Tous'}</p>
-                      {!!mission.allowedEmployees?.length && (
-                        <Tooltip>
-                          <ul className="list-disc pl-4">
-                            {mission.allowedEmployees?.map(employeeId => (
-                              <li key={employeeId}>{employeeId}</li>
-                            ))}
-                          </ul>
-                        </Tooltip>
-                      )}
+                      <Tooltip
+                        trigger={
+                          <div className="flex items-center gap-1 cursor-help">
+                            <p>
+                              {mission.allowedEmployees?.length === 1
+                                ? mission.allowedEmployees[0]
+                                : mission.allowedEmployees?.length || 'Tous'}
+                            </p>
+                          </div>
+                        }
+                        size="medium"
+                        className="text-foreground"
+                        isDisabled={(mission.allowedEmployees?.length || 0) <= 1}
+                      >
+                        <ul className="list-disc pl-4">
+                          {mission.allowedEmployees?.map(employeeId => (
+                            <li key={employeeId}>{employeeId}</li>
+                          ))}
+                        </ul>
+                      </Tooltip>
                     </div>
                   </>
                 )}

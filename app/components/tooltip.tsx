@@ -12,6 +12,8 @@ type TooltipProps = {
   orientation?: 'vertical' | 'horizontal';
   onClick?: () => void;
   className?: string;
+  trigger?: ReactNode;
+  isDisabled?: boolean;
 };
 
 export default function Tooltip({
@@ -21,10 +23,13 @@ export default function Tooltip({
   orientation = 'vertical',
   onClick,
   className = '',
+  trigger,
+  isDisabled = false,
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
 
   const sizeClasses = {
@@ -46,15 +51,16 @@ export default function Tooltip({
   }[size];
 
   const calculatePosition = useCallback(() => {
-    if (!buttonRef.current || !tooltipRef.current) return { top: 0, left: 0 };
+    const ref = trigger ? triggerRef : buttonRef;
+    if (!ref?.current || !tooltipRef.current) return { top: 0, left: 0 };
 
-    const rect = buttonRef.current.getBoundingClientRect();
+    const rect = ref.current.getBoundingClientRect();
     const tooltipWidth = tooltipRef.current.offsetWidth;
     const tooltipHeight = tooltipRef.current.offsetHeight;
     const spaceAbove = rect.top;
-    const spaceBelow = window.innerHeight - rect.bottom; // Used to determine if tooltip can fit below
+    const spaceBelow = window.innerHeight - rect.bottom;
     const spaceLeft = rect.left;
-    const spaceRight = window.innerWidth - rect.right; // Used to determine if tooltip can fit to the right
+    const spaceRight = window.innerWidth - rect.right;
 
     let top = 0;
     let left = 0;
@@ -62,7 +68,6 @@ export default function Tooltip({
     if (orientation === 'vertical') {
       const positionAbove = spaceAbove >= tooltipHeight;
       top = positionAbove ? rect.top - tooltipHeight - 10 : rect.bottom + 10;
-      // Check if positioning below would fit within viewport
       if (!positionAbove && spaceBelow < tooltipHeight + 10) {
         top = window.innerHeight - tooltipHeight - 10;
       }
@@ -76,7 +81,6 @@ export default function Tooltip({
     } else {
       const positionLeft = spaceLeft >= tooltipWidth;
       left = positionLeft ? rect.left - tooltipWidth - 10 : rect.right + 10;
-      // Check if positioning right would fit within viewport
       if (!positionLeft && spaceRight < tooltipWidth + 10) {
         left = window.innerWidth - tooltipWidth - 10;
       }
@@ -90,7 +94,7 @@ export default function Tooltip({
     }
 
     return { top, left };
-  }, [orientation]);
+  }, [orientation, trigger]);
 
   useEffect(() => {
     if (isVisible) {
@@ -101,22 +105,41 @@ export default function Tooltip({
 
   return (
     <div className="inline-flex items-center ml-1">
-      <button
-        ref={buttonRef}
-        type="button"
-        className={cn('text-light hover:text-foreground focus:outline-none cursor-help', className)}
-        onClick={e => {
-          e.stopPropagation();
-          setIsVisible(!isVisible);
-          onClick?.();
-        }}
-        onMouseEnter={() => setIsVisible(true)}
-        onMouseLeave={() => setIsVisible(false)}
-        aria-label="Information"
-      >
-        <Icon size={iconSize} />
-      </button>
-      {isVisible && (
+      {trigger && (
+        <div
+          ref={triggerRef}
+          className={className}
+          onClick={e => {
+            e.stopPropagation();
+            setIsVisible(!isVisible);
+            onClick?.();
+          }}
+          onMouseEnter={() => setIsVisible(true)}
+          onMouseLeave={() => setIsVisible(false)}
+        >
+          {trigger}
+        </div>
+      )}
+
+      {!isDisabled && (
+        <button
+          ref={buttonRef}
+          type="button"
+          className={cn('text-light hover:text-foreground focus:outline-none cursor-help mx-1', className)}
+          onClick={e => {
+            e.stopPropagation();
+            setIsVisible(!isVisible);
+            onClick?.();
+          }}
+          onMouseEnter={() => setIsVisible(true)}
+          onMouseLeave={() => setIsVisible(false)}
+          aria-label="Information"
+        >
+          <Icon size={iconSize} />
+        </button>
+      )}
+
+      {!isDisabled && isVisible && (
         <div
           ref={tooltipRef}
           className={`fixed z-100 bg-background text-foreground rounded-md shadow-lg border border-secondary ${sizeClasses[size]} ${widthClasses[size]}`}
