@@ -12,7 +12,7 @@ import {
   sendNewDeviceNotificationEmail,
 } from '@/app/actions/email';
 import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
-import { UserData } from '../contexts/authProvider';
+import { UserData } from './user';
 
 // Client-side wrapper around the email server actions.
 // Server-side now persists failed sends in the failed_emails DB queue

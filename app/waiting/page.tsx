@@ -5,7 +5,7 @@ import { RefreshButton } from '@/app/components/button';
 import ErrorPage from '@/app/components/error';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
-import { getUserKey, useAuth } from '@/app/contexts/authProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { getTimeDifference, getTimeRemaining, isElapsedTimeLessThan } from '@/app/utils/date';
@@ -22,6 +22,7 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getEmployeeFullName } from '../utils/employee';
+import { getUserKey } from '../utils/user';
 
 const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
 const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
@@ -57,7 +58,7 @@ export default function WaitingPage() {
   }, [conciergerieName, findConciergerie]);
 
   const handleEmployee = useCallback(() => {
-    const foundEmployee = findEmployee(getUserKey(userData as Employee));
+    const foundEmployee = userData && findEmployee(getUserKey(userData));
     setEmployee(foundEmployee);
     setCreationDate(foundEmployee?.createdAt ? new Date(foundEmployee.createdAt) : new Date());
     setMinimumWaitingTime(EMPLOYEE_MINIMUM_WAITING_TIME);

@@ -5,7 +5,7 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import M3LoadingSpinner from '@/app/components/m3LoadingSpinner';
 import SearchInput from '@/app/components/searchInput';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
-import { getUserKey, useAuth } from '@/app/contexts/authProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import { Employee } from '@/app/types/dataTypes';
@@ -20,6 +20,7 @@ import {
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
 import { ReactNode, useEffect, useState } from 'react';
 import { cn, iconButtonClassName, textClassName } from '../utils/className';
+import { getUserKey } from '../utils/user';
 
 export default function EmployeesList() {
   const { userData, conciergerieName, isLoading: authLoading, employees: authEmployees, updateUserData } = useAuth();

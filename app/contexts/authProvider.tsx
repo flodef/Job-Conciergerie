@@ -4,24 +4,17 @@ import { fetchConciergeries } from '@/app/actions/conciergerie';
 import { deleteEmployeeData, fetchEmployees } from '@/app/actions/employee';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
-import { isConnectionPoolError } from '@/app/utils/dbErrors';
 import { setPrimaryColor } from '@/app/utils/color';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
+import { isConnectionPoolError } from '@/app/utils/dbErrors';
 import { containsId, generateSimpleId } from '@/app/utils/id';
 import { getLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes } from '@/app/utils/navigation';
+import { getUserKey, type UserData } from '@/app/utils/user';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 // Define the type for the auth context
 export type UserType = 'conciergerie' | 'employee';
-export type UserData = Conciergerie | Employee;
-
-export const isEmployee = <T extends UserData>(user: T): boolean => 'firstName' in user && 'familyName' in user;
-export const getUserKey = <T extends UserData>(user: T): string => {
-  if ('name' in user) return user.name;
-  if ('firstName' in user && 'familyName' in user) return `${user.firstName} ${user.familyName}`;
-  throw new Error('Invalid UserData type');
-};
 
 interface AuthContextType {
   userId: string | undefined;

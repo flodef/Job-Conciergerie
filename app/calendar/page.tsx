@@ -1,13 +1,13 @@
 'use client';
 
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
-import { getUserKey, useAuth } from '@/app/contexts/authProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { useFetchTime } from '@/app/hooks/useFetchTime';
-import MissionDetails from '@/app/missions/components/missionDetails';
-import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
+import { useFetchTime } from '@/app/hooks/useFetchTime';
+import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
+import MissionDetails from '@/app/missions/components/missionDetails';
 import { Employee, Mission } from '@/app/types/dataTypes';
 import { formatCalendarDate, formatMissionTimeForCalendar, groupMissionsByDate } from '@/app/utils/calendar';
 import {
@@ -24,6 +24,7 @@ import { calculateEmployeeHoursForDay, formatHours } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay, IconUsers } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
+import { getUserKey } from '../utils/user';
 
 export default function Calendar() {
   const {

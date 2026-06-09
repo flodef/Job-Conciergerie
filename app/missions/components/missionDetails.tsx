@@ -8,7 +8,7 @@ import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import Switch from '@/app/components/switch';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
-import { getUserKey, isEmployee, useAuth } from '@/app/contexts/authProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
@@ -17,7 +17,7 @@ import { useImageCache } from '@/app/hooks/useImageCache';
 import MissionActions from '@/app/missions/components/missionActions';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
-import { Mission, Employee, Conciergerie } from '@/app/types/dataTypes';
+import { Employee, Mission } from '@/app/types/dataTypes';
 import {
   buttonClassName,
   cn,
@@ -39,6 +39,7 @@ import {
 } from '@/app/utils/date';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { formatHours } from '@/app/utils/task';
+import { getUserKey, isEmployee } from '@/app/utils/user';
 import {
   IconBuildingStore,
   IconCalendarEvent,

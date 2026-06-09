@@ -3,7 +3,7 @@
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
-import { getUserKey, useAuth } from '@/app/contexts/authProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Employee, Mission, MissionStatus } from '@/app/types/dataTypes';
 import {
@@ -21,6 +21,7 @@ import {
   removeEmployeeFromMissions,
   updateEmployeeStatus,
 } from '@/app/utils/employee';
+import { getUserKey } from '@/app/utils/user';
 import { IconCheck, IconMail, IconMapPin, IconPhone, IconTrash, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 

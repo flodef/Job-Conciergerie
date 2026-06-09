@@ -9,7 +9,7 @@ import MultiSelect from '@/app/components/multiSelect';
 import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import TaskSelector from '@/app/components/taskSelector';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
-import { getUserKey, useAuth } from '@/app/contexts/authProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission, Task } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
@@ -24,6 +24,7 @@ import {
 } from '@/app/utils/date';
 import { handleChange } from '@/app/utils/form';
 import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
+import { getUserKey } from '@/app/utils/user';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type MissionFormProps = {

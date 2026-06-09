@@ -3,8 +3,8 @@ import { getAllEmployees } from '@/app/db/employeeDb';
 import { getAllHomes } from '@/app/db/homeDb';
 import { claimLateNotification, getLateMissionsForCron } from '@/app/db/missionDb';
 import { sendLateCompletionEmail } from '@/app/actions/email';
-import { getUserKey } from '@/app/contexts/authProvider';
 import { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
+import { getUserKey } from '@/app/utils/user';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**

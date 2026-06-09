@@ -6,9 +6,9 @@ import { insertFailedEmail } from '@/app/db/failedEmailsDb';
 import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
 import { formatHours } from '@/app/utils/task';
+import { UserData } from '@/app/utils/user';
 import packageJson from '@/package.json';
 import nodemailer, { SendMailOptions } from 'nodemailer';
-import { UserData } from '../contexts/authProvider';
 import { getEmployeeFullName } from '../utils/employee';
 
 // Configure nodemailer transporter

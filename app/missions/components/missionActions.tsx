@@ -1,15 +1,11 @@
 'use client';
 
-import { getUserKey, useAuth } from '@/app/contexts/authProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission } from '@/app/types/dataTypes';
 import { actionButtonBarClassName, actionButtonClassName, cn } from '@/app/utils/className';
-import {
-  calculateEmployeePointsForDay,
-  calculateMissionPoints,
-  getMissionProviderCount,
-  isDuoComplete,
-} from '@/app/utils/task';
+import { calculateEmployeePointsForDay, calculateMissionPoints } from '@/app/utils/task';
+import { getUserKey } from '@/app/utils/user';
 import {
   IconAlertTriangle,
   IconCancel,

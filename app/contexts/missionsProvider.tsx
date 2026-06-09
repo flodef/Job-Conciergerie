@@ -8,15 +8,16 @@ import {
   updateMissionData,
 } from '@/app/actions/mission';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
-import { getUserKey, useAuth } from '@/app/contexts/authProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
-import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
+import { Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
 import { EmailSender } from '@/app/utils/emailSender';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes, Page } from '@/app/utils/navigation';
+import { getUserKey } from '@/app/utils/user';
 import { usePathname } from 'next/navigation';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 

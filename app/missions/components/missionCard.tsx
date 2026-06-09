@@ -1,13 +1,14 @@
 'use client';
 
 import HomeTitle from '@/app/components/homeTitle';
-import { getUserKey, useAuth } from '@/app/contexts/authProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { Conciergerie, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
 import { getEmployeeFullName } from '@/app/utils/employee';
 import { formatHours, getMissionProviderCount } from '@/app/utils/task';
+import { getUserKey } from '@/app/utils/user';
 import { useEffect, useState } from 'react';
 
 type MissionCardProps = {
