@@ -25,13 +25,12 @@ interface CustomDateTimeInputProps {
   row?: boolean;
   tooltip?: ReactNode;
   minimal?: boolean;
-  showPresets?: boolean;
 }
 
 const calendarButtonClassName =
   'p-2 hover:bg-secondary/50 rounded transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer';
 
-const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProps>(
+const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInputProps>(
   (
     {
       id,
@@ -53,13 +52,13 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
       row = false,
       tooltip,
       minimal = false,
-      showPresets = false,
     },
     ref,
   ) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const [focusedSegment, setFocusedSegment] = useState<'day' | 'month' | 'year' | 'hour' | 'minute' | null>(null);
+    const [typedDigits, setTypedDigits] = useState('');
     const [currentDate, setCurrentDate] = useState<Date>(value ? new Date(value) : new Date());
     const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
@@ -70,7 +69,13 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
 
     name = label?.toString() || id;
 
-    useImperativeHandle(ref, () => inputRef.current as HTMLInputElement);
+    useImperativeHandle(ref, () => ({
+      focus: () => {
+        setFocusedSegment('day');
+        setIsFocused(true);
+        customInputRef.current?.focus();
+      },
+    }));
 
     // Parse French format to Date
     const parseDateTime = (value: string): Date | null => {
@@ -137,6 +142,7 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
         setIsOpen(false);
         setIsFocused(false);
         setFocusedSegment(null);
+        setTypedDigits('');
         if (onEscape) onEscape();
       } else if (e.key === 'Enter') {
         e.preventDefault();
@@ -146,51 +152,47 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
           setIsOpen(false);
           setIsFocused(false);
           setFocusedSegment(null);
+          setTypedDigits('');
           if (onEnter) onEnter();
         }
       } else if (e.key === 'ArrowDown' && !isOpen && !minimal && (!isFocused || !focusedSegment)) {
         e.preventDefault();
         handleToggle();
       } else if (isFocused && !isOpen && focusedSegment) {
-        // Handle input field navigation
-        const segments: Array<'day' | 'month' | 'year' | 'hour' | 'minute'> = [
-          'day',
-          'month',
-          'year',
-          'hour',
-          'minute',
-        ];
-        const currentIndex = focusedSegment ? segments.indexOf(focusedSegment) : -1;
+        // Handle number input
+        if (/^\d$/.test(e.key)) {
+          e.preventDefault();
+          const newDigits = typedDigits + e.key;
+          setTypedDigits(newDigits);
 
-        if (e.key === 'ArrowRight') {
-          e.preventDefault();
-          const nextIndex = currentIndex < segments.length - 1 ? currentIndex + 1 : 0;
-          setFocusedSegment(segments[nextIndex]);
-        } else if (e.key === 'ArrowLeft') {
-          e.preventDefault();
-          const prevIndex = currentIndex > 0 ? currentIndex - 1 : segments.length - 1;
-          setFocusedSegment(segments[prevIndex]);
-        } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-          e.preventDefault();
-          if (focusedSegment) {
-            const delta = e.key === 'ArrowUp' ? 1 : -1;
+          const segments: Array<'day' | 'month' | 'year' | 'hour' | 'minute'> = [
+            'day',
+            'month',
+            'year',
+            'hour',
+            'minute',
+          ];
+          const maxDigits = focusedSegment === 'year' ? 4 : 2;
+
+          if (newDigits.length >= maxDigits) {
+            const value = parseInt(newDigits);
             const newDate = new Date(currentDate);
 
             switch (focusedSegment) {
               case 'day':
-                newDate.setDate(newDate.getDate() + delta);
+                if (value >= 1 && value <= 31) newDate.setDate(value);
                 break;
               case 'month':
-                newDate.setMonth(newDate.getMonth() + delta);
+                if (value >= 1 && value <= 12) newDate.setMonth(value - 1);
                 break;
               case 'year':
-                newDate.setFullYear(newDate.getFullYear() + delta);
+                newDate.setFullYear(value);
                 break;
               case 'hour':
-                newDate.setHours(newDate.getHours() + delta);
+                if (value >= 0 && value <= 23) newDate.setHours(value);
                 break;
               case 'minute':
-                newDate.setMinutes(newDate.getMinutes() + delta);
+                if (value >= 0 && value <= 59) newDate.setMinutes(value);
                 break;
             }
 
@@ -199,6 +201,7 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
               const minDate = new Date(min);
               if (newDate < minDate) {
                 if (onInvalidDate) onInvalidDate();
+                setTypedDigits('');
                 return;
               }
             }
@@ -207,6 +210,73 @@ const CustomDateTimeInput = forwardRef<HTMLInputElement, CustomDateTimeInputProp
             onChange(toISOString(newDate));
             setSelectedYear(newDate.getFullYear());
             setSelectedMonth(newDate.getMonth());
+            setTypedDigits('');
+
+            // Move to next segment
+            const currentIndex = segments.indexOf(focusedSegment);
+            const nextIndex = currentIndex < segments.length - 1 ? currentIndex + 1 : 0;
+            setFocusedSegment(segments[nextIndex]);
+          }
+        } else {
+          // Handle input field navigation
+          const segments: Array<'day' | 'month' | 'year' | 'hour' | 'minute'> = [
+            'day',
+            'month',
+            'year',
+            'hour',
+            'minute',
+          ];
+          const currentIndex = focusedSegment ? segments.indexOf(focusedSegment) : -1;
+
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            setTypedDigits('');
+            const nextIndex = currentIndex < segments.length - 1 ? currentIndex + 1 : 0;
+            setFocusedSegment(segments[nextIndex]);
+          } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            setTypedDigits('');
+            const prevIndex = currentIndex > 0 ? currentIndex - 1 : segments.length - 1;
+            setFocusedSegment(segments[prevIndex]);
+          } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            setTypedDigits('');
+            if (focusedSegment) {
+              const delta = e.key === 'ArrowUp' ? 1 : -1;
+              const newDate = new Date(currentDate);
+
+              switch (focusedSegment) {
+                case 'day':
+                  newDate.setDate(newDate.getDate() + delta);
+                  break;
+                case 'month':
+                  newDate.setMonth(newDate.getMonth() + delta);
+                  break;
+                case 'year':
+                  newDate.setFullYear(newDate.getFullYear() + delta);
+                  break;
+                case 'hour':
+                  newDate.setHours(newDate.getHours() + delta);
+                  break;
+                case 'minute':
+                  newDate.setMinutes(newDate.getMinutes() + delta);
+                  break;
+              }
+
+              // Check if new date is before min
+              if (min) {
+                const minDate = new Date(min);
+                if (newDate < minDate) {
+                  if (onInvalidDate) onInvalidDate();
+                  return;
+                }
+              }
+
+              setCurrentDate(newDate);
+              onChange(toISOString(newDate));
+              setSelectedYear(newDate.getFullYear());
+              setSelectedMonth(newDate.getMonth());
+            }
           }
         }
       }
