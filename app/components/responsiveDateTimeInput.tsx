@@ -25,6 +25,7 @@ interface ResponsiveDateTimeInputProps {
   tooltip?: ReactNode;
   minimal?: boolean;
   showPresets?: boolean;
+  autoFocus?: boolean;
 }
 
 const ResponsiveDateTimeInput = forwardRef<{ focus: () => void }, ResponsiveDateTimeInputProps>((props, ref) => {
@@ -36,7 +37,10 @@ const ResponsiveDateTimeInput = forwardRef<{ focus: () => void }, ResponsiveDate
   }, []);
 
   useImperativeHandle(ref, () => ({
-    focus: () => customInputRef.current?.focus(),
+    focus: () => {
+      if (isMobileDevice) (ref as any)?.current?.focus();
+      else customInputRef.current?.focus();
+    },
   }));
 
   if (isMobileDevice) {

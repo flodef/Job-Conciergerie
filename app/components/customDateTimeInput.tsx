@@ -25,6 +25,7 @@ interface CustomDateTimeInputProps {
   row?: boolean;
   tooltip?: ReactNode;
   minimal?: boolean;
+  autoFocus?: boolean;
 }
 
 const calendarButtonClassName =
@@ -52,6 +53,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
       row = false,
       tooltip,
       minimal = false,
+      autoFocus = false,
     },
     ref,
   ) => {
@@ -73,7 +75,8 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
       focus: () => {
         setFocusedSegment('day');
         setIsFocused(true);
-        customInputRef.current?.focus();
+        setIsOpen(false);
+        requestAnimationFrame(() => customInputRef.current?.focus());
       },
     }));
 
@@ -103,6 +106,16 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
         }
       }
     }, [value]);
+
+    // Auto-focus when autoFocus prop changes
+    useEffect(() => {
+      if (autoFocus) {
+        setFocusedSegment('day');
+        setIsFocused(true);
+        setIsOpen(false);
+        requestAnimationFrame(() => customInputRef.current?.focus());
+      }
+    }, [autoFocus]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -435,7 +448,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
         </Label>
         <div className={cn('relative w-full', minimal && 'flex items-center')}>
           <div
-            ref={minimal ? inputRef : customInputRef}
+            ref={customInputRef}
             id={id}
             tabIndex={0}
             onKeyDown={handleKeyDown}
@@ -448,6 +461,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
             onFocus={() => {
               if (!disabled) {
                 setIsFocused(true);
+                if (!focusedSegment) setFocusedSegment('day');
               }
             }}
             onBlur={e => {

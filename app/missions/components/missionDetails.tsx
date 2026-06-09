@@ -394,6 +394,8 @@ export default function MissionDetails({
     setEditingDate(date);
     setStartDateError('');
     setEndDateError('');
+    // Blur any focused button
+    (document.activeElement as HTMLElement)?.blur();
   };
 
   // Cancel date editing - close the fullscreen modal without changes
@@ -663,6 +665,7 @@ export default function MissionDetails({
                           min={localISOString(getMinStartDate())}
                           className="text-sm h-[28px] content-center"
                           minimal
+                          autoFocus={editingDate === 'start'}
                         />
                         <button
                           onClick={handleDateEditConfirm}
@@ -727,6 +730,7 @@ export default function MissionDetails({
                           min={localISOString(getMinEndDate())}
                           className="text-sm h-[28px] content-center"
                           minimal
+                          autoFocus={editingDate === 'end'}
                         />
                         <button
                           onClick={handleDateEditConfirm}
