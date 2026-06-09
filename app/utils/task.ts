@@ -260,7 +260,7 @@ export const formatNumber = (number: number | string): string => {
  * Formats hours in decimal format to a more human-readable format
  * e.g., 3.5 becomes "3h30", 1.25 becomes "1h15"
  */
-export const formatHour = (hours: number): string => {
+export const formatHours = (hours: number): string => {
   const wholeHours = Math.floor(hours);
   const minutes = Math.round((hours - wholeHours) * 60);
 

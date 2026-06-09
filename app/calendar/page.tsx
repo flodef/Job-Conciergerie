@@ -20,7 +20,7 @@ import {
 import { getColorValueByName } from '@/app/utils/color';
 import { isPastDate, isToday, sortDates } from '@/app/utils/date';
 import { Page } from '@/app/utils/navigation';
-import { calculateEmployeeHoursForDay, formatHour } from '@/app/utils/task';
+import { calculateEmployeeHoursForDay, formatHours } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay, IconUsers } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
@@ -319,7 +319,7 @@ export default function Calendar() {
                               : 'bg-green-200 text-green-700';
                         return (
                           <span className={`text-sm ${hoursClass} px-2 py-1 rounded-full text-nowrap`}>
-                            {formatHour(hours)}
+                            {formatHours(hours)}
                           </span>
                         );
                       })()}
@@ -383,7 +383,7 @@ export default function Calendar() {
                         </div>
                         <div className="flex items-center">
                           <span className="text-light text-nowrap">Heures :&nbsp;</span>
-                          <span className="font-medium">{formatHour(mission.hours)}</span>
+                          <span className="font-medium">{formatHours(mission.hours)}</span>
                         </div>
                       </div>
 

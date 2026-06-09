@@ -5,6 +5,7 @@ import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { insertFailedEmail } from '@/app/db/failedEmailsDb';
 import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
+import { formatHours } from '@/app/utils/task';
 import packageJson from '@/package.json';
 import nodemailer, { SendMailOptions } from 'nodemailer';
 import { UserData } from '../contexts/authProvider';
@@ -286,8 +287,8 @@ function composeMissionStatusChangeEmail(
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
-          <p><strong>Heures totales:</strong> ${mission.hours}h</p>
-          ${isDuo ? `<p><strong>Heures par prestataire:</strong> ${hoursPerProvider}h (binôme)</p>` : ''}
+          <p><strong>Heures totales:</strong> ${formatHours(mission.hours)}</p>
+          ${isDuo ? `<p><strong>Heures par prestataire:</strong> ${formatHours(hoursPerProvider)} (binôme)</p>` : ''}
           <p><strong>Employé:</strong> ${getEmployeeFullName(employee)}</p>
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Statut:</strong> ${employee.firstName} a ${statusAction} cette mission</p>
@@ -366,7 +367,6 @@ function composeMissionAcceptanceToEmployeeEmail(
   const endDate = formatDateTime(mission.endDateTime);
   const isDuo = !!mission.employeeId2;
   const hoursPerProvider = isDuo ? mission.hours / 2 : mission.hours;
-  const hoursText = hoursPerProvider === 1 ? '1 heure' : `${hoursPerProvider} heures`;
 
   return {
     to: employee.email,
@@ -383,7 +383,7 @@ function composeMissionAcceptanceToEmployeeEmail(
           <p><strong>Conciergerie:</strong> ${conciergerie.name}</p>
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
-          <p><strong>Durée estimée:</strong> ${hoursText}${isDuo ? ' (par prestataire)' : ''}</p>
+          <p><strong>Durée estimée:</strong> ${formatHours(hoursPerProvider)}${isDuo ? ' (par prestataire)' : ''}</p>
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
         </div>
@@ -417,7 +417,6 @@ function composeMissionUpdatedToEmployeeEmail(
   const endDate = formatDateTime(mission.endDateTime);
   const isDuo = !!mission.employeeId2;
   const hoursPerProvider = isDuo ? mission.hours / 2 : mission.hours;
-  const hoursText = hoursPerProvider === 1 ? '1 heure' : `${hoursPerProvider} heures`;
 
   return {
     to: employee.email,
@@ -440,7 +439,7 @@ function composeMissionUpdatedToEmployeeEmail(
           <p><strong>Conciergerie:</strong> ${conciergerie.name}</p>
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
-          <p><strong>Durée estimée:</strong> ${hoursText}${isDuo ? ' (par prestataire)' : ''}</p>
+          <p><strong>Durée estimée:</strong> ${formatHours(hoursPerProvider)}${isDuo ? ' (par prestataire)' : ''}</p>
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
         </div>

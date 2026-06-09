@@ -7,7 +7,7 @@ import { Conciergerie, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
 import { getEmployeeFullName } from '@/app/utils/employee';
-import { formatHour, getMissionProviderCount } from '@/app/utils/task';
+import { formatHours, getMissionProviderCount } from '@/app/utils/task';
 import { useEffect, useState } from 'react';
 
 type MissionCardProps = {
@@ -72,7 +72,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
           }}
         ></div>
         <span className="absolute top-2 right-1 w-7 text-xs text-center font-bold text-background z-10">
-          {formatHour(mission.hours)}
+          {formatHours(mission.hours)}
         </span>
       </div>
 

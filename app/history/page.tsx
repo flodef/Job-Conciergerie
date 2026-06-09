@@ -10,7 +10,7 @@ import { Home, Mission, MissionSortField } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDate, formatDateRange } from '@/app/utils/date';
 import { sortMissions } from '@/app/utils/missionFilters';
-import { formatHour, formatNumber, getMissionHoursPerProvider, getMissionProviderCount } from '@/app/utils/task';
+import { formatHours, formatNumber, getMissionHoursPerProvider, getMissionProviderCount } from '@/app/utils/task';
 import {
   IconBriefcase,
   IconBuilding,
@@ -56,7 +56,7 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">
-          <span className={descriptionClassName}>{formatHour(hoursPerProvider)}</span>
+          <span className={descriptionClassName}>{formatHours(hoursPerProvider)}</span>
           {isOpen ? (
             <IconChevronUp size={16} className={descriptionClassName} />
           ) : (
@@ -83,7 +83,7 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
             <span className={textClassName}>Tâches :</span> {mission.tasks.join(', ')}
           </p>
           <p className={descriptionClassName}>
-            <span className={textClassName}>Durée :</span> {formatHour(hoursPerProvider)}
+            <span className={textClassName}>Durée :</span> {formatHours(hoursPerProvider)}
             {isDuo && <span className="text-light ml-1">(binôme)</span>}
           </p>
         </div>
@@ -159,7 +159,7 @@ function MonthlyHoursChart({
         <div className="flex items-center justify-between mb-2">
           <h3 className={textClassName}>
             {selectedData
-              ? `${getMonthName(selectedData.month)} - ${formatHour(selectedData.hours)}`
+              ? `${getMonthName(selectedData.month)} - ${formatHours(selectedData.hours)}`
               : 'Heures par mois'}
           </h3>
           {selectedPoint && (
@@ -176,7 +176,7 @@ function MonthlyHoursChart({
             <div
               className={`w-4 h-4 rounded-full transition-all ${selectedPoint === month ? 'bg-primary scale-125' : 'bg-primary/60'}`}
             />
-            <span className={descriptionClassName}>{formatHour(hours)}</span>
+            <span className={descriptionClassName}>{formatHours(hours)}</span>
           </button>
         </div>
       </div>
@@ -198,7 +198,9 @@ function MonthlyHoursChart({
       {/* Header with selected month info and reset button */}
       <div className="flex items-center justify-between mb-3 h-7">
         <h3 className={textClassName}>
-          {selectedData ? `${getMonthName(selectedData.month)} - ${formatHour(selectedData.hours)}` : 'Heures par mois'}
+          {selectedData
+            ? `${getMonthName(selectedData.month)} - ${formatHours(selectedData.hours)}`
+            : 'Heures par mois'}
         </h3>
         {selectedPoint && (
           <button

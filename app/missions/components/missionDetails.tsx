@@ -38,7 +38,7 @@ import {
   localISOString,
 } from '@/app/utils/date';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
-import { formatHour } from '@/app/utils/task';
+import { formatHours } from '@/app/utils/task';
 import {
   IconBuildingStore,
   IconCalendarEvent,
@@ -631,7 +631,7 @@ export default function MissionDetails({
                 <IconStopwatch size={16} />
                 Nombre d&apos;heures estimées
               </h3>
-              <span className="font-medium">{formatHour(mission.hours)}</span>
+              <span className="font-medium">{formatHours(mission.hours)}</span>
             </div>
 
             <div className="flex items-center space-x-4">
