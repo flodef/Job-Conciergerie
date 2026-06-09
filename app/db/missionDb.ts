@@ -282,6 +282,27 @@ export const assignEmployeeToMission = async (missionId: string, employeeId: str
 };
 
 /**
+ * Fetch missions that are late (past end date, not completed, not yet notified)
+ * Used by the cron job to check for late missions independently of user activity
+ */
+export const getLateMissionsForCron = async () => {
+  try {
+    const result = await sql`
+      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours
+      FROM missions
+      WHERE status != 'completed'
+        AND end_date_time < NOW()
+        AND late_notified_at IS NULL
+      ORDER BY end_date_time ASC
+    `;
+    return result.map(row => formatMission(row as DbMission));
+  } catch (error) {
+    console.error('Error fetching late missions for cron:', error);
+    return [];
+  }
+};
+
+/**
  * Atomically claim the "late notification" slot for a mission.
  * Returns true only the first time it is called for a given mission id;
  * any subsequent call returns false because `late_notified_at` is no longer NULL.
