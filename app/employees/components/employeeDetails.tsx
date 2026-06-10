@@ -24,7 +24,7 @@ import {
   updateEmployeeStatus,
 } from '@/app/utils/employee';
 import { getUserKey } from '@/app/utils/user';
-import { IconCheck, IconMail, IconMapPin, IconPhone, IconTrash, IconX } from '@tabler/icons-react';
+import { IconArrowLeft, IconCheck, IconMail, IconMapPin, IconPhone, IconTrash, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
 
 type EmployeeDetailsProps = {
@@ -144,21 +144,27 @@ export default function EmployeeDetails({ employee, onClose, mission, skipAnimat
   const footer = (
     <div className={actionButtonBarClassName}>
       {mission ? (
-        <button
-          onClick={() =>
-            confirm({
-              title: 'Retirer de la mission',
-              message: 'Êtes-vous sûr de vouloir retirer ce prestataire de la mission ?',
-              confirmText: 'Retirer',
-              isDangerous: true,
-              onConfirm: handleRemoveFromMission,
-            })
-          }
-          className={cn(actionButtonClassName, 'bg-orange-100 text-orange-700')}
-        >
-          <IconX />
-          Retirer
-        </button>
+        <>
+          <button onClick={onClose} className={actionButtonClassName}>
+            <IconArrowLeft />
+            Retour mission
+          </button>
+          <button
+            onClick={() =>
+              confirm({
+                title: 'Retirer de la mission',
+                message: 'Êtes-vous sûr de vouloir retirer ce prestataire de la mission ?',
+                confirmText: 'Retirer',
+                isDangerous: true,
+                onConfirm: handleRemoveFromMission,
+              })
+            }
+            className={cn(actionButtonClassName, 'bg-orange-100 text-orange-700')}
+          >
+            <IconX />
+            Retirer
+          </button>
+        </>
       ) : (
         <>
           {(employee.status === 'accepted' || employee.status === 'pending') && (
