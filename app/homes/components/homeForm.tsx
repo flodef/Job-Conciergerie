@@ -17,8 +17,8 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import geographicZones from '@/app/data/geographicZone.json';
-import { Home } from '@/app/types/dataTypes';
-import { ErrorField } from '@/app/types/types';
+import type { Home } from '@/app/types/dataTypes';
+import type { ErrorField } from '@/app/types/types';
 import { handleChange } from '@/app/utils/form';
 import { descriptionLengthRegex, getMaxLength, inputLengthRegex } from '@/app/utils/regex';
 import { range } from '@/app/utils/select';
@@ -30,9 +30,17 @@ type HomeFormProps = {
   home?: Home;
   mode: 'add' | 'edit';
   autoFocus?: boolean;
+  skipAnimation?: boolean;
 };
 
-export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFocus = false }: HomeFormProps) {
+export default function HomeForm({
+  onClose,
+  onCancel,
+  home,
+  mode = 'add',
+  autoFocus = false,
+  skipAnimation = false,
+}: HomeFormProps) {
   const { addHome, updateHome, homeExists } = useHomes();
   const { conciergerieName } = useAuth();
   const { openModal, closeModal } = useModal();
@@ -323,6 +331,7 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
       title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'}
       onClose={handleClose}
       disabled={isSubmitting}
+      skipAnimation={skipAnimation}
       footer={footer}
     >
       <form onSubmit={handleSubmit} className="space-y-2">

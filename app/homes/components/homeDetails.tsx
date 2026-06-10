@@ -13,7 +13,7 @@ import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import { useImageCache } from '@/app/hooks/useImageCache';
-import { Home } from '@/app/types/dataTypes';
+import type { Home } from '@/app/types/dataTypes';
 import { actionButtonBarClassName, actionButtonClassName, cn } from '@/app/utils/className';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { IconFileDescription, IconListCheck, IconPencil, IconPhoto, IconTrash } from '@tabler/icons-react';
@@ -75,6 +75,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
   const [isReadOnly, setIsReadOnly] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [associatedMissions, setAssociatedMissions] = useState<string[]>([]);
+  const [skipAnimation, setSkipAnimation] = useState(false);
 
   useEffect(() => {
     setIsReadOnly(home.conciergerieName !== conciergerieName);
@@ -139,10 +140,32 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
   );
 
   if (isEditMode)
-    return <HomeForm home={home} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" autoFocus />;
+    return (
+      <HomeForm
+        home={home}
+        onClose={() => {
+          setSkipAnimation(true);
+          setIsEditMode(false);
+        }}
+        onCancel={() => {
+          setSkipAnimation(true);
+          setIsEditMode(false);
+        }}
+        mode="edit"
+        autoFocus
+        skipAnimation
+      />
+    );
 
   return (
-    <FullScreenModal title={<HomeTitle home={home} />} onClose={onClose} footer={footer} disabled={isSubmitting}>
+    <FullScreenModal
+      title={<HomeTitle home={home} />}
+      onClose={onClose}
+      footer={footer}
+      disabled={isSubmitting}
+      closeAll
+      skipAnimation={skipAnimation}
+    >
       {selectedImageIndex !== undefined && (
         <FullScreenImageCarousel
           altPrefix={`Photo de ${home.title}`}

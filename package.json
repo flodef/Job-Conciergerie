@@ -1,12 +1,12 @@
 {
   "name": "job-conciergerie",
-  "version": "2.194",
+  "version": "2.196",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "prepare": "husky",
     "version:bump": "bun scripts/increment-version.js",
     "test": "vitest run",
@@ -32,7 +32,7 @@
     "tailwind-merge": "latest"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "latest",
+    "@eslint/js": "latest",
     "@testing-library/jest-dom": "latest",
     "@testing-library/react": "latest",
     "@testing-library/user-event": "latest",
@@ -44,12 +44,15 @@
     "dotenv": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "eslint-plugin-react-hooks": "latest",
+    "globals": "latest",
     "happy-dom": "latest",
     "husky": "latest",
     "jsdom": "latest",
     "postcss": "latest",
     "tailwindcss": "latest",
     "typescript": "latest",
+    "typescript-eslint": "latest",
     "vitest": "latest"
   },
   "prettier": {

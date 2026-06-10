@@ -1,8 +1,10 @@
 'use client';
 
 import { CloseButton } from '@/app/components/button';
+import { useModal } from '@/app/contexts/modalProvider';
 import { cn } from '@/app/utils/className';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Tooltip from './tooltip';
 
 interface FullScreenModalProps {
@@ -13,6 +15,10 @@ interface FullScreenModalProps {
   disabled: boolean;
   tooltip?: string | ReactNode;
   className?: string;
+  /** If true, close button will call closeAllModals instead of closeModal */
+  closeAll?: boolean;
+  /** If true, skip enter/exit animations (for smooth view switching within modal) */
+  skipAnimation?: boolean;
 }
 
 export default function FullScreenModal({
@@ -23,15 +29,22 @@ export default function FullScreenModal({
   footer,
   disabled,
   tooltip,
+  closeAll = false,
+  skipAnimation = false,
 }: FullScreenModalProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const { closeAllModals } = useModal();
+  const [isVisible, setIsVisible] = useState(skipAnimation);
   const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Trigger enter animation on mount
+  // Trigger enter animation on mount (skip if skipAnimation is true)
   useEffect(() => {
+    if (skipAnimation) {
+      setIsVisible(true);
+      return;
+    }
     const timer = setTimeout(() => setIsVisible(true), 10);
     return () => clearTimeout(timer);
-  }, []);
+  }, [skipAnimation]);
 
   // Cleanup close timer on unmount
   useEffect(() => {
@@ -42,10 +55,18 @@ export default function FullScreenModal({
     };
   }, []);
 
-  // Handle close with exit animation
+  // Handle close with exit animation (skip if skipAnimation is true)
   const handleClose = () => {
+    if (skipAnimation) {
+      if (closeAll) closeAllModals();
+      else onClose();
+      return;
+    }
     setIsVisible(false);
-    closeTimerRef.current = setTimeout(onClose, 200); // Wait for animation to complete
+    closeTimerRef.current = setTimeout(() => {
+      if (closeAll) closeAllModals();
+      else onClose();
+    }, 200); // Wait for animation to complete
   };
 
   return (

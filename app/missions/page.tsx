@@ -11,11 +11,12 @@ import { useToast } from '@/app/contexts/toastProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import MissionDetails from '@/app/missions/components/missionDetails';
-import MissionFilters, { MissionFiltersType } from '@/app/missions/components/missionFilters';
+import type { MissionFiltersType } from '@/app/missions/components/missionFilters';
+import MissionFilters from '@/app/missions/components/missionFilters';
 import MissionForm from '@/app/missions/components/missionForm';
 import MissionList from '@/app/missions/components/missionList';
 import MissionSortControls from '@/app/missions/components/missionSortControls';
-import { MissionSortField } from '@/app/types/dataTypes';
+import type { MissionSortField } from '@/app/types/dataTypes';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import {
   applyMissionFilters,
@@ -33,7 +34,7 @@ export default function Missions() {
   const { homes } = useHomes();
   const { userType, isLoading: authLoading, employeeName, conciergerieName, isEmployee, isConciergerie } = useAuth();
   const { updateFetchTime, needsRefresh } = useFetchTime();
-  const { openModal, closeModal } = useModal();
+  const { openModal, closeModal, replaceModal } = useModal();
   const { showToast } = useToast();
   const needsRefreshMissions = needsRefresh[Page.Missions];
 

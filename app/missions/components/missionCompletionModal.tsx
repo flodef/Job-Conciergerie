@@ -6,7 +6,7 @@ import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
-import { Mission } from '@/app/types/dataTypes';
+import type { Mission } from '@/app/types/dataTypes';
 import { useEffect, useState } from 'react';
 import MissionReportModal from './missionReportModal';
 
@@ -14,9 +14,15 @@ type MissionCompletionModalProps = {
   mission: Mission;
   onClose: () => void;
   onComplete: () => void;
+  skipAnimation?: boolean;
 };
 
-export default function MissionCompletionModal({ mission, onClose, onComplete }: MissionCompletionModalProps) {
+export default function MissionCompletionModal({
+  mission,
+  onClose,
+  onComplete,
+  skipAnimation = false,
+}: MissionCompletionModalProps) {
   const { homes } = useHomes();
   const { isEmployee } = useAuth();
   const home = homes.find(h => h.id === mission.homeId);
@@ -119,6 +125,7 @@ export default function MissionCompletionModal({ mission, onClose, onComplete }:
       title={`Points particuliers (${checkedCount}/${totalCount})`}
       tooltip="Veuillez confirmer que tous les points particuliers suivants ont été réalisés"
       onClose={onClose}
+      skipAnimation={skipAnimation}
       footer={footer}
       disabled={false}
     >

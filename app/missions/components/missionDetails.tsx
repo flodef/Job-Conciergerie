@@ -20,7 +20,7 @@ import MissionActions from '@/app/missions/components/missionActions';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
 import { fetchMissionReport } from '@/app/actions/missionReport';
-import { Employee, Mission, MissionReport } from '@/app/types/dataTypes';
+import type { Employee, Mission, MissionReport } from '@/app/types/dataTypes';
 import {
   buttonClassName,
   cn,
@@ -62,7 +62,8 @@ import {
   IconX,
   IconZoomScan,
 } from '@tabler/icons-react';
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import type { ReactNode} from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type MissionDetailsProps = {
   mission: Mission;
@@ -147,8 +148,12 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [showHomeDetails, setShowHomeDetails] = useState(false);
+  const [showEmployeeDetails, setShowEmployeeDetails] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [skipAnimation, setSkipAnimation] = useState(false);
 
   // Open a confirmation dialog through the modal singleton (auto-pops on confirm/cancel)
   const confirm = (options: {
@@ -425,16 +430,17 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     });
   };
 
-  // Open the completion modal on top of the details modal (singleton handles stacking)
+  // Open the completion modal on top of the details modal (using internal state to avoid flash)
   const handleComplete = () => {
-    const id = openModal(() => (
-      <MissionCompletionModal mission={mission} onClose={() => closeModal(id)} onComplete={handleConfirmComplete} />
-    ));
+    setSkipAnimation(true);
+    setShowCompletionModal(true);
   };
 
-  // Open employee details on top of the mission details (singleton handles stacking)
+  // Open employee details on top of the mission details (using internal state to avoid flash)
   const openEmployeeDetails = (emp: Employee) => {
-    const id = openModal(() => <EmployeeDetails employee={emp} mission={mission} onClose={() => closeModal(id)} />);
+    setSkipAnimation(true);
+    setSelectedEmployee(emp);
+    setShowEmployeeDetails(true);
   };
 
   const handleConfirmComplete = () => {
@@ -581,13 +587,49 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   };
 
   if (isEditMode)
-    return <MissionForm mission={mission} onClose={() => setIsEditMode(false)} onCancel={onClose} mode="edit" />;
+    return (
+      <MissionForm
+        mission={mission}
+        onClose={() => {
+          setSkipAnimation(true);
+          setIsEditMode(false);
+        }}
+        onCancel={() => {
+          setSkipAnimation(true);
+          setIsEditMode(false);
+        }}
+        mode="edit"
+        skipAnimation
+      />
+    );
 
   if (showHomeDetails && home) {
     // Get the original home from the homes context to ensure we have all images
     const originalHome = homes.find(h => h.id === mission.homeId) || home;
     return (
       <HomeDetails home={originalHome} onClose={() => setShowHomeDetails(false)} isFromCalendar={isFromCalendar} />
+    );
+  }
+
+  if (showEmployeeDetails && selectedEmployee) {
+    return (
+      <EmployeeDetails
+        employee={selectedEmployee}
+        mission={mission}
+        onClose={() => setShowEmployeeDetails(false)}
+        skipAnimation
+      />
+    );
+  }
+
+  if (showCompletionModal) {
+    return (
+      <MissionCompletionModal
+        mission={mission}
+        onClose={() => setShowCompletionModal(false)}
+        onComplete={handleConfirmComplete}
+        skipAnimation
+      />
     );
   }
 
@@ -663,7 +705,14 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   if (!home) return;
 
   return (
-    <FullScreenModal onClose={onClose} title="Détails de la mission" footer={footer} disabled={isSubmitting}>
+    <FullScreenModal
+      onClose={onClose}
+      title="Détails de la mission"
+      footer={footer}
+      disabled={isSubmitting}
+      closeAll
+      skipAnimation={skipAnimation}
+    >
       {selectedImageIndex !== undefined && (
         <FullScreenImageCarousel
           altPrefix={`Photo de ${home.title}`}

@@ -7,7 +7,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
-import { Employee, Mission, MissionStatus } from '@/app/types/dataTypes';
+import type { Employee, Mission, MissionStatus } from '@/app/types/dataTypes';
 import {
   actionButtonBarClassName,
   actionButtonClassName,
@@ -31,9 +31,10 @@ type EmployeeDetailsProps = {
   employee: Employee;
   onClose: () => void;
   mission?: Mission;
+  skipAnimation?: boolean;
 };
 
-export default function EmployeeDetails({ employee, onClose, mission }: EmployeeDetailsProps) {
+export default function EmployeeDetails({ employee, onClose, mission, skipAnimation = false }: EmployeeDetailsProps) {
   const { deleteEmployee, updateUserData, userData, employees } = useAuth();
   const { missions, removeSecondProvider, updateMission } = useMissions();
   const { openModal, closeModal } = useModal();
@@ -212,7 +213,13 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
   );
 
   return (
-    <FullScreenModal title={getEmployeeFullName(employee)} onClose={onClose} footer={footer} disabled={isSubmitting}>
+    <FullScreenModal
+      title={getEmployeeFullName(employee)}
+      onClose={onClose}
+      footer={footer}
+      disabled={isSubmitting}
+      skipAnimation={skipAnimation}
+    >
       <div>
         <div className={containerClassName}>
           Statut :

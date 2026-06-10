@@ -1,7 +1,8 @@
 'use client';
 
 import { generateSimpleId } from '@/app/utils/id';
-import { createContext, useCallback, useContext, useState, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 
 // A modal entry can either be a static node or a render function that receives
 // its own id (handy to wire `onClose={() => closeModal(id)}` at the call site).
@@ -23,6 +24,8 @@ interface ModalContextType {
   closeAllModals: () => void;
   /** Number of modals currently in the stack. */
   modalCount: number;
+  /** Whether there are multiple modals in the stack (used for close button behavior) */
+  hasMultipleModals: boolean;
 }
 
 const ModalContext = createContext<ModalContextType>({
@@ -31,6 +34,7 @@ const ModalContext = createContext<ModalContextType>({
   closeModal: () => {},
   closeAllModals: () => {},
   modalCount: 0,
+  hasMultipleModals: false,
 });
 
 export function ModalProvider({ children }: { children: ReactNode }) {
@@ -59,7 +63,16 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const closeAllModals = useCallback(() => setStack([]), []);
 
   return (
-    <ModalContext.Provider value={{ openModal, replaceModal, closeModal, closeAllModals, modalCount: stack.length }}>
+    <ModalContext.Provider
+      value={{
+        openModal,
+        replaceModal,
+        closeModal,
+        closeAllModals,
+        modalCount: stack.length,
+        hasMultipleModals: stack.length > 1,
+      }}
+    >
       {children}
       {/*
         Singleton container: every modal in the stack stays mounted (so its internal

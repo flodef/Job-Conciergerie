@@ -13,8 +13,9 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
-import { Mission, Task } from '@/app/types/dataTypes';
-import { ErrorField } from '@/app/types/types';
+import type { Mission} from '@/app/types/dataTypes';
+import { Task } from '@/app/types/dataTypes';
+import type { ErrorField } from '@/app/types/types';
 import {
   adjustMissionDateTime,
   getMinEndDate,
@@ -34,9 +35,10 @@ type MissionFormProps = {
   onClose: () => void;
   onCancel?: () => void;
   mode: 'add' | 'edit';
+  skipAnimation?: boolean;
 };
 
-export default function MissionForm({ mission, onClose, onCancel, mode }: MissionFormProps) {
+export default function MissionForm({ mission, onClose, onCancel, mode, skipAnimation = false }: MissionFormProps) {
   const { homes, addMission, updateMission, missionExists } = useMissions();
   const { conciergerieName, employees: allEmployees } = useAuth();
   const { openModal, closeModal } = useModal();
@@ -374,6 +376,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
       title={mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}
       onClose={handleClose}
       disabled={isSubmitting || isSuccess}
+      skipAnimation={skipAnimation}
       footer={!isSuccess ? footer : undefined}
     >
       <form className="space-y-2">
