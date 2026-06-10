@@ -91,12 +91,12 @@ const Select = forwardRef(
     useEffect(() => {
       if (disabled) return;
       const handleKeyDown = (e: KeyboardEvent) => {
+        if (!isFocused) return;
         if (!isOpen) {
           if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter') {
             e.preventDefault();
             checkPosition();
             setIsOpen(true);
-            setIsFocused(true);
             setHighlightedIndex(e.key === 'ArrowUp' ? options.length - 1 : 0);
           }
         } else {
@@ -130,7 +130,7 @@ const Select = forwardRef(
       return () => {
         document.removeEventListener('keydown', handleKeyDown);
       };
-    }, [isOpen, highlightedIndex, options, onChange, disabled, checkPosition]);
+    }, [isOpen, highlightedIndex, options, onChange, disabled, checkPosition, isFocused]);
 
     // Scroll to highlighted option
     useEffect(() => {
