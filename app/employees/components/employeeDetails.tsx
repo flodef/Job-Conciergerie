@@ -147,23 +147,25 @@ export default function EmployeeDetails({ employee, onClose, mission, skipAnimat
         <>
           <button onClick={onClose} className={actionButtonClassName}>
             <IconArrowLeft />
-            Retour mission
+            Retour
           </button>
-          <button
-            onClick={() =>
-              confirm({
-                title: 'Retirer de la mission',
-                message: 'Êtes-vous sûr de vouloir retirer ce prestataire de la mission ?',
-                confirmText: 'Retirer',
-                isDangerous: true,
-                onConfirm: handleRemoveFromMission,
-              })
-            }
-            className={cn(actionButtonClassName, 'bg-orange-100 text-orange-700')}
-          >
-            <IconX />
-            Retirer
-          </button>
+          {mission.status !== 'started' && mission.status !== 'completed' && (
+            <button
+              onClick={() =>
+                confirm({
+                  title: 'Retirer de la mission',
+                  message: 'Êtes-vous sûr de vouloir retirer ce prestataire de la mission ?',
+                  confirmText: 'Retirer',
+                  isDangerous: true,
+                  onConfirm: handleRemoveFromMission,
+                })
+              }
+              className={cn(actionButtonClassName, 'bg-orange-100 text-orange-700')}
+            >
+              <IconX />
+              Retirer
+            </button>
+          )}
         </>
       ) : (
         <>

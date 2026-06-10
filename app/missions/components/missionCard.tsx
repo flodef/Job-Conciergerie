@@ -1,5 +1,6 @@
 'use client';
 
+import { fetchMissionReport } from '@/app/actions/missionReport';
 import HomeTitle from '@/app/components/homeTitle';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
@@ -9,6 +10,7 @@ import { formatDateRange } from '@/app/utils/date';
 import { getEmployeeFullName } from '@/app/utils/employee';
 import { formatHours, getMissionProviderCount } from '@/app/utils/task';
 import { getUserKey } from '@/app/utils/user';
+import { IconFileDescription } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
 type MissionCardProps = {
@@ -21,6 +23,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
   const { findConciergerie, findEmployee, isConciergerie } = useAuth();
   const { homes } = useHomes();
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
+  const [hasReport, setHasReport] = useState(false);
 
   const home = homes.find(h => h.id === mission.homeId);
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
@@ -42,6 +45,25 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
     const conciergerieData = findConciergerie(home?.conciergerieName ?? null);
     setConciergerie(conciergerieData);
   }, [home?.conciergerieName, findConciergerie]);
+
+  // Check if mission has a report
+  useEffect(() => {
+    if (mission.status !== 'completed') {
+      setHasReport(false);
+      return;
+    }
+    let active = true;
+    fetchMissionReport(mission.id)
+      .then(result => {
+        if (active) setHasReport(!!result);
+      })
+      .catch(() => {
+        if (active) setHasReport(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [mission.id, mission.status]);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent the default context menu
@@ -98,8 +120,14 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         </div>
       )}
 
-      {/* Binôme status badge */}
-      {home.allowDuo && <div className="absolute top-0 left-0 font-bold px-1 py-1">{providerCount}/2</div>}
+      {/* Report icon or Binôme status badge */}
+      {hasReport ? (
+        <div className="absolute top-0 left-0 p-1 text-foreground">
+          <IconFileDescription size={24} />
+        </div>
+      ) : (
+        home.allowDuo && <div className="absolute top-0 left-0 font-bold p-1">{providerCount}/2</div>
+      )}
 
       <div className="mx-3 text-center">
         <HomeTitle home={home} />

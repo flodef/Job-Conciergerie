@@ -12,7 +12,7 @@ import { useToast } from '@/app/contexts/toastProvider';
 import type { Employee, Mission } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
 import { messageLengthRegex } from '@/app/utils/regex';
-import { getUserKey, isEmployee } from '@/app/utils/user';
+import { getUserKey, isEmployeeUser } from '@/app/utils/user';
 import { useRef, useState } from 'react';
 
 const MAX_REPORT_IMAGES = 3;
@@ -40,7 +40,7 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
   }>(null);
 
   const handleSubmit = () => {
-    if (!userData || !isEmployee(userData)) return;
+    if (!userData || !isEmployeeUser(userData)) return;
     if (!content.trim() && !hasPendingImages && images.length === 0) {
       setContentError('Veuillez ajouter un commentaire ou une photo');
       return;

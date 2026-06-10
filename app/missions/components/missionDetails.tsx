@@ -42,7 +42,7 @@ import {
 } from '@/app/utils/date';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { formatHours } from '@/app/utils/task';
-import { getUserKey, isEmployee } from '@/app/utils/user';
+import { getUserKey, isEmployeeUser } from '@/app/utils/user';
 import {
   IconBuildingStore,
   IconCalendarEvent,
@@ -139,7 +139,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     updateMissionDateTime,
     updateMission,
   } = useMissions();
-  const { conciergerieName, findConciergerie, findEmployee, userData, isConciergerie } = useAuth();
+  const { conciergerieName, findConciergerie, findEmployee, userData, isConciergerie, isEmployee } = useAuth();
   const { homes } = useHomes();
   const { openModal, closeModal } = useModal();
   const { showToast } = useToast();
@@ -181,9 +181,27 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [report, setReport] = useState<MissionReport | null>(null);
   const [selectedReportImageIndex, setSelectedReportImageIndex] = useState<number>();
 
-  // Fetch the mission report (if any) once the mission is completed
+  // Get the conciergerie from the mission data
+  const conciergerie = useMemo(
+    () => findConciergerie(mission.conciergerieName),
+    [mission.conciergerieName, findConciergerie],
+  );
+  const conciergerieColor = getColorValueByName(conciergerie?.colorName);
+  const isOwner = isConciergerie && mission.conciergerieName === conciergerieName;
+  const isMissionEditable = mission.status !== 'started' && mission.status !== 'completed';
+
+  // Fetch the mission report (if any) - visible to employee who worked on it and conciergerie owner
   useEffect(() => {
     if (mission.status !== 'completed') {
+      setReport(null);
+      return;
+    }
+    // Only fetch if the current user is the employee who worked on the mission or the conciergerie owner
+    const isEmployeeWhoWorked =
+      userData &&
+      isEmployee &&
+      (mission.employeeId === getUserKey(userData) || mission.employeeId2 === getUserKey(userData));
+    if (!isEmployeeWhoWorked && !isOwner) {
       setReport(null);
       return;
     }
@@ -196,15 +214,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     return () => {
       active = false;
     };
-  }, [mission.id, mission.status]);
-
-  // Get the conciergerie from the mission data
-  const conciergerie = useMemo(
-    () => findConciergerie(mission.conciergerieName),
-    [mission.conciergerieName, findConciergerie],
-  );
-  const conciergerieColor = getColorValueByName(conciergerie?.colorName);
-  const isOwner = isConciergerie && mission.conciergerieName === conciergerieName;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mission.id, mission.status, isOwner, userData, mission.employeeId, mission.employeeId2]);
 
   // Date helpers
   const now = new Date();
@@ -213,8 +224,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const hasStarted = now >= startDate;
   const hasEnded = now >= endDate;
   const [editingDate, setEditingDate] = useState<'start' | 'end' | null>(null);
-  const isDateEditable =
-    isOwner && mission.status !== 'started' && mission.status !== 'completed' && !editingDate && !hasEnded;
+  const isDateEditable = isOwner && isMissionEditable && !editingDate && !hasEnded;
 
   // Date edit state - allows the conciergerie to adjust start and end dates inline
   const [editStartDate, setEditStartDate] = useState(localISOString(startDate));
@@ -371,7 +381,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     // Handle duo mission special cases
     if (employeeFieldToRemove === 'employeeId' && mission.employeeId2 && employee2) {
       // If removing primary employee in a duo mission
-      const isConciergerie2 = !isEmployee(employee2);
+      const isConciergerie2 = !isEmployeeUser(employee2);
 
       if (isConciergerie2) {
         // If secondary is a conciergerie, remove both and set status to null
@@ -978,17 +988,19 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         <span className="text-right">{getUserKey(employee)}</span>
                         <IconInfoCircle className="min-w-4.5" size={18} />
                       </div>
-                      <button
-                        onClick={() => handleRemoveEmployee('employeeId')}
-                        className={iconButtonClassName('dangerous')}
-                        title="Retirer de la mission"
-                      >
-                        <IconUserMinus size={24} />
-                      </button>
+                      {isMissionEditable && (
+                        <button
+                          onClick={() => handleRemoveEmployee('employeeId')}
+                          className={iconButtonClassName('dangerous')}
+                          title="Retirer de la mission"
+                        >
+                          <IconUserMinus size={24} />
+                        </button>
+                      )}
                     </div>
                     {employee2 && (
                       <div className="flex items-center justify-between gap-2">
-                        {isEmployee(employee2) ? (
+                        {isEmployeeUser(employee2) ? (
                           <div
                             onClick={() => openEmployeeDetails(employee2 as Employee)}
                             className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
@@ -999,13 +1011,15 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         ) : (
                           <span className="text-right">{getUserKey(employee2)}</span>
                         )}
-                        <button
-                          onClick={() => handleRemoveEmployee('employeeId2')}
-                          className={iconButtonClassName('dangerous')}
-                          title="Retirer de la mission"
-                        >
-                          <IconUserMinus size={24} />
-                        </button>
+                        {isMissionEditable && (
+                          <button
+                            onClick={() => handleRemoveEmployee('employeeId2')}
+                            className={iconButtonClassName('dangerous')}
+                            title="Retirer de la mission"
+                          >
+                            <IconUserMinus size={24} />
+                          </button>
+                        )}
                       </div>
                     )}
                     {home.allowDuo &&

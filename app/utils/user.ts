@@ -5,7 +5,7 @@ export type UserData = Conciergerie | Employee;
 /**
  * Check if a user is an employee
  */
-export const isEmployee = <T extends UserData>(user: T): boolean => 'firstName' in user && 'familyName' in user;
+export const isEmployeeUser = <T extends UserData>(user: T): boolean => 'firstName' in user && 'familyName' in user;
 
 /**
  * Get a unique key for a user (used for lookups and maps)
