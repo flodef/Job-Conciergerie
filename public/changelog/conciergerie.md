@@ -1,4 +1,4 @@
-# 2.181
+# 2.183
 
 - **Améliorations UI** : meilleure gestion de l'affichage des prestataires autorisés
 - **Missions non terminées à temps** : vérification et envoi d'un email toutes les 10 minutes
