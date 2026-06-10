@@ -41,14 +41,18 @@ describe('findEmployeeByContact', () => {
     mockSql.mockResolvedValueOnce([baseRow]);
     const result = await findEmployeeByContact('Marc', 'Caradec', '0662232945', 'marc.caradec@laposte.net');
     expect(result).not.toBeNull();
-    expect(result!.nameMatches).toBe(true);
-    expect(result!.employee.first_name).toBe('Marc');
+    if (result) {
+      expect(result.nameMatches).toBe(true);
+      expect(result.employee.first_name).toBe('Marc');
+    }
   });
 
   it('returns nameMatches=true with case-insensitive name comparison', async () => {
     mockSql.mockResolvedValueOnce([baseRow]);
     const result = await findEmployeeByContact('marc', 'caradec', '0662232945', 'marc.caradec@laposte.net');
-    expect(result!.nameMatches).toBe(true);
+    if (result) {
+      expect(result.nameMatches).toBe(true);
+    }
   });
 
   it('returns nameMatches=false when tel matches but name differs (DOUERIN scenario)', async () => {
@@ -56,15 +60,19 @@ describe('findEmployeeByContact', () => {
     // Stale localStorage had wrong name — tel matches a real employee but name is wrong
     const result = await findEmployeeByContact('DOUERIN', 'DOUERIN', '0662232945', 'other@example.com');
     expect(result).not.toBeNull();
-    expect(result!.nameMatches).toBe(false);
-    expect(result!.employee.first_name).toBe('Marc');
-    expect(result!.employee.family_name).toBe('Caradec');
+    if (result) {
+      expect(result.nameMatches).toBe(false);
+      expect(result.employee.first_name).toBe('Marc');
+      expect(result.employee.family_name).toBe('Caradec');
+    }
   });
 
   it('returns nameMatches=false when email matches but name differs', async () => {
     mockSql.mockResolvedValueOnce([baseRow]);
     const result = await findEmployeeByContact('Jean', 'Dupont', '0600000000', 'marc.caradec@laposte.net');
-    expect(result!.nameMatches).toBe(false);
+    if (result) {
+      expect(result.nameMatches).toBe(false);
+    }
   });
 
   it('returns null on DB error', async () => {

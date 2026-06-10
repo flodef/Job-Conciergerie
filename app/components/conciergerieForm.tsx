@@ -35,7 +35,10 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const [conciergerieName, setConciergerieName] = useState(conciergeries?.at(0)?.name || '');
 
   useEffect(() => {
-    if (!conciergerieName && conciergeries?.at(0)?.name) setConciergerieName(conciergeries.at(0)!.name);
+    if (conciergerieName) return;
+
+    const firstName = conciergeries.at(0)?.name;
+    if (firstName) setConciergerieName(firstName);
   }, [conciergeries, conciergerieName]);
 
   const { showToast } = useToast();

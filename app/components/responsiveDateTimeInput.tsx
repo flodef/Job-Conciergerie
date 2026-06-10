@@ -4,7 +4,7 @@ import CustomDateTimeInput from '@/app/components/customDateTimeInput';
 import DateTimeInput from '@/app/components/dateTimeInput';
 import { cn } from '@/app/utils/className';
 import { isMobile } from '@/app/utils/device';
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 interface ResponsiveDateTimeInputProps {
@@ -39,15 +39,26 @@ const ResponsiveDateTimeInput = forwardRef<{ focus: () => void }, ResponsiveDate
 
   useImperativeHandle(ref, () => ({
     focus: () => {
-      if (isMobileDevice) (ref as any)?.current?.focus();
-      else customInputRef.current?.focus();
+      if (isMobileDevice) {
+        const mobileRef = ref as React.RefObject<HTMLInputElement>;
+        mobileRef.current?.focus();
+      } else {
+        customInputRef.current?.focus();
+      }
     },
   }));
 
   if (isMobileDevice) {
     const { onEscape, onEnter, className, minimal, ...nativeProps } = props;
     const mobileClassName = minimal ? cn(className, 'w-[170px]') : className;
-    return <DateTimeInput {...nativeProps} className={mobileClassName} minimal={minimal} ref={ref as any} />;
+    return (
+      <DateTimeInput
+        {...nativeProps}
+        className={mobileClassName}
+        minimal={minimal}
+        ref={ref as React.RefObject<HTMLInputElement>}
+      />
+    );
   }
 
   return <CustomDateTimeInput {...props} ref={customInputRef} />;

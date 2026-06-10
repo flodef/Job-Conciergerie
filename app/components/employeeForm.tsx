@@ -83,10 +83,13 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     } else if (name === 'familyName') {
       formattedValue = normalizeFamilyName(value);
     }
-    setFormData(prev => ({
-      ...prev!,
-      [name]: formattedValue,
-    }));
+    setFormData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        [name]: formattedValue,
+      };
+    });
   };
 
   // Send conflict report to conciergerie using rate limiter

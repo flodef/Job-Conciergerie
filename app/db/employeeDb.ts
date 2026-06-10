@@ -107,9 +107,9 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
     `;
 
     return result.length > 0 ? formatEmployee(result[0] as DbEmployee) : null;
-  } catch (error: any) {
+  } catch (error) {
     // Check for unique constraint violation (PostgreSQL error code 23505)
-    if (error?.code === '23505') {
+    if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
       console.log('Employee already exists with this phone or email, fetching existing record');
       // Fetch and return the existing employee by phone or email
       const existing = await sql`

@@ -8,7 +8,10 @@ export { isConnectionPoolError };
  * SQL template literal for database queries
  * Works with any Postgres (Neon, Supabase, etc.) by just changing DATABASE_URL
  */
-export const sql = postgres(process.env.DATABASE_URL!, {
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) throw new Error('DATABASE_URL is not set');
+
+export const sql = postgres(databaseUrl, {
   prepare: false, // Required for Supabase connection pooling
   max: 2, // Very conservative limit for Supabase free tier (15 max)
   idle_timeout: 10, // Close idle connections after 10 seconds

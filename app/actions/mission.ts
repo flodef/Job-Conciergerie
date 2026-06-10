@@ -1,7 +1,6 @@
 'use server';
 
-import type {
-  DbMission} from '@/app/db/missionDb';
+import type { DbMission } from '@/app/db/missionDb';
 import {
   assignEmployeeToMission,
   claimLateNotification,
@@ -36,7 +35,7 @@ export async function createNewMission(data: Mission): Promise<Mission | null> {
     conciergerie_name: data.conciergerieName,
     status: data.status,
     allowed_employees: data.allowedEmployees,
-    hours: typeof data.hours === 'string' ? parseFloat(data.hours) : data.hours,
+    hours: data.hours,
   };
 
   return await createMission(dbData);
@@ -58,7 +57,7 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
   if (data.conciergerieName !== undefined) dbData.conciergerie_name = data.conciergerieName;
   if (data.status !== undefined) dbData.status = data.status;
   if (data.allowedEmployees !== undefined) dbData.allowed_employees = data.allowedEmployees;
-  if (data.hours !== undefined) dbData.hours = typeof data.hours === 'string' ? parseFloat(data.hours) : data.hours;
+  if (data.hours !== undefined) dbData.hours = data.hours;
 
   return await updateMission(id, dbData);
 }

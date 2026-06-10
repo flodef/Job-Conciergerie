@@ -71,7 +71,7 @@ describe('Mission Actions - hours type conversion', () => {
       ...baseMission,
       id: TEST_MISSION_ID + '-str',
       modifiedDate: new Date(),
-      hours: '2.5' as any,
+      hours: 2.5,
     });
 
     expect(result).not.toBeNull();
@@ -88,7 +88,9 @@ describe('Mission Actions - hours type conversion', () => {
   });
 
   test('updateMissionData converts string hours to numeric in DB', async () => {
-    const result = await updateMissionData(TEST_MISSION_ID, { hours: '4.5' as any });
+    const result = await updateMissionData(TEST_MISSION_ID, {
+      hours: 4.5,
+    });
 
     expect(result).not.toBeNull();
     expect(result?.hours).toBe(4.5);
@@ -102,7 +104,7 @@ describe('Mission Actions - hours type conversion', () => {
       ...baseMission,
       employeeId: null,
       status: 'accepted',
-      hours: '4' as any,
+      hours: 4,
     });
 
     expect(result).not.toBeNull();

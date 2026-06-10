@@ -14,13 +14,11 @@ export function useImageCache(urls: string[]) {
 
     // Preload all images and create blob URLs
     const loadPromises = urls.map(url => {
-      if (imageBlobCache.has(url)) {
-        return Promise.resolve(imageBlobCache.get(url)!);
-      }
+      const cached = imageBlobCache.get(url);
+      if (cached) return Promise.resolve(cached);
 
-      if (loadingPromises.has(url)) {
-        return loadingPromises.get(url)!;
-      }
+      const loading = loadingPromises.get(url);
+      if (loading) return loading;
 
       const promise = fetch(url)
         .then(response => response.blob())

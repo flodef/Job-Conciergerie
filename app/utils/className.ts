@@ -1,7 +1,7 @@
-import { twMerge } from 'tailwind-merge';
+import { twMerge, type ClassNameValue } from 'tailwind-merge';
 import type { ButtonStyle } from '@/app/components/button';
 
-export function cn(...inputs: any[]) {
+export function cn(...inputs: ClassNameValue[]) {
   return twMerge(inputs);
 }
 

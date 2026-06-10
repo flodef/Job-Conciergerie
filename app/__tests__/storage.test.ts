@@ -22,7 +22,9 @@ vi.mock('@/app/utils/supabase/server', () => ({
 }));
 
 describe('Supabase Storage', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockStorageFrom: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockSupabase: any;
 
   beforeAll(() => {
@@ -50,6 +52,7 @@ describe('Supabase Storage', () => {
       },
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (createAdminClient as any).mockReturnValue(mockSupabase);
   });
 
@@ -58,6 +61,7 @@ describe('Supabase Storage', () => {
 
     // Mock cookies for conciergerie auth
     const { cookies } = await import('next/headers');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (cookies as any).mockResolvedValue({
       get: vi.fn((name: string) => {
         if (name === 'user_id') return { value: 'test-conciergerie-id' };
@@ -146,6 +150,7 @@ describe('Supabase Storage', () => {
 
       // Simulate employee user (not conciergerie)
       const { cookies } = await import('next/headers');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (cookies as any).mockResolvedValue({
         get: vi.fn((name: string) => {
           if (name === 'user_id') return { value: 'test-employee-id' };
@@ -202,6 +207,7 @@ describe('Supabase Storage', () => {
     it('should return false when user is not authenticated as conciergerie', async () => {
       // Simulate employee user (not conciergerie)
       const { cookies } = await import('next/headers');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (cookies as any).mockResolvedValue({
         get: vi.fn((name: string) => {
           if (name === 'user_id') return { value: 'test-employee-id' };
@@ -255,6 +261,7 @@ describe('Supabase Storage', () => {
     it('should return empty array when user is not authenticated as conciergerie', async () => {
       // Simulate employee user (not conciergerie)
       const { cookies } = await import('next/headers');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (cookies as any).mockResolvedValue({
         get: vi.fn((name: string) => {
           if (name === 'user_id') return { value: 'test-employee-id' };

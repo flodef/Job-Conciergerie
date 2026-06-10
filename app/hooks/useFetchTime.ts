@@ -16,6 +16,7 @@ type FetchTimeState = {
 // Lazy import to avoid circular dependency during SSR
 const getPageSettings = () => {
   // Dynamic import to avoid SSR issues
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { pageSettings } = require('@/app/components/navigationLayout');
   return pageSettings as Record<Page, { icon: unknown; userType: string | undefined }>;
 };
