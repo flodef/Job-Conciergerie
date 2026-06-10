@@ -7,23 +7,23 @@ import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'reac
 
 type TooltipProps = {
   children: string | ReactNode;
+  trigger?: ReactNode;
   size?: Size;
   icon?: React.ComponentType<IconProps>;
   orientation?: 'vertical' | 'horizontal';
   onClick?: () => void;
   className?: string;
-  trigger?: ReactNode;
   isDisabled?: boolean;
 };
 
 export default function Tooltip({
   children,
+  trigger,
   size = 'medium',
   icon: Icon = IconInfoCircle,
   orientation = 'vertical',
   onClick,
   className = '',
-  trigger,
   isDisabled = false,
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);

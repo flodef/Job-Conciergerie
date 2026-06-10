@@ -15,10 +15,16 @@ const Label = ({ id, children, tooltip, required = true }: LabelProps) => {
   return (
     children && (
       <div className="flex items-center">
-        <label htmlFor={id} className={labelClassName}>
-          {children} {!required && ' (facultatif)'}
-        </label>
-        {tooltip && <Tooltip>{tooltip}</Tooltip>}
+        <Tooltip
+          trigger={
+            <label htmlFor={id} className={labelClassName}>
+              {children} {!required && ' (facultatif)'}
+            </label>
+          }
+          isDisabled={!tooltip}
+        >
+          {tooltip}
+        </Tooltip>
       </div>
     )
   );

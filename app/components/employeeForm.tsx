@@ -422,8 +422,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           id="conciergerie"
           label={
             <div className="flex items-center">
-              Conciergerie
-              <Tooltip>
+              <Tooltip trigger="Conciergerie">
                 C&apos;est la conciergerie par laquelle vous avez connu ce site, qui recevra votre candidature et qui
                 validera votre inscription.
               </Tooltip>
