@@ -7,7 +7,7 @@ import {
   fetchAllMissions,
   updateMissionData,
 } from '@/app/actions/mission';
-import type { Toast} from '@/app/components/toastMessage';
+import type { Toast } from '@/app/components/toastMessage';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
@@ -20,7 +20,7 @@ import { useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes, Page } from '@/app/utils/navigation';
 import { getUserKey } from '@/app/utils/user';
 import { usePathname } from 'next/navigation';
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 type MissionsContextType = {
@@ -329,10 +329,12 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     // Nothing to notify if there was no assigned prestataire
     if (!employee || !home || !conciergerie) return { success: true, employeeNotified: false };
 
-    let employeeNotified = false;
+    const employeeNotified = removeEmployee
+      ? !!employee.notificationSettings?.missionsCanceled
+      : !!employee.notificationSettings?.missionChanged;
+
     if (removeEmployee) {
       // Less time: the prestataire loses the mission and must accept it again
-      employeeNotified = !!employee.notificationSettings?.missionsCanceled;
       if (employeeNotified)
         await EmailSender.sendMissionRemovedEmail(existingMission, home, employee, conciergerie, 'canceled');
     } else {
@@ -342,7 +344,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       ];
       if (dates.startDateTime) changes.push(`Nouvelle date/heure de début: ${formatDateTime(newStart)}`);
       if (dates.endDateTime) changes.push(`Nouvelle date/heure de fin: ${formatDateTime(newEnd)}`);
-      employeeNotified = !!employee.notificationSettings?.missionChanged;
       if (employeeNotified)
         await EmailSender.sendMissionUpdatedEmail(updatedMission, home, employee, conciergerie, changes);
     }

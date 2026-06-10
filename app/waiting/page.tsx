@@ -29,6 +29,55 @@ const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
 const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
 const REFRESH_BUTTON_DISABLE_TIME = 1; // time in minutes
 
+function DeviceId({ userId, copyToClipboard }: { userId: string | undefined; copyToClipboard: (id: string) => void }) {
+  if (!userId) return null;
+
+  return (
+    <div className="flex items-center mb-0.5 ml-7 text-sm text-foreground gap-1">
+      <span>ID appareil : </span>
+      <span className="font-mono self-end">{formatId(userId)}</span>
+      <button
+        onClick={() => copyToClipboard(userId)}
+        className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+        title="Copier l'ID"
+      >
+        <IconCopy size={14} stroke={1.5} />
+      </button>
+    </div>
+  );
+}
+
+function RefreshButtons({
+  refreshDisabled,
+  handleRefreshWithEmail,
+  isRequestLessThanMinimumWaitingTime,
+  creationDate,
+  minimumWaitingTime,
+}: {
+  refreshDisabled: boolean;
+  handleRefreshWithEmail: () => void;
+  isRequestLessThanMinimumWaitingTime: () => boolean;
+  creationDate: Date | null;
+  minimumWaitingTime: number;
+}) {
+  return (
+    <div className="flex items-center justify-center">
+      <RefreshButton className="mt-0" disabled={refreshDisabled} onRefresh={handleRefreshWithEmail} />
+      <RefreshButton className="mt-0" shouldDisconnect disabled={isRequestLessThanMinimumWaitingTime()} />
+      {isRequestLessThanMinimumWaitingTime() && creationDate ? (
+        <Tooltip size="large" icon={IconHelpCircle}>
+          Pour éviter le spam, vous pourrez tenter une nouvelle demande dans{' '}
+          {getTimeRemaining(new Date(creationDate.getTime() + minimumWaitingTime * 60 * 1000))}
+        </Tooltip>
+      ) : refreshDisabled ? (
+        <Tooltip size="large" icon={IconClock}>
+          Pour éviter le spam, vous devez attendre 1 minute avant de réessayer
+        </Tooltip>
+      ) : null}
+    </div>
+  );
+}
+
 export default function WaitingPage() {
   const {
     userId,
@@ -129,24 +178,6 @@ export default function WaitingPage() {
       });
   };
 
-  const DeviceId = () => {
-    if (!userId) return null;
-
-    return (
-      <div className="flex items-center mb-0.5 ml-7 text-sm text-foreground gap-1">
-        <span>ID appareil : </span>
-        <span className="font-mono self-end">{formatId(userId)}</span>
-        <button
-          onClick={() => copyToClipboard(userId)}
-          className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-          title="Copier l'ID"
-        >
-          <IconCopy size={14} stroke={1.5} />
-        </button>
-      </div>
-    );
-  };
-
   const handleRefreshWithEmail = useCallback(() => {
     if (conciergerie && userId)
       return EmailSender.sendVerificationEmail(conciergerie, userId).then(() => {
@@ -170,23 +201,6 @@ export default function WaitingPage() {
       }
     }
   }, [conciergerie, employee, userId, findConciergerie, showToast]);
-
-  const RefreshButtons = () => (
-    <div className="flex items-center justify-center">
-      <RefreshButton className="mt-0" disabled={refreshDisabled} onRefresh={handleRefreshWithEmail} />
-      <RefreshButton className="mt-0" shouldDisconnect disabled={isRequestLessThanMinimumWaitingTime()} />
-      {isRequestLessThanMinimumWaitingTime() && creationDate ? (
-        <Tooltip size="large" icon={IconHelpCircle}>
-          Pour éviter le spam, vous pourrez tenter une nouvelle demande dans{' '}
-          {getTimeRemaining(new Date(creationDate.getTime() + minimumWaitingTime * 60 * 1000))}
-        </Tooltip>
-      ) : refreshDisabled ? (
-        <Tooltip size="large" icon={IconClock}>
-          Pour éviter le spam, vous devez attendre 1 minute avant de réessayer
-        </Tooltip>
-      ) : null}
-    </div>
-  );
 
   if (authLoading || !userType) return null;
 
@@ -219,7 +233,7 @@ export default function WaitingPage() {
                 </p>
               </div>
             </div>
-            <DeviceId />
+            <DeviceId userId={userId} copyToClipboard={copyToClipboard} />
 
             <div className="bg-primary/10 p-3 rounded-lg">
               <p className="text-sm text-foreground">
@@ -228,7 +242,13 @@ export default function WaitingPage() {
               </p>
             </div>
 
-            <RefreshButtons />
+            <RefreshButtons
+              refreshDisabled={refreshDisabled}
+              handleRefreshWithEmail={handleRefreshWithEmail}
+              isRequestLessThanMinimumWaitingTime={isRequestLessThanMinimumWaitingTime}
+              creationDate={creationDate}
+              minimumWaitingTime={minimumWaitingTime}
+            />
           </>
         ) : employee ? (
           // Employee waiting page
@@ -290,7 +310,7 @@ export default function WaitingPage() {
                   </span>
                 </p>
               </div>
-              <DeviceId />
+              <DeviceId userId={userId} copyToClipboard={copyToClipboard} />
               <p className={`text-sm text-foreground ml-7 ${timeWaiting ? 'visible' : 'invisible'}`}>
                 <span className="font-medium">Demande soumise il y a : </span>
                 <span className="font-bold">{timeWaiting}</span>
@@ -331,7 +351,13 @@ export default function WaitingPage() {
               )}
             </div>
 
-            <RefreshButtons />
+            <RefreshButtons
+              refreshDisabled={refreshDisabled}
+              handleRefreshWithEmail={handleRefreshWithEmail}
+              isRequestLessThanMinimumWaitingTime={isRequestLessThanMinimumWaitingTime}
+              creationDate={creationDate}
+              minimumWaitingTime={minimumWaitingTime}
+            />
           </>
         ) : !isLoading ? (
           // Error state

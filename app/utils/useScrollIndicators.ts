@@ -31,8 +31,6 @@ export function useScrollIndicators(isOpen: boolean) {
     });
     return () => {
       cancelAnimationFrame(raf);
-      const el = ref.current;
-      if (el) el.removeEventListener('scroll', update);
     };
   }, [isOpen, update]);
 

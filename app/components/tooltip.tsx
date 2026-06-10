@@ -64,8 +64,8 @@ export default function Tooltip({
     const spaceLeft = rect.left;
     const spaceRight = window.innerWidth - rect.right;
 
-    let top = 0;
-    let left = 0;
+    let top: number;
+    let left: number;
 
     if (orientation === 'vertical') {
       const positionAbove = spaceAbove >= tooltipHeight;

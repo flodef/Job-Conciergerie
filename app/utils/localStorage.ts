@@ -8,7 +8,11 @@ export function useLocalStorage<T>(
 
   // Keep a ref to the latest value so functional updates work without re-creating the setter
   const valueRef = useRef<T | undefined>(value);
-  valueRef.current = value;
+
+  // Update ref when value changes (in effect, not during render)
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   // Hydrate from localStorage after mount (client-only) to avoid SSR mismatch.
   // This effect ONLY reads - it never writes, so re-running it (e.g. in StrictMode)
