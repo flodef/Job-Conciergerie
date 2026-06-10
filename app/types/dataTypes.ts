@@ -36,6 +36,7 @@ export interface Home {
   hoursOfGardening: number; // Hours of gardening required
   conciergerieName: string; // Reference to the conciergerie by name
   allowDuo: boolean; // Whether missions on this home can be done by a duo (2 providers)
+  maxTravellers: number; // Maximum number of travellers allowed for missions on this home
 }
 
 export enum Task {
@@ -72,4 +73,6 @@ export interface Mission {
   status: MissionStatus | null; // Default is 'pending' if not specified
   allowedEmployees?: string[] | null; // List of prestataire IDs who can see this mission, empty or undefined means all
   hours: number; // Total hours for the mission based on tasks and home specifications
+  allowDuo: boolean; // Whether this mission can be done by a duo (2 providers) - copied from home at creation
+  travellers: number; // Number of travellers for this mission
 }

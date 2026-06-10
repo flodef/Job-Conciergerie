@@ -24,6 +24,11 @@ import { descriptionLengthRegex, getMaxLength, inputLengthRegex } from '@/app/ut
 import { range } from '@/app/utils/select';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+// Constants for validation
+export const MAX_TRAVELLERS = 8;
+const MAX_OBJECTIVES = 30;
+const MAX_PHOTOS = 9;
+
 type HomeFormProps = {
   onClose: () => void;
   onCancel?: () => void;
@@ -59,6 +64,7 @@ export default function HomeForm({
   const [hoursOfCleaning, setHoursOfCleaning] = useState<number>(home?.hoursOfCleaning || 0);
   const [hoursOfGardening, setHoursOfGardening] = useState<number>(home?.hoursOfGardening || 0);
   const [allowDuo, setAllowDuo] = useState<boolean>(home?.allowDuo ?? false);
+  const [maxTravellers, setMaxTravellers] = useState<number>(home?.maxTravellers ?? 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [initialFormValues, setInitialFormValues] = useState<{
@@ -69,6 +75,7 @@ export default function HomeForm({
     hoursOfCleaning: number;
     hoursOfGardening: number;
     allowDuo: boolean;
+    maxTravellers: number;
   }>();
 
   // Validation states
@@ -85,10 +92,6 @@ export default function HomeForm({
   const objectivesRef = useRef<HTMLTextAreaElement>(null);
   const imagesRef = useRef<HTMLInputElement>(null);
 
-  // Constants for validation
-  const MAX_OBJECTIVES = 30;
-  const MAX_PHOTOS = 9;
-
   // Load geographic zones from JSON file
   useEffect(() => {
     // Save initial form state for comparison
@@ -100,6 +103,7 @@ export default function HomeForm({
       hoursOfCleaning,
       hoursOfGardening,
       allowDuo,
+      maxTravellers,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -274,6 +278,7 @@ export default function HomeForm({
           hoursOfCleaning,
           hoursOfGardening,
           allowDuo,
+          maxTravellers,
         });
         if (!result) throw new Error("Impossible d'ajouter le bien");
 
@@ -293,6 +298,7 @@ export default function HomeForm({
           hoursOfCleaning,
           hoursOfGardening,
           allowDuo,
+          maxTravellers,
         });
         if (!result) throw new Error('Impossible de mettre à jour le bien');
 
@@ -414,6 +420,19 @@ export default function HomeForm({
           options={range(0, 7, 0.5)}
           disabled={isSubmitting}
           placeholder="Nombre d'heures"
+          required
+          row
+        />
+
+        <Select
+          id="max-travellers"
+          label="Nombre maximum de voyageurs"
+          value={maxTravellers}
+          className="max-w-1/3"
+          onChange={value => setMaxTravellers(Number(value))}
+          options={range(1, MAX_TRAVELLERS)}
+          disabled={isSubmitting}
+          placeholder="Nombre de voyageurs"
           required
           row
         />

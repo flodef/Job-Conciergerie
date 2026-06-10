@@ -32,6 +32,7 @@ beforeAll(async () => {
     hours_of_gardening: 0,
     conciergerie_name: TEST_CONCIERGERIE,
     allow_duo: true,
+    max_travellers: 4,
   });
 });
 
@@ -55,6 +56,8 @@ const baseMission: Omit<Mission, 'modifiedDate'> = {
   status: null,
   allowedEmployees: null,
   hours: 2,
+  allowDuo: true,
+  travellers: 2,
 };
 
 describe('Mission Actions - hours type conversion', () => {

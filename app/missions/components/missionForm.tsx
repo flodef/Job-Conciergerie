@@ -7,12 +7,14 @@ import FullScreenModal from '@/app/components/fullScreenModal';
 import Label from '@/app/components/label';
 import MultiSelect from '@/app/components/multiSelect';
 import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
+import Select from '@/app/components/select';
 import TaskSelector from '@/app/components/taskSelector';
 import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
+import { MAX_TRAVELLERS } from '@/app/homes/components/homeForm';
 import type { Mission } from '@/app/types/dataTypes';
 import { Task } from '@/app/types/dataTypes';
 import type { ErrorField } from '@/app/types/types';
@@ -26,6 +28,7 @@ import {
   localISOString,
 } from '@/app/utils/date';
 import { handleChange } from '@/app/utils/form';
+import { range } from '@/app/utils/select';
 import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
 import { getUserKey } from '@/app/utils/user';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -55,6 +58,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
   const [missionHours, setMissionHours] = useState(mission?.hours || 0);
   const [tasks, setTasks] = useState<Task[]>(mission?.tasks || (mode === 'add' ? [Task.Cleaning] : []));
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>(mission?.allowedEmployees || []);
+  const [travellers, setTravellers] = useState(mission?.travellers ?? 1);
   const [initialFormValues, setInitialFormValues] = useState<{
     homeId: string;
     missionHours: number;
@@ -62,6 +66,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
     endDateTime: string;
     tasks: Task[];
     selectedEmployees: string[];
+    travellers: number;
   }>();
 
   const [cannotEdit, setCannotEdit] = useState(false);
@@ -147,6 +152,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
       endDateTime,
       tasks,
       selectedEmployees,
+      travellers,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -262,6 +268,9 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
         )
           throw new Error('Une mission identique existe déjà');
 
+        const selectedHome = filteredHomes.find(h => h.id === homeId);
+        if (!selectedHome) throw new Error('Bien introuvable');
+
         const result = await addMission({
           homeId,
           tasks,
@@ -271,6 +280,8 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
           hours: missionHours,
           employeeId: null,
           status: null,
+          allowDuo: selectedHome.allowDuo,
+          travellers,
         });
         if (!result) throw new Error("Impossible d'ajouter la mission");
 
@@ -278,6 +289,9 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
         showToast({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
         onClose();
       } else if (mission) {
+        const selectedHome = filteredHomes.find(h => h.id === homeId);
+        if (!selectedHome) throw new Error('Bien introuvable');
+
         const updatedMission: Mission = {
           ...mission,
           homeId,
@@ -287,6 +301,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
           modifiedDate: new Date(),
           allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : null,
           hours: missionHours,
+          travellers,
         };
 
         // Check if update would create a duplicate
@@ -417,6 +432,17 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
           error={tasksError}
           setError={setTasksError}
           disabled={isSubmitting || cannotEdit}
+          required
+        />
+
+        <Select
+          id="travellers"
+          label="Nombre de voyageurs"
+          value={travellers}
+          onChange={value => setTravellers(Number(value))}
+          options={range(1, filteredHomes.find(h => h.id === homeId)?.maxTravellers || MAX_TRAVELLERS)}
+          disabled={isSubmitting || cannotEdit}
+          placeholder="Nombre de voyageurs"
           required
         />
 

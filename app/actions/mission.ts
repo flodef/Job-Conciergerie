@@ -36,6 +36,8 @@ export async function createNewMission(data: Mission): Promise<Mission | null> {
     status: data.status,
     allowed_employees: data.allowedEmployees,
     hours: data.hours,
+    allow_duo: data.allowDuo ?? false,
+    travellers: data.travellers ?? 1,
   };
 
   return await createMission(dbData);
@@ -58,6 +60,8 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
   if (data.status !== undefined) dbData.status = data.status;
   if (data.allowedEmployees !== undefined) dbData.allowed_employees = data.allowedEmployees;
   if (data.hours !== undefined) dbData.hours = data.hours;
+  if (data.allowDuo !== undefined) dbData.allow_duo = data.allowDuo;
+  if (data.travellers !== undefined) dbData.travellers = data.travellers;
 
   return await updateMission(id, dbData);
 }

@@ -779,6 +779,14 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           <span className="font-medium">{formatHours(mission.hours)}</span>
         </div>
 
+        <div className="flex items-center justify-between">
+          <h3 className={containerClassName}>
+            <IconUsers size={16} />
+            Nombre de voyageurs
+          </h3>
+          <span className="font-medium">{mission.travellers}</span>
+        </div>
+
         <div className="flex items-center space-x-4">
           <div className="space-y-2">
             <div>

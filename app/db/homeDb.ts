@@ -14,6 +14,7 @@ export interface DbHome {
   hours_of_gardening: number;
   conciergerie_name: string;
   allow_duo: boolean;
+  max_travellers: number;
 }
 
 /**
@@ -31,6 +32,7 @@ function formatHome(dbHome: DbHome): Home {
     hoursOfGardening: Number(dbHome.hours_of_gardening),
     conciergerieName: dbHome.conciergerie_name,
     allowDuo: dbHome.allow_duo ?? false,
+    maxTravellers: dbHome.max_travellers ?? 1,
   };
 }
 
@@ -40,7 +42,7 @@ function formatHome(dbHome: DbHome): Home {
 export const getAllHomes = async () => {
   try {
     const result = await sql`
-      SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo
+      SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers
       FROM homes
     `;
 
@@ -58,12 +60,12 @@ export const createHome = async (data: DbHome) => {
   try {
     const result = await sql`
       INSERT INTO homes (
-        id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo
+        id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers
       ) VALUES (
         ${data.id}, ${data.title}, ${data.description}, ${data.objectives}, ${data.images}, 
-        ${data.geographic_zone}, ${data.hours_of_cleaning}, ${data.hours_of_gardening}, ${data.conciergerie_name}, ${data.allow_duo ?? false}
+        ${data.geographic_zone}, ${data.hours_of_cleaning}, ${data.hours_of_gardening}, ${data.conciergerie_name}, ${data.allow_duo ?? false}, ${data.max_travellers ?? 1}
       )
-      RETURNING id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo
+      RETURNING id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers
     `;
 
     return result.length > 0 ? formatHome(result[0] as DbHome) : null;
@@ -118,6 +120,10 @@ export const updateHome = async (id: string, data: Partial<Omit<DbHome, 'id'>>) 
       fields.push(`allow_duo = $${values.length + 1}`);
       values.push(data.allow_duo);
     }
+    if (data.max_travellers !== undefined) {
+      fields.push(`max_travellers = $${values.length + 1}`);
+      values.push(data.max_travellers);
+    }
 
     if (fields.length === 0) return null; // Nothing to update
 
@@ -126,7 +132,7 @@ export const updateHome = async (id: string, data: Partial<Omit<DbHome, 'id'>>) 
       UPDATE homes
       SET ${fields.join(', ')}
       WHERE id = $${values.length + 1}
-      RETURNING id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo
+      RETURNING id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers
     `;
     values.push(id);
 

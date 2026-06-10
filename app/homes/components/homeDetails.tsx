@@ -16,7 +16,7 @@ import { useImageCache } from '@/app/hooks/useImageCache';
 import type { Home } from '@/app/types/dataTypes';
 import { actionButtonBarClassName, actionButtonClassName, cn } from '@/app/utils/className';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
-import { IconFileDescription, IconListCheck, IconPencil, IconPhoto, IconTrash } from '@tabler/icons-react';
+import { IconFileDescription, IconListCheck, IconPencil, IconPhoto, IconTrash, IconUsers } from '@tabler/icons-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 type HomeDetailsProps = {
@@ -209,6 +209,22 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
                     </li>
                   ))}
                 </ul>
+              ),
+            },
+            {
+              title: 'Informations',
+              icon: <IconUsers size={16} className="text-light" />,
+              content: (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-foreground">Mission en binôme</span>
+                    <span className="text-foreground font-medium">{home.allowDuo ? 'Oui' : 'Non'}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-foreground">Nombre maximum de voyageurs</span>
+                    <span className="text-foreground font-medium">{home.maxTravellers}</span>
+                  </div>
+                </div>
               ),
             },
           ]}

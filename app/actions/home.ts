@@ -1,6 +1,6 @@
 'use server';
 
-import type { DbHome} from '@/app/db/homeDb';
+import type { DbHome } from '@/app/db/homeDb';
 import { createHome, deleteHome, getAllHomes, updateHome } from '@/app/db/homeDb';
 import type { Home } from '@/app/types/dataTypes';
 
@@ -25,6 +25,7 @@ export async function createNewHome(data: {
   hoursOfGardening: number;
   conciergerieName: string;
   allowDuo?: boolean;
+  maxTravellers?: number;
 }): Promise<Home | null> {
   // Convert to DB format
   const dbData: Omit<DbHome, 'modified_date'> = {
@@ -38,6 +39,7 @@ export async function createNewHome(data: {
     hours_of_gardening: data.hoursOfGardening,
     conciergerie_name: data.conciergerieName,
     allow_duo: data.allowDuo ?? false,
+    max_travellers: data.maxTravellers ?? 1,
   };
 
   return await createHome(dbData);
@@ -58,6 +60,7 @@ export async function updateHomeData(
     hoursOfGardening: number;
     conciergerieName: string;
     allowDuo: boolean;
+    maxTravellers: number;
   }>,
 ): Promise<Home | null> {
   // Convert to DB format
@@ -71,6 +74,7 @@ export async function updateHomeData(
     hours_of_gardening: data.hoursOfGardening,
     conciergerie_name: data.conciergerieName,
     allow_duo: data.allowDuo,
+    max_travellers: data.maxTravellers,
   };
 
   return await updateHome(id, dbData);
