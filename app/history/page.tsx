@@ -1,7 +1,6 @@
 'use client';
 
 import Accordion from '@/app/components/accordion';
-import { Toast, ToastMessage } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
@@ -318,7 +317,6 @@ export default function HistoryPage() {
   const { homes } = useHomes();
   const { employeeName, isLoading: authLoading, findConciergerie } = useAuth();
 
-  const [toast, setToast] = useState<Toast>();
   const [sortField, setSortField] = useState<MissionSortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedConciergerie, setSelectedConciergerie] = useState<string | null>(null);
@@ -415,8 +413,6 @@ export default function HistoryPage() {
 
   return (
     <div className="p-4 space-y-4">
-      {toast && <ToastMessage toast={toast} onClose={() => setToast(undefined)} />}
-
       {/* Stats - recalculate based on filtered missions */}
       {filteredMissions.length > 0 && (
         <div className="flex gap-3">

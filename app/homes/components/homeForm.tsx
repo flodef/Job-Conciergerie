@@ -11,9 +11,11 @@ import ObjectiveList from '@/app/components/objectiveList';
 import Select from '@/app/components/select';
 import Switch from '@/app/components/switch';
 import TextArea from '@/app/components/textArea';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
+import { useModal } from '@/app/contexts/modalProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { Home } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
@@ -33,6 +35,8 @@ type HomeFormProps = {
 export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFocus = false }: HomeFormProps) {
   const { addHome, updateHome, homeExists } = useHomes();
   const { conciergerieName } = useAuth();
+  const { openModal, closeModal } = useModal();
+  const { showToast } = useToast();
 
   const imageUploaderRef = useRef<{
     uploadAllPendingImages: (conciergerieName: string, houseTitle: string) => Promise<string[] | null>;
@@ -49,8 +53,6 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
   const [allowDuo, setAllowDuo] = useState<boolean>(home?.allowDuo ?? false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
-  const [toast, setToast] = useState<Toast>();
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [initialFormValues, setInitialFormValues] = useState<{
     title: string;
     description: string;
@@ -142,13 +144,39 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
   };
 
   const handleCancel = () => {
-    if (checkFormChanged()) setShowConfirmDialog(true);
-    else closeAndCancel();
+    if (checkFormChanged()) {
+      const id = openModal(() => (
+        <ConfirmationModal
+          isOpen
+          title="Modifications non enregistrées"
+          message="Vous avez des modifications non enregistrées. Voulez-vous vraiment fermer ?"
+          confirmText="Fermer"
+          cancelText="Annuler"
+          onConfirm={closeAndCancel}
+          onClose={() => closeModal(id)}
+        />
+      ));
+    } else {
+      closeAndCancel();
+    }
   };
 
   const handleClose = () => {
-    if (checkFormChanged()) setShowConfirmDialog(true);
-    else onClose();
+    if (checkFormChanged()) {
+      const id = openModal(() => (
+        <ConfirmationModal
+          isOpen
+          title="Modifications non enregistrées"
+          message="Vous avez des modifications non enregistrées. Voulez-vous vraiment fermer ?"
+          confirmText="Fermer"
+          cancelText="Annuler"
+          onConfirm={closeAndCancel}
+          onClose={() => closeModal(id)}
+        />
+      ));
+    } else {
+      onClose();
+    }
   };
 
   // Check for duplicate objectives in the list
@@ -241,7 +269,8 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
         });
         if (!result) throw new Error("Impossible d'ajouter le bien");
 
-        setToast({ type: ToastType.Success, message: 'Bien ajouté avec succès !' });
+        showToast({ type: ToastType.Success, message: 'Bien ajouté avec succès !' });
+        closeAndCancel();
       } else if (home) {
         // For edit mode, only check for duplicates if the title has changed
         if (title !== home.title && homeExists(title, home.id)) throw new Error('Un bien avec ce titre existe déjà');
@@ -259,10 +288,11 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
         });
         if (!result) throw new Error('Impossible de mettre à jour le bien');
 
-        setToast({ type: ToastType.Success, message: 'Bien mis à jour avec succès !' });
+        showToast({ type: ToastType.Success, message: 'Bien mis à jour avec succès !' });
+        closeAndCancel();
       }
     } catch (error) {
-      setToast({ type: ToastType.Error, message: String(error), error });
+      showToast({ type: ToastType.Error, message: String(error), error });
       setIsSubmitting(false);
     }
   };
@@ -288,142 +318,118 @@ export default function HomeForm({ onClose, onCancel, home, mode = 'add', autoFo
     );
   }
 
-  const hasSuccessToast = toast?.type === ToastType.Success;
-
   return (
-    <>
-      <ToastMessage
-        toast={toast}
-        onClose={() => {
-          setToast(undefined);
-          if (toast?.type === ToastType.Success) closeAndCancel();
-        }}
-      />
-
-      {!hasSuccessToast && (
-        <FullScreenModal
-          title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'}
-          onClose={handleClose}
+    <FullScreenModal
+      title={mode === 'add' ? 'Ajouter un bien' : 'Modifier le bien'}
+      onClose={handleClose}
+      disabled={isSubmitting}
+      footer={footer}
+    >
+      <form onSubmit={handleSubmit} className="space-y-2">
+        <ImageUploader
+          id="images"
+          label="Photos"
+          ref={imageUploaderRef}
+          imagesRef={imagesRef}
+          imageIds={images}
+          onImageIdsChange={setImages}
+          onPendingImagesChange={setHasPendingImages}
+          maxImages={MAX_PHOTOS}
+          error={imagesError}
+          onError={setImagesError}
           disabled={isSubmitting}
-          footer={footer}
-        >
-          <form onSubmit={handleSubmit} className="space-y-2">
-            <ImageUploader
-              id="images"
-              label="Photos"
-              ref={imageUploaderRef}
-              imagesRef={imagesRef}
-              imageIds={images}
-              onImageIdsChange={setImages}
-              onPendingImagesChange={setHasPendingImages}
-              maxImages={MAX_PHOTOS}
-              error={imagesError}
-              onError={setImagesError}
-              disabled={isSubmitting}
-              required
-            />
+          required
+        />
 
-            <Input
-              id="title"
-              label="Titre"
-              ref={titleRef}
-              value={title}
-              onChange={setTitle}
-              error={titleError}
-              onError={setTitleError}
-              disabled={isSubmitting}
-              placeholder="Entrez le titre du bien..."
-              required
-            />
+        <Input
+          id="title"
+          label="Titre"
+          ref={titleRef}
+          value={title}
+          onChange={setTitle}
+          error={titleError}
+          onError={setTitleError}
+          disabled={isSubmitting}
+          placeholder="Entrez le titre du bien..."
+          required
+        />
 
-            <Combobox
-              id="geographic-zone"
-              label="Zone"
-              ref={geographicZoneRef}
-              className="max-w-2/3"
-              options={geographicZones}
-              value={geographicZone}
-              onChange={e => handleChange(e, setGeographicZone, setGeographicZoneError)}
-              placeholder="Sélectionnez zone"
-              disabled={isSubmitting}
-              error={geographicZoneError}
-              required
-              row
-            />
+        <Combobox
+          id="geographic-zone"
+          label="Zone"
+          ref={geographicZoneRef}
+          className="max-w-2/3"
+          options={geographicZones}
+          value={geographicZone}
+          onChange={e => handleChange(e, setGeographicZone, setGeographicZoneError)}
+          placeholder="Sélectionnez zone"
+          disabled={isSubmitting}
+          error={geographicZoneError}
+          required
+          row
+        />
 
-            <TextArea
-              id="description"
-              label="Description"
-              ref={descriptionRef}
-              value={description}
-              onChange={setDescription}
-              error={descriptionError}
-              onError={setDescriptionError}
-              disabled={isSubmitting}
-              placeholder="Décrivez les caractéristiques du bien..."
-              regex={descriptionLengthRegex}
-              required
-            />
+        <TextArea
+          id="description"
+          label="Description"
+          ref={descriptionRef}
+          value={description}
+          onChange={setDescription}
+          error={descriptionError}
+          onError={setDescriptionError}
+          disabled={isSubmitting}
+          placeholder="Décrivez les caractéristiques du bien..."
+          regex={descriptionLengthRegex}
+          required
+        />
 
-            <Select
-              id="hours-of-cleaning"
-              label="Heures de ménage"
-              className="max-w-1/3"
-              value={hoursOfCleaning}
-              onChange={value => setHoursOfCleaning(Number(value))}
-              options={range(0, 7, 0.5)}
-              disabled={isSubmitting}
-              placeholder="Nombre d'heures"
-              required
-              row
-            />
+        <Select
+          id="hours-of-cleaning"
+          label="Heures de ménage"
+          className="max-w-1/3"
+          value={hoursOfCleaning}
+          onChange={value => setHoursOfCleaning(Number(value))}
+          options={range(0, 7, 0.5)}
+          disabled={isSubmitting}
+          placeholder="Nombre d'heures"
+          required
+          row
+        />
 
-            <Select
-              id="hours-of-gardening"
-              label="Heures de jardinage"
-              value={hoursOfGardening}
-              className="max-w-1/3"
-              onChange={value => setHoursOfGardening(Number(value))}
-              options={range(0, 7, 0.5)}
-              disabled={isSubmitting}
-              placeholder="Nombre d'heures"
-              required
-              row
-            />
+        <Select
+          id="hours-of-gardening"
+          label="Heures de jardinage"
+          value={hoursOfGardening}
+          className="max-w-1/3"
+          onChange={value => setHoursOfGardening(Number(value))}
+          options={range(0, 7, 0.5)}
+          disabled={isSubmitting}
+          placeholder="Nombre d'heures"
+          required
+          row
+        />
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center cursor-pointer select-none">
-                <span className="text-foreground">Autoriser binôme</span>
-              </label>
-              <Switch enabled={allowDuo} onChange={() => setAllowDuo(!allowDuo)} />
-            </div>
+        <div className="flex items-center justify-between">
+          <label className="flex items-center cursor-pointer select-none">
+            <span className="text-foreground">Autoriser binôme</span>
+          </label>
+          <Switch enabled={allowDuo} onChange={() => setAllowDuo(!allowDuo)} />
+        </div>
 
-            <ObjectiveList
-              id="objectives"
-              label="Points particuliers"
-              ref={objectivesRef}
-              objectives={objectives}
-              setObjectives={e => {
-                setObjectives(e);
-                setObjectivesError('');
-              }}
-              maxObjectives={MAX_OBJECTIVES}
-              disabled={isSubmitting}
-              error={objectivesError}
-            />
-
-            <ConfirmationModal
-              isOpen={showConfirmDialog}
-              onClose={() => setShowConfirmDialog(false)}
-              onConfirm={onClose}
-              title="Modifications non enregistrées"
-              message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
-              confirmText="Quitter sans enregistrer"
-              cancelText="Continuer l'édition"
-            />
-          </form>
-        </FullScreenModal>
-      )}
-    </>
+        <ObjectiveList
+          id="objectives"
+          label="Points particuliers"
+          ref={objectivesRef}
+          objectives={objectives}
+          setObjectives={e => {
+            setObjectives(e);
+            setObjectivesError('');
+          }}
+          maxObjectives={MAX_OBJECTIVES}
+          disabled={isSubmitting}
+          error={objectivesError}
+        />
+      </form>
+    </FullScreenModal>
   );
 }

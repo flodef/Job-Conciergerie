@@ -3,8 +3,10 @@ import { updateEmployeeWithUserId } from '@/app/actions/employee';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import Input from '@/app/components/input';
 import Switch from '@/app/components/switch';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useModal } from '@/app/contexts/modalProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { iconButtonClassName, labelClassName } from '@/app/utils/className';
 import { containsId, formatId, isNewDevice } from '@/app/utils/id';
@@ -44,11 +46,11 @@ const ConnectedDevicesSettings: React.FC = () => {
     else setDeviceType('desktop');
   }, []);
 
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [confirmTargetId, setConfirmTargetId] = useState<string>();
   const [editingId, setEditingId] = useState<string>();
   const [editLabel, setEditLabel] = useState('');
-  const [toast, setToast] = useState<Toast>();
+  const { openModal, closeModal } = useModal();
+  const { showToast } = useToast();
 
   const [deleteSettings, setDeleteSettings] = useState(false);
 
@@ -69,20 +71,49 @@ const ConnectedDevicesSettings: React.FC = () => {
 
   const handleDeleteDevice = (id: string) => {
     setConfirmTargetId(id);
-    setShowConfirmDialog(true);
+    const idModal = openModal(() => (
+      <ConfirmationModal
+        isOpen
+        onConfirm={resetMyData}
+        onClose={() => {
+          closeModal(idModal);
+          setConfirmTargetId(undefined);
+        }}
+        title="Confirmation"
+        message={
+          id === currentUserId
+            ? "Êtes-vous sûr de vouloir réinitialiser vos données ? Cette action supprimera votre accès à l'application."
+            : 'Êtes-vous sûr de vouloir supprimer cet appareil ? Cette action révoquera son accès à ce compte.'
+        }
+        confirmText={id === currentUserId ? 'Réinitialiser' : 'Supprimer'}
+        cancelText="Annuler"
+        isDangerous
+      >
+        {id === currentUserId && (
+          <div className="mt-4 flex items-center justify-center w-full">
+            <label className="flex items-center cursor-pointer select-none w-full justify-center gap-2">
+              <span className={cn('text-light', deleteSettings ? 'font-bold' : '')}>
+                Supprimer également mes paramètres
+              </span>
+              <Switch enabled={deleteSettings} onChange={() => setDeleteSettings(!deleteSettings)} />
+            </label>
+          </div>
+        )}
+      </ConfirmationModal>
+    ));
   };
 
   const copyToClipboard = (id: string) => {
     navigator.clipboard
       .writeText(id)
       .then(() => {
-        setToast({
+        showToast({
           type: ToastType.Success,
           message: 'ID copié dans le presse-papier',
         });
       })
       .catch(err => {
-        setToast({
+        showToast({
           type: ToastType.Error,
           message: "Impossible de copier l'ID",
           error: err,
@@ -115,7 +146,7 @@ const ConnectedDevicesSettings: React.FC = () => {
 
     setStoredLabels(prevIds => prevIds?.map(item => (item.id === editingId ? { ...item, label: editLabel } : item)));
 
-    setToast({
+    showToast({
       type: ToastType.Success,
       message: "Label de l'appareil mis à jour",
     });
@@ -146,10 +177,10 @@ const ConnectedDevicesSettings: React.FC = () => {
       });
       updateUserData({ ...userData, id: updatedIds });
       setStoredLabels(updatedLabels);
-      setToast({ type: ToastType.Success, message: `L'appareil a été ${action} avec succès` });
+      showToast({ type: ToastType.Success, message: `L'appareil a été ${action} avec succès` });
       return updatedIds;
     } else {
-      setToast({ type: ToastType.Error, message: `L'appareil n'a pas pu être ${action}` });
+      showToast({ type: ToastType.Error, message: `L'appareil n'a pas pu être ${action}` });
       return null;
     }
   };
@@ -174,8 +205,6 @@ const ConnectedDevicesSettings: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-
       <div className="divide-y">
         {storedLabels?.map(item =>
           editingId === item.id ? (
@@ -270,35 +299,6 @@ const ConnectedDevicesSettings: React.FC = () => {
         )}
         <p className="text-sm text-gray-500 mt-4">Supprimez un appareil pour révoquer son accès à votre compte.</p>
       </div>
-
-      <ConfirmationModal
-        isOpen={showConfirmDialog}
-        onConfirm={resetMyData}
-        onClose={() => {
-          setShowConfirmDialog(false);
-          setConfirmTargetId(undefined);
-        }}
-        title="Confirmation"
-        message={
-          confirmTargetId === currentUserId
-            ? "Êtes-vous sûr de vouloir réinitialiser vos données ? Cette action supprimera votre accès à l'application."
-            : 'Êtes-vous sûr de vouloir supprimer cet appareil ? Cette action révoquera son accès à ce compte.'
-        }
-        confirmText={confirmTargetId === currentUserId ? 'Réinitialiser' : 'Supprimer'}
-        cancelText="Annuler"
-        isDangerous
-      >
-        {confirmTargetId === currentUserId && (
-          <div className="mt-4 flex items-center justify-center w-full">
-            <label className="flex items-center cursor-pointer select-none w-full justify-center gap-2">
-              <span className={cn('text-light', deleteSettings ? 'font-bold' : '')}>
-                Supprimer également mes paramètres
-              </span>
-              <Switch enabled={deleteSettings} onChange={() => setDeleteSettings(!deleteSettings)} />
-            </label>
-          </div>
-        )}
-      </ConfirmationModal>
     </div>
   );
 };

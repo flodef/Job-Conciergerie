@@ -2,9 +2,11 @@
 
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
+import { useModal } from '@/app/contexts/modalProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import { Employee, Mission, MissionStatus } from '@/app/types/dataTypes';
 import {
   actionButtonBarClassName,
@@ -34,12 +36,31 @@ type EmployeeDetailsProps = {
 export default function EmployeeDetails({ employee, onClose, mission }: EmployeeDetailsProps) {
   const { deleteEmployee, updateUserData, userData, employees } = useAuth();
   const { missions, removeSecondProvider, updateMission } = useMissions();
+  const { openModal, closeModal } = useModal();
+  const { showToast } = useToast();
 
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isRemoveFromMissionModalOpen, setIsRemoveFromMissionModalOpen] = useState(false);
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [toast, setToast] = useState<Toast>();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Open a confirmation dialog through the modal singleton (auto-pops on confirm/cancel)
+  const confirm = (options: {
+    title: string;
+    message: string;
+    confirmText: string;
+    isDangerous?: boolean;
+    onConfirm: () => void;
+  }) => {
+    const id = openModal(() => (
+      <ConfirmationModal
+        isOpen
+        title={options.title}
+        message={options.message}
+        confirmText={options.confirmText}
+        isDangerous={options.isDangerous}
+        onConfirm={options.onConfirm}
+        onClose={() => closeModal(id)}
+      />
+    ));
+  };
 
   // Helper function to count missions by status
   const countMissions = (status: MissionStatus) => {
@@ -51,18 +72,18 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
 
   const handleStatusChange = (newStatus: 'accepted' | 'rejected') => {
     setIsSubmitting(true);
-    if (newStatus === 'rejected') setIsRejectModalOpen(false);
     updateEmployeeStatus(employee, newStatus, userData, missions, employees || [], updateUserData)
       .then(({ updatedEmployee, emailSent }) => {
-        setToast({
+        showToast({
           type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
           message: `${getEmployeeFullName(updatedEmployee)} a été ${
             newStatus === 'accepted' ? 'accepté' : 'rejeté'
           }${emailSent ? ". L'employé a été notifié par email." : '.'}`,
         });
+        onClose();
       })
       .catch(error => {
-        setToast({
+        showToast({
           type: ToastType.Error,
           message: error.toString(),
           error,
@@ -73,17 +94,17 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
 
   const handleDelete = async () => {
     setIsSubmitting(true);
-    setIsDeleteModalOpen(false);
 
     // Remove employee from all missions first
     await removeEmployeeFromMissions(employee, missions, employees || []);
 
     deleteEmployee(employee).then(isSuccess => {
-      setToast({
+      showToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Employé supprimé !' : "Erreur lors de la suppression de l'employé",
       });
-      if (!isSuccess) setIsSubmitting(false);
+      if (isSuccess) onClose();
+      else setIsSubmitting(false);
     });
   };
 
@@ -91,17 +112,16 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
     if (!mission) return;
 
     setIsSubmitting(true);
-    setIsRemoveFromMissionModalOpen(false);
 
     const employeeId = getUserKey(employee);
     if (!employeeId) {
-      setToast({ type: ToastType.Error, message: "Impossible d'identifier le prestataire" });
+      showToast({ type: ToastType.Error, message: "Impossible d'identifier le prestataire" });
       setIsSubmitting(false);
       return;
     }
 
     const showResult = ({ success }: { success: boolean }) => {
-      setToast({
+      showToast({
         type: success ? ToastType.Success : ToastType.Error,
         message: success ? 'Prestataire retiré de la mission' : 'Erreur lors du retrait du prestataire',
       });
@@ -115,7 +135,7 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
     } else if (mission.employeeId2 === employeeId) {
       removeSecondProvider(mission.id).then(showResult);
     } else {
-      setToast({ type: ToastType.Error, message: "Le prestataire n'est pas assigné à cette mission" });
+      showToast({ type: ToastType.Error, message: "Le prestataire n'est pas assigné à cette mission" });
       setIsSubmitting(false);
     }
   };
@@ -124,7 +144,15 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
     <div className={actionButtonBarClassName}>
       {mission ? (
         <button
-          onClick={() => setIsRemoveFromMissionModalOpen(true)}
+          onClick={() =>
+            confirm({
+              title: 'Retirer de la mission',
+              message: 'Êtes-vous sûr de vouloir retirer ce prestataire de la mission ?',
+              confirmText: 'Retirer',
+              isDangerous: true,
+              onConfirm: handleRemoveFromMission,
+            })
+          }
           className={cn(actionButtonClassName, 'bg-orange-100 text-orange-700')}
         >
           <IconX />
@@ -134,7 +162,19 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
         <>
           {(employee.status === 'accepted' || employee.status === 'pending') && (
             <button
-              onClick={() => setIsRejectModalOpen(true)}
+              onClick={() =>
+                confirm({
+                  title: 'Rejeter le prestataire',
+                  message: `Vous êtes sur le point de rejeter ${getEmployeeFullName(employee)}.${
+                    countEmployeeMissions(employee, missions) > 0
+                      ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employee, missions)} mission(s).`
+                      : ''
+                  } Il ne pourra plus accéder à l'application.`,
+                  confirmText: 'Rejeter',
+                  isDangerous: true,
+                  onConfirm: () => handleStatusChange('rejected'),
+                })
+              }
               className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}
             >
               <IconX />
@@ -151,7 +191,16 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
             </button>
           )}
           <button
-            onClick={() => setIsDeleteModalOpen(true)}
+            onClick={() =>
+              confirm({
+                title: "Supprimer l'employé",
+                message:
+                  "Êtes-vous sûr de vouloir supprimer cet employé de l'application ? ATTENTION : Cette action est irréversible !!",
+                confirmText: 'Supprimer',
+                isDangerous: true,
+                onConfirm: handleDelete,
+              })
+            }
             className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}
           >
             <IconTrash />
@@ -162,120 +211,65 @@ export default function EmployeeDetails({ employee, onClose, mission }: Employee
     </div>
   );
 
-  const hasSuccessToast = toast?.type === ToastType.Success;
-
   return (
-    <>
-      <ToastMessage
-        toast={toast}
-        onClose={() => {
-          setToast(undefined);
-          if (toast?.type === ToastType.Success) onClose();
-        }}
-      />
+    <FullScreenModal title={getEmployeeFullName(employee)} onClose={onClose} footer={footer} disabled={isSubmitting}>
+      <div>
+        <div className={containerClassName}>
+          Statut :
+          <span
+            className={cn(
+              'text-base font-bold',
+              {
+                pending: 'text-yellow-500',
+                accepted: 'text-green-500',
+                rejected: 'text-red-500',
+              }[employee.status],
+            )}
+          >
+            {employee.status === 'pending' ? 'En attente' : employee.status === 'accepted' ? 'Accepté' : 'Rejeté'}
+          </span>
+        </div>
+      </div>
 
-      {!hasSuccessToast && (
-        <FullScreenModal
-          title={getEmployeeFullName(employee)}
-          onClose={onClose}
-          footer={footer}
-          disabled={isSubmitting}
-        >
-          <div>
-            <div className={containerClassName}>
-              Statut :
-              <span
-                className={cn(
-                  'text-base font-bold',
-                  {
-                    pending: 'text-yellow-500',
-                    accepted: 'text-green-500',
-                    rejected: 'text-red-500',
-                  }[employee.status],
-                )}
-              >
-                {employee.status === 'pending' ? 'En attente' : employee.status === 'accepted' ? 'Accepté' : 'Rejeté'}
-              </span>
-            </div>
+      <div className="flex flex-col">
+        <h4 className={descriptionClassName}>Contact :</h4>
+        <div className="space-y-3 mt-1">
+          <div className="flex items-center gap-2">
+            <IconMail size={25} className="text-light" />
+            <a href={`mailto:${employee.email}`} className="text-foreground hover:underline truncate">
+              {employee.email}
+            </a>
           </div>
-
-          <div className="flex flex-col">
-            <h4 className={descriptionClassName}>Contact :</h4>
-            <div className="space-y-3 mt-1">
-              <div className="flex items-center gap-2">
-                <IconMail size={25} className="text-light" />
-                <a href={`mailto:${employee.email}`} className="text-foreground hover:underline truncate">
-                  {employee.email}
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <IconPhone size={25} className="text-light" />
-                <a href={`tel:${employee.tel}`} className="text-foreground hover:underline truncate">
-                  {employee.tel}
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <IconMapPin size={25} className="text-light" />
-                <span className="text-foreground truncate">{employee.geographicZone}</span>
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <IconPhone size={25} className="text-light" />
+            <a href={`tel:${employee.tel}`} className="text-foreground hover:underline truncate">
+              {employee.tel}
+            </a>
           </div>
-
-          <p className={descriptionClassName}>
-            Missions acceptées : <span className={cn(labelClassName, 'font-bold')}>{countMissions('accepted')}</span>
-          </p>
-          <p className={descriptionClassName}>
-            Missions complétées : <span className={cn(labelClassName, 'font-bold')}>{countMissions('completed')}</span>
-          </p>
-
-          {employee.message && employee.status === 'pending' && (
-            <div>
-              <h4 className={descriptionClassName}>Message :</h4>
-              <div className="bg-secondary/10 rounded-md text-foreground">{employee.message}</div>
-            </div>
-          )}
-
-          <div className={containerClassName}>
-            Date d&apos;inscription :<span className={labelClassName}>{formatDate(new Date(employee.createdAt))}</span>
+          <div className="flex items-center gap-2">
+            <IconMapPin size={25} className="text-light" />
+            <span className="text-foreground truncate">{employee.geographicZone}</span>
           </div>
+        </div>
+      </div>
 
-          <ConfirmationModal
-            isOpen={isRemoveFromMissionModalOpen}
-            title="Retirer de la mission"
-            message="Êtes-vous sûr de vouloir retirer ce prestataire de la mission ?"
-            onConfirm={handleRemoveFromMission}
-            onCancel={() => setIsRemoveFromMissionModalOpen(false)}
-            confirmText="Retirer"
-            isDangerous
-          />
-          <ConfirmationModal
-            isOpen={isRejectModalOpen}
-            title="Rejeter le prestataire"
-            message={
-              employee
-                ? `Vous êtes sur le point de rejeter ${getEmployeeFullName(employee)}.${
-                    countEmployeeMissions(employee, missions) > 0
-                      ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employee, missions)} mission(s).`
-                      : ''
-                  } Il ne pourra plus accéder à l'application.`
-                : ''
-            }
-            onConfirm={() => handleStatusChange('rejected')}
-            onCancel={() => setIsRejectModalOpen(false)}
-            confirmText="Rejeter"
-            isDangerous
-          />
-          <ConfirmationModal
-            isOpen={isDeleteModalOpen}
-            title="Supprimer l'employé"
-            message="Êtes-vous sûr de vouloir supprimer cet employé de l'application ? ATTENTION : Cette action est irréversible !!"
-            onConfirm={handleDelete}
-            onCancel={() => setIsDeleteModalOpen(false)}
-            confirmText="Supprimer"
-            isDangerous
-          />
-        </FullScreenModal>
+      <p className={descriptionClassName}>
+        Missions acceptées : <span className={cn(labelClassName, 'font-bold')}>{countMissions('accepted')}</span>
+      </p>
+      <p className={descriptionClassName}>
+        Missions complétées : <span className={cn(labelClassName, 'font-bold')}>{countMissions('completed')}</span>
+      </p>
+
+      {employee.message && employee.status === 'pending' && (
+        <div>
+          <h4 className={descriptionClassName}>Message :</h4>
+          <div className="bg-secondary/10 rounded-md text-foreground">{employee.message}</div>
+        </div>
       )}
-    </>
+
+      <div className={containerClassName}>
+        Date d&apos;inscription :<span className={labelClassName}>{formatDate(new Date(employee.createdAt))}</span>
+      </div>
+    </FullScreenModal>
   );
 }

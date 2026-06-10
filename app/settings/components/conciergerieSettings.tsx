@@ -3,8 +3,9 @@ import { Button } from '@/app/components/button';
 import ColorPicker from '@/app/components/colorPicker';
 import Input from '@/app/components/input';
 import Label from '@/app/components/label';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import colorOptions from '@/app/data/colors.json';
 import { Conciergerie } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
@@ -34,7 +35,7 @@ const ConciergerieSettings: React.FC = () => {
   const [tel, setTel] = useState('');
   const [selectedColor, setSelectedColor] = useState<ColorOption | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState<Toast>();
+  const { showToast } = useToast();
 
   // Track original values for comparison
   const [originalEmail, setOriginalEmail] = useState('');
@@ -129,12 +130,12 @@ const ConciergerieSettings: React.FC = () => {
       if (selectedColor) setOriginalColorName(selectedColor.name);
 
       // Show success toast
-      setToast({
+      showToast({
         type: ToastType.Success,
         message: 'Modifications enregistrées avec succès',
       });
     } catch (error) {
-      setToast({
+      showToast({
         type: ToastType.Error,
         message: String(error),
         error,
@@ -146,8 +147,6 @@ const ConciergerieSettings: React.FC = () => {
 
   return (
     <div className="space-y-2">
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-
       <Label id="name">{name}</Label>
 
       <Input

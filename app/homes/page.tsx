@@ -2,10 +2,11 @@
 
 import FloatingActionButton from '@/app/components/floatingActionButton';
 import SearchInput from '@/app/components/searchInput';
-import { Toast, ToastMessage } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
+import { useModal } from '@/app/contexts/modalProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import HomeCard from '@/app/homes/components/homeCard';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
@@ -20,11 +21,8 @@ export default function HomesPage() {
   const { myHomes, isLoading: homesLoading } = useHomes();
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
   const { isLoading: authLoading } = useAuth();
+  const { openModal, closeModal } = useModal();
 
-  const [toast, setToast] = useState<Toast>();
-  const [selectedHome, setSelectedHome] = useState<Home | null>(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
@@ -54,29 +52,15 @@ export default function HomesPage() {
   );
 
   const handleHomeClick = (home: Home) => {
-    setSelectedHome(home);
+    const id = openModal(() => <HomeDetails home={home} onClose={() => closeModal(id)} />);
   };
 
   const handleHomeEdit = (home: Home) => {
-    setSelectedHome(home);
-    setIsEditModalOpen(true);
-  };
-
-  const handleCloseDetails = () => {
-    setSelectedHome(null);
+    const id = openModal(() => <HomeForm home={home} onClose={() => closeModal(id)} mode="edit" />);
   };
 
   const handleAddHome = () => {
-    setIsAddModalOpen(true);
-  };
-
-  const handleCloseAddModal = () => {
-    setIsAddModalOpen(false);
-  };
-
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
-    setSelectedHome(null);
+    const id = openModal(() => <HomeForm onClose={() => closeModal(id)} mode="add" />);
   };
 
   const [displayMode, setDisplayMode] = useLocalStorage<'list' | 'grid' | 'thumb'>('homes_display_mode', 'thumb');
@@ -85,8 +69,6 @@ export default function HomesPage() {
 
   return (
     <div className="bg-background min-h-full px-4">
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-
       {myHomes.length > 0 && (
         <div className="flex items-start justify-end gap-2 mb-2">
           {myHomes.length > 1 && (
@@ -169,15 +151,6 @@ export default function HomesPage() {
           <FloatingActionButton onClick={handleAddHome} />
         </>
       )}
-
-      {isAddModalOpen && <HomeForm onClose={handleCloseAddModal} mode="add" />}
-
-      {selectedHome &&
-        (!isEditModalOpen ? (
-          <HomeDetails home={selectedHome} onClose={handleCloseDetails} />
-        ) : (
-          <HomeForm home={selectedHome} onClose={handleCloseEditModal} mode="edit" />
-        ))}
     </div>
   );
 }

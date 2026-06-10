@@ -20,11 +20,11 @@ interface MissionListProps {
   groupedMissions: Record<string, Mission[]>;
   collapsedCategories: string[];
   setCollapsedCategories: React.Dispatch<React.SetStateAction<string[]>>;
-  setSelectedMission: (id: string | null) => void;
+  onSelectMission: (id: string) => void;
   showFilters: boolean;
   userType: string | undefined;
   handleAddMission: () => void;
-  setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  onEditMission: (id: string) => void;
   sortField: MissionSortField;
   isLoading?: boolean;
 }
@@ -33,11 +33,11 @@ export default function MissionList({
   groupedMissions,
   collapsedCategories,
   setCollapsedCategories,
-  setSelectedMission,
+  onSelectMission,
   showFilters,
   userType,
   handleAddMission,
-  setIsEditModalOpen,
+  onEditMission,
   sortField,
   isLoading,
 }: MissionListProps) {
@@ -132,10 +132,10 @@ export default function MissionList({
                 <div key={mission.id}>
                   <MissionCard
                     mission={mission}
-                    onClick={() => setSelectedMission(mission.id)}
+                    onClick={() => onSelectMission(mission.id)}
                     onEdit={() => {
-                      setSelectedMission(mission.id);
-                      if (mission.conciergerieName === conciergerieName) setIsEditModalOpen(true);
+                      if (mission.conciergerieName === conciergerieName) onEditMission(mission.id);
+                      else onSelectMission(mission.id);
                     }}
                   />
                 </div>

@@ -3,8 +3,9 @@ import { Button } from '@/app/components/button';
 import Combobox from '@/app/components/combobox';
 import Input from '@/app/components/input';
 import Label from '@/app/components/label';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { Employee } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
@@ -32,7 +33,7 @@ const EmployeeSettings: React.FC = () => {
   const [tel, setTel] = useState('');
   const [geographicZone, setGeographicZone] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState<Toast>();
+  const { showToast } = useToast();
 
   // Track original values for comparison
   const [originalEmail, setOriginalEmail] = useState('');
@@ -134,12 +135,12 @@ const EmployeeSettings: React.FC = () => {
       setOriginalGeographicZone(geographicZone);
 
       // Show success toast
-      setToast({
+      showToast({
         type: ToastType.Success,
         message: 'Modifications enregistrées avec succès',
       });
     } catch (error) {
-      setToast({
+      showToast({
         type: ToastType.Error,
         message: String(error),
         error,
@@ -151,8 +152,6 @@ const EmployeeSettings: React.FC = () => {
 
   return (
     <div className="space-y-2">
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-
       <Label id="name">{name}</Label>
 
       <Input

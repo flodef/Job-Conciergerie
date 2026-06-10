@@ -4,9 +4,11 @@ import Accordion from '@/app/components/accordion';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import M3LoadingSpinner from '@/app/components/m3LoadingSpinner';
 import SearchInput from '@/app/components/searchInput';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
+import { useModal } from '@/app/contexts/modalProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import { Employee } from '@/app/types/dataTypes';
 import {
@@ -25,16 +27,12 @@ import { getUserKey } from '../utils/user';
 export default function EmployeesList() {
   const { userData, conciergerieName, isLoading: authLoading, employees: authEmployees, updateUserData } = useAuth();
   const { missions } = useMissions();
+  const { openModal, closeModal } = useModal();
+  const { showToast } = useToast();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [toast, setToast] = useState<Toast>();
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-
-  // Confirmation modal state
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [employeeToReject, setEmployeeToReject] = useState<Employee | null>(null);
 
   // Data is loaded by AuthProvider, no need to fetch here
 
@@ -61,16 +59,45 @@ export default function EmployeesList() {
     emp => emp.status === 'rejected' && (searchTerm ? filterEmployees([emp], searchTerm).length > 0 : true),
   );
 
+  const rejectEmployee = (employee: Employee) => {
+    updateEmployeeStatus(employee, 'rejected', userData, missions, employees, updateUserData)
+      .then(({ updatedEmployee, emailSent }) => {
+        showToast({
+          type: ToastType.Info,
+          message: `${getEmployeeFullName(updatedEmployee)} a été rejeté${
+            emailSent ? ". L'employé a été notifié par email." : '.'
+          }`,
+        });
+      })
+      .catch(error => {
+        showToast({ type: ToastType.Error, message: error.toString(), error });
+      });
+  };
+
   // Handle status change
   const handleStatusChange = (employee: Employee, newStatus: 'accepted' | 'rejected') => {
     // For rejection, show confirmation modal first
     if (newStatus === 'rejected') {
-      setEmployeeToReject(employee);
-      setIsRejectModalOpen(true);
+      const id = openModal(() => (
+        <ConfirmationModal
+          isOpen
+          title="Rejeter le prestataire"
+          message={`Vous êtes sur le point de rejeter ${getEmployeeFullName(employee)}.${
+            countEmployeeMissions(employee, missions) > 0
+              ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employee, missions)} mission(s).`
+              : ''
+          } Il ne pourra plus accéder à l'application.`}
+          confirmText="Rejeter"
+          cancelText="Annuler"
+          isDangerous
+          onConfirm={() => rejectEmployee(employee)}
+          onClose={() => closeModal(id)}
+        />
+      ));
     } else {
       updateEmployeeStatus(employee, newStatus, userData, missions, employees, updateUserData)
         .then(({ updatedEmployee, emailSent }) => {
-          setToast({
+          showToast({
             type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
             message: `${getEmployeeFullName(updatedEmployee)} a été ${
               newStatus === 'accepted' ? 'accepté' : 'rejeté'
@@ -78,52 +105,14 @@ export default function EmployeesList() {
           });
         })
         .catch(error => {
-          setToast({
-            type: ToastType.Error,
-            message: error.toString(),
-            error,
-          });
+          showToast({ type: ToastType.Error, message: error.toString(), error });
         });
     }
-  };
-
-  // Handle confirmation of employee rejection
-  const handleConfirmRejection = () => {
-    if (employeeToReject) {
-      updateEmployeeStatus(employeeToReject, 'rejected', userData, missions, employees, updateUserData)
-        .then(({ updatedEmployee, emailSent }) => {
-          setToast({
-            type: ToastType.Info,
-            message: `${getEmployeeFullName(updatedEmployee)} a été rejeté${
-              emailSent ? ". L'employé a été notifié par email." : '.'
-            }`,
-          });
-          handleDeleteRejection();
-        })
-        .catch(error => {
-          setToast({
-            type: ToastType.Error,
-            message: error.toString(),
-            error,
-          });
-        });
-    }
-  };
-
-  // Handle cancellation of employee rejection
-  const handleDeleteRejection = () => {
-    setIsRejectModalOpen(false);
-    setEmployeeToReject(null);
   };
 
   // Handle employee selection
   const handleEmployeeClick = (employee: Employee) => {
-    setSelectedEmployee(employee);
-  };
-
-  // Close employee details modal
-  const closeEmployeeDetails = () => {
-    setSelectedEmployee(null);
+    const id = openModal(() => <EmployeeDetails employee={employee} onClose={() => closeModal(id)} />);
   };
 
   // Helper function to render employee table for each status
@@ -166,8 +155,6 @@ export default function EmployeesList() {
 
   return (
     <div className="bg-background min-h-full px-4">
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-
       {employees.length > 1 && (
         <SearchInput
           className="mb-2"
@@ -199,29 +186,6 @@ export default function EmployeesList() {
           ]}
         />
       </div>
-
-      {/* Employee details modal */}
-      {selectedEmployee && <EmployeeDetails employee={selectedEmployee} onClose={closeEmployeeDetails} />}
-
-      {/* Confirmation modal for employee rejection */}
-      <ConfirmationModal
-        isOpen={isRejectModalOpen}
-        onConfirm={handleConfirmRejection}
-        onCancel={handleDeleteRejection}
-        title="Rejeter le prestataire"
-        message={
-          employeeToReject
-            ? `Vous êtes sur le point de rejeter ${getEmployeeFullName(employeeToReject)}.${
-                countEmployeeMissions(employeeToReject, missions) > 0
-                  ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employeeToReject, missions)} mission(s).`
-                  : ''
-              } Il ne pourra plus accéder à l'application.`
-            : ''
-        }
-        confirmText="Rejeter"
-        cancelText="Annuler"
-        isDangerous={true}
-      />
     </div>
   );
 }

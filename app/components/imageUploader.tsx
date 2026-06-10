@@ -3,8 +3,9 @@
 import { deleteFileFromSupabase, uploadFileToSupabase, uploadReportImageToSupabase } from '@/app/actions/storage';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import LoadingSpinner from '@/app/components/loadingSpinner';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { errorClassName } from '@/app/utils/className';
+import { useToast } from '@/app/contexts/toastProvider';
 import { fallbackImage, getStorageFileName, getStorageImageUrl } from '@/app/utils/storage';
 import { IconCheck, IconPhotoPlus, IconX } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
@@ -72,8 +73,7 @@ const ImageUploader = React.forwardRef<
   ) => {
     const inputFocusRef = useRef<HTMLInputElement>(null);
     const uploadButtonRef = useRef<HTMLInputElement>(null);
-
-    const [toast, setToast] = useState<Toast>();
+    const { showToast } = useToast();
 
     const [localImages, setLocalImages] = useState<LocalImage[]>([]);
     const [fullscreenImageUrl, setFullscreenImageUrl] = useState<string | undefined>();
@@ -263,7 +263,7 @@ const ImageUploader = React.forwardRef<
           ? 'Certaines photos existent déjà dans la sélection !'
           : '';
       if (message)
-        setToast({
+        showToast({
           type: ToastType.Warning,
           message,
         });
@@ -280,7 +280,7 @@ const ImageUploader = React.forwardRef<
 
         // Basic validation
         if (!file.type.startsWith('image/')) {
-          setToast({
+          showToast({
             type: ToastType.Warning,
             message: `Le fichier ${file.name} n&apos;est pas une image.`,
           });
@@ -288,7 +288,7 @@ const ImageUploader = React.forwardRef<
         }
 
         if (fileSizeMB > MAX_FILE_SIZE_MB) {
-          setToast({
+          showToast({
             type: ToastType.Warning,
             message: `Le fichier ${file.name} dépasse la taille maximale de ${MAX_FILE_SIZE_MB}MB.`,
           });
@@ -357,8 +357,6 @@ const ImageUploader = React.forwardRef<
 
     return (
       <div className={className}>
-        {toast && <ToastMessage toast={toast} onClose={() => setToast(undefined)} />}
-
         <div id="images">
           <div className="flex justify-between items-center mb-1">
             {label}

@@ -8,6 +8,8 @@ import { BadgeProvider } from '@/app/contexts/badgeProvider';
 import { HomesProvider } from '@/app/contexts/homesProvider';
 import { MenuProvider } from '@/app/contexts/menuProvider';
 import { MissionsProviderWrapper } from '@/app/contexts/missionsProvider';
+import { ModalProvider } from '@/app/contexts/modalProvider';
+import { ToastProvider } from '@/app/contexts/toastProvider';
 import '@/app/globals.css';
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
@@ -60,8 +62,12 @@ export default function RootLayout({
                 <HomesProvider>
                   <MissionsProviderWrapper>
                     <BadgeProvider>
-                      <NavigationLayout>{children}</NavigationLayout>
-                      <OfflineIndicator />
+                      <ToastProvider>
+                        <ModalProvider>
+                          <NavigationLayout>{children}</NavigationLayout>
+                          <OfflineIndicator />
+                        </ModalProvider>
+                      </ToastProvider>
                     </BadgeProvider>
                   </MissionsProviderWrapper>
                 </HomesProvider>

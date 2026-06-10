@@ -5,9 +5,10 @@ import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import ImageUploader from '@/app/components/imageUploader';
 import TextArea from '@/app/components/textArea';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import { Employee, Mission } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
 import { messageLengthRegex } from '@/app/utils/regex';
@@ -24,6 +25,7 @@ type MissionReportModalProps = {
 export default function MissionReportModal({ mission, onClose }: MissionReportModalProps) {
   const { homes } = useHomes();
   const { userData, findConciergerie } = useAuth();
+  const { showToast } = useToast();
   const home = homes.find(h => h.id === mission.homeId);
 
   const [content, setContent] = useState('');
@@ -31,7 +33,6 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
   const [images, setImages] = useState<string[]>([]);
   const [hasPendingImages, setHasPendingImages] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toast, setToast] = useState<Toast>();
 
   const imagesRef = useRef<HTMLInputElement>(null);
   const imageUploaderRef = useRef<{
@@ -74,13 +75,13 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
             });
           }
 
-          setToast({ type: ToastType.Success, message: 'Compte rendu envoyé à la conciergerie !' });
-          setTimeout(onClose, 800);
+          showToast({ type: ToastType.Success, message: 'Compte rendu envoyé à la conciergerie !' });
+          onClose();
         });
       })
       .catch(error => {
         console.error('Error saving mission report:', error);
-        setToast({ type: ToastType.Error, message: 'Erreur lors de l’envoi du compte rendu' });
+        showToast({ type: ToastType.Error, message: 'Erreur lors de l’envoi du compte rendu' });
         setIsSubmitting(false);
       });
   };
@@ -106,7 +107,6 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
       footer={footer}
       disabled={isSubmitting}
     >
-      {toast && <ToastMessage toast={toast} onClose={() => setToast(undefined)} />}
       <div className="space-y-4 py-2">
         <TextArea
           id="report-content"

@@ -3,8 +3,8 @@
 import Accordion from '@/app/components/accordion';
 import ChangelogModal from '@/app/components/changelogModal';
 import M3LoadingSpinner from '@/app/components/m3LoadingSpinner';
-import { Toast, ToastMessage } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useModal } from '@/app/contexts/modalProvider';
 import ConciergerieSettings from '@/app/settings/components/conciergerieSettings';
 import ConnectedDevicesSettings from '@/app/settings/components/connectedDevicesSettings';
 import EmployeeSettings from '@/app/settings/components/employeeSettings';
@@ -16,16 +16,20 @@ import { useEffect, useState } from 'react';
 
 export default function Settings() {
   const { userType, isLoading: authLoading, userData } = useAuth();
+  const { openModal, closeModal } = useModal();
 
-  const [toast, setToast] = useState<Toast>();
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
-  const [showChangelogHistory, setShowChangelogHistory] = useState(false);
 
   useEffect(() => {
     if (!authLoading) setHasLoadedOnce(true);
   }, [authLoading]);
 
   const deviceCount = userData?.id?.length ?? 0;
+
+  const handleShowChangelog = () => {
+    if (!userType) return;
+    const id = openModal(() => <ChangelogModal userType={userType} onClose={() => closeModal(id)} mode="history" />);
+  };
 
   // Data is loaded by AuthProvider, no need to fetch here
 
@@ -39,12 +43,12 @@ export default function Settings() {
             tabIndex={0}
             onClick={e => {
               e.stopPropagation();
-              setShowChangelogHistory(true);
+              handleShowChangelog();
             }}
             onKeyDown={e => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.stopPropagation();
-                setShowChangelogHistory(true);
+                handleShowChangelog();
               }
             }}
             className="text-foreground/40 hover:text-primary transition-colors cursor-pointer"
@@ -79,10 +83,6 @@ export default function Settings() {
 
   return (
     <div className="bg-background min-h-full max-w-2xl mx-auto px-4">
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-      {showChangelogHistory && userType && (
-        <ChangelogModal userType={userType} onClose={() => setShowChangelogHistory(false)} mode="history" />
-      )}
       <Accordion items={accordionItems} defaultOpenIndex={-1} />
     </div>
   );

@@ -1,8 +1,9 @@
 import { updateConciergerieData } from '@/app/actions/conciergerie';
 import { updateEmployeeData } from '@/app/actions/employee';
 import Switch from '@/app/components/switch';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { useAuth, UserType } from '@/app/contexts/authProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { textClassName } from '@/app/utils/className';
 import {
@@ -36,7 +37,7 @@ const getDefaultSettings = (userType: UserType | undefined) => {
 const NotificationSettings: React.FC = () => {
   const { userType, userData, updateUserData, isConciergerie } = useAuth();
 
-  const [toast, setToast] = useState<Toast>();
+  const { showToast } = useToast();
   const [settings, setSettings] = useState<ConciergerieNotificationSettings | EmployeeNotificationSettings>(
     userData?.notificationSettings || getDefaultSettings(userType),
   );
@@ -81,12 +82,12 @@ const NotificationSettings: React.FC = () => {
 
       await updateData();
 
-      setToast({
+      showToast({
         type: ToastType.Success,
         message: 'Préférences de notification enregistrées',
       });
     } catch (error) {
-      setToast({
+      showToast({
         type: ToastType.Error,
         message: "Erreur lors de l'enregistrement des préférences",
         error,
@@ -98,8 +99,6 @@ const NotificationSettings: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-
       <div className="space-y-1">
         <h3 className={textClassName}>Recevoir un email lorsque :</h3>
         <div className="space-y-1 divide-y divide-secondary mt-2">

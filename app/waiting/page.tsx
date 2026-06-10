@@ -3,9 +3,10 @@
 import AppVersion from '@/app/components/appVersion';
 import { RefreshButton } from '@/app/components/button';
 import ErrorPage from '@/app/components/error';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { getTimeDifference, getTimeRemaining, isElapsedTimeLessThan } from '@/app/utils/date';
@@ -46,7 +47,7 @@ export default function WaitingPage() {
   const [minimumWaitingTime, setMinimumWaitingTime] = useState(0);
   const [refreshDisabled, setRefreshDisabled] = useState(true);
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
-  const [toast, setToast] = useState<Toast>();
+  const { showToast } = useToast();
 
   const handleConciergerie = useCallback(() => {
     const foundConciergerie = findConciergerie(conciergerieName ?? null);
@@ -114,13 +115,13 @@ export default function WaitingPage() {
     navigator.clipboard
       .writeText(id)
       .then(() => {
-        setToast({
+        showToast({
           type: ToastType.Success,
           message: 'ID copié dans le presse-papier',
         });
       })
       .catch(err => {
-        setToast({
+        showToast({
           type: ToastType.Error,
           message: "Impossible de copier l'ID",
           error: err,
@@ -149,7 +150,7 @@ export default function WaitingPage() {
   const handleRefreshWithEmail = useCallback(() => {
     if (conciergerie && userId)
       return EmailSender.sendVerificationEmail(conciergerie, userId).then(() => {
-        setToast({ type: ToastType.Success, message: "L'email de vérification a été envoyé avec succès" });
+        showToast({ type: ToastType.Success, message: "L'email de vérification a été envoyé avec succès" });
       });
 
     if (employee && userId) {
@@ -157,18 +158,18 @@ export default function WaitingPage() {
         const selectedConciergerie = findConciergerie(employee.conciergerieName ?? null);
         if (selectedConciergerie)
           return EmailSender.sendRegistrationEmail(selectedConciergerie, employee).then(() => {
-            setToast({ type: ToastType.Success, message: "L'email de notification a été envoyé avec succès" });
+            showToast({ type: ToastType.Success, message: "L'email de notification a été envoyé avec succès" });
           });
       } else if (employee.status === 'accepted') {
         return EmailSender.sendNewDeviceEmail(employee, userId).then(() => {
-          setToast({
+          showToast({
             type: ToastType.Success,
             message: "L'email de notification de nouvel appareil a été envoyé avec succès",
           });
         });
       }
     }
-  }, [conciergerie, employee, userId, findConciergerie]);
+  }, [conciergerie, employee, userId, findConciergerie, showToast]);
 
   const RefreshButtons = () => (
     <div className="flex items-center justify-center">
@@ -191,8 +192,6 @@ export default function WaitingPage() {
 
   return (
     <div className="flex-1 flex items-center justify-center bg-background">
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-
       <div className="w-full max-w-md bg-background overflow-hidden pt-6 px-4 pb-2 flex flex-col gap-4">
         {conciergerie ? (
           // Conciergerie waiting page

@@ -8,9 +8,10 @@ import FormActions from '@/app/components/formActions';
 import Input from '@/app/components/input';
 import Select from '@/app/components/select';
 import TextArea from '@/app/components/textArea';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { useRateLimiter } from '@/app/hooks/useRateLimiter';
@@ -43,7 +44,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     conciergerieName: conciergeries?.[0]?.name || '',
     message: '',
   });
-  const [toast, setToast] = useState<Toast>();
+  const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormChanged, setIsFormChanged] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -93,13 +94,13 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     if (!canAttempt || !formData || !userId) return;
 
     if (!attempt()) {
-      setToast({ type: ToastType.Error, message: 'Veuillez patienter avant de réessayer' });
+      showToast({ type: ToastType.Error, message: 'Veuillez patienter avant de réessayer' });
       return;
     }
 
     const selectedConciergerie = findConciergerie(formData.conciergerieName ?? null);
     if (!selectedConciergerie?.email) {
-      setToast({ type: ToastType.Error, message: 'Email de la conciergerie non disponible' });
+      showToast({ type: ToastType.Error, message: 'Email de la conciergerie non disponible' });
       return;
     }
 
@@ -117,14 +118,14 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     })
       .then((success: boolean) => {
         if (success) {
-          setToast({ type: ToastType.Success, message: 'Message envoyé à votre conciergerie' });
+          showToast({ type: ToastType.Success, message: 'Message envoyé à votre conciergerie' });
           setShowContactButton(false);
         } else {
-          setToast({ type: ToastType.Error, message: "Échec de l'envoi. Veuillez réessayer." });
+          showToast({ type: ToastType.Error, message: "Échec de l'envoi. Veuillez réessayer." });
         }
       })
       .catch(() => {
-        setToast({ type: ToastType.Error, message: "Erreur lors de l'envoi" });
+        showToast({ type: ToastType.Error, message: "Erreur lors de l'envoi" });
       });
   };
 
@@ -272,13 +273,13 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
         // Use EmailSender for consistent retry mechanism
         await EmailSender.sendRegistrationEmail(selectedConciergerie, newEmployee);
-        setToast({ type: ToastType.Success, message: "L'email de notification a été envoyé avec succès" });
+        showToast({ type: ToastType.Success, message: "L'email de notification a été envoyé avec succès" });
 
         // Wait a bit before redirecting to allow the email to be sent and a toast to be displayed
         setTimeout(() => onMenuChange(Page.Waiting), 1500);
       }
     } catch (error) {
-      setToast({
+      showToast({
         type: ToastType.Error,
         message: String(error),
         error,
@@ -308,7 +309,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
       // Send notification email to employee about the new device
       await EmailSender.sendNewDeviceEmail(updatedEmployee, userId);
-      setToast({
+      showToast({
         type: ToastType.Success,
         message: "L'email de notification de nouvel appareil a été envoyé avec succès",
       });
@@ -327,7 +328,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     setMaxDevicesPrompt(null);
     setIsSubmitting(true);
     proceedWithDeviceUpdate(employee, true).catch(error => {
-      setToast({
+      showToast({
         type: ToastType.Error,
         message: String(error),
         error,
@@ -349,8 +350,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
   return (
     <div className="min-h-full w-full flex flex-col items-center justify-start bg-background pt-2">
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-
       <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>
 
       <form onSubmit={handleSubmit} className="w-full px-4 space-y-2">

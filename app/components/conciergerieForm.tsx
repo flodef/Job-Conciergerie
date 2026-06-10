@@ -2,8 +2,9 @@
 
 import ErrorPage from '@/app/components/error';
 import FormActions from '@/app/components/formActions';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { cn, textClassName } from '@/app/utils/className';
 import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
@@ -37,7 +38,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     if (!conciergerieName && conciergeries?.at(0)?.name) setConciergerieName(conciergeries.at(0)!.name);
   }, [conciergeries, conciergerieName]);
 
-  const [toast, setToast] = useState<Toast>();
+  const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -73,12 +74,12 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
       EmailSender.sendVerificationEmail(selectedConciergerie, userId).then(() => {
-        setToast({ type: ToastType.Success, message: "L'email de vérification a été envoyé avec succès" });
+        showToast({ type: ToastType.Success, message: "L'email de vérification a été envoyé avec succès" });
       });
 
       onMenuChange(Page.Waiting);
     } catch (error) {
-      setToast({
+      showToast({
         type: ToastType.Error,
         message: String(error),
         error,
@@ -92,8 +93,6 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
 
   return (
     <div className="h-full w-full flex flex-col items-center justify-center bg-background">
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-
       <h2 className="text-2xl font-bold mb-4">Conciergerie</h2>
 
       <form onSubmit={handleSubmit} className="w-full max-w-sm px-4 space-y-4">

@@ -8,9 +8,11 @@ import Label from '@/app/components/label';
 import MultiSelect from '@/app/components/multiSelect';
 import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import TaskSelector from '@/app/components/taskSelector';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
+import { useModal } from '@/app/contexts/modalProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import { Mission, Task } from '@/app/types/dataTypes';
 import { ErrorField } from '@/app/types/types';
 import {
@@ -37,6 +39,8 @@ type MissionFormProps = {
 export default function MissionForm({ mission, onClose, onCancel, mode }: MissionFormProps) {
   const { homes, addMission, updateMission, missionExists } = useMissions();
   const { conciergerieName, employees: allEmployees } = useAuth();
+  const { openModal, closeModal } = useModal();
+  const { showToast } = useToast();
 
   // Filter homes by the current conciergerie
   const filteredHomes = useMemo(
@@ -76,8 +80,6 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [toast, setToast] = useState<Toast>();
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Validation states
   const [homeIdError, setHomeIdError] = useState('');
@@ -107,7 +109,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
 
       if (message) {
         setCannotEdit(true);
-        setToast({ type: ToastType.Warning, message });
+        showToast({ type: ToastType.Warning, message });
       }
     }
   }, [mission, mode]);
@@ -170,13 +172,39 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   };
 
   const handleCancel = () => {
-    if (checkFormChanged()) setShowConfirmDialog(true);
-    else closeAndCancel();
+    if (checkFormChanged()) {
+      const id = openModal(() => (
+        <ConfirmationModal
+          isOpen
+          title="Modifications non enregistrées"
+          message="Vous avez des modifications non enregistrées. Voulez-vous vraiment fermer ?"
+          confirmText="Fermer"
+          cancelText="Annuler"
+          onConfirm={closeAndCancel}
+          onClose={() => closeModal(id)}
+        />
+      ));
+    } else {
+      closeAndCancel();
+    }
   };
 
   const handleClose = () => {
-    if (checkFormChanged()) setShowConfirmDialog(true);
-    else onClose();
+    if (checkFormChanged()) {
+      const id = openModal(() => (
+        <ConfirmationModal
+          isOpen
+          title="Modifications non enregistrées"
+          message="Vous avez des modifications non enregistrées. Voulez-vous vraiment fermer ?"
+          confirmText="Fermer"
+          cancelText="Annuler"
+          onConfirm={closeAndCancel}
+          onClose={() => closeModal(id)}
+        />
+      ));
+    } else {
+      onClose();
+    }
   };
 
   const handleSubmit = async () => {
@@ -245,7 +273,8 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         if (!result) throw new Error("Impossible d'ajouter la mission");
 
         setIsSuccess(true);
-        setToast({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
+        showToast({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
+        onClose();
       } else if (mission) {
         const updatedMission: Mission = {
           ...mission,
@@ -265,16 +294,17 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
         if (!success) throw new Error('Impossible de mettre à jour la mission');
 
         setIsSuccess(true);
-        setToast({
+        showToast({
           type: ToastType.Success,
           message: employeeNotified
             ? 'Mission mise à jour ! Le prestataire a été notifié.'
             : 'Mission mise à jour avec succès !',
         });
+        onClose();
       }
     } catch (error) {
       setIsSubmitting(false);
-      setToast({ type: ToastType.Error, message: String(error), error });
+      showToast({ type: ToastType.Error, message: String(error), error });
     }
   };
 
@@ -340,139 +370,114 @@ export default function MissionForm({ mission, onClose, onCancel, mode }: Missio
   );
 
   return (
-    <>
-      <ToastMessage
-        toast={toast}
-        onClose={() => {
-          setToast(undefined);
-          if (isSuccess) onClose();
-        }}
-      />
+    <FullScreenModal
+      title={mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}
+      onClose={handleClose}
+      disabled={isSubmitting || isSuccess}
+      footer={!isSuccess ? footer : undefined}
+    >
+      <form className="space-y-2">
+        <Combobox
+          id="home-select"
+          label="Bien"
+          ref={homeSelectRef}
+          value={homeId}
+          onChange={value => handleChange(value, setHomeId, setHomeIdError)}
+          options={filteredHomes.map(home => ({
+            value: home.id,
+            label: home.title,
+          }))}
+          disabled={isSubmitting || cannotEdit}
+          placeholder="Sélectionner un bien"
+          error={homeIdError}
+          required
+        />
 
-      {!isSuccess && (
-        <FullScreenModal
-          title={mode === 'add' ? 'Ajouter une mission' : 'Modifier la mission'}
-          onClose={handleClose}
-          disabled={isSubmitting || isSuccess}
-          footer={!isSuccess ? footer : undefined}
-        >
-          <form className="space-y-2">
-            <Combobox
-              id="home-select"
-              label="Bien"
-              ref={homeSelectRef}
-              value={homeId}
-              onChange={value => handleChange(value, setHomeId, setHomeIdError)}
-              options={filteredHomes.map(home => ({
-                value: home.id,
-                label: home.title,
-              }))}
-              disabled={isSubmitting || cannotEdit}
-              placeholder="Sélectionner un bien"
-              error={homeIdError}
-              required
-            />
+        {missionHours > 0 && (
+          <div className="mt-2">
+            <Label id="mission-hours">
+              Durée estimée :{' '}
+              <span className="font-bold">
+                {missionHours} heure{missionHours > 1 ? 's' : ''}
+              </span>
+            </Label>
+          </div>
+        )}
 
-            {missionHours > 0 && (
-              <div className="mt-2">
-                <Label id="mission-hours">
-                  Durée estimée :{' '}
-                  <span className="font-bold">
-                    {missionHours} heure{missionHours > 1 ? 's' : ''}
-                  </span>
-                </Label>
-              </div>
-            )}
+        <TaskSelector
+          id="task-select"
+          label="Tâches"
+          ref={taskRef}
+          availableTasks={getAvailableTasks(filteredHomes.find(h => h.id === homeId) || undefined, Object.values(Task))}
+          selectedTasks={tasks}
+          onTasksChange={setTasks}
+          error={tasksError}
+          setError={setTasksError}
+          disabled={isSubmitting || cannotEdit}
+          required
+        />
 
-            <TaskSelector
-              id="task-select"
-              label="Tâches"
-              ref={taskRef}
-              availableTasks={getAvailableTasks(
-                filteredHomes.find(h => h.id === homeId) || undefined,
-                Object.values(Task),
-              )}
-              selectedTasks={tasks}
-              onTasksChange={setTasks}
-              error={tasksError}
-              setError={setTasksError}
-              disabled={isSubmitting || cannotEdit}
-              required
-            />
+        <ResponsiveDateTimeInput
+          id="start-date"
+          label="Date et heure de début"
+          ref={startDateRef}
+          value={startDateTime}
+          onChange={handleStartDateChange}
+          onBlur={handleStartDateBlur}
+          onEscape={() => {
+            setStartDateTime(lastCommittedStart);
+            setEndDateTime(lastCommittedEnd);
+          }}
+          error={startDateTimeError}
+          onError={setStartDateTimeError}
+          min={localISOString(getMinStartDate())}
+          disabled={isSubmitting || cannotEdit}
+          required
+        />
 
-            <ResponsiveDateTimeInput
-              id="start-date"
-              label="Date et heure de début"
-              ref={startDateRef}
-              value={startDateTime}
-              onChange={handleStartDateChange}
-              onBlur={handleStartDateBlur}
-              onEscape={() => {
-                setStartDateTime(lastCommittedStart);
-                setEndDateTime(lastCommittedEnd);
-              }}
-              error={startDateTimeError}
-              onError={setStartDateTimeError}
-              min={localISOString(getMinStartDate())}
-              disabled={isSubmitting || cannotEdit}
-              required
-            />
+        <ResponsiveDateTimeInput
+          id="end-date"
+          label="Date et heure de fin"
+          ref={endDateRef}
+          value={endDateTime}
+          onChange={handleEndDateChange}
+          onEscape={() => {
+            setStartDateTime(lastCommittedStart);
+            setEndDateTime(lastCommittedEnd);
+          }}
+          error={endDateTimeError}
+          onError={setEndDateTimeError}
+          min={localISOString(getMinEndDate())}
+          disabled={isSubmitting || cannotEdit}
+          required
+        />
 
-            <ResponsiveDateTimeInput
-              id="end-date"
-              label="Date et heure de fin"
-              ref={endDateRef}
-              value={endDateTime}
-              onChange={handleEndDateChange}
-              onEscape={() => {
-                setStartDateTime(lastCommittedStart);
-                setEndDateTime(lastCommittedEnd);
-              }}
-              error={endDateTimeError}
-              onError={setEndDateTimeError}
-              min={localISOString(getMinEndDate())}
-              disabled={isSubmitting || cannotEdit}
-              required
-            />
-
-            <MultiSelect
-              id="prestataires-select"
-              label="Prestataires"
-              values={selectedEmployees}
-              onChange={setSelectedEmployees}
-              options={employees.map(emp => ({
-                value: getUserKey(emp),
-                label: getUserKey(emp),
-              }))}
-              disabled={isSubmitting || cannotEdit}
-              required
-              allOption
-              tooltip={
-                <>
-                  {selectedEmployees.length === 0
-                    ? 'Tous les prestataires pourront voir cette mission'
-                    : 'Seuls les prestataires suivant pourront voir cette mission :'}
-                  <ul className="list-disc pl-4">
-                    {selectedEmployees.map(employeeId => (
-                      <li key={employeeId}>{employeeId}</li>
-                    ))}
-                  </ul>
-                </>
-              }
-            />
-
-            <ConfirmationModal
-              isOpen={showConfirmDialog}
-              onClose={() => setShowConfirmDialog(false)}
-              onConfirm={onClose}
-              title="Modifications non enregistrées"
-              message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
-              confirmText="Quitter sans enregistrer"
-              cancelText="Continuer l'édition"
-            />
-          </form>
-        </FullScreenModal>
-      )}
-    </>
+        <MultiSelect
+          id="prestataires-select"
+          label="Prestataires"
+          values={selectedEmployees}
+          onChange={setSelectedEmployees}
+          options={employees.map(emp => ({
+            value: getUserKey(emp),
+            label: getUserKey(emp),
+          }))}
+          disabled={isSubmitting || cannotEdit}
+          required
+          allOption
+          tooltip={
+            <>
+              {selectedEmployees.length === 0
+                ? 'Tous les prestataires pourront voir cette mission'
+                : 'Seuls les prestataires suivant pourront voir cette mission :'}
+              <ul className="list-disc pl-4">
+                {selectedEmployees.map(employeeId => (
+                  <li key={employeeId}>{employeeId}</li>
+                ))}
+              </ul>
+            </>
+          }
+        />
+      </form>
+    </FullScreenModal>
   );
 }

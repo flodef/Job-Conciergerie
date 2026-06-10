@@ -1,14 +1,14 @@
 'use client';
 
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import EmployeeDetails from '@/app/employees/components/employeeDetails';
+import { useModal } from '@/app/contexts/modalProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
-import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionDetails from '@/app/missions/components/missionDetails';
-import { Employee, Mission } from '@/app/types/dataTypes';
+import { Mission } from '@/app/types/dataTypes';
 import { formatCalendarDate, formatMissionTimeForCalendar, groupMissionsByDate } from '@/app/utils/calendar';
 import {
   cn,
@@ -37,11 +37,12 @@ export default function Calendar() {
     findConciergerie,
     userData,
   } = useAuth();
-  const { missions, isLoading: missionsLoading, fetchMissions, getLateMissions, completeMission } = useMissions();
+  const { missions, isLoading: missionsLoading, fetchMissions, getLateMissions } = useMissions();
   const { homes } = useHomes();
   const { needsRefresh, updateFetchTime } = useFetchTime();
+  const { openModal, closeModal } = useModal();
+  const { showToast } = useToast();
   const needsRefreshCalendar = needsRefresh[Page.Calendar];
-  const [toast, setToast] = useState<Toast>();
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   // Track when initial load completes
@@ -52,11 +53,6 @@ export default function Calendar() {
   const [acceptedMissions, setAcceptedMissions] = useState<Mission[]>([]);
   const [missionsByDate, setMissionsByDate] = useState<Map<string, Mission[]>>(new Map());
   const [sortedDates, setSortedDates] = useState<string[]>([]);
-  const [selectedMission, setSelectedMission] = useState<Mission | null>(null);
-  const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
-  const [selectedEmployeeForDetails, setSelectedEmployeeForDetails] = useState<Employee | null>(null);
-  const [missionForEmployeeDetails, setMissionForEmployeeDetails] = useState<Mission | null>(null);
-  const [missionToRestore, setMissionToRestore] = useState<Mission | null>(null);
 
   const [startedMissionsCount, setStartedMissionsCount] = useState(0);
   const [lateMissionsCount, setLateMissionsCount] = useState(0);
@@ -83,7 +79,7 @@ export default function Calendar() {
       .then(isSuccess => {
         if (isSuccess) updateFetchTime([Page.Calendar, Page.Missions, Page.Homes]);
         else
-          setToast({
+          showToast({
             type: ToastType.Error,
             message: 'Erreur lors du chargement des missions',
           });
@@ -138,7 +134,7 @@ export default function Calendar() {
   }, [missions, conciergerieName, employeeName, isEmployee, isConciergerie, getLateMissions]);
 
   const handleMissionClick = (mission: Mission) => {
-    setSelectedMission(mission);
+    const id = openModal(() => <MissionDetails mission={mission} onClose={() => closeModal(id)} isFromCalendar />);
   };
 
   const handleBadgeClick = (type: 'started' | 'late' | 'missingPartner') => {
@@ -170,66 +166,6 @@ export default function Calendar() {
     }
   };
 
-  const handleCloseDetails = (reopenAfter = false) => {
-    if (!reopenAfter) {
-      setSelectedMission(null);
-    } else {
-      setMissionToRestore(selectedMission);
-      setSelectedMission(null);
-    }
-  };
-
-  const handleOpenCompletionModal = () => {
-    setIsCompletionModalOpen(true);
-  };
-
-  const handleCloseCompletionModal = () => {
-    setIsCompletionModalOpen(false);
-    // Reopen mission details after a small delay
-    setTimeout(() => {
-      // Mission details will reopen because selectedMission is still set
-    }, 100);
-  };
-
-  const handleCompleteMission = async () => {
-    console.log('handleCompleteMission called in calendar');
-    if (!selectedMission) return;
-
-    const isSuccess = await completeMission(selectedMission.id);
-    if (isSuccess) {
-      setToast({
-        type: ToastType.Success,
-        message: 'Mission terminée ! Félicitations !',
-      });
-      setIsCompletionModalOpen(false);
-      setSelectedMission(null);
-      // Refresh missions
-      fetchMissions();
-    } else {
-      setToast({
-        type: ToastType.Error,
-        message: 'Erreur lors de la validation de la mission',
-      });
-    }
-  };
-
-  const handleOpenEmployeeDetails = (employee: Employee) => {
-    setSelectedEmployeeForDetails(employee);
-    setMissionForEmployeeDetails(selectedMission);
-    setMissionToRestore(selectedMission);
-    setSelectedMission(null);
-  };
-
-  const handleCloseEmployeeDetails = () => {
-    setSelectedEmployeeForDetails(null);
-    setMissionForEmployeeDetails(null);
-    // Reopen mission details immediately
-    if (missionToRestore) {
-      setSelectedMission(missionToRestore);
-      setMissionToRestore(null);
-    }
-  };
-
   // Only show empty state if not loading and we've confirmed there are no missions
   if (!hasLoadedOnce) return <M3LoadingSpinner />;
 
@@ -253,8 +189,6 @@ export default function Calendar() {
 
   return (
     <div className="bg-background min-h-full px-4">
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
-
       {/* Badge for started missions */}
       {startedMissionsCount + lateMissionsCount + missingPartnerMissionsCount > 0 && (
         <div className="sticky top-0 z-20 bg-background space-y-2 mb-4">
@@ -303,32 +237,6 @@ export default function Calendar() {
             </div>
           )}
         </div>
-      )}
-
-      {selectedMission && (
-        <MissionDetails
-          mission={selectedMission}
-          onClose={handleCloseDetails}
-          isFromCalendar={true}
-          onOpenCompletionModal={handleOpenCompletionModal}
-          onOpenEmployeeDetails={handleOpenEmployeeDetails}
-        />
-      )}
-
-      {isCompletionModalOpen && selectedMission && (
-        <MissionCompletionModal
-          mission={selectedMission}
-          onClose={handleCloseCompletionModal}
-          onComplete={handleCompleteMission}
-        />
-      )}
-
-      {selectedEmployeeForDetails && missionForEmployeeDetails && (
-        <EmployeeDetails
-          employee={selectedEmployeeForDetails}
-          mission={missionForEmployeeDetails}
-          onClose={handleCloseEmployeeDetails}
-        />
       )}
 
       <div className="space-y-4">

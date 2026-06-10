@@ -2,20 +2,20 @@
 
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FloatingActionButton from '@/app/components/floatingActionButton';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
+import { useModal } from '@/app/contexts/modalProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import HomeForm from '@/app/homes/components/homeForm';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import MissionDetails from '@/app/missions/components/missionDetails';
-import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
-import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import MissionFilters, { MissionFiltersType } from '@/app/missions/components/missionFilters';
 import MissionForm from '@/app/missions/components/missionForm';
 import MissionList from '@/app/missions/components/missionList';
 import MissionSortControls from '@/app/missions/components/missionSortControls';
-import { Employee, Mission, MissionSortField } from '@/app/types/dataTypes';
+import { MissionSortField } from '@/app/types/dataTypes';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import {
   applyMissionFilters,
@@ -29,13 +29,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
 
 export default function Missions() {
-  const { missions, isLoading: missionsLoading, fetchMissions, completeMission } = useMissions();
+  const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
   const { homes } = useHomes();
   const { userType, isLoading: authLoading, employeeName, conciergerieName, isEmployee, isConciergerie } = useAuth();
   const { updateFetchTime, needsRefresh } = useFetchTime();
+  const { openModal, closeModal } = useModal();
+  const { showToast } = useToast();
   const needsRefreshMissions = needsRefresh[Page.Missions];
 
-  const [toast, setToast] = useState<Toast>();
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   // Track when initial load completes
@@ -43,77 +44,37 @@ export default function Missions() {
     if (!authLoading && !missionsLoading) setHasLoadedOnce(true);
   }, [authLoading, missionsLoading, missions.length]);
 
-  // Modal states - must be declared before any conditional returns
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isAddHomeModalOpen, setIsAddHomeModalOpen] = useState(false);
-  const [isNoHomesModalOpen, setIsNoHomesModalOpen] = useState(false);
-  const [selectedMission, setSelectedMission] = useState<string | null>(null);
-  const [isCompletionModalOpen, setIsCompletionModalOpen] = useState(false);
-  const [selectedEmployeeForDetails, setSelectedEmployeeForDetails] = useState<Employee | null>(null);
-  const [missionForEmployeeDetails, setMissionForEmployeeDetails] = useState<Mission | null>(null);
-  const [missionToRestore, setMissionToRestore] = useState<string | null>(null);
-
-  const handleOpenCompletionModal = () => {
-    setIsCompletionModalOpen(true);
-  };
-
-  const handleCloseCompletionModal = () => {
-    setIsCompletionModalOpen(false);
-    // Reopen mission details after a small delay
-    setTimeout(() => {
-      // Mission details will reopen because selectedMission is still set
-    }, 100);
-  };
-
-  const handleCompleteMission = async () => {
-    console.log('handleCompleteMission called in missions page');
-    const mission = missions.find(m => m.id === selectedMission);
+  // Open the mission details modal (view mode) through the singleton
+  const openMissionDetails = (id: string) => {
+    const mission = missions.find(m => m.id === id);
     if (!mission) return;
-
-    const isSuccess = await completeMission(mission.id);
-    if (isSuccess) {
-      setToast({
-        type: ToastType.Success,
-        message: 'Mission terminée ! Félicitations !',
-      });
-      setIsCompletionModalOpen(false);
-      setSelectedMission(null);
-      // Refresh missions
-      fetchMissions();
-    } else {
-      setToast({
-        type: ToastType.Error,
-        message: 'Erreur lors de la validation de la mission',
-      });
-    }
+    const modalId = openModal(() => <MissionDetails mission={mission} onClose={() => closeModal(modalId)} />);
   };
 
-  const handleCloseDetails = (reopenAfter = false) => {
-    if (!reopenAfter) {
-      setSelectedMission(null);
-    } else {
-      setMissionToRestore(selectedMission);
-      setSelectedMission(null);
-    }
+  // Open the mission edit form through the singleton
+  const openMissionEdit = (id: string) => {
+    const mission = missions.find(m => m.id === id);
+    if (!mission) return;
+    const modalId = openModal(() => <MissionForm mission={mission} onClose={() => closeModal(modalId)} mode="edit" />);
   };
 
-  const handleOpenEmployeeDetails = (employee: Employee) => {
-    const mission = missions.find(m => m.id === selectedMission);
-    setSelectedEmployeeForDetails(employee);
-    setMissionForEmployeeDetails(mission || null);
-    setMissionToRestore(selectedMission);
-    setSelectedMission(null);
+  // Open the add-mission form through the singleton
+  const openAddMission = () => {
+    const modalId = openModal(() => <MissionForm onClose={() => closeModal(modalId)} mode="add" />);
   };
 
-  const handleCloseEmployeeDetails = () => {
-    setSelectedEmployeeForDetails(null);
-    setMissionForEmployeeDetails(null);
-    // Reopen mission details immediately
-    if (missionToRestore) {
-      setSelectedMission(missionToRestore);
-      setMissionToRestore(null);
-    }
+  // Open the add-home form, then chain into add-mission on success
+  const openAddHome = () => {
+    const modalId = openModal(() => (
+      <HomeForm
+        mode="add"
+        onClose={() => {
+          closeModal(modalId);
+          openAddMission();
+        }}
+        onCancel={() => closeModal(modalId)}
+      />
+    ));
   };
 
   // Sorting state - must be declared before any conditional returns
@@ -149,7 +110,7 @@ export default function Missions() {
       .then(isSuccess => {
         if (isSuccess) updateFetchTime([Page.Calendar, Page.Missions, Page.Homes]);
         else
-          setToast({
+          showToast({
             type: ToastType.Error,
             message: 'Erreur lors du chargement des missions',
           });
@@ -283,9 +244,19 @@ export default function Missions() {
   // Handle adding a new mission
   const handleAddMission = () => {
     if (homes.filter(h => h.conciergerieName === conciergerieName).length === 0) {
-      setIsNoHomesModalOpen(true);
+      const modalId = openModal(() => (
+        <ConfirmationModal
+          isOpen
+          title="Aucun bien disponible"
+          message="Vous devez d'abord ajouter un bien avant de pouvoir créer une mission."
+          confirmText="Ajouter un bien"
+          cancelText="Annuler"
+          onConfirm={openAddHome}
+          onClose={() => closeModal(modalId)}
+        />
+      ));
     } else {
-      setIsAddModalOpen(true);
+      openAddMission();
     }
   };
 
@@ -301,7 +272,6 @@ export default function Missions() {
 
   return (
     <div className="bg-background min-h-full px-4 pb-4">
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
       {/* Sort controls and filter toggle */}
       <MissionSortControls
         sortField={sortField}
@@ -343,11 +313,11 @@ export default function Missions() {
           groupedMissions={groupedMissions}
           collapsedCategories={collapsedCategories}
           setCollapsedCategories={setCollapsedCategories}
-          setSelectedMission={setSelectedMission}
+          onSelectMission={openMissionDetails}
           showFilters={showFilters}
           userType={userType}
           handleAddMission={handleAddMission}
-          setIsEditModalOpen={setIsEditModalOpen}
+          onEditMission={openMissionEdit}
           sortField={sortField}
           isLoading={false}
         />
@@ -355,70 +325,6 @@ export default function Missions() {
       {/* Only show the floating action button for conciergerie users */}
       {(filteredMissions.length > 0 || showFilters) && isConciergerie && (
         <FloatingActionButton onClick={handleAddMission} />
-      )}
-      {/* Mission details modal */}
-      {/* Edit mission modal */}
-      {missions.find(m => m.id === selectedMission) &&
-        (!isEditModalOpen ? (
-          <MissionDetails
-            mission={missions.find(m => m.id === selectedMission) as Mission}
-            onClose={handleCloseDetails}
-            onOpenCompletionModal={handleOpenCompletionModal}
-            onOpenEmployeeDetails={handleOpenEmployeeDetails}
-          />
-        ) : (
-          <MissionForm
-            mission={missions.find(m => m.id === selectedMission) as Mission}
-            onClose={() => {
-              setSelectedMission(null);
-              setIsEditModalOpen(false);
-            }}
-            mode="edit"
-          />
-        ))}
-      {/* Mission completion modal */}
-      {isCompletionModalOpen && missions.find(m => m.id === selectedMission) && (
-        <MissionCompletionModal
-          mission={missions.find(m => m.id === selectedMission) as Mission}
-          onClose={handleCloseCompletionModal}
-          onComplete={handleCompleteMission}
-        />
-      )}
-
-      {/* Employee details modal */}
-      {selectedEmployeeForDetails && missionForEmployeeDetails && (
-        <EmployeeDetails
-          employee={selectedEmployeeForDetails}
-          mission={missionForEmployeeDetails}
-          onClose={handleCloseEmployeeDetails}
-        />
-      )}
-      {/* Add mission modal */}
-      {isAddModalOpen && <MissionForm onClose={() => setIsAddModalOpen(false)} mode="add" />}
-      {/* Add home modal */}
-      {isAddHomeModalOpen && (
-        <HomeForm
-          onClose={() => {
-            setIsAddHomeModalOpen(false);
-            setIsAddModalOpen(true);
-          }}
-          onCancel={() => {
-            setIsAddModalOpen(false);
-          }}
-          mode="add"
-        />
-      )}
-      {/* No homes confirmation modal */}
-      {isNoHomesModalOpen && (
-        <ConfirmationModal
-          isOpen={isNoHomesModalOpen}
-          title="Aucun bien disponible"
-          message="Vous devez d'abord ajouter un bien avant de pouvoir créer une mission."
-          confirmText="Ajouter un bien"
-          cancelText="Annuler"
-          onConfirm={() => setIsAddHomeModalOpen(true)}
-          onClose={() => setIsNoHomesModalOpen(false)}
-        />
       )}
     </div>
   );
