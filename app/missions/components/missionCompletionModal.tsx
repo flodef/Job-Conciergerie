@@ -1,12 +1,15 @@
 'use client';
 
 import Checkbox from '@/app/components/checkbox';
+import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { Mission } from '@/app/types/dataTypes';
 import { cn } from '@/app/utils/className';
 import { useEffect, useState } from 'react';
+import MissionReportModal from './missionReportModal';
 
 type MissionCompletionModalProps = {
   mission: Mission;
@@ -16,7 +19,11 @@ type MissionCompletionModalProps = {
 
 export default function MissionCompletionModal({ mission, onClose, onComplete }: MissionCompletionModalProps) {
   const { homes } = useHomes();
+  const { isEmployee } = useAuth();
   const home = homes.find(h => h.id === mission.homeId);
+
+  // Flow steps: validate objectives → optionally ask for a report → fill the report
+  const [step, setStep] = useState<'objectives' | 'askReport' | 'report'>('objectives');
 
   // State to track which objectives are checked
   const [checkedObjectives, setCheckedObjectives] = useState<Record<string, boolean>>({});
@@ -51,10 +58,21 @@ export default function MissionCompletionModal({ mission, onClose, onComplete }:
     }));
   };
 
-  const handleConfirm = () => {
-    // Call the onComplete callback when all objectives are completed
+  // Finalize: complete the mission in DB and close the whole flow.
+  // Matches the original behaviour (onComplete + onClose) across all entry points.
+  const finish = () => {
     onComplete();
     onClose();
+  };
+
+  const handleConfirm = () => {
+    // Employees can optionally add a mission report before the mission is finalized.
+    // Conciergeries finalize immediately.
+    if (isEmployee) {
+      setStep('askReport');
+    } else {
+      finish();
+    }
   };
 
   const footer = (
@@ -68,6 +86,27 @@ export default function MissionCompletionModal({ mission, onClose, onComplete }:
   );
 
   if (!home) return null;
+
+  // Step 2: ask the employee whether they want to add a mission report.
+  // "Non, merci" finalizes the mission without a report.
+  if (step === 'askReport') {
+    return (
+      <ConfirmationModal
+        isOpen
+        title="Compte rendu de mission"
+        message="Souhaitez-vous ajouter un compte rendu de cette mission (commentaire et/ou photos) à destination de la conciergerie ?"
+        confirmText="Oui, ajouter"
+        cancelText="Non, merci"
+        onConfirm={() => setStep('report')}
+        onCancel={finish}
+      />
+    );
+  }
+
+  // Step 3: fill in the mission report; finalizing happens on close (with or without a report)
+  if (step === 'report') {
+    return <MissionReportModal mission={mission} onClose={finish} />;
+  }
 
   const checkedCount = Object.values(checkedObjectives).filter(Boolean).length;
   const totalCount = home.objectives.length;

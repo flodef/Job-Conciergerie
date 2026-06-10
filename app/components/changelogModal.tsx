@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 const INITIAL_COUNT = 1;
-const HISTORY_COUNT = 3;
+const HISTORY_COUNT = 10;
 
 function VersionSection({ entry }: { entry: VersionEntry }) {
   return (

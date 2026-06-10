@@ -3,6 +3,7 @@
 - **Améliorations UI** : meilleure gestion de l'affichage des prestataires autorisés
 - **Missions non terminées à temps** : vérification et envoi d'un email toutes les 10 minutes
 - **Amélioration navigation** : dans le calendrier, il est possible de cliquer sur les badges en haut de page (mission non terminées, mission démarrée, mission duo sans partenaire) afin de voir les missions concernées.
+- **Nouveau : Compte rendu de mission** : à la fin d'une mission, le prestataire peut rédiger un compte rendu (commentaire + jusqu'à 3 photos). Vous le recevez par email et il s'affiche dans les détails de la mission.
 
 # 2.165
 

@@ -6,6 +6,9 @@ import { createAdminClient } from '@/app/utils/supabase/server';
 // Constants
 const BUCKET_NAME = 'House images';
 
+// Folder where employee-uploaded mission report photos are stored
+const REPORTS_FOLDER = 'Reports';
+
 /**
  * Verifies if the current user is an authenticated Conciergerie
  * Returns the conciergerie ID if authorized, null otherwise
@@ -27,6 +30,24 @@ async function verifyConciergerieAuth(cookieStore: Awaited<ReturnType<typeof coo
     return userId;
   } catch (error) {
     console.error('Error verifying conciergerie auth:', error);
+    return null;
+  }
+}
+
+/**
+ * Verifies that the current user is authenticated (conciergerie or employee).
+ * Returns the user ID if authorized, null otherwise.
+ */
+async function verifyAuth(cookieStore: Awaited<ReturnType<typeof cookies>>): Promise<string | null> {
+  try {
+    const userId = cookieStore.get('user_id')?.value;
+    if (!userId) {
+      console.warn('Storage action: No user_id cookie found');
+      return null;
+    }
+    return userId;
+  } catch (error) {
+    console.error('Error verifying auth:', error);
     return null;
   }
 }
@@ -74,6 +95,51 @@ export async function uploadFileToSupabase(file: File, fileName?: string): Promi
     return data.path;
   } catch (error) {
     console.error('Error in uploadFileToSupabase:', error);
+    return null;
+  }
+}
+
+/**
+ * Uploads a mission report photo to Supabase Storage.
+ * Allowed for any authenticated user (employees and conciergeries), but the file
+ * is always stored under the protected `Reports/` folder to limit the scope.
+ * @param file File to upload
+ * @param fileName Path within the Reports folder (e.g. "missionId/0.jpg")
+ * @returns Promise<string> The file path in the bucket, or null if upload failed
+ */
+export async function uploadReportImageToSupabase(file: File, fileName: string): Promise<string | null> {
+  const cookieStore = await cookies();
+
+  // Verify user is authenticated (employee or conciergerie)
+  const userId = await verifyAuth(cookieStore);
+  if (!userId) {
+    console.error('Upload denied: user not authenticated.');
+    return null;
+  }
+
+  // Force the path into the Reports folder to prevent overwriting other files
+  const filePath = `${REPORTS_FOLDER}/${fileName}`.replace(/\/+/g, '/');
+
+  // Use admin client to bypass RLS policies
+  const supabase = createAdminClient();
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
+
+    const { data, error } = await supabase.storage.from(BUCKET_NAME).upload(filePath, buffer, {
+      contentType: file.type,
+      upsert: true,
+    });
+
+    if (error) {
+      console.error('Report image upload failed:', error.message);
+      return null;
+    }
+
+    return data.path;
+  } catch (error) {
+    console.error('Error in uploadReportImageToSupabase:', error);
     return null;
   }
 }

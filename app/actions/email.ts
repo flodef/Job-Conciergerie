@@ -5,6 +5,7 @@ import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { insertFailedEmail } from '@/app/db/failedEmailsDb';
 import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
+import { getStorageImageUrl } from '@/app/utils/storage';
 import { formatHours } from '@/app/utils/task';
 import { UserData } from '@/app/utils/user';
 import packageJson from '@/package.json';
@@ -90,6 +91,7 @@ type FailedEmailType =
   | 'missionAcceptance'
   | 'missionUpdated'
   | 'missionRemoved'
+  | 'missionReport'
   | 'newDevice'
   | 'contact';
 
@@ -518,6 +520,67 @@ function composeMissionRemovedToEmployeeEmail(
   };
 }
 
+function composeMissionReportEmail(
+  mission: Mission,
+  home: Home,
+  employee: Employee,
+  conciergerie: Conciergerie,
+  report: { content: string; images: string[] },
+): SendMailOptions {
+  const startDate = formatDateTime(mission.startDateTime);
+  const endDate = formatDateTime(mission.endDateTime);
+
+  const escapedContent = (report.content || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br>');
+
+  const imagesHtml =
+    report.images.length > 0
+      ? `
+        <div style="margin: 15px 0;">
+          <h3 style="color: #0d9488;">Photos (${report.images.length})</h3>
+          ${report.images
+            .map((path, i) => {
+              const url = getStorageImageUrl(path);
+              return `<p><a href="${url}" style="color: #0d9488;">📷 Photo ${i + 1}</a></p>
+                      <a href="${url}"><img src="${getStorageImageUrl(path, { width: 500, quality: 80 })}" alt="Photo ${i + 1}" style="max-width: 100%; border-radius: 5px; margin-bottom: 10px;" /></a>`;
+            })
+            .join('')}
+        </div>`
+      : '';
+
+  return {
+    to: conciergerie.email,
+    replyTo: employee.email,
+    subject: `📝 Compte rendu de mission - ${home.title}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #0d9488;">Compte rendu de mission</h2>
+        <p>Bonjour,</p>
+        <p><strong>${getEmployeeFullName(employee)}</strong> a rédigé un compte rendu pour la mission <strong>${home.title}</strong>.</p>
+        <div style="background-color: #f0fdfa; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #0d9488;">
+          <h3 style="margin-top: 0; color: #0d9488;">Détails de la mission</h3>
+          <p><strong>Bien:</strong> ${home.title}</p>
+          <p><strong>Date de début:</strong> ${startDate}</p>
+          <p><strong>Date de fin:</strong> ${endDate}</p>
+          <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
+        </div>
+        ${escapedContent ? `<div style="background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #e5e7eb;"><h3 style="margin-top: 0; color: #0d9488;">Commentaire</h3><p style="white-space: pre-wrap;">${escapedContent}</p></div>` : ''}
+        ${imagesHtml}
+        <p>Vous pouvez consulter cette mission via votre espace conciergerie :</p>
+        <p>
+          <a href="${baseUrl}/calendar" style="display: inline-block; background-color: #0d9488; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Voir mes missions
+          </a>
+        </p>
+        <p>Cordialement,<br>L&apos;équipe Job Conciergerie</p>
+      </div>
+    `,
+  };
+}
+
 // ------------------------------------------------------------------
 // Public server actions
 // Each attempts the SMTP send; on failure the email is queued in the DB
@@ -647,6 +710,22 @@ export async function sendMissionRemovedToEmployeeEmail(
     composeMissionRemovedToEmployeeEmail(mission, home, employee, conciergerie, type),
     'missionRemoved',
     { mission, home, employee, conciergerie, type },
+    isRetry,
+  );
+}
+
+export async function sendMissionReportEmail(
+  mission: Mission,
+  home: Home,
+  employee: Employee,
+  conciergerie: Conciergerie,
+  report: { content: string; images: string[] },
+  isRetry = false,
+): Promise<boolean> {
+  return deliver(
+    composeMissionReportEmail(mission, home, employee, conciergerie, report),
+    'missionReport',
+    { mission, home, employee, conciergerie, report },
     isRetry,
   );
 }
@@ -794,6 +873,15 @@ export async function retryQueuedEmail(type: FailedEmailType, payload: Record<st
         payload.employee as Employee,
         payload.conciergerie as Conciergerie,
         payload.type as 'deleted' | 'canceled',
+        true,
+      );
+    case 'missionReport':
+      return sendMissionReportEmail(
+        payload.mission as Mission,
+        payload.home as Home,
+        payload.employee as Employee,
+        payload.conciergerie as Conciergerie,
+        payload.report as { content: string; images: string[] },
         true,
       );
     case 'contact':

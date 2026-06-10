@@ -9,6 +9,7 @@ export type FailedEmailType =
   | 'missionAcceptance'
   | 'missionUpdated'
   | 'missionRemoved'
+  | 'missionReport'
   | 'newDevice'
   | 'contact';
 

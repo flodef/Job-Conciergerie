@@ -17,7 +17,8 @@ import { useImageCache } from '@/app/hooks/useImageCache';
 import MissionActions from '@/app/missions/components/missionActions';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
-import { Employee, Mission } from '@/app/types/dataTypes';
+import { fetchMissionReport } from '@/app/actions/missionReport';
+import { Employee, Mission, MissionReport } from '@/app/types/dataTypes';
 import {
   buttonClassName,
   cn,
@@ -47,6 +48,7 @@ import {
   IconInfoCircle,
   IconListCheck,
   IconMail,
+  IconNotes,
   IconPencil,
   IconPhone,
   IconStopwatch,
@@ -58,7 +60,7 @@ import {
   IconX,
   IconZoomScan,
 } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type MissionDetailsProps = {
   mission: Mission;
@@ -137,6 +139,25 @@ export default function MissionDetails({
   const [isRemoveEmployeeModalOpen, setIsRemoveEmployeeModalOpen] = useState(false);
   const [employeeFieldToRemove, setEmployeeFieldToRemove] = useState<'employeeId' | 'employeeId2' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [report, setReport] = useState<MissionReport | null>(null);
+  const [selectedReportImageIndex, setSelectedReportImageIndex] = useState<number>();
+
+  // Fetch the mission report (if any) once the mission is completed
+  useEffect(() => {
+    if (mission.status !== 'completed') {
+      setReport(null);
+      return;
+    }
+    let active = true;
+    fetchMissionReport(mission.id)
+      .then(result => {
+        if (active) setReport(result);
+      })
+      .catch(error => console.error('Error fetching mission report:', error));
+    return () => {
+      active = false;
+    };
+  }, [mission.id, mission.status]);
 
   // Get the conciergerie from the mission data
   const conciergerie = useMemo(
@@ -974,7 +995,44 @@ export default function MissionDetails({
                 )}
               </div>
             )}
+
+            {report && (report.content || report.images.length > 0) && (
+              <div className="space-y-2 border-t border-secondary pt-2">
+                <h3 className={containerClassName}>
+                  <IconNotes size={16} />
+                  Compte rendu
+                </h3>
+                {report.content && (
+                  <p className="text-sm text-foreground whitespace-pre-wrap wrap-break-word">{report.content}</p>
+                )}
+                {report.images.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {report.images.map((path, index) => (
+                      <img
+                        key={path}
+                        src={getStorageImageUrl(path, { width: 200, quality: 80 })}
+                        alt={`Photo ${index + 1} du compte rendu`}
+                        className="object-cover w-full aspect-square rounded-lg cursor-pointer"
+                        onClick={() => setSelectedReportImageIndex(index)}
+                        onError={e => {
+                          (e.target as HTMLImageElement).src = fallbackImage;
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+
+          {report && selectedReportImageIndex !== undefined && (
+            <FullScreenImageCarousel
+              altPrefix="Photo du compte rendu"
+              imageUrls={report.images.map(path => getStorageImageUrl(path))}
+              initialIndex={selectedReportImageIndex}
+              onClose={() => setSelectedReportImageIndex(undefined)}
+            />
+          )}
 
           {/* Employee details modal */}
           {isEmployeeDetailsModalOpen && selectedEmployeeForDetails && 'firstName' in selectedEmployeeForDetails && (

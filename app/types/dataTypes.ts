@@ -50,6 +50,15 @@ export interface MissionPoints {
 }
 export type MissionStatus = 'accepted' | 'started' | 'completed';
 export type MissionSortField = 'date' | 'conciergerie' | 'geographicZone' | 'homeTitle';
+
+export interface MissionReport {
+  id: string;
+  missionId: string; // Reference to the mission this report belongs to
+  employeeId: string; // ID of the employee who wrote the report
+  content: string; // Free text report (max 500 characters)
+  images: string[]; // Storage file paths for report photos (max 3)
+  createdAt: Date;
+}
 export interface Mission {
   id: string;
   homeId: string; // Reference to the home by ID

@@ -1,6 +1,6 @@
 'use client';
 
-import { deleteFileFromSupabase, uploadFileToSupabase } from '@/app/actions/storage';
+import { deleteFileFromSupabase, uploadFileToSupabase, uploadReportImageToSupabase } from '@/app/actions/storage';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import LoadingSpinner from '@/app/components/loadingSpinner';
 import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
@@ -37,6 +37,14 @@ export interface ImageUploaderProps {
   onError: (error: string) => void;
   disabled?: boolean;
   className?: string;
+  /**
+   * Upload destination. 'home' (default) uploads to the conciergerie/home folder
+   * (conciergerie-only). 'report' uploads to the Reports/<reportFolder> folder and
+   * is allowed for any authenticated user (used for employee mission reports).
+   */
+  uploadMode?: 'home' | 'report';
+  /** Folder name used in report mode (e.g. the mission id). */
+  reportFolder?: string;
 }
 
 const ImageUploader = React.forwardRef<
@@ -57,6 +65,8 @@ const ImageUploader = React.forwardRef<
       onError,
       disabled,
       className,
+      uploadMode = 'home',
+      reportFolder,
     },
     ref,
   ) => {
@@ -84,10 +94,12 @@ const ImageUploader = React.forwardRef<
     // Expose method to upload all pending images
     React.useImperativeHandle(ref, () => ({
       async uploadAllPendingImages(conciergerieName: string, houseTitle: string) {
-        // Delete removed images from storage
-        imageIdsToRemove.forEach(async img => {
-          await deleteFileFromSupabase(img);
-        });
+        // Delete removed images from storage (home mode only; report photos are not editable)
+        if (uploadMode === 'home') {
+          imageIdsToRemove.forEach(async img => {
+            await deleteFileFromSupabase(img);
+          });
+        }
 
         if (localImages.length === 0) return imageIds; // No pending images to upload
 
@@ -109,10 +121,18 @@ const ImageUploader = React.forwardRef<
           // Skip already failed images
           if (image.uploadStatus === 'success') continue;
 
-          // Build path: "ConciergerieName/Home Title X.jpg"
-          const sanitizedConciergerie = conciergerieName.replace(/[/\\?%*:|"<>]/g, '-').trim();
-          const sanitizedHome = houseTitle.replace(/[/\\?%*:|"<>]/g, '-').trim();
-          const fileName = `${sanitizedConciergerie}/${sanitizedHome} ${imageIndex}.jpg`;
+          // Build the destination file path depending on the upload mode
+          let fileName: string;
+          if (uploadMode === 'report') {
+            // "missionId/X.jpg" — stored under the Reports/ folder server-side
+            const sanitizedFolder = (reportFolder || 'unknown').replace(/[/\\?%*:|"<>]/g, '-').trim();
+            fileName = `${sanitizedFolder}/${imageIndex}_${Date.now()}.jpg`;
+          } else {
+            // "ConciergerieName/Home Title X.jpg"
+            const sanitizedConciergerie = conciergerieName.replace(/[/\\?%*:|"<>]/g, '-').trim();
+            const sanitizedHome = houseTitle.replace(/[/\\?%*:|"<>]/g, '-').trim();
+            fileName = `${sanitizedConciergerie}/${sanitizedHome} ${imageIndex}.jpg`;
+          }
 
           try {
             const compressedBlob = await compressImage(image.file);
@@ -120,7 +140,10 @@ const ImageUploader = React.forwardRef<
               type: 'image/jpeg', // Compressed images are always JPEG
             });
 
-            const result = await uploadFileToSupabase(file, fileName);
+            const result =
+              uploadMode === 'report'
+                ? await uploadReportImageToSupabase(file, fileName)
+                : await uploadFileToSupabase(file, fileName);
             imageIndex++;
 
             if (!result) {

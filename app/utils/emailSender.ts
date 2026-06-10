@@ -7,6 +7,7 @@ import {
   sendLateCompletionEmail,
   sendMissionAcceptanceToEmployeeEmail,
   sendMissionRemovedToEmployeeEmail,
+  sendMissionReportEmail,
   sendMissionStatusChangeEmail,
   sendMissionUpdatedToEmployeeEmail,
   sendNewDeviceNotificationEmail,
@@ -67,4 +68,12 @@ export const EmailSender = {
 
   sendNewDeviceEmail: (employee: Employee, userId: string) =>
     handleEmailSending(sendNewDeviceNotificationEmail, [employee, userId]),
+
+  sendMissionReportEmail: (
+    mission: Mission,
+    home: Home,
+    employee: Employee,
+    conciergerie: Conciergerie,
+    report: { content: string; images: string[] },
+  ) => handleEmailSending(sendMissionReportEmail, [mission, home, employee, conciergerie, report]),
 };
