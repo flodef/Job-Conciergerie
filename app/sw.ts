@@ -2,7 +2,7 @@
 
 import { defaultCache } from '@serwist/next/worker';
 import type { PrecacheEntry, SerwistGlobalConfig } from 'serwist';
-import { Serwist, StaleWhileRevalidate, CacheFirst } from 'serwist';
+import { Serwist, StaleWhileRevalidate, CacheFirst, NetworkFirst } from 'serwist';
 import { ExpirationPlugin, CacheableResponsePlugin } from 'serwist';
 
 // Declare Serwist types
@@ -33,6 +33,23 @@ const serwist = new Serwist({
   runtimeCaching: [
     // Default Next.js caching
     ...defaultCache,
+
+    // Network first for changelog files to always show latest version
+    {
+      matcher: ({ url }) => url.pathname.startsWith('/changelog/'),
+      handler: new NetworkFirst({
+        cacheName: 'changelog-cache',
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 10,
+            maxAgeSeconds: 60, // 1 minute - short cache for changelog
+          }),
+          new CacheableResponsePlugin({
+            statuses: [0, 200],
+          }),
+        ],
+      }),
+    },
 
     // Cache page navigation requests - Network first with cache fallback for offline
     {

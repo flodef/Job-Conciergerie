@@ -1,3 +1,7 @@
+# 2.186
+
+- **Amélioration UI** : Lorsqu'on termine une mission, les tâches faites sont maintenant placées tout en bas, en tant que terminées + affichage clair du nombre de tâches faites et à faire en haut, dans le titre.
+
 # 2.165
 
 - **Nouveau : Binôme** : missions en duo possibles — un employé peut rejoindre une mission déjà acceptée par un autre employé ou une conciergerie
