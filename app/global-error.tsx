@@ -4,7 +4,8 @@
 import { cn } from '@/app/utils/className';
 import { Open_Sans } from 'next/font/google';
 import Link from 'next/link';
-import { SyntheticEvent, useEffect } from 'react';
+import type { SyntheticEvent} from 'react';
+import { useEffect } from 'react';
 
 const email = 'flo@fims.fi';
 const openSans = Open_Sans({ subsets: ['latin'], weight: ['400', '700'] });

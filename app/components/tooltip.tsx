@@ -1,9 +1,11 @@
 'use client';
 
-import { Size } from '@/app/types/types';
-import { IconInfoCircle, IconProps } from '@tabler/icons-react';
+import type { Size } from '@/app/types/types';
+import type { IconProps } from '@tabler/icons-react';
+import { IconInfoCircle } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
-import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 type TooltipProps = {
   children: string | ReactNode;

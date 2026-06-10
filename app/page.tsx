@@ -4,7 +4,8 @@ import ConciergerieForm from '@/app/components/conciergerieForm';
 import EmployeeForm from '@/app/components/employeeForm';
 import InstallButton from '@/app/components/installButton';
 import UserTypeSelection from '@/app/components/userTypeSelection';
-import { useAuth, UserType } from '@/app/contexts/authProvider';
+import type { UserType } from '@/app/contexts/authProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useCallback, useEffect, useState } from 'react';
 
 export default function Home() {

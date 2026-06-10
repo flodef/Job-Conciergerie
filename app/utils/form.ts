@@ -1,4 +1,4 @@
-import { HTMLField } from '@/app/types/types';
+import type { HTMLField } from '@/app/types/types';
 import { getMaxLength } from '@/app/utils/regex';
 
 export const handleChange = (

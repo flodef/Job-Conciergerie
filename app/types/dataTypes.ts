@@ -1,4 +1,4 @@
-import { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
+import type { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
 
 export interface Conciergerie {
   id: string[];

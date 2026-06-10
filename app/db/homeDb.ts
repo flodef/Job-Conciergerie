@@ -1,6 +1,6 @@
 import { sql } from '@/app/db/db';
-import { Home } from '@/app/types/dataTypes';
-import postgres from 'postgres';
+import type { Home } from '@/app/types/dataTypes';
+import type postgres from 'postgres';
 
 // Type definition for database home
 export interface DbHome {

@@ -5,7 +5,8 @@ import { cn, errorClassName, optionClassName, rowClassName, selectClassName } fr
 import { shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
-import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type { ForwardedRef, ReactNode } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type MultiSelectOption = {
   value: string;
@@ -101,7 +102,7 @@ const MultiSelect = forwardRef(
         const item = optionsRef.current.children[highlightedIndex] as HTMLElement;
         item?.scrollIntoView({ block: 'nearest' });
       }
-    }, [highlightedIndex]);
+    }, [highlightedIndex, optionsRef]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === 'ArrowDown' && !isOpen) {

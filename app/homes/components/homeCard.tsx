@@ -1,6 +1,6 @@
 'use client';
 
-import { Home } from '@/app/types/dataTypes';
+import type { Home } from '@/app/types/dataTypes';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { IconUsers } from '@tabler/icons-react';
 import { useImageCache } from '@/app/hooks/useImageCache';

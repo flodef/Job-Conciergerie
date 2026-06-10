@@ -3,7 +3,7 @@
 import M3LoadingSpinner from '@/app/components/m3LoadingSpinner';
 import { useAuth } from '@/app/contexts/authProvider';
 import MissionCard from '@/app/missions/components/missionCard';
-import { Mission, MissionSortField } from '@/app/types/dataTypes';
+import type { Mission, MissionSortField } from '@/app/types/dataTypes';
 import { cn, titleClassName } from '@/app/utils/className';
 import {
   IconBriefcase,
@@ -35,7 +35,6 @@ export default function MissionList({
   setCollapsedCategories,
   onSelectMission,
   showFilters,
-  userType,
   handleAddMission,
   onEditMission,
   sortField,

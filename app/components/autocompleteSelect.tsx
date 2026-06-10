@@ -1,12 +1,12 @@
 'use client';
 
 import Label from '@/app/components/label';
-import { errorClassName, optionClassName, optionsClassName, selectClassName } from '@/app/utils/className';
+import { cn, errorClassName, optionClassName, selectClassName } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
-import { IconCheck, IconChevronDown, IconX } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
-import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { IconCheck, IconChevronDown, IconX } from '@tabler/icons-react';
+import type { ForwardedRef, ReactNode } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type SelectOption = {
   value: string;
@@ -112,7 +112,7 @@ const AutocompleteSelect = forwardRef(
         const item = optionsRef.current.children[highlightedIndex] as HTMLElement;
         item?.scrollIntoView({ block: 'nearest' });
       }
-    }, [highlightedIndex]);
+    }, [highlightedIndex, optionsRef]);
 
     const handleSelect = (optionValue: string) => {
       onChange(optionValue);

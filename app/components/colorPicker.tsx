@@ -2,7 +2,8 @@ import Label from '@/app/components/label';
 import { useAuth } from '@/app/contexts/authProvider';
 import { errorClassName, rowClassName } from '@/app/utils/className';
 import { cn } from '@/app/utils/className';
-import { ForwardRefRenderFunction, ReactNode, forwardRef } from 'react';
+import type { ForwardRefRenderFunction, ReactNode} from 'react';
+import { forwardRef } from 'react';
 
 export interface ColorOption {
   name: string;

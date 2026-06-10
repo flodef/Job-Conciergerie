@@ -1,7 +1,8 @@
 'use client';
 
 import { cn } from '@/app/utils/className';
-import { InputHTMLAttributes, forwardRef } from 'react';
+import type { InputHTMLAttributes} from 'react';
+import { forwardRef } from 'react';
 import { IconCheck } from '@tabler/icons-react';
 
 interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {

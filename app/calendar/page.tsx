@@ -8,7 +8,7 @@ import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import MissionDetails from '@/app/missions/components/missionDetails';
-import { Mission } from '@/app/types/dataTypes';
+import type { Mission } from '@/app/types/dataTypes';
 import { formatCalendarDate, formatMissionTimeForCalendar, groupMissionsByDate } from '@/app/utils/calendar';
 import {
   cn,
@@ -85,7 +85,7 @@ export default function Calendar() {
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [authLoading, fetchMissions, updateFetchTime, needsRefreshCalendar]);
+  }, [authLoading, fetchMissions, updateFetchTime, needsRefreshCalendar, showToast]);
 
   // Second useEffect to handle mission filtering after we have the user identity
   useEffect(() => {
@@ -131,7 +131,7 @@ export default function Calendar() {
     // Sort dates
     const dates = sortDates(Array.from(groupedMissions.keys()));
     setSortedDates(dates);
-  }, [missions, conciergerieName, employeeName, isEmployee, isConciergerie, getLateMissions]);
+  }, [missions, conciergerieName, employeeName, isEmployee, isConciergerie, getLateMissions, homes]);
 
   const handleMissionClick = (mission: Mission) => {
     const id = openModal(() => <MissionDetails mission={mission} onClose={() => closeModal(id)} isFromCalendar />);

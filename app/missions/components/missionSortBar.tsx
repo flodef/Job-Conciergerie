@@ -1,6 +1,6 @@
 'use client';
 
-import { MissionSortField } from '@/app/types/dataTypes';
+import type { MissionSortField } from '@/app/types/dataTypes';
 import { cn } from '@/app/utils/className';
 import { IconSortAscending, IconSortDescending } from '@tabler/icons-react';
 import React from 'react';

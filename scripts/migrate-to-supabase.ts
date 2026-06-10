@@ -328,7 +328,7 @@ async function main() {
   console.log(`Found ${homes.length} home(s) with images\n`);
 
   // Statistics
-  let totalHomes = homes.length;
+  const totalHomes = homes.length;
   let successfulHomes = 0;
   let failedHomes = 0;
   let totalMigrated = 0;

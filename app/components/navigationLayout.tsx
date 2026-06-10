@@ -6,7 +6,8 @@ import { PageManager } from '@/app/components/pageManager';
 import { TimeAgoDisplay } from '@/app/components/timeAgoDisplay';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
-import { useAuth, UserType } from '@/app/contexts/authProvider';
+import type { UserType } from '@/app/contexts/authProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useBadge } from '@/app/contexts/badgeProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
@@ -26,7 +27,8 @@ import {
   IconUser,
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
-import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import type { ReactNode} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import M3LoadingSpinner from './m3LoadingSpinner';
 
 // Map pages to their respective icons

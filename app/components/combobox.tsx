@@ -1,12 +1,13 @@
 'use client';
 
 import Label from '@/app/components/label';
-import { SelectOption } from '@/app/types/types';
+import type { SelectOption } from '@/app/types/types';
 import { cn, errorClassName, optionClassName, rowClassName, selectClassName } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
-import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type { ForwardedRef, ReactNode} from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type ComboboxProps = {
   id: string;

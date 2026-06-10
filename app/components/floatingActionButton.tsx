@@ -2,7 +2,7 @@
 
 import { IconPlus } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 type FloatingActionButtonProps = {
   onClick: () => void;

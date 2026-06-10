@@ -7,7 +7,7 @@ import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
-import { Conciergerie, Employee } from '@/app/types/dataTypes';
+import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { iconButtonClassName, labelClassName } from '@/app/utils/className';
 import { containsId, formatId, isNewDevice } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
@@ -30,7 +30,7 @@ type Device = {
 };
 
 const ConnectedDevicesSettings: React.FC = () => {
-  const { disconnect, nuke, userData, userId: currentUserId, updateUserData, isEmployee, isConciergerie } = useAuth();
+  const { disconnect, nuke, userData, userId: currentUserId, updateUserData, isEmployee } = useAuth();
 
   const [storedLabels, setStoredLabels] = useLocalStorage<Device[]>('device_labels', []);
   const inputRef = useRef<HTMLInputElement>(null);

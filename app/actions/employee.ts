@@ -1,8 +1,9 @@
 'use server';
 
+import type {
+  DbEmployee} from '@/app/db/employeeDb';
 import {
   createEmployee,
-  DbEmployee,
   deleteEmployee,
   findEmployeeByContact,
   getAllEmployees,
@@ -10,9 +11,10 @@ import {
   updateEmployeeSettings,
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
-import { Employee, EmployeeStatus } from '@/app/types/dataTypes';
+import type { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
-import { defaultEmployeeSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
+import type { EmployeeNotificationSettings } from '@/app/utils/notifications';
+import { defaultEmployeeSettings } from '@/app/utils/notifications';
 
 /**
  * Fetch all employees from the database with caching

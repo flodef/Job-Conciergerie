@@ -1,5 +1,6 @@
 import tasksData from '@/app/data/tasks.json';
-import { Home, Mission, MissionPoints, Task } from '@/app/types/dataTypes';
+import type { Home, Mission, MissionPoints} from '@/app/types/dataTypes';
+import { Task } from '@/app/types/dataTypes';
 
 export const MAX_POINTS_PER_DAY = 100;
 

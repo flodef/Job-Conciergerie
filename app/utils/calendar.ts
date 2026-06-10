@@ -1,6 +1,6 @@
 'use client';
 
-import { Mission } from '@/app/types/dataTypes';
+import type { Mission } from '@/app/types/dataTypes';
 import { formatTime, toLocalDateString } from '@/app/utils/date';
 
 export const monthNames = [

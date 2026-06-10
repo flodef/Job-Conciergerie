@@ -4,7 +4,8 @@ import CustomDateTimeInput from '@/app/components/customDateTimeInput';
 import DateTimeInput from '@/app/components/dateTimeInput';
 import { cn } from '@/app/utils/className';
 import { isMobile } from '@/app/utils/device';
-import { forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type { ReactNode} from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 interface ResponsiveDateTimeInputProps {
   id: string;

@@ -1,7 +1,8 @@
 'use server';
 
-import { DbConciergerie, getAllConciergeries, updateConciergerie, updateConciergerieId } from '@/app/db/conciergerieDb';
-import { Conciergerie } from '@/app/types/dataTypes';
+import type { DbConciergerie} from '@/app/db/conciergerieDb';
+import { getAllConciergeries, updateConciergerie, updateConciergerieId } from '@/app/db/conciergerieDb';
+import type { Conciergerie } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 
 /**

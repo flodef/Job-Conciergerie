@@ -1,7 +1,8 @@
 import { sql } from '@/app/db/db';
 import { getColorValueByName } from '@/app/utils/color';
 import { MAX_DEVICES } from '@/app/utils/id';
-import { ConciergerieNotificationSettings, defaultConciergerieSettings } from '@/app/utils/notifications';
+import type { ConciergerieNotificationSettings} from '@/app/utils/notifications';
+import { defaultConciergerieSettings } from '@/app/utils/notifications';
 
 // Type definition for database conciergerie
 export interface DbConciergerie {

@@ -3,7 +3,8 @@
 import Label from '@/app/components/label';
 import { errorClassName, inputFieldClassName } from '@/app/utils/className';
 import { getMaxLength, objectiveLengthRegex } from '@/app/utils/regex';
-import { ForwardedRef, forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type { ForwardedRef, ReactNode} from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type ObjectiveListProps = {
   id: string;

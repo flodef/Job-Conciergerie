@@ -1,5 +1,6 @@
 import { cn } from '@/app/utils/className';
-import { ReactNode, useEffect } from 'react';
+import type { ReactNode} from 'react';
+import { useEffect } from 'react';
 
 export enum ToastType {
   Success = 'success',

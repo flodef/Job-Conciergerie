@@ -1,14 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
 import {
-  generateSimpleId,
-  formatId,
   containsId,
-  isNewDevice,
+  formatId,
+  generateSimpleId,
   getConnectedDevices,
   getDevices,
-  MaxDevicesError,
+  isNewDevice,
   MAX_DEVICES,
+  MaxDevicesError,
 } from '@/app/utils/id';
+import { describe, expect, it } from 'vitest';
 
 describe('ID Utilities', () => {
   describe('MAX_DEVICES', () => {

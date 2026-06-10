@@ -3,9 +3,10 @@ import { getAllEmployees } from '@/app/db/employeeDb';
 import { getAllHomes } from '@/app/db/homeDb';
 import { claimLateNotification, getLateMissionsForCron } from '@/app/db/missionDb';
 import { sendLateCompletionEmail } from '@/app/actions/email';
-import { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
+import type { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
 import { getUserKey } from '@/app/utils/user';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 /**
  * Cron endpoint that checks for late missions and sends notifications.
@@ -104,7 +105,7 @@ async function handleCheckLateMissions(request: NextRequest) {
       try {
         await sendLateCompletionEmail(mission, home, employee, conciergerie);
         sent++;
-      } catch (error) {
+      } catch {
         skipped++;
       }
     }

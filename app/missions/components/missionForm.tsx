@@ -13,7 +13,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
-import type { Mission} from '@/app/types/dataTypes';
+import type { Mission } from '@/app/types/dataTypes';
 import { Task } from '@/app/types/dataTypes';
 import type { ErrorField } from '@/app/types/types';
 import {
@@ -114,7 +114,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
         showToast({ type: ToastType.Warning, message });
       }
     }
-  }, [mission, mode]);
+  }, [mission, mode, showToast]);
 
   // Calculate mission hours when dependencies change
   useEffect(() => {

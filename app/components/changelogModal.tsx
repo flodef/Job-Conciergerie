@@ -1,7 +1,8 @@
 'use client';
 
 import FullScreenModal from '@/app/components/fullScreenModal';
-import { parseChangelog, VersionEntry } from '@/app/hooks/useChangelog';
+import type { VersionEntry } from '@/app/hooks/useChangelog';
+import { parseChangelog } from '@/app/hooks/useChangelog';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';

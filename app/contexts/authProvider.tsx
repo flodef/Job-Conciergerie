@@ -2,8 +2,9 @@
 
 import { fetchConciergeries } from '@/app/actions/conciergerie';
 import { deleteEmployeeData, fetchEmployees } from '@/app/actions/employee';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
-import { Conciergerie, Employee } from '@/app/types/dataTypes';
+import type { Toast} from '@/app/components/toastMessage';
+import { ToastMessage, ToastType } from '@/app/components/toastMessage';
+import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
 import { isConnectionPoolError } from '@/app/utils/dbErrors';

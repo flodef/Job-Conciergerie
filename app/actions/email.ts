@@ -3,13 +3,14 @@
 import { isProduction } from '@/app/actions/environment';
 import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { insertFailedEmail } from '@/app/db/failedEmailsDb';
-import { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
+import type { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
 import { getStorageImageUrl } from '@/app/utils/storage';
 import { formatHours } from '@/app/utils/task';
-import { UserData } from '@/app/utils/user';
+import type { UserData } from '@/app/utils/user';
 import packageJson from '@/package.json';
-import nodemailer, { SendMailOptions } from 'nodemailer';
+import type { SendMailOptions } from 'nodemailer';
+import nodemailer from 'nodemailer';
 import { getEmployeeFullName } from '../utils/employee';
 
 // Configure nodemailer transporter

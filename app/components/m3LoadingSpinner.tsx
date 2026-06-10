@@ -1,6 +1,6 @@
 'use client';
 
-import { Size } from '@/app/types/types';
+import type { Size } from '@/app/types/types';
 import { cn } from '@/app/utils/className';
 import { defaultHTMLColor } from '@/app/utils/color';
 import { M3LoadingIndicator } from '@alerix/m3-loading-indicator/react';

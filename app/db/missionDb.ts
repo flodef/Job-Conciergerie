@@ -1,6 +1,6 @@
 import { sql } from '@/app/db/db';
-import { Mission, MissionStatus, Task } from '@/app/types/dataTypes';
-import postgres from 'postgres';
+import type { Mission, MissionStatus, Task } from '@/app/types/dataTypes';
+import type postgres from 'postgres';
 
 // Type definition for database mission
 export interface DbMission {

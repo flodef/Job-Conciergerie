@@ -1,4 +1,4 @@
-import { Home, Mission } from '@/app/types/dataTypes';
+import type { Home, Mission } from '@/app/types/dataTypes';
 
 /**
  * Get available months/years from missions

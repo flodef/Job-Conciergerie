@@ -1,6 +1,7 @@
 'use client';
 
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import type { Toast} from '@/app/components/toastMessage';
+import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { usePWAInstall } from '@/app/hooks/usePWAInstall';
 import { isDevMode } from '@/app/utils/environment';
 import { IconDeviceMobile } from '@tabler/icons-react';

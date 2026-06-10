@@ -9,7 +9,7 @@ import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useToast } from '@/app/contexts/toastProvider';
-import { Employee, Mission } from '@/app/types/dataTypes';
+import type { Employee, Mission } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
 import { messageLengthRegex } from '@/app/utils/regex';
 import { getUserKey, isEmployee } from '@/app/utils/user';

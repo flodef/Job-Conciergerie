@@ -1,5 +1,5 @@
 import { twMerge } from 'tailwind-merge';
-import { ButtonStyle } from '@/app/components/button';
+import type { ButtonStyle } from '@/app/components/button';
 
 export function cn(...inputs: any[]) {
   return twMerge(inputs);

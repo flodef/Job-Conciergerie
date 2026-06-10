@@ -28,13 +28,14 @@ import {
 import { Page } from '@/app/utils/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
+import type { SortDirection } from '../types/types';
 
 export default function Missions() {
   const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
   const { homes } = useHomes();
   const { userType, isLoading: authLoading, employeeName, conciergerieName, isEmployee, isConciergerie } = useAuth();
   const { updateFetchTime, needsRefresh } = useFetchTime();
-  const { openModal, closeModal, replaceModal } = useModal();
+  const { openModal, closeModal } = useModal();
   const { showToast } = useToast();
   const needsRefreshMissions = needsRefresh[Page.Missions];
 
@@ -80,7 +81,7 @@ export default function Missions() {
 
   // Sorting state - must be declared before any conditional returns
   const [sortField, setSortField] = useState<MissionSortField>('date');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [collapsedCategories, setCollapsedCategories] = useState<string[]>([]);
 
   // Filter states - must be declared before any conditional returns
@@ -117,7 +118,7 @@ export default function Missions() {
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [authLoading, fetchMissions, updateFetchTime, needsRefreshMissions]);
+  }, [authLoading, fetchMissions, updateFetchTime, needsRefreshMissions, showToast]);
 
   // Load saved filters from localStorage on component mount - must be called before any conditional returns
   useEffect(() => {
@@ -160,6 +161,7 @@ export default function Missions() {
     homes,
     missionsLoading,
     isEmployee,
+    isConciergerie,
     employeeName,
   ]);
 

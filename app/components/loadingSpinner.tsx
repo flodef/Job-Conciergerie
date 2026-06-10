@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/app/utils/className';
-import { Size } from '@/app/types/types';
+import type { Size } from '@/app/types/types';
 
 type LoadingSpinnerProps = {
   size?: Size;

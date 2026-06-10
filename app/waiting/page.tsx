@@ -7,7 +7,7 @@ import { ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useToast } from '@/app/contexts/toastProvider';
-import { Conciergerie, Employee } from '@/app/types/dataTypes';
+import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { getTimeDifference, getTimeRemaining, isElapsedTimeLessThan } from '@/app/utils/date';
 import { EmailSender } from '@/app/utils/emailSender';

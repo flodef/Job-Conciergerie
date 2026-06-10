@@ -1,5 +1,6 @@
 'use client';
 
+import { fetchMissionReport } from '@/app/actions/missionReport';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
@@ -19,7 +20,6 @@ import { useImageCache } from '@/app/hooks/useImageCache';
 import MissionActions from '@/app/missions/components/missionActions';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
-import { fetchMissionReport } from '@/app/actions/missionReport';
 import type { Employee, Mission, MissionReport } from '@/app/types/dataTypes';
 import {
   buttonClassName,
@@ -62,7 +62,7 @@ import {
   IconX,
   IconZoomScan,
 } from '@tabler/icons-react';
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
 type MissionDetailsProps = {
@@ -136,7 +136,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     removeSecondProvider,
     startMission,
     completeMission,
-    setShouldShowAcceptWarning,
     updateMissionDateTime,
     updateMission,
   } = useMissions();
@@ -151,7 +150,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [showEmployeeDetails, setShowEmployeeDetails] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
-  const [dontShowAgain, setDontShowAgain] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [skipAnimation, setSkipAnimation] = useState(false);
 
@@ -223,7 +221,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [editEndDate, setEditEndDate] = useState(localISOString(endDate));
   const [startDateError, setStartDateError] = useState('');
   const [endDateError, setEndDateError] = useState('');
-  const [isReduceTimeWarningOpen, setIsReduceTimeWarningOpen] = useState(false);
   const [pendingDateChanges, setPendingDateChanges] = useState<{ start?: Date; end?: Date }>({});
 
   // Get the home data

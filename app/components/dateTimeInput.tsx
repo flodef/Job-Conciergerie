@@ -1,7 +1,8 @@
 import Label from '@/app/components/label';
 import { cn, errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
 import { handleChange } from '@/app/utils/form';
-import { ForwardRefRenderFunction, ReactNode, forwardRef } from 'react';
+import type { ForwardRefRenderFunction, ReactNode} from 'react';
+import { forwardRef } from 'react';
 
 interface DateTimeInputProps {
   id: string;

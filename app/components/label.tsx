@@ -2,7 +2,7 @@
 
 import Tooltip from '@/app/components/tooltip';
 import { labelClassName } from '@/app/utils/className';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface LabelProps {
   id: string;

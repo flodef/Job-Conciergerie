@@ -6,11 +6,10 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useModal } from '@/app/contexts/modalProvider';
-import { useToast } from '@/app/contexts/toastProvider';
 import HomeCard from '@/app/homes/components/homeCard';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
-import { Home } from '@/app/types/dataTypes';
+import type { Home } from '@/app/types/dataTypes';
 import { cn, titleClassName } from '@/app/utils/className';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { IconLayout, IconLayoutGrid, IconList, IconPlus } from '@tabler/icons-react';
@@ -136,7 +135,7 @@ export default function HomesPage() {
                 displayMode === 'thumb' && 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4',
               )}
             >
-              {filteredHomes.map((home, index) => (
+              {filteredHomes.map(home => (
                 <HomeCard
                   key={home.id}
                   home={home}

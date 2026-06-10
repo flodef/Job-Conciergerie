@@ -1,12 +1,13 @@
 'use server';
 
+import type {
+  DbMissionReport} from '@/app/db/missionReportDb';
 import {
   createMissionReport,
-  DbMissionReport,
   getMissionReportByMissionId,
   getMissionReportsByMissionIds,
 } from '@/app/db/missionReportDb';
-import { MissionReport } from '@/app/types/dataTypes';
+import type { MissionReport } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
 
 /**

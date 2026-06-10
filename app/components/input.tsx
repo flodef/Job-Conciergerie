@@ -2,7 +2,8 @@ import Label from '@/app/components/label';
 import { errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
 import { handleChange } from '@/app/utils/form';
 import { emailRegex, frenchPhoneRegex, inputLengthRegex } from '@/app/utils/regex';
-import { ForwardRefRenderFunction, ReactNode, forwardRef } from 'react';
+import type { ForwardRefRenderFunction, ReactNode} from 'react';
+import { forwardRef } from 'react';
 
 interface InputProps {
   id: string;

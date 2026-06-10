@@ -5,10 +5,9 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HistoryFilters from '@/app/history/components/historyFilters';
-import { Home, Mission, MissionSortField } from '@/app/types/dataTypes';
+import type { Home, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDate, formatDateRange } from '@/app/utils/date';
-import { sortMissions } from '@/app/utils/missionFilters';
 import { formatHours, formatNumber, getMissionHoursPerProvider, getMissionProviderCount } from '@/app/utils/task';
 import {
   IconBriefcase,
@@ -23,8 +22,6 @@ import {
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { cn, descriptionClassName, iconButtonClassName, textClassName, titleClassName } from '../utils/className';
-
-type SortDirection = 'asc' | 'desc';
 
 function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
@@ -317,8 +314,6 @@ export default function HistoryPage() {
   const { homes } = useHomes();
   const { employeeName, isLoading: authLoading, findConciergerie } = useAuth();
 
-  const [sortField, setSortField] = useState<MissionSortField>('date');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [selectedConciergerie, setSelectedConciergerie] = useState<string | null>(null);
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<string | null>(null);
   // Note: selectedTimePeriod is used for both the filter dropdown and graph selection
@@ -389,12 +384,6 @@ export default function HistoryPage() {
 
     return filtered;
   }, [completedMissions, selectedConciergerie, selectedTimePeriod]);
-
-  // Sort filtered missions
-  const sortedMissions = useMemo(
-    () => sortMissions(filteredMissions, sortField, sortDirection, homes),
-    [filteredMissions, sortField, sortDirection, homes],
-  );
 
   // Stats based on filtered missions (recalculate)
   const stats = useMemo(() => {
@@ -486,7 +475,7 @@ export default function HistoryPage() {
       )}
 
       {/* Mission list */}
-      {sortedMissions.length === 0 ? (
+      {filteredMissions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3 text-light">
           <IconBriefcase size={48} className="opacity-30" />
           <p className="text-center">
@@ -497,7 +486,7 @@ export default function HistoryPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {sortedMissions.map(mission => {
+          {filteredMissions.map(mission => {
             const home = homes.find(h => h.id === mission.homeId);
             const conciergerie = findConciergerie(mission.conciergerieName);
             const color = getColorValueByName(conciergerie?.colorName);

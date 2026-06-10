@@ -17,7 +17,8 @@
  */
 
 import { sql } from '@/app/db/db';
-import nodemailer, { SendMailOptions } from 'nodemailer';
+import type { SendMailOptions } from 'nodemailer';
+import nodemailer from 'nodemailer';
 import { config } from 'dotenv';
 
 // Load environment variables

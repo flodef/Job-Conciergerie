@@ -6,7 +6,7 @@ import ConfirmationModal from '@/app/components/confirmationModal';
 import ErrorPage from '@/app/components/error';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
-import { Conciergerie, Employee } from '@/app/types/dataTypes';
+import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { Page } from '@/app/utils/navigation';
 import AppVersion from '@/app/components/appVersion';
 import { use, useCallback, useEffect, useRef, useState } from 'react';

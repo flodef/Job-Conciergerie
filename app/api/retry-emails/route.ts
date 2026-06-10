@@ -5,7 +5,8 @@ import {
   getExhaustedEmails,
   markAttempt,
 } from '@/app/db/failedEmailsDb';
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
 
 const RETRY_INTERVAL_MINUTES = 10;
 const MAX_ATTEMPTS = 20;

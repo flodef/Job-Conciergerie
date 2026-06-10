@@ -1,9 +1,11 @@
 'use client';
 
 import ConfirmationModal from '@/app/components/confirmationModal';
-import { defaultPage, Page, pages, routeMap } from '@/app/utils/navigation';
+import type { Page } from '@/app/utils/navigation';
+import { defaultPage, routeMap } from '@/app/utils/navigation';
 import { usePathname, useRouter } from 'next/navigation';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 type MenuContext = {
   onMenuChange: (page?: Page) => void;

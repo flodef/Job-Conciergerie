@@ -2,9 +2,10 @@
 
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { Mission } from '@/app/types/dataTypes';
+import type { Mission } from '@/app/types/dataTypes';
 import { useLocalStorage } from '@/app/utils/localStorage';
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 type BadgeContextType = {
   pendingEmployeesCount: number;
@@ -19,7 +20,7 @@ const checkingInterval = 60; // 1 minute
 const BadgeContext = createContext<BadgeContextType | undefined>(undefined);
 
 export function BadgeProvider({ children }: { children: ReactNode }) {
-  const { userType, conciergerieName, employeeName, employees: allEmployees, isEmployee, isConciergerie } = useAuth();
+  const { conciergerieName, employeeName, employees: allEmployees, isEmployee, isConciergerie } = useAuth();
   const { missions } = useMissions();
 
   const [employeesLastChecked, setEmployeesLastChecked] = useLocalStorage('last_checked_employees', '');
@@ -133,7 +134,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
     }, checkingInterval * 1000);
 
     return () => clearInterval(interval);
-  }, [missions, employeeName, isConciergerie, conciergerieName]);
+  }, [missions, employeeName, isConciergerie, conciergerieName, isEmployee]);
 
   // Reset functions
   const resetPendingEmployeesCount = () => {

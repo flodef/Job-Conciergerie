@@ -1,5 +1,5 @@
 import { sql } from '@/app/db/db';
-import { MissionReport } from '@/app/types/dataTypes';
+import type { MissionReport } from '@/app/types/dataTypes';
 
 // Type definition for database mission report
 export interface DbMissionReport {

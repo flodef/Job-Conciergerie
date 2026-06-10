@@ -2,13 +2,11 @@
 
 import { deleteFileFromSupabase, uploadFileToSupabase, uploadReportImageToSupabase } from '@/app/actions/storage';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
-import LoadingSpinner from '@/app/components/loadingSpinner';
 import { ToastType } from '@/app/components/toastMessage';
-import { errorClassName } from '@/app/utils/className';
 import { useToast } from '@/app/contexts/toastProvider';
+import { cn, errorClassName } from '@/app/utils/className';
 import { fallbackImage, getStorageFileName, getStorageImageUrl } from '@/app/utils/storage';
 import { IconCheck, IconPhotoPlus, IconX } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
 import React, { useEffect, useRef, useState } from 'react';
 import M3LoadingSpinner from './m3LoadingSpinner';
 
@@ -113,7 +111,6 @@ const ImageUploader = React.forwardRef<
 
         // Upload images one by one
         const newPaths: string[] = [];
-        let uploadedCount = 0;
         let failedCount = 0;
         let imageIndex = imageIds.length; // Start index after existing images
 
@@ -154,7 +151,6 @@ const ImageUploader = React.forwardRef<
 
             setLocalImages(prev => prev.map(img => (img.id === image.id ? { ...img, uploadStatus: 'success' } : img)));
             newPaths.push(result);
-            uploadedCount++;
           } catch (error) {
             console.error('Error uploading image:', error);
             failedCount++;

@@ -1,4 +1,4 @@
-import { Conciergerie, Employee } from '@/app/types/dataTypes';
+import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 
 export type UserData = Conciergerie | Employee;
 

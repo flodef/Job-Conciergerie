@@ -1,6 +1,6 @@
 'use client';
 
-import { UserType } from '@/app/contexts/authProvider';
+import type { UserType } from '@/app/contexts/authProvider';
 import { cn } from '@/app/utils/className';
 import { IconBuildingEstate, IconUser } from '@tabler/icons-react';
 import AppVersion from './appVersion';

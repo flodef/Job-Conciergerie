@@ -3,12 +3,12 @@
 import Label from '@/app/components/label';
 import { cn, descriptionClassName, errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
 import { IconCalendar, IconChevronDown, IconClock } from '@tabler/icons-react';
-import { forwardRef, ReactNode, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 interface CustomDateTimeInputProps {
   id: string;
   label: ReactNode;
-  name?: string;
   value: string;
   onChange: (value: string) => void;
   error: string;
@@ -36,7 +36,6 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
     {
       id,
       label,
-      name,
       value,
       onChange,
       error,
@@ -65,11 +64,8 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
     const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
     const containerRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLInputElement>(null);
     const customInputRef = useRef<HTMLDivElement>(null);
     const calendarButtonRef = useRef<HTMLButtonElement>(null);
-
-    name = label?.toString() || id;
 
     useImperativeHandle(ref, () => ({
       focus: () => {
@@ -79,15 +75,6 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
         requestAnimationFrame(() => customInputRef.current?.focus());
       },
     }));
-
-    // Parse French format to Date
-    const parseDateTime = (value: string): Date | null => {
-      if (!value) return null;
-      const match = value.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
-      if (!match) return null;
-      const [, day, month, year, hours, minutes] = match;
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
-    };
 
     // Convert to ISO string for onChange (using local timezone)
     const toISOString = (date: Date): string => {
@@ -135,17 +122,6 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
       if (!disabled && !minimal) {
         setIsOpen(!isOpen);
         setIsFocused(true);
-      }
-    };
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const parsed = parseDateTime(e.target.value);
-      if (parsed && !isNaN(parsed.getTime())) {
-        setCurrentDate(parsed);
-        onChange(toISOString(parsed));
-        setSelectedYear(parsed.getFullYear());
-        setSelectedMonth(parsed.getMonth());
-        onError('');
       }
     };
 
@@ -340,33 +316,6 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
 
       setCurrentDate(newDate);
       onChange(toISOString(newDate));
-      onError('');
-    };
-
-    const handlePreset = (hours: number) => {
-      const now = new Date();
-      const newDate = new Date(now.getTime() + hours * 60 * 60 * 1000);
-
-      // Validate against min and max
-      if (min) {
-        const minDate = new Date(min);
-        if (newDate < minDate) {
-          if (onInvalidDate) onInvalidDate();
-          return;
-        }
-      }
-      if (max) {
-        const maxDate = new Date(max);
-        if (newDate > maxDate) {
-          if (onInvalidDate) onInvalidDate();
-          return;
-        }
-      }
-
-      setCurrentDate(newDate);
-      onChange(toISOString(newDate));
-      setSelectedYear(newDate.getFullYear());
-      setSelectedMonth(newDate.getMonth());
       onError('');
     };
 

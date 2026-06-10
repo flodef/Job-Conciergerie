@@ -1,9 +1,8 @@
 import Label from '@/app/components/label';
-import { Task } from '@/app/types/dataTypes';
-import { errorClassName, rowClassName } from '@/app/utils/className';
-import { getTaskPoints } from '@/app/utils/task';
-import { cn } from '@/app/utils/className';
-import { ForwardRefRenderFunction, ReactNode, forwardRef } from 'react';
+import type { Task } from '@/app/types/dataTypes';
+import { cn, errorClassName, rowClassName } from '@/app/utils/className';
+import type { ForwardRefRenderFunction, ReactNode } from 'react';
+import { forwardRef } from 'react';
 
 interface TaskSelectorProps {
   id: string;

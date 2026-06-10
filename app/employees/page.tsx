@@ -10,7 +10,7 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
-import { Employee } from '@/app/types/dataTypes';
+import type { Employee } from '@/app/types/dataTypes';
 import {
   countEmployeeMissions,
   filterEmployees,
@@ -20,7 +20,8 @@ import {
   updateEmployeeStatus,
 } from '@/app/utils/employee';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
-import { ReactNode, useEffect, useState } from 'react';
+import type { ReactNode} from 'react';
+import { useEffect, useState } from 'react';
 import { cn, iconButtonClassName, textClassName } from '../utils/className';
 import { getUserKey } from '../utils/user';
 

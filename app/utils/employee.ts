@@ -1,6 +1,6 @@
 import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import { updateMissionData } from '@/app/actions/mission';
-import { Conciergerie, Employee, EmployeeStatus, Mission } from '@/app/types/dataTypes';
+import type { Conciergerie, Employee, EmployeeStatus, Mission } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
 import { getUserKey } from './user';
 

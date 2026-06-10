@@ -1,5 +1,5 @@
 import { isConnectionPoolError } from '@/app/utils/dbErrors';
-import { UserType } from '@/app/contexts/authProvider';
+import type { UserType } from '@/app/contexts/authProvider';
 import postgres from 'postgres';
 
 export { isConnectionPoolError };

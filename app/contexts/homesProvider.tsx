@@ -2,16 +2,18 @@
 
 import { createNewHome, deleteHomeData, fetchAllHomes, updateHomeData } from '@/app/actions/home';
 import { deleteFileFromSupabase } from '@/app/actions/storage';
-import { Toast, ToastMessage, ToastType } from '@/app/components/toastMessage';
+import type { Toast} from '@/app/components/toastMessage';
+import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { preloadImages } from '@/app/hooks/useImageCache';
-import { Home } from '@/app/types/dataTypes';
+import type { Home } from '@/app/types/dataTypes';
 import { generateSimpleId } from '@/app/utils/id';
 import { navigationRoutes, Page } from '@/app/utils/navigation';
 import { getStorageImageUrl } from '@/app/utils/storage';
 import { usePathname } from 'next/navigation';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode} from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 type HomesContextType = {
   isLoading: boolean;

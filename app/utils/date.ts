@@ -1,4 +1,4 @@
-import { Mission } from '@/app/types/dataTypes';
+import type { Mission } from '@/app/types/dataTypes';
 
 export const minimumMissionTime: number = 1; // minimum mission time in hours
 

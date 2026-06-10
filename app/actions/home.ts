@@ -1,7 +1,8 @@
 'use server';
 
-import { DbHome, createHome, deleteHome, getAllHomes, updateHome } from '@/app/db/homeDb';
-import { Home } from '@/app/types/dataTypes';
+import type { DbHome} from '@/app/db/homeDb';
+import { createHome, deleteHome, getAllHomes, updateHome } from '@/app/db/homeDb';
+import type { Home } from '@/app/types/dataTypes';
 
 /**
  * Fetch all homes

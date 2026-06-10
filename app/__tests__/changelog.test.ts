@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { getUnseenEntries, parseChangelog, versionGt, VersionEntry } from '@/app/hooks/useChangelog';
+import type { VersionEntry } from '@/app/hooks/useChangelog';
+import { getUnseenEntries, parseChangelog, versionGt } from '@/app/hooks/useChangelog';
 
 // ---------------------------------------------------------------------------
 // parseChangelog

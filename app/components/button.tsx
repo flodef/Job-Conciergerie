@@ -31,7 +31,7 @@ export function Button({
   return (
     <button
       className={cn(buttonClassName(style), className)}
-      onClick={e => {
+      onClick={() => {
         if (!disabled && !loading && onClick) onClick();
       }}
       disabled={disabled || loading}

@@ -1,7 +1,8 @@
 'use server';
 
+import type {
+  DbMission} from '@/app/db/missionDb';
 import {
-  DbMission,
   assignEmployeeToMission,
   claimLateNotification,
   createMission,
@@ -10,7 +11,7 @@ import {
   updateMission,
   updateMissionStatus,
 } from '@/app/db/missionDb';
-import { Mission, MissionStatus } from '@/app/types/dataTypes';
+import type { Mission, MissionStatus } from '@/app/types/dataTypes';
 
 /**
  * Fetch all missions from the database

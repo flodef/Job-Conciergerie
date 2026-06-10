@@ -2,15 +2,17 @@ import { updateConciergerieData } from '@/app/actions/conciergerie';
 import { updateEmployeeData } from '@/app/actions/employee';
 import Switch from '@/app/components/switch';
 import { ToastType } from '@/app/components/toastMessage';
-import { useAuth, UserType } from '@/app/contexts/authProvider';
+import type { UserType } from '@/app/contexts/authProvider';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useToast } from '@/app/contexts/toastProvider';
-import { Conciergerie, Employee } from '@/app/types/dataTypes';
+import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { textClassName } from '@/app/utils/className';
-import {
+import type {
   ConciergerieNotificationSettings,
+  EmployeeNotificationSettings} from '@/app/utils/notifications';
+import {
   defaultConciergerieSettings,
-  defaultEmployeeSettings,
-  EmployeeNotificationSettings,
+  defaultEmployeeSettings
 } from '@/app/utils/notifications';
 import React, { useState } from 'react';
 
