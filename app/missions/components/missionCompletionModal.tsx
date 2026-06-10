@@ -72,6 +72,10 @@ export default function MissionCompletionModal({ mission, onClose, onComplete }:
   const checkedCount = Object.values(checkedObjectives).filter(Boolean).length;
   const totalCount = home.objectives.length;
 
+  // Separate objectives into unchecked and checked
+  const uncheckedObjectives = home.objectives.filter(objective => !checkedObjectives[objective]);
+  const checkedObjectivesList = home.objectives.filter(objective => checkedObjectives[objective]);
+
   return (
     <FullScreenModal
       title={`Points particuliers (${checkedCount}/${totalCount})`}
@@ -82,21 +86,42 @@ export default function MissionCompletionModal({ mission, onClose, onComplete }:
     >
       <div className="py-2">
         <ul className="space-y-3">
-          {home.objectives.map((objective, index) => (
-            <li key={index} className="flex items-start gap-2">
+          {uncheckedObjectives.map((objective, index) => (
+            <li key={`unchecked-${index}`} className="flex items-start gap-2">
               <Checkbox
                 id={`objective-${index}`}
                 checked={checkedObjectives[objective] || false}
                 onChange={() => handleCheckboxChange(objective)}
-                labelClassName={cn(
-                  'flex-1',
-                  checkedObjectives[objective] ? 'line-through text-gray-500' : 'text-foreground',
-                )}
+                labelClassName="flex-1 text-foreground"
                 label={objective}
               />
             </li>
           ))}
         </ul>
+
+        {checkedObjectivesList.length > 0 && uncheckedObjectives.length > 0 && (
+          <div className="flex items-center gap-4 my-4">
+            <div className="flex-1 h-px bg-secondary" />
+            <span className="text-xs text-foreground/40 uppercase tracking-wide">Terminés</span>
+            <div className="flex-1 h-px bg-secondary" />
+          </div>
+        )}
+
+        {checkedObjectivesList.length > 0 && (
+          <ul className="space-y-3">
+            {checkedObjectivesList.map((objective, index) => (
+              <li key={`checked-${index}`} className="flex items-start gap-2">
+                <Checkbox
+                  id={`objective-checked-${index}`}
+                  checked={true}
+                  onChange={() => handleCheckboxChange(objective)}
+                  labelClassName="flex-1 line-through text-gray-500"
+                  label={objective}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </FullScreenModal>
   );
