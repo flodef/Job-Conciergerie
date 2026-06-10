@@ -13,8 +13,8 @@ import {
 import { shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconChevronDown } from '@tabler/icons-react';
-import type { ForwardedRef, ReactNode} from 'react';
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type { ForwardedRef, ReactNode } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type SelectProps = {
   id: string;
@@ -76,32 +76,53 @@ const Select = forwardRef(
       };
     }, []);
 
+    const checkPosition = useCallback(() => {
+      if (selectRef.current) {
+        setOpenUpward(
+          shouldOpenUpward({
+            elementRef: selectRef.current,
+            itemCount: options.length,
+          }),
+        );
+      }
+    }, [options.length]);
+
     // Handle keyboard navigation
     useEffect(() => {
-      if (disabled || !isOpen) return;
+      if (disabled) return;
       const handleKeyDown = (e: KeyboardEvent) => {
-        switch (e.key) {
-          case 'Escape':
+        if (!isOpen) {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter') {
             e.preventDefault();
-            setIsOpen(false);
-            break;
-          case 'ArrowDown':
-            e.preventDefault();
-            setHighlightedIndex(prev => (prev < options.length - 1 ? prev + 1 : prev));
-            break;
-          case 'ArrowUp':
-            e.preventDefault();
-            setHighlightedIndex(prev => (prev > 0 ? prev - 1 : 0));
-            break;
-          case 'Enter':
-            e.preventDefault();
-            if (highlightedIndex >= 0) {
-              const selectedOption = options[highlightedIndex];
-              const value = typeof selectedOption === 'object' ? selectedOption.value : selectedOption;
-              onChange(value.toString());
+            checkPosition();
+            setIsOpen(true);
+            setIsFocused(true);
+            setHighlightedIndex(e.key === 'ArrowUp' ? options.length - 1 : 0);
+          }
+        } else {
+          switch (e.key) {
+            case 'Escape':
+              e.preventDefault();
               setIsOpen(false);
-            }
-            break;
+              break;
+            case 'ArrowDown':
+              e.preventDefault();
+              setHighlightedIndex(prev => (prev < options.length - 1 ? prev + 1 : prev));
+              break;
+            case 'ArrowUp':
+              e.preventDefault();
+              setHighlightedIndex(prev => (prev > 0 ? prev - 1 : 0));
+              break;
+            case 'Enter':
+              e.preventDefault();
+              if (highlightedIndex >= 0) {
+                const selectedOption = options[highlightedIndex];
+                const value = typeof selectedOption === 'object' ? selectedOption.value : selectedOption;
+                onChange(value.toString());
+                setIsOpen(false);
+              }
+              break;
+          }
         }
       };
 
@@ -109,7 +130,7 @@ const Select = forwardRef(
       return () => {
         document.removeEventListener('keydown', handleKeyDown);
       };
-    }, [isOpen, highlightedIndex, options, onChange, disabled]);
+    }, [isOpen, highlightedIndex, options, onChange, disabled, checkPosition]);
 
     // Scroll to highlighted option
     useEffect(() => {
@@ -157,17 +178,6 @@ const Select = forwardRef(
       // If options are just strings
       return value;
     })();
-
-    const checkPosition = () => {
-      if (selectRef.current) {
-        setOpenUpward(
-          shouldOpenUpward({
-            elementRef: selectRef.current,
-            itemCount: options.length,
-          }),
-        );
-      }
-    };
 
     return (
       <div className={row ? rowClassName : ''}>
@@ -228,7 +238,7 @@ const Select = forwardRef(
                     <div
                       key={optionValue}
                       className={optionClassName(index === highlightedIndex, optionValue === value)}
-                      onClick={() => handleSelect(optionValue)}
+                      onMouseDown={() => handleSelect(optionValue)}
                       onMouseEnter={() => setHighlightedIndex(index)}
                       role="option"
                       aria-selected={optionValue === value}
