@@ -69,6 +69,18 @@ export default function FullScreenModal({
     }, 200); // Wait for animation to complete
   };
 
+  // Handle close button click - always closes all modals to clear history
+  const handleCloseButtonClick = () => {
+    if (skipAnimation) {
+      closeAllModals();
+      return;
+    }
+    setIsVisible(false);
+    closeTimerRef.current = setTimeout(() => {
+      closeAllModals();
+    }, 200); // Wait for animation to complete
+  };
+
   return (
     <div
       className={cn(
@@ -99,7 +111,7 @@ export default function FullScreenModal({
               {tooltip}
             </Tooltip>
           </div>
-          <CloseButton onClose={!disabled ? handleClose : () => {}} />
+          <CloseButton onClose={!disabled ? handleCloseButtonClick : () => {}} />
         </div>
 
         {/* Scrollable content area */}
