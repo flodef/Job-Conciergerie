@@ -1,15 +1,24 @@
-'use client';
-
 import tasksData from '@/app/data/tasks.json';
-import { MAX_POINTS_PER_DAY } from '@/app/missions/components/missionActions';
 import { Home, Mission, MissionPoints, Task } from '@/app/types/dataTypes';
 
-// Get points for a specific task
+export const MAX_POINTS_PER_DAY = 100;
+
+/**
+ * Get points for a specific task
+ *
+ * @param task The task to get points for
+ * @returns The number of points for the task
+ */
 export const getTaskPoints = (task: Task) => {
   return tasksData.find(t => t.label === task)?.points ?? 0;
 };
 
-// Calculate total points for a set of objectives
+/**
+ * Calculate total points for a set of objectives
+ *
+ * @param tasks The tasks to calculate points for
+ * @returns The total points for the tasks
+ */
 export const calculateTotalPoints = (tasks: Task[]): number => {
   return tasks.length ? tasks.reduce((total, task) => total + getTaskPoints(task), 0) : 0;
 };
@@ -17,6 +26,9 @@ export const calculateTotalPoints = (tasks: Task[]): number => {
 /**
  * Normalize a date by setting hours, minutes, seconds, and milliseconds to 0
  * to ensure date-only comparison
+ *
+ * @param date - The date to normalize
+ * @returns A new Date object with hours, minutes, seconds, and milliseconds set to 0
  */
 const normalizeDate = (date: Date | string): Date => {
   const normalized = new Date(date);
@@ -26,6 +38,11 @@ const normalizeDate = (date: Date | string): Date => {
 
 /**
  * Calculate the number of days between two dates (inclusive)
+ *
+ * @param startDate - The start date
+ * @param endDate - The end date
+ * @param inclusiveCount - Whether to include the start and end dates in the count (default: 1)
+ * @returns The number of days between the two dates (inclusive)
  */
 const calculateDaysBetweenDates = (startDate: Date, endDate: Date, inclusiveCount = 1): number => {
   const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
@@ -34,6 +51,11 @@ const calculateDaysBetweenDates = (startDate: Date, endDate: Date, inclusiveCoun
 
 /**
  * Calculate points per day with a maximum cap
+ *
+ * @param totalPoints - The total points to distribute
+ * @param days - The number of days to distribute the points over
+ * @param maxPointsPerDay - The maximum points that can be earned per day (default: MAX_POINTS_PER_DAY)
+ * @returns The points per day, capped at maxPointsPerDay
  */
 const calculatePointsPerDayWithCap = (
   totalPoints: number,
@@ -46,25 +68,39 @@ const calculatePointsPerDayWithCap = (
 /**
  * Number of providers sharing a mission: 2 when the binôme is complete
  * (both slots filled), otherwise 1.
+ *
+ * @param mission The mission to get the provider count for
+ * @returns The number of providers sharing the mission
  */
 export const getMissionProviderCount = (mission: Mission): number =>
   (mission.employeeId ? 1 : 0) + (mission.employeeId2 ? 1 : 0);
 
 /**
  * Whether the binôme is complete (both provider slots filled).
+ *
+ * @param mission The mission to check
+ * @returns True if the binôme is complete, false otherwise
  */
 export const isDuoComplete = (mission: Mission): boolean => getMissionProviderCount(mission) === 2;
 
 /**
  * Hours a single provider must work for a mission. When the binôme is complete,
  * the total hours are split evenly between the two providers.
+ *
+ * @param mission The mission to get the hours for
+ * @returns The hours a single provider must work for the mission
  */
 export const getMissionHoursPerProvider = (mission: Mission): number => {
   const providerCount = getMissionProviderCount(mission);
   return providerCount > 0 ? mission.hours / providerCount : 0;
 };
 
-// Calculate mission points including points per day
+/**
+ * Calculate mission points including points per day
+ *
+ * @param mission The mission to calculate points for
+ * @returns The total points and points per day for the mission
+ */
 export const calculateMissionPoints = (mission: Mission): MissionPoints => {
   // Calculate total points for all objectives in the mission
   const totalPoints = calculateTotalPoints(mission.tasks);
@@ -85,7 +121,13 @@ export const calculateMissionPoints = (mission: Mission): MissionPoints => {
   };
 };
 
-// Calculate remaining points per day based on remaining days
+/**
+ * Calculate remaining points per day based on remaining days
+ *
+ * @param mission The mission to calculate remaining points for
+ * @param currentDate The current date (default: today)
+ * @returns The remaining points per day
+ */
 export const calculateRemainingPointsPerDay = (mission: Mission, currentDate: Date = new Date()): number => {
   // Normalize dates for comparison
   const today = normalizeDate(currentDate);
@@ -110,6 +152,7 @@ export const calculateRemainingPointsPerDay = (mission: Mission, currentDate: Da
 
 /**
  * Filter missions for a specific employee and date
+ *
  * @param employeeId The ID of the employee
  * @param date The date to check
  * @param missions All missions
@@ -145,6 +188,7 @@ const filterEmployeeMissionsForDate = (
 
 /**
  * Calculate the total points an employee has for a specific day
+ *
  * @param employeeId The ID of the employee
  * @param date The date to check
  * @param missions All missions
@@ -198,6 +242,13 @@ export const calculateEmployeePointsForDay = (
   }, 0);
 };
 
+/**
+ * Get available tasks for a home based on the home's specifications
+ *
+ * @param home The home object
+ * @param tasks The tasks to filter (default: all tasks)
+ * @returns An array of available tasks
+ */
 export const getAvailableTasks = (home: Home | undefined, tasks = Object.values(Task)): Task[] => {
   if (!home) throw new Error('Home is required');
   return tasks.filter(task => getTaskHours(home, task) > 0);
@@ -205,6 +256,10 @@ export const getAvailableTasks = (home: Home | undefined, tasks = Object.values(
 
 /**
  * Calculate total hours for a mission based on selected tasks and home specifications
+ *
+ * @param home The home object
+ * @param tasks The tasks to calculate hours for
+ * @returns The total hours for the mission
  */
 export const calculateMissionHours = (home: Home, tasks: Task[]): number => {
   return tasks.reduce((acc, task) => acc + getTaskHours(home, task), 0);
@@ -212,6 +267,7 @@ export const calculateMissionHours = (home: Home, tasks: Task[]): number => {
 
 /**
  * Calculate the total hours an employee has for missions on a specific day
+ *
  * @param employeeId The ID of the employee
  * @param date The date to check
  * @param missions All missions
@@ -235,6 +291,10 @@ export const calculateEmployeeHoursForDay = (
 
 /**
  * Get hours for a specific task
+ *
+ * @param home The home object
+ * @param task The task to get hours for
+ * @returns The number of hours for the task
  */
 export const getTaskHours = (home: Home, task: Task): number => {
   const hours = {
@@ -249,6 +309,9 @@ export const getTaskHours = (home: Home, task: Task): number => {
 /**
  * Formats a number to display with minimal decimals
  * e.g., 3.0 becomes 3, and 1.666 becomes 1.7
+ *
+ * @param number The number to format
+ * @returns A string representation of the number
  */
 export const formatNumber = (number: number | string): string => {
   const num = typeof number === 'string' ? parseFloat(number) : number;
@@ -259,6 +322,9 @@ export const formatNumber = (number: number | string): string => {
 /**
  * Formats hours in decimal format to a more human-readable format
  * e.g., 3.5 becomes "3h30", 1.25 becomes "1h15"
+ *
+ * @param hours The hours to format
+ * @returns A string representation of the hours
  */
 export const formatHours = (hours: number): string => {
   const wholeHours = Math.floor(hours);

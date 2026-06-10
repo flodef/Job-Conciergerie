@@ -4,7 +4,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { Mission } from '@/app/types/dataTypes';
 import { actionButtonBarClassName, actionButtonClassName, cn } from '@/app/utils/className';
-import { calculateEmployeePointsForDay, calculateMissionPoints } from '@/app/utils/task';
+import { calculateEmployeePointsForDay, calculateMissionPoints, MAX_POINTS_PER_DAY } from '@/app/utils/task';
 import { getUserKey } from '@/app/utils/user';
 import {
   IconAlertTriangle,
@@ -16,8 +16,6 @@ import {
   IconUserPlus,
 } from '@tabler/icons-react';
 import { useMemo } from 'react';
-
-export const MAX_POINTS_PER_DAY = 100;
 
 type MissionActionsProps = {
   mission: Mission;

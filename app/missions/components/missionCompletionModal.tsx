@@ -7,7 +7,6 @@ import FullScreenModal from '@/app/components/fullScreenModal';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { Mission } from '@/app/types/dataTypes';
-import { cn } from '@/app/utils/className';
 import { useEffect, useState } from 'react';
 import MissionReportModal from './missionReportModal';
 
