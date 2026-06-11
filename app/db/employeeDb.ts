@@ -126,10 +126,51 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
 };
 
 /**
+ * Helper function to update missions when an employee is removed or rejected
+ * - For missions with status 'accepted' or 'started': set status to NULL
+ * - For missions with status 'completed': keep employee_id intact
+ */
+const updateMissionsForEmployeeRemoval = async (firstName: string, familyName: string) => {
+  try {
+    // Fetch the employee to get their ID(s)
+    const employeeResult = await sql`
+      SELECT id
+      FROM employees
+      WHERE first_name = ${firstName} AND family_name = ${familyName}
+      LIMIT 1
+    `;
+
+    if (employeeResult.length === 0) {
+      console.warn(`Employee ${firstName} ${familyName} not found`);
+      return;
+    }
+
+    const employeeIds = employeeResult[0].id as string[];
+
+    // Update missions where this employee is assigned
+    // For missions with status 'accepted' or 'started': set status to NULL
+    await sql`
+      UPDATE missions
+      SET status = NULL
+      WHERE status IN ('accepted', 'started')
+      AND (employee_id = ANY(${employeeIds}) OR employee_id2 = ANY(${employeeIds}))
+    `;
+  } catch (error) {
+    console.error(`Error updating missions for employee removal ${firstName} ${familyName}:`, error);
+  }
+};
+
+/**
  * Update an employee's status
+ * When setting status to 'rejected', update missions:
+ * - For missions with status 'accepted' or 'started': set status to NULL
+ * - For missions with status 'completed': keep employee_id intact
  */
 export const updateEmployeeStatus = async (firstName: string, familyName: string, status: EmployeeStatus) => {
   try {
+    // If rejecting, first update missions before changing status
+    if (status === 'rejected') await updateMissionsForEmployeeRemoval(firstName, familyName);
+
     const result = await sql`
       UPDATE employees
       SET status = ${status}
@@ -180,10 +221,17 @@ export const updateEmployeeSettings = async (
 
 /**
  * Delete an employee
+ * Before deletion, update missions:
+ * - For missions with status 'accepted' or 'started': set status to NULL
+ * - For missions with status 'completed': keep employee_id intact
  */
 export const deleteEmployee = async (firstName: string, familyName: string) => {
   if (!firstName || !familyName) throw new Error('No employee name provided');
   try {
+    // First, update missions where this employee is assigned
+    await updateMissionsForEmployeeRemoval(firstName, familyName);
+
+    // Delete the employee
     const result = await sql`
       DELETE FROM employees
       WHERE first_name = ${firstName} AND family_name = ${familyName}
