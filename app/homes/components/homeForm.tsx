@@ -1,7 +1,6 @@
 'use client';
 
 import Combobox from '@/app/components/combobox';
-import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
@@ -14,7 +13,7 @@ import TextArea from '@/app/components/textArea';
 import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
-import { useModal } from '@/app/contexts/modalProvider';
+import { useUnsavedChangesConfirmation } from '@/app/hooks/useUnsavedChangesConfirmation';
 import { useToast } from '@/app/contexts/toastProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import type { Home } from '@/app/types/dataTypes';
@@ -48,7 +47,6 @@ export default function HomeForm({
 }: HomeFormProps) {
   const { addHome, updateHome, homeExists } = useHomes();
   const { conciergerieName } = useAuth();
-  const { openModal, closeModal, closeAllModals } = useModal();
   const { showToast } = useToast();
 
   const imageUploaderRef = useRef<{
@@ -150,46 +148,11 @@ export default function HomeForm({
     initialFormValues,
   ]);
 
-  const closeAndCancel = () => {
-    onClose();
-    onCancel?.();
-  };
-
-  const handleCancel = () => {
-    if (checkFormChanged()) {
-      const id = openModal(() => (
-        <ConfirmationModal
-          isOpen
-          title="Modifications non enregistrées"
-          message="Vous avez des modifications non enregistrées. Voulez-vous vraiment fermer ?"
-          confirmText="Fermer"
-          cancelText="Annuler"
-          onConfirm={closeAndCancel}
-          onClose={() => closeModal(id)}
-        />
-      ));
-    } else {
-      closeAndCancel();
-    }
-  };
-
-  const handleClose = () => {
-    if (checkFormChanged()) {
-      const id = openModal(() => (
-        <ConfirmationModal
-          isOpen
-          title="Modifications non enregistrées"
-          message="Vous avez des modifications non enregistrées. Voulez-vous vraiment fermer ?"
-          confirmText="Fermer"
-          cancelText="Annuler"
-          onCancel={() => closeModal(id)}
-          onConfirm={closeAllModals}
-        />
-      ));
-    } else {
-      closeAllModals();
-    }
-  };
+  const { handleCancel, handleClose, closeAndCancel } = useUnsavedChangesConfirmation({
+    checkFormChanged,
+    onClose,
+    onCancel,
+  });
 
   // Check for duplicate objectives in the list
   const hasDuplicateObjectives = () => {

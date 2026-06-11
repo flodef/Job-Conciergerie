@@ -1,18 +1,17 @@
 'use client';
 
 import Combobox from '@/app/components/combobox';
-import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import Label from '@/app/components/label';
 import MultiSelect from '@/app/components/multiSelect';
 import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import Select from '@/app/components/select';
+import { useUnsavedChangesConfirmation } from '@/app/hooks/useUnsavedChangesConfirmation';
 import TaskSelector from '@/app/components/taskSelector';
 import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
-import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import { MAX_TRAVELLERS } from '@/app/homes/components/homeForm';
 import type { Mission } from '@/app/types/dataTypes';
@@ -44,7 +43,6 @@ type MissionFormProps = {
 export default function MissionForm({ mission, onClose, onCancel, mode, skipAnimation = false }: MissionFormProps) {
   const { homes, addMission, updateMission, missionExists } = useMissions();
   const { conciergerieName, employees: allEmployees } = useAuth();
-  const { openModal, closeModal, closeAllModals } = useModal();
   const { showToast } = useToast();
 
   // Filter homes by the current conciergerie
@@ -161,46 +159,11 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
     return tasksChanged || homeIdChanged || startDateChanged || endDateChanged || employeesChanged || travellersChanged;
   }, [homeId, tasks, startDateTime, endDateTime, selectedEmployees, travellers, initialFormValues]);
 
-  const closeAndCancel = () => {
-    onClose();
-    onCancel?.();
-  };
-
-  const handleCancel = () => {
-    if (checkFormChanged()) {
-      const id = openModal(() => (
-        <ConfirmationModal
-          isOpen
-          title="Modifications non enregistrées"
-          message="Vous avez des modifications non enregistrées. Voulez-vous vraiment fermer ?"
-          confirmText="Fermer"
-          cancelText="Annuler"
-          onConfirm={closeAndCancel}
-          onClose={() => closeModal(id)}
-        />
-      ));
-    } else {
-      closeAndCancel();
-    }
-  };
-
-  const handleClose = () => {
-    if (checkFormChanged()) {
-      const id = openModal(() => (
-        <ConfirmationModal
-          isOpen
-          title="Modifications non enregistrées"
-          message="Vous avez des modifications non enregistrées. Voulez-vous vraiment fermer ?"
-          confirmText="Fermer"
-          cancelText="Annuler"
-          onCancel={() => closeModal(id)}
-          onConfirm={closeAllModals}
-        />
-      ));
-    } else {
-      closeAllModals();
-    }
-  };
+  const { handleCancel, handleClose } = useUnsavedChangesConfirmation({
+    checkFormChanged,
+    onClose,
+    onCancel,
+  });
 
   const handleSubmit = async () => {
     if (!checkFormChanged()) return;

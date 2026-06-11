@@ -907,7 +907,13 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             <div className="absolute top-1/2 -translate-y-1/2 left-0.5">
               <div className="flex items-center">
                 <div className="w-4 h-0.5 bg-secondary -ml-1"></div>
-                <div className={cn(textClassName, '-ml-2 bg-secondary px-3 py-1 rounded-full text-nowrap')}>
+                <div
+                  className={cn(
+                    textClassName,
+                    'bg-secondary px-3 py-1 rounded-2xl',
+                    hasStarted && !hasEnded ? 'ml-0' : '-ml-2 whitespace-nowrap',
+                  )}
+                >
                   {(() => {
                     // Otherwise show total duration
                     return hasEnded
