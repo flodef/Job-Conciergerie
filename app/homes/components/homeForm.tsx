@@ -324,7 +324,7 @@ export default function HomeForm({
           label="Titre"
           ref={titleRef}
           value={title}
-          onChange={setTitle}
+          onChange={value => setTitle(value.trim())}
           error={titleError}
           onError={setTitleError}
           disabled={isSubmitting}
