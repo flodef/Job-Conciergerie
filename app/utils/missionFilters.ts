@@ -143,18 +143,21 @@ export function applyMissionFilters(
       // 'available' means no employee is assigned (employeeId is empty) OR duo-open (1/2) AND mission is not in the past
       // AND the current employee is not already assigned to either slot
       // 'accepted', 'started', 'completed' match the actual mission status
+      // 'expired' means null status AND mission is expired
       const isAvailable =
         (!mission.employeeId || (isMissionDuoOpen(mission) && !isPartOfMission(mission, employeeName))) &&
         !isMissionExpired(mission);
       const isAccepted = mission.status === 'accepted' && (!employeeName || isPartOfMission(mission, employeeName));
       const isStarted = mission.status === 'started';
       const isCompleted = mission.status === 'completed' && (!employeeName || isPartOfMission(mission, employeeName));
+      const isExpired = !mission.status && isMissionExpired(mission);
 
       const matchesMissionStatus =
         (selectedMissionStatuses.includes('available') && isAvailable) ||
         (selectedMissionStatuses.includes('accepted') && isAccepted) ||
         (selectedMissionStatuses.includes('started') && isStarted) ||
-        (selectedMissionStatuses.includes('completed') && isCompleted);
+        (selectedMissionStatuses.includes('completed') && isCompleted) ||
+        (selectedMissionStatuses.includes('expired') && isExpired);
 
       if (!matchesMissionStatus) return false;
     }

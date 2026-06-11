@@ -24,8 +24,8 @@ import { calculateEmployeeHoursForDay, formatHours } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay, IconUsers } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
+import { isMissionExpired, isPartOfMission } from '../utils/missionFilters';
 import { getUserKey } from '../utils/user';
-import { isPartOfMission } from '../utils/missionFilters';
 
 export default function Calendar() {
   const {
@@ -94,24 +94,30 @@ export default function Calendar() {
 
     const filteredMissions = missions.filter(
       mission =>
-        mission.status &&
-        mission.status !== 'completed' &&
-        (isEmployee ? isPartOfMission(mission, employeeName) : mission.conciergerieName === conciergerieName),
+        (mission.status && mission.status !== 'completed') ||
+        (isConciergerie && !mission.status && isMissionExpired(mission)),
+    );
+
+    // Filter by user type
+    const userFilteredMissions = filteredMissions.filter(mission =>
+      isEmployee ? isPartOfMission(mission, employeeName) : mission.conciergerieName === conciergerieName,
     );
 
     // Count started missions
-    const started = filteredMissions.filter(mission => mission.status === 'started');
+    const started = userFilteredMissions.filter(mission => mission.status === 'started');
     setStartedMissionsCount(started.length);
     setStartedMissions(started);
 
     // Count late missions (ended without being started)
-    const late = getLateMissions(filteredMissions).sort((a, b) => a.endDateTime.getTime() - b.endDateTime.getTime());
+    const late = getLateMissions(userFilteredMissions).sort(
+      (a, b) => a.endDateTime.getTime() - b.endDateTime.getTime(),
+    );
     setLateMissionsCount(late.length);
     setLateMissionsList(late);
 
     // Count missions missing a partner (duo missions with only one employee assigned)
     if (isConciergerie) {
-      const missingPartner = filteredMissions.filter(
+      const missingPartner = userFilteredMissions.filter(
         mission =>
           mission.allowDuo &&
           ((mission.employeeId && !mission.employeeId2) || (!mission.employeeId && mission.employeeId2)),
@@ -120,10 +126,10 @@ export default function Calendar() {
       setMissingPartnerMissionsList(missingPartner);
     }
 
-    setAcceptedMissions(filteredMissions);
+    setAcceptedMissions(userFilteredMissions);
 
     // Group missions by date
-    const groupedMissions = groupMissionsByDate(filteredMissions);
+    const groupedMissions = groupMissionsByDate(userFilteredMissions);
     setMissionsByDate(groupedMissions);
 
     // Sort dates

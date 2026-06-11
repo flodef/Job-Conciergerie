@@ -307,6 +307,7 @@ export default function Missions() {
               setSelectedEmployees={setSelectedEmployees}
               saveFiltersToLocalStorage={saveFiltersToLocalStorage}
               savedFilters={savedFilters}
+              isConciergerie={isConciergerie}
             />
           </div>
         )}

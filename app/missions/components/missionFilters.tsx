@@ -31,6 +31,7 @@ interface MissionFiltersProps {
   setSelectedEmployees?: React.Dispatch<React.SetStateAction<string[]>>;
   saveFiltersToLocalStorage?: () => void;
   savedFilters?: MissionFiltersType;
+  isConciergerie: boolean;
 }
 
 export default function MissionFilters({
@@ -50,6 +51,7 @@ export default function MissionFilters({
   setSelectedEmployees,
   saveFiltersToLocalStorage,
   savedFilters,
+  isConciergerie,
 }: MissionFiltersProps) {
   // Function to compare arrays (order doesn't matter)
   const compareArrays = (arr1: string[], arr2: string[]) => {
@@ -149,6 +151,7 @@ export default function MissionFilters({
             { value: 'accepted', label: 'Acceptées' },
             { value: 'started', label: 'Démarrées' },
             { value: 'completed', label: 'Terminées' },
+            ...(isConciergerie ? [{ value: 'expired', label: 'Expirées' }] : []),
           ]}
           disabled={false}
           required
