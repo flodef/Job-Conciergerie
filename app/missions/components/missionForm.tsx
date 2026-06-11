@@ -3,21 +3,20 @@
 import Combobox from '@/app/components/combobox';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
-import Label from '@/app/components/label';
 import MultiSelect from '@/app/components/multiSelect';
 import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import Select from '@/app/components/select';
-import { useUnsavedChangesConfirmation } from '@/app/hooks/useUnsavedChangesConfirmation';
 import TaskSelector from '@/app/components/taskSelector';
 import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import { MAX_TRAVELLERS } from '@/app/homes/components/homeForm';
-import { IconUsers } from '@tabler/icons-react';
+import { useUnsavedChangesConfirmation } from '@/app/hooks/useUnsavedChangesConfirmation';
 import type { Mission } from '@/app/types/dataTypes';
 import { Task } from '@/app/types/dataTypes';
 import type { ErrorField } from '@/app/types/types';
+import { containerClassName } from '@/app/utils/className';
 import {
   adjustMissionDateTime,
   getMinEndDate,
@@ -28,11 +27,12 @@ import {
   localISOString,
 } from '@/app/utils/date';
 import { handleChange } from '@/app/utils/form';
+import { isMissionExpired } from '@/app/utils/missionFilters';
 import { range } from '@/app/utils/select';
 import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
 import { getUserKey } from '@/app/utils/user';
+import { IconUsers } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { cn, containerClassName } from '@/app/utils/className';
 
 type MissionFormProps = {
   mission?: Mission;
@@ -102,16 +102,11 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
   // Check if mission can be edited
   useEffect(() => {
     if (mode === 'edit' && mission) {
-      const currentTime = new Date();
-      const missionEndTime = new Date(mission.endDateTime);
-
       // Cannot edit mission if end date is in the past AND mission status is not accepted or null
       const message =
-        missionEndTime < currentTime
-          ? 'Cette mission ne peut pas être modifiée car elle est déjà terminée'
-          : mission.status === 'started' || mission.status === 'completed'
-            ? 'Cette mission ne peut pas être modifiée car elle est déjà commencée ou terminée.'
-            : '';
+        isMissionExpired(mission) || mission.status === 'started' || mission.status === 'completed'
+          ? 'Cette mission ne peut pas être modifiée car elle est déjà commencée ou terminée.'
+          : '';
 
       if (message) {
         setCannotEdit(true);

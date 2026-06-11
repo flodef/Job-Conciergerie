@@ -3,6 +3,7 @@ import { updateMissionData } from '@/app/actions/mission';
 import type { Conciergerie, Employee, EmployeeStatus, Mission } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
 import { getUserKey } from './user';
+import { isPartOfMission } from './missionFilters';
 
 /**
  * Get the full name of an employee
@@ -125,9 +126,7 @@ export const countEmployeeMissions = (employee: Employee, missions: Mission[]): 
 // Remove employee from all their assigned missions
 export const removeEmployeeFromMissions = async (employee: Employee, missions: Mission[], employees: Employee[]) => {
   const employeeKey = getUserKey(employee);
-  const missionsToUpdate = missions.filter(
-    mission => mission.employeeId === employeeKey || mission.employeeId2 === employeeKey,
-  );
+  const missionsToUpdate = missions.filter(mission => isPartOfMission(mission, employeeKey));
 
   for (const mission of missionsToUpdate) {
     // Don't remove from completed missions (for archive purposes)

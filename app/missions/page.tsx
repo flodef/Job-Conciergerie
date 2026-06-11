@@ -135,8 +135,8 @@ export default function Missions() {
   // Basic filtered missions (by user type) - must be declared before any conditional returns
   const basicFilteredMissions = useMemo(() => {
     if (missionsLoading) return [];
-    return filterMissionsByUserType(missions, isEmployee ? employeeName : undefined, homes);
-  }, [missions, isEmployee, missionsLoading, employeeName, homes]);
+    return filterMissionsByUserType(missions, isEmployee ? employeeName : undefined);
+  }, [missions, isEmployee, missionsLoading, employeeName]);
 
   // Apply additional filters (conciergerie, status, zones) - must be declared before any conditional returns
   const filteredMissions = useMemo(() => {

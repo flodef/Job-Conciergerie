@@ -32,9 +32,6 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
   const providerCount = getMissionProviderCount(mission);
   const hasReport = !!getMissionReport(mission.id);
 
-  // Check if mission is fully accepted
-  const isFullyAccepted = home?.allowDuo ? providerCount === 2 : providerCount === 1;
-
   // Get reserved employees (excluding those who have already accepted the mission)
   const reservedEmployees = mission.allowedEmployees
     ?.filter(id => id !== mission.employeeId && id !== mission.employeeId2)
@@ -131,7 +128,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         <div className="flex justify-between items-center">
           <span>{formatDateRange(new Date(mission.startDateTime), new Date(mission.endDateTime))}</span>
         </div>
-        {isConciergerie && reservedEmployees?.length && !isFullyAccepted && (
+        {isConciergerie && !!reservedEmployees?.length && (
           <div className="flex items-center gap-1 mt-1 truncate">
             <span className="font-medium">Réservé à :</span>
             <span className="truncate">{reservedEmployees.join(', ')}</span>

@@ -6,6 +6,7 @@ import type { Mission } from '@/app/types/dataTypes';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState } from 'react';
+import { isMissionExpired } from '../utils/missionFilters';
 
 type BadgeContextType = {
   pendingEmployeesCount: number;
@@ -73,7 +74,7 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
         : (mission: Mission) =>
             !mission.employeeId && // Not assigned to anyone
             new Date(mission.modifiedDate) > lastCheckedDate &&
-            new Date(mission.endDateTime).getTime() >= new Date().getTime(); // Not expired
+            !isMissionExpired(mission); // Not expired
 
       const newMissions = missions.filter(missionFilter);
       setNewMissionsCount(newMissions.length);

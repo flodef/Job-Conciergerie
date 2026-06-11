@@ -23,6 +23,7 @@ import { getUserKey } from '@/app/utils/user';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { isMissionExpired, isPartOfMission } from '../utils/missionFilters';
 
 type MissionsContextType = {
   isLoading: boolean;
@@ -72,6 +73,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     isLoading: authLoading,
     userType,
     isEmployee,
+    employeeName,
   } = useAuth();
   const { homes, fetchHomes } = useHomes();
   const { needsRefresh, updateFetchTime } = useFetchTime();
@@ -90,10 +92,8 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     missionsRef.current = missions;
   }, [missions]);
 
-  const getLateMissions = (missions: Mission[]) => {
-    const now = new Date();
-    return missions.filter(mission => mission.status !== 'completed' && new Date(mission.endDateTime) < now);
-  };
+  const getLateMissions = (missions: Mission[]) =>
+    missions.filter(mission => mission.status !== 'completed' && !isMissionExpired(mission));
 
   const getMissionReport = useCallback(
     (missionId: string) => {
@@ -102,14 +102,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       const mission = missions.find(m => m.id === missionId);
       if (!mission) return undefined;
       const isOwner = userType === 'conciergerie' && mission.conciergerieName === conciergerieName;
-      const isEmployeeWhoWorked =
-        userData &&
-        isEmployee &&
-        (mission.employeeId === getUserKey(userData) || mission.employeeId2 === getUserKey(userData));
+      const isEmployeeWhoWorked = isEmployee && isPartOfMission(mission, employeeName);
       if (!isEmployeeWhoWorked && !isOwner) return undefined;
       return report;
     },
-    [missionReports, missions, userType, conciergerieName, userData, isEmployee],
+    [missionReports, missions, userType, conciergerieName, isEmployee, employeeName],
   );
 
   /**

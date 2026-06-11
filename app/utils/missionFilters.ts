@@ -1,7 +1,10 @@
 import type { Home, Mission } from '@/app/types/dataTypes';
+import { getMissionProviderCount } from './task';
 
 /**
  * Get available months/years from missions
+ * @param missions The list of missions to extract periods from
+ * @returns An array of unique month/year strings, sorted in descending order
  */
 export function getAvailableTimePeriods(missions: Mission[]): string[] {
   const periods = new Set<string>();
@@ -43,23 +46,38 @@ export function getAvailableTimePeriods(missions: Mission[]): string[] {
  * Whether a mission is "duo-open": the first binôme slot is filled but the second
  * is still free, the home allows duos, and the mission is not finished. Such a
  * mission stays visible to other providers so a second one can join.
+ * @param mission The mission to check
+ * @returns true if the mission is duo-open, false otherwise
  */
-export function isMissionDuoOpen(mission: Mission, homes: Home[]): boolean {
-  if (!mission.employeeId || mission.employeeId2) return false;
-  if (mission.status === 'completed') return false;
-  if (new Date(mission.endDateTime) < new Date()) return false;
-  const home = homes.find(h => h.id === mission.homeId);
-  return !!home?.allowDuo;
-}
+export const isMissionDuoOpen = (mission: Mission) =>
+  mission.allowDuo &&
+  !isMissionExpired(mission) &&
+  mission.status !== 'completed' &&
+  getMissionProviderCount(mission) < 2;
+
+/**
+ * Check if an employee is part of a mission (either as first or second provider)
+ * @param mission The mission to check
+ * @param employeeName The name of the employee to check
+ * @returns true if the employee is part of the mission, false otherwise
+ */
+export const isPartOfMission = (mission: Mission, employeeName: string | undefined) =>
+  employeeName && (mission.employeeId === employeeName || mission.employeeId2 === employeeName);
+
+/**
+ * Check if a mission is expired
+ * @param mission The mission to check
+ * @returns true if the mission is expired, false otherwise
+ */
+export const isMissionExpired = (mission: Mission) => new Date(mission.endDateTime) < new Date();
 
 /**
  * Filter missions based on user type
+ * @param missions The list of missions to filter
+ * @param employeeName The name of the employee (if any)
+ * @returns The filtered list of missions
  */
-export function filterMissionsByUserType(
-  missions: Mission[],
-  employeeName: string | undefined,
-  homes: Home[] = [],
-): Mission[] {
+export function filterMissionsByUserType(missions: Mission[], employeeName: string | undefined): Mission[] {
   return missions.filter(mission => {
     // For employee users, show only missions they have access to
     if (employeeName) {
@@ -67,13 +85,13 @@ export function filterMissionsByUserType(
       if (mission.allowedEmployees?.length) return mission.allowedEmployees.includes(employeeName);
 
       // Missions the employee is already part of (either binôme slot)
-      if (mission.employeeId === employeeName || mission.employeeId2 === employeeName) return true;
+      if (isPartOfMission(mission, employeeName)) return true;
 
       // Mission assigned to someone else: only visible if it's duo-open (so they can join as 2nd)
-      if (mission.employeeId) return isMissionDuoOpen(mission, homes);
+      if (mission.employeeId) return isMissionDuoOpen(mission);
 
       // Unassigned mission: visible while not in the past
-      return new Date(mission.endDateTime) >= new Date();
+      return !isMissionExpired(mission);
     }
 
     // For conciergerie users, show all the missions
@@ -83,6 +101,15 @@ export function filterMissionsByUserType(
 
 /**
  * Apply additional filters (conciergerie, status, zones)
+ * @param missions The list of missions to filter
+ * @param selectedConciergeries The selected conciergerie IDs
+ * @param selectedStatuses The selected status IDs
+ * @param selectedMissionStatuses The selected mission status IDs
+ * @param selectedZones The selected zone IDs
+ * @param homes The list of homes
+ * @param employeeName The name of the employee (if any)
+ * @param selectedEmployees The selected employee names
+ * @returns The filtered list of missions
  */
 export function applyMissionFilters(
   missions: Mission[],
@@ -94,16 +121,6 @@ export function applyMissionFilters(
   employeeName?: string,
   selectedEmployees: string[] = [],
 ): Mission[] {
-  // If no filters are selected, show all missions
-  // if (
-  //   selectedConciergeries.length === 0 &&
-  //   selectedStatuses.length === 0 &&
-  //   selectedMissionStatuses.length === 0 &&
-  //   selectedZones.length === 0
-  // ) {
-  //   return missions;
-  // }
-
   return missions.filter(mission => {
     // Filter by conciergerie
     if (selectedConciergeries.length > 0 && !selectedConciergeries.includes(mission.conciergerieName)) return false;
@@ -127,18 +144,11 @@ export function applyMissionFilters(
       // AND the current employee is not already assigned to either slot
       // 'accepted', 'started', 'completed' match the actual mission status
       const isAvailable =
-        (!mission.employeeId ||
-          (isMissionDuoOpen(mission, homes) &&
-            mission.employeeId !== employeeName &&
-            mission.employeeId2 !== employeeName)) &&
-        new Date(mission.endDateTime) >= new Date();
-      const isAccepted =
-        mission.status === 'accepted' &&
-        (!employeeName || mission.employeeId === employeeName || mission.employeeId2 === employeeName);
+        (!mission.employeeId || (isMissionDuoOpen(mission) && !isPartOfMission(mission, employeeName))) &&
+        !isMissionExpired(mission);
+      const isAccepted = mission.status === 'accepted' && (!employeeName || isPartOfMission(mission, employeeName));
       const isStarted = mission.status === 'started';
-      const isCompleted =
-        mission.status === 'completed' &&
-        (!employeeName || mission.employeeId === employeeName || mission.employeeId2 === employeeName);
+      const isCompleted = mission.status === 'completed' && (!employeeName || isPartOfMission(mission, employeeName));
 
       const matchesMissionStatus =
         (selectedMissionStatuses.includes('available') && isAvailable) ||
@@ -172,6 +182,11 @@ export function applyMissionFilters(
 
 /**
  * Sort missions by the specified field and direction
+ * @param missions The list of missions to sort
+ * @param sortField The field to sort by
+ * @param sortDirection The direction to sort (asc or desc)
+ * @param homes The list of homes to use for sorting
+ * @returns The sorted list of missions
  */
 export function sortMissions(
   missions: Mission[],
@@ -208,6 +223,10 @@ export function sortMissions(
 
 /**
  * Group missions by category based on sort field
+ * @param missions The list of missions to group
+ * @param sortField The field to group by
+ * @param homes The list of homes to use for grouping
+ * @returns An object with categories as keys and arrays of missions as values
  */
 export function groupMissionsByCategory(
   missions: Mission[],

@@ -6,7 +6,7 @@ import { insertFailedEmail } from '@/app/db/failedEmailsDb';
 import type { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
 import { getStorageImageUrl } from '@/app/utils/storage';
-import { formatHours } from '@/app/utils/task';
+import { formatHours, getMissionHoursPerProvider } from '@/app/utils/task';
 import type { UserData } from '@/app/utils/user';
 import packageJson from '@/package.json';
 import type { SendMailOptions } from 'nodemailer';
@@ -257,7 +257,7 @@ function composeMissionStatusChangeEmail(
   const startDate = formatDateTime(mission.startDateTime);
   const endDate = formatDateTime(mission.endDateTime);
   const isDuo = !!mission.employeeId2;
-  const hoursPerProvider = isDuo ? mission.hours / 2 : mission.hours;
+  const hoursPerProvider = getMissionHoursPerProvider(mission);
 
   let statusMessage = '';
   let statusAction = '';

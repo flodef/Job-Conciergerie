@@ -25,6 +25,7 @@ import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay, IconUs
 import { useEffect, useMemo, useRef, useState } from 'react';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
 import { getUserKey } from '../utils/user';
+import { isPartOfMission } from '../utils/missionFilters';
 
 export default function Calendar() {
   const {
@@ -95,9 +96,7 @@ export default function Calendar() {
       mission =>
         mission.status &&
         mission.status !== 'completed' &&
-        (isEmployee
-          ? mission.employeeId === employeeName || mission.employeeId2 === employeeName
-          : mission.conciergerieName === conciergerieName),
+        (isEmployee ? isPartOfMission(mission, employeeName) : mission.conciergerieName === conciergerieName),
     );
 
     // Count started missions
@@ -112,12 +111,11 @@ export default function Calendar() {
 
     // Count missions missing a partner (duo missions with only one employee assigned)
     if (isConciergerie) {
-      const missingPartner = filteredMissions.filter(mission => {
-        const home = homes.find(h => h.id === mission.homeId);
-        return (
-          (home?.allowDuo && mission.employeeId && !mission.employeeId2) || (!mission.employeeId && mission.employeeId2)
-        );
-      });
+      const missingPartner = filteredMissions.filter(
+        mission =>
+          mission.allowDuo &&
+          ((mission.employeeId && !mission.employeeId2) || (!mission.employeeId && mission.employeeId2)),
+      );
       setMissingPartnerMissionsCount(missingPartner.length);
       setMissingPartnerMissionsList(missingPartner);
     }
@@ -353,7 +351,7 @@ export default function Calendar() {
                         </div>
                       )}
 
-                      {home?.allowDuo ? (
+                      {mission.allowDuo ? (
                         <div className="flex items-center text-sm mt-1">
                           <IconUsers className="mr-1" size={16} />
                           <span className={cn(descriptionClassName, 'text-nowrap')}>Binôme :&nbsp;</span>

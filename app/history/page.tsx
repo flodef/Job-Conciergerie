@@ -8,7 +8,7 @@ import HistoryFilters from '@/app/history/components/historyFilters';
 import type { Home, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDate, formatDateRange } from '@/app/utils/date';
-import { formatHours, formatNumber, getMissionHoursPerProvider, getMissionProviderCount } from '@/app/utils/task';
+import { formatHours, formatNumber, getMissionHoursPerProvider, isDuoComplete } from '@/app/utils/task';
 import {
   IconBriefcase,
   IconBuilding,
@@ -36,7 +36,6 @@ function StatCard({ label, value, icon }: { label: string; value: string; icon: 
 function MissionRow({ mission, home, color }: { mission: Mission; home: Home | undefined; color: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const hoursPerProvider = getMissionHoursPerProvider(mission);
-  const isDuo = getMissionProviderCount(mission) === 2;
 
   return (
     <div className="border border-secondary rounded-lg overflow-hidden">
@@ -80,7 +79,7 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
           </p>
           <p className={descriptionClassName}>
             <span className={textClassName}>Durée :</span> {formatHours(hoursPerProvider)}
-            {isDuo && <span className="text-light ml-1">(binôme)</span>}
+            {isDuoComplete(mission) && <span className="text-light ml-1">(binôme)</span>}
           </p>
         </div>
       )}

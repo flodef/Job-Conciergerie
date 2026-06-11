@@ -39,6 +39,7 @@ import {
   handleMissionStartDateChange,
   localISOString,
 } from '@/app/utils/date';
+import { isMissionExpired } from '@/app/utils/missionFilters';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { formatHours } from '@/app/utils/task';
 import { getUserKey, isEmployeeUser } from '@/app/utils/user';
@@ -981,7 +982,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                       !employee2 &&
                       mission.employeeId &&
                       !mission.employeeId2 &&
-                      new Date(mission.endDateTime) >= new Date())) && <span className={titleClassName}>+</span>}
+                      !isMissionExpired(mission))) && <span className={titleClassName}>+</span>}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-2">
                       <div
@@ -1029,7 +1030,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                       !employee2 &&
                       mission.employeeId &&
                       !mission.employeeId2 &&
-                      new Date(mission.endDateTime) >= new Date() && (
+                      !isMissionExpired(mission) && (
                         <div className="flex items-center justify-between gap-2">
                           <button
                             onClick={() => handleAccept2()}

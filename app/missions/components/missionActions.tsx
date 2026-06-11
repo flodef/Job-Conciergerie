@@ -4,8 +4,8 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import type { Mission } from '@/app/types/dataTypes';
 import { actionButtonBarClassName, actionButtonClassName, cn } from '@/app/utils/className';
+import { isPartOfMission } from '@/app/utils/missionFilters';
 import { calculateEmployeePointsForDay, calculateMissionPoints, MAX_POINTS_PER_DAY } from '@/app/utils/task';
-import { getUserKey } from '@/app/utils/user';
 import {
   IconAlertTriangle,
   IconCancel,
@@ -40,7 +40,7 @@ export default function MissionActions({
   onStartMission,
   onCompleteMission,
 }: MissionActionsProps) {
-  const { conciergerieName, userData, isConciergerie, isEmployee } = useAuth();
+  const { conciergerieName, employeeName, isConciergerie, isEmployee } = useAuth();
   const { missions } = useMissions();
 
   // Check if the current time is after the mission start time
@@ -48,8 +48,8 @@ export default function MissionActions({
   const hasStartTimePassed = now > mission.startDateTime;
   const isMissionInPast = mission.endDateTime < now;
   const isOwnMission = isConciergerie && mission.conciergerieName === conciergerieName;
-  const currentEmployeeId = userData && isEmployee ? getUserKey(userData) : undefined;
-  const isCurrentEmployee = mission.employeeId === currentEmployeeId || mission.employeeId2 === currentEmployeeId;
+  const currentEmployeeId = isEmployee ? employeeName : undefined;
+  const isCurrentEmployee = isPartOfMission(mission, currentEmployeeId);
   const canAcceptMission = isEmployee && !mission.employeeId && !isMissionInPast;
   const canAcceptMission2 =
     isEmployee &&
