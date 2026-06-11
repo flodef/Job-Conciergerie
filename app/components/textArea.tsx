@@ -20,6 +20,7 @@ interface TextAreaProps {
   rows?: number;
   tooltip?: ReactNode;
   regex: RegExp;
+  onBlur?: () => void;
 }
 
 const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaProps> = (
@@ -38,6 +39,7 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
     rows = 1,
     tooltip,
     regex,
+    onBlur,
   },
   ref,
 ) => {
@@ -50,6 +52,13 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
       textarea.style.height = `${textarea.scrollHeight}px`;
     }
   }, [value]);
+
+  const handleBlur = () => {
+    if (value !== value.trim()) {
+      onChange(value.trim());
+    }
+    onBlur?.();
+  };
 
   return (
     <div className={row ? rowClassName : className}>
@@ -67,6 +76,7 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
           }}
           value={value}
           onChange={e => handleChange(e, onChange, onError, regex)}
+          onBlur={handleBlur}
           className={inputFieldClassName(error)}
           disabled={disabled}
           required={required}

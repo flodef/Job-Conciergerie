@@ -119,6 +119,15 @@ const ObjectiveList = forwardRef(
       setErrorIndex(hasDuplicate ? index : 0);
     };
 
+    const handleBlur = (index: number) => {
+      const trimmedValue = objectives[index].trim();
+      if (objectives[index] !== trimmedValue) {
+        const newObjectives = [...objectives];
+        newObjectives[index] = trimmedValue;
+        setObjectives(newObjectives);
+      }
+    };
+
     const deleteObjective = (index: number) => {
       if (objectives.length === 1) {
         const newObjectives = [...objectives];
@@ -181,6 +190,7 @@ const ObjectiveList = forwardRef(
               <textarea
                 value={objective}
                 onChange={e => editObjective(index, e.target.value)}
+                onBlur={() => handleBlur(index)}
                 onKeyDown={e => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -190,6 +200,12 @@ const ObjectiveList = forwardRef(
                     } else {
                       // Otherwise, move focus to the next objective
                       inputRefs.current[index + 1]?.focus();
+                    }
+                  } else if (e.key === 'Enter' && e.shiftKey) {
+                    e.preventDefault();
+                    // Move focus to the previous objective
+                    if (index > 0) {
+                      inputRefs.current[index - 1]?.focus();
                     }
                   } else if (e.key === 'Backspace' && objective === '') {
                     deleteObjective(index);
