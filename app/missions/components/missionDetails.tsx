@@ -39,7 +39,7 @@ import {
   handleMissionStartDateChange,
   localISOString,
 } from '@/app/utils/date';
-import { isMissionExpired } from '@/app/utils/missionFilters';
+import { isMissionDuoOpen } from '@/app/utils/missionFilters';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { formatHours } from '@/app/utils/task';
 import { getUserKey, isEmployeeUser } from '@/app/utils/user';
@@ -977,12 +977,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                   {!mission.allowDuo ? 'Prestataire' : 'Binôme'}
                 </h3>
                 <div className="flex items-center gap-2">
-                  {(employee2 ||
-                    (mission.allowDuo &&
-                      !employee2 &&
-                      mission.employeeId &&
-                      !mission.employeeId2 &&
-                      !isMissionExpired(mission))) && <span className={titleClassName}>+</span>}
+                  {(employee2 || isMissionDuoOpen(mission)) && <span className={titleClassName}>+</span>}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-2">
                       <div
@@ -1026,24 +1021,20 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         )}
                       </div>
                     )}
-                    {mission.allowDuo &&
-                      !employee2 &&
-                      mission.employeeId &&
-                      !mission.employeeId2 &&
-                      !isMissionExpired(mission) && (
-                        <div className="flex items-center justify-between gap-2">
-                          <button
-                            onClick={() => handleAccept2()}
-                            className={cn(
-                              buttonClassName('primary'),
-                              'px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200',
-                            )}
-                          >
-                            <IconUserPlus size={20} />
-                            <span>Rejoindre</span>
-                          </button>
-                        </div>
-                      )}
+                    {isMissionDuoOpen(mission) && (
+                      <div className="flex items-center justify-between gap-2">
+                        <button
+                          onClick={() => handleAccept2()}
+                          className={cn(
+                            buttonClassName('primary'),
+                            'px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200',
+                          )}
+                        >
+                          <IconUserPlus size={20} />
+                          <span>Rejoindre</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </>

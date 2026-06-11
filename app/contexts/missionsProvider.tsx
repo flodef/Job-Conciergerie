@@ -93,7 +93,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   }, [missions]);
 
   const getLateMissions = (missions: Mission[]) =>
-    missions.filter(mission => mission.status !== 'completed' && !isMissionExpired(mission));
+    missions.filter(mission => mission.status !== 'completed' && isMissionExpired(mission));
 
   const getMissionReport = useCallback(
     (missionId: string) => {
