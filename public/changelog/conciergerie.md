@@ -1,3 +1,9 @@
+# 2.216
+
+- **Nouveau : Nombre de voyageurs** : ajout du nombre de voyageurs dans les missions ainsi que le nombre maximal de voyageurs par maison
+- **Amélioration filtres calendrier** : ajout du filtre "Expirée" pour voir les missions qui ont dépassé leur date de fin sans être terminées
+- **Amélioration de l'interface** : auto-redimensionnement des descriptions de maison et des objectifs, navigation au clavier pour les ordinateurs
+
 # 2.185
 
 - **Améliorations UI** : meilleure gestion de l'affichage des prestataires autorisés
