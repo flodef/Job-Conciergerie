@@ -1,9 +1,9 @@
 'use client';
 
-import { fetchMissionReport } from '@/app/actions/missionReport';
 import HomeTitle from '@/app/components/homeTitle';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
+import { useMissions } from '@/app/contexts/missionsProvider';
 import type { Conciergerie, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
@@ -22,14 +22,15 @@ type MissionCardProps = {
 export default function MissionCard({ mission, onClick, onEdit }: MissionCardProps) {
   const { findConciergerie, findEmployee, isConciergerie } = useAuth();
   const { homes } = useHomes();
+  const { getMissionReport } = useMissions();
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
-  const [hasReport, setHasReport] = useState(false);
 
   const home = homes.find(h => h.id === mission.homeId);
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
   const employee = findEmployee(mission.employeeId);
   const employee2 = findEmployee(mission.employeeId2) || findConciergerie(mission.employeeId2);
   const providerCount = getMissionProviderCount(mission);
+  const hasReport = !!getMissionReport(mission.id);
 
   // Check if mission is fully accepted
   const isFullyAccepted = home?.allowDuo ? providerCount === 2 : providerCount === 1;
@@ -45,25 +46,6 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
     const conciergerieData = findConciergerie(home?.conciergerieName ?? null);
     setConciergerie(conciergerieData);
   }, [home?.conciergerieName, findConciergerie]);
-
-  // Check if mission has a report
-  useEffect(() => {
-    if (mission.status !== 'completed') {
-      setHasReport(false);
-      return;
-    }
-    let active = true;
-    fetchMissionReport(mission.id)
-      .then(result => {
-        if (active) setHasReport(!!result);
-      })
-      .catch(() => {
-        if (active) setHasReport(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [mission.id, mission.status]);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent the default context menu

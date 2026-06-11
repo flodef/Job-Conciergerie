@@ -7,12 +7,13 @@ import {
   fetchAllMissions,
   updateMissionData,
 } from '@/app/actions/mission';
+import { fetchMissionReports } from '@/app/actions/missionReport';
 import type { Toast } from '@/app/components/toastMessage';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
-import type { Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
+import type { Employee, Home, Mission, MissionReport, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
 import { EmailSender } from '@/app/utils/emailSender';
 import { generateSimpleId } from '@/app/utils/id';
@@ -28,6 +29,7 @@ type MissionsContextType = {
   missions: Mission[];
   homes: Home[];
   getLateMissions: (missions: Mission[]) => Mission[];
+  getMissionReport: (missionId: string) => MissionReport | undefined;
   fetchMissions: () => Promise<boolean>;
   addMission: (mission: Omit<Mission, 'id' | 'modifiedDate' | 'conciergerieName'>) => Promise<boolean>;
   updateMission: (mission: Mission) => Promise<{ success: boolean; employeeNotified: boolean }>;
@@ -77,6 +79,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [missionReports, setMissionReports] = useState<MissionReport[]>([]);
   const [shouldShowAcceptWarning, setShouldShowAcceptWarning] = useLocalStorage('show_accept_mission_warning', true);
   const [toast, setToast] = useState<Toast>();
 
@@ -91,6 +94,23 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const now = new Date();
     return missions.filter(mission => mission.status !== 'completed' && new Date(mission.endDateTime) < now);
   };
+
+  const getMissionReport = useCallback(
+    (missionId: string) => {
+      const report = missionReports.find(report => report.missionId === missionId);
+      if (!report) return undefined;
+      const mission = missions.find(m => m.id === missionId);
+      if (!mission) return undefined;
+      const isOwner = userType === 'conciergerie' && mission.conciergerieName === conciergerieName;
+      const isEmployeeWhoWorked =
+        userData &&
+        isEmployee &&
+        (mission.employeeId === getUserKey(userData) || mission.employeeId2 === getUserKey(userData));
+      if (!isEmployeeWhoWorked && !isOwner) return undefined;
+      return report;
+    },
+    [missionReports, missions, userType, conciergerieName, userData, isEmployee],
+  );
 
   /**
    * Checks for missions that haven't been completed on time and sends notifications
@@ -167,6 +187,15 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           if (fetchedMissions) {
             setMissions(fetchedMissions);
             checkForLateMissions(fetchedMissions);
+            // Fetch reports for all completed missions
+            const completedMissionIds = fetchedMissions.filter(m => m.status === 'completed').map(m => m.id);
+            if (completedMissionIds.length > 0) {
+              fetchMissionReports(completedMissionIds)
+                .then(reports => setMissionReports(reports))
+                .catch(() => setMissionReports([]));
+            } else {
+              setMissionReports([]);
+            }
             updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
           }
           setIsLoading(false);
@@ -666,6 +695,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         missions,
         homes,
         getLateMissions,
+        getMissionReport,
         fetchMissions,
         addMission,
         updateMission,

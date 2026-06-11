@@ -1,6 +1,5 @@
 'use client';
 
-import { fetchMissionReport } from '@/app/actions/missionReport';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import { FullScreenImageCarousel } from '@/app/components/fullScreenImageCarousel';
 import FullScreenModal from '@/app/components/fullScreenModal';
@@ -20,7 +19,7 @@ import { useImageCache } from '@/app/hooks/useImageCache';
 import MissionActions from '@/app/missions/components/missionActions';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
-import type { Employee, Mission, MissionReport } from '@/app/types/dataTypes';
+import type { Employee, Mission } from '@/app/types/dataTypes';
 import {
   buttonClassName,
   cn,
@@ -63,7 +62,7 @@ import {
   IconZoomScan,
 } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 type MissionDetailsProps = {
   mission: Mission;
@@ -138,8 +137,9 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
     completeMission,
     updateMissionDateTime,
     updateMission,
+    getMissionReport,
   } = useMissions();
-  const { conciergerieName, findConciergerie, findEmployee, userData, isConciergerie, isEmployee } = useAuth();
+  const { conciergerieName, findConciergerie, findEmployee, userData, isConciergerie } = useAuth();
   const { homes } = useHomes();
   const { openModal, closeModal } = useModal();
   const { showToast } = useToast();
@@ -152,6 +152,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [skipAnimation, setSkipAnimation] = useState(false);
+  const [selectedReportImageIndex, setSelectedReportImageIndex] = useState<number>();
 
   // Open a confirmation dialog through the modal singleton (auto-pops on confirm/cancel)
   const confirm = (options: {
@@ -178,8 +179,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
       </ConfirmationModal>
     ));
   };
-  const [report, setReport] = useState<MissionReport | null>(null);
-  const [selectedReportImageIndex, setSelectedReportImageIndex] = useState<number>();
 
   // Get the conciergerie from the mission data
   const conciergerie = useMemo(
@@ -190,32 +189,19 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const isOwner = isConciergerie && mission.conciergerieName === conciergerieName;
   const isMissionEditable = mission.status !== 'started' && mission.status !== 'completed';
 
-  // Fetch the mission report (if any) - visible to employee who worked on it and conciergerie owner
-  useEffect(() => {
-    if (mission.status !== 'completed') {
-      setReport(null);
-      return;
-    }
-    // Only fetch if the current user is the employee who worked on the mission or the conciergerie owner
-    const isEmployeeWhoWorked =
-      userData &&
-      isEmployee &&
-      (mission.employeeId === getUserKey(userData) || mission.employeeId2 === getUserKey(userData));
-    if (!isEmployeeWhoWorked && !isOwner) {
-      setReport(null);
-      return;
-    }
-    let active = true;
-    fetchMissionReport(mission.id)
-      .then(result => {
-        if (active) setReport(result);
-      })
-      .catch(error => console.error('Error fetching mission report:', error));
-    return () => {
-      active = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mission.id, mission.status, isOwner, userData, mission.employeeId, mission.employeeId2]);
+  // Get the mission report (if any) - permission checks are handled in getMissionReport
+  const report = useMemo(
+    () => (mission.status === 'completed' ? getMissionReport(mission.id) : undefined),
+    [mission.id, mission.status, getMissionReport],
+  );
+
+  // Cache report images - report photos are stored in the "House images" bucket under the Reports/ folder
+  const reportImageUrls = useMemo(
+    () => report?.images.map(path => getStorageImageUrl(path, { width: 200, quality: 80 })) ?? [],
+    [report],
+  );
+  const reportFullImageUrls = useMemo(() => report?.images.map(path => getStorageImageUrl(path)) ?? [], [report]);
+  const { getCachedUrl } = useImageCache(reportImageUrls);
 
   // Date helpers
   const now = new Date();
@@ -1121,7 +1107,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                 {report.images.map((path, index) => (
                   <img
                     key={path}
-                    src={getStorageImageUrl(path, { width: 200, quality: 80 })}
+                    src={getCachedUrl(reportImageUrls[index])}
                     alt={`Photo ${index + 1} du compte rendu`}
                     className="object-cover w-full aspect-square rounded-lg cursor-pointer"
                     onClick={() => setSelectedReportImageIndex(index)}
@@ -1139,7 +1125,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
       {report && selectedReportImageIndex !== undefined && (
         <FullScreenImageCarousel
           altPrefix="Photo du compte rendu"
-          imageUrls={report.images.map(path => getStorageImageUrl(path))}
+          imageUrls={reportFullImageUrls}
           initialIndex={selectedReportImageIndex}
           onClose={() => setSelectedReportImageIndex(undefined)}
         />
