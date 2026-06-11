@@ -141,7 +141,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   } = useMissions();
   const { conciergerieName, findConciergerie, findEmployee, userData, isConciergerie } = useAuth();
   const { homes } = useHomes();
-  const { openModal, closeModal } = useModal();
+  const { openModal, closeModal, closeAllModals } = useModal();
   const { showToast } = useToast();
 
   const [isEditMode, setIsEditMode] = useState(false);
@@ -609,7 +609,8 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
       <EmployeeDetails
         employee={selectedEmployee}
         mission={mission}
-        onClose={() => setShowEmployeeDetails(false)}
+        onClose={closeAllModals}
+        onBack={() => setShowEmployeeDetails(false)}
         skipAnimation
       />
     );

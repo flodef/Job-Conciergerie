@@ -1,10 +1,9 @@
 'use client';
 
 import { CloseButton } from '@/app/components/button';
-import { useModal } from '@/app/contexts/modalProvider';
 import { cn } from '@/app/utils/className';
 import type { ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Tooltip from './tooltip';
 
 interface FullScreenModalProps {
@@ -29,12 +28,9 @@ export default function FullScreenModal({
   footer,
   disabled,
   tooltip,
-  closeAll = false,
   skipAnimation = false,
 }: FullScreenModalProps) {
-  const { closeAllModals } = useModal();
   const [isVisible, setIsVisible] = useState(skipAnimation);
-  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Trigger enter animation on mount (skip if skipAnimation is true)
   useEffect(() => {
@@ -46,39 +42,12 @@ export default function FullScreenModal({
     return () => clearTimeout(timer);
   }, [skipAnimation]);
 
-  // Cleanup close timer on unmount
-  useEffect(() => {
-    return () => {
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current);
-      }
-    };
-  }, []);
-
-  // Handle close with exit animation (skip if skipAnimation is true)
+  // Close immediately. The exit animation is intentionally skipped because
+  // onClose may just stack another modal (e.g. an unsaved-changes confirmation)
+  // rather than unmount, in which case a fade-out would be inconsistent with
+  // other entry points (like the footer cancel button).
   const handleClose = () => {
-    if (skipAnimation) {
-      if (closeAll) closeAllModals();
-      else onClose();
-      return;
-    }
-    setIsVisible(false);
-    closeTimerRef.current = setTimeout(() => {
-      if (closeAll) closeAllModals();
-      else onClose();
-    }, 200); // Wait for animation to complete
-  };
-
-  // Handle close button click - always closes all modals to clear history
-  const handleCloseButtonClick = () => {
-    if (skipAnimation) {
-      closeAllModals();
-      return;
-    }
-    setIsVisible(false);
-    closeTimerRef.current = setTimeout(() => {
-      closeAllModals();
-    }, 200); // Wait for animation to complete
+    onClose();
   };
 
   return (
@@ -111,7 +80,7 @@ export default function FullScreenModal({
               {tooltip}
             </Tooltip>
           </div>
-          <CloseButton onClose={!disabled ? handleCloseButtonClick : () => {}} />
+          <CloseButton onClose={!disabled ? handleClose : () => {}} />
         </div>
 
         {/* Scrollable content area */}

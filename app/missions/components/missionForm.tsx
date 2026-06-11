@@ -44,7 +44,7 @@ type MissionFormProps = {
 export default function MissionForm({ mission, onClose, onCancel, mode, skipAnimation = false }: MissionFormProps) {
   const { homes, addMission, updateMission, missionExists } = useMissions();
   const { conciergerieName, employees: allEmployees } = useAuth();
-  const { openModal, closeModal } = useModal();
+  const { openModal, closeModal, closeAllModals } = useModal();
   const { showToast } = useToast();
 
   // Filter homes by the current conciergerie
@@ -193,12 +193,12 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
           message="Vous avez des modifications non enregistrées. Voulez-vous vraiment fermer ?"
           confirmText="Fermer"
           cancelText="Annuler"
-          onConfirm={closeAndCancel}
-          onClose={() => closeModal(id)}
+          onCancel={() => closeModal(id)}
+          onConfirm={closeAllModals}
         />
       ));
     } else {
-      onClose();
+      closeAllModals();
     }
   };
 

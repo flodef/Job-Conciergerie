@@ -20,7 +20,7 @@ import {
   updateEmployeeStatus,
 } from '@/app/utils/employee';
 import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { cn, iconButtonClassName, textClassName } from '../utils/className';
 import { getUserKey } from '../utils/user';

@@ -48,7 +48,7 @@ export default function HomeForm({
 }: HomeFormProps) {
   const { addHome, updateHome, homeExists } = useHomes();
   const { conciergerieName } = useAuth();
-  const { openModal, closeModal } = useModal();
+  const { openModal, closeModal, closeAllModals } = useModal();
   const { showToast } = useToast();
 
   const imageUploaderRef = useRef<{
@@ -182,12 +182,12 @@ export default function HomeForm({
           message="Vous avez des modifications non enregistrées. Voulez-vous vraiment fermer ?"
           confirmText="Fermer"
           cancelText="Annuler"
-          onConfirm={closeAndCancel}
-          onClose={() => closeModal(id)}
+          onCancel={() => closeModal(id)}
+          onConfirm={closeAllModals}
         />
       ));
     } else {
-      onClose();
+      closeAllModals();
     }
   };
 

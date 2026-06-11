@@ -30,11 +30,18 @@ import { useState } from 'react';
 type EmployeeDetailsProps = {
   employee: Employee;
   onClose: () => void;
+  onBack?: () => void;
   mission?: Mission;
   skipAnimation?: boolean;
 };
 
-export default function EmployeeDetails({ employee, onClose, mission, skipAnimation = false }: EmployeeDetailsProps) {
+export default function EmployeeDetails({
+  employee,
+  onClose,
+  onBack,
+  mission,
+  skipAnimation = false,
+}: EmployeeDetailsProps) {
   const { deleteEmployee, updateUserData, userData, employees } = useAuth();
   const { missions, removeSecondProvider, updateMission } = useMissions();
   const { openModal, closeModal } = useModal();
@@ -145,7 +152,7 @@ export default function EmployeeDetails({ employee, onClose, mission, skipAnimat
     <div className={actionButtonBarClassName}>
       {mission ? (
         <>
-          <button onClick={onClose} className={actionButtonClassName}>
+          <button onClick={onBack} className={actionButtonClassName}>
             <IconArrowLeft />
             Retour
           </button>
