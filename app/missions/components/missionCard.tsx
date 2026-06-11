@@ -108,7 +108,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
           <IconFileDescription size={24} />
         </div>
       ) : (
-        home.allowDuo && <div className="absolute top-0 left-0 font-bold p-1">{providerCount}/2</div>
+        mission.allowDuo && <div className="absolute top-0 left-0 font-bold p-1">{providerCount}/2</div>
       )}
 
       <div className="mx-3 text-center">

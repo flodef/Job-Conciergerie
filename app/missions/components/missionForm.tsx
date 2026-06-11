@@ -14,6 +14,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import { MAX_TRAVELLERS } from '@/app/homes/components/homeForm';
+import { IconUsers } from '@tabler/icons-react';
 import type { Mission } from '@/app/types/dataTypes';
 import { Task } from '@/app/types/dataTypes';
 import type { ErrorField } from '@/app/types/types';
@@ -31,6 +32,7 @@ import { range } from '@/app/utils/select';
 import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
 import { getUserKey } from '@/app/utils/user';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { cn, containerClassName } from '@/app/utils/className';
 
 type MissionFormProps = {
   mission?: Mission;
@@ -362,13 +364,19 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
         />
 
         {missionHours > 0 && (
-          <div className="mt-2">
-            <Label id="mission-hours">
-              Durée estimée :{' '}
+          <div className="mt-2 flex justify-between">
+            <div className={containerClassName}>
+              Durée estimée :
               <span className="font-bold">
                 {missionHours} heure{missionHours > 1 ? 's' : ''}
               </span>
-            </Label>
+            </div>
+            {filteredHomes.find(h => h.id === homeId)?.allowDuo && (
+              <div className={containerClassName}>
+                <IconUsers size={16} />
+                <span className="font-bold">Binôme</span>
+              </div>
+            )}
           </div>
         )}
 

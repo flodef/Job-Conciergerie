@@ -972,12 +972,12 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             {employee ? (
               <>
                 <h3 className={containerClassName}>
-                  {!home.allowDuo ? <IconUserCheck size={16} /> : <IconUsers size={16} />}
-                  {!home.allowDuo ? 'Prestataire' : 'Binôme'}
+                  {!mission.allowDuo ? <IconUserCheck size={16} /> : <IconUsers size={16} />}
+                  {!mission.allowDuo ? 'Prestataire' : 'Binôme'}
                 </h3>
                 <div className="flex items-center gap-2">
                   {(employee2 ||
-                    (home.allowDuo &&
+                    (mission.allowDuo &&
                       !employee2 &&
                       mission.employeeId &&
                       !mission.employeeId2 &&
@@ -1025,7 +1025,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         )}
                       </div>
                     )}
-                    {home.allowDuo &&
+                    {mission.allowDuo &&
                       !employee2 &&
                       mission.employeeId &&
                       !mission.employeeId2 &&
@@ -1079,7 +1079,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           </div>
         )}
 
-        {home.allowDuo && !isConciergerie && (
+        {mission.allowDuo && !isConciergerie && (
           <div className="flex items-center justify-between">
             <h3 className={containerClassName}>
               <IconUserCheck size={16} />
