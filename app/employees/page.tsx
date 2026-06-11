@@ -66,7 +66,7 @@ export default function EmployeesList() {
         showToast({
           type: ToastType.Info,
           message: `${getEmployeeFullName(updatedEmployee)} a été rejeté${
-            emailSent ? ". L'employé a été notifié par email." : '.'
+            emailSent ? '. Le prestataire a été notifié par email.' : '.'
           }`,
         });
       })
@@ -85,13 +85,40 @@ export default function EmployeesList() {
           title="Rejeter le prestataire"
           message={`Vous êtes sur le point de rejeter ${getEmployeeFullName(employee)}.${
             countEmployeeMissions(employee, missions) > 0
-              ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employee, missions)} mission(s).`
+              ? ` Ce prestataire sera retiré de ses ${countEmployeeMissions(employee, missions)} mission(s).`
               : ''
           } Il ne pourra plus accéder à l'application.`}
           confirmText="Rejeter"
           cancelText="Annuler"
           isDangerous
           onConfirm={() => rejectEmployee(employee)}
+          onClose={() => closeModal(id)}
+        />
+      ));
+    } else if (newStatus === 'accepted' && employee.status === 'rejected') {
+      // For accepting a previously rejected employee, show confirmation modal
+      const id = openModal(() => (
+        <ConfirmationModal
+          isOpen
+          title="Accepter le prestataire"
+          message={`Vous êtes sur le point d'accepter ${getEmployeeFullName(employee)} qui était précédemment rejeté. Ce prestataire pourra à nouveau accéder à l'application.`}
+          confirmText="Accepter"
+          cancelText="Annuler"
+          onConfirm={() => {
+            updateEmployeeStatus(employee, newStatus, userData, missions, employees, updateUserData)
+              .then(({ updatedEmployee, emailSent }) => {
+                showToast({
+                  type: ToastType.Success,
+                  message: `${getEmployeeFullName(updatedEmployee)} a été accepté${
+                    emailSent ? '. Le prestataire a été notifié par email.' : '.'
+                  }`,
+                });
+              })
+              .catch(error => {
+                showToast({ type: ToastType.Error, message: error.toString(), error });
+              });
+            closeModal(id);
+          }}
           onClose={() => closeModal(id)}
         />
       ));
@@ -102,7 +129,7 @@ export default function EmployeesList() {
             type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
             message: `${getEmployeeFullName(updatedEmployee)} a été ${
               newStatus === 'accepted' ? 'accepté' : 'rejeté'
-            }${emailSent ? ". L'employé a été notifié par email." : '.'}`,
+            }${emailSent ? '. Le prestataire a été notifié par email.' : '.'}`,
           });
         })
         .catch(error => {

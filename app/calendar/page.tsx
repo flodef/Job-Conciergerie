@@ -181,7 +181,7 @@ export default function Calendar() {
           <p className="text-light">
             {isEmployee
               ? "Vous n'avez pas encore accepté de missions"
-              : "Aucun employé n'a accepté de missions de votre conciergerie"}
+              : "Aucun prestataire n'a accepté de missions de votre conciergerie"}
           </p>
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
             <IconCalendarEvent size={32} />

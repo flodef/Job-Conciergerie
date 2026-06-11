@@ -253,7 +253,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           email: trimmedEmail,
           id: userId,
         });
-        if (!newEmployee) throw new Error('Employé non créé dans la base de données');
+        if (!newEmployee) throw new Error('Prestataire non créé dans la base de données');
 
         updateUserData(newEmployee);
         updateUserType('employee');
@@ -298,7 +298,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     if (employee.status === 'accepted' && JSON.stringify(newIds) !== JSON.stringify(employee.id)) {
       const updatedIds = await updateEmployeeWithUserId(employee, newIds);
 
-      if (!updatedIds) throw new Error('Employé non mis à jour dans la base de données');
+      if (!updatedIds) throw new Error('Prestataire non mis à jour dans la base de données');
 
       // Update the employee object with the new ID array
       const updatedEmployee = {

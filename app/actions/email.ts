@@ -129,13 +129,13 @@ function composeConciergerieVerificationEmail(conciergerie: Conciergerie, userId
 function composeEmployeeRegistrationEmail(conciergerie: Conciergerie, employee: Employee): SendMailOptions {
   return {
     to: conciergerie.email,
-    subject: "👤 Nouvelle demande d'inscription employé",
+    subject: "👤 Nouvelle demande d'inscription prestataire",
     html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Nouvelle demande d'inscription employé</h2>
+          <h2 style="color: #333;">Nouvelle demande d'inscription prestataire</h2>
           <p>Bonjour ${conciergerie.name},</p>
-          <p>Un nouvel employé a demandé à rejoindre votre conciergerie sur notre plateforme Job Conciergerie.</p>
-          <p><strong>Détails de l'employé :</strong></p>
+          <p>Un nouveau prestataire a demandé à rejoindre votre conciergerie sur notre plateforme Job Conciergerie.</p>
+          <p><strong>Détails du prestataire :</strong></p>
           <ul>
             <li><strong>Nom :</strong> ${getEmployeeFullName(employee)}</li>
             <li><strong>Email :</strong> ${employee.email}</li>
@@ -292,7 +292,7 @@ function composeMissionStatusChangeEmail(
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
           <p><strong>Heures totales:</strong> ${formatHours(mission.hours)}</p>
           ${isDuo ? `<p><strong>Heures par prestataire:</strong> ${formatHours(hoursPerProvider)} (binôme)</p>` : ''}
-          <p><strong>Employé:</strong> ${getEmployeeFullName(employee)}</p>
+          <p><strong>Prestataire:</strong> ${getEmployeeFullName(employee)}</p>
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Statut:</strong> ${employee.firstName} a ${statusAction} cette mission</p>
         </div>
@@ -344,7 +344,7 @@ function composeLateCompletionEmail(
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
-          <p><strong>Employé:</strong> ${getEmployeeFullName(employee)}</p>
+          <p><strong>Prestataire:</strong> ${getEmployeeFullName(employee)}</p>
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Statut actuel:</strong> ${statusLabel}</p>
         </div>
@@ -789,7 +789,7 @@ export async function sendEmployeeConflictReport(
   data: ConflictReportData,
   isRetry = false,
 ): Promise<boolean> {
-  const reportMessage = `Conflit d'inscription employé•e :
+  const reportMessage = `Conflit d'inscription prestataire :
 
 Informations saisies :
 - Prénom : ${data.firstName}
@@ -806,11 +806,11 @@ ${
 Nom enregistré en base de données : ${data.existingName}`
     : ''
 }
-L'employé•e indique que ce numéro/email lui appartient mais le nom ne correspond pas à celui enregistré dans la base de données.
+Le prestataire indique que ce numéro/email lui appartient mais le nom ne correspond pas à celui enregistré dans la base de données.
 
-Veuillez vérifier manuellement et contacter l'employé•e si nécessaire.`;
+Veuillez vérifier manuellement et contacter le prestataire si nécessaire.`;
 
-  return sendContactEmail(conciergerieEmail, 'Conflit inscription employé•e', reportMessage, isRetry);
+  return sendContactEmail(conciergerieEmail, 'Conflit inscription prestataire', reportMessage, isRetry);
 }
 
 /**

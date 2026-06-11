@@ -27,7 +27,7 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: 'Job Conciergerie',
-  description: 'Gestion des missions pour conciergeries et employés',
+  description: 'Gestion des missions pour conciergeries et prestataires',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

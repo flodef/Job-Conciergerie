@@ -86,7 +86,7 @@ export default function EmployeeDetails({
           type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
           message: `${getEmployeeFullName(updatedEmployee)} a été ${
             newStatus === 'accepted' ? 'accepté' : 'rejeté'
-          }${emailSent ? ". L'employé a été notifié par email." : '.'}`,
+          }${emailSent ? '. Le prestataire a été notifié par email.' : '.'}`,
         });
         onClose();
       })
@@ -109,7 +109,7 @@ export default function EmployeeDetails({
     deleteEmployee(employee).then(isSuccess => {
       showToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
-        message: isSuccess ? 'Employé supprimé !' : "Erreur lors de la suppression de l'employé",
+        message: isSuccess ? 'Prestataire supprimé !' : 'Erreur lors de la suppression du prestataire',
       });
       if (isSuccess) onClose();
       else setIsSubmitting(false);
@@ -183,7 +183,7 @@ export default function EmployeeDetails({
                   title: 'Rejeter le prestataire',
                   message: `Vous êtes sur le point de rejeter ${getEmployeeFullName(employee)}.${
                     countEmployeeMissions(employee, missions) > 0
-                      ? ` Cet employé sera retiré de ses ${countEmployeeMissions(employee, missions)} mission(s).`
+                      ? ` Ce prestataire sera retiré de ses ${countEmployeeMissions(employee, missions)} mission(s).`
                       : ''
                   } Il ne pourra plus accéder à l'application.`,
                   confirmText: 'Rejeter',
@@ -209,9 +209,9 @@ export default function EmployeeDetails({
           <button
             onClick={() =>
               confirm({
-                title: "Supprimer l'employé",
+                title: 'Supprimer le prestataire',
                 message:
-                  "Êtes-vous sûr de vouloir supprimer cet employé de l'application ? ATTENTION : Cette action est irréversible !!",
+                  "Êtes-vous sûr de vouloir supprimer ce prestataire de l'application ? ATTENTION : Cette action est irréversible !!",
                 confirmText: 'Supprimer',
                 isDangerous: true,
                 onConfirm: handleDelete,
