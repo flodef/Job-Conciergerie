@@ -61,7 +61,6 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
   const [travellers, setTravellers] = useState(mission?.travellers ?? 1);
   const [initialFormValues, setInitialFormValues] = useState<{
     homeId: string;
-    missionHours: number;
     startDateTime: string;
     endDateTime: string;
     tasks: Task[];
@@ -136,18 +135,8 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
 
   // Set up French locale for date inputs
   useEffect(() => {
-    // Try to set the locale for date inputs
-    const dateInputs = document.querySelectorAll('input[type="datetime-local"]');
-    dateInputs.forEach(input => {
-      input.setAttribute('lang', 'fr');
-    });
-
-    // Set document language to French
-    document.documentElement.lang = 'fr';
-
     setInitialFormValues({
       homeId,
-      missionHours,
       startDateTime,
       endDateTime,
       tasks,
@@ -163,16 +152,14 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
     // Check if any field has been filled in compared to initial state
     const tasksChanged = JSON.stringify(tasks) !== JSON.stringify(initialFormValues.tasks);
     const homeIdChanged = homeId !== initialFormValues.homeId;
-    const missionHoursChanged = missionHours !== initialFormValues.missionHours;
     const startDateChanged = startDateTime !== initialFormValues.startDateTime;
     const endDateChanged = endDateTime !== initialFormValues.endDateTime;
     const employeesChanged =
       JSON.stringify(selectedEmployees.sort()) !== JSON.stringify(initialFormValues.selectedEmployees.sort());
+    const travellersChanged = travellers !== initialFormValues.travellers;
 
-    return (
-      tasksChanged || homeIdChanged || missionHoursChanged || startDateChanged || endDateChanged || employeesChanged
-    );
-  }, [homeId, missionHours, tasks, startDateTime, endDateTime, selectedEmployees, initialFormValues]);
+    return tasksChanged || homeIdChanged || startDateChanged || endDateChanged || employeesChanged || travellersChanged;
+  }, [homeId, tasks, startDateTime, endDateTime, selectedEmployees, travellers, initialFormValues]);
 
   const closeAndCancel = () => {
     onClose();
@@ -483,7 +470,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
 
         <MultiSelect
           id="prestataires-select"
-          label="Prestataires"
+          label="Prestataires autorisés"
           values={selectedEmployees}
           onChange={setSelectedEmployees}
           options={employees.map(emp => ({
