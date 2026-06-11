@@ -127,7 +127,8 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
 
 /**
  * Helper function to update missions when an employee is removed or rejected
- * - For missions with status 'accepted' or 'started': set status to NULL
+ * - For single employee missions: set status to NULL
+ * - For duo missions: set status to NULL only if both employees are NULL, otherwise keep 'accepted'
  * - For missions with status 'completed': keep employee_id intact
  */
 const updateMissionsForEmployeeRemoval = async (firstName: string, familyName: string) => {
@@ -148,12 +149,34 @@ const updateMissionsForEmployeeRemoval = async (firstName: string, familyName: s
     const employeeIds = employeeResult[0].id as string[];
 
     // Update missions where this employee is assigned
-    // For missions with status 'accepted' or 'started': set status to NULL
+    // For single employee missions (allow_duo = false): set status to NULL
     await sql`
       UPDATE missions
       SET status = NULL
       WHERE status IN ('accepted', 'started')
+      AND allow_duo = false
       AND (employee_id = ANY(${employeeIds}) OR employee_id2 = ANY(${employeeIds}))
+    `;
+
+    // For duo missions: set status to NULL only if the other employee is also NULL
+    // If employee_id is being removed, check if employee_id2 is NULL
+    await sql`
+      UPDATE missions
+      SET status = NULL
+      WHERE status IN ('accepted', 'started')
+      AND allow_duo = true
+      AND employee_id = ANY(${employeeIds})
+      AND employee_id2 IS NULL
+    `;
+
+    // If employee_id2 is being removed, check if employee_id is NULL
+    await sql`
+      UPDATE missions
+      SET status = NULL
+      WHERE status IN ('accepted', 'started')
+      AND allow_duo = true
+      AND employee_id2 = ANY(${employeeIds})
+      AND employee_id IS NULL
     `;
   } catch (error) {
     console.error(`Error updating missions for employee removal ${firstName} ${familyName}:`, error);
