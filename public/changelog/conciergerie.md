@@ -2,7 +2,7 @@
 
 - **Nouveau : Nombre de voyageurs** : ajout du nombre de voyageurs dans les missions ainsi que le nombre maximal de voyageurs par maison
 - **Amélioration filtres calendrier** : ajout du filtre "Expirée" pour voir les missions qui ont dépassé leur date de fin sans être terminées
-- **Amélioration de l'interface** : auto-redimensionnement des descriptions de maison et des objectifs, navigation au clavier pour les ordinateurs
+- **Amélioration de l'interface** : navigation plus fluide lors de l'ouverture des fenêtres, auto-redimensionnement des descriptions de maison et des objectifs, navigation au clavier pour les ordinateurs
 
 # 2.185
 
