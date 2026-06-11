@@ -2,8 +2,8 @@ import Label from '@/app/components/label';
 import { errorClassName, inputFieldClassName, rowClassName, textAreaCharCountClassName } from '@/app/utils/className';
 import { handleChange } from '@/app/utils/form';
 import { getMaxLength } from '@/app/utils/regex';
-import type { ForwardRefRenderFunction, ReactNode} from 'react';
-import { forwardRef } from 'react';
+import type { ForwardRefRenderFunction, ReactNode } from 'react';
+import { forwardRef, useEffect, useRef } from 'react';
 
 interface TextAreaProps {
   id: string;
@@ -35,12 +35,22 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
     placeholder = '',
     className = '',
     row = false,
-    rows = 4,
+    rows = 1,
     tooltip,
     regex,
   },
   ref,
 ) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [value]);
+
   return (
     <div className={row ? rowClassName : className}>
       <Label id={id} required={required} tooltip={tooltip}>
@@ -50,7 +60,11 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
         <textarea
           id={id}
           name={label?.toString() || id}
-          ref={ref}
+          ref={node => {
+            textareaRef.current = node;
+            if (typeof ref === 'function') ref(node);
+            else if (ref) ref.current = node;
+          }}
           value={value}
           onChange={e => handleChange(e, onChange, onError, regex)}
           className={inputFieldClassName(error)}
@@ -58,6 +72,7 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
           required={required}
           placeholder={placeholder}
           rows={rows}
+          style={{ resize: 'none', overflow: 'hidden' }}
         />
         {error ? (
           <p className={errorClassName}>{error}</p>

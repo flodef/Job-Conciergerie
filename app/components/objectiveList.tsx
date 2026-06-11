@@ -3,7 +3,7 @@
 import Label from '@/app/components/label';
 import { errorClassName, inputFieldClassName } from '@/app/utils/className';
 import { getMaxLength, objectiveLengthRegex } from '@/app/utils/regex';
-import type { ForwardedRef, ReactNode} from 'react';
+import type { ForwardedRef, ReactNode } from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type ObjectiveListProps = {
@@ -27,6 +27,16 @@ const ObjectiveList = forwardRef(
     const prevObjectivesLength = useRef(objectives.length);
     const [errorMessages, setErrorMessages] = useState<string[]>([]);
     const [errorIndex, setErrorIndex] = useState(0);
+
+    // Auto-resize textarea height based on content
+    useEffect(() => {
+      inputRefs.current.forEach(textarea => {
+        if (textarea) {
+          textarea.style.height = 'auto';
+          textarea.style.height = `${textarea.scrollHeight}px`;
+        }
+      });
+    }, [objectives]);
 
     useEffect(() => {
       if (objectives.length !== prevObjectivesLength.current) {
@@ -193,6 +203,7 @@ const ObjectiveList = forwardRef(
                 rows={1}
                 disabled={disabled}
                 className={inputFieldClassName(errorMessages[index])}
+                style={{ resize: 'none', overflow: 'hidden' }}
               />
               {(objectives.length > 1 || objective !== '') && (
                 <button
