@@ -292,6 +292,7 @@ function composeMissionStatusChangeEmail(
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
           <p><strong>Heures totales:</strong> ${formatHours(mission.hours)}</p>
           ${isDuo ? `<p><strong>Heures par prestataire:</strong> ${formatHours(hoursPerProvider)} (binôme)</p>` : ''}
+          ${mission.travellers ? `<p><strong>Nombre de voyageurs:</strong> ${mission.travellers}</p>` : ''}
           <p><strong>Prestataire:</strong> ${getEmployeeFullName(employee)}</p>
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Statut:</strong> ${employee.firstName} a ${statusAction} cette mission</p>
@@ -344,6 +345,7 @@ function composeLateCompletionEmail(
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
+          ${mission.travellers ? `<p><strong>Nombre de voyageurs:</strong> ${mission.travellers}</p>` : ''}
           <p><strong>Prestataire:</strong> ${getEmployeeFullName(employee)}</p>
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           <p><strong>Statut actuel:</strong> ${statusLabel}</p>
@@ -388,6 +390,7 @@ function composeMissionAcceptanceToEmployeeEmail(
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Durée estimée:</strong> ${formatHours(hoursPerProvider)}${isDuo ? ' (par prestataire)' : ''}</p>
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
+          ${mission.travellers ? `<p><strong>Nombre de voyageurs:</strong> ${mission.travellers}</p>` : ''}
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
         </div>
         <p><strong>Rappel important:</strong></p>
@@ -444,6 +447,7 @@ function composeMissionUpdatedToEmployeeEmail(
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Durée estimée:</strong> ${formatHours(hoursPerProvider)}${isDuo ? ' (par prestataire)' : ''}</p>
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
+          ${mission.travellers ? `<p><strong>Nombre de voyageurs:</strong> ${mission.travellers}</p>` : ''}
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
         </div>
         <p><strong>Important :</strong> Suite à ces modifications, votre assignation à cette mission a été annulée.</p>
@@ -506,6 +510,7 @@ function composeMissionRemovedToEmployeeEmail(
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
+          ${mission.travellers ? `<p><strong>Nombre de voyageurs:</strong> ${mission.travellers}</p>` : ''}
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
         </div>
         <p>Pour toute question concernant cette ${config.actionNoun}, veuillez contacter directement la conciergerie.</p>
@@ -567,6 +572,7 @@ function composeMissionReportEmail(
           <p><strong>Date de début:</strong> ${startDate}</p>
           <p><strong>Date de fin:</strong> ${endDate}</p>
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
+          ${mission.travellers ? `<p><strong>Nombre de voyageurs:</strong> ${mission.travellers}</p>` : ''}
         </div>
         ${escapedContent ? `<div style="background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #e5e7eb;"><h3 style="margin-top: 0; color: #0d9488;">Commentaire</h3><p style="white-space: pre-wrap;">${escapedContent}</p></div>` : ''}
         ${imagesHtml}
