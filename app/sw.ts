@@ -16,7 +16,7 @@ declare const self: ServiceWorkerGlobalScope;
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
-  skipWaiting: false,
+  skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
   // Enable offline fallback for navigation
@@ -31,10 +31,10 @@ const serwist = new Serwist({
     ],
   },
   runtimeCaching: [
-    // Default Next.js caching
-    ...defaultCache,
-
     // Network first for changelog files to always show latest version
+    // IMPORTANT: this must be registered BEFORE defaultCache, since routes are
+    // evaluated in registration order and defaultCache has a catch-all same-origin
+    // route that would otherwise intercept /changelog/*.md requests first.
     {
       matcher: ({ url }) => url.pathname.startsWith('/changelog/'),
       handler: new NetworkFirst({
@@ -50,6 +50,9 @@ const serwist = new Serwist({
         ],
       }),
     },
+
+    // Default Next.js caching
+    ...defaultCache,
 
     // Cache page navigation requests - Network first with cache fallback for offline
     {

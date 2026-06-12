@@ -52,7 +52,7 @@ export function useChangelog(userType: 'employee' | 'conciergerie' | undefined) 
     const seenVersion = localStorage.getItem(STORAGE_KEY);
     if (seenVersion === packageJson.version) return;
 
-    fetch(`/changelog/${userType}.md`)
+    fetch(`/changelog/${userType}.md?v=${packageJson.version}`, { cache: 'no-store' })
       .then(res => (res.ok ? res.text() : null))
       .then(text => {
         if (!text) return;

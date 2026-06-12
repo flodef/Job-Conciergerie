@@ -27,8 +27,7 @@ export default function Settings() {
   const deviceCount = userData?.id?.length ?? 0;
 
   const handleShowChangelog = () => {
-    if (!userType) return;
-    const id = openModal(() => <ChangelogModal userType={userType} onClose={() => closeModal(id)} mode="history" />);
+    const id = openModal(() => <ChangelogModal onClose={() => closeModal(id)} mode="history" />);
   };
 
   // Data is loaded by AuthProvider, no need to fetch here

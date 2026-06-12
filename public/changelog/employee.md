@@ -1,7 +1,11 @@
+# 2.216
+
+- **Amélioration de l'interface** : navigation plus fluide lors de l'ouverture des fenêtres et amélioration de la navigation au clavier pour les ordinateurs
+
 # 2.186
 
-- **Amélioration UI** : Lorsqu'on termine une mission, les tâches faites sont maintenant placées tout en bas, en tant que terminées + affichage clair du nombre de tâches faites et à faire en haut, dans le titre.
 - **Nouveau : Compte rendu de mission** : à la fin d'une mission, vous pouvez rédiger un compte rendu (commentaire + jusqu'à 3 photos) envoyé directement à la conciergerie.
+- **Amélioration UI** : Lorsqu'on termine une mission, les tâches faites sont maintenant placées tout en bas, en tant que terminées + affichage clair du nombre de tâches faites et à faire en haut, dans le titre.
 
 # 2.165
 

@@ -27,7 +27,7 @@ import {
   IconUser,
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import React, { useCallback, useEffect, useState } from 'react';
 import M3LoadingSpinner from './m3LoadingSpinner';
 
@@ -311,9 +311,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {isNavigationPage && !!userType && <InstallToast />}
 
       {/* Changelog modal - auto-shown once per new version */}
-      {showChangelog && userType && (
-        <ChangelogModal userType={userType} onClose={dismissChangelog} mode="current" entries={changelogEntries} />
-      )}
+      {showChangelog && <ChangelogModal onClose={dismissChangelog} mode="current" entries={changelogEntries} />}
 
       {/* Main content */}
       <main
