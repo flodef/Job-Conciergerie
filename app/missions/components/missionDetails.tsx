@@ -39,7 +39,7 @@ import {
   handleMissionStartDateChange,
   localISOString,
 } from '@/app/utils/date';
-import { isMissionDuoOpen } from '@/app/utils/missionFilters';
+import { isMissionDuoOpen, isMissionEditable } from '@/app/utils/missionFilters';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { formatHours } from '@/app/utils/task';
 import { getUserKey, isEmployeeUser } from '@/app/utils/user';
@@ -188,7 +188,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   );
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
   const isOwner = isConciergerie && mission.conciergerieName === conciergerieName;
-  const isMissionEditable = mission.status !== 'started' && mission.status !== 'completed';
 
   // Get the mission report (if any) - permission checks are handled in getMissionReport
   const report = useMemo(
@@ -211,7 +210,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const hasStarted = now >= startDate;
   const hasEnded = now >= endDate;
   const [editingDate, setEditingDate] = useState<'start' | 'end' | null>(null);
-  const isDateEditable = isOwner && isMissionEditable && !editingDate && !hasEnded;
+  const isDateEditable = isOwner && isMissionEditable(mission) && !editingDate && !hasEnded;
 
   // Date edit state - allows the conciergerie to adjust start and end dates inline
   const [editStartDate, setEditStartDate] = useState(localISOString(startDate));
@@ -767,15 +766,13 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           <span className="font-medium">{formatHours(mission.hours)}</span>
         </div>
 
-        {!!mission.travellers && (
-          <div className="flex items-center justify-between">
-            <h3 className={containerClassName}>
-              <IconUsers size={16} />
-              Nombre de voyageurs
-            </h3>
-            <span className="font-medium">{mission.travellers}</span>
-          </div>
-        )}
+        <div className="flex items-center justify-between">
+          <h3 className={containerClassName}>
+            <IconUsers size={16} />
+            Nombre de voyageurs
+          </h3>
+          <span className="font-medium">{mission.travellers || '-'}</span>
+        </div>
 
         <div className="flex items-center space-x-4">
           <div className="space-y-2">
@@ -987,7 +984,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         <span className="text-right">{getUserKey(employee)}</span>
                         <IconInfoCircle className="min-w-4.5" size={18} />
                       </div>
-                      {isMissionEditable && (
+                      {isMissionEditable(mission) && (
                         <button
                           onClick={() => handleRemoveEmployee('employeeId')}
                           className={iconButtonClassName('dangerous')}
@@ -1010,7 +1007,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
                         ) : (
                           <span className="text-right">{getUserKey(employee2)}</span>
                         )}
-                        {isMissionEditable && (
+                        {isMissionEditable(mission) && (
                           <button
                             onClick={() => handleRemoveEmployee('employeeId2')}
                             className={iconButtonClassName('dangerous')}

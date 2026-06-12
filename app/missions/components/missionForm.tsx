@@ -27,7 +27,7 @@ import {
   localISOString,
 } from '@/app/utils/date';
 import { handleChange } from '@/app/utils/form';
-import { isMissionExpired } from '@/app/utils/missionFilters';
+import { isMissionEditable, isMissionExpired } from '@/app/utils/missionFilters';
 import { range } from '@/app/utils/select';
 import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
 import { getUserKey } from '@/app/utils/user';
@@ -104,7 +104,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
     if (mode === 'edit' && mission) {
       // Cannot edit mission if end date is in the past AND mission status is not accepted or null
       const message =
-        isMissionExpired(mission) || mission.status === 'started' || mission.status === 'completed'
+        isMissionExpired(mission) || !isMissionEditable(mission)
           ? 'Cette mission ne peut pas être modifiée car elle est déjà commencée ou terminée.'
           : '';
 

@@ -72,6 +72,13 @@ export const isPartOfMission = (mission: Mission, employeeName: string | undefin
 export const isMissionExpired = (mission: Mission) => new Date(mission.endDateTime) < new Date();
 
 /**
+ * Check if a mission is editable
+ * @param mission The mission to check
+ * @returns true if the mission is editable, false otherwise
+ */
+export const isMissionEditable = (mission: Mission) => mission.status !== 'started' && mission.status !== 'completed';
+
+/**
  * Filter missions based on user type
  * @param missions The list of missions to filter
  * @param employeeName The name of the employee (if any)

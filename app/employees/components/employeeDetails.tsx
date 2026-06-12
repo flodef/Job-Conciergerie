@@ -23,6 +23,7 @@ import {
   removeEmployeeFromMissions,
   updateEmployeeStatus,
 } from '@/app/utils/employee';
+import { isMissionEditable } from '@/app/utils/missionFilters';
 import { getUserKey } from '@/app/utils/user';
 import { IconArrowLeft, IconCheck, IconMail, IconMapPin, IconPhone, IconTrash, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -156,7 +157,7 @@ export default function EmployeeDetails({
             <IconArrowLeft />
             Retour
           </button>
-          {mission.status !== 'started' && mission.status !== 'completed' && (
+          {isMissionEditable(mission) && (
             <button
               onClick={() =>
                 confirm({
