@@ -45,6 +45,7 @@ import { formatHours } from '@/app/utils/task';
 import { getUserKey, isEmployeeUser } from '@/app/utils/user';
 import {
   IconBuildingStore,
+  IconBulb,
   IconCalendarEvent,
   IconCheck,
   IconInfoCircle,
@@ -773,6 +774,18 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           </h3>
           <span className="font-medium">{mission.travellers || '-'}</span>
         </div>
+
+        {mission.conciergerieComment && (
+          <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+            <div className="flex items-start gap-2">
+              <IconBulb size={16} className="text-primary mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-primary mb-1">Commentaire conciergerie</h3>
+                <p className="text-sm text-foreground/80 whitespace-pre-wrap">{mission.conciergerieComment}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center space-x-4">
           <div className="space-y-2">

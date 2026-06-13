@@ -392,6 +392,7 @@ function composeMissionAcceptanceToEmployeeEmail(
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           ${mission.travellers ? `<p><strong>Nombre de voyageurs:</strong> ${mission.travellers}</p>` : ''}
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
+          ${mission.conciergerieComment ? `<div style="background-color: #fffbeb; padding: 10px; border-radius: 5px; margin-top: 10px; border-left: 3px solid #f59e0b;"><p style="margin: 0; color: #92400e;"><strong>💡 Commentaire conciergerie :</strong></p><p style="margin: 5px 0 0 0; color: #78350f;">${mission.conciergerieComment}</p></div>` : ''}
         </div>
         <p><strong>Rappel important:</strong></p>
         <ul>
@@ -449,6 +450,7 @@ function composeMissionUpdatedToEmployeeEmail(
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
           ${mission.travellers ? `<p><strong>Nombre de voyageurs:</strong> ${mission.travellers}</p>` : ''}
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
+          ${mission.conciergerieComment ? `<div style="background-color: #fffbeb; padding: 10px; border-radius: 5px; margin-top: 10px; border-left: 3px solid #f59e0b;"><p style="margin: 0; color: #92400e;"><strong>💡 Commentaire conciergerie :</strong></p><p style="margin: 5px 0 0 0; color: #78350f;">${mission.conciergerieComment}</p></div>` : ''}
         </div>
         <p><strong>Important :</strong> Suite à ces modifications, votre assignation à cette mission a été annulée.</p>
         <p>Si vous êtes toujours intéressé(e) par cette mission avec les changements mentionnés ci-dessus, vous devrez l'accepter à nouveau dans l'application.</p>

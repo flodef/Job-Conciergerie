@@ -7,6 +7,7 @@ import MultiSelect from '@/app/components/multiSelect';
 import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import Select from '@/app/components/select';
 import TaskSelector from '@/app/components/taskSelector';
+import TextArea from '@/app/components/textArea';
 import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
@@ -28,6 +29,7 @@ import {
 } from '@/app/utils/date';
 import { handleChange } from '@/app/utils/form';
 import { isMissionEditable, isMissionExpired } from '@/app/utils/missionFilters';
+import { messageLengthRegex } from '@/app/utils/regex';
 import { range } from '@/app/utils/select';
 import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
 import { getUserKey } from '@/app/utils/user';
@@ -59,6 +61,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
   const [tasks, setTasks] = useState<Task[]>(mission?.tasks || (mode === 'add' ? [Task.Cleaning] : []));
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>(mission?.allowedEmployees || []);
   const [travellers, setTravellers] = useState(mission?.travellers ?? 1);
+  const [conciergerieComment, setConciergerieComment] = useState(mission?.conciergerieComment || '');
   const [initialFormValues, setInitialFormValues] = useState<{
     homeId: string;
     startDateTime: string;
@@ -66,6 +69,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
     tasks: Task[];
     selectedEmployees: string[];
     travellers: number;
+    conciergerieComment: string;
   }>();
 
   const [cannotEdit, setCannotEdit] = useState(false);
@@ -92,10 +96,13 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
   const [tasksError, setTasksError] = useState('');
   const [startDateTimeError, setStartDateTimeError] = useState('');
   const [endDateTimeError, setEndDateTimeError] = useState('');
+  const [conciergerieCommentError, setConciergerieCommentError] = useState('');
 
   // Refs for form elements
   const homeSelectRef = useRef<HTMLInputElement>(null);
   const taskRef = useRef<HTMLDivElement>(null);
+  const travellersRef = useRef<HTMLInputElement>(null);
+  const conciergerieCommentRef = useRef<HTMLTextAreaElement>(null);
   const startDateRef = useRef<HTMLInputElement>(null);
   const endDateRef = useRef<HTMLInputElement>(null);
 
@@ -137,6 +144,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
       tasks,
       selectedEmployees,
       travellers,
+      conciergerieComment,
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -152,9 +160,27 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
     const employeesChanged =
       JSON.stringify(selectedEmployees.sort()) !== JSON.stringify(initialFormValues.selectedEmployees.sort());
     const travellersChanged = travellers !== initialFormValues.travellers;
+    const conciergerieCommentChanged = conciergerieComment !== initialFormValues.conciergerieComment;
 
-    return tasksChanged || homeIdChanged || startDateChanged || endDateChanged || employeesChanged || travellersChanged;
-  }, [homeId, tasks, startDateTime, endDateTime, selectedEmployees, travellers, initialFormValues]);
+    return (
+      tasksChanged ||
+      homeIdChanged ||
+      startDateChanged ||
+      endDateChanged ||
+      employeesChanged ||
+      travellersChanged ||
+      conciergerieCommentChanged
+    );
+  }, [
+    homeId,
+    tasks,
+    startDateTime,
+    endDateTime,
+    selectedEmployees,
+    travellers,
+    conciergerieComment,
+    initialFormValues,
+  ]);
 
   const { handleCancel, handleClose } = useUnsavedChangesConfirmation({
     checkFormChanged,
@@ -229,6 +255,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
           status: null,
           allowDuo: selectedHome.allowDuo,
           travellers,
+          conciergerieComment: conciergerieComment || undefined,
         });
         if (!result) throw new Error("Impossible d'ajouter la mission");
 
@@ -249,6 +276,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
           allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : null,
           hours: missionHours,
           travellers,
+          conciergerieComment: conciergerieComment || undefined,
         };
 
         // Check if update would create a duplicate
@@ -391,12 +419,26 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
         <Select
           id="travellers"
           label="Nombre de voyageurs"
+          ref={travellersRef}
           value={travellers}
           onChange={value => setTravellers(Number(value))}
           options={range(1, filteredHomes.find(h => h.id === homeId)?.maxTravellers || MAX_TRAVELLERS)}
           disabled={isSubmitting || cannotEdit}
           placeholder="Nombre de voyageurs"
           required
+        />
+
+        <TextArea
+          id="conciergerie-comment"
+          label="Commentaire conciergerie"
+          ref={conciergerieCommentRef}
+          value={conciergerieComment}
+          onChange={setConciergerieComment}
+          error={conciergerieCommentError}
+          onError={setConciergerieCommentError}
+          disabled={isSubmitting || cannotEdit}
+          placeholder="Ajoutez un commentaire pour le prestataire (ex: informations spécifiques, consignes particulières...)"
+          regex={messageLengthRegex}
         />
 
         <ResponsiveDateTimeInput
