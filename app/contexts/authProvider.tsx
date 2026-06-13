@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const generateId = useCallback(() => {
-    const id = userId ?? getLocalStorageItem<string>('user_id') ?? generateSimpleId();
+    const id = userId || getLocalStorageItem<string>('user_id') || generateSimpleId();
     updateUserId(id);
     return id;
   }, [userId, updateUserId]);

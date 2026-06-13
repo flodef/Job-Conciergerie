@@ -20,7 +20,6 @@ type ConciergerieFormProps = {
 export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const { onMenuChange } = useMenuContext();
   const {
-    userId,
     setConciergerieName: setSelectedConciergerieName,
     conciergeries,
     findConciergerie,
@@ -62,7 +61,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       setIsSubmitting(true);
 
       // Generate userId if not available
-      const currentUserId = userId || generateId();
+      const currentUserId = generateId();
 
       setSelectedConciergerieName(conciergerieName);
 

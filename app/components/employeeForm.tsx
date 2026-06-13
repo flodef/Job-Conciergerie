@@ -136,7 +136,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       setIsSubmitting(true);
 
       // Generate userId if not available
-      const currentUserId = userId || generateId();
+      const currentUserId = generateId();
 
       // Find the employee that matches the criteria (trim values for comparison)
       const lookup = await lookupEmployeeByContact(
