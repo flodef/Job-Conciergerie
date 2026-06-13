@@ -113,7 +113,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       });
   };
 
-  const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = async e => {
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async e => {
     e.preventDefault();
 
     if (!formData) return;
@@ -171,8 +171,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         });
         if (!newEmployee) throw new Error('Prestataire non créé dans la base de données');
 
-        updateUserData(newEmployee);
         updateUserType('employee');
+        updateUserData(newEmployee, 'employee');
 
         // Clear saved form data so a different user on the same device starts fresh
         setFormData({
@@ -223,8 +223,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       };
 
       // Update local user data and userType so auth context is fully set before navigating
-      updateUserData(updatedEmployee);
       updateUserType('employee');
+      updateUserData(updatedEmployee, 'employee');
 
       // Send notification email to employee about the new device
       await EmailSender.sendNewDeviceEmail(updatedEmployee, userId);
@@ -237,6 +237,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       setTimeout(() => onMenuChange(Page.Waiting), 1500);
     } else {
       updateUserType('employee');
+      updateUserData(employee, 'employee');
       onMenuChange(employee.status === 'accepted' ? Page.Missions : Page.Waiting);
     }
   };

@@ -229,8 +229,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchDataFromDatabase]);
 
   const updateUserData = <T extends UserData>(updatedData: T, updateType = userType) => {
-    // Update user data only if the update type matches the current user type (meaning we are updating the current user)
-    if (updateType === userType) setUserData(updatedData);
+    // Update user data if we are updating the current user, or if there is no current user yet (new registration)
+    if (updateType === userType || !userType) setUserData(updatedData);
 
     // Update employees or conciergeries list
     const userId = getUserKey(updatedData);

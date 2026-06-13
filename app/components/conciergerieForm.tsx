@@ -54,7 +54,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     onClose();
   };
 
-  const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = e => {
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = e => {
     e.preventDefault();
 
     try {
