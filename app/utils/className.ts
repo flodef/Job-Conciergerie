@@ -26,7 +26,7 @@ export const actionButtonClassName = 'flex flex-col items-center p-2 w-20 rounde
 
 export const iconButtonClassName = (type?: ButtonStyle) =>
   cn(
-    'p-1 rounded-full hover:bg-light/30 transition-colors cursor-pointer disabled:text-light disabled:hover:bg-transparent disabled:cursor-not-allowed',
+    'p-1 rounded-full hover:bg-light/30 transition-colors cursor-pointer disabled:text-light disabled:cursor-not-allowed',
     type === 'primary' && 'hover:bg-primary/30 text-primary',
     type === 'secondary' && 'hover:bg-secondary/30 text-secondary',
     type === 'success' && 'hover:bg-green-500/30 text-green-500',
@@ -36,7 +36,7 @@ export const iconButtonClassName = (type?: ButtonStyle) =>
 
 export const buttonClassName = (type: ButtonStyle) =>
   cn(
-    'px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:hover:bg-transparent disabled:cursor-not-allowed disabled:opacity-50',
+    'px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50',
     type === 'primary' && 'text-background bg-primary hover:bg-primary/80',
     type === 'secondary' && 'text-foreground bg-secondary hover:bg-secondary/80',
     type === 'success' && 'text-background bg-green-500 hover:bg-green-500/80',
