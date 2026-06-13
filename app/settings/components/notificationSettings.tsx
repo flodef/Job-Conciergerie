@@ -6,14 +6,9 @@ import type { UserType } from '@/app/contexts/authProvider';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import type { Conciergerie, Employee } from '@/app/types/dataTypes';
-import { textClassName } from '@/app/utils/className';
-import type {
-  ConciergerieNotificationSettings,
-  EmployeeNotificationSettings} from '@/app/utils/notifications';
-import {
-  defaultConciergerieSettings,
-  defaultEmployeeSettings
-} from '@/app/utils/notifications';
+import { labelClassName } from '@/app/utils/className';
+import type { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
+import { defaultConciergerieSettings, defaultEmployeeSettings } from '@/app/utils/notifications';
 import React, { useState } from 'react';
 
 const conciergerieOptions = [
@@ -45,13 +40,16 @@ const NotificationSettings: React.FC = () => {
   );
   const options = isConciergerie ? conciergerieOptions : employeeOptions;
 
-  const handleToggle = <T extends ConciergerieNotificationSettings | EmployeeNotificationSettings>(key: keyof T) => {
+  const handleToggle = <T extends ConciergerieNotificationSettings | EmployeeNotificationSettings>(
+    key: keyof T,
+    newValue: boolean,
+  ) => {
     if (!userType) return;
 
     // First update the local state
     const newSettings = {
       ...settings,
-      [key]: !(settings as T)[key],
+      [key]: newValue,
     };
     setSettings(newSettings);
 
@@ -102,17 +100,18 @@ const NotificationSettings: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <h3 className={textClassName}>Recevoir un email lorsque :</h3>
+        <h3 className={labelClassName}>Recevoir un email lorsque :</h3>
         <div className="space-y-1 divide-y divide-secondary mt-2">
           {options.map(option => (
             <div
               key={option.key}
               className="flex items-center justify-between py-2 hover:bg-secondary/10 px-2 rounded transition-colors"
             >
-              <span className="text-sm">{option.label}</span>
               <Switch
+                className="text-sm my-0"
+                label={option.label}
                 enabled={settings[option.key as keyof typeof settings]}
-                onChange={() => handleToggle(option.key)}
+                onToggle={newValue => handleToggle(option.key, newValue)}
               />
             </div>
           ))}

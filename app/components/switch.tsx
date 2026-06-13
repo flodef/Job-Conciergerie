@@ -1,14 +1,29 @@
-import { cn } from '@/app/utils/className';
+import Label from '@/app/components/label';
+import { cn, rowClassName } from '@/app/utils/className';
+import type { ReactNode } from 'react';
 import React from 'react';
 
 interface SwitchProps {
   enabled: boolean;
-  onChange?: () => void;
+  onToggle?: (value: boolean) => void;
   size?: 'sm' | 'md' | 'lg';
   id?: string;
+  label?: ReactNode;
+  tooltip?: ReactNode;
+  row?: boolean;
+  className?: string;
 }
 
-const Switch: React.FC<SwitchProps> = ({ enabled, onChange, size = 'md', id }) => {
+const Switch: React.FC<SwitchProps> = ({
+  enabled,
+  onToggle,
+  size = 'md',
+  id = '',
+  label,
+  tooltip,
+  row = true,
+  className,
+}) => {
   // Size mappings
   const sizes = {
     sm: {
@@ -33,12 +48,12 @@ const Switch: React.FC<SwitchProps> = ({ enabled, onChange, size = 'md', id }) =
 
   const { track, thumb, thumbPosition, thumbTranslate } = sizes[size];
 
-  return (
+  const switchElement = (
     <button
       id={id}
       type="button"
       className={'relative inline-flex items-center focus:outline-none rounded-full cursor-pointer'}
-      onClick={onChange}
+      onClick={() => onToggle?.(!enabled)}
       role="switch"
       aria-checked={enabled}
     >
@@ -55,6 +70,17 @@ const Switch: React.FC<SwitchProps> = ({ enabled, onChange, size = 'md', id }) =
       />
       <span className="sr-only">{enabled ? 'Activé' : 'Désactivé'}</span>
     </button>
+  );
+
+  if (!label) return switchElement;
+
+  return (
+    <div className={cn(row ? rowClassName : '', className)}>
+      <Label id={id} required={true} tooltip={tooltip}>
+        {label}
+      </Label>
+      {switchElement}
+    </div>
   );
 };
 

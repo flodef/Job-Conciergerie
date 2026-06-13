@@ -95,7 +95,7 @@ const ConnectedDevicesSettings: React.FC = () => {
               <span className={cn('text-light', deleteSettings ? 'font-bold' : '')}>
                 Supprimer également mes paramètres
               </span>
-              <Switch enabled={deleteSettings} onChange={() => setDeleteSettings(!deleteSettings)} />
+              <Switch enabled={deleteSettings} onToggle={setDeleteSettings} />
             </label>
           </div>
         )}

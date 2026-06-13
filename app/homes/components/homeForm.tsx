@@ -124,6 +124,7 @@ export default function HomeForm({
     const hoursOfCleaningChanged = hoursOfCleaning !== initialFormValues.hoursOfCleaning;
     const hoursOfGardeningChanged = hoursOfGardening !== initialFormValues.hoursOfGardening;
     const allowDuoChanged = allowDuo !== initialFormValues.allowDuo;
+    const maxTravellersChanged = maxTravellers !== initialFormValues.maxTravellers;
 
     return (
       titleChanged ||
@@ -133,7 +134,8 @@ export default function HomeForm({
       geographicZoneChanged ||
       hoursOfCleaningChanged ||
       hoursOfGardeningChanged ||
-      allowDuoChanged
+      allowDuoChanged ||
+      maxTravellersChanged
     );
   }, [
     title,
@@ -144,6 +146,7 @@ export default function HomeForm({
     hoursOfCleaning,
     hoursOfGardening,
     allowDuo,
+    maxTravellers,
     initialFormValues,
   ]);
 
@@ -364,7 +367,7 @@ export default function HomeForm({
         <Select
           id="hours-of-cleaning"
           label="Heures de ménage"
-          className="max-w-1/3"
+          className="max-w-20"
           value={hoursOfCleaning}
           onChange={value => setHoursOfCleaning(Number(value))}
           options={range(0, 7, 0.5)}
@@ -378,7 +381,7 @@ export default function HomeForm({
           id="hours-of-gardening"
           label="Heures de jardinage"
           value={hoursOfGardening}
-          className="max-w-1/3"
+          className="max-w-20"
           onChange={value => setHoursOfGardening(Number(value))}
           options={range(0, 7, 0.5)}
           disabled={isSubmitting}
@@ -391,7 +394,7 @@ export default function HomeForm({
           id="max-travellers"
           label="Nombre maximum de voyageurs"
           value={maxTravellers}
-          className="max-w-1/3"
+          className="max-w-20"
           onChange={value => setMaxTravellers(Number(value))}
           options={range(1, MAX_TRAVELLERS)}
           disabled={isSubmitting}
@@ -400,12 +403,7 @@ export default function HomeForm({
           row
         />
 
-        <div className="flex items-center justify-between">
-          <label className="flex items-center cursor-pointer select-none">
-            <span className="text-foreground">Autoriser binôme</span>
-          </label>
-          <Switch enabled={allowDuo} onChange={() => setAllowDuo(!allowDuo)} />
-        </div>
+        <Switch id="allow-duo" label="Autoriser binôme" enabled={allowDuo} onToggle={setAllowDuo} />
 
         <ObjectiveList
           id="objectives"

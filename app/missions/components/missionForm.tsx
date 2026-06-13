@@ -419,6 +419,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
         <Select
           id="travellers"
           label="Nombre de voyageurs"
+          className="max-w-20"
           ref={travellersRef}
           value={travellers}
           onChange={value => setTravellers(Number(value))}
@@ -426,19 +427,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
           disabled={isSubmitting || cannotEdit}
           placeholder="Nombre de voyageurs"
           required
-        />
-
-        <TextArea
-          id="conciergerie-comment"
-          label="Commentaire conciergerie"
-          ref={conciergerieCommentRef}
-          value={conciergerieComment}
-          onChange={setConciergerieComment}
-          error={conciergerieCommentError}
-          onError={setConciergerieCommentError}
-          disabled={isSubmitting || cannotEdit}
-          placeholder="Ajoutez un commentaire pour le prestataire (ex: informations spécifiques, consignes particulières...)"
-          regex={messageLengthRegex}
+          row
         />
 
         <ResponsiveDateTimeInput
@@ -500,6 +489,19 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
               </ul>
             </>
           }
+        />
+
+        <TextArea
+          id="conciergerie-comment"
+          label="Commentaire conciergerie"
+          ref={conciergerieCommentRef}
+          value={conciergerieComment}
+          onChange={setConciergerieComment}
+          error={conciergerieCommentError}
+          onError={setConciergerieCommentError}
+          disabled={isSubmitting || cannotEdit}
+          placeholder="Ajoutez un commentaire pour le prestataire (ex: informations spécifiques, consignes particulières...)"
+          regex={messageLengthRegex}
         />
       </form>
     </FullScreenModal>

@@ -5,7 +5,7 @@ export function cn(...inputs: ClassNameValue[]) {
   return twMerge(inputs);
 }
 
-export const rowClassName = 'flex flex-row justify-between my-4 gap-4 items-center';
+export const rowClassName = 'w-full flex flex-row justify-between my-4 gap-4 items-center';
 export const titleClassName = 'text-lg font-medium';
 export const textClassName = 'text-sm font-medium text-foreground';
 export const textPulseClassName = textClassName + ' italic animate-pulse';

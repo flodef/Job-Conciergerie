@@ -119,7 +119,7 @@ function AcceptMissionWarning({ onConfirm, onClose }: { onConfirm: () => void; o
       <div className="mt-4 flex items-center justify-center w-full">
         <label className="flex items-center cursor-pointer select-none w-full justify-center gap-2">
           <span className={cn('text-light', dontShowAgain ? 'font-bold' : '')}>Ne plus afficher ce message</span>
-          <Switch enabled={dontShowAgain} onChange={() => setDontShowAgain(!dontShowAgain)} />
+          <Switch enabled={dontShowAgain} onToggle={setDontShowAgain} />
         </label>
       </div>
     </ConfirmationModal>
