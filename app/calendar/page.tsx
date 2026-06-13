@@ -141,6 +141,8 @@ export default function Calendar() {
     const id = openModal(() => <MissionDetails mission={mission} onClose={() => closeModal(id)} isFromCalendar />);
   };
 
+  const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const handleBadgeClick = (type: 'started' | 'late' | 'missingPartner') => {
     let missions: Mission[] = [];
     let index = 0;
@@ -163,9 +165,29 @@ export default function Calendar() {
       const mission = missions[index];
       const element = document.getElementById(`mission-${mission.id}`);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        element.classList.add('ring-2', 'ring-primary');
-        setTimeout(() => element.classList.remove('ring-2', 'ring-primary'), 2000);
+        // Clear any existing highlight timeout
+        if (highlightTimeoutRef.current) {
+          clearTimeout(highlightTimeoutRef.current);
+          // Remove highlight from any previously highlighted element
+          document.querySelectorAll('.highlighted-mission').forEach(el => {
+            el.classList.remove('highlighted-mission', 'border-2', 'border-primary');
+          });
+        }
+
+        // Scroll to the day container instead of the mission card to keep the day title visible
+        const dayContainer = element.closest('[data-day-container]');
+        if (dayContainer) {
+          dayContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Add highlight using border for visibility on all sides
+        element.classList.add('highlighted-mission', 'border-2', 'border-primary');
+
+        // Set timeout to remove highlight
+        highlightTimeoutRef.current = setTimeout(() => {
+          element.classList.remove('highlighted-mission', 'border-2', 'border-primary');
+          highlightTimeoutRef.current = null;
+        }, 2000);
       }
     }
   };
@@ -253,7 +275,7 @@ export default function Calendar() {
           const missionsForDate = missionsByDate.get(dateStr) || [];
 
           return (
-            <div key={dateStr} className="border border-secondary rounded-lg overflow-hidden">
+            <div key={dateStr} data-day-container className="border border-secondary rounded-lg overflow-hidden">
               <div
                 className={cn(
                   'p-3 font-medium border-b border-secondary',
