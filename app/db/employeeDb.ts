@@ -33,7 +33,7 @@ function formatEmployee(dbEmployee: DbEmployee) {
     message: dbEmployee.message || '',
     conciergerieName: dbEmployee.conciergerie_name || '',
     status: dbEmployee.status,
-    notificationSettings: dbEmployee.notification_settings || defaultEmployeeSettings,
+    notificationSettings: JSON.parse(String(dbEmployee.notification_settings)) || defaultEmployeeSettings,
     createdAt: dbEmployee.created_at,
   };
 }

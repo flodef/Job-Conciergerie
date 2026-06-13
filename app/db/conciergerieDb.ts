@@ -1,7 +1,7 @@
 import { sql } from '@/app/db/db';
 import { getColorValueByName } from '@/app/utils/color';
 import { MAX_DEVICES } from '@/app/utils/id';
-import type { ConciergerieNotificationSettings} from '@/app/utils/notifications';
+import type { ConciergerieNotificationSettings } from '@/app/utils/notifications';
 import { defaultConciergerieSettings } from '@/app/utils/notifications';
 
 // Type definition for database conciergerie
@@ -25,7 +25,7 @@ function formatConciergerie(dbConciergerie: DbConciergerie) {
     tel: dbConciergerie.tel,
     colorName: dbConciergerie.color_name,
     color: getColorValueByName(dbConciergerie.color_name),
-    notificationSettings: dbConciergerie.notification_settings || defaultConciergerieSettings,
+    notificationSettings: JSON.parse(String(dbConciergerie.notification_settings)) || defaultConciergerieSettings,
   };
 }
 
