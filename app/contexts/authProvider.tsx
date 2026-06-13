@@ -2,7 +2,7 @@
 
 import { fetchConciergeries } from '@/app/actions/conciergerie';
 import { deleteEmployeeData, fetchEmployees } from '@/app/actions/employee';
-import type { Toast} from '@/app/components/toastMessage';
+import type { Toast } from '@/app/components/toastMessage';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
@@ -38,6 +38,7 @@ interface AuthContextType {
   refreshData: () => void;
   disconnect: () => void;
   nuke: () => void;
+  generateId: () => string;
 }
 
 // Create the auth context
@@ -62,6 +63,7 @@ const AuthContext = createContext<AuthContextType>({
   refreshData: () => {},
   disconnect: () => {},
   nuke: () => {},
+  generateId: () => '',
 });
 
 // Auth provider component
@@ -300,6 +302,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         refreshData,
         disconnect,
         nuke,
+        generateId,
       }}
     >
       {toast && <ToastMessage toast={toast} onClose={handleToastClose} />}

@@ -36,26 +36,17 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
   const [error, setError] = useState('');
   const [pendingUpdate, setPendingUpdate] = useState<PendingUpdate | null>(null);
 
-  const applyEmployeeUpdate = useCallback(
-    async (employee: Employee, evictOldest: boolean) => {
+  const applyUpdate = useCallback(
+    async (entity: Employee | Conciergerie, evictOldest: boolean) => {
       if (!userId) throw new Error('Identifiant non trouvé');
-      const newIds = getDevices(employee.id, userId, false, evictOldest);
-      const result = await updateEmployeeWithUserId(employee, newIds);
+      const newIds = getDevices(entity.id, userId, false, evictOldest);
+      const result = isEmployee
+        ? await updateEmployeeWithUserId(entity as Employee, newIds)
+        : await updateConciergerieWithUserId(entity as Conciergerie, newIds);
       if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
-      updateUserData({ ...employee, id: result });
+      updateUserData({ ...entity, id: result });
     },
-    [userId, updateUserData],
-  );
-
-  const applyConciergerieUpdate = useCallback(
-    async (conciergerie: Conciergerie, evictOldest: boolean) => {
-      if (!userId) throw new Error('Identifiant non trouvé');
-      const newIds = getDevices(conciergerie.id, userId, false, evictOldest);
-      const result = await updateConciergerieWithUserId(conciergerie, newIds);
-      if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
-      updateUserData({ ...conciergerie, id: result });
-    },
-    [userId, updateUserData],
+    [userId, updateUserData, isEmployee],
   );
 
   const isFetching = useRef(false);
@@ -76,7 +67,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
           // If the ID fetched is not the one in the localStorage, update it in the database
           if (!employee.id.includes(userId)) {
             try {
-              await applyEmployeeUpdate(employee, false);
+              await applyUpdate(employee, false);
             } catch (err) {
               if (err instanceof MaxDevicesError) {
                 setPendingUpdate({ kind: 'employee', entity: employee, oldestId: err.oldestDevice });
@@ -92,7 +83,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
           // If the ID fetched is not the one in the localStorage, update it in the database
           if (!conciergerie.id.includes(userId)) {
             try {
-              await applyConciergerieUpdate(conciergerie, false);
+              await applyUpdate(conciergerie, false);
             } catch (err) {
               if (err instanceof MaxDevicesError) {
                 setPendingUpdate({ kind: 'conciergerie', entity: conciergerie, oldestId: err.oldestDevice });
@@ -126,18 +117,14 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
     onMenuChange,
     findEmployee,
     findConciergerie,
-    applyEmployeeUpdate,
-    applyConciergerieUpdate,
+    applyUpdate,
   ]);
 
   const handleConfirmEviction = () => {
     if (!pendingUpdate) return;
     const update = pendingUpdate;
     setPendingUpdate(null);
-    const promise =
-      update.kind === 'employee'
-        ? applyEmployeeUpdate(update.entity, true)
-        : applyConciergerieUpdate(update.entity, true);
+    const promise = applyUpdate(update.entity, true);
     promise
       .then(() => onMenuChange(Page.Missions))
       .catch(err => setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour'));

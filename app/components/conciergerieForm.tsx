@@ -4,13 +4,12 @@ import ErrorPage from '@/app/components/error';
 import FormActions from '@/app/components/formActions';
 import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useToast } from '@/app/contexts/toastProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import { cn, textClassName } from '@/app/utils/className';
 import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
 import { EmailSender } from '@/app/utils/emailSender';
 import { Page } from '@/app/utils/navigation';
-import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import AppVersion from './appVersion';
 
@@ -26,6 +25,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     conciergeries,
     findConciergerie,
     isLoading,
+    generateId,
   } = useAuth();
 
   const conciergerieNameRef = useRef<HTMLDivElement>(null);
@@ -55,19 +55,14 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
     onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = e => {
     e.preventDefault();
 
     try {
       setIsSubmitting(true);
 
-      if (!conciergerieName?.trim()) {
-        conciergerieNameRef.current?.focus();
-        setConciergerieNameError('Veuillez sélectionner une conciergerie');
-        throw new Error('Veuillez sélectionner une conciergerie');
-      }
-
-      if (!userId) throw new Error("L'identifiant n'est pas défini");
+      // Generate userId if not available
+      const currentUserId = userId || generateId();
 
       setSelectedConciergerieName(conciergerieName);
 
@@ -76,7 +71,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
-      EmailSender.sendVerificationEmail(selectedConciergerie, userId).then(() => {
+      EmailSender.sendVerificationEmail(selectedConciergerie, currentUserId).then(() => {
         showToast({ type: ToastType.Success, message: "L'email de vérification a été envoyé avec succès" });
       });
 

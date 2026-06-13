@@ -22,7 +22,7 @@ import { formatId, getDevices, MAX_DEVICES, MaxDevicesError } from '@/app/utils/
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { messageLengthRegex } from '@/app/utils/regex';
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { buttonClassName, cn } from '../utils/className';
 
 type EmployeeFormProps = {
@@ -30,7 +30,7 @@ type EmployeeFormProps = {
 };
 
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
-  const { userId, conciergeries, updateUserData, updateUserType, findConciergerie, isLoading } = useAuth();
+  const { userId, conciergeries, updateUserData, updateUserType, findConciergerie, isLoading, generateId } = useAuth();
   const { onMenuChange } = useMenuContext();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
@@ -113,7 +113,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = async e => {
     e.preventDefault();
 
     if (!formData) return;
@@ -135,7 +135,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     try {
       setIsSubmitting(true);
 
-      if (!userId) throw new Error("L'identifiant n'est pas défini");
+      // Generate userId if not available
+      const currentUserId = userId || generateId();
 
       // Find the employee that matches the criteria (trim values for comparison)
       const lookup = await lookupEmployeeByContact(
@@ -166,7 +167,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         // Create a new employee in the database (with normalized values)
         const newEmployee = await createNewEmployee({
           ...normalizedFormData,
-          id: userId,
+          id: currentUserId,
         });
         if (!newEmployee) throw new Error('Prestataire non créé dans la base de données');
 
@@ -255,8 +256,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     });
   };
 
-  if (!formData) return null;
-  if (isLoading) return null;
+  if (!formData || isLoading) return null;
 
   if (!conciergeries?.length)
     return (
