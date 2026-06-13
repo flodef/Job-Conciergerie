@@ -13,3 +13,5 @@ export type SelectOption = {
 export type Size = 'small' | 'medium' | 'large';
 
 export type SortDirection = 'asc' | 'desc';
+
+export type UpdateMode = 'add' | 'edit';

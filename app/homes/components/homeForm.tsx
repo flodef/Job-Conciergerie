@@ -17,7 +17,7 @@ import { useToast } from '@/app/contexts/toastProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { useUnsavedChangesConfirmation } from '@/app/hooks/useUnsavedChangesConfirmation';
 import type { Home } from '@/app/types/dataTypes';
-import type { ErrorField } from '@/app/types/types';
+import type { ErrorField, UpdateMode } from '@/app/types/types';
 import { descriptionLengthRegex, getMaxLength, inputLengthRegex } from '@/app/utils/regex';
 import { range } from '@/app/utils/select';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -31,7 +31,7 @@ type HomeFormProps = {
   onClose: () => void;
   onCancel?: () => void;
   home?: Home;
-  mode: 'add' | 'edit';
+  mode: UpdateMode;
   autoFocus?: boolean;
   skipAnimation?: boolean;
 };

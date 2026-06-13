@@ -24,6 +24,7 @@ import {
   buttonClassName,
   cn,
   containerClassName,
+  descriptionClassName,
   iconButtonClassName,
   textClassName,
   textPulseClassName,
@@ -64,7 +65,7 @@ import {
   IconZoomScan,
 } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type MissionDetailsProps = {
   mission: Mission;
@@ -126,7 +127,7 @@ function AcceptMissionWarning({ onConfirm, onClose }: { onConfirm: () => void; o
   );
 }
 
-export default function MissionDetails({ mission, onClose, isFromCalendar = false }: MissionDetailsProps) {
+export default function MissionDetails({ mission: propMission, onClose, isFromCalendar = false }: MissionDetailsProps) {
   const {
     shouldShowAcceptWarning,
     deleteMission,
@@ -147,6 +148,7 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const { showToast } = useToast();
 
   const [isEditMode, setIsEditMode] = useState(false);
+
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [showHomeDetails, setShowHomeDetails] = useState(false);
   const [showEmployeeDetails, setShowEmployeeDetails] = useState(false);
@@ -155,6 +157,12 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [skipAnimation, setSkipAnimation] = useState(false);
   const [selectedReportImageIndex, setSelectedReportImageIndex] = useState<number>();
+
+  // Sync local mission with prop when it changes (e.g., after external updates)
+  const [mission, setMission] = useState(propMission);
+  useEffect(() => {
+    setMission(propMission);
+  }, [propMission]);
 
   // Open a confirmation dialog through the modal singleton (auto-pops on confirm/cancel)
   const confirm = (options: {
@@ -219,6 +227,13 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
   const [startDateError, setStartDateError] = useState('');
   const [endDateError, setEndDateError] = useState('');
   const [pendingDateChanges, setPendingDateChanges] = useState<{ start?: Date; end?: Date }>({});
+
+  // Update edit dates when mission changes (e.g., after form submission)
+  useEffect(() => {
+    setEditStartDate(localISOString(startDate));
+    setEditEndDate(localISOString(endDate));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mission.startDateTime, mission.endDateTime]);
 
   // Get the home data
   const home = homes.find(h => h.id === mission.homeId);
@@ -588,6 +603,9 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           setSkipAnimation(true);
           setIsEditMode(false);
         }}
+        onSuccess={updatedMission => {
+          setMission(updatedMission);
+        }}
         onCancel={() => {
           setSkipAnimation(true);
           setIsEditMode(false);
@@ -774,18 +792,6 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
           </h3>
           <span className="font-medium">{mission.travellers || '-'}</span>
         </div>
-
-        {mission.conciergerieComment && (
-          <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-            <div className="flex items-start gap-2">
-              <IconBulb size={16} className="text-primary mt-0.5 shrink-0" />
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold text-primary mb-1">Commentaire conciergerie</h3>
-                <p className="text-sm text-foreground/80 whitespace-pre-wrap">{mission.conciergerieComment}</p>
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="flex items-center space-x-4">
           <div className="space-y-2">
@@ -1101,6 +1107,22 @@ export default function MissionDetails({ mission, onClose, isFromCalendar = fals
             ) : (
               <span className={textPulseClassName}>En attente...</span>
             )}
+          </div>
+        )}
+
+        {mission.conciergerieComment && (
+          <div className=" p-1 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+            <div className="flex-1">
+              <div className="flex items-start gap-2">
+                <IconBulb size={16} className="text-yellow-600 dark:text-yellow-400 shrink-0" />
+                <h3 className="text-sm font-semibold text-yellow-600 dark:text-yellow-400 mb-1">
+                  Commentaire conciergerie
+                </h3>
+              </div>
+              <p className={cn(descriptionClassName, 'px-1 text-yellow-800 dark:text-yellow-200')}>
+                {mission.conciergerieComment}
+              </p>
+            </div>
           </div>
         )}
 

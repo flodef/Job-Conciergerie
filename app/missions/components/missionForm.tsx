@@ -16,7 +16,7 @@ import { MAX_TRAVELLERS } from '@/app/homes/components/homeForm';
 import { useUnsavedChangesConfirmation } from '@/app/hooks/useUnsavedChangesConfirmation';
 import type { Mission } from '@/app/types/dataTypes';
 import { Task } from '@/app/types/dataTypes';
-import type { ErrorField } from '@/app/types/types';
+import type { ErrorField, UpdateMode } from '@/app/types/types';
 import { containerClassName } from '@/app/utils/className';
 import {
   adjustMissionDateTime,
@@ -39,11 +39,19 @@ type MissionFormProps = {
   mission?: Mission;
   onClose: () => void;
   onCancel?: () => void;
-  mode: 'add' | 'edit';
+  onSuccess?: (updatedMission: Mission) => void;
+  mode: UpdateMode;
   skipAnimation?: boolean;
 };
 
-export default function MissionForm({ mission, onClose, onCancel, mode, skipAnimation = false }: MissionFormProps) {
+export default function MissionForm({
+  mission,
+  onClose,
+  onCancel,
+  onSuccess,
+  mode,
+  skipAnimation = false,
+}: MissionFormProps) {
   const { homes, addMission, updateMission, missionExists } = useMissions();
   const { conciergerieName, employees: allEmployees } = useAuth();
   const { showToast } = useToast();
@@ -59,7 +67,14 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
   const [missionHours, setMissionHours] = useState(mission?.hours || 0);
   const [tasks, setTasks] = useState<Task[]>(mission?.tasks || (mode === 'add' ? [Task.Cleaning] : []));
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>(mission?.allowedEmployees || []);
-  const [travellers, setTravellers] = useState(mission?.travellers ?? 1);
+  const [travellers, setTravellers] = useState<number>(() => {
+    if (mode === 'edit' && mission) {
+      return mission.travellers;
+    }
+    // In add mode, use maxTravellers of the first available home
+    const firstHome = filteredHomes[0];
+    return firstHome?.maxTravellers ?? 1;
+  });
   const [conciergerieComment, setConciergerieComment] = useState(mission?.conciergerieComment || '');
   const [initialFormValues, setInitialFormValues] = useState<{
     homeId: string;
@@ -134,11 +149,13 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
     }
   }, [homeId, tasks, filteredHomes]);
 
-  // Set travellers to max travellers of selected home when home changes
+  // Set travellers to max travellers of selected home when home changes (only in add mode)
   useEffect(() => {
-    const home = filteredHomes.find(h => h.id === homeId);
-    if (home) setTravellers(home.maxTravellers);
-  }, [homeId, filteredHomes]);
+    if (mode === 'add') {
+      const home = filteredHomes.find(h => h.id === homeId);
+      if (home) setTravellers(home.maxTravellers);
+    }
+  }, [homeId, filteredHomes, mode]);
 
   // Set up French locale for date inputs
   useEffect(() => {
@@ -297,6 +314,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
             ? 'Mission mise à jour ! Le prestataire a été notifié.'
             : 'Mission mise à jour avec succès !',
         });
+        if (onSuccess) onSuccess(updatedMission);
         onClose();
       }
     } catch (error) {
@@ -375,20 +393,35 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
       footer={!isSuccess ? footer : undefined}
     >
       <form className="space-y-2">
-        <Combobox
-          id="home-select"
-          label="Bien"
-          ref={homeSelectRef}
-          value={homeId}
-          onChange={setHomeId}
-          options={filteredHomes.map(home => ({
-            value: home.id,
-            label: home.title,
-          }))}
+        {mode === 'add' && (
+          <Combobox
+            id="home-select"
+            label="Bien"
+            ref={homeSelectRef}
+            value={homeId}
+            onChange={setHomeId}
+            options={filteredHomes.map(home => ({
+              value: home.id,
+              label: home.title,
+            }))}
+            disabled={isSubmitting || cannotEdit}
+            placeholder="Sélectionner un bien"
+            error={homeIdError}
+            onError={setHomeIdError}
+            required
+          />
+        )}
+
+        <TaskSelector
+          id="task-select"
+          label="Tâches"
+          ref={taskRef}
+          availableTasks={getAvailableTasks(filteredHomes.find(h => h.id === homeId) || undefined, Object.values(Task))}
+          selectedTasks={tasks}
+          onTasksChange={setTasks}
+          error={tasksError}
+          setError={setTasksError}
           disabled={isSubmitting || cannotEdit}
-          placeholder="Sélectionner un bien"
-          error={homeIdError}
-          onError={setHomeIdError}
           required
         />
 
@@ -408,19 +441,6 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
             )}
           </div>
         )}
-
-        <TaskSelector
-          id="task-select"
-          label="Tâches"
-          ref={taskRef}
-          availableTasks={getAvailableTasks(filteredHomes.find(h => h.id === homeId) || undefined, Object.values(Task))}
-          selectedTasks={tasks}
-          onTasksChange={setTasks}
-          error={tasksError}
-          setError={setTasksError}
-          disabled={isSubmitting || cannotEdit}
-          required
-        />
 
         <Select
           id="travellers"
