@@ -8,7 +8,8 @@ vi.mock('@/app/utils/notifications', () => ({
 }));
 
 import { sql } from '@/app/db/db';
-import { findEmployeeByContact } from '@/app/db/employeeDb';
+import { findEmployeeByContact, formatEmployee } from '@/app/db/employeeDb';
+import type { DbEmployee } from '@/app/db/employeeDb';
 
 const mockSql = sql as unknown as ReturnType<typeof vi.fn>;
 
@@ -21,10 +22,10 @@ const baseRow = {
   tel: '0662232945',
   email: 'marc.caradec@laposte.net',
   geographic_zone: 'Telgruc-sur-Mer',
-  message: null,
+  message: undefined,
   conciergerie_name: 'MENTHEREGLISSE',
   notification_settings: null,
-  status: 'accepted',
+  status: 'accepted' as const,
   created_at: '2026-04-07T12:15:23Z',
 };
 
@@ -87,5 +88,82 @@ describe('findEmployeeByContact', () => {
     await findEmployeeByContact('Marc', 'Caradec', '0699999999', 'marc.caradec@laposte.net');
     // Verify the sql template was called (lookup happened)
     expect(mockSql).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('formatEmployee', () => {
+  it('handles null notification_settings by using default', () => {
+    const result = formatEmployee(baseRow as unknown as DbEmployee);
+    expect(result.notificationSettings).toEqual({
+      acceptedMissions: true,
+      startedMissions: true,
+      completedMissions: true,
+    });
+  });
+
+  it('parses JSON string notification_settings', () => {
+    const settings = { acceptedMissions: false, startedMissions: true, completedMissions: false };
+    const row: DbEmployee = {
+      ...baseRow,
+      notification_settings: JSON.stringify(settings),
+    } as unknown as DbEmployee;
+    const result = formatEmployee(row);
+    expect(result.notificationSettings).toEqual(settings);
+  });
+
+  it('handles invalid JSON in notification_settings by using default', () => {
+    const row: DbEmployee = {
+      ...baseRow,
+      notification_settings: 'invalid json',
+    } as unknown as DbEmployee;
+    const result = formatEmployee(row);
+    expect(result.notificationSettings).toEqual({
+      acceptedMissions: true,
+      startedMissions: true,
+      completedMissions: true,
+    });
+  });
+
+  it('handles empty string notification_settings by using default', () => {
+    const row: DbEmployee = {
+      ...baseRow,
+      notification_settings: '',
+    } as unknown as DbEmployee;
+    const result = formatEmployee(row);
+    expect(result.notificationSettings).toEqual({
+      acceptedMissions: true,
+      startedMissions: true,
+      completedMissions: true,
+    });
+  });
+
+  it('preserves all other fields', () => {
+    const result = formatEmployee(baseRow as unknown as DbEmployee);
+    expect(result.id).toBe('abc123');
+    expect(result.firstName).toBe('Marc');
+    expect(result.familyName).toBe('Caradec');
+    expect(result.tel).toBe('0662232945');
+    expect(result.email).toBe('marc.caradec@laposte.net');
+    expect(result.geographicZone).toBe('Telgruc-sur-Mer');
+    expect(result.conciergerieName).toBe('MENTHEREGLISSE');
+    expect(result.status).toBe('accepted');
+  });
+
+  it('handles missing message field', () => {
+    const row: DbEmployee = {
+      ...baseRow,
+      message: undefined,
+    } as unknown as DbEmployee;
+    const result = formatEmployee(row);
+    expect(result.message).toBe('');
+  });
+
+  it('handles missing conciergerie_name field', () => {
+    const row: DbEmployee = {
+      ...baseRow,
+      conciergerie_name: undefined,
+    } as unknown as DbEmployee;
+    const result = formatEmployee(row);
+    expect(result.conciergerieName).toBe('');
   });
 });

@@ -40,6 +40,8 @@ afterAll(async () => {
   // Cleanup test data
   await deleteMission(TEST_MISSION_ID);
   await deleteMission(TEST_MISSION_ID + '-str');
+  await deleteMission(TEST_MISSION_ID + '-comment');
+  await deleteMission(TEST_MISSION_ID + '-no-comment');
   await sql`DELETE FROM homes WHERE id = ${TEST_HOME_ID}`;
   // Close database connection to free up pool
   await sql.end();
@@ -58,6 +60,7 @@ const baseMission: Omit<Mission, 'modifiedDate'> = {
   hours: 2,
   allowDuo: true,
   travellers: 2,
+  conciergerieComment: undefined,
 };
 
 describe('Mission Actions - hours type conversion', () => {
@@ -114,6 +117,74 @@ describe('Mission Actions - hours type conversion', () => {
     expect(result?.hours).toBe(4);
     expect(typeof result?.hours).toBe('number');
     expect(result?.status).toBe('accepted');
+  });
+});
+
+describe('Mission Actions - conciergerieComment field', () => {
+  test('createNewMission stores conciergerieComment', async () => {
+    const comment = 'Test conciergerie comment';
+    const result = await createNewMission({
+      ...baseMission,
+      id: TEST_MISSION_ID + '-comment',
+      modifiedDate: new Date(),
+      conciergerieComment: comment,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.conciergerieComment).toBe(comment);
+  });
+
+  test('createNewMission handles undefined conciergerieComment', async () => {
+    const result = await createNewMission({
+      ...baseMission,
+      id: TEST_MISSION_ID + '-no-comment',
+      modifiedDate: new Date(),
+      conciergerieComment: undefined,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.conciergerieComment).toBeUndefined();
+  });
+
+  test('updateMissionData updates conciergerieComment', async () => {
+    const comment = 'Updated conciergerie comment';
+    const result = await updateMissionData(TEST_MISSION_ID, {
+      conciergerieComment: comment,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.conciergerieComment).toBe(comment);
+  });
+
+  test('updateMissionData clears conciergerieComment when set to undefined', async () => {
+    // First set a comment
+    await updateMissionData(TEST_MISSION_ID, {
+      conciergerieComment: 'Test comment',
+    });
+
+    // Then clear it
+    const result = await updateMissionData(TEST_MISSION_ID, {
+      conciergerieComment: undefined,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.conciergerieComment).toBeUndefined();
+  });
+
+  test('updateMissionData preserves conciergerieComment when not provided', async () => {
+    const comment = 'Preserved comment';
+    await updateMissionData(TEST_MISSION_ID, {
+      conciergerieComment: comment,
+    });
+
+    // Update another field without touching conciergerieComment
+    const result = await updateMissionData(TEST_MISSION_ID, {
+      hours: 5,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.conciergerieComment).toBe(comment);
+    expect(result?.hours).toBe(5);
   });
 });
 
