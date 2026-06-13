@@ -21,6 +21,7 @@ type MultiSelectProps = {
   options: MultiSelectOption[];
   className?: string;
   error?: boolean | string;
+  onError?: (error: string) => void;
   disabled: boolean;
   required?: boolean;
   allOption?: boolean; // Whether to include an "All" option
@@ -38,6 +39,7 @@ const MultiSelect = forwardRef(
       options,
       className = '',
       error = false,
+      onError = () => {},
       disabled = false,
       required = false,
       allOption = true,
@@ -189,6 +191,11 @@ const MultiSelect = forwardRef(
                 setIsFocused(false);
                 setIsOpen(false);
               }
+              onError(
+                required && !displayValue
+                  ? `Veuillez sélectionner ${label?.toString().toLowerCase() || 'une option'}`
+                  : '',
+              );
             }}
             onKeyDown={handleKeyDown}
             role="combobox"

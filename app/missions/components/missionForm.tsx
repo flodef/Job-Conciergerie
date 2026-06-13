@@ -27,7 +27,6 @@ import {
   handleMissionStartDateChange,
   localISOString,
 } from '@/app/utils/date';
-import { handleChange } from '@/app/utils/form';
 import { isMissionEditable, isMissionExpired } from '@/app/utils/missionFilters';
 import { messageLengthRegex } from '@/app/utils/regex';
 import { range } from '@/app/utils/select';
@@ -375,7 +374,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
           label="Bien"
           ref={homeSelectRef}
           value={homeId}
-          onChange={value => handleChange(value, setHomeId, setHomeIdError)}
+          onChange={setHomeId}
           options={filteredHomes.map(home => ({
             value: home.id,
             label: home.title,
@@ -383,6 +382,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
           disabled={isSubmitting || cannotEdit}
           placeholder="Sélectionner un bien"
           error={homeIdError}
+          onError={setHomeIdError}
           required
         />
 

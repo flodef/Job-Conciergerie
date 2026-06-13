@@ -25,6 +25,7 @@ type SelectProps = {
   placeholder?: string;
   className?: string;
   error?: boolean | string;
+  onError?: (error: string) => void;
   disabled: boolean;
   required?: boolean;
   row?: boolean;
@@ -42,6 +43,7 @@ const Select = forwardRef(
       placeholder = 'Sélectionner une option',
       className = '',
       error = false,
+      onError = () => {},
       disabled = false,
       required = false,
       row = false,
@@ -200,6 +202,11 @@ const Select = forwardRef(
             onBlur={() => {
               setIsFocused(false);
               setIsOpen(false);
+              onError(
+                required && !displayValue
+                  ? `Veuillez sélectionner ${label?.toString().toLowerCase() || 'une option'}`
+                  : '',
+              );
             }}
             role="combobox"
             aria-expanded={isOpen}

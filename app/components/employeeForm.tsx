@@ -11,18 +11,17 @@ import TextArea from '@/app/components/textArea';
 import { ToastType } from '@/app/components/toastMessage';
 import Tooltip from '@/app/components/tooltip';
 import { useAuth } from '@/app/contexts/authProvider';
-import { useToast } from '@/app/contexts/toastProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
+import { useToast } from '@/app/contexts/toastProvider';
 import geographicZones from '@/app/data/geographicZone.json';
 import { useRateLimiter } from '@/app/hooks/useRateLimiter';
 import type { Employee } from '@/app/types/dataTypes';
-import type { ErrorField } from '@/app/types/types';
 import { EmailSender } from '@/app/utils/emailSender';
+import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
 import { formatId, getDevices, MAX_DEVICES, MaxDevicesError } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
-import { emailRegex, frenchPhoneRegex, getMaxLength, inputLengthRegex, messageLengthRegex } from '@/app/utils/regex';
-import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
+import { messageLengthRegex } from '@/app/utils/regex';
 import React, { useRef, useState } from 'react';
 import { buttonClassName, cn } from '../utils/className';
 
@@ -46,7 +45,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   });
   const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFormChanged, setIsFormChanged] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [maxDevicesPrompt, setMaxDevicesPrompt] = useState<{ oldestId: string; employee: Employee } | null>(null);
 
@@ -74,23 +72,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const geographicZoneRef = useRef<HTMLInputElement>(null);
   const conciergerieNameRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
-
-  const handleFormChange = (name: string, value: string) => {
-    setIsFormChanged(true);
-    let formattedValue = value;
-    if (name === 'firstName') {
-      formattedValue = normalizeFirstName(value);
-    } else if (name === 'familyName') {
-      formattedValue = normalizeFamilyName(value);
-    }
-    setFormData(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        [name]: formattedValue,
-      };
-    });
-  };
 
   // Send conflict report to conciergerie using rate limiter
   const sendConflictReport = async () => {
@@ -137,94 +118,32 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
     if (!formData) return;
 
-    let error: ErrorField | undefined;
+    // Normalize name fields
+    const normalizedFormData = {
+      ...formData,
+      firstName: normalizeFirstName(formData.firstName),
+      familyName: normalizeFamilyName(formData.familyName),
+    };
 
-    // Check if all required fields are filled
-    if (!formData.firstName?.trim())
-      error = {
-        message: 'Veuillez entrer un prénom',
-        fieldRef: firstNameRef,
-        func: setFirstNameError,
-      };
-    else if (formData.firstName.length > getMaxLength(inputLengthRegex))
-      error = {
-        message: `Le prénom ne peut pas dépasser ${getMaxLength(inputLengthRegex)} caractères`,
-        fieldRef: firstNameRef,
-        func: setFirstNameError,
-      };
-    else if (!formData.familyName?.trim())
-      error = {
-        message: 'Veuillez entrer un nom',
-        fieldRef: familyNameRef,
-        func: setFamilyNameError,
-      };
-    else if (formData.familyName.length > getMaxLength(inputLengthRegex))
-      error = {
-        message: `Le nom ne peut pas dépasser ${getMaxLength(inputLengthRegex)} caractères`,
-        fieldRef: familyNameRef,
-        func: setFamilyNameError,
-      };
-    else if (!formData.email?.trim())
-      error = {
-        message: 'Veuillez entrer une adresse email',
-        fieldRef: emailRef,
-        func: setEmailError,
-      };
-    else if (!formData.tel?.trim())
-      error = {
-        message: 'Veuillez entrer un numéro de téléphone',
-        fieldRef: phoneRef,
-        func: setPhoneError,
-      };
-    else if (!emailRegex.test(formData.email))
-      error = {
-        message: "Veuillez corriger le format de l'email",
-        fieldRef: emailRef,
-        func: setEmailError,
-      };
-    else if (!frenchPhoneRegex.test(formData.tel))
-      error = {
-        message: 'Veuillez corriger le format du numéro de téléphone',
-        fieldRef: phoneRef,
-        func: setPhoneError,
-      };
-    else if (!formData.geographicZone?.trim())
-      error = {
-        message: 'Veuillez entrer un lieu de vie',
-        fieldRef: geographicZoneRef,
-        func: setGeographicZoneError,
-      };
-    else if (!formData.conciergerieName?.trim())
-      error = {
-        message: 'Veuillez sélectionner une conciergerie',
-        fieldRef: conciergerieNameRef,
-        func: setConciergerieNameError,
-      };
-    else if (formData.message && formData.message.length > getMaxLength(messageLengthRegex))
-      error = {
-        message: `Le message ne peut pas dépasser ${getMaxLength(messageLengthRegex)} caractères`,
-        fieldRef: messageRef,
-        func: setMessageError,
-      };
+    // Validate special required fields
+    if (!normalizedFormData.geographicZone?.trim()) {
+      geographicZoneRef.current?.focus();
+      geographicZoneRef.current?.blur();
+      return;
+    }
 
     try {
       setIsSubmitting(true);
 
-      if (error) {
-        error.fieldRef.current?.focus();
-        error.func(error.message);
-        throw new Error(error.message);
-      }
-
       if (!userId) throw new Error("L'identifiant n'est pas défini");
 
       // Find the employee that matches the criteria (trim values for comparison)
-      const trimmedFirstName = formData.firstName.trim();
-      const trimmedFamilyName = formData.familyName.trim();
-      const trimmedTel = formData.tel.trim();
-      const trimmedEmail = formData.email.trim();
-
-      const lookup = await lookupEmployeeByContact(trimmedFirstName, trimmedFamilyName, trimmedTel, trimmedEmail);
+      const lookup = await lookupEmployeeByContact(
+        normalizedFormData.firstName,
+        normalizedFormData.familyName,
+        normalizedFormData.tel,
+        normalizedFormData.email,
+      );
 
       if (lookup) {
         if (!lookup.nameMatches) {
@@ -244,13 +163,9 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           throw err;
         }
       } else {
-        // Create a new employee in the database (with trimmed values)
+        // Create a new employee in the database (with normalized values)
         const newEmployee = await createNewEmployee({
-          ...formData,
-          firstName: trimmedFirstName,
-          familyName: trimmedFamilyName,
-          tel: trimmedTel,
-          email: trimmedEmail,
+          ...normalizedFormData,
           id: userId,
         });
         if (!newEmployee) throw new Error('Prestataire non créé dans la base de données');
@@ -361,7 +276,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           label="Prénom"
           ref={firstNameRef}
           value={formData.firstName}
-          onChange={e => handleFormChange('firstName', e)}
+          onChange={e => setFormData({ ...formData, firstName: e })}
           error={firstNameError}
           onError={setFirstNameError}
           disabled={isSubmitting}
@@ -374,7 +289,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           label="Nom"
           ref={familyNameRef}
           value={formData.familyName}
-          onChange={e => handleFormChange('familyName', e)}
+          onChange={e => setFormData({ ...formData, familyName: e })}
           error={familyNameError}
           onError={setFamilyNameError}
           disabled={isSubmitting}
@@ -387,7 +302,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           label="Téléphone"
           ref={phoneRef}
           value={formData.tel}
-          onChange={e => handleFormChange('tel', e)}
+          onChange={e => setFormData({ ...formData, tel: e })}
           error={phoneError}
           onError={setPhoneError}
           disabled={isSubmitting}
@@ -400,7 +315,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           label="Email"
           ref={emailRef}
           value={formData.email}
-          onChange={e => handleFormChange('email', e)}
+          onChange={e => setFormData({ ...formData, email: e })}
           error={emailError}
           onError={setEmailError}
           disabled={isSubmitting}
@@ -414,10 +329,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           ref={geographicZoneRef}
           options={geographicZones}
           value={formData.geographicZone || ''}
-          onChange={e => handleFormChange('geographicZone', e)}
+          onChange={e => setFormData({ ...formData, geographicZone: e })}
           disabled={isSubmitting}
           placeholder="Sélectionnez un lieu de vie..."
           error={geographicZoneError}
+          onError={setGeographicZoneError}
           required
         />
 
@@ -434,10 +350,11 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           ref={conciergerieNameRef}
           options={conciergeries.map(c => c.name)}
           value={formData.conciergerieName || ''}
-          onChange={e => handleFormChange('conciergerieName', e)}
+          onChange={e => setFormData({ ...formData, conciergerieName: e })}
           disabled={isSubmitting}
           placeholder="Sélectionner une conciergerie"
           error={conciergerieNameError}
+          onError={setConciergerieNameError}
           required
         />
 
@@ -446,7 +363,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           label="Message"
           ref={messageRef}
           value={formData.message}
-          onChange={value => handleFormChange('message', value)}
+          onChange={value => setFormData({ ...formData, message: value })}
           error={messageError}
           onError={setMessageError}
           disabled={isSubmitting}
@@ -487,7 +404,12 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
         <FormActions
           onCancel={() => {
-            if (isFormChanged) {
+            const hasChanges =
+              formData &&
+              Object.entries(formData)
+                .filter(([key]) => key !== 'conciergerieName')
+                .some(([, value]) => value !== '');
+            if (hasChanges) {
               setShowConfirmDialog(true);
             } else {
               onClose();

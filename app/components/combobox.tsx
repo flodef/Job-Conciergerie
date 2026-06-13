@@ -6,7 +6,7 @@ import { cn, errorClassName, optionClassName, rowClassName, selectClassName } fr
 import { shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
-import type { ForwardedRef, ReactNode} from 'react';
+import type { ForwardedRef, ReactNode } from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 type ComboboxProps = {
@@ -18,6 +18,7 @@ type ComboboxProps = {
   placeholder?: string;
   className?: string;
   error?: boolean | string;
+  onError?: (error: string) => void;
   disabled: boolean;
   required?: boolean;
   row?: boolean;
@@ -35,6 +36,7 @@ const Combobox = forwardRef(
       placeholder = 'Sélectionner une option',
       className = '',
       error = false,
+      onError = () => {},
       disabled = false,
       required = false,
       row = false,
@@ -187,7 +189,7 @@ const Combobox = forwardRef(
               id={id}
               ref={inputRef}
               type="text"
-              className="grow w-full bg-transparent outline-none text-foreground"
+              className={`grow w-full bg-transparent outline-none ${!value ? 'text-light/80' : 'text-foreground'}`}
               placeholder={displayValue?.toString().trim() || placeholder}
               value={isOpen ? searchTerm : displayValue}
               onChange={handleInputChange}
@@ -204,10 +206,16 @@ const Combobox = forwardRef(
                 if (!e.relatedTarget || !comboboxRef.current?.contains(e.relatedTarget as Node)) {
                   setIsFocused(false);
                   setIsOpen(false);
+                  onError(
+                    required && !value
+                      ? `Veuillez sélectionner ${label?.toString().toLowerCase() || 'une option'}`
+                      : '',
+                  );
                 }
               }}
               autoComplete="off"
               disabled={disabled}
+              required={required}
               role="combobox"
               aria-expanded={isOpen}
               aria-haspopup="listbox"

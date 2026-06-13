@@ -1,8 +1,8 @@
 import Label from '@/app/components/label';
 import { errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
-import { handleChange } from '@/app/utils/form';
+import { handleInputBlur, handleChange } from '@/app/utils/form';
 import { emailRegex, frenchPhoneRegex, inputLengthRegex } from '@/app/utils/regex';
-import type { ForwardRefRenderFunction, ReactNode} from 'react';
+import type { ForwardRefRenderFunction, ReactNode } from 'react';
 import { forwardRef } from 'react';
 
 interface InputProps {
@@ -52,6 +52,7 @@ const InputComponent: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
         ref={ref}
         value={value}
         onChange={e => handleChange(e, onChange, onError, regex)}
+        onBlur={e => handleInputBlur(e, onChange, onError, regex)}
         className={inputFieldClassName(error)}
         disabled={disabled}
         placeholder={placeholder}

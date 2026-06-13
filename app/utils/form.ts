@@ -2,12 +2,12 @@ import type { HTMLField } from '@/app/types/types';
 import { getMaxLength } from '@/app/utils/regex';
 
 export const handleChange = (
-  e: React.ChangeEvent<HTMLField> | string,
+  e: React.ChangeEvent<HTMLField>,
   set: (value: string) => void,
   setError: (error: string) => void,
   regex?: RegExp,
 ) => {
-  const { name, value, required } = typeof e === 'string' ? { name: '', value: e } : e.target;
+  const { name, value, required } = e.target;
 
   const setValue = (value: string, error: string) => {
     setError(!value.trim() && required ? `${name} est requis` : error);
@@ -26,4 +26,19 @@ export const handleChange = (
   } else {
     setValue(value, '');
   }
+};
+
+export const handleInputBlur = (
+  e: React.ChangeEvent<HTMLField>,
+  onChange: (value: string) => void,
+  onError: (error: string) => void,
+  regex?: RegExp,
+) => {
+  const { value } = e.target;
+
+  // Trim the value if needed
+  if (value !== value.trim()) (e.target as HTMLField).value = value.trim();
+
+  // Trigger validation on blur
+  handleChange(e, onChange, onError, regex);
 };

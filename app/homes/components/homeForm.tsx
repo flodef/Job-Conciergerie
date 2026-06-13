@@ -13,12 +13,11 @@ import TextArea from '@/app/components/textArea';
 import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
-import { useUnsavedChangesConfirmation } from '@/app/hooks/useUnsavedChangesConfirmation';
 import { useToast } from '@/app/contexts/toastProvider';
 import geographicZones from '@/app/data/geographicZone.json';
+import { useUnsavedChangesConfirmation } from '@/app/hooks/useUnsavedChangesConfirmation';
 import type { Home } from '@/app/types/dataTypes';
 import type { ErrorField } from '@/app/types/types';
-import { handleChange } from '@/app/utils/form';
 import { descriptionLengthRegex, getMaxLength, inputLengthRegex } from '@/app/utils/regex';
 import { range } from '@/app/utils/select';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -339,10 +338,11 @@ export default function HomeForm({
           className="max-w-2/3"
           options={geographicZones}
           value={geographicZone}
-          onChange={e => handleChange(e, setGeographicZone, setGeographicZoneError)}
+          onChange={setGeographicZone}
           placeholder="Sélectionnez zone"
           disabled={isSubmitting}
           error={geographicZoneError}
+          onError={setGeographicZoneError}
           required
           row
         />

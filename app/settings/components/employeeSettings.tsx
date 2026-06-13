@@ -10,7 +10,6 @@ import geographicZones from '@/app/data/geographicZone.json';
 import type { Employee } from '@/app/types/dataTypes';
 import type { ErrorField } from '@/app/types/types';
 import { getEmployeeFullName } from '@/app/utils/employee';
-import { handleChange } from '@/app/utils/form';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
@@ -188,10 +187,11 @@ const EmployeeSettings: React.FC = () => {
         ref={geographicZoneRef}
         options={geographicZones}
         value={geographicZone}
-        onChange={e => handleChange(e, setGeographicZone, setGeographicZoneError)}
+        onChange={setGeographicZone}
         disabled={isSaving}
         placeholder="Sélectionnez un lieu de vie..."
         error={geographicZoneError}
+        onError={setGeographicZoneError}
         required
         row
       />

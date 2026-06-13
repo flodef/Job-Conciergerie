@@ -22,6 +22,7 @@ type AutocompleteSelectProps = {
   placeholder?: string;
   className?: string;
   error?: boolean | string;
+  onError?: (error: string) => void;
   disabled?: boolean;
   required?: boolean;
   clearable?: boolean;
@@ -42,6 +43,7 @@ const AutocompleteSelect = forwardRef(
       placeholder = 'Sélectionner...',
       className = '',
       error = false,
+      onError = () => {},
       disabled = false,
       required = false,
       clearable = true,
@@ -229,6 +231,9 @@ const AutocompleteSelect = forwardRef(
                 setIsFocused(false);
                 setIsOpen(false);
               }
+              onError(
+                required && !value ? `Veuillez sélectionner ${label?.toString().toLowerCase() || 'une option'}` : '',
+              );
             }}
             role={isReadonly ? undefined : 'combobox'}
             aria-expanded={isReadonly ? undefined : isOpen}
