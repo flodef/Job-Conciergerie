@@ -134,6 +134,12 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
     }
   }, [homeId, tasks, filteredHomes]);
 
+  // Set travellers to max travellers of selected home when home changes
+  useEffect(() => {
+    const home = filteredHomes.find(h => h.id === homeId);
+    if (home) setTravellers(home.maxTravellers);
+  }, [homeId, filteredHomes]);
+
   // Set up French locale for date inputs
   useEffect(() => {
     setInitialFormValues({
@@ -500,7 +506,7 @@ export default function MissionForm({ mission, onClose, onCancel, mode, skipAnim
           error={conciergerieCommentError}
           onError={setConciergerieCommentError}
           disabled={isSubmitting || cannotEdit}
-          placeholder="Ajoutez un commentaire pour le prestataire (ex: informations spécifiques, consignes particulières...)"
+          placeholder="Exemples : informations spécifiques, consignes particulières..."
           regex={messageLengthRegex}
         />
       </form>
