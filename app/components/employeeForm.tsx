@@ -21,8 +21,9 @@ import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
 import { formatId, getDevices, MAX_DEVICES, MaxDevicesError } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
-import { messageLengthRegex } from '@/app/utils/regex';
+import { emailRegex, frenchPhoneRegex, messageLengthRegex } from '@/app/utils/regex';
 import { useRef, useState } from 'react';
+import type { ErrorField } from '../types/types';
 import { buttonClassName, cn } from '../utils/className';
 
 type EmployeeFormProps = {
@@ -125,15 +126,66 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       familyName: normalizeFamilyName(formData.familyName),
     };
 
-    // Validate special required fields
-    if (!normalizedFormData.geographicZone?.trim()) {
-      geographicZoneRef.current?.focus();
-      geographicZoneRef.current?.blur();
-      return;
-    }
+    let error: ErrorField | undefined;
+
+    // Check if all required fields are filled
+    if (!formData.firstName?.trim())
+      error = {
+        message: 'Veuillez entrer un prénom',
+        fieldRef: firstNameRef,
+        func: setFirstNameError,
+      };
+    else if (!formData.familyName?.trim())
+      error = {
+        message: 'Veuillez entrer un nom',
+        fieldRef: familyNameRef,
+        func: setFamilyNameError,
+      };
+    else if (!formData.email?.trim())
+      error = {
+        message: 'Veuillez entrer une adresse email',
+        fieldRef: emailRef,
+        func: setEmailError,
+      };
+    else if (!formData.tel?.trim())
+      error = {
+        message: 'Veuillez entrer un numéro de téléphone',
+        fieldRef: phoneRef,
+        func: setPhoneError,
+      };
+    else if (!emailRegex.test(formData.email))
+      error = {
+        message: "Veuillez corriger le format de l'email",
+        fieldRef: emailRef,
+        func: setEmailError,
+      };
+    else if (!frenchPhoneRegex.test(formData.tel))
+      error = {
+        message: 'Veuillez corriger le format du numéro de téléphone',
+        fieldRef: phoneRef,
+        func: setPhoneError,
+      };
+    else if (!formData.geographicZone?.trim())
+      error = {
+        message: 'Veuillez entrer un lieu de vie',
+        fieldRef: geographicZoneRef,
+        func: setGeographicZoneError,
+      };
+    else if (!formData.conciergerieName?.trim())
+      error = {
+        message: 'Veuillez sélectionner une conciergerie',
+        fieldRef: conciergerieNameRef,
+        func: setConciergerieNameError,
+      };
 
     try {
       setIsSubmitting(true);
+
+      if (error) {
+        error.fieldRef.current?.focus();
+        error.func(error.message);
+        throw new Error(error.message);
+      }
 
       // Generate userId if not available
       const currentUserId = generateId();

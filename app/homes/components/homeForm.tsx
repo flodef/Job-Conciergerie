@@ -18,7 +18,7 @@ import geographicZones from '@/app/data/geographicZone.json';
 import { useUnsavedChangesConfirmation } from '@/app/hooks/useUnsavedChangesConfirmation';
 import type { Home } from '@/app/types/dataTypes';
 import type { ErrorField, UpdateMode } from '@/app/types/types';
-import { descriptionLengthRegex, getMaxLength, inputLengthRegex } from '@/app/utils/regex';
+import { descriptionLengthRegex } from '@/app/utils/regex';
 import { range } from '@/app/utils/select';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -180,12 +180,6 @@ export default function HomeForm({
         fieldRef: titleRef,
         func: setTitleError,
       };
-    else if (title.length > getMaxLength(inputLengthRegex))
-      error = {
-        message: `Le titre ne peut pas dépasser ${getMaxLength(inputLengthRegex)} caractères`,
-        fieldRef: titleRef,
-        func: setTitleError,
-      };
     else if (!geographicZone.trim())
       error = {
         message: 'Veuillez sélectionner une zone géographique',
@@ -195,12 +189,6 @@ export default function HomeForm({
     else if (!description.trim())
       error = {
         message: 'Veuillez remplir la description',
-        fieldRef: descriptionRef,
-        func: setDescriptionError,
-      };
-    else if (description.length > getMaxLength(descriptionLengthRegex))
-      error = {
-        message: `La description ne peut pas dépasser ${getMaxLength(descriptionLengthRegex)} caractères`,
         fieldRef: descriptionRef,
         func: setDescriptionError,
       };
