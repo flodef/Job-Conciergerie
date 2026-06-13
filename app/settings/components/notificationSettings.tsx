@@ -9,12 +9,13 @@ import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { labelClassName } from '@/app/utils/className';
 import type { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
 import { defaultConciergerieSettings, defaultEmployeeSettings } from '@/app/utils/notifications';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 const conciergerieOptions = [
   { label: 'Missions acceptées', key: 'acceptedMissions' as const },
   { label: 'Missions démarrées', key: 'startedMissions' as const },
   { label: 'Missions terminées', key: 'completedMissions' as const },
+  { label: 'Missions non commencées', key: 'missionsEndedWithoutStart' as const },
   { label: 'Missions non terminées à temps', key: 'missionsEndedWithoutCompletion' as const },
 ];
 const employeeOptions = [
@@ -39,6 +40,13 @@ const NotificationSettings: React.FC = () => {
     userData?.notificationSettings || getDefaultSettings(userType),
   );
   const options = isConciergerie ? conciergerieOptions : employeeOptions;
+
+  // Sync settings with userData when it changes
+  useEffect(() => {
+    if (userData?.notificationSettings) {
+      setSettings(userData.notificationSettings);
+    }
+  }, [userData?.notificationSettings]);
 
   const handleToggle = <T extends ConciergerieNotificationSettings | EmployeeNotificationSettings>(
     key: keyof T,

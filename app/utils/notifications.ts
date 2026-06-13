@@ -2,12 +2,14 @@ export interface ConciergerieNotificationSettings {
   acceptedMissions: boolean;
   startedMissions: boolean;
   completedMissions: boolean;
+  missionsEndedWithoutStart: boolean;
   missionsEndedWithoutCompletion: boolean;
 }
 export const defaultConciergerieSettings: ConciergerieNotificationSettings = {
   acceptedMissions: true,
   startedMissions: true,
   completedMissions: true,
+  missionsEndedWithoutStart: true,
   missionsEndedWithoutCompletion: true,
 };
 
