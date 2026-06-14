@@ -44,7 +44,7 @@ import {
 import { isMissionDuoOpen, isMissionEditable } from '@/app/utils/missionFilters';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { formatHours } from '@/app/utils/task';
-import { getUserKey, isEmployeeUser } from '@/app/utils/user';
+import { getUserKey, isEmployeeUser, isOwner } from '@/app/utils/user';
 import {
   IconBuildingStore,
   IconBulb,
@@ -143,7 +143,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
     updateMission,
     getMissionReport,
   } = useMissions();
-  const { conciergerieName, findConciergerie, findEmployee, userData, isConciergerie } = useAuth();
+  const { findConciergerie, findEmployee, userData, isConciergerie } = useAuth();
   const { homes } = useHomes();
   const { openModal, closeModal, closeAllModals } = useModal();
   const { showToast } = useToast();
@@ -197,7 +197,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
     [mission.conciergerieName, findConciergerie],
   );
   const conciergerieColor = getColorValueByName(conciergerie?.colorName);
-  const isOwner = isConciergerie && mission.conciergerieName === conciergerieName;
+  const isMissionOwner = isOwner(userData, mission);
 
   // Get the mission report (if any) - permission checks are handled in getMissionReport
   const report = useMemo(
@@ -220,7 +220,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
   const hasStarted = now >= startDate;
   const hasEnded = now >= endDate;
   const [editingDate, setEditingDate] = useState<'start' | 'end' | null>(null);
-  const isDateEditable = isOwner && isMissionEditable(mission) && !editingDate && !hasEnded;
+  const isDateEditable = isMissionOwner && isMissionEditable(mission) && !editingDate && !hasEnded;
 
   // Date edit state - allows the conciergerie to adjust start and end dates inline
   const [editStartDate, setEditStartDate] = useState(localISOString(startDate));
@@ -468,7 +468,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
 
   // Start inline date editing
   const startEditingDate = (date: 'start' | 'end') => {
-    if (!isOwner) return;
+    if (!isMissionOwner) return;
     cancelDateEditing();
     setEditingDate(date);
     setStartDateError('');
@@ -700,26 +700,28 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
 
   return (
     <>
-      <div style={{ display: isEditMode ? 'block' : 'none' }}>
-        <MissionForm
-          key={isEditMode ? 'edit' : 'hidden'}
-          mission={mission}
-          onClose={() => {
-            setSkipAnimation(true);
-            setIsEditMode(false);
-          }}
-          onSuccess={updatedMission => {
-            setMission(updatedMission);
-          }}
-          onCancel={() => {
-            setSkipAnimation(true);
-            setIsEditMode(false);
-          }}
-          mode="edit"
-          skipAnimation
-          forceRecalc={isEditMode}
-        />
-      </div>
+      {isMissionOwner && (
+        <div style={{ display: isEditMode ? 'block' : 'none' }}>
+          <MissionForm
+            key={isEditMode ? 'edit' : 'hidden'}
+            mission={mission}
+            onClose={() => {
+              setSkipAnimation(true);
+              setIsEditMode(false);
+            }}
+            onSuccess={updatedMission => {
+              setMission(updatedMission);
+            }}
+            onCancel={() => {
+              setSkipAnimation(true);
+              setIsEditMode(false);
+            }}
+            mode="edit"
+            skipAnimation
+            forceRecalc={isEditMode}
+          />
+        </div>
+      )}
 
       {!isEditMode && (
         <FullScreenModal
@@ -961,7 +963,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
             </div>
 
             {/* Only show conciergerie name if not viewed from calendar by a conciergerie */}
-            {(!isFromCalendar || !isConciergerie) && !isOwner && (
+            {(!isFromCalendar || !isConciergerie) && !isMissionOwner && (
               <div>
                 <h3 className={containerClassName}>
                   <IconBuildingStore size={16} />

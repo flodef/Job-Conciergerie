@@ -16,6 +16,7 @@ import { useImageCache } from '@/app/hooks/useImageCache';
 import type { Home } from '@/app/types/dataTypes';
 import { actionButtonBarClassName, actionButtonClassName, cn } from '@/app/utils/className';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
+import { isOwner } from '@/app/utils/user';
 import { IconFileDescription, IconListCheck, IconPencil, IconPhoto, IconTrash, IconUsers } from '@tabler/icons-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -66,7 +67,7 @@ const HomeImageGrid = React.memo(function HomeImageGrid({
 export default function HomeDetails({ home, onClose, isFromCalendar = false }: HomeDetailsProps) {
   const { deleteHome, homes: allHomes } = useHomes();
   const { missions } = useMissions();
-  const { conciergerieName, isEmployee, isConciergerie } = useAuth();
+  const { conciergerieName, isEmployee, isConciergerie, userData } = useAuth();
   const { openModal, closeModal } = useModal();
   const { showToast } = useToast();
 
@@ -141,22 +142,25 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
 
   return (
     <>
-      <div style={{ display: showHomeForm ? 'block' : 'none' }}>
-        <HomeForm
-          home={home}
-          onClose={() => {
-            setSkipAnimation(true);
-            setShowHomeForm(false);
-          }}
-          onCancel={() => {
-            setSkipAnimation(true);
-            setShowHomeForm(false);
-          }}
-          mode="edit"
-          skipAnimation
-          forceRecalc={showHomeForm}
-        />
-      </div>
+      {isOwner(userData, home) && (
+        <div style={{ display: showHomeForm ? 'block' : 'none' }}>
+          <HomeForm
+            home={home}
+            onClose={() => {
+              setSkipAnimation(true);
+              setShowHomeForm(false);
+            }}
+            onCancel={() => {
+              setSkipAnimation(true);
+              setShowHomeForm(false);
+            }}
+            mode="edit"
+            skipAnimation
+            forceRecalc={showHomeForm}
+          />
+        </div>
+      )}
+
       {!showHomeForm && (
         <FullScreenModal
           title={<HomeTitle home={home} />}

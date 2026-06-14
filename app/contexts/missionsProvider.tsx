@@ -19,7 +19,7 @@ import { EmailSender } from '@/app/utils/emailSender';
 import { generateSimpleId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes, Page } from '@/app/utils/navigation';
-import { getUserKey } from '@/app/utils/user';
+import { getUserKey, isOwner } from '@/app/utils/user';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
@@ -101,12 +101,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       if (!report) return undefined;
       const mission = missions.find(m => m.id === missionId);
       if (!mission) return undefined;
-      const isOwner = userType === 'conciergerie' && mission.conciergerieName === conciergerieName;
-      const isEmployeeWhoWorked = isEmployee && isPartOfMission(mission, employeeName);
-      if (!isEmployeeWhoWorked && !isOwner) return undefined;
-      return report;
+
+      const shouldShowReport = isEmployee ? isPartOfMission(mission, employeeName) : isOwner(userData, mission);
+      return shouldShowReport ? report : undefined;
     },
-    [missionReports, missions, userType, conciergerieName, isEmployee, employeeName],
+    [missionReports, missions, isEmployee, employeeName, userData],
   );
 
   /**
