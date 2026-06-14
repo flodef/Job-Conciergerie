@@ -12,8 +12,8 @@ export interface DbEmployee {
   email: string;
   geographic_zone: string;
   message?: string;
-  conciergerie_name: string;
-  notification_settings: string | null;
+  conciergerie_name?: string;
+  notification_settings?: string;
   status: EmployeeStatus;
   created_at: string;
 }
@@ -92,15 +92,12 @@ export const getAllEmployees = async () => {
  */
 export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
   try {
-    // Convert notification_settings to JSONB if present
-    const notificationSettings = data.notification_settings ? JSON.stringify(data.notification_settings) : null;
-
     const result = await sql`
       INSERT INTO employees (
-        id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status
+        id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, status
       ) VALUES (
         ${data.id}, ${data.first_name}, ${data.family_name}, ${data.tel}, ${data.email}, ${data.geographic_zone},
-        ${data.message || null}, ${data.conciergerie_name ?? null}, ${notificationSettings}::jsonb, ${data.status || 'pending'}
+        ${data.message ?? null}, ${data.conciergerie_name ?? null}, ${data.status || 'pending'}
       )
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
@@ -218,18 +215,15 @@ export const updateEmployeeSettings = async (
   try {
     if (!firstName || !familyName) throw new Error('No employee name provided');
 
-    // Convert notification_settings to JSONB if present
-    const notificationSettings = data.notification_settings ? JSON.stringify(data.notification_settings) : null;
-
     const result = await sql`
       UPDATE employees
-      SET 
+      SET
         tel = COALESCE(${data.tel ?? null}, tel),
         email = COALESCE(${data.email ?? null}, email),
         geographic_zone = COALESCE(${data.geographic_zone ?? null}, geographic_zone),
         message = COALESCE(${data.message ?? null}, message),
         conciergerie_name = COALESCE(${data.conciergerie_name ?? null}, conciergerie_name),
-        notification_settings = COALESCE(${notificationSettings}::jsonb, notification_settings)
+        notification_settings = COALESCE(${data.notification_settings ?? null}::jsonb, notification_settings)
       WHERE first_name = ${firstName} AND family_name = ${familyName}
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;

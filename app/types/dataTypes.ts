@@ -18,7 +18,7 @@ export interface Employee {
   tel: string;
   email: string;
   geographicZone: string; // Geographic zone where the employee is located
-  conciergerieName: string;
+  conciergerieName?: string;
   message?: string;
   notificationSettings?: EmployeeNotificationSettings;
   status: EmployeeStatus;

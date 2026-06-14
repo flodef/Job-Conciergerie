@@ -52,16 +52,14 @@ export const updateConciergerie = async (name: string | undefined, data: Partial
   try {
     if (!name) throw new Error('No name provided');
 
-    const notificationSettings = data.notification_settings ? JSON.stringify(data.notification_settings) : null;
-
     const result = await sql`
       UPDATE conciergeries
-      SET 
+      SET
         name = COALESCE(${data.name ?? null}, name),
         email = COALESCE(${data.email ?? null}, email),
         tel = COALESCE(${data.tel ?? null}, tel),
         color_name = COALESCE(${data.color_name ?? null}, color_name),
-        notification_settings = COALESCE(${notificationSettings}::jsonb, notification_settings)
+        notification_settings = COALESCE(${data.notification_settings ?? null}::jsonb, notification_settings)
       WHERE name = ${name}
       RETURNING id, name, email, tel, color_name, notification_settings
     `;

@@ -119,13 +119,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
     if (!formData) return;
 
-    // Normalize name fields
-    const normalizedFormData = {
-      ...formData,
-      firstName: normalizeFirstName(formData.firstName),
-      familyName: normalizeFamilyName(formData.familyName),
-    };
-
     let error: ErrorField | undefined;
 
     // Check if all required fields are filled
@@ -187,8 +180,18 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         throw new Error(error.message);
       }
 
+      if (!formData.conciergerieName) throw new Error('Veuillez sélectionner une conciergerie');
+
       // Generate userId if not available
       const currentUserId = generateId();
+
+      // Normalize name fields
+      const normalizedFormData = {
+        ...formData,
+        firstName: normalizeFirstName(formData.firstName),
+        familyName: normalizeFamilyName(formData.familyName),
+        conciergerieName: formData.conciergerieName,
+      };
 
       // Find the employee that matches the criteria (trim values for comparison)
       const lookup = await lookupEmployeeByContact(

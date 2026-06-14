@@ -80,7 +80,7 @@ export async function createNewEmployee(data: {
     geographic_zone: data.geographicZone,
     message: data.message,
     conciergerie_name: data.conciergerieName,
-    notification_settings: JSON.parse(String(data.notificationSettings)),
+    notification_settings: JSON.stringify(data.notificationSettings),
     status: 'pending',
   };
 
@@ -132,7 +132,7 @@ export async function updateEmployeeData(
     geographic_zone: data.geographicZone,
     message: data.message,
     conciergerie_name: data.conciergerieName,
-    notification_settings: JSON.parse(String(data.notificationSettings)),
+    notification_settings: JSON.stringify(data.notificationSettings),
   };
 
   return await updateEmployeeSettings(employee.firstName, employee.familyName, dbData);

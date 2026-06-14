@@ -54,7 +54,7 @@ export async function updateConciergerieData(
     email: data.email,
     tel: data.tel,
     color_name: data.colorName,
-    notification_settings: String(data.notificationSettings),
+    notification_settings: data.notificationSettings ? JSON.stringify(data.notificationSettings) : null,
   };
 
   return await updateConciergerie(conciergerie.name, dbData);
