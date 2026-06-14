@@ -42,9 +42,7 @@ export default function HomesPage() {
         if (searchTerm.trim() === '') return true;
         const searchLower = searchTerm.toLowerCase();
         return (
-          home.title.toLowerCase().includes(searchLower) ||
-          home.description.toLowerCase().includes(searchLower) ||
-          home.objectives.some(objective => objective.toLowerCase().includes(searchLower))
+          home.title.toLowerCase().includes(searchLower) || home.geographicZone.toLowerCase().includes(searchLower)
         );
       }),
     [myHomes, searchTerm],

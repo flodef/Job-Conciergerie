@@ -89,7 +89,7 @@ const HomeCard = React.memo(function HomeCard({ home, onClick, onEdit, displayMo
     default:
       return (
         <div
-          className="bg-background p-4 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 flex flex-col"
+          className="bg-background p-2 rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer border border-gray-200 flex flex-col"
           onClick={onClick}
           onContextMenu={handleContextMenu}
         >
