@@ -36,26 +36,24 @@ export default function Settings() {
     {
       title: 'Général',
       subtitle: (
-        <span className="flex items-center gap-1.5">
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={e => {
+        <span
+          className="flex flex-row items-center gap-1.5 text-light hover:text-foreground/70 transition-colors cursor-help"
+          role="button"
+          tabIndex={0}
+          onClick={e => {
+            e.stopPropagation();
+            handleShowChangelog();
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
               e.stopPropagation();
               handleShowChangelog();
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.stopPropagation();
-                handleShowChangelog();
-              }
-            }}
-            className="text-foreground/40 hover:text-primary transition-colors cursor-pointer"
-            title="Notes de version"
-          >
-            <IconInfoCircle size={20} />
-          </span>
-          <span>v. {packageJson.version}</span>
+            }
+          }}
+          title="Notes de version"
+        >
+          <IconInfoCircle size={20} />
+          v. {packageJson.version}
         </span>
       ),
       icon: <IconSettings size={20} />,

@@ -21,6 +21,7 @@ import MissionCompletionModal from '@/app/missions/components/missionCompletionM
 import MissionForm from '@/app/missions/components/missionForm';
 import type { Employee, Mission } from '@/app/types/dataTypes';
 import {
+  actionButtonBarClassName,
   buttonClassName,
   cn,
   containerClassName,
@@ -635,7 +636,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
     (pendingDateChanges.end && pendingDateChanges.end.getTime() !== endDate.getTime());
 
   const footer = hasPendingChanges ? (
-    <div className="flex justify-end gap-2 bg-background border-t border-secondary px-2 py-2 rounded-b-lg">
+    <div className={actionButtonBarClassName}>
       <button onClick={handleCancelPendingDateChanges} className={buttonClassName('secondary')}>
         Annuler
       </button>

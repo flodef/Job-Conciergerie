@@ -27,7 +27,6 @@ import {
   handleMissionStartDateChange,
   localISOString,
 } from '@/app/utils/date';
-import { isMissionEditable, isMissionExpired } from '@/app/utils/missionFilters';
 import { messageLengthRegex } from '@/app/utils/regex';
 import { range } from '@/app/utils/select';
 import { calculateMissionHours, getAvailableTasks } from '@/app/utils/task';
@@ -166,10 +165,10 @@ export default function MissionForm({
   // Check if mission can be edited
   useEffect(() => {
     if (mode === 'edit' && mission) {
-      // Cannot edit mission if end date is in the past AND mission status is not accepted or null
+      // Cannot edit mission if mission status is accepted
       const message =
-        isMissionExpired(mission) || !isMissionEditable(mission)
-          ? 'Cette mission ne peut pas être modifiée car elle est déjà commencée ou terminée.'
+        mission.status === 'accepted'
+          ? 'Cette mission a déjà été acceptée et sa modification peut potentiellement entraîner un retrait du prestataire'
           : '';
 
       if (message) {
@@ -487,11 +486,16 @@ export default function MissionForm({
           ref={travellersRef}
           value={travellers}
           onChange={value => setTravellers(Number(value))}
-          options={range(1, filteredHomes.find(h => h.id === homeId)?.maxTravellers || MAX_TRAVELLERS)}
+          options={range(0, filteredHomes.find(h => h.id === homeId)?.maxTravellers || MAX_TRAVELLERS)}
           disabled={isSubmitting || cannotEdit}
           placeholder="Nombre de voyageurs"
           required
           row
+          tooltip={
+            travellers === 0
+              ? '0 signifie que le nombre de voyageurs est inconnu et ne sera pas précisé dans la mission'
+              : undefined
+          }
         />
 
         <ResponsiveDateTimeInput

@@ -331,19 +331,20 @@ export default function Calendar() {
                     >
                       {lateMissions.includes(mission) && (
                         <div
-                          className="absolute text-sm font-bold text-white bg-red-500/80 px-1 py-0.5 uppercase tracking-wider whitespace-nowrap z-10"
-                          style={{
-                            transform: 'rotate(15deg) scale(0.9)',
-                            transformOrigin: 'center',
-                            width: '140%',
-                            textAlign: 'center',
-                            top: '50%',
-                            left: '50%',
-                            marginLeft: '-70%',
-                            marginTop: '-10px',
-                          }}
+                          className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center z-10"
+                          aria-hidden="true"
                         >
-                          ⚠️ MISSION EN RETARD NON TERMINÉE ⚠️
+                          <div
+                            className="absolute text-sm font-bold text-white bg-red-500/80 px-1 py-0.5 uppercase tracking-wider whitespace-nowrap"
+                            style={{
+                              transform: 'rotate(10deg) scale(0.9)',
+                              transformOrigin: 'center',
+                              textAlign: 'center',
+                              width: '120%',
+                            }}
+                          >
+                            ⚠️ MISSION EN RETARD NON TERMINÉE ⚠️
+                          </div>
                         </div>
                       )}
                       <div className="flex justify-between items-start mb-2">

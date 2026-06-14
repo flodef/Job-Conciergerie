@@ -4,7 +4,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import type { Mission } from '@/app/types/dataTypes';
 import { actionButtonBarClassName, actionButtonClassName, cn } from '@/app/utils/className';
-import { isPartOfMission } from '@/app/utils/missionFilters';
+import { isMissionEditable, isPartOfMission } from '@/app/utils/missionFilters';
 import { calculateEmployeePointsForDay, calculateMissionPoints, MAX_POINTS_PER_DAY } from '@/app/utils/task';
 import {
   IconAlertTriangle,
@@ -146,14 +146,18 @@ export default function MissionActions({
     </div>
   ) : isOwnMission && !isCompleted ? (
     <div className={actionButtonBarClassName}>
-      <button onClick={onEdit} className={actionButtonClassName} data-edit-button>
-        <IconPencil />
-        Modifier
-      </button>
-      <button onClick={onDelete} className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}>
-        <IconTrash />
-        Supprimer
-      </button>
+      {isMissionEditable(mission) && (
+        <>
+          <button onClick={onEdit} className={actionButtonClassName} data-edit-button>
+            <IconPencil />
+            Modifier
+          </button>
+          <button onClick={onDelete} className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}>
+            <IconTrash />
+            Supprimer
+          </button>
+        </>
+      )}
       {isAccepted && !isStarted && (
         <button onClick={onRemoveEmployee} className={cn(actionButtonClassName, 'bg-yellow-100 text-yellow-700')}>
           <IconCancel />

@@ -1,11 +1,12 @@
 'use client';
 
 import type { Size } from '@/app/types/types';
+import { cn } from '@/app/utils/className';
 import type { IconProps } from '@tabler/icons-react';
 import { IconInfoCircle } from '@tabler/icons-react';
-import { cn } from '@/app/utils/className';
 import type { ReactNode } from 'react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 type TooltipProps = {
   children: string | ReactNode;
@@ -41,9 +42,9 @@ export default function Tooltip({
   };
 
   const widthClasses = {
-    small: 'w-[200px] max-w-full',
-    medium: 'w-[300px] max-w-full',
-    large: 'w-[400px] max-w-full',
+    small: 'w-[200px] max-w-[calc(100vw-20px)]',
+    medium: 'w-[300px] max-w-[calc(100vw-20px)]',
+    large: 'w-[400px] max-w-[calc(100vw-20px)]',
   };
 
   const iconSize = {
@@ -54,49 +55,56 @@ export default function Tooltip({
 
   const calculatePosition = useCallback(() => {
     const ref = trigger ? triggerRef : buttonRef;
-    if (!ref?.current || !tooltipRef.current) return { top: 0, left: 0 };
+    if (!ref?.current) return { top: 0, left: 0 };
 
     const rect = ref.current.getBoundingClientRect();
-    const tooltipWidth = tooltipRef.current.offsetWidth;
-    const tooltipHeight = tooltipRef.current.offsetHeight;
-    const spaceAbove = rect.top;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceLeft = rect.left;
-    const spaceRight = window.innerWidth - rect.right;
+    const padding = 10;
+    // Cap width to viewport (mirrors the CSS max-w-[calc(100vw-20px)])
+    const tooltipWidth = Math.min({ small: 200, medium: 300, large: 400 }[size], window.innerWidth - padding * 2);
+    const tooltipHeight = tooltipRef.current?.offsetHeight || 100;
 
     let top: number;
     let left: number;
 
     if (orientation === 'vertical') {
-      const positionAbove = spaceAbove >= tooltipHeight;
-      top = positionAbove ? rect.top - tooltipHeight - 10 : rect.bottom + 10;
-      if (!positionAbove && spaceBelow < tooltipHeight + 10) {
-        top = window.innerHeight - tooltipHeight - 10;
-      }
+      // Calculate vertical position (prefer above if enough space)
+      const spaceAbove = rect.top;
+      const positionAbove = spaceAbove >= tooltipHeight + padding;
+      top = positionAbove ? rect.top - tooltipHeight - padding : rect.bottom + padding;
+
+      // Clamp vertical position to stay within viewport
+      top = Math.max(padding, Math.min(top, window.innerHeight - tooltipHeight - padding));
+
+      // Calculate horizontal position (centered on trigger)
       left = rect.left + (rect.width - tooltipWidth) / 2;
-      if (left + tooltipWidth > window.innerWidth) {
-        left = window.innerWidth - tooltipWidth - 10;
+
+      // If centered position would go off right edge, align right edge with viewport
+      if (left + tooltipWidth > window.innerWidth - padding) {
+        left = window.innerWidth - tooltipWidth - padding;
       }
-      if (left < 0) {
-        left = 10;
+
+      // If that would go off left edge, align left edge with viewport
+      if (left < padding) {
+        left = padding;
       }
     } else {
-      const positionLeft = spaceLeft >= tooltipWidth;
-      left = positionLeft ? rect.left - tooltipWidth - 10 : rect.right + 10;
-      if (!positionLeft && spaceRight < tooltipWidth + 10) {
-        left = window.innerWidth - tooltipWidth - 10;
-      }
+      // Calculate horizontal position (prefer left if enough space)
+      const spaceLeft = rect.left;
+      const positionLeft = spaceLeft >= tooltipWidth + padding;
+      left = positionLeft ? rect.left - tooltipWidth - padding : rect.right + padding;
+
+      // Clamp horizontal position to stay within viewport
+      left = Math.max(padding, Math.min(left, window.innerWidth - tooltipWidth - padding));
+
+      // Calculate vertical position (centered on trigger)
       top = rect.top + (rect.height - tooltipHeight) / 2;
-      if (top + tooltipHeight > window.innerHeight) {
-        top = window.innerHeight - tooltipHeight - 10;
-      }
-      if (top < 0) {
-        top = 10;
-      }
+
+      // Clamp vertical position to stay within viewport
+      top = Math.max(padding, Math.min(top, window.innerHeight - tooltipHeight - padding));
     }
 
     return { top, left };
-  }, [orientation, trigger]);
+  }, [orientation, trigger, size]);
 
   useEffect(() => {
     if (isVisible) {
@@ -105,19 +113,37 @@ export default function Tooltip({
     }
   }, [isVisible, calculatePosition]);
 
+  const handleInteraction = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsVisible(!isVisible);
+      onClick?.();
+    },
+    [isVisible, onClick],
+  );
+
+  const handleMouseEnter = useCallback(() => setIsVisible(true), []);
+  const handleMouseLeave = useCallback(() => setIsVisible(false), []);
+
+  const tooltipContent = (
+    <div
+      ref={tooltipRef}
+      className={`fixed z-100 bg-background text-foreground rounded-md shadow-lg border border-secondary ${sizeClasses[size]} ${widthClasses[size]}`}
+      style={{ top: `${position.top}px`, left: `${position.left}px` }}
+    >
+      {children}
+    </div>
+  );
+
   return (
     <div className="inline-flex items-center ml-1">
       {trigger && (
         <div
           ref={triggerRef}
-          className={className}
-          onClick={e => {
-            e.stopPropagation();
-            setIsVisible(!isVisible);
-            onClick?.();
-          }}
-          onMouseEnter={() => setIsVisible(true)}
-          onMouseLeave={() => setIsVisible(false)}
+          className={cn(className, 'cursor-help')}
+          onClick={handleInteraction}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           {trigger}
         </div>
@@ -127,29 +153,17 @@ export default function Tooltip({
         <button
           ref={buttonRef}
           type="button"
-          className={cn('text-light hover:text-foreground focus:outline-none cursor-help mx-1', className)}
-          onClick={e => {
-            e.stopPropagation();
-            setIsVisible(!isVisible);
-            onClick?.();
-          }}
-          onMouseEnter={() => setIsVisible(true)}
-          onMouseLeave={() => setIsVisible(false)}
+          className={cn('hover:text-foreground focus:outline-none cursor-help mx-1', className)}
+          onClick={handleInteraction}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
           aria-label="Information"
         >
           <Icon size={iconSize} />
         </button>
       )}
 
-      {!isDisabled && isVisible && (
-        <div
-          ref={tooltipRef}
-          className={`fixed z-100 bg-background text-foreground rounded-md shadow-lg border border-secondary ${sizeClasses[size]} ${widthClasses[size]}`}
-          style={{ top: `${position.top}px`, left: `${position.left}px` }}
-        >
-          {children}
-        </div>
-      )}
+      {!isDisabled && isVisible && createPortal(tooltipContent, document.body)}
     </div>
   );
 }
