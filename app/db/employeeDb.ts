@@ -1,7 +1,6 @@
 import { sql } from '@/app/db/db';
 import type { EmployeeStatus } from '@/app/types/dataTypes';
 import { MAX_DEVICES } from '@/app/utils/id';
-import type { EmployeeNotificationSettings } from '@/app/utils/notifications';
 import { defaultEmployeeSettings } from '@/app/utils/notifications';
 
 // Type definition for database employee
@@ -13,8 +12,8 @@ export interface DbEmployee {
   email: string;
   geographic_zone: string;
   message?: string;
-  conciergerie_name?: string;
-  notification_settings?: EmployeeNotificationSettings;
+  conciergerie_name: string;
+  notification_settings: string | null;
   status: EmployeeStatus;
   created_at: string;
 }
@@ -22,7 +21,7 @@ export interface DbEmployee {
 /**
  * Format a database employee to match the application's expected format
  */
-function formatEmployee(dbEmployee: DbEmployee) {
+export function formatEmployee(dbEmployee: DbEmployee) {
   return {
     id: dbEmployee.id,
     firstName: dbEmployee.first_name,

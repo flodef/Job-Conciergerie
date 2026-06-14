@@ -1,7 +1,6 @@
 'use server';
 
-import type {
-  DbEmployee} from '@/app/db/employeeDb';
+import type { DbEmployee } from '@/app/db/employeeDb';
 import {
   createEmployee,
   deleteEmployee,
@@ -14,7 +13,6 @@ import {
 import type { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
 import type { EmployeeNotificationSettings } from '@/app/utils/notifications';
-import { defaultEmployeeSettings } from '@/app/utils/notifications';
 
 /**
  * Fetch all employees from the database with caching
@@ -49,9 +47,9 @@ export async function lookupEmployeeByContact(
       email: row.email,
       geographicZone: row.geographic_zone,
       message: row.message || '',
-      conciergerieName: row.conciergerie_name || '',
+      conciergerieName: row.conciergerie_name,
       status: row.status,
-      notificationSettings: row.notification_settings || defaultEmployeeSettings,
+      notificationSettings: JSON.parse(String(row.notification_settings)),
       createdAt: row.created_at,
     },
     nameMatches,
@@ -69,7 +67,7 @@ export async function createNewEmployee(data: {
   email: string;
   geographicZone: string;
   message?: string;
-  conciergerieName?: string;
+  conciergerieName: string;
   notificationSettings?: EmployeeNotificationSettings;
 }): Promise<Employee | null> {
   // Convert to DB format
@@ -82,7 +80,7 @@ export async function createNewEmployee(data: {
     geographic_zone: data.geographicZone,
     message: data.message,
     conciergerie_name: data.conciergerieName,
-    notification_settings: data.notificationSettings,
+    notification_settings: JSON.parse(String(data.notificationSettings)),
     status: 'pending',
   };
 
@@ -134,7 +132,7 @@ export async function updateEmployeeData(
     geographic_zone: data.geographicZone,
     message: data.message,
     conciergerie_name: data.conciergerieName,
-    notification_settings: data.notificationSettings,
+    notification_settings: JSON.parse(String(data.notificationSettings)),
   };
 
   return await updateEmployeeSettings(employee.firstName, employee.familyName, dbData);

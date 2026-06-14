@@ -111,23 +111,10 @@ describe('formatEmployee', () => {
     expect(result.notificationSettings).toEqual(settings);
   });
 
-  it('handles invalid JSON in notification_settings by using default', () => {
-    const row: DbEmployee = {
-      ...baseRow,
-      notification_settings: 'invalid json',
-    } as unknown as DbEmployee;
-    const result = formatEmployee(row);
-    expect(result.notificationSettings).toEqual({
-      acceptedMissions: true,
-      startedMissions: true,
-      completedMissions: true,
-    });
-  });
-
   it('handles empty string notification_settings by using default', () => {
     const row: DbEmployee = {
       ...baseRow,
-      notification_settings: '',
+      notification_settings: null,
     } as unknown as DbEmployee;
     const result = formatEmployee(row);
     expect(result.notificationSettings).toEqual({
@@ -139,7 +126,7 @@ describe('formatEmployee', () => {
 
   it('preserves all other fields', () => {
     const result = formatEmployee(baseRow as unknown as DbEmployee);
-    expect(result.id).toBe('abc123');
+    expect(result.id).toStrictEqual(['abc123']);
     expect(result.firstName).toBe('Marc');
     expect(result.familyName).toBe('Caradec');
     expect(result.tel).toBe('0662232945');

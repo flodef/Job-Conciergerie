@@ -1,6 +1,6 @@
 'use server';
 
-import type { DbConciergerie} from '@/app/db/conciergerieDb';
+import type { DbConciergerie } from '@/app/db/conciergerieDb';
 import { getAllConciergeries, updateConciergerie, updateConciergerieId } from '@/app/db/conciergerieDb';
 import type { Conciergerie } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
@@ -54,7 +54,7 @@ export async function updateConciergerieData(
     email: data.email,
     tel: data.tel,
     color_name: data.colorName,
-    notification_settings: data.notificationSettings,
+    notification_settings: String(data.notificationSettings),
   };
 
   return await updateConciergerie(conciergerie.name, dbData);

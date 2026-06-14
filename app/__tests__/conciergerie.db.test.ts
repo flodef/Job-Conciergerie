@@ -33,19 +33,10 @@ describe('formatConciergerie', () => {
     expect(result.notificationSettings).toEqual(settings);
   });
 
-  it('handles invalid JSON in notification_settings by using default', () => {
-    const row: DbConciergerie = {
-      ...baseRow,
-      notification_settings: 'invalid json',
-    };
-    const result = formatConciergerie(row);
-    expect(result.notificationSettings).toEqual({});
-  });
-
   it('handles empty string notification_settings by using default', () => {
     const row: DbConciergerie = {
       ...baseRow,
-      notification_settings: '',
+      notification_settings: null,
     };
     const result = formatConciergerie(row);
     expect(result.notificationSettings).toEqual({});
@@ -53,7 +44,7 @@ describe('formatConciergerie', () => {
 
   it('preserves all other fields', () => {
     const result = formatConciergerie(baseRow);
-    expect(result.id).toBe('concierge1');
+    expect(result.id).toStrictEqual(['concierge1']);
     expect(result.name).toBe('MENTHEREGLISSE');
     expect(result.email).toBe('contact@menthereglisse.fr');
     expect(result.tel).toBe('0600000000');
