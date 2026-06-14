@@ -63,7 +63,7 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
   if (data.hours !== undefined) dbData.hours = data.hours;
   if (data.allowDuo !== undefined) dbData.allow_duo = data.allowDuo;
   if (data.travellers !== undefined) dbData.travellers = data.travellers;
-  if (data.conciergerieComment !== undefined) dbData.conciergerie_comment = data.conciergerieComment ?? null;
+  if (data.conciergerieComment !== undefined) dbData.conciergerie_comment = data.conciergerieComment;
 
   return await updateMission(id, dbData);
 }
