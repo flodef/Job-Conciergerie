@@ -1,3 +1,7 @@
+# 2.252
+
+- **Nouveau : Commentaire de mission** : ajout d'un champ facultatif permettant de rajouter des commentaires destinés au prestataire, pour une mission spécifique.
+
 # 2.216
 
 - **Nouveau : Nombre de voyageurs** : ajout du nombre de voyageurs dans les missions ainsi que le nombre maximal de voyageurs par maison
