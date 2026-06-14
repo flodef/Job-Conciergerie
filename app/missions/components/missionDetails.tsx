@@ -44,7 +44,7 @@ import {
 import { isMissionDuoOpen, isMissionEditable } from '@/app/utils/missionFilters';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { formatHours } from '@/app/utils/task';
-import { getUserKey, isEmployeeUser, isOwner } from '@/app/utils/user';
+import { getUserKey, isConciergerieUser, isEmployeeUser, isOwner } from '@/app/utils/user';
 import {
   IconBuildingStore,
   IconBulb,
@@ -384,7 +384,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
     // Handle duo mission special cases
     if (employeeFieldToRemove === 'employeeId' && mission.employeeId2 && employee2) {
       // If removing primary employee in a duo mission
-      const isConciergerie2 = !isEmployeeUser(employee2);
+      const isConciergerie2 = isConciergerieUser(employee2);
 
       if (isConciergerie2) {
         // If secondary is a conciergerie, remove both and set status to null

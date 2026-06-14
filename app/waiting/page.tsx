@@ -22,9 +22,9 @@ import {
   IconMailForward,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getEmployeeFullName } from '../utils/employee';
-import { getUserKey, isEmployeeUser } from '../utils/user';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
+import { getEmployeeFullName } from '../utils/employee';
+import { getUserKey } from '../utils/user';
 
 const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
 const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
@@ -80,7 +80,16 @@ function RefreshButtons({
 }
 
 export default function WaitingPage() {
-  const { userId, isLoading: authLoading, userData, conciergerieName, findEmployee, findConciergerie } = useAuth();
+  const {
+    userId,
+    isLoading: authLoading,
+    userData,
+    conciergerieName,
+    findEmployee,
+    findConciergerie,
+    isEmployee,
+    isConciergerie,
+  } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [employee, setEmployee] = useState<Employee>();
@@ -115,12 +124,11 @@ export default function WaitingPage() {
     hasLoadedDataRef.current = true;
 
     // Handle user data
-    if (userData) {
-      if (isEmployeeUser(userData)) handleEmployee();
-      else handleConciergerie();
-    }
+    if (isEmployee) handleEmployee();
+    else if (isConciergerie) handleConciergerie();
+
     setIsLoading(false);
-  }, [userData, authLoading, handleConciergerie, handleEmployee]);
+  }, [userData, authLoading, handleConciergerie, handleEmployee, isEmployee, isConciergerie]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;

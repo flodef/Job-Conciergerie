@@ -12,7 +12,7 @@ import { useToast } from '@/app/contexts/toastProvider';
 import type { Employee, Mission } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
 import { messageLengthRegex } from '@/app/utils/regex';
-import { getUserKey, isEmployeeUser } from '@/app/utils/user';
+import { getUserKey } from '@/app/utils/user';
 import { useRef, useState } from 'react';
 
 const MAX_REPORT_IMAGES = 3;
@@ -24,7 +24,7 @@ type MissionReportModalProps = {
 
 export default function MissionReportModal({ mission, onClose }: MissionReportModalProps) {
   const { homes } = useHomes();
-  const { userData, findConciergerie } = useAuth();
+  const { userData, findConciergerie, isEmployee } = useAuth();
   const { showToast } = useToast();
   const home = homes.find(h => h.id === mission.homeId);
 
@@ -40,7 +40,8 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
   }>(null);
 
   const handleSubmit = () => {
-    if (!userData || !isEmployeeUser(userData)) return;
+    if (!isEmployee || !userData) return;
+
     if (!content.trim() && !hasPendingImages && images.length === 0) {
       setContentError('Veuillez ajouter un commentaire ou une photo');
       return;
@@ -48,8 +49,7 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
 
     setIsSubmitting(true);
 
-    const employee = userData as Employee;
-    const employeeId = getUserKey(employee);
+    const employeeId = getUserKey(userData);
 
     // Upload pending images first (report mode → Reports/<missionId> folder)
     imageUploaderRef.current
@@ -69,7 +69,7 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
           // Notify the conciergerie by email (best-effort, non-blocking for the user)
           const conciergerie = findConciergerie(mission.conciergerieName);
           if (home && conciergerie) {
-            EmailSender.sendMissionReportEmail(mission, home, employee, conciergerie, {
+            EmailSender.sendMissionReportEmail(mission, home, userData as Employee, conciergerie, {
               content: report.content,
               images: report.images,
             });
