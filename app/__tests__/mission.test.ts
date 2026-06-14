@@ -166,7 +166,7 @@ describe.skipIf(!process.env.DATABASE_URL)('Mission Actions - conciergerieCommen
         conciergerieComment: 'Test comment',
       });
 
-      // Then clear it
+      // Then clear it by setting to undefined
       const result = await updateMissionData(TEST_MISSION_ID, {
         conciergerieComment: undefined,
       });
