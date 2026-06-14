@@ -2,7 +2,14 @@
 
 import Label from '@/app/components/label';
 import type { SelectOption } from '@/app/types/types';
-import { cn, errorClassName, optionClassName, rowClassName, selectClassName } from '@/app/utils/className';
+import {
+  cn,
+  errorClassName,
+  optionClassName,
+  optionsClassName,
+  rowClassName,
+  selectClassName,
+} from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
@@ -23,6 +30,7 @@ type ComboboxProps = {
   required?: boolean;
   row?: boolean;
   tooltip?: ReactNode;
+  maxItems?: number; // Maximum number of items to show in dropdown
 };
 
 const Combobox = forwardRef(
@@ -41,6 +49,7 @@ const Combobox = forwardRef(
       required = false,
       row = false,
       tooltip,
+      maxItems,
     }: ComboboxProps,
     forwardedRef: ForwardedRef<HTMLInputElement>,
   ) => {
@@ -247,7 +256,8 @@ const Combobox = forwardRef(
                   optionsRef.current = el;
                   scrollRef.current = el;
                 }}
-                className="w-full bg-background border border-foreground/20 rounded-lg shadow-lg overflow-auto max-h-[202px]"
+                className={optionsClassName}
+                style={{ maxHeight: maxItems ? `${maxItems * 40}px` : '202px' }}
                 role="listbox"
               >
                 {filteredOptions.length === 0 ? (

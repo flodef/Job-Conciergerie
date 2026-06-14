@@ -75,7 +75,7 @@ const Switch: React.FC<SwitchProps> = ({
   if (!label) return switchElement;
 
   return (
-    <div className={cn(row ? rowClassName : '', className)}>
+    <div className={cn(row ? rowClassName : '', 'my-3', className)}>
       <Label id={id} required={true} tooltip={tooltip}>
         {label}
       </Label>

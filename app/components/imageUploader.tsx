@@ -6,7 +6,7 @@ import { ToastType } from '@/app/components/toastMessage';
 import { useToast } from '@/app/contexts/toastProvider';
 import { cn, errorClassName } from '@/app/utils/className';
 import { fallbackImage, getStorageFileName, getStorageImageUrl } from '@/app/utils/storage';
-import { IconCheck, IconPhotoPlus, IconX } from '@tabler/icons-react';
+import { IconCheck, IconPhotoPlus, IconTrash, IconX } from '@tabler/icons-react';
 import React, { useEffect, useRef, useState } from 'react';
 import M3LoadingSpinner from './m3LoadingSpinner';
 
@@ -339,8 +339,16 @@ const ImageUploader = React.forwardRef<
     };
 
     const deleteAll = () => {
-      imageIds.map(handleDeleteCommitted);
-      localImages.map(i => handleDeleteLocal(i.id));
+      setImageIdsToRemove(prev => [...prev, ...imageIds]);
+      onImageIdsChange([]);
+      onPendingImagesChange(localImages.length > 0);
+      setLocalImages(prev => {
+        prev.forEach(img => {
+          if (img.previewUrl) URL.revokeObjectURL(img.previewUrl);
+        });
+        return [];
+      });
+      setHasChanged(true);
     };
 
     useEffect(() => {
@@ -361,13 +369,14 @@ const ImageUploader = React.forwardRef<
                 <button
                   type="button"
                   onClick={deleteAll}
-                  className="text-sm text-red-500 hover:text-red-600 cursor-pointer"
+                  className="text-sm text-red-500 hover:text-red-600 cursor-pointer flex items-center gap-1"
                 >
+                  <IconTrash size={16} />
                   Tout supprimer
                 </button>
               )}
               {/* Hack to focus the input when there is an error */}
-              <input ref={inputFocusRef} type="text" className="h-0 w-0" />
+              <input id="focus-hack" ref={inputFocusRef} type="text" className="h-0 w-0 hidden" />
             </div>
           </div>
         </div>

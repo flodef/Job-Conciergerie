@@ -69,14 +69,14 @@ export default function HomesPage() {
   return (
     <div className="bg-background min-h-full px-4">
       {myHomes.length > 0 && (
-        <div className="flex items-start justify-end gap-2 mb-2">
+        <div className="flex items-center justify-between gap-2 mb-4">
           {myHomes.length > 1 && (
             <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
           )}
           <div className="flex gap-2">
             <button
               className={cn(
-                'mt-1 p-2 rounded cursor-pointer',
+                'p-2 rounded cursor-pointer',
                 displayMode === 'list' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
               )}
               onClick={() => setDisplayMode('list')}
@@ -86,7 +86,7 @@ export default function HomesPage() {
             </button>
             <button
               className={cn(
-                'mt-1 p-2 rounded cursor-pointer',
+                'p-2 rounded cursor-pointer',
                 displayMode === 'grid' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
               )}
               onClick={() => setDisplayMode('grid')}
@@ -96,7 +96,7 @@ export default function HomesPage() {
             </button>
             <button
               className={cn(
-                'mt-1 p-2 rounded cursor-pointer',
+                'p-2 rounded cursor-pointer',
                 displayMode === 'thumb' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
               )}
               onClick={() => setDisplayMode('thumb')}

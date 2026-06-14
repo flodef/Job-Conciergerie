@@ -595,26 +595,6 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
     }
   };
 
-  if (isEditMode)
-    return (
-      <MissionForm
-        mission={mission}
-        onClose={() => {
-          setSkipAnimation(true);
-          setIsEditMode(false);
-        }}
-        onSuccess={updatedMission => {
-          setMission(updatedMission);
-        }}
-        onCancel={() => {
-          setSkipAnimation(true);
-          setIsEditMode(false);
-        }}
-        mode="edit"
-        skipAnimation
-      />
-    );
-
   if (showHomeDetails && home) {
     // Get the original home from the homes context to ensure we have all images
     const originalHome = homes.find(h => h.id === mission.homeId) || home;
@@ -718,451 +698,486 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
   if (!home) return;
 
   return (
-    <FullScreenModal
-      onClose={onClose}
-      title="Détails de la mission"
-      footer={footer}
-      disabled={isSubmitting}
-      closeAll
-      skipAnimation={skipAnimation}
-    >
-      {selectedImageIndex !== undefined && (
-        <FullScreenImageCarousel
-          altPrefix={`Photo de ${home.title}`}
-          imageUrls={home.images}
-          initialIndex={selectedImageIndex}
-          onClose={() => setSelectedImageIndex(undefined)}
+    <>
+      <div style={{ display: isEditMode ? 'block' : 'none' }}>
+        <MissionForm
+          key={isEditMode ? 'edit' : 'hidden'}
+          mission={mission}
+          onClose={() => {
+            setSkipAnimation(true);
+            setIsEditMode(false);
+          }}
+          onSuccess={updatedMission => {
+            setMission(updatedMission);
+          }}
+          onCancel={() => {
+            setSkipAnimation(true);
+            setIsEditMode(false);
+          }}
+          mode="edit"
+          skipAnimation
+          forceRecalc={isEditMode}
         />
-      )}
+      </div>
 
-      <div className="space-y-2" data-mission-details>
-        <div>
-          <div className="flex items-center justify-between">
-            <HomeTitle home={home} />
-            <button
-              className="cursor-pointer"
-              onClick={() => setShowHomeDetails(true)}
-              title="Voir les détails du bien"
-            >
-              <IconZoomScan size={40} />
-            </button>
-          </div>
-
-          {home.images.length ? (
-            <HomeImagePreview
-              imageUrl={getStorageImageUrl(firstHomeImage, { width: 400, quality: 80 })}
-              homeTitle={home.title}
-              onClick={() => setSelectedImageIndex(home.images.indexOf(firstHomeImage))}
+      {!isEditMode && (
+        <FullScreenModal
+          onClose={onClose}
+          title="Détails de la mission"
+          footer={footer}
+          disabled={isSubmitting}
+          closeAll
+          skipAnimation={skipAnimation}
+        >
+          {selectedImageIndex !== undefined && (
+            <FullScreenImageCarousel
+              altPrefix={`Photo de ${home.title}`}
+              imageUrls={home.images}
+              initialIndex={selectedImageIndex}
+              onClose={() => setSelectedImageIndex(undefined)}
             />
-          ) : null}
-        </div>
+          )}
 
-        <div className="flex items-center justify-between">
-          <h3 className={containerClassName}>
-            <IconListCheck size={16} />
-            Tâches
-          </h3>
-          <div className="flex flex-wrap gap-2 justify-end">
-            {mission.tasks.map(task => (
-              <span
-                key={task}
-                className="px-2 py-1 rounded-lg text-sm text-background"
-                style={{
-                  backgroundColor: `${conciergerieColor}`,
-                }}
-              >
-                {task}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <h3 className={containerClassName}>
-            <IconStopwatch size={16} />
-            Nombre d&apos;heures estimées
-          </h3>
-          <span className="font-medium">{formatHours(mission.hours)}</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <h3 className={containerClassName}>
-            <IconUsers size={16} />
-            Nombre de voyageurs
-          </h3>
-          <span className="font-medium">{mission.travellers || '-'}</span>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <div className="space-y-2">
+          <div className="space-y-2" data-mission-details>
             <div>
-              <h3 className={containerClassName}>
-                <IconCalendarEvent size={16} />
-                Date de début
-              </h3>
-              <div className="flex items-center gap-1 flex-wrap">
-                {editingDate === 'start' ? (
-                  <>
-                    <ResponsiveDateTimeInput
-                      id="Date de début"
-                      label=""
-                      value={editStartDate}
-                      onChange={value => {
-                        const { startDateTime: newStart, endDateTime: newEnd } = handleMissionStartDateChange(
-                          value,
-                          editStartDate,
-                          editEndDate,
-                        );
-                        setEditStartDate(newStart);
-                        setEditEndDate(newEnd);
-                      }}
-                      onEscape={cancelDateEditing}
-                      onEnter={handleDateEditConfirm}
-                      error={startDateError}
-                      onError={setStartDateError}
-                      required
-                      min={localISOString(getMinStartDate())}
-                      className="text-sm h-[28px] content-center"
-                      minimal
-                      autoFocus={editingDate === 'start'}
-                    />
-                    <button
-                      onClick={handleDateEditConfirm}
-                      className={iconButtonClassName('success')}
-                      title="Confirmer"
-                    >
-                      <IconCheck size={20} />
-                    </button>
-                    <button onClick={cancelDateEditing} className={iconButtonClassName('dangerous')} title="Annuler">
-                      <IconX size={20} />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
-                      {formatDateTime(new Date(editStartDate), true)}
-                    </p>
-                    {isDateEditable && (
-                      <button
-                        onClick={() => startEditingDate('start')}
-                        className={iconButtonClassName()}
-                        title="Modifier la date de début"
-                      >
-                        <IconPencil size={20} />
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h3 className={containerClassName}>
-                <IconCalendarEvent size={16} />
-                Date de fin
-              </h3>
-              <div className="flex items-center gap-1 flex-wrap">
-                {editingDate === 'end' ? (
-                  <>
-                    <ResponsiveDateTimeInput
-                      id="Date de fin"
-                      label=""
-                      value={editEndDate}
-                      onChange={value => {
-                        const { startDateTime: newStart, endDateTime: newEnd } = handleMissionEndDateChange(
-                          value,
-                          editStartDate,
-                          editEndDate,
-                        );
-                        setEditEndDate(newEnd);
-                        setEditStartDate(newStart);
-                      }}
-                      onEscape={cancelDateEditing}
-                      onEnter={handleDateEditConfirm}
-                      error={endDateError}
-                      onError={setEndDateError}
-                      required
-                      min={localISOString(getMinEndDate())}
-                      className="text-sm h-[28px] content-center"
-                      minimal
-                      autoFocus={editingDate === 'end'}
-                    />
-                    <button
-                      onClick={handleDateEditConfirm}
-                      className={iconButtonClassName('success')}
-                      title="Confirmer"
-                    >
-                      <IconCheck size={20} />
-                    </button>
-                    <button onClick={cancelDateEditing} className={iconButtonClassName('dangerous')} title="Annuler">
-                      <IconX size={20} />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
-                      {formatDateTime(new Date(editEndDate), true)}
-                    </p>
-                    {isDateEditable && (
-                      <button
-                        onClick={() => startEditingDate('end')}
-                        className={iconButtonClassName()}
-                        title="Modifier la date de fin"
-                      >
-                        <IconPencil size={20} />
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="relative h-24 flex items-center">
-            <div className="h-full w-0.5 bg-secondary -mx-1"></div>
-            <div className="absolute top-0 left-0 w-3 h-0.5 bg-secondary -ml-4"></div>
-            <div className="absolute bottom-0 left-0 w-3 h-0.5 bg-secondary -ml-4"></div>
-
-            <div className="absolute top-1/2 -translate-y-1/2 left-0.5">
-              <div className="flex items-center">
-                <div className="w-4 h-0.5 bg-secondary -ml-1"></div>
-                <div
-                  className={cn(
-                    textClassName,
-                    'bg-secondary px-3 py-1 rounded-2xl',
-                    hasStarted && !hasEnded ? 'ml-0' : '-ml-2 whitespace-nowrap',
-                  )}
+              <div className="flex items-center justify-between">
+                <HomeTitle home={home} />
+                <button
+                  className="cursor-pointer"
+                  onClick={() => setShowHomeDetails(true)}
+                  title="Voir les détails du bien"
                 >
-                  {(() => {
-                    // Otherwise show total duration
-                    return hasEnded
-                      ? 'Mission terminée'
-                      : getDateRangeDifference(hasStarted ? now : new Date(editStartDate), new Date(editEndDate)) +
-                          (hasStarted ? ' restant' : '');
-                  })()}
-                </div>
+                  <IconZoomScan size={40} />
+                </button>
+              </div>
+
+              {home.images.length ? (
+                <HomeImagePreview
+                  imageUrl={getStorageImageUrl(firstHomeImage, { width: 400, quality: 80 })}
+                  homeTitle={home.title}
+                  onClick={() => setSelectedImageIndex(home.images.indexOf(firstHomeImage))}
+                />
+              ) : null}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <h3 className={containerClassName}>
+                <IconListCheck size={16} />
+                Tâches
+              </h3>
+              <div className="flex flex-wrap gap-2 justify-end">
+                {mission.tasks.map(task => (
+                  <span
+                    key={task}
+                    className="px-2 py-1 rounded-lg text-sm text-background"
+                    style={{
+                      backgroundColor: `${conciergerieColor}`,
+                    }}
+                  >
+                    {task}
+                  </span>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Only show conciergerie name if not viewed from calendar by a conciergerie */}
-        {(!isFromCalendar || !isConciergerie) && !isOwner && (
-          <div>
-            <h3 className={containerClassName}>
-              <IconBuildingStore size={16} />
-              Conciergerie
-            </h3>
-            <div className="flex items-center gap-3">
-              <p className={cn(titleClassName, 'h-6 font-bold')} style={{ color: conciergerieColor }}>
-                {conciergerie?.name || mission.conciergerieName}
-              </p>
-
-              {/* Contact buttons */}
-              <div className="flex gap-3">
-                {conciergerie?.tel && (
-                  <a
-                    href={`tel:${conciergerie.tel}`}
-                    className={cn(iconButtonClassName(), 'p-0 hover:bg-transparent')}
-                    title={`Appeler ${conciergerie.name}`}
-                  >
-                    <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
-                  </a>
-                )}
-
-                {conciergerie?.email && (
-                  <a
-                    href={`mailto:${conciergerie.email}`}
-                    className={cn(iconButtonClassName(), 'p-0 hover:bg-transparent')}
-                    title={`Envoyer un email à ${conciergerie.name}`}
-                  >
-                    <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />
-                  </a>
-                )}
-              </div>
+            <div className="flex items-center justify-between">
+              <h3 className={containerClassName}>
+                <IconStopwatch size={16} />
+                Nombre d&apos;heures estimées
+              </h3>
+              <span className="font-medium">{formatHours(mission.hours)}</span>
             </div>
-          </div>
-        )}
 
-        {!isFromCalendar && isConciergerie && (
-          <div className="flex items-center justify-between">
-            {employee ? (
-              <>
+            {!!mission.travellers && (
+              <div className="flex items-center justify-between">
                 <h3 className={containerClassName}>
-                  {!mission.allowDuo ? <IconUserCheck size={16} /> : <IconUsers size={16} />}
-                  {!mission.allowDuo ? 'Prestataire' : 'Binôme'}
+                  <IconUsers size={16} />
+                  Nombre de voyageurs
                 </h3>
-                <div className="flex items-center gap-2">
-                  {(employee2 || isMissionDuoOpen(mission)) && <span className={titleClassName}>+</span>}
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <div
-                        onClick={() => openEmployeeDetails(employee)}
-                        className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
-                      >
-                        <span className="text-right">{getUserKey(employee)}</span>
-                        <IconInfoCircle className="min-w-4.5" size={18} />
-                      </div>
-                      {isMissionEditable(mission) && (
+                <span className="font-medium">{mission.travellers}</span>
+              </div>
+            )}
+
+            <div className="flex items-center space-x-4">
+              <div className="space-y-2">
+                <div>
+                  <h3 className={containerClassName}>
+                    <IconCalendarEvent size={16} />
+                    Date de début
+                  </h3>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {editingDate === 'start' ? (
+                      <>
+                        <ResponsiveDateTimeInput
+                          id="Date de début"
+                          label=""
+                          value={editStartDate}
+                          onChange={value => {
+                            const { startDateTime: newStart, endDateTime: newEnd } = handleMissionStartDateChange(
+                              value,
+                              editStartDate,
+                              editEndDate,
+                            );
+                            setEditStartDate(newStart);
+                            setEditEndDate(newEnd);
+                          }}
+                          onEscape={cancelDateEditing}
+                          onEnter={handleDateEditConfirm}
+                          error={startDateError}
+                          onError={setStartDateError}
+                          required
+                          min={localISOString(getMinStartDate())}
+                          className="text-sm h-[28px] content-center"
+                          minimal
+                          autoFocus={editingDate === 'start'}
+                        />
                         <button
-                          onClick={() => handleRemoveEmployee('employeeId')}
-                          className={iconButtonClassName('dangerous')}
-                          title="Retirer de la mission"
+                          onClick={handleDateEditConfirm}
+                          className={iconButtonClassName('success')}
+                          title="Confirmer"
                         >
-                          <IconUserMinus size={24} />
+                          <IconCheck size={20} />
                         </button>
-                      )}
-                    </div>
-                    {employee2 && (
-                      <div className="flex items-center justify-between gap-2">
-                        {isEmployeeUser(employee2) ? (
-                          <div
-                            onClick={() => openEmployeeDetails(employee2 as Employee)}
-                            className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
-                          >
-                            <span className="text-right">{getUserKey(employee2)}</span>
-                            <IconInfoCircle className="min-w-4.5" size={18} />
-                          </div>
-                        ) : (
-                          <span className="text-right">{getUserKey(employee2)}</span>
-                        )}
-                        {isMissionEditable(mission) && (
+                        <button
+                          onClick={cancelDateEditing}
+                          className={iconButtonClassName('dangerous')}
+                          title="Annuler"
+                        >
+                          <IconX size={20} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
+                          {formatDateTime(new Date(editStartDate), true)}
+                        </p>
+                        {isDateEditable && (
                           <button
-                            onClick={() => handleRemoveEmployee('employeeId2')}
-                            className={iconButtonClassName('dangerous')}
-                            title="Retirer de la mission"
+                            onClick={() => startEditingDate('start')}
+                            className={iconButtonClassName()}
+                            title="Modifier la date de début"
                           >
-                            <IconUserMinus size={24} />
+                            <IconPencil size={20} />
                           </button>
                         )}
-                      </div>
-                    )}
-                    {isMissionDuoOpen(mission) && (
-                      <div className="flex items-center justify-between gap-2">
-                        <button
-                          onClick={() => handleAccept2()}
-                          className={cn(
-                            buttonClassName('primary'),
-                            'px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200',
-                          )}
-                        >
-                          <IconUserPlus size={20} />
-                          <span>Rejoindre</span>
-                        </button>
-                      </div>
+                      </>
                     )}
                   </div>
                 </div>
-              </>
-            ) : (
-              <>
-                <h3 className={containerClassName}>
-                  <IconUsersGroup size={16} />
-                  Prestataires autorisés
-                </h3>
-                <div className="flex items-center gap-1">
-                  <Tooltip
-                    trigger={
-                      <div className="flex items-center gap-1 cursor-help">
-                        <p>
-                          {mission.allowedEmployees?.length === 1
-                            ? mission.allowedEmployees[0]
-                            : mission.allowedEmployees?.length || 'Tous'}
+
+                <div>
+                  <h3 className={containerClassName}>
+                    <IconCalendarEvent size={16} />
+                    Date de fin
+                  </h3>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {editingDate === 'end' ? (
+                      <>
+                        <ResponsiveDateTimeInput
+                          id="Date de fin"
+                          label=""
+                          value={editEndDate}
+                          onChange={value => {
+                            const { startDateTime: newStart, endDateTime: newEnd } = handleMissionEndDateChange(
+                              value,
+                              editStartDate,
+                              editEndDate,
+                            );
+                            setEditEndDate(newEnd);
+                            setEditStartDate(newStart);
+                          }}
+                          onEscape={cancelDateEditing}
+                          onEnter={handleDateEditConfirm}
+                          error={endDateError}
+                          onError={setEndDateError}
+                          required
+                          min={localISOString(getMinEndDate())}
+                          className="text-sm h-[28px] content-center"
+                          minimal
+                          autoFocus={editingDate === 'end'}
+                        />
+                        <button
+                          onClick={handleDateEditConfirm}
+                          className={iconButtonClassName('success')}
+                          title="Confirmer"
+                        >
+                          <IconCheck size={20} />
+                        </button>
+                        <button
+                          onClick={cancelDateEditing}
+                          className={iconButtonClassName('dangerous')}
+                          title="Annuler"
+                        >
+                          <IconX size={20} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
+                          {formatDateTime(new Date(editEndDate), true)}
                         </p>
-                      </div>
-                    }
-                    size="medium"
-                    className="text-foreground"
-                    isDisabled={(mission.allowedEmployees?.length || 0) <= 1}
-                  >
-                    <ul className="list-disc pl-4">
-                      {mission.allowedEmployees?.map(employeeId => (
-                        <li key={employeeId}>{employeeId}</li>
-                      ))}
-                    </ul>
-                  </Tooltip>
+                        {isDateEditable && (
+                          <button
+                            onClick={() => startEditingDate('end')}
+                            className={iconButtonClassName()}
+                            title="Modifier la date de fin"
+                          >
+                            <IconPencil size={20} />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {mission.allowDuo && !isConciergerie && (
-          <div className="flex items-center justify-between">
-            <h3 className={containerClassName}>
-              <IconUserCheck size={16} />
-              Binôme
-            </h3>
-
-            {employee && userData && getUserKey(userData) === getUserKey(employee) ? (
-              employee2 ? (
-                <span className={textClassName}>{getUserKey(employee2)}</span>
-              ) : (
-                <span className={textPulseClassName}>En attente...</span>
-              )
-            ) : employee2 && userData && getUserKey(userData) === getUserKey(employee2) ? (
-              <span className={textClassName}>{employee ? getUserKey(employee) : '-'}</span>
-            ) : employee ? (
-              <span className={textClassName}>{getUserKey(employee)}</span>
-            ) : (
-              <span className={textPulseClassName}>En attente...</span>
-            )}
-          </div>
-        )}
-
-        {mission.conciergerieComment && (
-          <div className=" p-1 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-            <div className="flex-1">
-              <div className="flex items-start gap-2">
-                <IconBulb size={16} className="text-yellow-600 dark:text-yellow-400 shrink-0" />
-                <h3 className="text-sm font-semibold text-yellow-600 dark:text-yellow-400 mb-1">
-                  Commentaire conciergerie
-                </h3>
               </div>
-              <p className={cn(descriptionClassName, 'px-1 text-yellow-800 dark:text-yellow-200')}>
-                {mission.conciergerieComment}
-              </p>
+
+              <div className="relative h-24 flex items-center">
+                <div className="h-full w-0.5 bg-secondary -mx-1"></div>
+                <div className="absolute top-0 left-0 w-3 h-0.5 bg-secondary -ml-4"></div>
+                <div className="absolute bottom-0 left-0 w-3 h-0.5 bg-secondary -ml-4"></div>
+
+                <div className="absolute top-1/2 -translate-y-1/2 left-0.5">
+                  <div className="flex items-center">
+                    <div className="w-4 h-0.5 bg-secondary -ml-1"></div>
+                    <div
+                      className={cn(
+                        textClassName,
+                        'bg-secondary px-3 py-1 rounded-2xl',
+                        hasStarted && !hasEnded ? 'ml-0' : '-ml-2 whitespace-nowrap',
+                      )}
+                    >
+                      {(() => {
+                        // Otherwise show total duration
+                        return hasEnded
+                          ? 'Mission terminée'
+                          : getDateRangeDifference(hasStarted ? now : new Date(editStartDate), new Date(editEndDate)) +
+                              (hasStarted ? ' restant' : '');
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
 
-        {report && (report.content || report.images.length > 0) && (
-          <div className="space-y-2 border-t border-secondary pt-2">
-            <h3 className={containerClassName}>
-              <IconNotes size={16} />
-              Compte rendu
-            </h3>
-            {report.content && (
-              <p className="text-sm text-foreground whitespace-pre-wrap wrap-break-word">{report.content}</p>
+            {/* Only show conciergerie name if not viewed from calendar by a conciergerie */}
+            {(!isFromCalendar || !isConciergerie) && !isOwner && (
+              <div>
+                <h3 className={containerClassName}>
+                  <IconBuildingStore size={16} />
+                  Conciergerie
+                </h3>
+                <div className="flex items-center gap-3">
+                  <p className={cn(titleClassName, 'h-6 font-bold')} style={{ color: conciergerieColor }}>
+                    {conciergerie?.name || mission.conciergerieName}
+                  </p>
+
+                  {/* Contact buttons */}
+                  <div className="flex gap-3">
+                    {conciergerie?.tel && (
+                      <a
+                        href={`tel:${conciergerie.tel}`}
+                        className={cn(iconButtonClassName(), 'p-0 hover:bg-transparent')}
+                        title={`Appeler ${conciergerie.name}`}
+                      >
+                        <IconPhone size={24} stroke={1.5} style={{ color: conciergerieColor }} />
+                      </a>
+                    )}
+
+                    {conciergerie?.email && (
+                      <a
+                        href={`mailto:${conciergerie.email}`}
+                        className={cn(iconButtonClassName(), 'p-0 hover:bg-transparent')}
+                        title={`Envoyer un email à ${conciergerie.name}`}
+                      >
+                        <IconMail size={24} stroke={1.5} style={{ color: conciergerieColor }} />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
-            {report.images.length > 0 && (
-              <div className="grid grid-cols-3 gap-2">
-                {report.images.map((path, index) => (
-                  <img
-                    key={path}
-                    src={getCachedUrl(reportImageUrls[index])}
-                    alt={`Photo ${index + 1} du compte rendu`}
-                    className="object-cover w-full aspect-square rounded-lg cursor-pointer"
-                    onClick={() => setSelectedReportImageIndex(index)}
-                    onError={e => {
-                      (e.target as HTMLImageElement).src = fallbackImage;
-                    }}
-                  />
-                ))}
+
+            {!isFromCalendar && isConciergerie && (
+              <div className="flex items-center justify-between">
+                {employee ? (
+                  <>
+                    <h3 className={containerClassName}>
+                      {!mission.allowDuo ? <IconUserCheck size={16} /> : <IconUsers size={16} />}
+                      {!mission.allowDuo ? 'Prestataire' : 'Binôme'}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      {(employee2 || isMissionDuoOpen(mission)) && <span className={titleClassName}>+</span>}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div
+                            onClick={() => openEmployeeDetails(employee)}
+                            className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
+                          >
+                            <span className="text-right">{getUserKey(employee)}</span>
+                            <IconInfoCircle className="min-w-4.5" size={18} />
+                          </div>
+                          {isMissionEditable(mission) && (
+                            <button
+                              onClick={() => handleRemoveEmployee('employeeId')}
+                              className={iconButtonClassName('dangerous')}
+                              title="Retirer de la mission"
+                            >
+                              <IconUserMinus size={24} />
+                            </button>
+                          )}
+                        </div>
+                        {employee2 && (
+                          <div className="flex items-center justify-between gap-2">
+                            {isEmployeeUser(employee2) ? (
+                              <div
+                                onClick={() => openEmployeeDetails(employee2 as Employee)}
+                                className="flex items-center gap-1 cursor-pointer hover:underline hover:text-primary transition-colors"
+                              >
+                                <span className="text-right">{getUserKey(employee2)}</span>
+                                <IconInfoCircle className="min-w-4.5" size={18} />
+                              </div>
+                            ) : (
+                              <span className="text-right">{getUserKey(employee2)}</span>
+                            )}
+                            {isMissionEditable(mission) && (
+                              <button
+                                onClick={() => handleRemoveEmployee('employeeId2')}
+                                className={iconButtonClassName('dangerous')}
+                                title="Retirer de la mission"
+                              >
+                                <IconUserMinus size={24} />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {isMissionDuoOpen(mission) && (
+                          <div className="flex items-center justify-between gap-2">
+                            <button
+                              onClick={() => handleAccept2()}
+                              className={cn(
+                                buttonClassName('primary'),
+                                'px-2 py-1 bg-purple-100 text-purple-700 hover:bg-purple-200',
+                              )}
+                            >
+                              <IconUserPlus size={20} />
+                              <span>Rejoindre</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className={containerClassName}>
+                      <IconUsersGroup size={16} />
+                      Prestataires autorisés
+                    </h3>
+                    <div className="flex items-center gap-1">
+                      <Tooltip
+                        trigger={
+                          <div className="flex items-center gap-1 cursor-help">
+                            <p>
+                              {mission.allowedEmployees?.length === 1
+                                ? mission.allowedEmployees[0]
+                                : mission.allowedEmployees?.length || 'Tous'}
+                            </p>
+                          </div>
+                        }
+                        size="medium"
+                        className="text-foreground"
+                        isDisabled={(mission.allowedEmployees?.length || 0) <= 1}
+                      >
+                        <ul className="list-disc pl-4">
+                          {mission.allowedEmployees?.map(employeeId => (
+                            <li key={employeeId}>{employeeId}</li>
+                          ))}
+                        </ul>
+                      </Tooltip>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {mission.allowDuo && !isConciergerie && (
+              <div className="flex items-center justify-between">
+                <h3 className={containerClassName}>
+                  <IconUserCheck size={16} />
+                  Binôme
+                </h3>
+
+                {employee && userData && getUserKey(userData) === getUserKey(employee) ? (
+                  employee2 ? (
+                    <span className={textClassName}>{getUserKey(employee2)}</span>
+                  ) : (
+                    <span className={textPulseClassName}>En attente...</span>
+                  )
+                ) : employee2 && userData && getUserKey(userData) === getUserKey(employee2) ? (
+                  <span className={textClassName}>{employee ? getUserKey(employee) : '-'}</span>
+                ) : employee ? (
+                  <span className={textClassName}>{getUserKey(employee)}</span>
+                ) : (
+                  <span className={textPulseClassName}>En attente...</span>
+                )}
+              </div>
+            )}
+
+            {mission.conciergerieComment && (
+              <div className=" p-1 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                <div className="flex-1">
+                  <div className="flex items-start gap-2">
+                    <IconBulb size={16} className="text-yellow-600 dark:text-yellow-400 shrink-0" />
+                    <h3 className="text-sm font-semibold text-yellow-600 dark:text-yellow-400 mb-1">
+                      Commentaire conciergerie
+                    </h3>
+                  </div>
+                  <p className={cn(descriptionClassName, 'px-1 text-yellow-800 dark:text-yellow-200')}>
+                    {mission.conciergerieComment}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {report && (report.content || report.images.length > 0) && (
+              <div className="space-y-2 border-t border-secondary pt-2">
+                <h3 className={containerClassName}>
+                  <IconNotes size={16} />
+                  Compte rendu
+                </h3>
+                {report.content && (
+                  <p className="text-sm text-foreground whitespace-pre-wrap wrap-break-word">{report.content}</p>
+                )}
+                {report.images.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {report.images.map((path, index) => (
+                      <img
+                        key={path}
+                        src={getCachedUrl(reportImageUrls[index])}
+                        alt={`Photo ${index + 1} du compte rendu`}
+                        className="object-cover w-full aspect-square rounded-lg cursor-pointer"
+                        onClick={() => setSelectedReportImageIndex(index)}
+                        onError={e => {
+                          (e.target as HTMLImageElement).src = fallbackImage;
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
-      </div>
 
-      {report && selectedReportImageIndex !== undefined && (
-        <FullScreenImageCarousel
-          altPrefix="Photo du compte rendu"
-          imageUrls={reportFullImageUrls}
-          initialIndex={selectedReportImageIndex}
-          onClose={() => setSelectedReportImageIndex(undefined)}
-        />
+          {report && selectedReportImageIndex !== undefined && (
+            <FullScreenImageCarousel
+              altPrefix="Photo du compte rendu"
+              imageUrls={reportFullImageUrls}
+              initialIndex={selectedReportImageIndex}
+              onClose={() => setSelectedReportImageIndex(undefined)}
+            />
+          )}
+        </FullScreenModal>
       )}
-    </FullScreenModal>
+    </>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import Label from '@/app/components/label';
-import { cn, errorClassName, optionClassName, selectClassName } from '@/app/utils/className';
+import { cn, errorClassName, optionClassName, optionsClassName, selectClassName } from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconCheck, IconChevronDown, IconX } from '@tabler/icons-react';
@@ -288,7 +288,7 @@ const AutocompleteSelect = forwardRef(
               <div
                 id={`${id}-options`}
                 ref={optionsRef}
-                className="w-full bg-background border border-foreground/20 rounded-lg shadow-lg overflow-auto"
+                className={optionsClassName}
                 style={{ maxHeight: maxItems ? `${maxItems * 40}px` : '202px' }}
                 role="listbox"
               >

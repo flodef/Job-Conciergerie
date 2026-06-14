@@ -71,11 +71,11 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
   const { showToast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>();
   const [associatedMissions, setAssociatedMissions] = useState<string[]>([]);
   const [skipAnimation, setSkipAnimation] = useState(false);
+  const [showHomeForm, setShowHomeForm] = useState(false);
 
   useEffect(() => {
     setIsReadOnly(home.conciergerieName !== conciergerieName);
@@ -128,7 +128,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
 
   const footer = !isReadOnly && !isEmployee && (
     <div className={actionButtonBarClassName}>
-      <button onClick={() => setIsEditMode(true)} className={actionButtonClassName}>
+      <button onClick={() => setShowHomeForm(true)} className={actionButtonClassName}>
         <IconPencil />
         Modifier
       </button>
@@ -139,97 +139,99 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
     </div>
   );
 
-  if (isEditMode)
-    return (
-      <HomeForm
-        home={home}
-        onClose={() => {
-          setSkipAnimation(true);
-          setIsEditMode(false);
-        }}
-        onCancel={() => {
-          setSkipAnimation(true);
-          setIsEditMode(false);
-        }}
-        mode="edit"
-        autoFocus
-        skipAnimation
-      />
-    );
-
   return (
-    <FullScreenModal
-      title={<HomeTitle home={home} />}
-      onClose={onClose}
-      footer={footer}
-      disabled={isSubmitting}
-      closeAll
-      skipAnimation={skipAnimation}
-    >
-      {selectedImageIndex !== undefined && (
-        <FullScreenImageCarousel
-          altPrefix={`Photo de ${home.title}`}
-          imageUrls={home.images}
-          initialIndex={selectedImageIndex}
-          onClose={() => setSelectedImageIndex(undefined)}
-        />
-      )}
-
-      <div data-home-details>
-        <Accordion
-          variant="card"
-          items={[
-            ...(home.images.length > 0
-              ? [
-                  {
-                    title: `Photos (${home.images.length})`,
-                    icon: <IconPhoto size={16} className="text-light" />,
-                    content: <HomeImageGrid images={home.images} onImageClick={setSelectedImageIndex} />,
-                  },
-                ]
-              : []),
-            ...(isConciergerie || (isEmployee && isFromCalendar)
-              ? [
-                  {
-                    title: 'Description',
-                    icon: <IconFileDescription size={16} className="text-light" />,
-                    content: <p className="text-foreground whitespace-pre-wrap">{home.description}</p>,
-                  },
-                ]
-              : []),
-            {
-              title: 'Points particuliers',
-              icon: <IconListCheck size={16} className="text-light" />,
-              content: (
-                <ul className="list-none pl-0 space-y-1">
-                  {home.objectives.map((objective, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 shrink-0 border border-foreground" />
-                      <span className="text-foreground overflow-hidden">{objective}</span>
-                    </li>
-                  ))}
-                </ul>
-              ),
-            },
-            {
-              title: 'Informations',
-              icon: <IconUsers size={16} className="text-light" />,
-              content: (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-foreground">Mission en binôme</span>
-                    <span className="text-foreground font-medium">{home.allowDuo ? 'Oui' : 'Non'}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-foreground">Nombre maximum de voyageurs</span>
-                    <span className="text-foreground font-medium">{home.maxTravellers}</span>
-                  </div>
-                </div>
-              ),
-            },
-          ]}
+    <>
+      <div style={{ display: showHomeForm ? 'block' : 'none' }}>
+        <HomeForm
+          home={home}
+          onClose={() => {
+            setSkipAnimation(true);
+            setShowHomeForm(false);
+          }}
+          onCancel={() => {
+            setSkipAnimation(true);
+            setShowHomeForm(false);
+          }}
+          mode="edit"
+          skipAnimation
+          forceRecalc={showHomeForm}
         />
       </div>
-    </FullScreenModal>
+      {!showHomeForm && (
+        <FullScreenModal
+          title={<HomeTitle home={home} />}
+          onClose={onClose}
+          footer={footer}
+          disabled={isSubmitting}
+          closeAll
+          skipAnimation={skipAnimation}
+        >
+          {selectedImageIndex !== undefined && (
+            <FullScreenImageCarousel
+              altPrefix={`Photo de ${home.title}`}
+              imageUrls={home.images}
+              initialIndex={selectedImageIndex}
+              onClose={() => setSelectedImageIndex(undefined)}
+            />
+          )}
+
+          <div data-home-details>
+            <Accordion
+              variant="card"
+              items={[
+                ...(home.images.length > 0
+                  ? [
+                      {
+                        title: `Photos (${home.images.length})`,
+                        icon: <IconPhoto size={16} className="text-light" />,
+                        content: <HomeImageGrid images={home.images} onImageClick={setSelectedImageIndex} />,
+                      },
+                    ]
+                  : []),
+                ...(isConciergerie || (isEmployee && isFromCalendar)
+                  ? [
+                      {
+                        title: 'Description',
+                        icon: <IconFileDescription size={16} className="text-light" />,
+                        content: <p className="text-foreground whitespace-pre-wrap">{home.description}</p>,
+                      },
+                    ]
+                  : []),
+                {
+                  title: 'Points particuliers',
+                  icon: <IconListCheck size={16} className="text-light" />,
+                  content: (
+                    <ul className="list-none pl-0 space-y-1">
+                      {home.objectives.map((objective, index) => (
+                        <li key={index} className="flex items-start">
+                          <span className="inline-block w-2.5 h-2.5 mt-1.5 mr-2 shrink-0 border border-foreground" />
+                          <span className="text-foreground overflow-hidden">{objective}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ),
+                },
+                {
+                  title: 'Informations',
+                  icon: <IconUsers size={16} className="text-light" />,
+                  content: (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-foreground">Mission en binôme</span>
+                        <span className="text-foreground font-medium">{home.allowDuo ? 'Oui' : 'Non'}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-foreground">Nombre maximum de voyageurs</span>
+                        <span className="text-foreground font-medium">{home.maxTravellers}</span>
+                      </div>
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          </div>
+        </FullScreenModal>
+      )}
+    </>
   );
 }

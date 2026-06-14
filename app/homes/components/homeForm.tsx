@@ -32,8 +32,8 @@ type HomeFormProps = {
   onCancel?: () => void;
   home?: Home;
   mode: UpdateMode;
-  autoFocus?: boolean;
   skipAnimation?: boolean;
+  forceRecalc?: boolean;
 };
 
 export default function HomeForm({
@@ -41,8 +41,8 @@ export default function HomeForm({
   onCancel,
   home,
   mode = 'add',
-  autoFocus = false,
   skipAnimation = false,
+  forceRecalc = false,
 }: HomeFormProps) {
   const { addHome, updateHome, homeExists } = useHomes();
   const { conciergerieName } = useAuth();
@@ -68,6 +68,7 @@ export default function HomeForm({
     title: string;
     description: string;
     objectives: string[];
+    images: string[];
     geographicZone: string;
     hoursOfCleaning: number;
     hoursOfGardening: number;
@@ -89,27 +90,50 @@ export default function HomeForm({
   const objectivesRef = useRef<HTMLTextAreaElement>(null);
   const imagesRef = useRef<HTMLInputElement>(null);
 
-  // Load geographic zones from JSON file
-  useEffect(() => {
-    // Save initial form state for comparison
+  // Helper function to reset form to initial values
+  const resetFormToInitialValues = useCallback(() => {
+    setIsSubmitting(false);
+    setTitleError('');
+    setDescriptionError('');
+    setGeographicZoneError('');
+    setObjectivesError('');
+    setImagesError('');
+    const initialTitle = home?.title || '';
+    const initialDescription = home?.description || '';
+    const initialObjectives = home?.objectives || [''];
+    const initialImages = home?.images || [];
+    const initialGeographicZone = home?.geographicZone || '';
+    const initialHoursOfCleaning = home?.hoursOfCleaning || 0;
+    const initialHoursOfGardening = home?.hoursOfGardening || 0;
+    const initialAllowDuo = home?.allowDuo ?? false;
+    const initialMaxTravellers = home?.maxTravellers ?? 1;
+    setTitle(initialTitle);
+    setDescription(initialDescription);
+    setObjectives(initialObjectives);
+    setImages(initialImages);
+    setGeographicZone(initialGeographicZone);
+    setHoursOfCleaning(initialHoursOfCleaning);
+    setHoursOfGardening(initialHoursOfGardening);
+    setAllowDuo(initialAllowDuo);
+    setMaxTravellers(initialMaxTravellers);
     setInitialFormValues({
-      title,
-      description,
-      objectives: [...objectives],
-      geographicZone,
-      hoursOfCleaning,
-      hoursOfGardening,
-      allowDuo,
-      maxTravellers,
+      title: initialTitle,
+      description: initialDescription,
+      objectives: [...initialObjectives],
+      images: [...initialImages],
+      geographicZone: initialGeographicZone,
+      hoursOfCleaning: initialHoursOfCleaning,
+      hoursOfGardening: initialHoursOfGardening,
+      allowDuo: initialAllowDuo,
+      maxTravellers: initialMaxTravellers,
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    titleRef.current?.focus();
+  }, [home]);
 
-  // Auto-focus title input when autoFocus is true
+  // Initialize form values on mount
   useEffect(() => {
-    if (autoFocus && titleRef.current) {
-      titleRef.current.focus();
-    }
-  }, [autoFocus]);
+    resetFormToInitialValues();
+  }, [resetFormToInitialValues]);
 
   // Check if form has been modified
   const checkFormChanged = useCallback(() => {
@@ -119,7 +143,7 @@ export default function HomeForm({
     const titleChanged = title !== initialFormValues.title;
     const descriptionChanged = description !== initialFormValues.description;
     const objectivesChanged = JSON.stringify(objectives) !== JSON.stringify(initialFormValues.objectives);
-    const imagesChanged = hasPendingImages;
+    const imagesChanged = JSON.stringify(images) !== JSON.stringify(initialFormValues.images) || hasPendingImages;
     const geographicZoneChanged = geographicZone !== initialFormValues.geographicZone;
     const hoursOfCleaningChanged = hoursOfCleaning !== initialFormValues.hoursOfCleaning;
     const hoursOfGardeningChanged = hoursOfGardening !== initialFormValues.hoursOfGardening;
@@ -141,6 +165,7 @@ export default function HomeForm({
     title,
     description,
     objectives,
+    images,
     hasPendingImages,
     geographicZone,
     hoursOfCleaning,
@@ -152,8 +177,14 @@ export default function HomeForm({
 
   const { handleCancel, handleClose, closeAndCancel } = useUnsavedChangesConfirmation({
     checkFormChanged,
-    onClose,
-    onCancel,
+    onClose: () => {
+      resetFormToInitialValues();
+      onClose();
+    },
+    onCancel: () => {
+      resetFormToInitialValues();
+      onCancel?.();
+    },
   });
 
   // Check for duplicate objectives in the list
@@ -236,6 +267,7 @@ export default function HomeForm({
         if (!result) throw new Error("Impossible d'ajouter le bien");
 
         showToast({ type: ToastType.Success, message: 'Bien ajouté avec succès !' });
+        resetFormToInitialValues();
         closeAndCancel();
       } else if (home) {
         // For edit mode, only check for duplicates if the title has changed
@@ -256,6 +288,7 @@ export default function HomeForm({
         if (!result) throw new Error('Impossible de mettre à jour le bien');
 
         showToast({ type: ToastType.Success, message: 'Bien mis à jour avec succès !' });
+        resetFormToInitialValues();
         closeAndCancel();
       }
     } catch (error) {
@@ -350,6 +383,7 @@ export default function HomeForm({
           placeholder="Décrivez les caractéristiques du bien..."
           regex={descriptionLengthRegex}
           required
+          forceRecalc={forceRecalc}
         />
 
         <Select
@@ -405,6 +439,7 @@ export default function HomeForm({
           maxObjectives={MAX_OBJECTIVES}
           disabled={isSubmitting}
           error={objectivesError}
+          forceRecalc={forceRecalc}
         />
       </form>
     </FullScreenModal>

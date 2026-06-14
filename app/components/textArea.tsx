@@ -1,9 +1,10 @@
 import Label from '@/app/components/label';
-import { errorClassName, inputFieldClassName, rowClassName, textAreaCharCountClassName } from '@/app/utils/className';
-import { handleInputBlur, handleChange } from '@/app/utils/form';
+import { cn, errorClassName, inputFieldClassName, textAreaCharCountClassName } from '@/app/utils/className';
+import { handleChange, handleInputBlur } from '@/app/utils/form';
 import { getMaxLength } from '@/app/utils/regex';
+import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import type { ForwardRefRenderFunction, ReactNode } from 'react';
-import { forwardRef, useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 
 interface TextAreaProps {
   id: string;
@@ -16,10 +17,10 @@ interface TextAreaProps {
   required?: boolean;
   placeholder?: string;
   className?: string;
-  row?: boolean;
   rows?: number;
   tooltip?: ReactNode;
   regex: RegExp;
+  forceRecalc?: boolean;
 }
 
 const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaProps> = (
@@ -34,28 +35,48 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
     required = false,
     placeholder = '',
     className = '',
-    row = false,
     rows = 1,
     tooltip,
     regex,
+    forceRecalc,
   },
   ref,
 ) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMultiLine, setIsMultiLine] = useState(false);
 
   useEffect(() => {
     const textarea = textareaRef.current;
-    if (textarea) {
+    if (textarea && !isCollapsed) {
       textarea.style.height = 'auto';
       textarea.style.height = `${textarea.scrollHeight}px`;
+      setIsMultiLine(textarea.scrollHeight > 40);
+    } else if (textarea && isCollapsed) {
+      textarea.style.height = '40px';
     }
-  }, [value]);
+  }, [value, forceRecalc, isCollapsed]);
+
+  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
   return (
-    <div className={row ? rowClassName : className}>
-      <Label id={id} required={required} tooltip={tooltip}>
-        {label}
-      </Label>
+    <div className={className}>
+      <div className="flex items-center justify-between">
+        <Label id={id} required={required} tooltip={tooltip}>
+          {label}
+        </Label>
+        {isMultiLine && (
+          <button
+            type="button"
+            onClick={toggleCollapse}
+            className="p-1 hover:bg-foreground/10 rounded cursor-pointer transition-colors"
+            disabled={disabled}
+            tabIndex={-1}
+          >
+            {isCollapsed ? <IconChevronDown size={16} /> : <IconChevronUp size={16} />}
+          </button>
+        )}
+      </div>
       <div className="relative">
         <textarea
           id={id}
@@ -68,7 +89,7 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
           value={value}
           onChange={e => handleChange(e, onChange, onError, regex)}
           onBlur={e => handleInputBlur(e, onChange, onError, regex)}
-          className={inputFieldClassName(error)}
+          className={cn(inputFieldClassName(error), 'pb-2')}
           disabled={disabled}
           required={required}
           placeholder={placeholder}

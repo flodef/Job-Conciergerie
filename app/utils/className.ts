@@ -5,17 +5,17 @@ export function cn(...inputs: ClassNameValue[]) {
   return twMerge(inputs);
 }
 
-export const rowClassName = 'w-full flex flex-row justify-between my-4 gap-4 items-center';
+export const rowClassName = 'flex flex-row justify-between my-2 gap-4 items-center';
 export const titleClassName = 'text-lg font-medium';
 export const textClassName = 'text-sm font-medium text-foreground';
 export const textPulseClassName = textClassName + ' italic animate-pulse';
 export const descriptionClassName = 'text-sm font-medium text-light';
 export const containerClassName = descriptionClassName + ' flex items-center gap-1';
 export const labelClassName = 'text-base font-medium text-foreground whitespace-nowrap';
-export const errorClassName = 'text-red-500 text-sm mt-1';
+export const errorClassName = 'text-red-500 text-sm';
 export const textAreaCharCountClassName = 'text-right text-sm text-foreground/50 -mt-1.5';
 export const inputClassName =
-  'w-full p-2 pl-9 border-2 border-secondary rounded-md focus:ring-primary focus:border-primary focus-visible:outline-none focus-within:outline-none';
+  'w-full px-2 py-1 pl-9 border-2 border-secondary rounded-md focus:ring-primary focus:border-primary focus-visible:outline-none focus-within:outline-none';
 export const spinningClassName =
   'w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin mr-2';
 export const secondaryButtonClassName = 'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 cursor-pointer';
@@ -45,7 +45,7 @@ export const buttonClassName = (type: ButtonStyle) =>
   );
 export const selectClassName = (error: boolean | string, disabled: boolean, isFocused: boolean, isOpen: boolean) =>
   cn(
-    'w-full p-2 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer min-w-0',
+    'w-full px-2 py-1 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer min-w-0',
     'focus-visible:outline-none focus-within:outline-none border-2',
     error && 'border-red-500',
     disabled && 'opacity-50 cursor-not-allowed',
@@ -53,7 +53,7 @@ export const selectClassName = (error: boolean | string, disabled: boolean, isFo
   );
 export const inputFieldClassName = (error: boolean | string) =>
   cn(
-    'w-full px-3 py-2 rounded-lg bg-background text-foreground border-2 cursor-pointer focus-visible:outline-none focus-within:outline-none',
+    'w-full px-2 py-1 rounded-lg bg-background text-foreground border-2 cursor-pointer focus-visible:outline-none focus-within:outline-none',
     error ? 'border-red-500' : 'border-secondary focus:border-primary',
   );
 export const filterButtonClassName = (shouldAppear: boolean) =>
@@ -64,11 +64,8 @@ export const filterButtonClassName = (shouldAppear: boolean) =>
       ? 'bg-foreground/10 text-foreground w-[115px]'
       : 'bg-foreground/5 text-foreground/40 w-0 px-[0px] overflow-hidden',
   );
-export const optionsClassName = (openUpward: boolean) =>
-  cn(
-    'absolute z-50 w-full bg-background border border-foreground/20 rounded-lg shadow-lg overflow-auto max-h-[202px]',
-    openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
-  );
+export const optionsClassName =
+  'w-full bg-background border border-foreground/20 rounded-lg shadow-lg overflow-auto max-h-[202px]';
 export const optionClassName = (isHighlighted: boolean, isSelected?: boolean) =>
   cn(
     'p-2 cursor-pointer hover:bg-primary/10 flex items-center justify-between',

@@ -1,7 +1,7 @@
 'use client';
 
 import Label from '@/app/components/label';
-import { errorClassName, inputFieldClassName } from '@/app/utils/className';
+import { cn, errorClassName, inputFieldClassName } from '@/app/utils/className';
 import { getMaxLength, objectiveLengthRegex } from '@/app/utils/regex';
 import type { ForwardedRef, ReactNode } from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
@@ -16,11 +16,12 @@ type ObjectiveListProps = {
   error?: string;
   disabled?: boolean;
   tooltip?: ReactNode;
+  forceRecalc?: boolean;
 };
 
 const ObjectiveList = forwardRef(
   (
-    { id, label, objectives, setObjectives, maxObjectives, error, disabled, tooltip }: ObjectiveListProps,
+    { id, label, objectives, setObjectives, maxObjectives, error, disabled, tooltip, forceRecalc }: ObjectiveListProps,
     forwardedRef: ForwardedRef<HTMLTextAreaElement>,
   ) => {
     const inputRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
@@ -36,7 +37,7 @@ const ObjectiveList = forwardRef(
           textarea.style.height = `${textarea.scrollHeight}px`;
         }
       });
-    }, [objectives]);
+    }, [objectives, forceRecalc]);
 
     useEffect(() => {
       if (objectives.length !== prevObjectivesLength.current) {
@@ -218,7 +219,7 @@ const ObjectiveList = forwardRef(
                 }}
                 rows={1}
                 disabled={disabled}
-                className={inputFieldClassName(errorMessages[index])}
+                className={cn(inputFieldClassName(errorMessages[index]), 'pb-2')}
                 style={{ resize: 'none', overflow: 'hidden' }}
               />
               {(objectives.length > 1 || objective !== '') && (

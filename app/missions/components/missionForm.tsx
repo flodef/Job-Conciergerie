@@ -42,6 +42,7 @@ type MissionFormProps = {
   onSuccess?: (updatedMission: Mission) => void;
   mode: UpdateMode;
   skipAnimation?: boolean;
+  forceRecalc?: boolean;
 };
 
 export default function MissionForm({
@@ -51,6 +52,7 @@ export default function MissionForm({
   onSuccess,
   mode,
   skipAnimation = false,
+  forceRecalc = false,
 }: MissionFormProps) {
   const { homes, addMission, updateMission, missionExists } = useMissions();
   const { conciergerieName, employees: allEmployees } = useAuth();
@@ -120,6 +122,47 @@ export default function MissionForm({
   const startDateRef = useRef<HTMLInputElement>(null);
   const endDateRef = useRef<HTMLInputElement>(null);
 
+  // Helper function to reset form to initial values
+  const resetFormToInitialValues = useCallback(() => {
+    setCannotEdit(false);
+    setIsSubmitting(false);
+    setIsSuccess(false);
+    setHomeIdError('');
+    setTasksError('');
+    setStartDateTimeError('');
+    setEndDateTimeError('');
+    setConciergerieCommentError('');
+    const { startDateTime: start, endDateTime: end } = getMissionDateTime(mission);
+    const initialHomeId = mission?.homeId || filteredHomes[0]?.id || '';
+    const initialTasks = mission?.tasks || (mode === 'add' ? [Task.Cleaning] : []);
+    const initialSelectedEmployees = mission?.allowedEmployees || [];
+    const initialTravellers = mode === 'edit' && mission ? mission.travellers : (filteredHomes[0]?.maxTravellers ?? 1);
+    const initialConciergerieComment = mission?.conciergerieComment || '';
+    setHomeId(initialHomeId);
+    setStartDateTime(start);
+    setEndDateTime(end);
+    setTasks(initialTasks);
+    setSelectedEmployees(initialSelectedEmployees);
+    setTravellers(initialTravellers);
+    setConciergerieComment(initialConciergerieComment);
+    setInitialFormValues({
+      homeId: initialHomeId,
+      startDateTime: start,
+      endDateTime: end,
+      tasks: initialTasks,
+      selectedEmployees: initialSelectedEmployees,
+      travellers: initialTravellers,
+      conciergerieComment: initialConciergerieComment,
+    });
+    const ref = mode === 'add' ? homeSelectRef : taskRef;
+    ref?.current?.focus();
+  }, [mission, mode, filteredHomes]);
+
+  // Initialize form values on mount
+  useEffect(() => {
+    resetFormToInitialValues();
+  }, [resetFormToInitialValues]);
+
   // Check if mission can be edited
   useEffect(() => {
     if (mode === 'edit' && mission) {
@@ -157,19 +200,6 @@ export default function MissionForm({
     }
   }, [homeId, filteredHomes, mode]);
 
-  // Set up French locale for date inputs
-  useEffect(() => {
-    setInitialFormValues({
-      homeId,
-      startDateTime,
-      endDateTime,
-      tasks,
-      selectedEmployees,
-      travellers,
-      conciergerieComment,
-    });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   // Check if form has been modified
   const checkFormChanged = useCallback(() => {
     if (!initialFormValues) return false;
@@ -206,8 +236,14 @@ export default function MissionForm({
 
   const { handleCancel, handleClose } = useUnsavedChangesConfirmation({
     checkFormChanged,
-    onClose,
-    onCancel,
+    onClose: () => {
+      resetFormToInitialValues();
+      onClose();
+    },
+    onCancel: () => {
+      resetFormToInitialValues();
+      onCancel?.();
+    },
   });
 
   const handleSubmit = async () => {
@@ -283,6 +319,7 @@ export default function MissionForm({
 
         setIsSuccess(true);
         showToast({ type: ToastType.Success, message: 'Mission ajoutée avec succès !' });
+        resetFormToInitialValues();
         onClose();
       } else if (mission) {
         const selectedHome = filteredHomes.find(h => h.id === homeId);
@@ -315,6 +352,7 @@ export default function MissionForm({
             : 'Mission mise à jour avec succès !',
         });
         if (onSuccess) onSuccess(updatedMission);
+        resetFormToInitialValues();
         onClose();
       }
     } catch (error) {
@@ -458,7 +496,8 @@ export default function MissionForm({
 
         <ResponsiveDateTimeInput
           id="start-date"
-          label="Date et heure de début"
+          label="Début"
+          className="w-60"
           ref={startDateRef}
           value={startDateTime}
           onChange={handleStartDateChange}
@@ -472,11 +511,13 @@ export default function MissionForm({
           min={localISOString(getMinStartDate())}
           disabled={isSubmitting || cannotEdit}
           required
+          row
         />
 
         <ResponsiveDateTimeInput
           id="end-date"
-          label="Date et heure de fin"
+          label="Fin"
+          className="w-60"
           ref={endDateRef}
           value={endDateTime}
           onChange={handleEndDateChange}
@@ -489,6 +530,7 @@ export default function MissionForm({
           min={localISOString(getMinEndDate())}
           disabled={isSubmitting || cannotEdit}
           required
+          row
         />
 
         <MultiSelect
@@ -527,6 +569,7 @@ export default function MissionForm({
           onError={setConciergerieCommentError}
           disabled={isSubmitting || cannotEdit}
           placeholder="Exemples : informations spécifiques, consignes particulières..."
+          forceRecalc={forceRecalc}
           regex={messageLengthRegex}
         />
       </form>

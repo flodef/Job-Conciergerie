@@ -30,6 +30,7 @@ type SelectProps = {
   required?: boolean;
   row?: boolean;
   tooltip?: ReactNode;
+  maxItems?: number; // Maximum number of items to show in dropdown
 };
 
 const Select = forwardRef(
@@ -48,6 +49,7 @@ const Select = forwardRef(
       required = false,
       row = false,
       tooltip,
+      maxItems,
     }: SelectProps,
     forwardedRef: ForwardedRef<HTMLDivElement>,
   ) => {
@@ -228,13 +230,22 @@ const Select = forwardRef(
               )}
               style={{ zIndex: 50 }}
             >
+              {canScrollUp && (
+                <div
+                  className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
+                  style={{ zIndex: 51 }}
+                >
+                  <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
+                </div>
+              )}
               <div
                 id={`${id}-options`}
                 ref={el => {
                   optionsRef.current = el;
                   scrollRef.current = el;
                 }}
-                className={optionsClassName(openUpward)}
+                className={optionsClassName}
+                style={{ maxHeight: maxItems ? `${maxItems * 40}px` : '202px' }}
                 role="listbox"
               >
                 {options.map((option: string | number | SelectOption, index: number) => {
@@ -255,14 +266,6 @@ const Select = forwardRef(
                   );
                 })}
               </div>
-              {canScrollUp && (
-                <div
-                  className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
-                  style={{ zIndex: 51 }}
-                >
-                  <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
-                </div>
-              )}
               {canScrollDown && (
                 <div
                   className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"

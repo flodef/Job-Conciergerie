@@ -1,7 +1,14 @@
 'use client';
 
 import Label from '@/app/components/label';
-import { cn, errorClassName, optionClassName, rowClassName, selectClassName } from '@/app/utils/className';
+import {
+  cn,
+  errorClassName,
+  optionClassName,
+  optionsClassName,
+  rowClassName,
+  selectClassName,
+} from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
@@ -27,6 +34,7 @@ type MultiSelectProps = {
   allOption?: boolean; // Whether to include an "All" option
   row?: boolean;
   tooltip?: ReactNode;
+  maxItems?: number; // Maximum number of items to show in dropdown
 };
 
 const MultiSelect = forwardRef(
@@ -45,6 +53,7 @@ const MultiSelect = forwardRef(
       allOption = true,
       row = false,
       tooltip,
+      maxItems,
     }: MultiSelectProps,
     forwardedRef: ForwardedRef<HTMLDivElement>,
   ) => {
@@ -221,7 +230,8 @@ const MultiSelect = forwardRef(
               <div
                 id={`${id}-options`}
                 ref={optionsRef}
-                className="w-full bg-background border border-foreground/20 rounded-lg shadow-lg overflow-auto max-h-[202px]"
+                className={optionsClassName}
+                style={{ maxHeight: maxItems ? `${maxItems * 40}px` : '202px' }}
                 role="listbox"
                 aria-multiselectable="true"
               >
