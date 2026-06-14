@@ -10,20 +10,10 @@ interface SwitchProps {
   id?: string;
   label?: ReactNode;
   tooltip?: ReactNode;
-  row?: boolean;
   className?: string;
 }
 
-const Switch: React.FC<SwitchProps> = ({
-  enabled,
-  onToggle,
-  size = 'md',
-  id = '',
-  label,
-  tooltip,
-  row = true,
-  className,
-}) => {
+const Switch: React.FC<SwitchProps> = ({ enabled, onToggle, size = 'md', id = '', label, tooltip, className }) => {
   // Size mappings
   const sizes = {
     sm: {
@@ -75,7 +65,7 @@ const Switch: React.FC<SwitchProps> = ({
   if (!label) return switchElement;
 
   return (
-    <div className={cn(row ? rowClassName : '', 'my-3', className)}>
+    <div className={cn(rowClassName, 'w-full my-3', className)}>
       <Label id={id} required={true} tooltip={tooltip}>
         {label}
       </Label>

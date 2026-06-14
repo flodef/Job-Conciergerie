@@ -353,6 +353,7 @@ export default function HomeForm({
           disabled={isSubmitting}
           placeholder="Entrez le titre du bien..."
           required
+          row
         />
 
         <Combobox
