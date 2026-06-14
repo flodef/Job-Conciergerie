@@ -75,5 +75,5 @@ export interface Mission {
   hours: number; // Total hours for the mission based on tasks and home specifications
   allowDuo: boolean; // Whether this mission can be done by a duo (2 providers) - copied from home at creation
   travellers: number; // Number of travellers for this mission
-  conciergerieComment?: string; // Free text comment from conciergerie about the mission
+  conciergerieComment?: string | null; // Free text comment from conciergerie about the mission
 }

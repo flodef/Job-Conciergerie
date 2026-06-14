@@ -2,17 +2,25 @@ import { describe, expect, test, beforeAll, afterAll } from 'vitest';
 import type { Mission } from '@/app/types/dataTypes';
 import { Task } from '@/app/types/dataTypes';
 import { getMissionHoursPerProvider, getMissionProviderCount } from '@/app/utils/task';
-import { createNewMission, updateMissionData } from '@/app/actions/mission';
-import { createHome } from '@/app/db/homeDb';
-import { deleteMission } from '@/app/db/missionDb';
-import { sql } from '@/app/db/db';
 
 const TEST_HOME_ID = 'test-home-hours-fix';
 const TEST_MISSION_ID = 'test-mission-hours-fix';
 const TEST_CONCIERGERIE = 'MENTHEREGLISSE';
 
 describe.skipIf(!process.env.DATABASE_URL)('Mission Actions - conciergerieComment field', () => {
+  let createNewMission: any, updateMissionData: any, createHome: any, deleteMission: any, sql: any;
+
   beforeAll(async () => {
+    // Import database-dependent modules only when DATABASE_URL is set
+    const missionActions = await import('@/app/actions/mission');
+    createNewMission = missionActions.createNewMission;
+    updateMissionData = missionActions.updateMissionData;
+    const homeDb = await import('@/app/db/homeDb');
+    createHome = homeDb.createHome;
+    const missionDb = await import('@/app/db/missionDb');
+    deleteMission = missionDb.deleteMission;
+    const db = await import('@/app/db/db');
+    sql = db.sql;
     // Debug: log DATABASE_URL
     console.log('DATABASE_URL in test:', process.env.DATABASE_URL?.substring(0, 60));
 
