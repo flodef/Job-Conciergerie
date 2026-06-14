@@ -475,13 +475,20 @@ export default function HistoryPage() {
 
       {/* Mission list */}
       {filteredMissions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-light">
-          <IconBriefcase size={48} className="opacity-30" />
-          <p className="text-center">
-            {completedMissions.length === 0
-              ? 'Aucune mission terminée pour le moment.'
-              : 'Aucune mission ne correspond aux filtres sélectionnés.'}
-          </p>
+        <div className="flex flex-col items-center justify-center h-[calc(100dvh-10.5rem)] border-2 border-dashed border-secondary rounded-lg p-4">
+          <div className="flex flex-col items-center justify-center text-center gap-2">
+            <h3 className={titleClassName}>
+              {completedMissions.length === 0 ? 'Aucune mission terminée' : 'Aucun résultat'}
+            </h3>
+            <p className="text-light">
+              {completedMissions.length === 0
+                ? "Vous n'avez pas encore de missions terminées"
+                : 'Aucune mission ne correspond aux filtres sélectionnés'}
+            </p>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
+              <IconBriefcase size={32} />
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-2">

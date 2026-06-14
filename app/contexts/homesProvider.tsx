@@ -2,7 +2,7 @@
 
 import { createNewHome, deleteHomeData, fetchAllHomes, updateHomeData } from '@/app/actions/home';
 import { deleteFileFromSupabase } from '@/app/actions/storage';
-import type { Toast} from '@/app/components/toastMessage';
+import type { Toast } from '@/app/components/toastMessage';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
@@ -12,7 +12,7 @@ import { generateSimpleId } from '@/app/utils/id';
 import { navigationRoutes, Page } from '@/app/utils/navigation';
 import { getStorageImageUrl } from '@/app/utils/storage';
 import { usePathname } from 'next/navigation';
-import type { ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 type HomesContextType = {
@@ -53,7 +53,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
   // Core fetch logic shared between auto-fetch and manual refresh
   const isFetching = useRef(false);
 
-  const fetchHomesCore = useCallback(() => {
+  const fetchHomesCore = useCallback(async () => {
     if (isFetching.current) return Promise.resolve(false);
 
     // Skip fetching if offline - preserve existing data but reset needsRefresh

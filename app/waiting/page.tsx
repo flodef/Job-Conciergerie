@@ -23,7 +23,8 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getEmployeeFullName } from '../utils/employee';
-import { getUserKey } from '../utils/user';
+import { getUserKey, isEmployeeUser } from '../utils/user';
+import M3LoadingSpinner from '../components/m3LoadingSpinner';
 
 const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
 const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
@@ -79,15 +80,7 @@ function RefreshButtons({
 }
 
 export default function WaitingPage() {
-  const {
-    userId,
-    userType,
-    isLoading: authLoading,
-    userData,
-    conciergerieName,
-    findEmployee,
-    findConciergerie,
-  } = useAuth();
+  const { userId, isLoading: authLoading, userData, conciergerieName, findEmployee, findConciergerie } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [employee, setEmployee] = useState<Employee>();
@@ -103,8 +96,6 @@ export default function WaitingPage() {
     setConciergerie(foundConciergerie);
     setPrimaryColor(foundConciergerie?.color);
     setMinimumWaitingTime(CONCIERGERIE_MINIMUM_WAITING_TIME);
-
-    setIsLoading(false);
   }, [conciergerieName, findConciergerie]);
 
   const handleEmployee = useCallback(() => {
@@ -112,26 +103,24 @@ export default function WaitingPage() {
     setEmployee(foundEmployee);
     setCreationDate(foundEmployee?.createdAt ? new Date(foundEmployee.createdAt) : new Date());
     setMinimumWaitingTime(EMPLOYEE_MINIMUM_WAITING_TIME);
-
-    setIsLoading(false);
   }, [userData, findEmployee]);
 
   // Use a ref to track if we've already loaded the data to prevent infinite loops
   const hasLoadedDataRef = useRef(false);
   useEffect(() => {
     // Wait for auth to be loaded or if we've already loaded the data
-    if (authLoading || hasLoadedDataRef.current || !userType) return;
+    if (authLoading || hasLoadedDataRef.current) return;
 
     // Mark that we're loading data to prevent infinite loops
     hasLoadedDataRef.current = true;
 
-    // Handle conciergerie user type
-    const handleUser = {
-      conciergerie: handleConciergerie,
-      employee: handleEmployee,
-    }[userType];
-    handleUser();
-  }, [userType, authLoading, handleConciergerie, handleEmployee]);
+    // Handle user data
+    if (userData) {
+      if (isEmployeeUser(userData)) handleEmployee();
+      else handleConciergerie();
+    }
+    setIsLoading(false);
+  }, [userData, authLoading, handleConciergerie, handleEmployee]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -202,7 +191,7 @@ export default function WaitingPage() {
     }
   }, [conciergerie, employee, userId, findConciergerie, showToast]);
 
-  if (authLoading || !userType) return null;
+  if (authLoading || isLoading) return <M3LoadingSpinner className="h-full" />;
 
   return (
     <div className="flex-1 flex items-center justify-center bg-background">
@@ -255,7 +244,7 @@ export default function WaitingPage() {
           <>
             <h1 className="text-2xl font-bold text-center">
               {employee.status === 'pending'
-                ? 'Demande en cours d&apos;examen'
+                ? "Demande en cours d'examen"
                 : employee.status === 'accepted'
                   ? 'Nouvel appareil connecté'
                   : 'Demande rejetée'}
@@ -317,8 +306,8 @@ export default function WaitingPage() {
               </p>
             </div>
 
-            <div className="bg-primary/10 p-3 rounded-lg">
-              {employee.status === 'accepted' ? (
+            {employee.status === 'accepted' ? (
+              <div className="bg-primary/10 p-3 rounded-lg">
                 <span className="text-sm text-foreground">
                   Pour accéder à votre compte depuis cet appareil, vous devez :
                   <ul className="list-disc list-inside">
@@ -338,8 +327,10 @@ export default function WaitingPage() {
                     </li>
                   </ul>
                 </span>
-              ) : (
-                <>
+              </div>
+            ) : (
+              employee.status === 'pending' && (
+                <div className="bg-primary/10 p-3 rounded-lg">
                   <p className="text-sm text-foreground">
                     <span className="font-medium">Délai de traitement habituel :</span> 48 heures ouvrées
                   </p>
@@ -347,9 +338,9 @@ export default function WaitingPage() {
                     Une fois votre demande acceptée, vous pourrez accéder directement à l&apos;application lors de votre
                     prochaine visite.
                   </p>
-                </>
-              )}
-            </div>
+                </div>
+              )
+            )}
 
             <RefreshButtons
               refreshDisabled={refreshDisabled}
@@ -359,15 +350,15 @@ export default function WaitingPage() {
               minimumWaitingTime={minimumWaitingTime}
             />
           </>
-        ) : !isLoading ? (
+        ) : (
           // Error state
           <ErrorPage
             title="Demande non trouvée"
             message="Nous n'avons pas pu trouver votre demande. Veuillez retourner à la page d'accueil et soumettre une nouvelle demande."
           />
-        ) : null}
+        )}
       </div>
-      {(isLoading || employee || conciergerie) && <AppVersion />}
+      <AppVersion />
     </div>
   );
 }

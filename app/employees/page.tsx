@@ -153,13 +153,11 @@ export default function EmployeesList() {
         <table className="min-w-full divide-y divide-secondary">
           <thead className="bg-secondary/10">
             <tr>
-              <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
-                Nom
-              </th>
-              <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
+              <th className="px-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">Nom</th>
+              <th className="px-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
                 Contact
               </th>
-              <th className="px-1 py-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
+              <th className="px-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -230,18 +228,18 @@ function EmployeeRow({
 }) {
   return (
     <tr className="hover:bg-secondary/5 cursor-pointer transition-colors overflow-x-hidden" onClick={onClick}>
-      <td className="px-1 py-1 pl-0">
+      <td className="px-1 pl-0 pr-1">
         <div className={cn(textClassName, 'flex flex-col truncate text-wrap max-w-28 sm:max-w-full')}>
           {getEmployeeFullName(employee)}
         </div>
       </td>
-      <td className="px-1 py-1 whitespace-nowrap">
+      <td className="px-1 py-0 whitespace-nowrap">
         <div className={cn(textClassName, 'flex flex-col truncate max-w-28 sm:max-w-full')}>
           <div>{employee.email}</div>
           <div>{employee.tel}</div>
         </div>
       </td>
-      <td className={cn(textClassName, 'px-1 py-1 pr-0 whitespace-nowrap justify-items-center')}>
+      <td className={cn(textClassName, 'px-1 pl-1 pr-0 whitespace-nowrap justify-items-center')}>
         <div className="flex space-x-2 justify-center" onClick={e => e.stopPropagation()}>
           {employee.status !== 'accepted' && (
             <button

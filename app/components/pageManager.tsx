@@ -11,6 +11,16 @@ import { Page } from '@/app/utils/navigation';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useEffect, useRef } from 'react';
 
+const pages = [
+  { page: Page.Missions, component: <MissionsPage /> },
+  { page: Page.Calendar, component: <Calendar /> },
+  { page: Page.History, component: <HistoryPage /> },
+  { page: Page.Homes, component: <HomesPage /> },
+  { page: Page.Employees, component: <EmployeesList /> },
+  { page: Page.Settings, component: <Settings /> },
+  { page: Page.Welcome, component: <Welcome /> },
+] as const;
+
 // All pages are rendered once and kept in DOM, only visibility changes
 export function PageManager() {
   const { currentPage } = useMenuContext();
@@ -35,91 +45,21 @@ export function PageManager() {
 
   return (
     <div ref={scrollRef} className="h-full overflow-y-auto relative">
-      {/* Each page wrapper - active page is relative (natural height), inactive are absolute with 0 height */}
-      <div
-        className="transition-opacity duration-200 ease-in-out"
-        style={{
-          position: activePage === Page.Missions ? 'relative' : 'absolute',
-          height: activePage === Page.Missions ? 'auto' : 0,
-          overflow: activePage === Page.Missions ? 'visible' : 'hidden',
-          opacity: activePage === Page.Missions ? 1 : 0,
-          width: '100%',
-        }}
-      >
-        <MissionsPage />
-      </div>
-      <div
-        className="transition-opacity duration-200 ease-in-out"
-        style={{
-          position: activePage === Page.Calendar ? 'relative' : 'absolute',
-          height: activePage === Page.Calendar ? 'auto' : 0,
-          overflow: activePage === Page.Calendar ? 'visible' : 'hidden',
-          opacity: activePage === Page.Calendar ? 1 : 0,
-          width: '100%',
-        }}
-      >
-        <Calendar />
-      </div>
-      <div
-        className="transition-opacity duration-200 ease-in-out"
-        style={{
-          position: activePage === Page.History ? 'relative' : 'absolute',
-          height: activePage === Page.History ? 'auto' : 0,
-          overflow: activePage === Page.History ? 'visible' : 'hidden',
-          opacity: activePage === Page.History ? 1 : 0,
-          width: '100%',
-        }}
-      >
-        <HistoryPage />
-      </div>
-      <div
-        className="transition-opacity duration-200 ease-in-out"
-        style={{
-          position: activePage === Page.Homes ? 'relative' : 'absolute',
-          height: activePage === Page.Homes ? 'auto' : 0,
-          overflow: activePage === Page.Homes ? 'visible' : 'hidden',
-          opacity: activePage === Page.Homes ? 1 : 0,
-          width: '100%',
-        }}
-      >
-        <HomesPage />
-      </div>
-      <div
-        className="transition-opacity duration-200 ease-in-out"
-        style={{
-          position: activePage === Page.Employees ? 'relative' : 'absolute',
-          height: activePage === Page.Employees ? 'auto' : 0,
-          overflow: activePage === Page.Employees ? 'visible' : 'hidden',
-          opacity: activePage === Page.Employees ? 1 : 0,
-          width: '100%',
-        }}
-      >
-        <EmployeesList />
-      </div>
-      <div
-        className="transition-opacity duration-200 ease-in-out"
-        style={{
-          position: activePage === Page.Settings ? 'relative' : 'absolute',
-          height: activePage === Page.Settings ? 'auto' : 0,
-          overflow: activePage === Page.Settings ? 'visible' : 'hidden',
-          opacity: activePage === Page.Settings ? 1 : 0,
-          width: '100%',
-        }}
-      >
-        <Settings />
-      </div>
-      <div
-        className="transition-opacity duration-200 ease-in-out"
-        style={{
-          position: activePage === Page.Welcome ? 'relative' : 'absolute',
-          height: activePage === Page.Welcome ? 'auto' : 0,
-          overflow: activePage === Page.Welcome ? 'visible' : 'hidden',
-          opacity: activePage === Page.Welcome ? 1 : 0,
-          width: '100%',
-        }}
-      >
-        <Welcome />
-      </div>
+      {pages.map(({ page, component }) => (
+        <div
+          key={page}
+          className="transition-opacity duration-200 ease-in-out"
+          style={{
+            position: activePage === page ? 'relative' : 'absolute',
+            height: activePage === page ? 'auto' : 0,
+            overflow: activePage === page ? 'visible' : 'hidden',
+            opacity: activePage === page ? 1 : 0,
+            width: '100%',
+          }}
+        >
+          {component}
+        </div>
+      ))}
     </div>
   );
 }

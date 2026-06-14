@@ -18,7 +18,7 @@ import { useRateLimiter } from '@/app/hooks/useRateLimiter';
 import type { Employee } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
 import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
-import { formatId, getDevices, MAX_DEVICES, MaxDevicesError } from '@/app/utils/id';
+import { formatId, getConnectedDevices, getDevices, MAX_DEVICES, MaxDevicesError } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -31,7 +31,7 @@ type EmployeeFormProps = {
 };
 
 export default function EmployeeForm({ onClose }: EmployeeFormProps) {
-  const { userId, conciergeries, updateUserData, updateUserType, findConciergerie, isLoading, generateId } = useAuth();
+  const { userId, conciergeries, updateUserData, findConciergerie, isLoading, generateId } = useAuth();
   const { onMenuChange } = useMenuContext();
 
   // Using Partial<Employee> since we don't have status and createdAt yet
@@ -226,8 +226,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         });
         if (!newEmployee) throw new Error('Prestataire non créé dans la base de données');
 
-        updateUserType('employee');
-        updateUserData(newEmployee, 'employee');
+        updateUserData(newEmployee);
 
         // Clear saved form data so a different user on the same device starts fresh
         setFormData({
@@ -249,8 +248,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         await EmailSender.sendRegistrationEmail(selectedConciergerie, newEmployee);
         showToast({ type: ToastType.Success, message: "L'email de notification a été envoyé avec succès" });
 
-        // Wait a bit before redirecting to allow the email to be sent and a toast to be displayed
-        setTimeout(() => onMenuChange(Page.Waiting), 1500);
+        onMenuChange(Page.Waiting);
       }
     } catch (error) {
       showToast({
@@ -266,7 +264,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     if (!userId) throw new Error("L'identifiant n'est pas défini");
 
     const newIds = getDevices(employee.id, userId, true, evictOldest);
-    if (employee.status === 'accepted' && JSON.stringify(newIds) !== JSON.stringify(employee.id)) {
+    if (JSON.stringify(newIds) !== JSON.stringify(employee.id)) {
       const updatedIds = await updateEmployeeWithUserId(employee, newIds);
 
       if (!updatedIds) throw new Error('Prestataire non mis à jour dans la base de données');
@@ -278,8 +276,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       };
 
       // Update local user data and userType so auth context is fully set before navigating
-      updateUserType('employee');
-      updateUserData(updatedEmployee, 'employee');
+      updateUserData(updatedEmployee);
 
       // Send notification email to employee about the new device
       await EmailSender.sendNewDeviceEmail(updatedEmployee, userId);
@@ -288,12 +285,12 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         message: "L'email de notification de nouvel appareil a été envoyé avec succès",
       });
 
-      // Wait a bit before redirecting to allow the email to be sent and a toast to be displayed
-      setTimeout(() => onMenuChange(Page.Waiting), 1500);
+      onMenuChange(Page.Waiting);
     } else {
-      updateUserType('employee');
-      updateUserData(employee, 'employee');
-      onMenuChange(employee.status === 'accepted' ? Page.Missions : Page.Waiting);
+      updateUserData(employee);
+      onMenuChange(
+        employee.status === 'accepted' && getConnectedDevices(newIds).includes(userId) ? Page.Missions : Page.Waiting,
+      );
     }
   };
 

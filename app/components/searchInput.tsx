@@ -18,7 +18,7 @@ export default function SearchInput({
   className = '',
 }: SearchInputProps) {
   return (
-    <div className={cn('relative', className)}>
+    <div className={cn('relative sm:max-w-72', className)}>
       <input
         type="text"
         placeholder={placeholder}

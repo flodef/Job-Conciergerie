@@ -111,14 +111,14 @@ export default function Missions() {
     fetchMissions()
       .then(isSuccess => {
         if (isSuccess) updateFetchTime([Page.Calendar, Page.Missions, Page.Homes]);
-        else
+        else if (!hasLoadedOnce)
           showToast({
             type: ToastType.Error,
             message: 'Erreur lors du chargement des missions',
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [authLoading, fetchMissions, updateFetchTime, needsRefreshMissions, showToast]);
+  }, [authLoading, fetchMissions, updateFetchTime, needsRefreshMissions, showToast, hasLoadedOnce]);
 
   // Load saved filters from localStorage on component mount - must be called before any conditional returns
   useEffect(() => {

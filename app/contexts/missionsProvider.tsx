@@ -153,7 +153,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
   // Core fetch logic shared between auto-fetch and manual refresh
   const isFetching = useRef(false);
 
-  const fetchMissionsCore = useCallback(() => {
+  const fetchMissionsCore = useCallback(async () => {
     if (isFetching.current) return Promise.resolve(false);
 
     // Skip fetching if offline - preserve existing data but reset needsRefresh

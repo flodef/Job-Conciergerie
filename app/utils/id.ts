@@ -103,6 +103,7 @@ export function getDevices(ids: string[], userId: string, isNewDevice = false, e
     connectedDevices = connectedDevices.slice(1); // remove the oldest (first stored)
   }
 
-  const newId = isNewDevice ? NEW_ID_CHAR + userId : userId;
+  const newId = isNewDevice && !ids.includes(userId) ? NEW_ID_CHAR + userId : userId;
+
   return connectedDevices.length ? [...connectedDevices.filter(id => id !== userId), newId] : [userId];
 }

@@ -79,14 +79,14 @@ export default function Calendar() {
     fetchMissions()
       .then(isSuccess => {
         if (isSuccess) updateFetchTime([Page.Calendar, Page.Missions, Page.Homes]);
-        else
+        else if (!hasLoadedOnce)
           showToast({
             type: ToastType.Error,
             message: 'Erreur lors du chargement des missions',
           });
       })
       .finally(() => (isFetching.current = false));
-  }, [authLoading, fetchMissions, updateFetchTime, needsRefreshCalendar, showToast]);
+  }, [authLoading, fetchMissions, updateFetchTime, needsRefreshCalendar, showToast, hasLoadedOnce]);
 
   // Second useEffect to handle mission filtering after we have the user identity
   useEffect(() => {
@@ -197,7 +197,7 @@ export default function Calendar() {
 
   if (acceptedMissions.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100dvh-10rem)] border-2 border-dashed border-secondary rounded-lg p-8">
+      <div className="flex flex-col items-center justify-center h-[calc(100dvh-10.5rem)] border-2 border-dashed border-secondary rounded-lg p-4 m-4">
         <div className="flex flex-col items-center justify-center text-center gap-2">
           <h3 className={titleClassName}>{isEmployee ? 'Aucune mission acceptée' : 'Aucune mission en cours'}</h3>
           <p className="text-light">
