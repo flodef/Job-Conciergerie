@@ -2,7 +2,7 @@
 
 import type { Home } from '@/app/types/dataTypes';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
-import { IconUsers } from '@tabler/icons-react';
+import { IconFileDescription, IconPencil, IconUsers } from '@tabler/icons-react';
 import { useImageCache } from '@/app/hooks/useImageCache';
 import HomeTitle from '@/app/components/homeTitle';
 import React, { useMemo } from 'react';
@@ -11,6 +11,7 @@ type HomeCardProps = {
   home: Home;
   onClick: () => void;
   onEdit: () => void;
+  onNotesClick: () => void;
   displayMode?: 'list' | 'grid' | 'thumb';
 };
 
@@ -48,17 +49,28 @@ const HomeImage = React.memo(function HomeImage({
 });
 
 // Memoized HomeCard to prevent re-renders when parent state changes
-const HomeCard = React.memo(function HomeCard({ home, onClick, onEdit, displayMode = 'thumb' }: HomeCardProps) {
+const HomeCard = React.memo(function HomeCard({
+  home,
+  onClick,
+  onEdit,
+  onNotesClick,
+  displayMode = 'thumb',
+}: HomeCardProps) {
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     onEdit();
+  };
+
+  const handleNotesClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onNotesClick();
   };
 
   switch (displayMode) {
     case 'list':
       return (
         <div
-          className="flex items-center justify-between p-2 border-b border-secondary last:border-b-0 cursor-pointer"
+          className="flex items-center justify-between p-1 border-b border-secondary last:border-b-0 cursor-pointer"
           onClick={onClick}
           onContextMenu={handleContextMenu}
         >
@@ -66,10 +78,22 @@ const HomeCard = React.memo(function HomeCard({ home, onClick, onEdit, displayMo
             <div className="relative w-8 h-8 overflow-hidden rounded-md shrink-0">
               <HomeImage home={home} altText={`Miniature de ${home.title}`} />
             </div>
-            {home.allowDuo && <IconUsers size={20} />}
-            <span className="text-foreground font-medium truncate">{home.title}</span>
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                {home.allowDuo && <IconUsers size={20} />}
+                <span className="text-foreground font-medium truncate">{home.title}</span>
+              </div>
+              <span className="text-light text-sm">{home.geographicZone}</span>
+            </div>
           </div>
-          <span className="text-light text-sm shrink-0">{home.geographicZone}</span>
+          <button
+            type="button"
+            onClick={handleNotesClick}
+            className="p-1 hover:bg-secondary rounded cursor-pointer shrink-0"
+            title={home.notes ? 'Voir les notes' : 'Ajouter des notes'}
+          >
+            {home.notes ? <IconFileDescription size={20} /> : <IconPencil size={20} />}
+          </button>
         </div>
       );
     case 'grid':
@@ -80,8 +104,16 @@ const HomeCard = React.memo(function HomeCard({ home, onClick, onEdit, displayMo
           onContextMenu={handleContextMenu}
         >
           {home.allowDuo && (
-            <IconUsers size={24} className="absolute top-1 left-1 bg-white/80 rounded p-1 text-black" />
+            <IconUsers size={24} className="absolute top-0 left-0 p-1 bg-white/80 rounded text-black" />
           )}
+          <button
+            type="button"
+            onClick={handleNotesClick}
+            className="absolute top-0 right-0 p-0.5 bg-white/80 rounded text-black cursor-pointer"
+            title={home.notes ? 'Voir les notes' : 'Ajouter des notes'}
+          >
+            {home.notes ? <IconFileDescription size={24} /> : <IconPencil size={24} />}
+          </button>
           <HomeImage home={home} altText={`Photo de ${home.title}`} className="rounded-md" />
         </div>
       );
@@ -96,6 +128,14 @@ const HomeCard = React.memo(function HomeCard({ home, onClick, onEdit, displayMo
           <HomeTitle home={home} />
 
           <div className="relative aspect-video w-full overflow-hidden rounded-lg mt-auto">
+            <button
+              type="button"
+              onClick={handleNotesClick}
+              className="absolute top-0 right-0 p-1 bg-white/80 rounded text-black cursor-pointer"
+              title={home.notes ? 'Voir les notes' : 'Ajouter des notes'}
+            >
+              {home.notes ? <IconFileDescription size={20} /> : <IconPencil size={20} />}
+            </button>
             <HomeImage home={home} altText={`Photo de ${home.title}`} className="rounded-md" />
           </div>
         </div>

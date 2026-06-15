@@ -22,6 +22,7 @@ type HomesContextType = {
   fetchHomes: () => Promise<boolean>;
   addHome: (home: Omit<Home, 'id' | 'conciergerieName'>) => Promise<boolean>;
   updateHome: (home: Home) => Promise<boolean>;
+  updateHomeLocal: (home: Home) => void;
   deleteHome: (id: string) => Promise<boolean>;
   homeExists: (title: string, id?: string) => boolean;
 };
@@ -167,6 +168,10 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
+  const updateHomeLocal = (updatedHome: Home) => {
+    setHomes(prev => prev.map(home => (home.id === updatedHome.id ? { ...updatedHome } : home)));
+  };
+
   const deleteHome = async (id: string) => {
     const homeToDelete = homes.find(h => h.id === id && h.conciergerieName === conciergerieName);
 
@@ -190,6 +195,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
         fetchHomes,
         addHome,
         updateHome,
+        updateHomeLocal,
         deleteHome,
         homeExists,
       }}

@@ -37,6 +37,7 @@ export interface Home {
   conciergerieName: string; // Reference to the conciergerie by name
   allowDuo: boolean; // Whether missions on this home can be done by a duo (2 providers)
   maxTravellers: number; // Maximum number of travellers allowed for missions on this home
+  notes?: string; // Optional notes about the home
 }
 
 export enum Task {

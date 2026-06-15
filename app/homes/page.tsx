@@ -9,6 +9,7 @@ import { useModal } from '@/app/contexts/modalProvider';
 import HomeCard from '@/app/homes/components/homeCard';
 import HomeDetails from '@/app/homes/components/homeDetails';
 import HomeForm from '@/app/homes/components/homeForm';
+import HomeNotesModal from '@/app/homes/components/homeNotesModal';
 import type { Home } from '@/app/types/dataTypes';
 import { cn, titleClassName } from '@/app/utils/className';
 import { useLocalStorage } from '@/app/utils/localStorage';
@@ -17,7 +18,7 @@ import { useEffect, useMemo, useState } from 'react';
 import M3LoadingSpinner from '../components/m3LoadingSpinner';
 
 export default function HomesPage() {
-  const { myHomes, isLoading: homesLoading } = useHomes();
+  const { myHomes, isLoading: homesLoading, updateHomeLocal } = useHomes();
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
   const { isLoading: authLoading } = useAuth();
   const { openModal, closeModal } = useModal();
@@ -54,6 +55,18 @@ export default function HomesPage() {
 
   const handleHomeEdit = (home: Home) => {
     const id = openModal(() => <HomeForm home={home} onClose={() => closeModal(id)} mode="edit" />);
+  };
+
+  const handleHomeNotes = (home: Home) => {
+    const id = openModal(() => (
+      <HomeNotesModal
+        home={home}
+        onClose={() => closeModal(id)}
+        onSuccess={updatedHome => {
+          updateHomeLocal(updatedHome);
+        }}
+      />
+    ));
   };
 
   const handleAddHome = () => {
@@ -128,7 +141,7 @@ export default function HomesPage() {
           ) : (
             <div
               className={cn(
-                displayMode === 'list' && 'flex flex-col gap-2',
+                displayMode === 'list' && 'flex flex-col',
                 displayMode === 'grid' && 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4',
                 displayMode === 'thumb' && 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4',
               )}
@@ -139,6 +152,7 @@ export default function HomesPage() {
                   home={home}
                   onClick={() => handleHomeClick(home)}
                   onEdit={() => handleHomeEdit(home)}
+                  onNotesClick={() => handleHomeNotes(home)}
                   displayMode={displayMode}
                 />
               ))}

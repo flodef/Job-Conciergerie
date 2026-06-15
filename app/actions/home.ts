@@ -26,6 +26,7 @@ export async function createNewHome(data: {
   conciergerieName: string;
   allowDuo?: boolean;
   maxTravellers?: number;
+  notes?: string;
 }): Promise<Home | null> {
   // Convert to DB format
   const dbData: Omit<DbHome, 'modified_date'> = {
@@ -40,6 +41,7 @@ export async function createNewHome(data: {
     conciergerie_name: data.conciergerieName,
     allow_duo: data.allowDuo ?? false,
     max_travellers: data.maxTravellers ?? 1,
+    notes: data.notes,
   };
 
   return await createHome(dbData);
@@ -61,6 +63,7 @@ export async function updateHomeData(
     conciergerieName: string;
     allowDuo: boolean;
     maxTravellers: number;
+    notes?: string;
   }>,
 ): Promise<Home | null> {
   // Convert to DB format
@@ -75,9 +78,17 @@ export async function updateHomeData(
     conciergerie_name: data.conciergerieName,
     allow_duo: data.allowDuo,
     max_travellers: data.maxTravellers,
+    notes: data.notes,
   };
 
   return await updateHome(id, dbData);
+}
+
+/**
+ * Update only the notes field of a home
+ */
+export async function updateHomeNotes(id: string, notes: string | undefined): Promise<Home | null> {
+  return await updateHome(id, { notes });
 }
 
 /**
