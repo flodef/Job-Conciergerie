@@ -109,9 +109,7 @@ export default function MissionCompletionModal({
   }
 
   // Step 3: fill in the mission report; finalizing happens on close (with or without a report)
-  if (step === 'report') {
-    return <MissionReportModal mission={mission} onClose={finish} />;
-  }
+  if (step === 'report') return <MissionReportModal mission={mission} onClose={finish} />;
 
   const checkedCount = Object.values(checkedObjectives).filter(Boolean).length;
   const totalCount = home.objectives.length;

@@ -1,6 +1,7 @@
 'use client';
 
 import { saveMissionReport } from '@/app/actions/missionReport';
+import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import ImageUploader from '@/app/components/imageUploader';
@@ -33,6 +34,22 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
   const [images, setImages] = useState<string[]>([]);
   const [hasPendingImages, setHasPendingImages] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCloseWarning, setShowCloseWarning] = useState(false);
+
+  const hasUnsavedChanges = content.trim().length > 0 || images.length > 0 || hasPendingImages;
+
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      setShowCloseWarning(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmClose = () => {
+    setShowCloseWarning(false);
+    onClose();
+  };
 
   const imagesRef = useRef<HTMLInputElement>(null);
   const imageUploaderRef = useRef<{
@@ -42,8 +59,8 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
   const handleSubmit = () => {
     if (!isEmployee || !userData) return;
 
-    if (!content.trim() && !hasPendingImages && images.length === 0) {
-      setContentError('Veuillez ajouter un commentaire ou une photo');
+    if (!content.trim()) {
+      setContentError('Veuillez ajouter un commentaire');
       return;
     }
 
@@ -90,7 +107,7 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
     <FormActions
       submitText="Envoyer"
       onSubmit={handleSubmit}
-      onCancel={onClose}
+      onCancel={handleClose}
       submitType="button"
       isSubmitting={isSubmitting}
       disabled={isSubmitting}
@@ -100,14 +117,14 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
   if (!home) return null;
 
   return (
-    <FullScreenModal
-      title="Compte rendu de mission"
-      tooltip="Rédigez un compte rendu (commentaire et/ou photos) qui sera envoyé à la conciergerie"
-      onClose={onClose}
-      footer={footer}
-      disabled={isSubmitting}
-    >
-      <div className="space-y-4 py-2">
+    <>
+      <FullScreenModal
+        title="Compte rendu de mission"
+        tooltip="Rédigez un compte rendu (commentaire et/ou photos) qui sera envoyé à la conciergerie"
+        onClose={handleClose}
+        footer={footer}
+        disabled={isSubmitting}
+      >
         <TextArea
           id="report-content"
           label="Commentaire"
@@ -119,6 +136,7 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
           rows={5}
           regex={messageLengthRegex}
           disabled={isSubmitting}
+          required
         />
 
         <ImageUploader
@@ -136,7 +154,19 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
           onError={() => {}}
           disabled={isSubmitting}
         />
-      </div>
-    </FullScreenModal>
+      </FullScreenModal>
+
+      <ConfirmationModal
+        isOpen={showCloseWarning}
+        onConfirm={handleConfirmClose}
+        onCancel={() => setShowCloseWarning(false)}
+        onClose={() => setShowCloseWarning(false)}
+        title="Fermer sans envoyer"
+        message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir fermer sans envoyer le compte rendu ?"
+        confirmText="Fermer sans envoyer"
+        cancelText="Annuler"
+        isDangerous
+      />
+    </>
   );
 }

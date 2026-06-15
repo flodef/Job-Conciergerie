@@ -1,3 +1,4 @@
+import ConfirmationModal from '@/app/components/confirmationModal';
 import Label from '@/app/components/label';
 import { cn, errorClassName, inputFieldClassName, textAreaCharCountClassName } from '@/app/utils/className';
 import { handleChange, handleInputBlur } from '@/app/utils/form';
@@ -52,6 +53,19 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
+  const handleDelete = () => {
+    if (value && value.length > 0) {
+      setShowDeleteWarning(true);
+    } else {
+      onDelete?.();
+    }
+  };
+
+  const confirmDelete = () => {
+    setShowDeleteWarning(false);
+    onDelete?.();
+  };
+
   const isFixedHeight = rows !== 1;
 
   useEffect(() => {
@@ -73,19 +87,6 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
   }, [value, isCollapsed, isFocused, isFixedHeight]);
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
-
-  const handleDelete = () => {
-    if (value && value.length > 0) {
-      setShowDeleteWarning(true);
-    } else {
-      onDelete?.();
-    }
-  };
-
-  const confirmDelete = () => {
-    setShowDeleteWarning(false);
-    onDelete?.();
-  };
 
   return (
     <div className={className}>
@@ -148,29 +149,17 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
           </div>
         )}
       </div>
-      {showDeleteWarning && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-background rounded-lg shadow-lg max-w-sm w-full p-6">
-            <p className="text-foreground mb-4">Êtes-vous sûr de vouloir supprimer cette note ?</p>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowDeleteWarning(false)}
-                className="px-4 py-2 bg-secondary text-foreground rounded-lg hover:bg-secondary/80"
-              >
-                Annuler
-              </button>
-              <button
-                type="button"
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                Supprimer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        isOpen={showDeleteWarning}
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteWarning(false)}
+        onClose={() => setShowDeleteWarning(false)}
+        title="Supprimer la note"
+        message="Êtes-vous sûr de vouloir supprimer cette note ?"
+        confirmText="Supprimer"
+        cancelText="Annuler"
+        isDangerous
+      />
     </div>
   );
 };
