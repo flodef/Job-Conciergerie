@@ -1,3 +1,7 @@
+# 2.261
+
+- **Nouveau : Notes de maison** : ajout d'une fonctionnalité permettant de rajouter des notes pour chaque maison.
+
 # 2.252
 
 - **Nouveau : Commentaire de mission** : ajout d'un champ facultatif permettant de rajouter des commentaires destinés au prestataire, pour une mission spécifique.
