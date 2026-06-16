@@ -234,13 +234,14 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
                         </div>
                       )}
                       <div className="flex items-center justify-between">
-                        <span className="text-foreground">Mission en binôme</span>
-                        <span className="text-foreground font-medium">{home.allowDuo ? 'Oui' : 'Non'}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
                         <span className="text-foreground">Nombre maximum de voyageurs</span>
                         <span className="text-foreground font-medium">{home.maxTravellers}</span>
                       </div>
+                      {home.allowDuo && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-foreground">Mission en binôme</span>
+                        </div>
+                      )}
                     </div>
                   ),
                 },

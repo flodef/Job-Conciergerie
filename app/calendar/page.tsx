@@ -279,7 +279,7 @@ export default function Calendar() {
               <div
                 className={cn(
                   'p-3 font-medium border-b border-secondary',
-                  isToday(date) ? 'bg-primary/10' : 'bg-secondary/50',
+                  isToday(date) ? 'bg-primary/10' : 'bg-foreground/10',
                 )}
               >
                 <div className="flex items-center justify-between">

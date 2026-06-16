@@ -97,19 +97,19 @@ export default function MissionList({
         >
           <button
             onClick={() => toggleCategory(category)}
-            className="w-full px-4 py-3 flex items-center justify-between bg-foreground/5 cursor-pointer"
+            className="w-full px-4 py-3 flex items-center justify-between bg-foreground/10 cursor-pointer"
           >
             <div className="flex items-center gap-2">
               {
                 {
-                  date: <IconCalendar size={18} className="text-foreground/70" />,
-                  conciergerie: <IconUser size={18} className="text-foreground/70" />,
-                  homeTitle: <IconHome size={18} className="text-foreground/70" />,
-                  geographicZone: <IconMap2 size={18} className="text-foreground/70" />,
+                  date: <IconCalendar size={18} className="text-foreground" />,
+                  conciergerie: <IconUser size={18} className="text-foreground" />,
+                  homeTitle: <IconHome size={18} className="text-foreground" />,
+                  geographicZone: <IconMap2 size={18} className="text-foreground" />,
                 }[sortField]
               }
               <h2 className="font-medium">{category}</h2>
-              <span className="text-sm text-foreground/70">({missions.length})</span>
+              <span className="text-sm text-light">({missions.length})</span>
             </div>
             <IconChevronDown
               size={20}
