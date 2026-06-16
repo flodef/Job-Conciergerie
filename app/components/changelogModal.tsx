@@ -2,10 +2,9 @@
 
 import FullScreenModal from '@/app/components/fullScreenModal';
 import type { VersionEntry } from '@/app/hooks/useChangelog';
-import { parseChangelog } from '@/app/hooks/useChangelog';
-import packageJson from '@/package.json';
+import { useChangelog } from '@/app/hooks/useChangelog';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../contexts/authProvider';
 
@@ -37,25 +36,13 @@ function VersionSection({ entry }: { entry: VersionEntry }) {
 
 interface ChangelogModalProps {
   onClose: () => void;
-  /** 'current' = auto-show on new version (entries pre-loaded); 'history' = fetched from file */
-  mode: 'current' | 'history';
-  entries?: VersionEntry[];
 }
 
-export default function ChangelogModal({ onClose, mode, entries: initialEntries }: ChangelogModalProps) {
-  const { userType } = useAuth();
-  const [entries, setEntries] = useState<VersionEntry[]>(initialEntries ?? []);
-  const [showAll, setShowAll] = useState(false);
+export default function ChangelogModal({ onClose }: ChangelogModalProps) {
+  const { userType, userData } = useAuth();
+  const { entries } = useChangelog(userType);
 
-  useEffect(() => {
-    if (mode !== 'history' || !userType) return;
-    fetch(`/changelog/${userType}.md?v=${packageJson.version}`, { cache: 'no-store' })
-      .then(res => (res.ok ? res.text() : null))
-      .then(text => {
-        if (text) setEntries(parseChangelog(text));
-      })
-      .catch(() => {});
-  }, [mode, userType]);
+  const [showAll, setShowAll] = useState(false);
 
   const visible = entries.slice(0, showAll ? HISTORY_COUNT : INITIAL_COUNT);
   const hasMore = entries.length > INITIAL_COUNT;
@@ -79,19 +66,15 @@ export default function ChangelogModal({ onClose, mode, entries: initialEntries 
     </button>
   ) : null;
 
-  if (!userType) return null;
+  if (!userType || !userData || entries.length === 0) return null;
 
   return (
     <FullScreenModal title="Nouveautés" onClose={onClose} footer={footer} disabled={false}>
-      {entries.length === 0 ? (
-        <p className="text-sm text-foreground/60 text-center py-4">Aucune note de version disponible.</p>
-      ) : (
-        <div className="space-y-4 py-1">
-          {visible.map(entry => (
-            <VersionSection key={entry.version} entry={entry} />
-          ))}
-        </div>
-      )}
+      <div className="space-y-4 py-1">
+        {visible.map(entry => (
+          <VersionSection key={entry.version} entry={entry} />
+        ))}
+      </div>
     </FullScreenModal>
   );
 }

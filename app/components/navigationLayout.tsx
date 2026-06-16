@@ -99,11 +99,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const [refreshToast, setRefreshToast] = useState<{ type: ToastType; message: string } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const updateAvailable = useUpdateChecker();
-  const {
-    showModal: showChangelog,
-    entries: changelogEntries,
-    dismiss: dismissChangelog,
-  } = useChangelog(userType as 'employee' | 'conciergerie' | undefined);
+  const { showModal: showChangelog, dismiss: dismissChangelog } = useChangelog(userType as UserType);
 
   // Handle manual refresh with rate limiting
   const handleManualRefresh = useCallback(() => {
@@ -311,7 +307,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {isNavigationPage && !!userType && <InstallToast />}
 
       {/* Changelog modal - auto-shown once per new version */}
-      {showChangelog && <ChangelogModal onClose={dismissChangelog} mode="current" entries={changelogEntries} />}
+      {showChangelog && <ChangelogModal onClose={dismissChangelog} />}
 
       {/* Main content */}
       <main

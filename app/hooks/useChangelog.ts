@@ -1,5 +1,6 @@
 import packageJson from '@/package.json';
 import { useEffect, useState } from 'react';
+import type { UserType } from '../contexts/authProvider';
 
 const STORAGE_KEY = 'changelog_seen_version';
 
@@ -42,7 +43,7 @@ export function getUnseenEntries(entries: VersionEntry[], seenVersion: string | 
   return entries.filter(e => versionGt(e.version, seenVersion));
 }
 
-export function useChangelog(userType: 'employee' | 'conciergerie' | undefined) {
+export function useChangelog(userType: UserType | undefined) {
   const [showModal, setShowModal] = useState(false);
   const [entries, setEntries] = useState<VersionEntry[]>([]);
 
@@ -50,16 +51,19 @@ export function useChangelog(userType: 'employee' | 'conciergerie' | undefined) 
     if (!userType) return;
 
     const seenVersion = localStorage.getItem(STORAGE_KEY);
-    if (seenVersion === packageJson.version) return;
 
     fetch(`/changelog/${userType}.md?v=${packageJson.version}`, { cache: 'no-store' })
       .then(res => (res.ok ? res.text() : null))
       .then(text => {
         if (!text) return;
-        const unseen = getUnseenEntries(parseChangelog(text), seenVersion);
-        if (unseen.length === 0) return;
-        setEntries(unseen);
-        setShowModal(true);
+        const allEntries = parseChangelog(text);
+        setEntries(allEntries);
+
+        // Only show modal automatically if there are unseen entries
+        if (seenVersion !== packageJson.version) {
+          const unseen = getUnseenEntries(allEntries, seenVersion);
+          if (unseen.length > 0) setShowModal(true);
+        }
       })
       .catch(() => {});
   }, [userType]);

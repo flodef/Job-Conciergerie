@@ -18,7 +18,7 @@ import {
   titleClassName,
 } from '@/app/utils/className';
 import { getColorValueByName } from '@/app/utils/color';
-import { isPastDate, isToday, sortDates } from '@/app/utils/date';
+import { isToday, sortDates } from '@/app/utils/date';
 import { Page } from '@/app/utils/navigation';
 import { calculateEmployeeHoursForDay, formatHours } from '@/app/utils/task';
 import { IconAlertTriangle, IconCalendarEvent, IconClock, IconPlayerPlay, IconUsers } from '@tabler/icons-react';
@@ -279,7 +279,7 @@ export default function Calendar() {
               <div
                 className={cn(
                   'p-3 font-medium border-b border-secondary',
-                  isToday(date) ? 'bg-primary/10' : isPastDate(date) ? 'bg-secondary/30' : 'bg-secondary/10',
+                  isToday(date) ? 'bg-primary/10' : 'bg-secondary/50',
                 )}
               >
                 <div className="flex items-center justify-between">
