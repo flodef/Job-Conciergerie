@@ -1,4 +1,5 @@
 import type { Home, Mission } from '@/app/types/dataTypes';
+import { frenchMonths } from './date';
 import { getMissionProviderCount } from './task';
 
 /**
@@ -16,22 +17,6 @@ export function getAvailableTimePeriods(missions: Mission[]): string[] {
     const period = `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
     periods.add(period);
   });
-
-  // Map French month names to numbers for proper sorting
-  const frenchMonths: Record<string, number> = {
-    Janvier: 0,
-    Février: 1,
-    Mars: 2,
-    Avril: 3,
-    Mai: 4,
-    Juin: 5,
-    Juillet: 6,
-    Août: 7,
-    Septembre: 8,
-    Octobre: 9,
-    Novembre: 10,
-    Décembre: 11,
-  };
 
   return Array.from(periods).sort((a, b) => {
     const [monthA, yearA] = a.split(' ');

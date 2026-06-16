@@ -2,6 +2,7 @@
 
 import Label from '@/app/components/label';
 import { cn, descriptionClassName, errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
+import { monthNamesShort } from '@/app/utils/date';
 import { IconCalendar, IconChevronDown, IconClock } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
@@ -370,22 +371,6 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
       return days;
     };
 
-    // Month names in French
-    const monthNames = [
-      'Janv.',
-      'Fév.',
-      'Mars',
-      'Avril',
-      'Mai',
-      'Juin',
-      'Juil.',
-      'Août',
-      'Sept.',
-      'Oct.',
-      'Nov.',
-      'Déc.',
-    ];
-
     const daysOfWeek = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
     const segmentClassName = 'pl-1 pr-[5px] rounded transition-colors cursor-pointer';
@@ -519,7 +504,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
                         <button type="button" onClick={() => handleMonthChange(-1)} className={calendarButtonClassName}>
                           <IconChevronDown size={16} className="rotate-90" />
                         </button>
-                        <span className="font-medium text-center text-sm w-9">{monthNames[selectedMonth]}</span>
+                        <span className="font-medium text-center text-sm w-9">{monthNamesShort[selectedMonth]}</span>
                         <button type="button" onClick={() => handleMonthChange(1)} className={calendarButtonClassName}>
                           <IconChevronDown size={16} className="-rotate-90" />
                         </button>

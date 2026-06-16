@@ -2,6 +2,54 @@ import type { Mission } from '@/app/types/dataTypes';
 
 export const minimumMissionTime: number = 1; // minimum mission time in hours
 
+// French month names (long format)
+export const monthNames = [
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
+];
+
+// French month names (short format)
+export const monthNamesShort = [
+  'Janv.',
+  'Fév.',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juil.',
+  'Août',
+  'Sept.',
+  'Oct.',
+  'Nov.',
+  'Déc.',
+];
+
+// Map French month names to numbers for proper sorting
+export const frenchMonths: Record<string, number> = {
+  Janvier: 0,
+  Février: 1,
+  Mars: 2,
+  Avril: 3,
+  Mai: 4,
+  Juin: 5,
+  Juillet: 6,
+  Août: 7,
+  Septembre: 8,
+  Octobre: 9,
+  Novembre: 10,
+  Décembre: 11,
+};
+
 // Get current date and time in local timezone
 export const localISOString = (date: Date) => {
   // Should use a try/catch block to handle invalid dates

@@ -3,22 +3,11 @@
 import type { Mission } from '@/app/types/dataTypes';
 import { formatTime, toLocalDateString } from '@/app/utils/date';
 
-export const monthNames = [
-  'Janvier',
-  'Février',
-  'Mars',
-  'Avril',
-  'Mai',
-  'Juin',
-  'Juillet',
-  'Août',
-  'Septembre',
-  'Octobre',
-  'Novembre',
-  'Décembre',
-];
-
-// Format date to display in calendar (e.g., "Lundi 8 mars 2025")
+/**
+ * Format date to display in calendar (e.g., "Lundi 8 mars 2025")
+ * @param date - The date to format
+ * @returns The formatted date string
+ */
 export const formatCalendarDate = (date: Date): string => {
   return date.toLocaleDateString('fr-FR', {
     weekday: 'long',
@@ -29,7 +18,11 @@ export const formatCalendarDate = (date: Date): string => {
   });
 };
 
-// Group missions by date
+/**
+ * Group missions by date
+ * @param missions - The list of missions to group
+ * @returns A map of date strings to mission arrays
+ */
 export const groupMissionsByDate = (missions: Mission[]): Map<string, Mission[]> => {
   const missionsByDate = new Map<string, Mission[]>();
   const today = new Date();
