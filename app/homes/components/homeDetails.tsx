@@ -182,6 +182,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
           <div data-home-details>
             <Accordion
               variant="card"
+              defaultOpenIndex={-1}
               items={[
                 ...(home.images.length > 0
                   ? [
