@@ -198,7 +198,23 @@ export default function EmployeeDetails({
               Rejeter
             </button>
           )}
-          {(employee.status === 'rejected' || employee.status === 'pending') && (
+          {employee.status === 'rejected' && (
+            <button
+              onClick={() =>
+                confirm({
+                  title: 'Accepter le prestataire',
+                  message: `Vous êtes sur le point d'accepter ${getEmployeeFullName(employee)} qui était précédemment rejeté. Ce prestataire pourra à nouveau accéder à l'application.`,
+                  confirmText: 'Accepter',
+                  onConfirm: () => handleStatusChange('accepted'),
+                })
+              }
+              className={cn(actionButtonClassName, 'bg-green-100 text-green-700')}
+            >
+              <IconCheck />
+              Accepter
+            </button>
+          )}
+          {employee.status === 'pending' && (
             <button
               onClick={() => handleStatusChange('accepted')}
               className={cn(actionButtonClassName, 'bg-green-100 text-green-700')}
@@ -211,8 +227,7 @@ export default function EmployeeDetails({
             onClick={() =>
               confirm({
                 title: 'Supprimer le prestataire',
-                message:
-                  "Êtes-vous sûr de vouloir supprimer ce prestataire de l'application ? ATTENTION : Cette action est irréversible !!",
+                message: `Êtes-vous sûr de vouloir supprimer ce prestataire de l'application ?\n\n⚠️ ATTENTION ⚠️\nCette action est irréversible !!`,
                 confirmText: 'Supprimer',
                 isDangerous: true,
                 onConfirm: handleDelete,

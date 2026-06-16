@@ -48,7 +48,7 @@ export default function ConfirmationModal({
       <div className="bg-background rounded-lg shadow-xl max-w-md w-full px-6 pt-4 animate-in fade-in zoom-in-95 duration-200">
         <h2 className={cn(titleClassName, 'text-center')}>{title}</h2>
 
-        <div className="text-foreground/80 py-2">
+        <div className="text-foreground/80 py-2 whitespace-pre-wrap">
           {message && <p>{message}</p>}
           {children}
         </div>
