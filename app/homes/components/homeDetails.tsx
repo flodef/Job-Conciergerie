@@ -220,6 +220,18 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
                   icon: <IconUsers size={16} className="text-light" />,
                   content: (
                     <div className="space-y-2">
+                      {home.hoursOfCleaning > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-foreground">Heures de ménage</span>
+                          <span className="text-foreground font-medium">{home.hoursOfCleaning}h</span>
+                        </div>
+                      )}
+                      {home.hoursOfGardening > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-foreground">Heures de jardinage</span>
+                          <span className="text-foreground font-medium">{home.hoursOfGardening}h</span>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between">
                         <span className="text-foreground">Mission en binôme</span>
                         <span className="text-foreground font-medium">{home.allowDuo ? 'Oui' : 'Non'}</span>
