@@ -303,7 +303,14 @@ export default function WaitingPage() {
                           : 'text-red-500'
                     }`}
                   >
-                    {{ pending: 'En attente de validation', accepted: 'Accepté', rejected: 'Rejeté' }[employee.status]}
+                    {
+                      {
+                        pending: 'En attente de validation',
+                        accepted: 'Accepté',
+                        rejected: 'Rejeté',
+                        deleted: 'Supprimé',
+                      }[employee.status]
+                    }
                   </span>
                 </p>
               </div>

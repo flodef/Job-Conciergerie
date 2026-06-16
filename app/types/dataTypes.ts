@@ -10,7 +10,7 @@ export interface Conciergerie {
   notificationSettings?: ConciergerieNotificationSettings;
 }
 
-export type EmployeeStatus = 'pending' | 'accepted' | 'rejected';
+export type EmployeeStatus = 'pending' | 'accepted' | 'rejected' | 'deleted';
 export interface Employee {
   id: string[];
   firstName: string;

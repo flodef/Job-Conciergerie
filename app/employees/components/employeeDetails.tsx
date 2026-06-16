@@ -1,5 +1,6 @@
 'use client';
 
+import { deleteEmployeeData, updateEmployeeStatusAction } from '@/app/actions/employee';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { ToastType } from '@/app/components/toastMessage';
@@ -17,12 +18,7 @@ import {
   labelClassName,
 } from '@/app/utils/className';
 import { formatDate } from '@/app/utils/date';
-import {
-  countEmployeeMissions,
-  getEmployeeFullName,
-  removeEmployeeFromMissions,
-  updateEmployeeStatus,
-} from '@/app/utils/employee';
+import { countEmployeeMissions, getEmployeeFullName, updateEmployeeStatus } from '@/app/utils/employee';
 import { isMissionEditable } from '@/app/utils/missionFilters';
 import { getUserKey } from '@/app/utils/user';
 import { IconArrowLeft, IconCheck, IconMail, IconMapPin, IconPhone, IconTrash, IconX } from '@tabler/icons-react';
@@ -43,7 +39,7 @@ export default function EmployeeDetails({
   mission,
   skipAnimation = false,
 }: EmployeeDetailsProps) {
-  const { deleteEmployee, updateUserData, userData, employees } = useAuth();
+  const { updateUserData, userData, employees } = useAuth();
   const { missions, removeSecondProvider, updateMission } = useMissions();
   const { openModal, closeModal } = useModal();
   const { showToast } = useToast();
@@ -104,10 +100,14 @@ export default function EmployeeDetails({
   const handleDelete = async () => {
     setIsSubmitting(true);
 
-    // Remove employee from all missions first
-    await removeEmployeeFromMissions(employee, missions, employees || []);
+    // Check if employee has completed missions
+    const hasCompleted = countMissions('completed') > 0;
 
-    deleteEmployee(employee).then(isSuccess => {
+    const updateAction = hasCompleted
+      ? () => updateEmployeeStatusAction(employee, 'deleted') // Mark as deleted instead of deleting from DB
+      : () => deleteEmployeeData(employee); // Delete from the DB
+
+    updateAction().then(isSuccess => {
       showToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Prestataire supprimé !' : 'Erreur lors de la suppression du prestataire',
@@ -246,6 +246,7 @@ export default function EmployeeDetails({
                 pending: 'text-yellow-500',
                 accepted: 'text-green-500',
                 rejected: 'text-red-500',
+                deleted: 'text-red-500',
               }[employee.status],
             )}
           >

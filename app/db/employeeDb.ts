@@ -70,12 +70,14 @@ export const findEmployeeByContact = async (
 /**
  * Fetch all employees with caching
  * Cache is invalidated when employee data changes
+ * Filters out employees with 'deleted' status
  */
 export const getAllEmployees = async () => {
   try {
     const result = await sql`
         SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
         FROM employees
+        WHERE status != 'deleted'
         ORDER BY created_at DESC
       `;
 
@@ -253,7 +255,7 @@ export const deleteEmployee = async (firstName: string, familyName: string) => {
       RETURNING id
     `;
 
-    return result.length > 0; // Check if deletion occurred by verifying if result has data
+    return result.length > 0;
   } catch (error) {
     console.error(`Error deleting employee ${firstName} ${familyName}:`, error);
     return false;

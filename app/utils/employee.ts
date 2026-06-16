@@ -62,6 +62,7 @@ export function sortEmployees(employees: Employee[]): Employee[] {
     pending: 0,
     accepted: 1,
     rejected: 2,
+    deleted: 3,
   };
 
   return [...employees].sort((a, b) => {
