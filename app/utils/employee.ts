@@ -2,8 +2,8 @@ import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import { updateMissionData } from '@/app/actions/mission';
 import type { Conciergerie, Employee, EmployeeStatus, Mission } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
-import { getUserKey } from './user';
 import { isPartOfMission } from './missionFilters';
+import { getUserKey } from './user';
 
 /**
  * Get the full name of an employee
@@ -120,19 +120,28 @@ export function filterEmployeesByConciergerie(employees: Employee[], conciergeri
   );
 }
 
-// Count missions assigned to an employee
+/**
+ * Count missions assigned to an employee
+ * @param employee Employee to count missions for
+ * @param missions All missions
+ * @returns Number of missions assigned to the employee
+ */
 export const countEmployeeMissions = (employee: Employee, missions: Mission[]): number =>
   missions.filter(mission => getUserKey(employee) === mission.employeeId).length;
 
-// Remove employee from all their assigned missions
+/**
+ * Remove employee from all their assigned missions
+ * @param employee Employee to remove
+ * @param missions All missions
+ * @param employees All employees
+ */
 export const removeEmployeeFromMissions = async (employee: Employee, missions: Mission[], employees: Employee[]) => {
   const employeeKey = getUserKey(employee);
-  const missionsToUpdate = missions.filter(mission => isPartOfMission(mission, employeeKey));
+  const missionsToUpdate = missions.filter(
+    mission => isPartOfMission(mission, employeeKey) && mission.status !== 'completed',
+  );
 
   for (const mission of missionsToUpdate) {
-    // Don't remove from completed missions (for archive purposes)
-    if (mission.status === 'completed') continue;
-
     let updatedMission: Partial<Mission> = { ...mission, modifiedDate: new Date() };
 
     if (mission.employeeId === employeeKey) {
@@ -160,7 +169,15 @@ export const removeEmployeeFromMissions = async (employee: Employee, missions: M
   }
 };
 
-// Update employee status
+/**
+ * Update employee status
+ * @param employee Employee to update
+ * @param newStatus New status to set
+ * @param userData Current user data
+ * @param missions All missions
+ * @param employees All employees
+ * @param updateUserData Function to update user data
+ */
 export const updateEmployeeStatus = async (
   employee: Employee,
   newStatus: 'accepted' | 'rejected',

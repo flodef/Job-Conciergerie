@@ -18,7 +18,7 @@ import {
   labelClassName,
 } from '@/app/utils/className';
 import { formatDate } from '@/app/utils/date';
-import { countEmployeeMissions, getEmployeeFullName, updateEmployeeStatus } from '@/app/utils/employee';
+import { getEmployeeFullName, updateEmployeeStatus } from '@/app/utils/employee';
 import { isMissionEditable } from '@/app/utils/missionFilters';
 import { getUserKey } from '@/app/utils/user';
 import { IconArrowLeft, IconCheck, IconMail, IconMapPin, IconPhone, IconTrash, IconX } from '@tabler/icons-react';
@@ -112,8 +112,11 @@ export default function EmployeeDetails({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess ? 'Prestataire supprimé !' : 'Erreur lors de la suppression du prestataire',
       });
-      if (isSuccess) onClose();
-      else setIsSubmitting(false);
+      if (isSuccess) {
+        employee.status = 'deleted';
+        updateUserData(employee, 'employee');
+        onClose();
+      } else setIsSubmitting(false);
     });
   };
 
@@ -183,10 +186,9 @@ export default function EmployeeDetails({
                 confirm({
                   title: 'Rejeter le prestataire',
                   message: `Vous êtes sur le point de rejeter ${getEmployeeFullName(employee)}.${
-                    countEmployeeMissions(employee, missions) > 0
-                      ? ` Ce prestataire sera retiré de ses ${countEmployeeMissions(employee, missions)} mission(s).`
-                      : ''
-                  } Il ne pourra plus accéder à l'application.`,
+                    countMissions('accepted') > 0 &&
+                    `\nCe prestataire sera retiré de ses ${countMissions('accepted')} mission(s).`
+                  }${countMissions('started') > 0 ? '\n⚠️ Cet employé a une mission en cours. Si vous continuez, celle-ci sera interrompue.' : ''}\n\nIl ne pourra plus accéder à l'application.`,
                   confirmText: 'Rejeter',
                   isDangerous: true,
                   onConfirm: () => handleStatusChange('rejected'),

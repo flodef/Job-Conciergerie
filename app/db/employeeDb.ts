@@ -130,20 +130,7 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
  */
 const updateMissionsForEmployeeRemoval = async (firstName: string, familyName: string) => {
   try {
-    // Fetch the employee to get their ID(s)
-    const employeeResult = await sql`
-      SELECT id
-      FROM employees
-      WHERE first_name = ${firstName} AND family_name = ${familyName}
-      LIMIT 1
-    `;
-
-    if (employeeResult.length === 0) {
-      console.warn(`Employee ${firstName} ${familyName} not found`);
-      return;
-    }
-
-    const employeeIds = employeeResult[0].id as string[];
+    const employeeId = `${firstName} ${familyName}`;
 
     // Update missions where this employee is assigned
     // For single employee missions (allow_duo = false): set status to NULL
@@ -152,7 +139,7 @@ const updateMissionsForEmployeeRemoval = async (firstName: string, familyName: s
       SET status = NULL
       WHERE status IN ('accepted', 'started')
       AND allow_duo = false
-      AND (employee_id = ANY(${employeeIds}) OR employee_id2 = ANY(${employeeIds}))
+      AND (employee_id = ANY(${employeeId}) OR employee_id2 = ANY(${employeeId}))
     `;
 
     // For duo missions: set status to NULL only if the other employee is also NULL
@@ -162,7 +149,7 @@ const updateMissionsForEmployeeRemoval = async (firstName: string, familyName: s
       SET status = NULL
       WHERE status IN ('accepted', 'started')
       AND allow_duo = true
-      AND employee_id = ANY(${employeeIds})
+      AND employee_id = ANY(${employeeId})
       AND employee_id2 IS NULL
     `;
 
@@ -172,7 +159,7 @@ const updateMissionsForEmployeeRemoval = async (firstName: string, familyName: s
       SET status = NULL
       WHERE status IN ('accepted', 'started')
       AND allow_duo = true
-      AND employee_id2 = ANY(${employeeIds})
+      AND employee_id2 = ANY(${employeeId})
       AND employee_id IS NULL
     `;
   } catch (error) {

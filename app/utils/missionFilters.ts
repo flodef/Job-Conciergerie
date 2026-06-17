@@ -43,11 +43,11 @@ export const isMissionDuoOpen = (mission: Mission) =>
 /**
  * Check if an employee is part of a mission (either as first or second provider)
  * @param mission The mission to check
- * @param employeeName The name of the employee to check
+ * @param employeeId The id of the employee to check
  * @returns true if the employee is part of the mission, false otherwise
  */
-export const isPartOfMission = (mission: Mission, employeeName: string | undefined) =>
-  employeeName && (mission.employeeId === employeeName || mission.employeeId2 === employeeName);
+export const isPartOfMission = (mission: Mission, employeeId: string | undefined) =>
+  employeeId && (mission.employeeId === employeeId || mission.employeeId2 === employeeId);
 
 /**
  * Check if a mission is expired
@@ -66,18 +66,18 @@ export const isMissionEditable = (mission: Mission) => mission.status !== 'start
 /**
  * Filter missions based on user type
  * @param missions The list of missions to filter
- * @param employeeName The name of the employee (if any)
+ * @param employeeId The name of the employee (if any)
  * @returns The filtered list of missions
  */
-export function filterMissionsByUserType(missions: Mission[], employeeName: string | undefined): Mission[] {
+export function filterMissionsByUserType(missions: Mission[], employeeId: string | undefined): Mission[] {
   return missions.filter(mission => {
     // For employee users, show only missions they have access to
-    if (employeeName) {
+    if (employeeId) {
       // If the mission has prestataires specified, check if the current employee is in the list
-      if (mission.allowedEmployees?.length) return mission.allowedEmployees.includes(employeeName);
+      if (mission.allowedEmployees?.length) return mission.allowedEmployees.includes(employeeId);
 
       // Missions the employee is already part of (either binôme slot)
-      if (isPartOfMission(mission, employeeName)) return true;
+      if (isPartOfMission(mission, employeeId)) return true;
 
       // Mission assigned to someone else: only visible if it's duo-open (so they can join as 2nd)
       if (mission.employeeId) return isMissionDuoOpen(mission);
@@ -99,7 +99,7 @@ export function filterMissionsByUserType(missions: Mission[], employeeName: stri
  * @param selectedMissionStatuses The selected mission status IDs
  * @param selectedZones The selected zone IDs
  * @param homes The list of homes
- * @param employeeName The name of the employee (if any)
+ * @param employeeId The id of the employee (if any)
  * @param selectedEmployees The selected employee names
  * @returns The filtered list of missions
  */
@@ -110,7 +110,7 @@ export function applyMissionFilters(
   selectedMissionStatuses: string[],
   selectedZones: string[],
   homes: Home[],
-  employeeName?: string,
+  employeeId?: string,
   selectedEmployees: string[] = [],
 ): Mission[] {
   return missions.filter(mission => {
@@ -137,11 +137,11 @@ export function applyMissionFilters(
       // 'accepted', 'started', 'completed' match the actual mission status
       // 'expired' means null status AND mission is expired
       const isAvailable =
-        (!mission.employeeId || (isMissionDuoOpen(mission) && !isPartOfMission(mission, employeeName))) &&
+        (!mission.employeeId || (isMissionDuoOpen(mission) && !isPartOfMission(mission, employeeId))) &&
         !isMissionExpired(mission);
-      const isAccepted = mission.status === 'accepted' && (!employeeName || isPartOfMission(mission, employeeName));
+      const isAccepted = mission.status === 'accepted' && (!employeeId || isPartOfMission(mission, employeeId));
       const isStarted = mission.status === 'started';
-      const isCompleted = mission.status === 'completed' && (!employeeName || isPartOfMission(mission, employeeName));
+      const isCompleted = mission.status === 'completed' && (!employeeId || isPartOfMission(mission, employeeId));
       const isExpired = !mission.status && isMissionExpired(mission);
 
       const matchesMissionStatus =
