@@ -51,7 +51,11 @@ const TaskSelectorComponent: ForwardRefRenderFunction<HTMLDivElement, TaskSelect
       <Label id={id} required={required} tooltip={tooltip}>
         {label}
       </Label>
-      <div ref={ref} className="grid grid-cols-3 gap-2">
+      <div
+        ref={ref}
+        className="grid gap-2"
+        style={{ gridTemplateColumns: `repeat(${availableTasks.length}, minmax(0, 1fr))` }}
+      >
         {availableTasks.map(task => (
           <button
             type="button"

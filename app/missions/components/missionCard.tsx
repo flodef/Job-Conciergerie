@@ -109,7 +109,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
       )}
 
       <div className="mx-3 text-center">
-        <HomeTitle home={home} />
+        <HomeTitle home={home} allowDuo={mission.allowDuo} />
       </div>
 
       <div className="flex flex-wrap gap-1 mt-2">

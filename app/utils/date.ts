@@ -1,6 +1,7 @@
 import type { Mission } from '@/app/types/dataTypes';
 
 export const minimumMissionTime: number = 1; // minimum mission time in hours
+const oneHour = 3600000; // 1 hour in milliseconds
 
 // French month names (long format)
 export const monthNames = [
@@ -50,7 +51,11 @@ export const frenchMonths: Record<string, number> = {
   Décembre: 11,
 };
 
-// Get current date and time in local timezone
+/**
+ * Get current date and time in local timezone
+ * @param date The date to convert
+ * @returns The date in local timezone
+ */
 export const localISOString = (date: Date) => {
   // Should use a try/catch block to handle invalid dates
   try {
@@ -98,6 +103,9 @@ export const adjustMissionDateTime = (start: string, end: string): { startDateTi
 
 /**
  * Format a date for display in French format (DD/MM/YYYY)
+ * @param date The date to format
+ * @param useSpacing Whether to use spacing between date parts
+ * @returns The formatted date
  */
 export const formatDate = (date: Date, useSpacing = false): string => {
   return new Date(date)
@@ -112,6 +120,9 @@ export const formatDate = (date: Date, useSpacing = false): string => {
 
 /**
  * Format a time for display in French format HH:MM (e.g., "14:30")
+ * @param date The date to format
+ * @param useSpacing Whether to use spacing between time parts
+ * @returns The formatted time
  */
 export const formatTime = (date: Date, useSpacing = false): string => {
   return new Date(date)
@@ -125,6 +136,9 @@ export const formatTime = (date: Date, useSpacing = false): string => {
 
 /**
  * Format a datetime for display in French format (DD/MM/YYYY à HH:MM)
+ * @param date The date to format
+ * @param useSpacing Whether to use spacing between date and time
+ * @returns The formatted datetime
  */
 export const formatDateTime = (date: Date, useSpacing = false): string => {
   const dateStr = formatDate(date, useSpacing);
@@ -132,12 +146,20 @@ export const formatDateTime = (date: Date, useSpacing = false): string => {
   return `${dateStr} à ${timeStr}`;
 };
 
-// Sort dates in ascending order
+/**
+ * Sort dates in ascending order
+ * @param dates The dates to sort
+ * @returns The sorted dates
+ */
 export const sortDates = (dates: string[]): string[] => {
   return dates.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 };
 
-// Check if a date is today
+/**
+ * Check if a date is today
+ * @param date The date to check
+ * @returns True if the date is today, false otherwise
+ */
 export const isToday = (date: Date): boolean => {
   const today = new Date();
   return (
@@ -147,7 +169,11 @@ export const isToday = (date: Date): boolean => {
   );
 };
 
-// Check if a date is in the past
+/**
+ * Check if a date is in the past
+ * @param date The date to check
+ * @returns True if the date is in the past, false otherwise
+ */
 export const isPastDate = (date: Date): boolean => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -159,6 +185,8 @@ export const isPastDate = (date: Date): boolean => {
 /**
  * Convert a date to local date string in YYYY-MM-DD format
  * This handles timezone correctly by using local time
+ * @param date The date to convert
+ * @returns The date in YYYY-MM-DD format
  */
 export const toLocalDateString = (date: Date): string => {
   const year = date.getFullYear();
@@ -167,7 +195,7 @@ export const toLocalDateString = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-/*
+/**
  * Calculate the remaining time until refresh is available
  * @param targetDate The date when refresh will be available
  * @returns A string representing the remaining time until refresh is available
@@ -205,6 +233,10 @@ export const isElapsedTimeLessThan = (fromDate: Date, minutes: number) => {
 /**
  * Calculate the time difference between two dates in a human-readable format
  * Consistent with mission points calculation (counting both start and end days)
+ * @param startDate The start date
+ * @param endDate The end date
+ * @param offsetDays Optional offset in days to add to the difference
+ * @returns A string representing the time difference
  */
 export const getTimeDifference = (startDate: Date, endDate: Date, offsetDays?: number): string => {
   // Calculate the difference in days
@@ -231,19 +263,25 @@ export const getTimeDifference = (startDate: Date, endDate: Date, offsetDays?: n
 /**
  * Calculate the time difference between two dates in a human-readable format
  * Consistent with mission points calculation (counting both start and end days)
+ * @param startDate The start date
+ * @param endDate The end date
+ * @param useFullDay Whether to use full days (including start and end days) or just the remaining hours
+ * @returns A string representing the time difference
  */
-export const getDateRangeDifference = (startDate: Date, endDate: Date): string => {
+export const getDateRangeDifference = (startDate: Date, endDate: Date, useFullDay = true): string => {
   // Create copies of the dates to avoid modifying the original objects
   const start = new Date(startDate);
   const end = new Date(endDate);
 
   // Set hours to 0 to calculate just the days (same as in calculateMissionPoints)
-  start.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
+  if (useFullDay) {
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+  }
 
   // Calculate the difference in days
   const diffTime = Math.abs(end.getTime() - start.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   return getTimeDifference(startDate, endDate, diffDays);
 };
@@ -251,51 +289,51 @@ export const getDateRangeDifference = (startDate: Date, endDate: Date): string =
 /**
  * Calculate the remaining time for a mission that has already started
  * Returns a string with the remaining time or null if the mission hasn't started yet
+ * @param startDate The start date of the mission
+ * @param endDate The end date of the mission
+ * @returns A string with the remaining time or null if the mission hasn't started yet
  */
 export const getRemainingTime = (startDate: Date, endDate: Date): string | null => {
   const now = new Date();
 
-  // If the mission hasn't started yet, return null
-  if (startDate > now) {
-    return null;
-  }
+  // If the mission has ended, return "Mission terminée"
+  if (endDate < now) return 'Mission terminée';
 
-  // If the mission has ended, return "Terminé"
-  if (endDate < now) {
-    return 'Terminé';
-  }
+  // Check if mission has started
+  const hasMissionStarted = startDate <= now;
 
   // Calculate remaining time from now to end date
+  const start = new Date(startDate);
   const end = new Date(endDate);
-  const today = new Date(now);
-
-  // Set hours to 0 to calculate just the days
-  today.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
 
   // Calculate the difference in days
-  const diffTime = Math.abs(end.getTime() - today.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // No need to add 1 as we're calculating from today
+  const diffTime = hasMissionStarted
+    ? Math.abs(end.getTime() - now.getTime())
+    : Math.abs(start.getTime() - now.getTime());
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); // No need to add 1 as we're calculating from today
 
   // For hours, use the original calculation
-  const diffMs = endDate.getTime() - now.getTime();
+  const diffMs = diffTime;
   const diffSecs = Math.floor(diffMs / 1000);
   const diffMins = Math.floor(diffSecs / 60);
   const diffHours = Math.floor(diffMins / 60);
 
   if (diffDays > 0) {
-    return `${diffDays} jour${diffDays > 1 ? 's' : ''} restant${diffDays > 1 ? 's' : ''}`;
+    return `${!hasMissionStarted ? 'Dans' : ''} ${diffDays} jour${diffDays > 1 ? 's' : ''} ${hasMissionStarted ? 'restant' + (diffDays > 1 ? 's' : '') : ''}`;
   } else if (diffHours > 0) {
-    return `${diffHours} heure${diffHours > 1 ? 's' : ''} restante${diffHours > 1 ? 's' : ''}`;
+    return `${!hasMissionStarted ? 'Dans' : ''} ${diffHours} heure${diffHours > 1 ? 's' : ''} ${hasMissionStarted ? 'restante' + (diffHours > 1 ? 's' : '') : ''}`;
   } else if (diffMins > 0) {
-    return `${diffMins} minute${diffMins > 1 ? 's' : ''} restante${diffMins > 1 ? 's' : ''}`;
+    return `${!hasMissionStarted ? 'Dans' : ''} ${diffMins} minute${diffMins > 1 ? 's' : ''} ${hasMissionStarted ? 'restante' + (diffMins > 1 ? 's' : '') : ''}`;
   } else {
-    return "Moins d'une minute restante";
+    return `${!hasMissionStarted ? 'Dans m' : 'M'}oins d'une minute ${hasMissionStarted ? 'restante' : ''}`;
   }
 };
 
 /**
  * Check if two dates are on the same day
+ * @param date1 The first date
+ * @param date2 The second date
+ * @returns True if the dates are on the same day, false otherwise
  */
 export const isSameDay = (date1: Date, date2: Date): boolean => {
   return (
@@ -309,6 +347,9 @@ export const isSameDay = (date1: Date, date2: Date): boolean => {
  * Format a date range for display
  * If start and end are on the same day, shows date once with start and end times
  * Otherwise shows full date and time for both
+ * @param startDate The start date
+ * @param endDate The end date
+ * @returns A string representing the date range
  */
 export const formatDateRange = (startDate: Date, endDate: Date): string => {
   if (isSameDay(startDate, endDate)) {
@@ -323,6 +364,8 @@ export const formatDateRange = (startDate: Date, endDate: Date): string => {
 /**
  * Get month and year label from a month key (YYYY-MM format)
  * Returns "Mois Année" in French (e.g., "Janvier 2026")
+ * @param monthKey The month key in YYYY-MM format
+ * @returns The month and year label in French
  */
 export const getMonthYearLabel = (monthKey: string): string => {
   const [year, month] = monthKey.split('-');
@@ -332,6 +375,9 @@ export const getMonthYearLabel = (monthKey: string): string => {
 
 /**
  * Check if a date is in the same month and year as a month key (YYYY-MM format)
+ * @param date The date to check
+ * @param monthKey The month key in YYYY-MM format
+ * @returns True if the date is in the same month and year as the month key, false otherwise
  */
 export const isSameMonthYear = (date: Date, monthKey: string): boolean => {
   const [year, month] = monthKey.split('-');
@@ -340,6 +386,7 @@ export const isSameMonthYear = (date: Date, monthKey: string): boolean => {
 
 /**
  * Get minimum start date (now - 59 seconds to allow selecting current minute)
+ * @returns The minimum start date
  */
 export const getMinStartDate = (): Date => {
   const now = new Date();
@@ -348,14 +395,13 @@ export const getMinStartDate = (): Date => {
 
 /**
  * Get minimum end date (now + 1 hour)
+ * @returns The minimum end date
  */
 export const getMinEndDate = (): Date => {
   const now = new Date();
   now.setHours(now.getHours() + 1);
   return now;
 };
-
-const oneHour = 3600000;
 
 /**
  * Handle start date change with auto-adjustment of end date

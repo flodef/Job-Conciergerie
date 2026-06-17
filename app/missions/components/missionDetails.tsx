@@ -34,9 +34,9 @@ import {
 import { getColorValueByName } from '@/app/utils/color';
 import {
   formatDateTime,
-  getDateRangeDifference,
   getMinEndDate,
   getMinStartDate,
+  getRemainingTime,
   handleMissionEndDateChange,
   handleMissionStartDateChange,
   localISOString,
@@ -744,7 +744,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
           <div className="space-y-2" data-mission-details>
             <div>
               <div className="flex items-center justify-between">
-                <HomeTitle home={home} />
+                <HomeTitle home={home} allowDuo={mission.allowDuo} />
                 <button
                   className="cursor-pointer"
                   onClick={() => setShowHomeDetails(true)}
@@ -788,7 +788,10 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
                 <IconStopwatch size={16} />
                 Nombre d&apos;heures estimées
               </h3>
-              <span className="font-medium">{formatHours(mission.hours)}</span>
+              <span className="font-medium">
+                {formatHours(mission.hours)}
+                {mission.allowDuo && ` (${formatHours(mission.hours / 2)} / pers.)`}
+              </span>
             </div>
 
             {!!mission.travellers && (
@@ -949,13 +952,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
                         hasStarted && !hasEnded ? 'ml-0' : '-ml-2 whitespace-nowrap',
                       )}
                     >
-                      {(() => {
-                        // Otherwise show total duration
-                        return hasEnded
-                          ? 'Mission terminée'
-                          : getDateRangeDifference(hasStarted ? now : new Date(editStartDate), new Date(editEndDate)) +
-                              (hasStarted ? ' restant' : '');
-                      })()}
+                      {getRemainingTime(new Date(editStartDate), new Date(editEndDate))}
                     </div>
                   </div>
                 </div>

@@ -1,10 +1,11 @@
 'use client';
 
+import HomeTitle from '@/app/components/homeTitle';
+import { useImageCache } from '@/app/hooks/useImageCache';
 import type { Home } from '@/app/types/dataTypes';
+import { cn, descriptionClassName, titleClassName } from '@/app/utils/className';
 import { fallbackImage, getStorageImageUrl } from '@/app/utils/storage';
 import { IconFileDescription, IconPencil, IconUsers } from '@tabler/icons-react';
-import { useImageCache } from '@/app/hooks/useImageCache';
-import HomeTitle from '@/app/components/homeTitle';
 import React, { useMemo } from 'react';
 
 type HomeCardProps = {
@@ -81,9 +82,9 @@ const HomeCard = React.memo(function HomeCard({
             <div className="flex flex-col min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 {home.allowDuo && <IconUsers size={20} />}
-                <span className="text-foreground font-medium truncate">{home.title}</span>
+                <span className={cn(titleClassName, 'truncate')}>{home.title}</span>
               </div>
-              <span className="text-light text-sm">{home.geographicZone}</span>
+              <span className={descriptionClassName}>{home.geographicZone}</span>
             </div>
           </div>
           <button
@@ -125,7 +126,7 @@ const HomeCard = React.memo(function HomeCard({
           onClick={onClick}
           onContextMenu={handleContextMenu}
         >
-          <HomeTitle home={home} />
+          <HomeTitle home={home} allowDuo={home.allowDuo} />
 
           <div className="relative aspect-video w-full overflow-hidden rounded-lg mt-auto">
             <button

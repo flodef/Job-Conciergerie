@@ -163,7 +163,7 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
 
       {!showHomeForm && (
         <FullScreenModal
-          title={<HomeTitle home={home} />}
+          title={<HomeTitle home={home} allowDuo={home.allowDuo} />}
           onClose={onClose}
           footer={footer}
           disabled={isSubmitting}
