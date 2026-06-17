@@ -84,7 +84,7 @@ export default function EmployeesList() {
     updateEmployeeStatus(employee, 'rejected', userData, missions, employees, updateUserData)
       .then(({ updatedEmployee, emailSent }) => {
         showToast({
-          type: ToastType.Info,
+          type: ToastType.Warning,
           message: `${getEmployeeFullName(updatedEmployee)} a été rejeté${
             emailSent ? '. Le prestataire a été notifié par email.' : '.'
           }`,
