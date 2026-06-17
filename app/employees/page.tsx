@@ -12,10 +12,11 @@ import { useToast } from '@/app/contexts/toastProvider';
 import EmployeeDetails from '@/app/employees/components/employeeDetails';
 import type { Employee } from '@/app/types/dataTypes';
 import {
-  countEmployeeMissions,
   filterEmployees,
   filterEmployeesByConciergerie,
   getEmployeeFullName,
+  getEmployeeStatusChangeConfirmation,
+  handleEmployeeStatusChange,
   sortEmployees,
   updateEmployeeStatus,
 } from '@/app/utils/employee';
@@ -76,65 +77,43 @@ export default function EmployeesList() {
   };
 
   // Handle status change
-  const handleStatusChange = (employee: Employee, newStatus: 'accepted' | 'rejected') => {
-    // For rejection, show confirmation modal first
-    if (newStatus === 'rejected') {
+  const handleStatusChangeWithToast = async (employee: Employee, newStatus: 'accepted' | 'rejected') => {
+    try {
+      const message = await handleEmployeeStatusChange(
+        employee,
+        newStatus,
+        userData,
+        missions,
+        employees,
+        updateUserData,
+      );
+      showToast({ type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info, message });
+    } catch (error) {
+      showToast({ type: ToastType.Error, message: String(error), error: error instanceof Error ? error : undefined });
+    }
+  };
+
+  const handleStatusChange = async (employee: Employee, newStatus: 'accepted' | 'rejected') => {
+    const confirmation = getEmployeeStatusChangeConfirmation(employee, newStatus, missions);
+    if (confirmation) {
       const id = openModal(() => (
         <ConfirmationModal
           isOpen
-          title="Rejeter le prestataire"
-          message={`Vous êtes sur le point de rejeter ${getEmployeeFullName(employee)}.${
-            countEmployeeMissions(employee, missions) > 0
-              ? ` Ce prestataire sera retiré de ses ${countEmployeeMissions(employee, missions)} mission(s).`
-              : ''
-          } Il ne pourra plus accéder à l'application.`}
-          confirmText="Rejeter"
-          cancelText="Annuler"
-          isDangerous
-          onConfirm={() => rejectEmployee(employee)}
-          onClose={() => closeModal(id)}
-        />
-      ));
-    } else if (newStatus === 'accepted' && employee.status === 'rejected') {
-      // For accepting a previously rejected employee, show confirmation modal
-      const id = openModal(() => (
-        <ConfirmationModal
-          isOpen
-          title="Accepter le prestataire"
-          message={`Vous êtes sur le point d'accepter ${getEmployeeFullName(employee)} qui était précédemment rejeté. Ce prestataire pourra à nouveau accéder à l'application.`}
-          confirmText="Accepter"
-          cancelText="Annuler"
-          onConfirm={() => {
-            updateEmployeeStatus(employee, newStatus, userData, missions, employees, updateUserData)
-              .then(({ updatedEmployee, emailSent }) => {
-                showToast({
-                  type: ToastType.Success,
-                  message: `${getEmployeeFullName(updatedEmployee)} a été accepté${
-                    emailSent ? '. Le prestataire a été notifié par email.' : '.'
-                  }`,
-                });
-              })
-              .catch(error => {
-                showToast({ type: ToastType.Error, message: error.toString(), error });
-              });
+          title={confirmation.title}
+          message={confirmation.message}
+          confirmText={confirmation.confirmText}
+          cancelText={confirmation.cancelText}
+          isDangerous={confirmation.isDangerous}
+          onConfirm={async () => {
+            if (newStatus === 'rejected') rejectEmployee(employee);
+            else await handleStatusChangeWithToast(employee, newStatus);
             closeModal(id);
           }}
           onClose={() => closeModal(id)}
         />
       ));
     } else {
-      updateEmployeeStatus(employee, newStatus, userData, missions, employees, updateUserData)
-        .then(({ updatedEmployee, emailSent }) => {
-          showToast({
-            type: newStatus === 'accepted' ? ToastType.Success : ToastType.Info,
-            message: `${getEmployeeFullName(updatedEmployee)} a été ${
-              newStatus === 'accepted' ? 'accepté' : 'rejeté'
-            }${emailSent ? '. Le prestataire a été notifié par email.' : '.'}`,
-          });
-        })
-        .catch(error => {
-          showToast({ type: ToastType.Error, message: error.toString(), error });
-        });
+      await handleStatusChangeWithToast(employee, newStatus);
     }
   };
 
