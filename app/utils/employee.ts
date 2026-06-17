@@ -1,6 +1,6 @@
 import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import { updateMissionData } from '@/app/actions/mission';
-import type { Conciergerie, Employee, EmployeeStatus, Mission } from '@/app/types/dataTypes';
+import type { Conciergerie, Employee, EmployeeStatus, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
 import { isPartOfMission } from './missionFilters';
 import { getUserKey } from './user';
@@ -124,10 +124,15 @@ export function filterEmployeesByConciergerie(employees: Employee[], conciergeri
  * Count missions assigned to an employee
  * @param employee Employee to count missions for
  * @param missions All missions
+ * @param status Optional mission status to filter by. If not specified, counts all missions.
  * @returns Number of missions assigned to the employee
  */
-export const countEmployeeMissions = (employee: Employee, missions: Mission[]): number =>
-  missions.filter(mission => getUserKey(employee) === mission.employeeId).length;
+export const countEmployeeMissions = (employee: Employee, missions: Mission[], status?: MissionStatus): number => {
+  const employeeId = getUserKey(employee);
+  return employeeId
+    ? missions.filter(mission => mission.employeeId === employeeId && (!status || mission.status === status)).length
+    : 0;
+};
 
 /**
  * Remove employee from all their assigned missions
@@ -204,4 +209,70 @@ export const updateEmployeeStatus = async (
     newStatus === 'accepted',
   );
   return { updatedEmployee, emailSent };
+};
+
+/**
+ * Handle employee status change
+ * @param employee Employee to update
+ * @param newStatus New status to set
+ * @param userData Current user data
+ * @param missions All missions
+ * @param employees All employees
+ * @param updateUserData Function to update user data
+ * @returns Success message to display in toast
+ */
+export const handleEmployeeStatusChange = async (
+  employee: Employee,
+  newStatus: 'accepted' | 'rejected',
+  userData: Conciergerie | Employee | undefined,
+  missions: Mission[],
+  employees: Employee[],
+  updateUserData: (data: Employee, type: 'employee') => void,
+): Promise<string> => {
+  const { updatedEmployee, emailSent } = await updateEmployeeStatus(
+    employee,
+    newStatus,
+    userData,
+    missions,
+    employees,
+    updateUserData,
+  );
+  return `${getEmployeeFullName(updatedEmployee)} a été ${
+    newStatus === 'accepted' ? 'accepté' : 'rejeté'
+  }${emailSent ? '. Le prestataire a été notifié par email.' : '.'}`;
+};
+
+/**
+ * Get confirmation modal configuration for employee status change
+ * @param employee Employee to update
+ * @param newStatus New status to set
+ * @param missions All missions
+ * @returns Modal configuration object or null if no confirmation needed
+ */
+export const getEmployeeStatusChangeConfirmation = (
+  employee: Employee,
+  newStatus: 'accepted' | 'rejected',
+  missions: Mission[],
+): { title: string; message: string; confirmText: string; cancelText?: string; isDangerous?: boolean } | null => {
+  if (newStatus === 'rejected') {
+    const acceptedCount = countEmployeeMissions(employee, missions, 'accepted');
+    const startedCount = countEmployeeMissions(employee, missions, 'started');
+    return {
+      title: 'Rejeter le prestataire',
+      message: `Vous êtes sur le point de rejeter ${getEmployeeFullName(employee)}.${
+        acceptedCount > 0 ? `\nCe prestataire sera retiré de ses ${acceptedCount} mission(s).` : ''
+      }${startedCount > 0 ? '\n⚠️ Cet employé a une mission en cours. Si vous continuez, celle-ci sera interrompue.' : ''}\n\nIl ne pourra plus accéder à l'application.`,
+      confirmText: 'Rejeter',
+      cancelText: 'Annuler',
+      isDangerous: true,
+    };
+  } else if (newStatus === 'accepted' && employee.status === 'rejected') {
+    return {
+      title: 'Accepter le prestataire',
+      message: `Vous êtes sur le point d'accepter ${getEmployeeFullName(employee)} qui était précédemment rejeté. Ce prestataire pourra à nouveau accéder à l'application.`,
+      confirmText: 'Accepter',
+      cancelText: 'Annuler',
+    };
+  }
+  return null;
 };
