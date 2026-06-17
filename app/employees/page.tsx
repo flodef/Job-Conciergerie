@@ -20,10 +20,18 @@ import {
   sortEmployees,
   updateEmployeeStatus,
 } from '@/app/utils/employee';
-import { IconCheck, IconUser, IconUserCheck, IconUserX, IconX } from '@tabler/icons-react';
+import {
+  IconCheck,
+  IconSortAscending,
+  IconSortDescending,
+  IconUser,
+  IconUserCheck,
+  IconUserX,
+  IconX,
+} from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-import { cn, iconButtonClassName, textClassName } from '../utils/className';
+import { cn, descriptionClassName, iconButtonClassName, textClassName } from '../utils/className';
 import { getUserKey } from '../utils/user';
 
 export default function EmployeesList() {
@@ -35,6 +43,7 @@ export default function EmployeesList() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const [nameSortOrder, setNameSortOrder] = useState<'none' | 'asc' | 'desc'>('none');
 
   // Data is loaded by AuthProvider, no need to fetch here
 
@@ -46,9 +55,19 @@ export default function EmployeesList() {
     // Filter employees by conciergerie
     const filteredEmployees = filterEmployeesByConciergerie(authEmployees, conciergerieName);
 
-    setEmployees(sortEmployees(filteredEmployees));
+    // Apply name sorting if needed
+    let sortedEmployees = sortEmployees(filteredEmployees);
+    if (nameSortOrder !== 'none') {
+      sortedEmployees = [...sortedEmployees].sort((a, b) => {
+        const nameA = getEmployeeFullName(a).toLowerCase();
+        const nameB = getEmployeeFullName(b).toLowerCase();
+        return nameSortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+      });
+    }
+
+    setEmployees(sortedEmployees);
     setHasLoadedOnce(true);
-  }, [conciergerieName, authLoading, authEmployees]);
+  }, [conciergerieName, authLoading, authEmployees, nameSortOrder]);
 
   // Filter employees by status
   const pendingEmployees = employees.filter(
@@ -128,15 +147,23 @@ export default function EmployeesList() {
       return <p className="text-light text-center italic">Aucun prestataire {emptyMessage}</p>;
 
     return (
-      <div className="overflow-x-auto">
+      <div className="max-h-[44vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-secondary">
-          <thead className="bg-secondary/10">
+          <thead className="bg-background sticky top-0 z-10">
             <tr>
-              <th className="px-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">Nom</th>
-              <th className="px-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
-                Contact
+              <th
+                className="text-center text-xs font-medium text-foreground/70 uppercase tracking-wider cursor-pointer hover:text-foreground"
+                onClick={() =>
+                  setNameSortOrder(nameSortOrder === 'none' ? 'asc' : nameSortOrder === 'asc' ? 'desc' : 'none')
+                }
+              >
+                <div className="flex items-center justify-center gap-1">
+                  Coordonnées
+                  {nameSortOrder === 'asc' && <IconSortAscending size={14} />}
+                  {nameSortOrder === 'desc' && <IconSortDescending size={14} />}
+                </div>
               </th>
-              <th className="px-1 text-center text-xs font-medium text-foreground/70 uppercase tracking-wider">
+              <th className="text-center text-xs font-medium text-foreground/70 uppercase tracking-wider w-16">
                 Actions
               </th>
             </tr>
@@ -207,18 +234,14 @@ function EmployeeRow({
 }) {
   return (
     <tr className="hover:bg-secondary/5 cursor-pointer transition-colors overflow-x-hidden" onClick={onClick}>
-      <td className="px-1 pl-0 pr-1">
-        <div className={cn(textClassName, 'flex flex-col truncate text-wrap max-w-28 sm:max-w-full')}>
-          {getEmployeeFullName(employee)}
+      <td className="pr-2">
+        <div className="flex justify-between items-center truncate">
+          <span className={cn(textClassName, 'truncate')}>{getEmployeeFullName(employee)}</span>
+          <span className={descriptionClassName}>{employee.tel}</span>
         </div>
+        <div className={cn(descriptionClassName, 'truncate')}>{employee.email}</div>
       </td>
-      <td className="px-1 py-0 whitespace-nowrap">
-        <div className={cn(textClassName, 'flex flex-col truncate max-w-28 sm:max-w-full')}>
-          <div>{employee.email}</div>
-          <div>{employee.tel}</div>
-        </div>
-      </td>
-      <td className={cn(textClassName, 'px-1 pl-1 pr-0 whitespace-nowrap justify-items-center')}>
+      <td>
         <div className="flex space-x-2 justify-center" onClick={e => e.stopPropagation()}>
           {employee.status !== 'accepted' && (
             <button

@@ -75,6 +75,7 @@ export default function EmployeeDetails({
   };
 
   const handleStatusChangeWithToast = async (newStatus: 'accepted' | 'rejected') => {
+    onClose();
     setIsSubmitting(true);
     try {
       const message = await handleEmployeeStatusChange(
