@@ -64,7 +64,7 @@ const HomeImageGrid = React.memo(function HomeImageGrid({
   );
 });
 
-export default function HomeDetails({ home, onClose, isFromCalendar = false }: HomeDetailsProps) {
+export default function HomeDetails({ home: propHome, onClose, isFromCalendar = false }: HomeDetailsProps) {
   const { deleteHome, homes: allHomes } = useHomes();
   const { missions } = useMissions();
   const { conciergerieName, isEmployee, isConciergerie, userData } = useAuth();
@@ -77,6 +77,13 @@ export default function HomeDetails({ home, onClose, isFromCalendar = false }: H
   const [associatedMissions, setAssociatedMissions] = useState<string[]>([]);
   const [skipAnimation, setSkipAnimation] = useState(false);
   const [showHomeForm, setShowHomeForm] = useState(false);
+
+  // Sync home with the latest data from allHomes (which updates when DB changes)
+  const [home, setHome] = useState(propHome);
+  useEffect(() => {
+    const updatedHome = allHomes.find(h => h.id === home.id);
+    if (updatedHome) setHome(updatedHome);
+  }, [allHomes, home.id]);
 
   useEffect(() => {
     setIsReadOnly(home.conciergerieName !== conciergerieName);
