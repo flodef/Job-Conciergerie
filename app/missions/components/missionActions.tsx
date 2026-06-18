@@ -69,10 +69,10 @@ export default function MissionActions({
     const { pointsPerDay } = calculateMissionPoints(mission);
 
     // Create dates for the range
-    const currentDate = mission.startDateTime;
+    const currentDate = new Date(mission.startDateTime);
     currentDate.setHours(0, 0, 0, 0);
 
-    const lastDate = mission.endDateTime;
+    const lastDate = new Date(mission.endDateTime);
     lastDate.setHours(0, 0, 0, 0);
 
     let maxPointsForAnyDay = 0;

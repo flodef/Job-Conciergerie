@@ -35,11 +35,11 @@ export const groupMissionsByDate = (missions: Mission[]): Map<string, Mission[]>
     // Skip completed missions
     if (mission.status === 'completed') return;
 
-    // Reset hours to compare just the dates
-    const startDay = mission.startDateTime;
+    // Reset hours to compare just the dates (use copies to avoid mutating the shared mission objects)
+    const startDay = new Date(mission.startDateTime);
     startDay.setHours(0, 0, 0, 0);
 
-    const endDay = mission.endDateTime;
+    const endDay = new Date(mission.endDateTime);
     endDay.setHours(0, 0, 0, 0);
 
     // Check if mission spans multiple days
@@ -93,14 +93,14 @@ export const groupMissionsByDate = (missions: Mission[]): Map<string, Mission[]>
  * @returns Formatted time string
  */
 export const formatMissionTimeForCalendar = (mission: Mission, currentDate: Date): string => {
-  // Reset hours to compare just the dates
-  const startDay = mission.startDateTime;
+  // Reset hours to compare just the dates (use copies to avoid mutating the shared mission objects)
+  const startDay = new Date(mission.startDateTime);
   startDay.setHours(0, 0, 0, 0);
 
-  const endDay = mission.endDateTime;
+  const endDay = new Date(mission.endDateTime);
   endDay.setHours(0, 0, 0, 0);
 
-  const currentDay = currentDate;
+  const currentDay = new Date(currentDate);
   currentDay.setHours(0, 0, 0, 0);
 
   // Check if the mission spans multiple days
