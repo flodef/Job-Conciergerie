@@ -89,8 +89,10 @@ const MultiSelect = forwardRef(
 
     const toggleOption = (optionValue: string) => {
       if (optionValue === 'all') {
-        // If "All" is selected, clear all other selections
+        // If "All" is selected, clear all other selections and close
         onChange([]);
+        setIsOpen(false);
+        setIsFocused(false);
       } else {
         // If any specific option is selected, remove "All" from the selection
         let newValues = [...values];
@@ -249,7 +251,11 @@ const MultiSelect = forwardRef(
                       <div
                         key={option.value}
                         className={cn(optionClassName(isSelected), isHighlighted && !isSelected && 'bg-secondary/30')}
-                        onMouseDown={() => toggleOption(option.value)}
+                        onMouseDown={e => {
+                          // Prevent the combobox from losing focus (which would close the dropdown)
+                          e.preventDefault();
+                          toggleOption(option.value);
+                        }}
                         onMouseEnter={() => setHighlightedIndex(index)}
                         role="option"
                         aria-selected={isSelected}
