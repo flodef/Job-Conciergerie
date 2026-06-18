@@ -59,10 +59,10 @@ export const inputFieldClassName = (error: boolean | string) =>
 export const filterButtonClassName = (shouldAppear: boolean) =>
   cn(
     rightSideButtonClassName,
-    'transition-all duration-500 ease-in-out',
+    'transition-all duration-500 ease-in-out px-1.5 mb-0',
     shouldAppear
-      ? 'bg-foreground/10 text-foreground w-[115px]'
-      : 'bg-foreground/5 text-foreground/40 w-0 px-[0px] overflow-hidden',
+      ? 'bg-foreground/10 text-foreground w-8'
+      : 'bg-foreground/5 text-foreground/40 w-0 px-0 overflow-hidden',
   );
 export const optionsClassName =
   'w-full bg-background border border-foreground/20 rounded-lg shadow-lg overflow-auto max-h-[202px]';

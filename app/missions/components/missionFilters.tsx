@@ -2,7 +2,7 @@
 
 import MultiSelect from '@/app/components/multiSelect';
 import { filterButtonClassName, rowClassName, secondaryButtonClassName } from '@/app/utils/className';
-import { IconDeviceFloppy, IconX } from '@tabler/icons-react';
+import { IconDeviceFloppy, IconRefresh, IconX } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
 import React from 'react';
 
@@ -36,6 +36,13 @@ interface MissionFiltersProps {
   onClose?: () => void;
 }
 
+// Reusable reset button component
+const FilterResetButton = ({ onClick, changed }: { onClick: () => void; changed: boolean }) => (
+  <button onClick={onClick} className={filterButtonClassName(changed)} disabled={!changed} aria-label="Réinitialiser">
+    <IconRefresh size={24} />
+  </button>
+);
+
 export default function MissionFilters({
   availableConciergeries,
   availableZones,
@@ -61,7 +68,7 @@ export default function MissionFilters({
     available: 'Disponible',
     accepted: 'Acceptée',
     completed: 'Terminée',
-    started: 'En cours',
+    // started: 'En cours', // Not used in the app
     expired: 'Expirée',
   };
 
@@ -106,7 +113,7 @@ export default function MissionFilters({
     <div className="px-4 pb-4 bg-background rounded-lg shadow-md flex flex-col gap-2">
       {/* Conciergeries filter */}
       {availableConciergeries.length > 0 && (
-        <div className={cn(rowClassName, 'my-0')}>
+        <div className={cn(rowClassName, 'gap-2 my-0')}>
           <MultiSelect
             id="conciergeries-filter"
             label="Conciergerie"
@@ -119,40 +126,34 @@ export default function MissionFilters({
             disabled={false}
             required
           />
-          <button
+          <FilterResetButton
             onClick={() => setSelectedConciergeries(savedFilters?.conciergeries || [])}
-            className={filterButtonClassName(conciergeriesChanged)}
-            disabled={!conciergeriesChanged}
-          >
-            <IconX size={14} /> Réinitialiser
-          </button>
+            changed={conciergeriesChanged}
+          />
         </div>
       )}
 
       {/* Time period filter */}
-      <div className={cn(rowClassName, 'my-0')}>
-        <MultiSelect
-          id="time-period-filter"
-          label="Période"
-          values={selectedStatuses}
-          onChange={setSelectedStatuses}
-          options={availableTimePeriods.map(period => ({ value: period, label: period }))}
-          disabled={availableTimePeriods.length === 0}
-          required={availableTimePeriods.length > 0}
-        />
-        {availableTimePeriods.length > 0 && (
-          <button
+      {availableTimePeriods.length > 0 && (
+        <div className={cn(rowClassName, 'gap-2 my-0')}>
+          <MultiSelect
+            id="time-period-filter"
+            label="Période"
+            values={selectedStatuses}
+            onChange={setSelectedStatuses}
+            options={availableTimePeriods.map(period => ({ value: period, label: period }))}
+            disabled={false}
+            required
+          />
+          <FilterResetButton
             onClick={() => setSelectedStatuses(savedFilters?.statuses || [])}
-            className={filterButtonClassName(statusesChanged)}
-            disabled={!statusesChanged}
-          >
-            <IconX size={14} /> Réinitialiser
-          </button>
-        )}
-      </div>
+            changed={statusesChanged}
+          />
+        </div>
+      )}
 
       {/* Mission status filter */}
-      <div className={cn(rowClassName, 'my-0')}>
+      <div className={cn(rowClassName, 'gap-2 my-0')}>
         <MultiSelect
           id="mission-status-filter"
           label="Etat de la mission"
@@ -174,13 +175,10 @@ export default function MissionFilters({
           disabled={false}
           required
         />
-        <button
+        <FilterResetButton
           onClick={() => setSelectedMissionStatuses(savedFilters?.missionStatuses || ['available'])}
-          className={filterButtonClassName(missionStatusesChanged)}
-          disabled={!missionStatusesChanged}
-        >
-          <IconX size={14} /> Réinitialiser
-        </button>
+          changed={missionStatusesChanged}
+        />
       </div>
 
       {/* Employee filter - conciergerie only */}
@@ -188,7 +186,7 @@ export default function MissionFilters({
         availableEmployees.length > 0 &&
         setSelectedEmployees &&
         selectedEmployees !== undefined && (
-          <div className={cn(rowClassName, 'my-0')}>
+          <div className={cn(rowClassName, 'gap-2 my-0')}>
             <MultiSelect
               id="employee-filter"
               label="Prestataire"
@@ -198,41 +196,33 @@ export default function MissionFilters({
               disabled={false}
               required
             />
-            <button
+            <FilterResetButton
               onClick={() => setSelectedEmployees(savedFilters?.employees || [])}
-              className={filterButtonClassName(employeesChanged)}
-              disabled={!employeesChanged}
-            >
-              <IconX size={14} /> Réinitialiser
-            </button>
+              changed={employeesChanged}
+            />
           </div>
         )}
 
       {/* Geographic zones filter */}
-      <div className={cn(rowClassName, 'my-0')}>
-        <MultiSelect
-          id="zones-filter"
-          label="Zone géographique"
-          values={selectedZones}
-          onChange={setSelectedZones}
-          options={availableZones.map(zone => ({
-            value: zone,
-            label: zone,
-          }))}
-          disabled={false}
-          required
-        />
-        <button
-          onClick={() => setSelectedZones(savedFilters?.zones || [])}
-          className={filterButtonClassName(zonesChanged)}
-          disabled={!zonesChanged}
-        >
-          <IconX size={14} /> Réinitialiser
-        </button>
-      </div>
+      {availableZones.length > 0 && (
+        <div className={cn(rowClassName, 'gap-2 my-0')}>
+          <MultiSelect
+            id="zones-filter"
+            label="Zone géographique"
+            values={selectedZones}
+            onChange={setSelectedZones}
+            options={availableZones.map(zone => ({
+              value: zone,
+              label: zone,
+            }))}
+            disabled={false}
+            required
+          />
+          <FilterResetButton onClick={() => setSelectedZones(savedFilters?.zones || [])} changed={zonesChanged} />
+        </div>
+      )}
 
       {/* Save and Reset all filters buttons */}
-
       <div className="pt-2 border-t border-foreground/10 flex gap-2">
         {/* Save filters button */}
         {saveFiltersToLocalStorage && (
