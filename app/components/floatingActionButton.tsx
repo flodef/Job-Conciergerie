@@ -19,7 +19,7 @@ export default function FloatingActionButton({
     <button
       onClick={onClick}
       className={cn(
-        'fixed bottom-24 right-4 w-14 h-14 rounded-full bg-primary text-background flex items-center justify-center shadow-lg',
+        'fixed bottom-20 right-4 sm:right-8 w-14 h-14 rounded-full bg-primary text-background flex items-center justify-center shadow-lg',
         'hover:bg-primary/90 transition-colors z-10 cursor-pointer',
         className,
       )}
