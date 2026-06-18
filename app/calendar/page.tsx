@@ -170,22 +170,22 @@ export default function Calendar() {
           clearTimeout(highlightTimeoutRef.current);
           // Remove highlight from any previously highlighted element
           document.querySelectorAll('.highlighted-mission').forEach(el => {
-            el.classList.remove('highlighted-mission', 'border-2', 'border-primary');
+            el.classList.remove('highlighted-mission', 'border-3', 'border-primary');
           });
         }
 
         // Scroll to the day container instead of the mission card to keep the day title visible
         const dayContainer = element.closest('[data-day-container]');
         if (dayContainer) {
-          dayContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          dayContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         // Add highlight using border for visibility on all sides
-        element.classList.add('highlighted-mission', 'border-2', 'border-primary');
+        element.classList.add('highlighted-mission', 'border-3', 'border-primary');
 
         // Set timeout to remove highlight
         highlightTimeoutRef.current = setTimeout(() => {
-          element.classList.remove('highlighted-mission', 'border-2', 'border-primary');
+          element.classList.remove('highlighted-mission', 'border-3', 'border-primary');
           highlightTimeoutRef.current = null;
         }, 2000);
       }
