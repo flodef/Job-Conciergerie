@@ -15,3 +15,5 @@ export type Size = 'small' | 'medium' | 'large';
 export type SortDirection = 'asc' | 'desc';
 
 export type UpdateMode = 'add' | 'edit';
+
+export type DateTimeRange = 'start' | 'end';

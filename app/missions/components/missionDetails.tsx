@@ -20,6 +20,7 @@ import MissionActions from '@/app/missions/components/missionActions';
 import MissionCompletionModal from '@/app/missions/components/missionCompletionModal';
 import MissionForm from '@/app/missions/components/missionForm';
 import type { Employee, Mission } from '@/app/types/dataTypes';
+import type { DateTimeRange } from '@/app/types/types';
 import {
   actionButtonBarClassName,
   buttonClassName,
@@ -27,6 +28,7 @@ import {
   containerClassName,
   descriptionClassName,
   iconButtonClassName,
+  rowClassName,
   textClassName,
   textPulseClassName,
   titleClassName,
@@ -219,7 +221,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
   const endDate = new Date(mission.endDateTime);
   const hasStarted = now >= startDate;
   const hasEnded = now >= endDate;
-  const [editingDate, setEditingDate] = useState<'start' | 'end' | null>(null);
+  const [editingDate, setEditingDate] = useState<DateTimeRange | null>(null);
   const isDateEditable = isMissionOwner && isMissionEditable(mission) && !editingDate && !hasEnded;
 
   // Date edit state - allows the conciergerie to adjust start and end dates inline
@@ -235,6 +237,19 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
     setEditEndDate(localISOString(endDate));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mission.startDateTime, mission.endDateTime]);
+
+  // Helper to handle date changes for both start and end dates
+  const handleDateChange = (value: string) => {
+    const dateChangeFunc = editingDate === 'start' ? handleMissionStartDateChange : handleMissionEndDateChange;
+
+    const { startDateTime: newStart, endDateTime: newEnd } = dateChangeFunc(value, editStartDate, editEndDate);
+
+    setEditStartDate(newStart);
+    setEditEndDate(newEnd);
+
+    setStartDateError('');
+    setEndDateError('');
+  };
 
   // Get the home data
   const home = homes.find(h => h.id === mission.homeId);
@@ -467,7 +482,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
   };
 
   // Start inline date editing
-  const startEditingDate = (date: 'start' | 'end') => {
+  const startEditingDate = (date: DateTimeRange) => {
     if (!isMissionOwner) return;
     cancelDateEditing();
     setEditingDate(date);
@@ -743,7 +758,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
 
           <div className="space-y-2" data-mission-details>
             <div>
-              <div className="flex items-center justify-between">
+              <div className={rowClassName}>
                 <HomeTitle home={home} allowDuo={mission.allowDuo} />
                 <button
                   className="cursor-pointer"
@@ -763,7 +778,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
               ) : null}
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className={rowClassName}>
               <h3 className={containerClassName}>
                 <IconListCheck size={16} />
                 Tâches
@@ -783,7 +798,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className={rowClassName}>
               <h3 className={containerClassName}>
                 <IconStopwatch size={16} />
                 Nombre d&apos;heures estimées
@@ -795,12 +810,22 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
             </div>
 
             {!!mission.travellers && (
-              <div className="flex items-center justify-between">
+              <div className={rowClassName}>
                 <h3 className={containerClassName}>
-                  <IconUsers size={16} />
+                  <IconUsersGroup size={16} />
                   Nombre de voyageurs
                 </h3>
                 <span className="font-medium">{mission.travellers}</span>
+              </div>
+            )}
+
+            {!!mission.allowDuo && (
+              <div className={rowClassName}>
+                <h3 className={containerClassName}>
+                  <IconUsers size={16} />
+                  Mission en binôme
+                </h3>
+                <span className="font-medium">Oui</span>
               </div>
             )}
 
@@ -818,15 +843,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
                           id="Date de début"
                           label=""
                           value={editStartDate}
-                          onChange={value => {
-                            const { startDateTime: newStart, endDateTime: newEnd } = handleMissionStartDateChange(
-                              value,
-                              editStartDate,
-                              editEndDate,
-                            );
-                            setEditStartDate(newStart);
-                            setEditEndDate(newEnd);
-                          }}
+                          onChange={handleDateChange}
                           onEscape={cancelDateEditing}
                           onEnter={handleDateEditConfirm}
                           error={startDateError}
@@ -883,15 +900,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
                           id="Date de fin"
                           label=""
                           value={editEndDate}
-                          onChange={value => {
-                            const { startDateTime: newStart, endDateTime: newEnd } = handleMissionEndDateChange(
-                              value,
-                              editStartDate,
-                              editEndDate,
-                            );
-                            setEditEndDate(newEnd);
-                            setEditStartDate(newStart);
-                          }}
+                          onChange={handleDateChange}
                           onEscape={cancelDateEditing}
                           onEnter={handleDateEditConfirm}
                           error={endDateError}
@@ -998,7 +1007,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
             )}
 
             {!isFromCalendar && isConciergerie && (
-              <div className="flex items-center justify-between">
+              <div className={rowClassName}>
                 {employee ? (
                   <>
                     <h3 className={containerClassName}>
@@ -1101,7 +1110,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
             )}
 
             {mission.allowDuo && !isConciergerie && (
-              <div className="flex items-center justify-between">
+              <div className={rowClassName}>
                 <h3 className={containerClassName}>
                   <IconUserCheck size={16} />
                   Binôme

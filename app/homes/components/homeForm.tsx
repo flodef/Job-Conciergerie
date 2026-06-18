@@ -23,7 +23,7 @@ import { range } from '@/app/utils/select';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Constants for validation
-export const MAX_TRAVELLERS = 8;
+export const MAX_TRAVELLERS = 10;
 const MAX_OBJECTIVES = 30;
 const MAX_PHOTOS = 9;
 

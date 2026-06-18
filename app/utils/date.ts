@@ -309,7 +309,7 @@ export const getRemainingTime = (startDate: Date, endDate: Date): string | null 
   // Calculate the difference in days
   const diffTime = hasMissionStarted
     ? Math.abs(end.getTime() - now.getTime())
-    : Math.abs(start.getTime() - now.getTime());
+    : Math.abs(end.getTime() - start.getTime());
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); // No need to add 1 as we're calculating from today
 
   // For hours, use the original calculation
@@ -319,13 +319,13 @@ export const getRemainingTime = (startDate: Date, endDate: Date): string | null 
   const diffHours = Math.floor(diffMins / 60);
 
   if (diffDays > 0) {
-    return `${!hasMissionStarted ? 'Dans' : ''} ${diffDays} jour${diffDays > 1 ? 's' : ''} ${hasMissionStarted ? 'restant' + (diffDays > 1 ? 's' : '') : ''}`;
+    return `${diffDays} jour${diffDays > 1 ? 's' : ''} ${hasMissionStarted ? 'restant' + (diffDays > 1 ? 's' : '') : ''}`;
   } else if (diffHours > 0) {
-    return `${!hasMissionStarted ? 'Dans' : ''} ${diffHours} heure${diffHours > 1 ? 's' : ''} ${hasMissionStarted ? 'restante' + (diffHours > 1 ? 's' : '') : ''}`;
+    return `${diffHours} heure${diffHours > 1 ? 's' : ''} ${hasMissionStarted ? 'restante' + (diffHours > 1 ? 's' : '') : ''}`;
   } else if (diffMins > 0) {
-    return `${!hasMissionStarted ? 'Dans' : ''} ${diffMins} minute${diffMins > 1 ? 's' : ''} ${hasMissionStarted ? 'restante' + (diffMins > 1 ? 's' : '') : ''}`;
+    return `${diffMins} minute${diffMins > 1 ? 's' : ''} ${hasMissionStarted ? 'restante' + (diffMins > 1 ? 's' : '') : ''}`;
   } else {
-    return `${!hasMissionStarted ? 'Dans m' : 'M'}oins d'une minute ${hasMissionStarted ? 'restante' : ''}`;
+    return `Moins d'une minute ${hasMissionStarted ? 'restante' : ''}`;
   }
 };
 

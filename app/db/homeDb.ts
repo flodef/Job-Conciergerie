@@ -1,6 +1,7 @@
 import { sql } from '@/app/db/db';
 import type { Home } from '@/app/types/dataTypes';
 import type postgres from 'postgres';
+import { MAX_TRAVELLERS } from '../homes/components/homeForm';
 
 // Type definition for database home
 export interface DbHome {
@@ -33,7 +34,7 @@ function formatHome(dbHome: DbHome): Home {
     hoursOfGardening: Number(dbHome.hours_of_gardening),
     conciergerieName: dbHome.conciergerie_name,
     allowDuo: dbHome.allow_duo ?? false,
-    maxTravellers: dbHome.max_travellers ?? 1,
+    maxTravellers: dbHome.max_travellers ?? MAX_TRAVELLERS,
     notes: dbHome.notes,
   };
 }
