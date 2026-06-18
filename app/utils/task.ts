@@ -1,5 +1,5 @@
 import tasksData from '@/app/data/tasks.json';
-import type { Home, Mission, MissionPoints} from '@/app/types/dataTypes';
+import type { Home, Mission, MissionPoints } from '@/app/types/dataTypes';
 import { Task } from '@/app/types/dataTypes';
 
 export const MAX_POINTS_PER_DAY = 100;
@@ -174,13 +174,9 @@ const filterEmployeeMissionsForDate = (
     if ((mission.employeeId !== employeeId && mission.employeeId2 !== employeeId) || mission.status === 'completed')
       return false;
 
-    // Check if the mission spans the target date
-    const startDate = new Date(mission.startDateTime);
-    const endDate = new Date(mission.endDateTime);
-
     // Set hours to 0 to calculate just the days
-    const start = normalizeDate(startDate);
-    const end = normalizeDate(endDate);
+    const start = normalizeDate(mission.startDateTime);
+    const end = normalizeDate(mission.endDateTime);
     const target = normalizeDate(date);
 
     return start <= target && target <= end;

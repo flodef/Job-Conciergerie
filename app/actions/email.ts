@@ -326,8 +326,7 @@ function composeLateCompletionEmail(
   }[mission.status || 'accepted'];
 
   const now = new Date();
-  const endDateTime = new Date(mission.endDateTime);
-  const daysLate = Math.floor((now.getTime() - endDateTime.getTime()) / (1000 * 60 * 60 * 24));
+  const daysLate = Math.floor((now.getTime() - mission.endDateTime.getTime()) / (1000 * 60 * 60 * 24));
   const daysLateText = daysLate === 0 ? "aujourd'hui" : daysLate === 1 ? 'hier' : `il y a ${daysLate} jours`;
 
   return {

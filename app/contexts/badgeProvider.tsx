@@ -70,10 +70,10 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
         ? (mission: Mission) =>
             mission.conciergerieName === conciergerieName &&
             mission.employeeId && // Has an employee (accepted)
-            new Date(mission.modifiedDate) > lastCheckedDate
+            mission.modifiedDate > lastCheckedDate
         : (mission: Mission) =>
             !mission.employeeId && // Not assigned to anyone
-            new Date(mission.modifiedDate) > lastCheckedDate &&
+            mission.modifiedDate > lastCheckedDate &&
             !isMissionExpired(mission); // Not expired
 
       const newMissions = missions.filter(missionFilter);
@@ -97,14 +97,12 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
       // Find missions that are scheduled for today
       const today = new Date();
       const todayMissions = missions.filter(mission => {
-        const missionStart = new Date(mission.startDateTime);
-
         // Check if mission is scheduled for today (mission day matches today)
         return (
           mission.employeeId === employeeName &&
-          missionStart.getDate() === today.getDate() &&
-          missionStart.getMonth() === today.getMonth() &&
-          missionStart.getFullYear() === today.getFullYear()
+          mission.startDateTime.getDate() === today.getDate() &&
+          mission.startDateTime.getMonth() === today.getMonth() &&
+          mission.startDateTime.getFullYear() === today.getFullYear()
         );
       });
 

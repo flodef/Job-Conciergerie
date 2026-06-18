@@ -47,7 +47,7 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
           <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
           <div className="min-w-0">
             <p className={cn(titleClassName, 'truncate')}>{home?.title ?? 'Bien inconnu'}</p>
-            <p className={descriptionClassName}>{formatDate(new Date(mission.startDateTime))}</p>
+            <p className={descriptionClassName}>{formatDate(mission.startDateTime)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-2">
@@ -63,8 +63,7 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
       {isOpen && (
         <div className="px-3 pb-3 space-y-1 text-sm border-t border-secondary pt-2">
           <p className={descriptionClassName}>
-            <span className={textClassName}>Dates :</span>{' '}
-            {formatDateRange(new Date(mission.startDateTime), new Date(mission.endDateTime))}
+            <span className={textClassName}>Dates :</span> {formatDateRange(mission.startDateTime, mission.endDateTime)}
           </p>
           {home?.geographicZone && (
             <p className={descriptionClassName}>
@@ -110,7 +109,7 @@ function MonthlyHoursChart({
     const data = new Map<string, { hours: number; count: number }>();
 
     missions.forEach(mission => {
-      const date = new Date(mission.startDateTime);
+      const date = mission.startDateTime;
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       const existing = data.get(monthKey) || { hours: 0, count: 0 };
       data.set(monthKey, {
@@ -329,8 +328,7 @@ export default function HistoryPage() {
     // If a time period is selected, only show conciergeries with missions in that period
     if (selectedTimePeriod) {
       missionsToFilter = completedMissions.filter(m => {
-        const date = new Date(m.startDateTime);
-        return getMonthKey(date) === selectedTimePeriod;
+        return getMonthKey(m.startDateTime) === selectedTimePeriod;
       });
     }
 
@@ -348,8 +346,7 @@ export default function HistoryPage() {
 
     const periods = new Set<string>();
     missionsToFilter.forEach(m => {
-      const date = new Date(m.startDateTime);
-      periods.add(getMonthKey(date));
+      periods.add(getMonthKey(m.startDateTime));
     });
     // Sort from newest to oldest (descending)
     return Array.from(periods).sort((a, b) => b.localeCompare(a));
@@ -367,8 +364,7 @@ export default function HistoryPage() {
     // Filter by time period (month)
     if (selectedTimePeriod) {
       filtered = filtered.filter(m => {
-        const date = new Date(m.startDateTime);
-        return getMonthKey(date) === selectedTimePeriod;
+        return getMonthKey(m.startDateTime) === selectedTimePeriod;
       });
     }
 

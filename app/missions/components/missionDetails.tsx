@@ -217,8 +217,8 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
 
   // Date helpers
   const now = new Date();
-  const startDate = new Date(mission.startDateTime);
-  const endDate = new Date(mission.endDateTime);
+  const startDate = mission.startDateTime;
+  const endDate = mission.endDateTime;
   const hasStarted = now >= startDate;
   const hasEnded = now >= endDate;
   const [editingDate, setEditingDate] = useState<DateTimeRange | null>(null);

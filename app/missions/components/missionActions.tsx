@@ -68,22 +68,18 @@ export default function MissionActions({
     // Get the mission points
     const { pointsPerDay } = calculateMissionPoints(mission);
 
-    // Check each day of the mission to see if accepting would exceed max points per day
-    const startDate = new Date(mission.startDateTime);
-    const endDate = new Date(mission.endDateTime);
-
     // Create dates for the range
-    const currentDate = new Date(startDate);
+    const currentDate = mission.startDateTime;
     currentDate.setHours(0, 0, 0, 0);
 
-    const lastDate = new Date(endDate);
+    const lastDate = mission.endDateTime;
     lastDate.setHours(0, 0, 0, 0);
 
     let maxPointsForAnyDay = 0;
 
     // Check each day in the range
     while (currentDate <= lastDate) {
-      const pointsForDay = calculateEmployeePointsForDay(currentEmployeeId, new Date(currentDate), missions);
+      const pointsForDay = calculateEmployeePointsForDay(currentEmployeeId, currentDate, missions);
 
       // Keep track of the maximum points for any day
       maxPointsForAnyDay = Math.max(maxPointsForAnyDay, pointsForDay);

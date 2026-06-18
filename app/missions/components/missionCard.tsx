@@ -126,7 +126,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
 
       <div className="mt-3 text-sm text-light">
         <div className="flex justify-between items-center">
-          <span>{formatDateRange(new Date(mission.startDateTime), new Date(mission.endDateTime))}</span>
+          <span>{formatDateRange(mission.startDateTime, mission.endDateTime)}</span>
         </div>
         {isConciergerie && !!reservedEmployees?.length && (
           <div className="flex items-center gap-1 mt-1 truncate">

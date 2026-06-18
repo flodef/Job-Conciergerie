@@ -35,15 +35,11 @@ export const groupMissionsByDate = (missions: Mission[]): Map<string, Mission[]>
     // Skip completed missions
     if (mission.status === 'completed') return;
 
-    // Create date objects in local timezone
-    const startDate = new Date(mission.startDateTime);
-    const endDate = new Date(mission.endDateTime);
-
     // Reset hours to compare just the dates
-    const startDay = new Date(startDate);
+    const startDay = mission.startDateTime;
     startDay.setHours(0, 0, 0, 0);
 
-    const endDay = new Date(endDate);
+    const endDay = mission.endDateTime;
     endDay.setHours(0, 0, 0, 0);
 
     // Check if mission spans multiple days
@@ -64,14 +60,14 @@ export const groupMissionsByDate = (missions: Mission[]): Map<string, Mission[]>
         }
       } else if (isEnded) {
         // For ended multi-day missions that are not completed, show only on last day
-        const endDateStr = toLocalDateString(endDate);
+        const endDateStr = toLocalDateString(mission.endDateTime);
         const existingMissions = missionsByDate.get(endDateStr) || [];
         if (!existingMissions.some(m => m.id === mission.id)) {
           missionsByDate.set(endDateStr, [...existingMissions, mission]);
         }
       } else {
         // For future multi-day missions, show only on start day
-        const startDateStr = toLocalDateString(startDate);
+        const startDateStr = toLocalDateString(mission.startDateTime);
         const existingMissions = missionsByDate.get(startDateStr) || [];
         if (!existingMissions.some(m => m.id === mission.id)) {
           missionsByDate.set(startDateStr, [...existingMissions, mission]);
@@ -79,7 +75,7 @@ export const groupMissionsByDate = (missions: Mission[]): Map<string, Mission[]>
       }
     } else {
       // For single-day missions, show on that day
-      const dateStr = toLocalDateString(startDate);
+      const dateStr = toLocalDateString(mission.startDateTime);
       const existingMissions = missionsByDate.get(dateStr) || [];
       if (!existingMissions.some(m => m.id === mission.id)) {
         missionsByDate.set(dateStr, [...existingMissions, mission]);
@@ -97,17 +93,14 @@ export const groupMissionsByDate = (missions: Mission[]): Map<string, Mission[]>
  * @returns Formatted time string
  */
 export const formatMissionTimeForCalendar = (mission: Mission, currentDate: Date): string => {
-  const startDate = new Date(mission.startDateTime);
-  const endDate = new Date(mission.endDateTime);
-
   // Reset hours to compare just the dates
-  const startDay = new Date(startDate);
+  const startDay = mission.startDateTime;
   startDay.setHours(0, 0, 0, 0);
 
-  const endDay = new Date(endDate);
+  const endDay = mission.endDateTime;
   endDay.setHours(0, 0, 0, 0);
 
-  const currentDay = new Date(currentDate);
+  const currentDay = currentDate;
   currentDay.setHours(0, 0, 0, 0);
 
   // Check if the mission spans multiple days
@@ -115,16 +108,16 @@ export const formatMissionTimeForCalendar = (mission: Mission, currentDate: Date
 
   // If it's a single day mission or if start and end are on the same day
   if (!isMultiDayMission) {
-    return `${formatTime(startDate)} - ${formatTime(endDate)}`;
+    return `${formatTime(mission.startDateTime)} - ${formatTime(mission.endDateTime)}`;
   }
 
   // For multi-day missions
   if (currentDay.getTime() === startDay.getTime()) {
     // Start day
-    return `À partir de ${formatTime(startDate)}`;
+    return `À partir de ${formatTime(mission.startDateTime)}`;
   } else if (currentDay.getTime() === endDay.getTime()) {
     // End day
-    return `Jusqu'à ${formatTime(endDate)}`;
+    return `Jusqu'à ${formatTime(mission.endDateTime)}`;
   } else {
     // Day in between
     return 'Toute la journée';

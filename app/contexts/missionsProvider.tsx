@@ -562,7 +562,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       return { success: false, employeeNotified: false };
 
     // Only allow starting if the mission is accepted and the start time has passed
-    if (new Date() < new Date(missionToStart.startDateTime)) return { success: false, employeeNotified: false };
+    if (new Date() < missionToStart.startDateTime) return { success: false, employeeNotified: false };
 
     const success = await setMissionData(id, { ...missionToStart, status: 'started' });
     if (!success) return { success: false, employeeNotified: false };
@@ -625,10 +625,10 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       if (mission.conciergerieName !== conciergerieName) return false;
 
       // Check if start and end dates match (comparing only date and time, not milliseconds)
-      const missionStart = new Date(mission.startDateTime);
-      const missionEnd = new Date(mission.endDateTime);
-      const newStart = new Date(missionData.startDateTime);
-      const newEnd = new Date(missionData.endDateTime);
+      const missionStart = mission.startDateTime;
+      const missionEnd = mission.endDateTime;
+      const newStart = missionData.startDateTime;
+      const newEnd = missionData.endDateTime;
 
       const startMatches =
         missionStart.getFullYear() === newStart.getFullYear() &&

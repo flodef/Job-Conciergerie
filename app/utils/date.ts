@@ -108,7 +108,7 @@ export const adjustMissionDateTime = (start: string, end: string): { startDateTi
  * @param useSpacing Whether to use spacing between date parts
  * @returns The formatted date
  */
-export const formatDate = (date: Date, useSpacing = false): string => {
+export const formatDigitDate = (date: Date): string => {
   return new Date(date)
     .toLocaleDateString('fr-FR', {
       day: '2-digit',
@@ -116,7 +116,19 @@ export const formatDate = (date: Date, useSpacing = false): string => {
       year: 'numeric',
       timeZone: 'Europe/Paris',
     })
-    .replace(/\//g, useSpacing ? ' / ' : '/');
+    .replace(/\//g, ' / ');
+};
+
+/**
+ * Format a date for display with short month name (e.g., "1 Janv. 2026")
+ * @param date The date to format
+ * @returns The formatted date
+ */
+export const formatDate = (date: Date): string => {
+  const day = date.getDate();
+  const month = monthNamesShort[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day} ${month} ${year}`;
 };
 
 /**
@@ -141,9 +153,9 @@ export const formatTime = (date: Date, useSpacing = false): string => {
  * @param useSpacing Whether to use spacing between date and time
  * @returns The formatted datetime
  */
-export const formatDateTime = (date: Date, useSpacing = false): string => {
-  const dateStr = formatDate(date, useSpacing);
-  const timeStr = formatTime(date, useSpacing);
+export const formatDateTime = (date: Date, useDigit = false): string => {
+  const dateStr = useDigit ? formatDigitDate(date) : formatDate(date);
+  const timeStr = formatTime(date);
   return `${dateStr} à ${timeStr}`;
 };
 
