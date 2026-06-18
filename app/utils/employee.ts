@@ -2,6 +2,7 @@ import { updateEmployeeStatusAction } from '@/app/actions/employee';
 import { updateMissionData } from '@/app/actions/mission';
 import type { Conciergerie, Employee, EmployeeStatus, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
+import {} from './extensions';
 import { isPartOfMission } from './missionFilters';
 import { getUserKey } from './user';
 
@@ -29,7 +30,7 @@ export const normalizeFirstName = function (firstName: string) {
     .replace(/\s+/g, '-')
     .split('-')
     .filter(Boolean)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .map(part => part.toFirstUpperCase())
     .join('-');
 };
 
@@ -47,7 +48,7 @@ export const normalizeFamilyName = function (familyName: string) {
     .toLowerCase()
     .split(/[ -]/)
     .filter(Boolean)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .map(part => part.toFirstUpperCase())
     .join(familyName.includes('-') ? '-' : ' ');
 };
 

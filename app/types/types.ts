@@ -17,3 +17,10 @@ export type SortDirection = 'asc' | 'desc';
 export type UpdateMode = 'add' | 'edit';
 
 export type DateTimeRange = 'start' | 'end';
+
+export type MinMax = {
+  min: number;
+  max: number;
+};
+
+export type SymbolPosition = 'before' | 'after';

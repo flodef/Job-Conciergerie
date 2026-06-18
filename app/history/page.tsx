@@ -7,7 +7,7 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import HistoryFilters from '@/app/history/components/historyFilters';
 import type { Home, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
-import { formatDate, formatDateRange } from '@/app/utils/date';
+import { formatDate, formatDateRange, getMonthYearLabel } from '@/app/utils/date';
 import { formatHours, formatNumber, getMissionHoursPerProvider, isDuoComplete } from '@/app/utils/task';
 import {
   IconBriefcase,
@@ -93,15 +93,6 @@ const formatShortMonthLabel = (monthKey: string): string => {
   return `${month}/${year.slice(2)}`;
 };
 
-// Helper to get month name in French with first letter capitalized
-const getMonthName = (monthKey: string): string => {
-  const [year, month] = monthKey.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-  const formatted = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-  // Ensure first letter is uppercase
-  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-};
-
 // Interactive line chart component for monthly hours with manual SVG
 function MonthlyHoursChart({
   missions,
@@ -154,7 +145,7 @@ function MonthlyHoursChart({
         <div className="flex items-center justify-between mb-2">
           <h3 className={textClassName}>
             {selectedData
-              ? `${getMonthName(selectedData.month)} - ${formatHours(selectedData.hours)}`
+              ? `${getMonthYearLabel(selectedData.month)} - ${formatHours(selectedData.hours)}`
               : 'Heures par mois'}
           </h3>
           {selectedPoint && (
@@ -194,7 +185,7 @@ function MonthlyHoursChart({
       <div className="flex items-center justify-between mb-3 h-7">
         <h3 className={textClassName}>
           {selectedData
-            ? `${getMonthName(selectedData.month)} - ${formatHours(selectedData.hours)}`
+            ? `${getMonthYearLabel(selectedData.month)} - ${formatHours(selectedData.hours)}`
             : 'Heures par mois'}
         </h3>
         {selectedPoint && (

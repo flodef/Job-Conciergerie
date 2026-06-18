@@ -7,6 +7,7 @@ import UserTypeSelection from '@/app/components/userTypeSelection';
 import type { UserType } from '@/app/contexts/authProvider';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useCallback, useEffect, useState } from 'react';
+import {} from '@/app/utils/extensions';
 
 export default function Home() {
   const { isLoading: authLoading, userType, updateUserType } = useAuth();

@@ -2,6 +2,7 @@
 
 import type { Mission } from '@/app/types/dataTypes';
 import { formatTime, toLocalDateString } from '@/app/utils/date';
+import {} from './extensions';
 
 /**
  * Format date to display in calendar (e.g., "Lundi 8 mars 2025")
@@ -9,13 +10,15 @@ import { formatTime, toLocalDateString } from '@/app/utils/date';
  * @returns The formatted date string
  */
 export const formatCalendarDate = (date: Date): string => {
-  return date.toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'Europe/Paris',
-  });
+  return date
+    .toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Europe/Paris',
+    })
+    .toFirstUpperCase();
 };
 
 /**

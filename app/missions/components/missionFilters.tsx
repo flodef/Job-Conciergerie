@@ -56,11 +56,11 @@ export default function MissionFilters({
   isConciergerie,
 }: MissionFiltersProps) {
   const statusLabels: Record<string, string> = {
-    available: 'Disponibles',
-    accepted: 'Acceptées',
-    completed: 'Terminées',
+    available: 'Disponible',
+    accepted: 'Acceptée',
+    completed: 'Terminée',
     started: 'En cours',
-    expired: 'Expirées',
+    expired: 'Expirée',
   };
 
   // Function to compare arrays (order doesn't matter)
@@ -153,7 +153,7 @@ export default function MissionFilters({
       <div className={cn(rowClassName, 'my-0')}>
         <MultiSelect
           id="mission-status-filter"
-          label="Statut"
+          label="Etat de la mission"
           values={selectedMissionStatuses}
           onChange={setSelectedMissionStatuses}
           options={

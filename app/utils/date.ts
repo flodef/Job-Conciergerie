@@ -1,4 +1,5 @@
 import type { Mission } from '@/app/types/dataTypes';
+import {} from './extensions';
 
 export const minimumMissionTime: number = 1; // minimum mission time in hours
 const oneHour = 3600000; // 1 hour in milliseconds
@@ -370,7 +371,19 @@ export const formatDateRange = (startDate: Date, endDate: Date): string => {
 export const getMonthYearLabel = (monthKey: string): string => {
   const [year, month] = monthKey.split('-');
   const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-  return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toFirstUpperCase();
+};
+
+/**
+ * Get month and year label from a Date object
+ * Returns "Mois Année" in French (e.g., "Janvier 2026")
+ * @param date The date object
+ * @returns The month and year label in French
+ */
+export const getMonthYearFromDate = (date: Date): string => {
+  const month = date.toLocaleString('fr-FR', { month: 'long' });
+  const year = date.getFullYear();
+  return `${month.toFirstUpperCase()} ${year}`;
 };
 
 /**

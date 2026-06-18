@@ -1,5 +1,5 @@
 import type { Home, Mission } from '@/app/types/dataTypes';
-import { frenchMonths } from './date';
+import { frenchMonths, getMonthYearFromDate } from './date';
 import { getMissionProviderCount } from './task';
 
 /**
@@ -12,11 +12,7 @@ export function getAvailableTimePeriods(missions: Mission[], sortDirection: 'asc
   const periods = new Set<string>();
 
   missions.forEach(mission => {
-    const date = new Date(mission.startDateTime);
-    const month = date.toLocaleString('fr-FR', { month: 'long' });
-    const year = date.getFullYear();
-    const period = `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
-    periods.add(period);
+    periods.add(getMonthYearFromDate(mission.startDateTime));
   });
 
   return Array.from(periods).sort((a, b) => {
@@ -56,7 +52,7 @@ export const isPartOfMission = (mission: Mission, employeeId: string | undefined
  * @param mission The mission to check
  * @returns true if the mission is expired, false otherwise
  */
-export const isMissionExpired = (mission: Mission) => new Date(mission.endDateTime) < new Date();
+export const isMissionExpired = (mission: Mission) => mission.endDateTime < new Date();
 
 /**
  * Check if a mission is editable
@@ -163,14 +159,9 @@ export function applyMissionFilters(
 
     // Filter by time period (month/year)
     if (selectedStatuses.length > 0) {
-      const missionDate = new Date(mission.startDateTime);
-      const missionMonth = missionDate.toLocaleString('fr-FR', { month: 'long' });
-      const missionYear = missionDate.getFullYear();
-      const missionPeriod = `${missionMonth.charAt(0).toUpperCase() + missionMonth.slice(1)} ${missionYear}`;
+      const missionPeriod = getMonthYearFromDate(mission.startDateTime);
 
-      const matchesTimeStatus = selectedStatuses.includes(missionPeriod);
-
-      if (!matchesTimeStatus) return false;
+      if (!selectedStatuses.includes(missionPeriod)) return false;
     }
 
     // Filter by mission status (skip if employee filter is active — shows all their missions)
@@ -218,8 +209,8 @@ export function sortMissions(
     let comparison = 0;
 
     if (sortField === 'date') {
-      const dateA = new Date(a.startDateTime).getTime();
-      const dateB = new Date(b.startDateTime).getTime();
+      const dateA = a.startDateTime.getTime();
+      const dateB = b.startDateTime.getTime();
       comparison = dateA - dateB;
     } else if (sortField === 'conciergerie') {
       comparison = a.conciergerieName.localeCompare(b.conciergerieName);
@@ -259,10 +250,7 @@ export function groupMissionsByCategory(
     let category = '';
 
     if (sortField === 'date') {
-      const date = new Date(mission.startDateTime);
-      const month = date.toLocaleString('fr-FR', { month: 'long' });
-      const year = date.getFullYear();
-      category = `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
+      category = getMonthYearFromDate(mission.startDateTime);
     } else if (sortField === 'conciergerie') {
       category = mission.conciergerieName;
     } else if (sortField === 'geographicZone') {

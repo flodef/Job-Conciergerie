@@ -2,7 +2,7 @@
 
 import AutocompleteSelect from '@/app/components/autocompleteSelect';
 import { rowClassName } from '@/app/utils/className';
-import React from 'react';
+import { getMonthYearLabel } from '@/app/utils/date';
 
 export type HistoryFiltersType = {
   conciergerie: string | null;
@@ -17,15 +17,6 @@ interface HistoryFiltersProps {
   selectedTimePeriod: string | null;
   setSelectedTimePeriod: (value: string | null) => void;
 }
-
-// Format period key to Month yyyy format with capitalized month (e.g., "2026-01" -> "Janvier 2026")
-const formatPeriodLabel = (periodKey: string): string => {
-  const [year, month] = periodKey.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
-  const formatted = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-  // Ensure first letter is uppercase
-  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-};
 
 export default function HistoryFilters({
   availableConciergeries,
@@ -78,7 +69,7 @@ export default function HistoryFilters({
           onChange={handleTimePeriodChange}
           options={availableTimePeriods.map(period => ({
             value: period,
-            label: formatPeriodLabel(period),
+            label: getMonthYearLabel(period),
           }))}
           placeholder="Toutes les périodes"
           disabled={availableTimePeriods.length === 0}
