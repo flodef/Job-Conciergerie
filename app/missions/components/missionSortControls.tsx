@@ -18,6 +18,13 @@ interface MissionSortControlsProps {
 
 const sortButtonClassName = 'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer';
 
+const SORT_FIELDS = [
+  { field: 'date' as SortField, label: 'Date' },
+  { field: 'conciergerie' as SortField, label: 'Conciergerie' },
+  { field: 'geographicZone' as SortField, label: 'Zone' },
+  { field: 'homeTitle' as SortField, label: 'Bien' },
+];
+
 export default function MissionSortControls({
   sortField,
   sortDirection,
@@ -32,50 +39,20 @@ export default function MissionSortControls({
       {/* Sort and filter buttons */}
       <div className="flex items-center justify-between">
         <div className="flex flex-wrap gap-1.5 items-center flex-1 overflow-hidden">
-          <button
-            onClick={() => changeSortField('date')}
-            className={cn(
-              sortButtonClassName,
-              sortField === 'date' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
-            )}
-          >
-            <span>Date</span>
-            {sortField === 'date' &&
-              (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
-          </button>
-          <button
-            onClick={() => changeSortField('conciergerie')}
-            className={cn(
-              sortButtonClassName,
-              sortField === 'conciergerie' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
-            )}
-          >
-            <span>Conciergerie</span>
-            {sortField === 'conciergerie' &&
-              (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
-          </button>
-          <button
-            onClick={() => changeSortField('geographicZone')}
-            className={cn(
-              sortButtonClassName,
-              sortField === 'geographicZone' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
-            )}
-          >
-            <span>Zone</span>
-            {sortField === 'geographicZone' &&
-              (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
-          </button>
-          <button
-            onClick={() => changeSortField('homeTitle')}
-            className={cn(
-              sortButtonClassName,
-              sortField === 'homeTitle' ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
-            )}
-          >
-            <span>Bien</span>
-            {sortField === 'homeTitle' &&
-              (sortDirection === 'asc' ? <IconSortAscending size={16} /> : <IconSortDescending size={16} />)}
-          </button>
+          {SORT_FIELDS.map(({ field, label }) => (
+            <button
+              key={field}
+              onClick={() => changeSortField(field)}
+              className={cn(
+                sortButtonClassName,
+                sortField === field ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',
+              )}
+            >
+              <span>{label}</span>
+              {sortField === field &&
+                (sortDirection === 'asc' ? <IconSortDescending size={16} /> : <IconSortAscending size={16} />)}
+            </button>
+          ))}
         </div>
 
         {/* Filter toggle button */}

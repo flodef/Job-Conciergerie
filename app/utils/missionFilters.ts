@@ -5,9 +5,10 @@ import { getMissionProviderCount } from './task';
 /**
  * Get available months/years from missions
  * @param missions The list of missions to extract periods from
- * @returns An array of unique month/year strings, sorted in descending order
+ * @param sortDirection The sort direction ('asc' or 'desc')
+ * @returns An array of unique month/year strings, sorted according to sortDirection
  */
-export function getAvailableTimePeriods(missions: Mission[]): string[] {
+export function getAvailableTimePeriods(missions: Mission[], sortDirection: 'asc' | 'desc' = 'desc'): string[] {
   const periods = new Set<string>();
 
   missions.forEach(mission => {
@@ -23,7 +24,8 @@ export function getAvailableTimePeriods(missions: Mission[]): string[] {
     const [monthB, yearB] = b.split(' ');
     const dateA = new Date(parseInt(yearA), frenchMonths[monthA] || 0, 1);
     const dateB = new Date(parseInt(yearB), frenchMonths[monthB] || 0, 1);
-    return dateB.getTime() - dateA.getTime(); // Sort descending (newest first)
+    const comparison = dateA.getTime() - dateB.getTime();
+    return sortDirection === 'asc' ? comparison : -comparison;
   });
 }
 
@@ -62,6 +64,48 @@ export const isMissionExpired = (mission: Mission) => new Date(mission.endDateTi
  * @returns true if the mission is editable, false otherwise
  */
 export const isMissionEditable = (mission: Mission) => mission.status !== 'started' && mission.status !== 'completed';
+
+/**
+ * Get the status of a mission for filtering purposes
+ * @param mission The mission to check
+ * @param employeeId The id of the employee (if any)
+ * @returns The mission status: 'available', 'accepted', 'started', 'completed', or 'expired'
+ */
+export const getMissionStatus = (
+  mission: Mission,
+  employeeId?: string,
+): 'available' | 'accepted' | 'started' | 'completed' | 'expired' => {
+  const canSeeMission = !employeeId || isPartOfMission(mission, employeeId);
+  const isAvailable =
+    (!mission.employeeId || (isMissionDuoOpen(mission) && !isPartOfMission(mission, employeeId))) &&
+    !isMissionExpired(mission) &&
+    mission.status !== 'completed';
+  const isAccepted = mission.status === 'accepted' && canSeeMission;
+  const isStarted = mission.status === 'started' && canSeeMission;
+  const isCompleted = mission.status === 'completed' && canSeeMission;
+  const isExpired = !mission.status && isMissionExpired(mission);
+
+  if (isAvailable) return 'available';
+  if (isAccepted) return 'accepted';
+  if (isStarted) return 'started';
+  if (isCompleted) return 'completed';
+  if (isExpired) return 'expired';
+  return 'available';
+};
+
+/**
+ * Get available mission statuses from missions
+ * @param missions The list of missions to extract statuses from
+ * @param employeeId The id of the employee (if any)
+ * @returns An array of unique mission status strings
+ */
+export function getAvailableMissionStatuses(missions: Mission[], employeeId?: string): string[] {
+  const statuses = new Set<string>();
+  missions.forEach(mission => {
+    statuses.add(getMissionStatus(mission, employeeId));
+  });
+  return Array.from(statuses);
+}
 
 /**
  * Filter missions based on user type
@@ -131,27 +175,8 @@ export function applyMissionFilters(
 
     // Filter by mission status (skip if employee filter is active — shows all their missions)
     if (selectedMissionStatuses.length > 0 && selectedEmployees.length === 0) {
-      // Check if the mission matches the selected status filter
-      // 'available' means no employee is assigned (employeeId is empty) OR duo-open (1/2) AND mission is not in the past
-      // AND the current employee is not already assigned to either slot
-      // 'accepted', 'started', 'completed' match the actual mission status
-      // 'expired' means null status AND mission is expired
-      const isAvailable =
-        (!mission.employeeId || (isMissionDuoOpen(mission) && !isPartOfMission(mission, employeeId))) &&
-        !isMissionExpired(mission);
-      const isAccepted = mission.status === 'accepted' && (!employeeId || isPartOfMission(mission, employeeId));
-      const isStarted = mission.status === 'started';
-      const isCompleted = mission.status === 'completed' && (!employeeId || isPartOfMission(mission, employeeId));
-      const isExpired = !mission.status && isMissionExpired(mission);
-
-      const matchesMissionStatus =
-        (selectedMissionStatuses.includes('available') && isAvailable) ||
-        (selectedMissionStatuses.includes('accepted') && isAccepted) ||
-        (selectedMissionStatuses.includes('started') && isStarted) ||
-        (selectedMissionStatuses.includes('completed') && isCompleted) ||
-        (selectedMissionStatuses.includes('expired') && isExpired);
-
-      if (!matchesMissionStatus) return false;
+      const missionStatus = getMissionStatus(mission, employeeId);
+      if (!selectedMissionStatuses.includes(missionStatus)) return false;
     }
 
     // Filter by geographic zones

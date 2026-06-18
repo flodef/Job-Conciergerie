@@ -18,6 +18,7 @@ interface MissionFiltersProps {
   availableConciergeries: string[];
   availableZones: string[];
   availableTimePeriods: string[];
+  availableMissionStatuses?: string[];
   availableEmployees?: string[];
   selectedConciergeries: string[];
   setSelectedConciergeries: React.Dispatch<React.SetStateAction<string[]>>;
@@ -38,6 +39,7 @@ export default function MissionFilters({
   availableConciergeries,
   availableZones,
   availableTimePeriods,
+  availableMissionStatuses,
   availableEmployees,
   selectedConciergeries,
   setSelectedConciergeries,
@@ -53,6 +55,14 @@ export default function MissionFilters({
   savedFilters,
   isConciergerie,
 }: MissionFiltersProps) {
+  const statusLabels: Record<string, string> = {
+    available: 'Disponibles',
+    accepted: 'Acceptées',
+    completed: 'Terminées',
+    started: 'En cours',
+    expired: 'Expirées',
+  };
+
   // Function to compare arrays (order doesn't matter)
   const compareArrays = (arr1: string[], arr2: string[]) => {
     if (arr1.length !== arr2.length) return true;
@@ -146,12 +156,19 @@ export default function MissionFilters({
           label="Statut"
           values={selectedMissionStatuses}
           onChange={setSelectedMissionStatuses}
-          options={[
-            { value: 'available', label: 'Disponibles' },
-            { value: 'accepted', label: 'Acceptées' },
-            { value: 'completed', label: 'Terminées' },
-            ...(isConciergerie ? [{ value: 'expired', label: 'Expirées' }] : []),
-          ]}
+          options={
+            availableMissionStatuses && availableMissionStatuses.length > 0
+              ? availableMissionStatuses.map(status => ({
+                  value: status,
+                  label: statusLabels[status] || status,
+                }))
+              : [
+                  { value: 'available', label: statusLabels.available },
+                  { value: 'accepted', label: statusLabels.accepted },
+                  { value: 'completed', label: statusLabels.completed },
+                  ...(isConciergerie ? [{ value: 'expired', label: statusLabels.expired }] : []),
+                ]
+          }
           disabled={false}
           required
         />

@@ -18,9 +18,11 @@ import MissionList from '@/app/missions/components/missionList';
 import MissionSortControls from '@/app/missions/components/missionSortControls';
 import type { MissionSortField } from '@/app/types/dataTypes';
 import { useLocalStorage } from '@/app/utils/localStorage';
+import React, { useLayoutEffect } from 'react';
 import {
   applyMissionFilters,
   filterMissionsByUserType,
+  getAvailableMissionStatuses,
   getAvailableTimePeriods,
   groupMissionsByCategory,
   sortMissions,
@@ -83,6 +85,7 @@ export default function Missions() {
   const [sortField, setSortField] = useState<MissionSortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [collapsedCategories, setCollapsedCategories] = useState<string[]>([]);
+  const prevSortField = useRef<MissionSortField>('date');
 
   // Filter states - must be declared before any conditional returns
   const [selectedConciergeries, setSelectedConciergeries] = useState<string[]>([]);
@@ -191,6 +194,108 @@ export default function Missions() {
     employeeName,
   ]);
 
+  // Apply filters EXCEPT conciergeries (for available conciergeries calculation)
+  const filteredMissionsWithoutConciergeries = useMemo(() => {
+    if (missionsLoading) return [];
+    return applyMissionFilters(
+      basicFilteredMissions,
+      [], // No conciergeries filter
+      selectedStatuses,
+      selectedMissionStatuses,
+      selectedZones,
+      homes,
+      isEmployee ? employeeName : undefined,
+      isConciergerie ? selectedEmployees : [],
+    );
+  }, [
+    basicFilteredMissions,
+    selectedStatuses,
+    selectedMissionStatuses,
+    selectedZones,
+    selectedEmployees,
+    homes,
+    missionsLoading,
+    isEmployee,
+    isConciergerie,
+    employeeName,
+  ]);
+
+  // Apply filters EXCEPT zones (for available zones calculation)
+  const filteredMissionsWithoutZones = useMemo(() => {
+    if (missionsLoading) return [];
+    return applyMissionFilters(
+      basicFilteredMissions,
+      selectedConciergeries,
+      selectedStatuses,
+      selectedMissionStatuses,
+      [], // No zones filter
+      homes,
+      isEmployee ? employeeName : undefined,
+      isConciergerie ? selectedEmployees : [],
+    );
+  }, [
+    basicFilteredMissions,
+    selectedConciergeries,
+    selectedStatuses,
+    selectedMissionStatuses,
+    selectedEmployees,
+    homes,
+    missionsLoading,
+    isEmployee,
+    isConciergerie,
+    employeeName,
+  ]);
+
+  // Apply filters EXCEPT employees (for available employees calculation)
+  const filteredMissionsWithoutEmployees = useMemo(() => {
+    if (missionsLoading) return [];
+    return applyMissionFilters(
+      basicFilteredMissions,
+      selectedConciergeries,
+      selectedStatuses,
+      selectedMissionStatuses,
+      selectedZones,
+      homes,
+      isEmployee ? employeeName : undefined,
+      [], // No employees filter
+    );
+  }, [
+    basicFilteredMissions,
+    selectedConciergeries,
+    selectedStatuses,
+    selectedMissionStatuses,
+    selectedZones,
+    homes,
+    missionsLoading,
+    isEmployee,
+    employeeName,
+  ]);
+
+  // Apply filters EXCEPT mission statuses (for available mission statuses calculation)
+  const filteredMissionsWithoutMissionStatuses = useMemo(() => {
+    if (missionsLoading) return [];
+    return applyMissionFilters(
+      basicFilteredMissions,
+      selectedConciergeries,
+      selectedStatuses,
+      [], // No mission statuses filter
+      selectedZones,
+      homes,
+      isEmployee ? employeeName : undefined,
+      selectedEmployees,
+    );
+  }, [
+    basicFilteredMissions,
+    selectedConciergeries,
+    selectedStatuses,
+    selectedZones,
+    selectedEmployees,
+    homes,
+    missionsLoading,
+    isEmployee,
+    employeeName,
+  ]);
+
   // Sort missions - must be declared before any conditional returns
   const sortedMissions = useMemo(() => {
     if (missionsLoading) return [];
@@ -211,49 +316,77 @@ export default function Missions() {
     else setCollapsedCategories([]);
   }, [groupedMissions, missionsLoading]);
 
+  // Collapse all categories when sort field changes to prevent flickering
+  useLayoutEffect(() => {
+    if (missionsLoading) return;
+    if (prevSortField.current !== sortField) {
+      const categories = Object.keys(groupedMissions);
+      if (categories.length > 1) setCollapsedCategories(categories);
+      else setCollapsedCategories([]);
+      prevSortField.current = sortField;
+    }
+  }, [sortField, groupedMissions, missionsLoading]);
+
   // Get available conciergeries for filtering - must be declared before any conditional returns
+  // Use filtered missions (excluding conciergeries) to only show conciergeries with missions matching other filters
+  // Sort order follows the current sort direction when sorting by conciergerie
   const availableConciergeries = useMemo(() => {
     if (missionsLoading) return [];
     const conciergeries = new Set<string>();
-    basicFilteredMissions.forEach(mission => {
+    filteredMissionsWithoutConciergeries.forEach(mission => {
       if (mission.conciergerieName) {
         conciergeries.add(mission.conciergerieName);
       }
     });
-    return Array.from(conciergeries).sort();
-  }, [basicFilteredMissions, missionsLoading]);
+    const sorted = Array.from(conciergeries).sort();
+    const conciergerieSortDirection = sortField === 'conciergerie' ? sortDirection : 'asc';
+    return conciergerieSortDirection === 'asc' ? sorted : sorted.reverse();
+  }, [filteredMissionsWithoutConciergeries, missionsLoading, sortField, sortDirection]);
 
   // Get available employees for filtering (conciergerie only) - must be declared before any conditional returns
-  // Scan all missions (not just status-filtered) to find employees with any assigned mission (either binôme slot)
+  // Use filtered missions (excluding employees) to only show employees with missions matching other filters
   const availableEmployees = useMemo(() => {
     if (missionsLoading || !isConciergerie) return [];
     const employeeIds = new Set<string>();
-    missions.forEach(mission => {
+    filteredMissionsWithoutEmployees.forEach(mission => {
       if (mission.employeeId) employeeIds.add(mission.employeeId);
       if (mission.employeeId2) employeeIds.add(mission.employeeId2);
     });
     return Array.from(employeeIds).sort();
-  }, [missions, missionsLoading, isConciergerie]);
+  }, [filteredMissionsWithoutEmployees, missionsLoading, isConciergerie]);
 
   // Get available geographic zones for filtering - must be declared before any conditional returns
+  // Use filtered missions (excluding zones) to only show zones with missions matching other filters
+  // Sort order follows the current sort direction when sorting by geographicZone
   const availableZones = useMemo(() => {
     if (missionsLoading) return [];
     const zones = new Set<string>();
-    basicFilteredMissions.forEach(mission => {
+    filteredMissionsWithoutZones.forEach(mission => {
       const home = homes.find(h => h.id === mission.homeId);
       if (home?.geographicZone) {
         zones.add(home.geographicZone);
       }
     });
-    return Array.from(zones).sort();
-  }, [basicFilteredMissions, homes, missionsLoading]);
+    const sorted = Array.from(zones).sort();
+    const zoneSortDirection = sortField === 'geographicZone' ? sortDirection : 'asc';
+    return zoneSortDirection === 'asc' ? sorted : sorted.reverse();
+  }, [filteredMissionsWithoutZones, homes, missionsLoading, sortField, sortDirection]);
 
   // Get available time periods (months/years) for filtering - must be declared before any conditional returns
   // Use filtered missions (excluding time period) to only show periods with missions matching other filters
+  // Sort order follows the current sort direction when sorting by date
   const availableTimePeriods = useMemo(() => {
     if (missionsLoading) return [];
-    return getAvailableTimePeriods(filteredMissionsWithoutTimePeriod);
-  }, [filteredMissionsWithoutTimePeriod, missionsLoading]);
+    const timeSortDirection = sortField === 'date' ? sortDirection : 'desc';
+    return getAvailableTimePeriods(filteredMissionsWithoutTimePeriod, timeSortDirection);
+  }, [filteredMissionsWithoutTimePeriod, missionsLoading, sortField, sortDirection]);
+
+  // Get available mission statuses for filtering - must be declared before any conditional returns
+  // Use filtered missions (excluding mission statuses) to only show statuses with missions matching other filters
+  const availableMissionStatuses = useMemo(() => {
+    if (missionsLoading) return [];
+    return getAvailableMissionStatuses(filteredMissionsWithoutMissionStatuses, isEmployee ? employeeName : undefined);
+  }, [filteredMissionsWithoutMissionStatuses, missionsLoading, isEmployee, employeeName]);
 
   // Function to save current filter values to localStorage
   const saveFiltersToLocalStorage = () => {
@@ -328,6 +461,7 @@ export default function Missions() {
               availableConciergeries={availableConciergeries}
               availableZones={availableZones}
               availableTimePeriods={availableTimePeriods}
+              availableMissionStatuses={availableMissionStatuses}
               availableEmployees={availableEmployees}
               selectedConciergeries={selectedConciergeries}
               setSelectedConciergeries={setSelectedConciergeries}
