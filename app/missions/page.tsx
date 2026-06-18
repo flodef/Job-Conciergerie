@@ -16,6 +16,7 @@ import MissionFilters from '@/app/missions/components/missionFilters';
 import MissionForm from '@/app/missions/components/missionForm';
 import MissionList from '@/app/missions/components/missionList';
 import MissionSortControls from '@/app/missions/components/missionSortControls';
+import { SORT_LABELS } from '@/app/missions/components/missionSortBar';
 import type { MissionSortField } from '@/app/types/dataTypes';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import React, { useLayoutEffect } from 'react';
@@ -399,6 +400,13 @@ export default function Missions() {
     });
   };
 
+  // Function to handle sort field change with toast
+  const handleSortChange = (field: MissionSortField, direction: 'asc' | 'desc') => {
+    const label = SORT_LABELS[field];
+    const directionLabel = direction === 'asc' ? 'croissant' : 'décroissant';
+    showToast({ type: ToastType.Info, message: `Tri par ${label}, ordre ${directionLabel}` });
+  };
+
   // Change sort field
   const changeSortField = (field: MissionSortField) => {
     if (sortField === field) {
@@ -451,6 +459,7 @@ export default function Missions() {
         setShowFilters={setShowFilters}
         hasActiveFilters={hasActiveFilters}
         filteredMissionsCount={filteredMissions.length}
+        onSortChange={handleSortChange}
       />
       {/* Content */}
       <>
@@ -476,6 +485,7 @@ export default function Missions() {
               saveFiltersToLocalStorage={saveFiltersToLocalStorage}
               savedFilters={savedFilters}
               isConciergerie={isConciergerie}
+              onClose={() => setShowFilters(false)}
             />
           </div>
         )}

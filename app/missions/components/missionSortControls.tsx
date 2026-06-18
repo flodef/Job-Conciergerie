@@ -14,6 +14,7 @@ interface MissionSortControlsProps {
   setShowFilters: React.Dispatch<React.SetStateAction<boolean>>;
   hasActiveFilters: boolean;
   filteredMissionsCount: number;
+  onSortChange?: (field: SortField, direction: 'asc' | 'desc') => void;
 }
 
 const sortButtonClassName = 'px-3 py-1.5 rounded-lg text-sm flex items-center gap-1 whitespace-nowrap cursor-pointer';
@@ -33,6 +34,7 @@ export default function MissionSortControls({
   setShowFilters,
   hasActiveFilters,
   filteredMissionsCount,
+  onSortChange,
 }: MissionSortControlsProps) {
   return (
     <div className="mb-4 space-y-4 mt-2">
@@ -42,7 +44,12 @@ export default function MissionSortControls({
           {SORT_FIELDS.map(({ field, label }) => (
             <button
               key={field}
-              onClick={() => changeSortField(field)}
+              onClick={() => {
+                const newDirection = field === sortField ? (sortDirection === 'asc' ? 'desc' : 'asc') : 'asc';
+                changeSortField(field);
+                if (showFilters) setShowFilters(false);
+                onSortChange?.(field, newDirection);
+              }}
               className={cn(
                 sortButtonClassName,
                 sortField === field ? 'bg-primary text-background' : 'bg-foreground/10 text-foreground',

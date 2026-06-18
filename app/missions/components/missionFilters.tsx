@@ -33,6 +33,7 @@ interface MissionFiltersProps {
   saveFiltersToLocalStorage?: () => void;
   savedFilters?: MissionFiltersType;
   isConciergerie: boolean;
+  onClose?: () => void;
 }
 
 export default function MissionFilters({
@@ -54,6 +55,7 @@ export default function MissionFilters({
   saveFiltersToLocalStorage,
   savedFilters,
   isConciergerie,
+  onClose,
 }: MissionFiltersProps) {
   const statusLabels: Record<string, string> = {
     available: 'Disponible',
@@ -235,7 +237,10 @@ export default function MissionFilters({
         {/* Save filters button */}
         {saveFiltersToLocalStorage && (
           <button
-            onClick={saveFiltersToLocalStorage}
+            onClick={() => {
+              saveFiltersToLocalStorage();
+              onClose?.();
+            }}
             disabled={!filtersChanged}
             className={cn(
               secondaryButtonClassName,

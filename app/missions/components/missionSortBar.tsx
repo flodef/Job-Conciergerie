@@ -3,9 +3,8 @@
 import type { MissionSortField } from '@/app/types/dataTypes';
 import { cn } from '@/app/utils/className';
 import { IconSortAscending, IconSortDescending } from '@tabler/icons-react';
-import React from 'react';
 
-const SORT_LABELS: Record<MissionSortField, string> = {
+export const SORT_LABELS: Record<MissionSortField, string> = {
   date: 'Date',
   conciergerie: 'Conciergerie',
   geographicZone: 'Zone',
