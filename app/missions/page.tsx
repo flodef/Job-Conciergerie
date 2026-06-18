@@ -177,6 +177,14 @@ export default function Missions() {
     return groupMissionsByCategory(sortedMissions, sortField, homes);
   }, [sortedMissions, sortField, homes, missionsLoading]);
 
+  // Initialize collapsed categories - collapse all except if there's only one category
+  useEffect(() => {
+    if (missionsLoading) return;
+    const categories = Object.keys(groupedMissions);
+    if (categories.length > 1) setCollapsedCategories(categories);
+    else setCollapsedCategories([]);
+  }, [groupedMissions, missionsLoading]);
+
   // Get available conciergeries for filtering - must be declared before any conditional returns
   const availableConciergeries = useMemo(() => {
     if (missionsLoading) return [];
