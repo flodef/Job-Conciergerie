@@ -165,6 +165,32 @@ export default function Missions() {
     employeeName,
   ]);
 
+  // Apply filters EXCEPT time period (for available time periods calculation)
+  const filteredMissionsWithoutTimePeriod = useMemo(() => {
+    if (missionsLoading) return [];
+    return applyMissionFilters(
+      basicFilteredMissions,
+      selectedConciergeries,
+      [], // No time period filter
+      selectedMissionStatuses,
+      selectedZones,
+      homes,
+      isEmployee ? employeeName : undefined,
+      isConciergerie ? selectedEmployees : [],
+    );
+  }, [
+    basicFilteredMissions,
+    selectedConciergeries,
+    selectedMissionStatuses,
+    selectedZones,
+    selectedEmployees,
+    homes,
+    missionsLoading,
+    isEmployee,
+    isConciergerie,
+    employeeName,
+  ]);
+
   // Sort missions - must be declared before any conditional returns
   const sortedMissions = useMemo(() => {
     if (missionsLoading) return [];
@@ -223,11 +249,11 @@ export default function Missions() {
   }, [basicFilteredMissions, homes, missionsLoading]);
 
   // Get available time periods (months/years) for filtering - must be declared before any conditional returns
-  // Use basic filtered missions to only show periods with missions accessible to the user
+  // Use filtered missions (excluding time period) to only show periods with missions matching other filters
   const availableTimePeriods = useMemo(() => {
     if (missionsLoading) return [];
-    return getAvailableTimePeriods(basicFilteredMissions);
-  }, [basicFilteredMissions, missionsLoading]);
+    return getAvailableTimePeriods(filteredMissionsWithoutTimePeriod);
+  }, [filteredMissionsWithoutTimePeriod, missionsLoading]);
 
   // Function to save current filter values to localStorage
   const saveFiltersToLocalStorage = () => {

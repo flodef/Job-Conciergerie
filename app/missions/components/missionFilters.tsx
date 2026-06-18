@@ -149,7 +149,6 @@ export default function MissionFilters({
           options={[
             { value: 'available', label: 'Disponibles' },
             { value: 'accepted', label: 'Acceptées' },
-            { value: 'started', label: 'Démarrées' },
             { value: 'completed', label: 'Terminées' },
             ...(isConciergerie ? [{ value: 'expired', label: 'Expirées' }] : []),
           ]}
