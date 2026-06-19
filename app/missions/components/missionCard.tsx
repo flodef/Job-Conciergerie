@@ -5,6 +5,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import type { Conciergerie, Mission } from '@/app/types/dataTypes';
+import { cn, textClassName } from '@/app/utils/className';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDateRange } from '@/app/utils/date';
 import { getEmployeeFullName } from '@/app/utils/employee';
@@ -124,7 +125,7 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         ))}
       </div>
 
-      <div className="mt-3 text-sm text-light">
+      <div className={cn(textClassName, 'mt-3')}>
         <div className="flex justify-between items-center">
           <span>{formatDateRange(mission.startDateTime, mission.endDateTime)}</span>
         </div>

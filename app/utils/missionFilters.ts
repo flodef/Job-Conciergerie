@@ -64,27 +64,17 @@ export const isMissionEditable = (mission: Mission) => mission.status !== 'start
 /**
  * Get the status of a mission for filtering purposes
  * @param mission The mission to check
- * @param employeeId The id of the employee (if any)
  * @returns The mission status: 'available', 'accepted', 'started', 'completed', or 'expired'
  */
-export const getMissionStatus = (
-  mission: Mission,
-  employeeId?: string,
-): 'available' | 'accepted' | 'started' | 'completed' | 'expired' => {
-  const canSeeMission = !employeeId || isPartOfMission(mission, employeeId);
-  const isAvailable =
-    (!mission.employeeId || (isMissionDuoOpen(mission) && !isPartOfMission(mission, employeeId))) &&
-    !isMissionExpired(mission) &&
-    mission.status !== 'completed';
-  const isAccepted = mission.status === 'accepted' && canSeeMission;
-  const isStarted = mission.status === 'started' && canSeeMission;
-  const isCompleted = mission.status === 'completed' && canSeeMission;
+export const getMissionStatus = (mission: Mission): 'available' | 'accepted' | 'started' | 'completed' | 'expired' => {
+  const isAccepted = mission.status === 'accepted';
+  const isStarted = mission.status === 'started';
+  const isCompleted = mission.status === 'completed';
   const isExpired = !mission.status && isMissionExpired(mission);
 
-  if (isAvailable) return 'available';
-  if (isAccepted) return 'accepted';
-  if (isStarted) return 'started';
   if (isCompleted) return 'completed';
+  if (isStarted) return 'started';
+  if (isAccepted) return 'accepted';
   if (isExpired) return 'expired';
   return 'available';
 };
@@ -92,13 +82,12 @@ export const getMissionStatus = (
 /**
  * Get available mission statuses from missions
  * @param missions The list of missions to extract statuses from
- * @param employeeId The id of the employee (if any)
  * @returns An array of unique mission status strings
  */
-export function getAvailableMissionStatuses(missions: Mission[], employeeId?: string): string[] {
+export function getAvailableMissionStatuses(missions: Mission[]): string[] {
   const statuses = new Set<string>();
   missions.forEach(mission => {
-    statuses.add(getMissionStatus(mission, employeeId));
+    statuses.add(getMissionStatus(mission));
   });
   return Array.from(statuses);
 }
@@ -166,7 +155,7 @@ export function applyMissionFilters(
 
     // Filter by mission status (skip if employee filter is active — shows all their missions)
     if (selectedMissionStatuses.length > 0 && selectedEmployees.length === 0) {
-      const missionStatus = getMissionStatus(mission, employeeId);
+      const missionStatus = getMissionStatus(mission);
       if (!selectedMissionStatuses.includes(missionStatus)) return false;
     }
 

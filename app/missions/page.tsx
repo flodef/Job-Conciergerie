@@ -386,8 +386,8 @@ export default function Missions() {
   // Use filtered missions (excluding mission statuses) to only show statuses with missions matching other filters
   const availableMissionStatuses = useMemo(() => {
     if (missionsLoading) return [];
-    return getAvailableMissionStatuses(filteredMissionsWithoutMissionStatuses, isEmployee ? employeeName : undefined);
-  }, [filteredMissionsWithoutMissionStatuses, missionsLoading, isEmployee, employeeName]);
+    return getAvailableMissionStatuses(filteredMissionsWithoutMissionStatuses);
+  }, [filteredMissionsWithoutMissionStatuses, missionsLoading]);
 
   // Function to save current filter values to localStorage
   const saveFiltersToLocalStorage = () => {

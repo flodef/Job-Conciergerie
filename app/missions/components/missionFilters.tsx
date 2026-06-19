@@ -1,6 +1,7 @@
 'use client';
 
 import MultiSelect from '@/app/components/multiSelect';
+import Select from '@/app/components/select';
 import { filterButtonClassName, rowClassName, secondaryButtonClassName } from '@/app/utils/className';
 import { IconDeviceFloppy, IconRefresh, IconX } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
@@ -153,33 +154,31 @@ export default function MissionFilters({
       )}
 
       {/* Mission status filter */}
-      <div className={cn(rowClassName, 'gap-2 my-0')}>
-        <MultiSelect
-          id="mission-status-filter"
-          label="Etat de la mission"
-          values={selectedMissionStatuses}
-          onChange={setSelectedMissionStatuses}
-          options={
-            availableMissionStatuses && availableMissionStatuses.length > 0
-              ? availableMissionStatuses.map(status => ({
+      {availableMissionStatuses && availableMissionStatuses.length > 0 && (
+        <div className={cn(rowClassName, 'gap-2 my-0')}>
+          <Select
+            id="mission-status-filter"
+            label="Etat de la mission"
+            value={selectedMissionStatuses[0] || 'all'}
+            onChange={value => setSelectedMissionStatuses(value === 'all' ? [] : [value])}
+            options={[
+              { value: 'all', label: 'Tous' },
+              ...availableMissionStatuses
+                .filter(status => isConciergerie || (status !== 'started' && status !== 'expired'))
+                .map(status => ({
                   value: status,
                   label: statusLabels[status] || status,
-                }))
-              : [
-                  { value: 'available', label: statusLabels.available },
-                  { value: 'accepted', label: statusLabels.accepted },
-                  { value: 'completed', label: statusLabels.completed },
-                  ...(isConciergerie ? [{ value: 'expired', label: statusLabels.expired }] : []),
-                ]
-          }
-          disabled={false}
-          required
-        />
-        <FilterResetButton
-          onClick={() => setSelectedMissionStatuses(savedFilters?.missionStatuses || ['available'])}
-          changed={missionStatusesChanged}
-        />
-      </div>
+                })),
+            ]}
+            disabled={false}
+            required
+          />
+          <FilterResetButton
+            onClick={() => setSelectedMissionStatuses(savedFilters?.missionStatuses || ['available'])}
+            changed={missionStatusesChanged}
+          />
+        </div>
+      )}
 
       {/* Employee filter - conciergerie only */}
       {availableEmployees &&

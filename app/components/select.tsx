@@ -194,7 +194,7 @@ const Select = forwardRef(
     })();
 
     return (
-      <div className={row ? rowClassName : ''}>
+      <div className={row ? rowClassName : 'w-full'}>
         <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
