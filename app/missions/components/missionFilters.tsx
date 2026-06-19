@@ -69,8 +69,8 @@ export default function MissionFilters({
     available: 'Disponible',
     accepted: 'Acceptée',
     completed: 'Terminée',
-    // started: 'En cours', // Not used in the app
     expired: 'Expirée',
+    started: 'En cours',
   };
 
   // Function to compare arrays (order doesn't matter)
@@ -163,8 +163,12 @@ export default function MissionFilters({
             onChange={value => setSelectedMissionStatuses(value === 'all' ? [] : [value])}
             options={[
               { value: 'all', label: 'Tous' },
-              ...availableMissionStatuses
-                .filter(status => isConciergerie || (status !== 'started' && status !== 'expired'))
+              ...Object.keys(statusLabels)
+                .filter(
+                  status =>
+                    availableMissionStatuses.includes(status) &&
+                    (isConciergerie || (status !== 'started' && status !== 'expired')),
+                )
                 .map(status => ({
                   value: status,
                   label: statusLabels[status] || status,
