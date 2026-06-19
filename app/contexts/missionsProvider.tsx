@@ -278,40 +278,86 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const changes: string[] = [];
 
     // Compare mission properties to identify changes
-    if (new Date(existingMission.startDateTime).getTime() !== new Date(updatedMission.startDateTime).getTime())
-      changes.push(`Date/heure de début modifiée: ${formatDateTime(updatedMission.startDateTime)}`);
+    const tasksChanged = [...existingMission.tasks].sort().join(', ') !== [...updatedMission.tasks].sort().join(', ');
+    const homeIdChanged = existingMission.homeId !== updatedMission.homeId;
+    const startDateChanged =
+      new Date(existingMission.startDateTime).getTime() !== new Date(updatedMission.startDateTime).getTime();
+    const endDateChanged =
+      new Date(existingMission.endDateTime).getTime() !== new Date(updatedMission.endDateTime).getTime();
+    const employeesChanged =
+      JSON.stringify((existingMission.allowedEmployees || []).sort()) !==
+      JSON.stringify((updatedMission.allowedEmployees || []).sort());
+    const travellersChanged = existingMission.travellers !== updatedMission.travellers;
+    const conciergerieCommentChanged =
+      (existingMission.conciergerieComment || '') !== (updatedMission.conciergerieComment || '');
 
-    if (new Date(existingMission.endDateTime).getTime() !== new Date(updatedMission.endDateTime).getTime())
-      changes.push(`Date/heure de fin modifiée: ${formatDateTime(updatedMission.endDateTime)}`);
+    // Check if date change is an extension (adding time) or reduction
+    let isDateExtension = false;
+    let isDateReduction = false;
+    if (startDateChanged || endDateChanged) {
+      const originalStart = new Date(existingMission.startDateTime);
+      const originalEnd = new Date(existingMission.endDateTime);
+      const newStart = new Date(updatedMission.startDateTime);
+      const newEnd = new Date(updatedMission.endDateTime);
+      const originalDuration = originalEnd.getTime() - originalStart.getTime();
+      const newDuration = newEnd.getTime() - newStart.getTime();
+      isDateExtension = newDuration > originalDuration;
+      isDateReduction = newDuration < originalDuration;
+    }
 
-    // Compare tasks
-    const existingTasks = [...existingMission.tasks].sort().join(', ');
-    const updatedTasks = [...updatedMission.tasks].sort().join(', ');
-    if (existingTasks !== updatedTasks) changes.push(`Tâches modifiées: ${updatedTasks}`);
+    // Safe changes: only date extension, travellers, or conciergerie comment
+    // Unsafe changes: tasks, home, employees, date reduction
+    const isSafeChange =
+      !tasksChanged &&
+      !homeIdChanged &&
+      !employeesChanged &&
+      (isDateExtension || travellersChanged || conciergerieCommentChanged) &&
+      !isDateReduction;
 
-    // Special case for homes (home might be different)
+    // Build changes list for email
+    if (startDateChanged) changes.push(`Date/heure de début modifiée: ${formatDateTime(updatedMission.startDateTime)}`);
+    if (endDateChanged) changes.push(`Date/heure de fin modifiée: ${formatDateTime(updatedMission.endDateTime)}`);
+    if (tasksChanged) changes.push(`Tâches modifiées: ${[...updatedMission.tasks].sort().join(', ')}`);
+
     const existingHome = homes.find(h => h.id === existingMission.homeId);
     const updatedHome = homes.find(h => h.id === updatedMission.homeId);
-    if (existingMission.homeId !== updatedMission.homeId && existingHome && updatedHome)
-      changes.push(`Bien modifié: ${updatedHome.title}`);
+    if (homeIdChanged && existingHome && updatedHome) changes.push(`Bien modifié: ${updatedHome.title}`);
+    if (travellersChanged) changes.push(`Nombre de voyageurs modifié: ${updatedMission.travellers}`);
+    if (conciergerieCommentChanged) changes.push('Commentaire conciergerie modifié');
 
     const home = updatedHome || existingHome;
+
+    // Determine if we need to remove the employee
+    const shouldRemoveEmployee = existingMission.employeeId && !isSafeChange;
 
     // First update the mission
     // Only preserve employeeId and status if they're not being explicitly changed
     const dataToUpdate = {
       ...updatedMission,
-      employeeId: updatedMission.employeeId !== undefined ? updatedMission.employeeId : existingMission.employeeId,
-      status: updatedMission.status !== undefined ? updatedMission.status : existingMission.status,
+      employeeId: shouldRemoveEmployee
+        ? null
+        : updatedMission.employeeId !== undefined
+          ? updatedMission.employeeId
+          : existingMission.employeeId,
+      status: shouldRemoveEmployee
+        ? null
+        : updatedMission.status !== undefined
+          ? updatedMission.status
+          : existingMission.status,
     };
     const success = await setMissionData(updatedMission.id, dataToUpdate);
     if (!success) return { success: false, employeeNotified: false };
 
     // If successful and there's an employee assigned who has notifications enabled, send email
     const conciergerie = findConciergerie(updatedMission.conciergerieName);
-    if (employee?.notificationSettings?.missionChanged && home && changes.length > 0 && conciergerie) {
-      await EmailSender.sendMissionUpdatedEmail(updatedMission, home, employee, conciergerie, changes);
-      return { success: true, employeeNotified: true };
+    if (employee && home && changes.length > 0 && conciergerie) {
+      if (shouldRemoveEmployee && employee.notificationSettings?.missionsCanceled) {
+        await EmailSender.sendMissionRemovedEmail(existingMission, home, employee, conciergerie, 'canceled');
+        return { success: true, employeeNotified: true };
+      } else if (!shouldRemoveEmployee && employee.notificationSettings?.missionChanged) {
+        await EmailSender.sendMissionUpdatedEmail(updatedMission, home, employee, conciergerie, changes);
+        return { success: true, employeeNotified: true };
+      }
     }
 
     return { success: true, employeeNotified: false };
