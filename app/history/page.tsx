@@ -34,6 +34,7 @@ function StatCard({ label, value, icon }: { label: string; value: string; icon: 
 }
 
 function MissionRow({ mission, home, color }: { mission: Mission; home: Home | undefined; color: string }) {
+  const { employeeName } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const hoursPerProvider = getMissionHoursPerProvider(mission);
 
@@ -44,7 +45,7 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
         onClick={() => setIsOpen(prev => !prev)}
       >
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+          <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: color }} />
           <div className="min-w-0">
             <p className={cn(titleClassName, 'truncate')}>{home?.title ?? 'Bien inconnu'}</p>
             <p className={descriptionClassName}>{formatDate(mission.startDateTime)}</p>
@@ -63,7 +64,7 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
       {isOpen && (
         <div className="px-3 pb-3 space-y-1 text-sm border-t border-secondary pt-2">
           <p className={descriptionClassName}>
-            <span className={textClassName}>Dates :</span> {formatDateRange(mission.startDateTime, mission.endDateTime)}
+            <span className={textClassName}>Date :</span> {formatDateRange(mission.startDateTime, mission.endDateTime)}
           </p>
           {home?.geographicZone && (
             <p className={descriptionClassName}>
@@ -74,12 +75,15 @@ function MissionRow({ mission, home, color }: { mission: Mission; home: Home | u
             <span className={textClassName}>Conciergerie :</span> {mission.conciergerieName}
           </p>
           <p className={descriptionClassName}>
-            <span className={textClassName}>Tâches :</span> {mission.tasks.join(', ')}
+            <span className={textClassName}>Tâche{mission.tasks.length > 1 ? 's' : ''} :</span>{' '}
+            {mission.tasks.join(', ')}
           </p>
-          <p className={descriptionClassName}>
-            <span className={textClassName}>Durée :</span> {formatHours(hoursPerProvider)}
-            {isDuoComplete(mission) && <span className="text-light ml-1">(binôme)</span>}
-          </p>
+          {isDuoComplete(mission) && (
+            <p className={descriptionClassName}>
+              <span className={textClassName}>Binôme :</span>{' '}
+              {employeeName === mission.employeeId ? mission.employeeId2 : mission.employeeId}
+            </p>
+          )}
         </div>
       )}
     </div>

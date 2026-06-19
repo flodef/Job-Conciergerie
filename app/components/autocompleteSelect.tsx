@@ -1,7 +1,14 @@
 'use client';
 
 import Label from '@/app/components/label';
-import { cn, errorClassName, optionClassName, optionsClassName, selectClassName } from '@/app/utils/className';
+import {
+  cn,
+  errorClassName,
+  getDropdownMaxHeight,
+  optionClassName,
+  optionsClassName,
+  selectClassName,
+} from '@/app/utils/className';
 import { shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconCheck, IconChevronDown, IconX } from '@tabler/icons-react';
@@ -280,16 +287,15 @@ const AutocompleteSelect = forwardRef(
           {isOpen && !disabled && (
             <div
               className={cn(
-                'relative',
+                'relative z-50',
                 openUpward ? 'bottom-full mb-1 absolute w-full' : 'top-full mt-1 absolute w-full',
               )}
-              style={{ zIndex: 50 }}
             >
               <div
                 id={`${id}-options`}
                 ref={optionsRef}
                 className={optionsClassName}
-                style={{ maxHeight: maxItems ? `${maxItems * 40}px` : '202px' }}
+                style={getDropdownMaxHeight(maxItems)}
                 role="listbox"
               >
                 {filteredOptions.length === 0 ? (

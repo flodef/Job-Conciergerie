@@ -5,6 +5,7 @@ import type { SelectOption } from '@/app/types/types';
 import {
   cn,
   errorClassName,
+  getDropdownMaxHeight,
   optionClassName,
   optionsClassName,
   rowClassName,
@@ -257,7 +258,7 @@ const Combobox = forwardRef(
                   scrollRef.current = el;
                 }}
                 className={optionsClassName}
-                style={{ maxHeight: maxItems ? `${maxItems * 40}px` : '202px' }}
+                style={getDropdownMaxHeight(maxItems)}
                 role="listbox"
               >
                 {filteredOptions.length === 0 ? (

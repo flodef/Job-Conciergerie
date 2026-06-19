@@ -4,6 +4,7 @@ import Label from '@/app/components/label';
 import {
   cn,
   errorClassName,
+  getDropdownMaxHeight,
   optionClassName,
   optionsClassName,
   rowClassName,
@@ -233,7 +234,7 @@ const MultiSelect = forwardRef(
                 id={`${id}-options`}
                 ref={optionsRef}
                 className={optionsClassName}
-                style={{ maxHeight: maxItems ? `${maxItems * 40}px` : '202px' }}
+                style={getDropdownMaxHeight(maxItems)}
                 role="listbox"
                 aria-multiselectable="true"
               >

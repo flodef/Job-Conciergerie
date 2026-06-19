@@ -1,9 +1,11 @@
 import { twMerge, type ClassNameValue } from 'tailwind-merge';
 import type { ButtonStyle } from '@/app/components/button';
 
-export function cn(...inputs: ClassNameValue[]) {
-  return twMerge(inputs);
-}
+export const DROPDOWN_ITEM_HEIGHT = 41;
+export const DEFAULT_MAX_ITEMS = 5;
+export const DEFAULT_DROPDOWN_MAX_HEIGHT = DEFAULT_MAX_ITEMS * DROPDOWN_ITEM_HEIGHT;
+
+export const cn = (...inputs: ClassNameValue[]) => twMerge(inputs);
 
 export const rowClassName = 'flex flex-row justify-between my-2 gap-4 items-center';
 export const titleClassName = 'text-lg font-medium';
@@ -64,11 +66,13 @@ export const filterButtonClassName = (shouldAppear: boolean) =>
       ? 'bg-foreground/10 text-foreground w-8'
       : 'bg-foreground/5 text-foreground/40 w-0 px-0 overflow-hidden',
   );
-export const optionsClassName =
-  'w-full bg-background border border-foreground/20 rounded-lg shadow-lg overflow-auto max-h-[202px]';
+export const optionsClassName = 'w-full bg-background border border-foreground/20 rounded-lg shadow-lg overflow-auto';
 export const optionClassName = (isHighlighted: boolean, isSelected?: boolean) =>
   cn(
     'p-2 cursor-pointer hover:bg-primary/10 flex items-center justify-between',
     isHighlighted && 'bg-primary/10',
     isSelected && 'font-medium text-primary bg-primary/10',
   );
+export const getDropdownMaxHeight = (maxItems?: number) => ({
+  maxHeight: maxItems ? `${maxItems * DROPDOWN_ITEM_HEIGHT}px` : `${DEFAULT_DROPDOWN_MAX_HEIGHT}px`,
+});
