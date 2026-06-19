@@ -16,6 +16,7 @@ import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconChevronDown } from '@tabler/icons-react';
 import type { ForwardedRef, ReactNode } from 'react';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 type SelectProps = {
   id: string;
@@ -58,6 +59,7 @@ const Select = forwardRef(
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const [isFocused, setIsFocused] = useState(false);
     const [openUpward, setOpenUpward] = useState(false);
+    const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
     const selectRef = useRef<HTMLDivElement>(null);
     const optionsRef = useRef<HTMLDivElement>(null);
     const { ref: scrollRef, canScrollUp, canScrollDown } = useScrollIndicators(isOpen);
@@ -89,8 +91,16 @@ const Select = forwardRef(
             itemCount: options.length,
           }),
         );
+        const rect = selectRef.current.getBoundingClientRect();
+        const top = openUpward ? rect.top : rect.bottom;
+        setDropdownPosition({ top, left: rect.left, width: rect.width });
       }
-    }, [options.length]);
+    }, [options.length, openUpward]);
+
+    // Reset dropdown position when closed
+    useEffect(() => {
+      if (!isOpen) setDropdownPosition(null);
+    }, [isOpen]);
 
     // Handle keyboard navigation
     useEffect(() => {
@@ -223,60 +233,65 @@ const Select = forwardRef(
             />
           </div>
 
-          {isOpen && !disabled && (
-            <div
-              className={cn(
-                'relative',
-                openUpward ? 'bottom-full mb-1 absolute w-full' : 'top-full mt-1 absolute w-full',
-              )}
-              style={{ zIndex: 50 }}
-            >
-              {canScrollUp && (
-                <div
-                  className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
-                  style={{ zIndex: 51 }}
-                >
-                  <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
-                </div>
-              )}
+          {isOpen &&
+            !disabled &&
+            dropdownPosition &&
+            createPortal(
               <div
-                id={`${id}-options`}
-                ref={el => {
-                  optionsRef.current = el;
-                  scrollRef.current = el;
+                className="fixed z-50"
+                style={{
+                  top: openUpward ? dropdownPosition.top - 4 : dropdownPosition.top + 4,
+                  left: dropdownPosition.left,
+                  width: dropdownPosition.width,
                 }}
-                className={optionsClassName}
-                style={getDropdownMaxHeight(maxItems)}
-                role="listbox"
               >
-                {options.map((option: string | number | SelectOption, index: number) => {
-                  const optionValue = typeof option === 'object' ? option.value : option;
-                  const optionLabel = typeof option === 'object' ? option.label : option;
-
-                  return (
-                    <div
-                      key={optionValue}
-                      className={optionClassName(index === highlightedIndex, optionValue === value)}
-                      onMouseDown={() => handleSelect(optionValue)}
-                      onMouseEnter={() => setHighlightedIndex(index)}
-                      role="option"
-                      aria-selected={optionValue === value}
-                    >
-                      {optionLabel}
-                    </div>
-                  );
-                })}
-              </div>
-              {canScrollDown && (
+                {canScrollUp && (
+                  <div
+                    className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
+                    style={{ zIndex: 51 }}
+                  >
+                    <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
+                  </div>
+                )}
                 <div
-                  className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
-                  style={{ zIndex: 51 }}
+                  id={`${id}-options`}
+                  ref={el => {
+                    optionsRef.current = el;
+                    scrollRef.current = el;
+                  }}
+                  className={optionsClassName}
+                  style={getDropdownMaxHeight(maxItems)}
+                  role="listbox"
                 >
-                  <IconChevronDown size={18} className="text-foreground/60" />
+                  {options.map((option: string | number | SelectOption, index: number) => {
+                    const optionValue = typeof option === 'object' ? option.value : option;
+                    const optionLabel = typeof option === 'object' ? option.label : option;
+
+                    return (
+                      <div
+                        key={optionValue}
+                        className={optionClassName(index === highlightedIndex, optionValue === value)}
+                        onMouseDown={() => handleSelect(optionValue)}
+                        onMouseEnter={() => setHighlightedIndex(index)}
+                        role="option"
+                        aria-selected={optionValue === value}
+                      >
+                        {optionLabel}
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-            </div>
-          )}
+                {canScrollDown && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
+                    style={{ zIndex: 51 }}
+                  >
+                    <IconChevronDown size={18} className="text-foreground/60" />
+                  </div>
+                )}
+              </div>,
+              document.body,
+            )}
         </div>
         {error && <p className={errorClassName}>{error}</p>}
       </div>

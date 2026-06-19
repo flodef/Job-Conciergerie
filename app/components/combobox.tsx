@@ -16,6 +16,7 @@ import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
 import type { ForwardedRef, ReactNode } from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 type ComboboxProps = {
   id: string;
@@ -59,6 +60,7 @@ const Combobox = forwardRef(
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const [isFocused, setIsFocused] = useState(false);
     const [openUpward, setOpenUpward] = useState(false);
+    const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
     const comboboxRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const optionsRef = useRef<HTMLDivElement>(null);
@@ -184,8 +186,16 @@ const Combobox = forwardRef(
             itemCount: filteredOptions.length,
           }),
         );
+        const rect = comboboxRef.current.getBoundingClientRect();
+        const top = openUpward ? rect.top : rect.bottom;
+        setDropdownPosition({ top, left: rect.left, width: rect.width });
       }
     };
+
+    // Reset dropdown position when closed
+    useEffect(() => {
+      if (!isOpen) setDropdownPosition(null);
+    }, [isOpen]);
 
     return (
       <div className={row ? rowClassName : ''}>
@@ -244,63 +254,68 @@ const Combobox = forwardRef(
             </button>
           </div>
 
-          {isOpen && !disabled && (
-            <div
-              className={cn(
-                'relative',
-                openUpward ? 'bottom-full mb-1 absolute w-full' : 'top-full mt-1 absolute w-full',
-              )}
-              style={{ zIndex: 50 }}
-            >
+          {isOpen &&
+            !disabled &&
+            dropdownPosition &&
+            createPortal(
               <div
-                ref={el => {
-                  optionsRef.current = el;
-                  scrollRef.current = el;
+                className="fixed z-50"
+                style={{
+                  top: openUpward ? dropdownPosition.top - 4 : dropdownPosition.top + 4,
+                  left: dropdownPosition.left,
+                  width: dropdownPosition.width,
                 }}
-                className={optionsClassName}
-                style={getDropdownMaxHeight(maxItems)}
-                role="listbox"
               >
-                {filteredOptions.length === 0 ? (
-                  <div className="p-2 text-foreground/50 text-center">Aucun résultat</div>
-                ) : (
-                  filteredOptions.map((option, index) => {
-                    const optionValue = typeof option === 'object' ? option.value : option;
-                    const optionLabel = typeof option === 'object' ? option.label : option;
+                <div
+                  ref={el => {
+                    optionsRef.current = el;
+                    scrollRef.current = el;
+                  }}
+                  className={optionsClassName}
+                  style={getDropdownMaxHeight(maxItems)}
+                  role="listbox"
+                >
+                  {filteredOptions.length === 0 ? (
+                    <div className="p-2 text-foreground/50 text-center">Aucun résultat</div>
+                  ) : (
+                    filteredOptions.map((option, index) => {
+                      const optionValue = typeof option === 'object' ? option.value : option;
+                      const optionLabel = typeof option === 'object' ? option.label : option;
 
-                    return (
-                      <div
-                        key={optionValue}
-                        className={optionClassName(index === highlightedIndex, optionValue === value)}
-                        onMouseDown={() => handleSelect(optionValue)}
-                        onMouseEnter={() => setHighlightedIndex(index)}
-                        role="option"
-                        aria-selected={optionValue === value}
-                      >
-                        {optionLabel}
-                      </div>
-                    );
-                  })
+                      return (
+                        <div
+                          key={optionValue}
+                          className={optionClassName(index === highlightedIndex, optionValue === value)}
+                          onMouseDown={() => handleSelect(optionValue)}
+                          onMouseEnter={() => setHighlightedIndex(index)}
+                          role="option"
+                          aria-selected={optionValue === value}
+                        >
+                          {optionLabel}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                {canScrollUp && (
+                  <div
+                    className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
+                    style={{ zIndex: 51 }}
+                  >
+                    <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
+                  </div>
                 )}
-              </div>
-              {canScrollUp && (
-                <div
-                  className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
-                  style={{ zIndex: 51 }}
-                >
-                  <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
-                </div>
-              )}
-              {canScrollDown && (
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
-                  style={{ zIndex: 51 }}
-                >
-                  <IconChevronDown size={18} className="text-foreground/60" />
-                </div>
-              )}
-            </div>
-          )}
+                {canScrollDown && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
+                    style={{ zIndex: 51 }}
+                  >
+                    <IconChevronDown size={18} className="text-foreground/60" />
+                  </div>
+                )}
+              </div>,
+              document.body,
+            )}
         </div>
         {error && <p className={errorClassName}>{error}</p>}
       </div>

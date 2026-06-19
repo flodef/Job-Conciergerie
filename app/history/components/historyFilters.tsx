@@ -55,7 +55,6 @@ export default function HistoryFilters({
             required
             clearable
             row
-            maxItems={2}
           />
         </div>
       )}
@@ -76,8 +75,6 @@ export default function HistoryFilters({
           required={availableTimePeriods.length > 0}
           clearable
           row
-          maxItems={2}
-          forceOpenUpward
         />
       </div>
     </div>

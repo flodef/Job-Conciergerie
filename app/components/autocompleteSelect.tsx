@@ -14,6 +14,7 @@ import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconCheck, IconChevronDown, IconX } from '@tabler/icons-react';
 import type { ForwardedRef, ReactNode } from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 type SelectOption = {
   value: string;
@@ -66,6 +67,7 @@ const AutocompleteSelect = forwardRef(
     const [openUpward, setOpenOpenUpward] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+    const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
     const selectRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const { ref: optionsRef, canScrollUp, canScrollDown } = useScrollIndicators(isOpen);
@@ -185,15 +187,18 @@ const AutocompleteSelect = forwardRef(
     const checkPosition = () => {
       if (forceOpenUpward) {
         setOpenOpenUpward(true);
-        return;
-      }
-      if (selectRef.current) {
+      } else if (selectRef.current) {
         setOpenOpenUpward(
           shouldOpenUpward({
             elementRef: selectRef.current,
             itemCount: filteredOptions.length,
           }),
         );
+      }
+      if (selectRef.current) {
+        const rect = selectRef.current.getBoundingClientRect();
+        const top = openUpward ? rect.top : rect.bottom;
+        setDropdownPosition({ top, left: rect.left, width: rect.width });
       }
     };
 
@@ -206,6 +211,11 @@ const AutocompleteSelect = forwardRef(
         setHighlightedIndex(-1);
       }
     };
+
+    // Reset dropdown position when closed
+    useEffect(() => {
+      if (!isOpen) setDropdownPosition(null);
+    }, [isOpen]);
 
     const handleChevronClick = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -284,59 +294,65 @@ const AutocompleteSelect = forwardRef(
           </div>
 
           {/* Dropdown */}
-          {isOpen && !disabled && (
-            <div
-              className={cn(
-                'relative z-50',
-                openUpward ? 'bottom-full mb-1 absolute w-full' : 'top-full mt-1 absolute w-full',
-              )}
-            >
+          {isOpen &&
+            !disabled &&
+            dropdownPosition &&
+            createPortal(
               <div
-                id={`${id}-options`}
-                ref={optionsRef}
-                className={optionsClassName}
-                style={getDropdownMaxHeight(maxItems)}
-                role="listbox"
+                className="fixed z-50"
+                style={{
+                  top: openUpward ? dropdownPosition.top - 4 : dropdownPosition.top + 4,
+                  left: dropdownPosition.left,
+                  width: dropdownPosition.width,
+                }}
               >
-                {filteredOptions.length === 0 ? (
-                  <div className="p-2 text-foreground/50 text-center">Aucune option trouvée</div>
-                ) : (
-                  filteredOptions.map((option, i) => {
-                    const isSelected = option.value === value;
-                    const isHighlighted = i === highlightedIndex;
-                    return (
-                      <div
-                        key={option.value}
-                        className={cn(optionClassName(isSelected), isHighlighted && !isSelected && 'bg-secondary/30')}
-                        onMouseDown={() => handleSelect(option.value)}
-                        role="option"
-                        aria-selected={isSelected}
-                      >
-                        <span className={cn(isSelected && 'font-medium text-primary')}>{option.label}</span>
-                        {isSelected && <IconCheck size={18} className="text-primary" />}
-                      </div>
-                    );
-                  })
+                <div
+                  id={`${id}-options`}
+                  ref={optionsRef}
+                  className={optionsClassName}
+                  style={getDropdownMaxHeight(maxItems)}
+                  role="listbox"
+                >
+                  {filteredOptions.length === 0 ? (
+                    <div className="p-2 text-foreground/50 text-center">Aucune option trouvée</div>
+                  ) : (
+                    filteredOptions.map((option, i) => {
+                      const isSelected = option.value === value;
+                      const isHighlighted = i === highlightedIndex;
+                      return (
+                        <div
+                          key={option.value}
+                          className={cn(optionClassName(isSelected), isHighlighted && !isSelected && 'bg-secondary/30')}
+                          onMouseDown={() => handleSelect(option.value)}
+                          role="option"
+                          aria-selected={isSelected}
+                        >
+                          <span className={cn(isSelected && 'font-medium text-primary')}>{option.label}</span>
+                          {isSelected && <IconCheck size={18} className="text-primary" />}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                {canScrollUp && (
+                  <div
+                    className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
+                    style={{ zIndex: 51 }}
+                  >
+                    <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
+                  </div>
                 )}
-              </div>
-              {canScrollUp && (
-                <div
-                  className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
-                  style={{ zIndex: 51 }}
-                >
-                  <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
-                </div>
-              )}
-              {canScrollDown && (
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
-                  style={{ zIndex: 51 }}
-                >
-                  <IconChevronDown size={18} className="text-foreground/60" />
-                </div>
-              )}
-            </div>
-          )}
+                {canScrollDown && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
+                    style={{ zIndex: 51 }}
+                  >
+                    <IconChevronDown size={18} className="text-foreground/60" />
+                  </div>
+                )}
+              </div>,
+              document.body,
+            )}
         </div>
         {error && <p className={errorClassName}>{error}</p>}
       </div>
