@@ -44,6 +44,13 @@ if (!devDbUrlMatch || !devDbUrlMatch[1]) {
 
 const DEV_DB_URL = devDbUrlMatch![1].replace(/['"]/g, '');
 
+// Check for direct URL (bypasses pooler and RLS)
+const directUrlMatch = envContent.match(/^DIRECT_URL=(.*)$/m);
+const DIRECT_URL = directUrlMatch ? directUrlMatch[1].replace(/['"]/g, '') : null;
+
+// Use direct URL if available, otherwise fall back to DATABASE_URL
+const RESTORE_URL = DIRECT_URL || DEV_DB_URL;
+
 console.log('');
 console.log(`${BOLD}╔══════════════════════════════════════╗${RESET}`);
 console.log(`${BOLD}║        Dev DB Reset Utility          ║${RESET}`);
@@ -51,6 +58,8 @@ console.log(`${BOLD}╚═══════════════════
 console.log('');
 const maskedDevUrl = DEV_DB_URL.replace(/@.*$/, '@***');
 info(`Dev DB: ${maskedDevUrl}`);
+if (DIRECT_URL) info('Using DIRECT_URL (bypasses pooler/RLS)');
+else warn('No DIRECT_URL found - using DATABASE_URL (RLS may block access)');
 console.log('');
 
 // ── Ask whether to dump prod ──────────────────
@@ -88,6 +97,8 @@ if (dumpProd) {
       `pg_dump --no-owner --no-acl --no-privileges --schema=public --format=plain "${PROD_DB_URL}" > "${dumpFile}"`,
       { stdio: 'pipe' },
     );
+    // Remove CREATE SCHEMA statement from dump to avoid conflict
+    execSync(`sed -i '/^CREATE SCHEMA public;/d' "${dumpFile}"`, { stdio: 'pipe' });
     success(`Dump saved to ${dumpFile}`);
   } catch (e) {
     error('pg_dump failed. Check your production connection string.');
@@ -147,7 +158,7 @@ if (CONFIRM !== 'yes') {
 console.log('');
 info('Resetting public schema in dev database...');
 try {
-  execSync(`psql "${DEV_DB_URL}" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"`, {
+  execSync(`psql "${RESTORE_URL}" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"`, {
     stdio: 'pipe',
   });
   success('Schema reset.');
@@ -158,7 +169,7 @@ try {
 // ── Restore dump into dev ─────────────────────
 info('Restoring dump into dev database...');
 try {
-  execSync(`psql "${DEV_DB_URL}" -f "${dumpFile}"`, { stdio: 'inherit' });
+  execSync(`psql "${RESTORE_URL}" -f "${dumpFile}"`, { stdio: 'inherit' });
   success('Restore complete!');
 } catch (e) {
   error('psql restore failed. The dump file may be incompatible.');
