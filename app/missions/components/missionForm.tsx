@@ -42,6 +42,7 @@ type MissionFormProps = {
   mode: UpdateMode;
   skipAnimation?: boolean;
   forceRecalc?: boolean;
+  onBeforeSubmit?: (isSafeChange: boolean) => Promise<boolean>;
 };
 
 export default function MissionForm({
@@ -52,6 +53,7 @@ export default function MissionForm({
   mode,
   skipAnimation = false,
   forceRecalc = false,
+  onBeforeSubmit,
 }: MissionFormProps) {
   const { homes, addMission, updateMission, missionExists } = useMissions();
   const { conciergerieName, employees: allEmployees } = useAuth();
@@ -87,8 +89,6 @@ export default function MissionForm({
     conciergerieComment: string;
   }>();
 
-  const [cannotEdit, setCannotEdit] = useState(false);
-
   // Get employees with accepted status using useMemo
   // This avoids the infinite loop issue by not using state + useEffect
   const employees = useMemo(() => {
@@ -123,7 +123,6 @@ export default function MissionForm({
 
   // Helper function to reset form to initial values
   const resetFormToInitialValues = useCallback(() => {
-    setCannotEdit(false);
     setIsSubmitting(false);
     setIsSuccess(false);
     setHomeIdError('');
@@ -161,22 +160,6 @@ export default function MissionForm({
   useEffect(() => {
     resetFormToInitialValues();
   }, [resetFormToInitialValues]);
-
-  // Check if mission can be edited
-  useEffect(() => {
-    if (mode === 'edit' && mission) {
-      // Cannot edit mission if mission status is accepted
-      const message =
-        mission.status === 'accepted'
-          ? 'Cette mission a déjà été acceptée et sa modification peut potentiellement entraîner un retrait du prestataire'
-          : '';
-
-      if (message) {
-        setCannotEdit(true);
-        showToast({ type: ToastType.Warning, message });
-      }
-    }
-  }, [mission, mode, showToast]);
 
   // Calculate mission hours when dependencies change
   useEffect(() => {
@@ -324,6 +307,48 @@ export default function MissionForm({
         const selectedHome = filteredHomes.find(h => h.id === homeId);
         if (!selectedHome) throw new Error('Bien introuvable');
 
+        // Determine if changes are safe (don't require employee removal)
+        // Safe changes: date extension (adding hours), travellers change, conciergerie comment change
+        const tasksChanged = JSON.stringify(tasks) !== JSON.stringify(mission.tasks);
+        const homeIdChanged = homeId !== mission.homeId;
+        const startDateChanged = startDateTime !== initialFormValues?.startDateTime;
+        const endDateChanged = endDateTime !== initialFormValues?.endDateTime;
+        const employeesChanged =
+          JSON.stringify(selectedEmployees.sort()) !== JSON.stringify((mission.allowedEmployees || []).sort());
+        const travellersChanged = travellers !== mission.travellers;
+        const conciergerieCommentChanged = conciergerieComment !== (mission.conciergerieComment || '');
+
+        // Check if date change is an extension (adding time) or reduction
+        let isDateExtension = false;
+        let isDateReduction = false;
+        if (startDateChanged || endDateChanged) {
+          const originalStart = new Date(mission.startDateTime);
+          const originalEnd = new Date(mission.endDateTime);
+          const newStart = startDate;
+          const newEnd = endDate;
+          const originalDuration = originalEnd.getTime() - originalStart.getTime();
+          const newDuration = newEnd.getTime() - newStart.getTime();
+          isDateExtension = newDuration > originalDuration;
+          isDateReduction = newDuration < originalDuration;
+        }
+
+        // Safe changes: only date extension, travellers, or conciergerie comment
+        const isSafeChange =
+          !tasksChanged &&
+          !homeIdChanged &&
+          !employeesChanged &&
+          (isDateExtension || travellersChanged || conciergerieCommentChanged) &&
+          !isDateReduction;
+
+        // Notify parent about safety of changes and wait for confirmation if needed
+        if (onBeforeSubmit) {
+          const shouldContinue = await onBeforeSubmit(isSafeChange);
+          if (!shouldContinue) {
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
         const updatedMission: Mission = {
           ...mission,
           homeId,
@@ -441,7 +466,7 @@ export default function MissionForm({
               value: home.id,
               label: home.title,
             }))}
-            disabled={isSubmitting || cannotEdit}
+            disabled={isSubmitting}
             placeholder="Sélectionner un bien"
             error={homeIdError}
             onError={setHomeIdError}
@@ -458,7 +483,7 @@ export default function MissionForm({
           onTasksChange={setTasks}
           error={tasksError}
           setError={setTasksError}
-          disabled={isSubmitting || cannotEdit}
+          disabled={isSubmitting}
           required
         />
 
@@ -487,7 +512,7 @@ export default function MissionForm({
           value={travellers}
           onChange={value => setTravellers(Number(value))}
           options={range(0, filteredHomes.find(h => h.id === homeId)?.maxTravellers || MAX_TRAVELLERS)}
-          disabled={isSubmitting || cannotEdit}
+          disabled={isSubmitting}
           placeholder="Nombre de voyageurs"
           required
           row
@@ -513,7 +538,7 @@ export default function MissionForm({
           error={startDateTimeError}
           onError={setStartDateTimeError}
           min={localISOString(getMinStartDate())}
-          disabled={isSubmitting || cannotEdit}
+          disabled={isSubmitting}
           required
           row
         />
@@ -532,7 +557,7 @@ export default function MissionForm({
           error={endDateTimeError}
           onError={setEndDateTimeError}
           min={localISOString(getMinEndDate())}
-          disabled={isSubmitting || cannotEdit}
+          disabled={isSubmitting}
           required
           row
         />
@@ -546,7 +571,7 @@ export default function MissionForm({
             value: getUserKey(emp),
             label: getUserKey(emp),
           }))}
-          disabled={isSubmitting || cannotEdit}
+          disabled={isSubmitting}
           required
           allOption
           tooltip={
@@ -571,7 +596,7 @@ export default function MissionForm({
           onChange={setConciergerieComment}
           error={conciergerieCommentError}
           onError={setConciergerieCommentError}
-          disabled={isSubmitting || cannotEdit}
+          disabled={isSubmitting}
           placeholder="Exemples : informations spécifiques, consignes particulières..."
           forceRecalc={forceRecalc}
           regex={messageLengthRegex}

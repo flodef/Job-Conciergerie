@@ -175,6 +175,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
     cancelText?: string;
     isDangerous?: boolean;
     onConfirm: () => void;
+    onClose?: () => void;
     children?: ReactNode;
   }) => {
     const id = openModal(() => (
@@ -186,7 +187,10 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
         cancelText={options.cancelText}
         isDangerous={options.isDangerous}
         onConfirm={options.onConfirm}
-        onClose={() => closeModal(id)}
+        onClose={() => {
+          closeModal(id);
+          options.onClose?.();
+        }}
       >
         {options.children}
       </ConfirmationModal>
@@ -662,19 +666,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
   ) : (
     <MissionActions
       mission={mission}
-      onEdit={() => {
-        if (mission.employeeId)
-          confirm({
-            title: 'Mission déjà acceptée',
-            message:
-              'Cette mission a déjà été acceptée par un prestataire. En modifiant cette mission, elle sera retirée du planning du prestataire et retournera dans la liste des missions disponibles.',
-            confirmText: 'Continuer',
-            cancelText: 'Annuler',
-            isDangerous: true,
-            onConfirm: () => setIsEditMode(true),
-          });
-        else setIsEditMode(true);
-      }}
+      onEdit={() => setIsEditMode(true)}
       onDelete={() => {
         if (mission.employeeId)
           confirm({
@@ -734,6 +726,23 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
             mode="edit"
             skipAnimation
             forceRecalc={isEditMode}
+            onBeforeSubmit={isSafeChange => {
+              if (mission.employeeId && !isSafeChange) {
+                return new Promise(resolve => {
+                  confirm({
+                    title: 'Modification risquée',
+                    message:
+                      'Cette modification retirera le prestataire de la mission et elle retournera dans la liste des missions disponibles. Le prestataire sera notifié par email.',
+                    confirmText: 'Confirmer',
+                    cancelText: 'Annuler',
+                    isDangerous: true,
+                    onConfirm: () => resolve(true),
+                    onClose: () => resolve(false),
+                  });
+                });
+              }
+              return Promise.resolve(true);
+            }}
           />
         </div>
       )}
