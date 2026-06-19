@@ -300,8 +300,8 @@ const MultiSelect = forwardRef(
               </div>,
               document.body,
             )}
+          {error && <p className={errorClassName}>{error}</p>}
         </div>
-        {error && <p className={errorClassName}>{error}</p>}
       </div>
     );
   },

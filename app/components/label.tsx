@@ -14,7 +14,7 @@ interface LabelProps {
 const Label = ({ id, children, tooltip, required = true }: LabelProps) => {
   return (
     children && (
-      <div className="flex items-center">
+      <div className="flex items-center mt-1.5">
         <Tooltip
           trigger={
             <label htmlFor={id} className={labelClassName}>

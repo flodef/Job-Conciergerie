@@ -51,30 +51,32 @@ const TaskSelectorComponent: ForwardRefRenderFunction<HTMLDivElement, TaskSelect
       <Label id={id} required={required} tooltip={tooltip}>
         {label}
       </Label>
-      <div
-        ref={ref}
-        className="grid gap-2"
-        style={{ gridTemplateColumns: `repeat(${availableTasks.length}, minmax(0, 1fr))` }}
-      >
-        {availableTasks.map(task => (
-          <button
-            type="button"
-            key={task}
-            onClick={() => toggleTask(task)}
-            disabled={disabled}
-            className={cn(
-              'px-2 py-1 border rounded-lg text-sm flex justify-center items-center',
-              'border-foreground/20 focus-visible:outline-primary cursor-pointer',
-              selectedTasks.includes(task)
-                ? 'bg-primary text-background border-primary'
-                : 'bg-background text-foreground border-secondary',
-            )}
-          >
-            <span>{task}</span>
-          </button>
-        ))}
+      <div className="flex-1">
+        <div
+          ref={ref}
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${availableTasks.length}, minmax(0, 1fr))` }}
+        >
+          {availableTasks.map(task => (
+            <button
+              type="button"
+              key={task}
+              onClick={() => toggleTask(task)}
+              disabled={disabled}
+              className={cn(
+                'px-2 py-1 border rounded-lg text-sm flex justify-center items-center',
+                'border-foreground/20 focus-visible:outline-primary cursor-pointer',
+                selectedTasks.includes(task)
+                  ? 'bg-primary text-background border-primary'
+                  : 'bg-background text-foreground border-secondary',
+              )}
+            >
+              <span>{task}</span>
+            </button>
+          ))}
+        </div>
+        {error && <p className={errorClassName}>{error}</p>}
       </div>
-      {error && <p className={errorClassName}>{error}</p>}
     </div>
   );
 };

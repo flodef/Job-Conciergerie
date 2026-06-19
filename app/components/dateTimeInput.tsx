@@ -48,7 +48,7 @@ const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTim
         <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
-        <div className={row ? className : ''}>
+        <div className={row ? 'flex-1' : ''}>
           <input
             type="datetime-local"
             lang="fr"
@@ -74,9 +74,9 @@ const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTim
             min={min}
             max={max}
           />
+          {error && <p className={errorClassName}>{error}</p>}
         </div>
       </div>
-      {error && <p className={errorClassName}>{error}</p>}
     </div>
   );
 };

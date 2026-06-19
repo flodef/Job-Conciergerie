@@ -45,20 +45,22 @@ const InputComponent: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
       <Label id={id} required={required} tooltip={tooltip}>
         {label}
       </Label>
-      <input
-        type={type}
-        id={id}
-        name={label?.toString() || id}
-        ref={ref}
-        value={value}
-        onChange={e => handleChange(e, onChange, onError, regex)}
-        onBlur={e => handleInputBlur(e, onChange, onError, regex)}
-        className={inputFieldClassName(error)}
-        disabled={disabled}
-        placeholder={placeholder}
-        required={required}
-      />
-      {error && <p className={errorClassName}>{error}</p>}
+      <div className="flex-1">
+        <input
+          type={type}
+          id={id}
+          name={label?.toString() || id}
+          ref={ref}
+          value={value}
+          onChange={e => handleChange(e, onChange, onError, regex)}
+          onBlur={e => handleInputBlur(e, onChange, onError, regex)}
+          className={inputFieldClassName(error)}
+          disabled={disabled}
+          placeholder={placeholder}
+          required={required}
+        />
+        {error && <p className={errorClassName}>{error}</p>}
+      </div>
     </div>
   );
 };

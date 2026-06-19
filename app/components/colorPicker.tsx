@@ -58,55 +58,59 @@ const ColorPickerComponent: ForwardRefRenderFunction<HTMLDivElement, ColorPicker
       <Label id={id} required={required} tooltip={tooltip}>
         {label}
       </Label>
-      <div ref={ref} className="grid grid-cols-3 gap-3 mt-1">
-        {colorOptions.map(color => {
-          const isUsed = isColorUsed(color.name);
-          const isSelected = selectedColor?.name === color.name;
+      <div className="flex-1">
+        <div ref={ref} className="grid grid-cols-3 gap-3 mt-1">
+          {colorOptions.map(color => {
+            const isUsed = isColorUsed(color.name);
+            const isSelected = selectedColor?.name === color.name;
 
-          return (
-            <button
-              key={color.name}
-              type="button"
-              onClick={() => {
-                if (!isUsed || isSelected) {
-                  onColorChange(color);
+            return (
+              <button
+                key={color.name}
+                type="button"
+                onClick={() => {
+                  if (!isUsed || isSelected) {
+                    onColorChange(color);
+                  }
+                }}
+                disabled={(isUsed && !isSelected) || disabled}
+                className={cn(
+                  'relative flex flex-col items-center space-y-1 p-2 border rounded-md transition-all cursor-pointer',
+                  isSelected ? 'ring-2 ring-primary border-primary' : 'border-secondary',
+                  isUsed && !isSelected ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary/10',
+                )}
+                title={
+                  isUsed && !isSelected ? 'Cette couleur est déjà utilisée par une autre conciergerie' : color.name
                 }
-              }}
-              disabled={(isUsed && !isSelected) || disabled}
-              className={cn(
-                'relative flex flex-col items-center space-y-1 p-2 border rounded-md transition-all cursor-pointer',
-                isSelected ? 'ring-2 ring-primary border-primary' : 'border-secondary',
-                isUsed && !isSelected ? 'opacity-50 cursor-not-allowed' : 'hover:bg-secondary/10',
-              )}
-              title={isUsed && !isSelected ? 'Cette couleur est déjà utilisée par une autre conciergerie' : color.name}
-            >
-              <div className="w-6 h-6 rounded-full" style={{ backgroundColor: color.value }} />
-              <span>{color.name}</span>
+              >
+                <div className="w-6 h-6 rounded-full" style={{ backgroundColor: color.value }} />
+                <span>{color.name}</span>
 
-              {/* Diagonal "utilisée" label for used colors */}
-              {isUsed && !isSelected && (
-                <div
-                  className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center"
-                  aria-hidden="true"
-                >
+                {/* Diagonal "utilisée" label for used colors */}
+                {isUsed && !isSelected && (
                   <div
-                    className="absolute text-sm font-bold text-foreground/80 bg-background/70 px-1 py-0.5 uppercase tracking-wider whitespace-nowrap"
-                    style={{
-                      transform: 'rotate(45deg) scale(0.9)',
-                      transformOrigin: 'center',
-                      width: '140%',
-                      textAlign: 'center',
-                    }}
+                    className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center"
+                    aria-hidden="true"
                   >
-                    UTILISÉE
+                    <div
+                      className="absolute text-sm font-bold text-foreground/80 bg-background/70 px-1 py-0.5 uppercase tracking-wider whitespace-nowrap"
+                      style={{
+                        transform: 'rotate(45deg) scale(0.9)',
+                        transformOrigin: 'center',
+                        width: '140%',
+                        textAlign: 'center',
+                      }}
+                    >
+                      UTILISÉE
+                    </div>
                   </div>
-                </div>
-              )}
-            </button>
-          );
-        })}
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {error && <p className={errorClassName}>{error}</p>}
       </div>
-      {error && <p className={errorClassName}>{error}</p>}
     </div>
   );
 };

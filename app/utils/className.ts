@@ -7,7 +7,7 @@ export const DEFAULT_DROPDOWN_MAX_HEIGHT = DEFAULT_MAX_ITEMS * DROPDOWN_ITEM_HEI
 
 export const cn = (...inputs: ClassNameValue[]) => twMerge(inputs);
 
-export const rowClassName = 'flex flex-row justify-between my-2 gap-4 items-center';
+export const rowClassName = 'flex flex-row justify-between my-2 gap-4 items-start';
 export const titleClassName = 'text-lg font-medium';
 export const textClassName = 'text-sm font-medium text-foreground';
 export const textPulseClassName = textClassName + ' italic animate-pulse';
