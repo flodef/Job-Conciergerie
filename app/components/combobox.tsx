@@ -180,14 +180,13 @@ const Combobox = forwardRef(
 
     const checkPosition = () => {
       if (comboboxRef.current) {
-        setOpenUpward(
-          shouldOpenUpward({
-            elementRef: comboboxRef.current,
-            itemCount: filteredOptions.length,
-          }),
-        );
         const rect = comboboxRef.current.getBoundingClientRect();
-        const top = openUpward ? rect.top : rect.bottom;
+        const shouldOpen = shouldOpenUpward({
+          elementRef: comboboxRef.current,
+          itemCount: filteredOptions.length,
+        });
+        setOpenUpward(shouldOpen);
+        const top = shouldOpen ? rect.top : rect.bottom;
         setDropdownPosition({ top, left: rect.left, width: rect.width });
       }
     };

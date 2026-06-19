@@ -85,17 +85,16 @@ const Select = forwardRef(
 
     const checkPosition = useCallback(() => {
       if (selectRef.current) {
-        setOpenUpward(
-          shouldOpenUpward({
-            elementRef: selectRef.current,
-            itemCount: options.length,
-          }),
-        );
         const rect = selectRef.current.getBoundingClientRect();
-        const top = openUpward ? rect.top : rect.bottom;
+        const shouldOpen = shouldOpenUpward({
+          elementRef: selectRef.current,
+          itemCount: options.length,
+        });
+        setOpenUpward(shouldOpen);
+        const top = shouldOpen ? rect.top : rect.bottom;
         setDropdownPosition({ top, left: rect.left, width: rect.width });
       }
-    }, [options.length, openUpward]);
+    }, [options.length]);
 
     // Reset dropdown position when closed
     useEffect(() => {

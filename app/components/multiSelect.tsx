@@ -173,14 +173,13 @@ const MultiSelect = forwardRef(
 
     const checkPosition = () => {
       if (selectRef.current) {
-        setOpenUpward(
-          shouldOpenUpward({
-            elementRef: selectRef.current,
-            itemCount: processedOptions.length,
-          }),
-        );
         const rect = selectRef.current.getBoundingClientRect();
-        const top = openUpward ? rect.top : rect.bottom;
+        const shouldOpen = shouldOpenUpward({
+          elementRef: selectRef.current,
+          itemCount: processedOptions.length,
+        });
+        setOpenUpward(shouldOpen);
+        const top = shouldOpen ? rect.top : rect.bottom;
         setDropdownPosition({ top, left: rect.left, width: rect.width });
       }
     };

@@ -185,19 +185,16 @@ const AutocompleteSelect = forwardRef(
     };
 
     const checkPosition = () => {
-      if (forceOpenUpward) {
-        setOpenOpenUpward(true);
-      } else if (selectRef.current) {
-        setOpenOpenUpward(
+      if (selectRef.current) {
+        const rect = selectRef.current.getBoundingClientRect();
+        const shouldOpen =
+          forceOpenUpward ||
           shouldOpenUpward({
             elementRef: selectRef.current,
             itemCount: filteredOptions.length,
-          }),
-        );
-      }
-      if (selectRef.current) {
-        const rect = selectRef.current.getBoundingClientRect();
-        const top = openUpward ? rect.top : rect.bottom;
+          });
+        setOpenOpenUpward(shouldOpen);
+        const top = shouldOpen ? rect.top : rect.bottom;
         setDropdownPosition({ top, left: rect.left, width: rect.width });
       }
     };
