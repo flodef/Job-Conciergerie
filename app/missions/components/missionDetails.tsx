@@ -652,33 +652,22 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
             )}
 
             <div className="flex items-center space-x-4">
-              <div className="space-y-2">
-                <div>
-                  <h3 className={containerClassName}>
-                    <IconCalendarEvent size={16} />
-                    Date de début
-                  </h3>
-                  <div className="flex items-center gap-1 flex-wrap">
-                    <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
-                      {formatDateTime(new Date(startDate), true)}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className={containerClassName}>
-                    <IconCalendarEvent size={16} />
-                    Date de fin
-                  </h3>
-                  <div className="flex items-center gap-1 flex-wrap">
-                    <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
-                      {formatDateTime(new Date(endDate), true)}
-                    </p>
-                  </div>
+              <div>
+                <h3 className={containerClassName}>
+                  <IconCalendarEvent size={16} />
+                  Dates
+                </h3>
+                <div className="flex flex-col gap-1">
+                  <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
+                    Du {formatDateTime(new Date(startDate))}
+                  </p>
+                  <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
+                    Au {formatDateTime(new Date(endDate))}
+                  </p>
                 </div>
               </div>
 
-              <div className="relative h-24 flex items-center">
+              <div className="relative h-16 flex items-center">
                 <div className="h-full w-0.5 bg-secondary -mx-1"></div>
                 <div className="absolute top-0 left-0 w-3 h-0.5 bg-secondary -ml-4"></div>
                 <div className="absolute bottom-0 left-0 w-3 h-0.5 bg-secondary -ml-4"></div>
