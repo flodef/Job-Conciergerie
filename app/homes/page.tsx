@@ -20,7 +20,7 @@ import M3LoadingSpinner from '../components/m3LoadingSpinner';
 export default function HomesPage() {
   const { myHomes, isLoading: homesLoading, updateHomeLocal } = useHomes();
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
-  const { isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading, isConciergerie } = useAuth();
   const { openModal, closeModal } = useModal();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,6 +76,7 @@ export default function HomesPage() {
   const [displayMode, setDisplayMode] = useLocalStorage<'list' | 'grid' | 'thumb'>('homes_display_mode', 'thumb');
 
   if (!hasLoadedOnce) return <M3LoadingSpinner />;
+  if (!isConciergerie) return null;
 
   return (
     <div className="bg-background min-h-full px-4">
