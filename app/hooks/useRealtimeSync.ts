@@ -101,10 +101,17 @@ export function useRealtimeSync() {
   ]);
 
   useEffect(() => {
-    if (isLoading || !userId) return;
+    if (isLoading || !userId) {
+      console.log('[Realtime] Not subscribing yet (isLoading:', isLoading, 'userId:', userId, ')');
+      return;
+    }
 
     const supabase = getBrowserClient();
-    if (!supabase) return;
+    if (!supabase) {
+      console.log('[Realtime] No Supabase browser client (missing env vars?)');
+      return;
+    }
+    console.log('[Realtime] Subscribing to db-changes channel...');
 
     const timers: Record<string, ReturnType<typeof setTimeout>> = {};
     const debounce = (key: string, fn: () => void) => {
@@ -115,6 +122,7 @@ export function useRealtimeSync() {
     const channel = supabase
       .channel('db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' }, payload => {
+        console.log('[Realtime] missions event:', payload.eventType, payload);
         if (payload.eventType === 'DELETE') {
           if (payload.old?.id) deleteMissionRef.current(payload.old.id);
         } else if (payload.new?.id) {
@@ -124,6 +132,7 @@ export function useRealtimeSync() {
         }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'homes' }, payload => {
+        console.log('[Realtime] homes event:', payload.eventType, payload);
         if (payload.eventType === 'DELETE') {
           if (payload.old?.id) deleteHomeRef.current(payload.old.id);
         } else if (payload.new?.id) {
