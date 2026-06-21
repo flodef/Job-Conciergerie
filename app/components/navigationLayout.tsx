@@ -16,7 +16,15 @@ import { useUpdateChecker } from '@/app/hooks/useUpdateChecker';
 import { cn } from '@/app/utils/className';
 import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/navigation';
 import { useRouter } from 'next/navigation';
-import { IconBriefcase, IconCalendar, IconClockHour3, IconHome, IconSettings, IconUser } from '@tabler/icons-react';
+import {
+  IconBriefcase,
+  IconCalendar,
+  IconClockHour3,
+  IconHome,
+  IconRefresh,
+  IconSettings,
+  IconUser,
+} from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import React, { useEffect, useState } from 'react';
 import M3LoadingSpinner from './m3LoadingSpinner';
@@ -181,6 +189,13 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {updateAvailable && (
         <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 bg-primary px-4 py-2 text-white text-sm">
           <span>Une nouvelle version est disponible</span>
+          <button
+            onClick={() => window.location.reload()}
+            className="flex items-center gap-1 font-semibold underline underline-offset-2 whitespace-nowrap cursor-pointer"
+          >
+            <IconRefresh size={14} />
+            Mettre à jour
+          </button>
         </div>
       )}
 
