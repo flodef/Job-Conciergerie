@@ -192,10 +192,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
   // Incremental update functions for realtime sync
   const addHomeFromRealtime = useCallback((home: Home) => {
-    setHomes(prev => {
-      if (prev.some(h => h.id === home.id)) return prev;
-      return [...prev, home];
-    });
+    setHomes(prev => (prev.some(h => h.id === home.id) ? prev : [...prev, home]));
   }, []);
 
   const updateHomeFromRealtime = useCallback((home: Home) => {

@@ -736,11 +736,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   // Incremental update functions for realtime sync
   const addMissionFromRealtime = useCallback((mission: Mission) => {
-    setMissions(prev => {
-      // Only add if not already present
-      if (prev.some(m => m.id === mission.id)) return prev;
-      return [...prev, mission];
-    });
+    setMissions(prev => (prev.some(m => m.id === mission.id) ? prev : [...prev, mission]));
   }, []);
 
   const updateMissionFromRealtime = useCallback((mission: Mission) => {

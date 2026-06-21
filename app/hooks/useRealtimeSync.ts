@@ -55,12 +55,13 @@ const formatHomeFromRow = (row: any): Home => ({
 
 /**
  * Subscribe to Supabase Realtime (Postgres Changes) and apply incremental
- * updates to the local state whenever a row changes in the missions, homes,
- * employees or conciergeries tables.
+ * row-level updates to the local state whenever a row changes in the missions,
+ * homes, employees or conciergeries tables.
  *
- * This makes the data update almost instantly without polling. The underlying
- * websocket is auto-reconnected by supabase-js, so no manual health check is
- * needed.
+ * Requires an RLS SELECT policy for the anon role on missions/homes and
+ * `REPLICA IDENTITY FULL` so the payload contains the full row (incl. the old
+ * row on UPDATE/DELETE). The underlying websocket is auto-reconnected by
+ * supabase-js, so no manual health check is needed.
  */
 export function useRealtimeSync() {
   const { triggerRefresh } = useFetchTime();
@@ -114,7 +115,6 @@ export function useRealtimeSync() {
     const channel = supabase
       .channel('db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' }, payload => {
-        console.log('[Realtime] missions event:', payload.eventType, payload);
         if (payload.eventType === 'DELETE') {
           if (payload.old?.id) deleteMissionRef.current(payload.old.id);
         } else if (payload.new?.id) {
@@ -124,7 +124,6 @@ export function useRealtimeSync() {
         }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'homes' }, payload => {
-        console.log('[Realtime] homes event:', payload.eventType, payload);
         if (payload.eventType === 'DELETE') {
           if (payload.old?.id) deleteHomeRef.current(payload.old.id);
         } else if (payload.new?.id) {
