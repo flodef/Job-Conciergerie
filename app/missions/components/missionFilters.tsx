@@ -2,9 +2,11 @@
 
 import MultiSelect from '@/app/components/multiSelect';
 import Select from '@/app/components/select';
+import Switch from '@/app/components/switch';
 import { filterButtonClassName, rowClassName, secondaryButtonClassName } from '@/app/utils/className';
 import { IconDeviceFloppy, IconRefresh, IconX } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
+import { useLocalStorage } from '@/app/utils/localStorage';
 import React from 'react';
 
 export type MissionFiltersType = {
@@ -35,6 +37,9 @@ interface MissionFiltersProps {
   savedFilters?: MissionFiltersType;
   isConciergerie: boolean;
   onClose?: () => void;
+  onToggleAllMissions?: (expand: boolean) => void;
+  missionsExpandedByDefault?: boolean;
+  setMissionsExpandedByDefault?: React.Dispatch<React.SetStateAction<boolean | undefined>>;
 }
 
 // Reusable reset button component
@@ -64,7 +69,16 @@ export default function MissionFilters({
   savedFilters,
   isConciergerie,
   onClose,
+  onToggleAllMissions,
+  missionsExpandedByDefault: propMissionsExpandedByDefault,
+  setMissionsExpandedByDefault: propSetMissionsExpandedByDefault,
 }: MissionFiltersProps) {
+  const [localMissionsExpandedByDefault, setLocalMissionsExpandedByDefault] = useLocalStorage<boolean>(
+    'missions_expanded_by_default',
+    false,
+  );
+  const missionsExpandedByDefault = propMissionsExpandedByDefault ?? localMissionsExpandedByDefault;
+  const setMissionsExpandedByDefault = propSetMissionsExpandedByDefault ?? setLocalMissionsExpandedByDefault;
   const statusLabels: Record<string, string> = {
     available: 'Disponible',
     accepted: 'Acceptée',
@@ -110,8 +124,23 @@ export default function MissionFilters({
   const filtersChanged = React.useMemo(() => {
     return conciergeriesChanged || statusesChanged || missionStatusesChanged || zonesChanged || employeesChanged;
   }, [conciergeriesChanged, statusesChanged, missionStatusesChanged, zonesChanged, employeesChanged]);
+
+  const handleToggleMissionsExpanded = (expand: boolean) => {
+    setMissionsExpandedByDefault(expand);
+    onToggleAllMissions?.(expand);
+  };
+
   return (
-    <div className="px-4 pb-4 bg-background rounded-lg shadow-md flex flex-col gap-2">
+    <div className="px-4 pb-4 bg-background rounded-lg shadow-md flex flex-col gap-1">
+      {/* Mission expansion setting */}
+      <Switch
+        id="missions-expanded-default"
+        label="Déplier les missions"
+        enabled={missionsExpandedByDefault ?? false}
+        onToggle={handleToggleMissionsExpanded}
+        className="my-0"
+      />
+
       {/* Conciergeries filter */}
       {availableConciergeries.length > 0 && (
         <div className={cn(rowClassName, 'gap-2 my-0')}>

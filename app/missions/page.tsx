@@ -105,6 +105,12 @@ export default function Missions() {
     employees: [],
   });
 
+  // Mission expansion setting - must be declared before any conditional returns
+  const [missionsExpandedByDefault, setMissionsExpandedByDefault] = useLocalStorage<boolean>(
+    'missions_expanded_by_default',
+    false,
+  );
+
   // Reload missions when needed
   const isFetching = useRef(false);
   useEffect(() => {
@@ -309,24 +315,36 @@ export default function Missions() {
     return groupMissionsByCategory(sortedMissions, sortField, homes);
   }, [sortedMissions, sortField, homes, missionsLoading]);
 
-  // Initialize collapsed categories - collapse all except if there's only one category
+  // Initialize collapsed categories - respect the expansion setting
   useEffect(() => {
     if (missionsLoading) return;
     const categories = Object.keys(groupedMissions);
-    if (categories.length > 1) setCollapsedCategories(categories);
-    else setCollapsedCategories([]);
-  }, [groupedMissions, missionsLoading]);
+    if (categories.length > 1) {
+      setCollapsedCategories(missionsExpandedByDefault ? [] : categories);
+    } else {
+      setCollapsedCategories([]);
+    }
+  }, [groupedMissions, missionsLoading, missionsExpandedByDefault]);
+
+  // Toggle all missions expanded/collapsed
+  const handleToggleAllMissions = (expand: boolean) => {
+    const categories = Object.keys(groupedMissions);
+    setCollapsedCategories(expand ? [] : categories);
+  };
 
   // Collapse all categories when sort field changes to prevent flickering
   useLayoutEffect(() => {
     if (missionsLoading) return;
     if (prevSortField.current !== sortField) {
       const categories = Object.keys(groupedMissions);
-      if (categories.length > 1) setCollapsedCategories(categories);
-      else setCollapsedCategories([]);
+      if (categories.length > 1) {
+        setCollapsedCategories(missionsExpandedByDefault ? [] : categories);
+      } else {
+        setCollapsedCategories([]);
+      }
       prevSortField.current = sortField;
     }
-  }, [sortField, groupedMissions, missionsLoading]);
+  }, [sortField, groupedMissions, missionsLoading, missionsExpandedByDefault]);
 
   // Get available conciergeries for filtering - must be declared before any conditional returns
   // Use filtered missions (excluding conciergeries) to only show conciergeries with missions matching other filters
@@ -486,6 +504,9 @@ export default function Missions() {
               savedFilters={savedFilters}
               isConciergerie={isConciergerie}
               onClose={() => setShowFilters(false)}
+              onToggleAllMissions={handleToggleAllMissions}
+              missionsExpandedByDefault={missionsExpandedByDefault}
+              setMissionsExpandedByDefault={setMissionsExpandedByDefault}
             />
           </div>
         )}
