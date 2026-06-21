@@ -14,6 +14,7 @@ import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { useChangelog } from '@/app/hooks/useChangelog';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
+import { useRealtimeSync } from '@/app/hooks/useRealtimeSync';
 import { useUpdateChecker } from '@/app/hooks/useUpdateChecker';
 import { cn } from '@/app/utils/className';
 import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/navigation';
@@ -96,6 +97,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     resetNewMissionsCount,
   } = useBadge();
   const { lastFetchTime, updateFetchTime } = useFetchTime();
+  useRealtimeSync();
   const [refreshToast, setRefreshToast] = useState<{ type: ToastType; message: string } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const updateAvailable = useUpdateChecker();

@@ -143,9 +143,24 @@ export function useFetchTime() {
     });
   }, []);
 
+  // triggerRefresh flags the given pages as needing a refresh (e.g. from a
+  // realtime event). Providers react to needsRefresh and refetch silently.
+  const triggerRefresh = useCallback((pages: Page | Page[]) => {
+    const pageArray = Array.isArray(pages) ? pages : [pages];
+
+    setSharedState(prev => {
+      const newNeedsRefresh = { ...prev.needsRefresh };
+      pageArray.forEach(page => {
+        newNeedsRefresh[page] = true;
+      });
+      return { ...prev, needsRefresh: newNeedsRefresh };
+    });
+  }, []);
+
   return {
     lastFetchTime: state.lastFetchTime,
     needsRefresh: state.needsRefresh,
     updateFetchTime,
+    triggerRefresh,
   };
 }
