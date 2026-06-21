@@ -15,3 +15,13 @@ export async function isProduction(): Promise<boolean> {
 
   return prodProjectId ? dbURL.includes(prodProjectId) : false;
 }
+
+/**
+ * Validates that NEXT_PUBLIC_SUPABASE_URL and DATABASE_URL point to the same Supabase project.
+ * Logs an error if they don't match, which would cause Realtime to fail.
+ */
+export async function validateSupabaseConfig(): Promise<boolean> {
+  const match = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/([a-z0-9]+)\.supabase\.co/);
+  const supabaseProjectId = match?.[1] ?? null;
+  return !!supabaseProjectId && (process.env.DATABASE_URL?.includes(supabaseProjectId) ?? false);
+}

@@ -13,6 +13,7 @@ import { getLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes } from '@/app/utils/navigation';
 import { getUserKey, type UserData } from '@/app/utils/user';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { validateSupabaseConfig } from '../actions/environment';
 
 // Define the type for the auth context
 export type UserType = 'conciergerie' | 'employee';
@@ -210,6 +211,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize the auth provider
   useEffect(() => {
     setIsLoading(true);
+
+    // Validate Supabase configuration (logs error if mismatch)
+    validateSupabaseConfig().then(isValid => {
+      if (isValid) console.log('[Supabase Config] OK: NEXT_PUBLIC_SUPABASE_URL and DATABASE_URL match project ID:');
+      else
+        console.error(
+          '[Supabase Config] ERROR: NEXT_PUBLIC_SUPABASE_URL and DATABASE_URL do not point to the same project.',
+        );
+    });
+
     // Only run this once when the component mounts
     fetchDataFromDatabase()
       .then(() => setIsLoading(false))
