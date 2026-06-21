@@ -1,11 +1,9 @@
 'use client';
 
-import { useEffect, useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 import type { Page } from '@/app/utils/navigation';
 import { navigationPages } from '@/app/utils/navigation';
 
-const AUTO_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes (increased from 1 min to save Neon CU)
-const STALE_THRESHOLD = 15 * 60 * 1000; // 15 minutes (increased from 5 min to save Neon CU)
 const LAST_FETCH_STORAGE_KEY = 'fetch_time_last_fetch';
 
 type FetchTimeState = {
@@ -84,43 +82,9 @@ const subscribe = (callback: () => void) => {
 // Get current shared state (for useSyncExternalStore)
 const getSnapshot = () => getSharedState();
 
-// Check for stale data (runs on interval in the first hook instance)
-const checkStale = () => {
-  const state = getSharedState();
-  const now = Date.now();
-  let hasChanges = false;
-  const newNeedsRefresh = { ...state.needsRefresh };
-
-  Object.entries(state.lastFetchTime).forEach(([page, time]) => {
-    if (time && now - time > STALE_THRESHOLD && !state.needsRefresh[page as Page]) {
-      newNeedsRefresh[page as Page] = true;
-      hasChanges = true;
-      console.log(`Data for ${page} is stale, should refresh`);
-    }
-  });
-
-  if (hasChanges) {
-    setSharedState(prev => ({ ...prev, needsRefresh: newNeedsRefresh }));
-  }
-};
-
-// Track if stale check interval is already running
-let isIntervalRunning = false;
-
 export function useFetchTime() {
   // Use useSyncExternalStore to subscribe to shared state
   const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-
-  // Start stale check interval only once (on first hook mount)
-  useEffect(() => {
-    if (isIntervalRunning) return;
-    isIntervalRunning = true;
-    const interval = setInterval(checkStale, AUTO_REFRESH_INTERVAL);
-    return () => {
-      clearInterval(interval);
-      isIntervalRunning = false;
-    };
-  }, []);
 
   // updateFetchTime updates shared state
   const updateFetchTime = useCallback((pages: Page | Page[]) => {

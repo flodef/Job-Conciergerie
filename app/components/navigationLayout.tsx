@@ -3,9 +3,6 @@
 import ChangelogModal from '@/app/components/changelogModal';
 import InstallToast from '@/app/components/installToast';
 import { PageManager } from '@/app/components/pageManager';
-import { TimeAgoDisplay } from '@/app/components/timeAgoDisplay';
-import { ToastMessage, ToastType } from '@/app/components/toastMessage';
-import Tooltip from '@/app/components/tooltip';
 import type { UserType } from '@/app/contexts/authProvider';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useBadge } from '@/app/contexts/badgeProvider';
@@ -18,18 +15,10 @@ import { useRealtimeSync } from '@/app/hooks/useRealtimeSync';
 import { useUpdateChecker } from '@/app/hooks/useUpdateChecker';
 import { cn } from '@/app/utils/className';
 import { navigationPages, navigationRoutes, Page, routeMap } from '@/app/utils/navigation';
-import {
-  IconBriefcase,
-  IconCalendar,
-  IconClockHour3,
-  IconHome,
-  IconRefresh,
-  IconSettings,
-  IconUser,
-} from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
+import { IconBriefcase, IconCalendar, IconClockHour3, IconHome, IconSettings, IconUser } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import M3LoadingSpinner from './m3LoadingSpinner';
 
 // Map pages to their respective icons
@@ -44,8 +33,6 @@ export const pageSettings: Record<Page, { icon: ReactNode; userType: UserType | 
   [Page.Employees]: { icon: <IconUser size={30} />, userType: 'conciergerie' },
   [Page.Settings]: { icon: <IconSettings size={30} />, userType: undefined },
 };
-
-const MIN_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 export default function NavigationLayout({ children }: { children: ReactNode }) {
   const { userType: authUserType, isLoading: isAuthLoading, isEmployee, isConciergerie } = useAuth();
@@ -82,8 +69,8 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       style.remove();
     };
   }, []);
-  const { isLoading: isLoadingMissions, fetchMissions } = useMissions();
-  const { isLoading: isLoadingHomes, fetchHomes } = useHomes();
+  const { isLoading: isLoadingMissions } = useMissions();
+  const { isLoading: isLoadingHomes } = useHomes();
   const { currentPage, onMenuChange } = useMenuContext();
 
   const [userType, setUserType] = useState<UserType | undefined>(authUserType);
@@ -96,60 +83,21 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     resetPendingEmployeesCount,
     resetNewMissionsCount,
   } = useBadge();
-  const { lastFetchTime, updateFetchTime } = useFetchTime();
+  useFetchTime();
   useRealtimeSync();
-  const [refreshToast, setRefreshToast] = useState<{ type: ToastType; message: string } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const updateAvailable = useUpdateChecker();
   const { showModal: showChangelog, dismiss: dismissChangelog } = useChangelog(userType as UserType);
 
-  // Handle manual refresh with rate limiting
-  const handleManualRefresh = useCallback(() => {
-    const now = Date.now();
-    const pageKey = currentPage === Page.Missions || currentPage === Page.Calendar ? Page.Missions : Page.Homes;
-    const lastFetch = lastFetchTime[pageKey] || 0;
-    const timeSinceLastRefresh = now - lastFetch;
-
-    if (timeSinceLastRefresh < MIN_REFRESH_INTERVAL) {
-      const remainingSeconds = Math.ceil((MIN_REFRESH_INTERVAL - timeSinceLastRefresh) / 1000);
-      const remainingMinutes = Math.ceil(remainingSeconds / 60);
-      setRefreshToast({
-        type: ToastType.Warning,
-        message: `Veuillez attendre encore ${remainingMinutes} min avant de rafraîchir`,
-      });
-      setTimeout(() => setRefreshToast(null), 3000);
-      return;
-    }
-
-    // Refresh data based on current page
-    if (currentPage === Page.Missions || currentPage === Page.Calendar) {
-      fetchMissions().then(() => updateFetchTime(Page.Missions));
-    }
-    if (currentPage === Page.Homes) {
-      fetchHomes().then(() => updateFetchTime(Page.Homes));
-    }
-
-    setRefreshToast({
-      type: ToastType.Success,
-      message: 'Données rafraîchies avec succès !',
-    });
-    setTimeout(() => setRefreshToast(null), 3000);
-  }, [currentPage, fetchHomes, fetchMissions, lastFetchTime, updateFetchTime]);
-
-  // Intercept page refresh (F5, Ctrl+R, swipe down) and trigger app refresh instead
+  // Intercept all refresh actions (F5, Ctrl+R, pull-to-refresh) to prevent page refresh
   useEffect(() => {
     let pullStartY = 0;
     let isPulling = false;
 
-    // Handle F5 and Ctrl+R
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
-        e.preventDefault();
-        handleManualRefresh();
-      }
+      if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) e.preventDefault();
     };
 
-    // Handle pull-to-refresh on mobile (only when scroll container is at top)
     const handleTouchStart = (e: TouchEvent) => {
       if (!isScrolled) {
         pullStartY = e.touches[0].clientY;
@@ -161,12 +109,9 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       if (!isPulling || isScrolled) return;
       const pullY = e.touches[0].clientY;
       const pullDistance = pullY - pullStartY;
-
-      // If pulled down more than 100px at top of page, trigger refresh
       if (pullDistance > 100) {
         isPulling = false;
         e.preventDefault();
-        handleManualRefresh();
       }
     };
 
@@ -174,7 +119,6 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       isPulling = false;
     };
 
-    // Add event listeners
     window.addEventListener('keydown', handleKeyDown);
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -186,7 +130,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [handleManualRefresh, isScrolled]);
+  }, [isScrolled]);
 
   const isLoading = isAuthLoading || isLoadingMissions || isLoadingHomes;
 
@@ -264,15 +208,8 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     <div className="h-dvh flex flex-col">
       {/* Update available banner - sits above the header */}
       {updateAvailable && (
-        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-2 bg-primary px-4 py-2 text-white text-sm">
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 bg-primary px-4 py-2 text-white text-sm">
           <span>Une nouvelle version est disponible</span>
-          <button
-            onClick={() => window.location.reload()}
-            className="flex items-center gap-1 font-semibold underline underline-offset-2 whitespace-nowrap cursor-pointer"
-          >
-            <IconRefresh size={14} />
-            Mettre à jour
-          </button>
         </div>
       )}
 
@@ -287,21 +224,6 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
         >
           {/* Title */}
           <h1 className="w-full text-2xl font-semibold text-foreground text-center">{currentPage}</h1>
-          {/* Tooltip for last fetch time */}
-          {!!lastFetchTime[currentPage] && (
-            <Tooltip icon={IconRefresh} size="medium" orientation="horizontal" onClick={handleManualRefresh}>
-              <div className="flex w-full justify-center text-center">
-                Dernière mise à jour :<br /> il y a <TimeAgoDisplay lastFetchTime={lastFetchTime[currentPage]} />
-              </div>
-            </Tooltip>
-          )}
-          {/* Toast for refresh feedback */}
-          {refreshToast && (
-            <ToastMessage
-              toast={{ type: refreshToast.type, message: refreshToast.message }}
-              onClose={() => setRefreshToast(null)}
-            />
-          )}
         </header>
       )}
 
