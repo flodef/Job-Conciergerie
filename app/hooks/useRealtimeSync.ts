@@ -118,24 +118,27 @@ export function useRealtimeSync() {
     };
 
     const channel = supabase
-      .channel('db-changes', { config: { broadcast: { ack: true } } })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'missions' }, payload => {
-        if (payload.new?.id) addMissionRef.current(formatMissionFromRow(payload.new));
+      .channel('db-changes')
+      // Single wildcard binding per table; dispatch on payload.eventType.
+      // Multiple separate bindings (INSERT/UPDATE/DELETE) on the same channel
+      // can silently break event delivery, so we keep one binding per table.
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' }, payload => {
+        if (payload.eventType === 'DELETE') {
+          if (payload.old?.id) deleteMissionRef.current(payload.old.id);
+        } else if (payload.new?.id) {
+          const mission = formatMissionFromRow(payload.new);
+          if (payload.eventType === 'INSERT') addMissionRef.current(mission);
+          else updateMissionRef.current(mission);
+        }
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'missions' }, payload => {
-        if (payload.new?.id) updateMissionRef.current(formatMissionFromRow(payload.new));
-      })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'missions' }, payload => {
-        if (payload.old?.id) deleteMissionRef.current(payload.old.id);
-      })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'homes' }, payload => {
-        if (payload.new?.id) addHomeRef.current(formatHomeFromRow(payload.new));
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'homes' }, payload => {
-        if (payload.new?.id) updateHomeRef.current(formatHomeFromRow(payload.new));
-      })
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'homes' }, payload => {
-        if (payload.old?.id) deleteHomeRef.current(payload.old.id);
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'homes' }, payload => {
+        if (payload.eventType === 'DELETE') {
+          if (payload.old?.id) deleteHomeRef.current(payload.old.id);
+        } else if (payload.new?.id) {
+          const home = formatHomeFromRow(payload.new);
+          if (payload.eventType === 'INSERT') addHomeRef.current(home);
+          else updateHomeRef.current(home);
+        }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, () =>
         debounce('employees', () => {
