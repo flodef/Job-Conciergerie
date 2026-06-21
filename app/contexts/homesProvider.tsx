@@ -25,6 +25,10 @@ type HomesContextType = {
   updateHomeLocal: (home: Home) => void;
   deleteHome: (id: string) => Promise<boolean>;
   homeExists: (title: string, id?: string) => boolean;
+  // Incremental update functions for realtime sync
+  addHomeFromRealtime: (home: Home) => void;
+  updateHomeFromRealtime: (home: Home) => void;
+  deleteHomeFromRealtime: (id: string) => void;
 };
 
 const HomesContext = createContext<HomesContextType | undefined>(undefined);
@@ -186,6 +190,22 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
+  // Incremental update functions for realtime sync
+  const addHomeFromRealtime = useCallback((home: Home) => {
+    setHomes(prev => {
+      if (prev.some(h => h.id === home.id)) return prev;
+      return [...prev, home];
+    });
+  }, []);
+
+  const updateHomeFromRealtime = useCallback((home: Home) => {
+    setHomes(prev => prev.map(h => (h.id === home.id ? home : h)));
+  }, []);
+
+  const deleteHomeFromRealtime = useCallback((id: string) => {
+    setHomes(prev => prev.filter(h => h.id !== id));
+  }, []);
+
   return (
     <HomesContext.Provider
       value={{
@@ -198,6 +218,9 @@ export function HomesProvider({ children }: { children: ReactNode }) {
         updateHomeLocal,
         deleteHome,
         homeExists,
+        addHomeFromRealtime,
+        updateHomeFromRealtime,
+        deleteHomeFromRealtime,
       }}
     >
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />

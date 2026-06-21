@@ -56,6 +56,10 @@ type MissionsContextType = {
     >,
     id?: string,
   ) => boolean;
+  // Incremental update functions for realtime sync
+  addMissionFromRealtime: (mission: Mission) => void;
+  updateMissionFromRealtime: (mission: Mission) => void;
+  deleteMissionFromRealtime: (id: string) => void;
 };
 
 const MissionsContext = createContext<MissionsContextType | undefined>(undefined);
@@ -730,6 +734,23 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       await EmailSender.sendMissionStatusEmail(mission, home, employee, conciergerie, status);
   };
 
+  // Incremental update functions for realtime sync
+  const addMissionFromRealtime = useCallback((mission: Mission) => {
+    setMissions(prev => {
+      // Only add if not already present
+      if (prev.some(m => m.id === mission.id)) return prev;
+      return [...prev, mission];
+    });
+  }, []);
+
+  const updateMissionFromRealtime = useCallback((mission: Mission) => {
+    setMissions(prev => prev.map(m => (m.id === mission.id ? mission : m)));
+  }, []);
+
+  const deleteMissionFromRealtime = useCallback((id: string) => {
+    setMissions(prev => prev.filter(m => m.id !== id));
+  }, []);
+
   return (
     <MissionsContext.Provider
       value={{
@@ -753,6 +774,9 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         shouldShowAcceptWarning,
         setShouldShowAcceptWarning,
         missionExists,
+        addMissionFromRealtime,
+        updateMissionFromRealtime,
+        deleteMissionFromRealtime,
       }}
     >
       <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
