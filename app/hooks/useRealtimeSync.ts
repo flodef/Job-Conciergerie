@@ -12,10 +12,6 @@ import { useEffect, useRef } from 'react';
 // Small debounce so a burst of row changes (e.g. a bulk update) triggers a
 // single refetch instead of many.
 const DEBOUNCE_MS = 500;
-// Health check interval
-const HEALTH_CHECK_INTERVAL = 30 * 1000; // 30 seconds
-// Max reconnection attempts before refreshing the app
-const MAX_RECONNECT_ATTEMPTS = 3;
 
 /**
  * Realtime payloads deliver raw database rows in snake_case with string dates.
@@ -58,14 +54,13 @@ const formatHomeFromRow = (row: any): Home => ({
 });
 
 /**
- * Subscribe to Supabase Realtime (Postgres Changes) and flag the relevant
- * pages for a silent background refresh whenever a row changes in the
- * missions, homes, employees or conciergeries tables.
+ * Subscribe to Supabase Realtime (Postgres Changes) and apply incremental
+ * updates to the local state whenever a row changes in the missions, homes,
+ * employees or conciergeries tables.
  *
- * This makes the data update almost instantly without polling. Includes
- * a health check that monitors the websocket connection and attempts to
- * reconnect if it drops. If reconnection fails after MAX_RECONNECT_ATTEMPTS,
- * the app is refreshed to restore the connection.
+ * This makes the data update almost instantly without polling. The underlying
+ * websocket is auto-reconnected by supabase-js, so no manual health check is
+ * needed.
  */
 export function useRealtimeSync() {
   const { triggerRefresh } = useFetchTime();
@@ -83,9 +78,6 @@ export function useRealtimeSync() {
   const addHomeRef = useRef(addHomeFromRealtime);
   const updateHomeRef = useRef(updateHomeFromRealtime);
   const deleteHomeRef = useRef(deleteHomeFromRealtime);
-  const channelRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
-  const healthCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const reconnectAttemptsRef = useRef(0);
 
   useEffect(() => {
     triggerRefreshRef.current = triggerRefresh;
@@ -107,7 +99,9 @@ export function useRealtimeSync() {
     deleteHomeFromRealtime,
   ]);
 
-  const subscribe = () => {
+  useEffect(() => {
+    if (isLoading || !userId) return;
+
     const supabase = getBrowserClient();
     if (!supabase) return;
 
@@ -119,10 +113,8 @@ export function useRealtimeSync() {
 
     const channel = supabase
       .channel('db-changes')
-      // Single wildcard binding per table; dispatch on payload.eventType.
-      // Multiple separate bindings (INSERT/UPDATE/DELETE) on the same channel
-      // can silently break event delivery, so we keep one binding per table.
       .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' }, payload => {
+        console.log('[Realtime] missions event:', payload.eventType, payload);
         if (payload.eventType === 'DELETE') {
           if (payload.old?.id) deleteMissionRef.current(payload.old.id);
         } else if (payload.new?.id) {
@@ -132,6 +124,7 @@ export function useRealtimeSync() {
         }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'homes' }, payload => {
+        console.log('[Realtime] homes event:', payload.eventType, payload);
         if (payload.eventType === 'DELETE') {
           if (payload.old?.id) deleteHomeRef.current(payload.old.id);
         } else if (payload.new?.id) {
@@ -149,64 +142,11 @@ export function useRealtimeSync() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conciergeries' }, () =>
         debounce('conciergeries', () => fetchDataRef.current('conciergerie')),
       )
-      .subscribe(status => {
-        console.log('[Realtime] Channel status:', status);
-        if (status === 'SUBSCRIBED') {
-          reconnectAttemptsRef.current = 0;
-        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-          console.log('[Realtime] Connection lost, attempting to reconnect...');
-          handleReconnect();
-        }
-      });
-
-    channelRef.current = channel;
-
-    // Start health check
-    healthCheckIntervalRef.current = setInterval(() => {
-      if (channelRef.current?.state !== 'joined') {
-        console.log('[Realtime] Health check failed, connection not joined');
-        handleReconnect();
-      }
-    }, HEALTH_CHECK_INTERVAL);
+      .subscribe(status => console.log('[Realtime] Channel status:', status));
 
     return () => {
       Object.values(timers).forEach(clearTimeout);
-      if (healthCheckIntervalRef.current) clearInterval(healthCheckIntervalRef.current);
-      if (channelRef.current) supabase.removeChannel(channelRef.current);
+      supabase.removeChannel(channel);
     };
-  };
-
-  const handleReconnect = () => {
-    reconnectAttemptsRef.current += 1;
-    const newAttempts = reconnectAttemptsRef.current;
-    console.log(`[Realtime] Reconnection attempt ${newAttempts}/${MAX_RECONNECT_ATTEMPTS}`);
-
-    if (newAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.log('[Realtime] Max reconnection attempts reached, refreshing app...');
-      window.location.reload();
-      return;
-    }
-
-    // Cleanup and resubscribe
-    if (channelRef.current) {
-      const supabase = getBrowserClient();
-      if (supabase) supabase.removeChannel(channelRef.current);
-    }
-    if (healthCheckIntervalRef.current) clearInterval(healthCheckIntervalRef.current);
-
-    // Delay before reconnecting
-    setTimeout(() => {
-      subscribe();
-    }, 2000);
-  };
-
-  useEffect(() => {
-    if (isLoading || !userId) return;
-
-    const cleanup = subscribe();
-    return () => {
-      if (cleanup) cleanup();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, isLoading]);
 }

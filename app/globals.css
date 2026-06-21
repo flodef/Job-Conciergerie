@@ -73,6 +73,13 @@
   }
 }
 
+html,
+body {
+  /* Disable native pull-to-refresh (and rubber-band navigation) reliably,
+     including on Vercel/production where JS touch preventDefault is not enough. */
+  overscroll-behavior-y: contain;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);

@@ -89,48 +89,19 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const updateAvailable = useUpdateChecker();
   const { showModal: showChangelog, dismiss: dismissChangelog } = useChangelog(userType as UserType);
 
-  // Intercept all refresh actions (F5, Ctrl+R, pull-to-refresh) to prevent page refresh
+  // Best-effort intercept of F5 / Ctrl+R. NOTE: browsers do NOT reliably allow
+  // preventing these reserved reload shortcuts via JS (it works in some dev
+  // contexts but not in production), so this cannot be fully guaranteed.
+  // Pull-to-refresh is handled reliably via `overscroll-behavior-y: contain`
+  // in globals.css.
   useEffect(() => {
-    let pullStartY = 0;
-    let isPulling = false;
-
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) e.preventDefault();
-    };
-
-    const handleTouchStart = (e: TouchEvent) => {
-      if (!isScrolled) {
-        pullStartY = e.touches[0].clientY;
-        isPulling = true;
-      }
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isPulling || isScrolled) return;
-      const pullY = e.touches[0].clientY;
-      const pullDistance = pullY - pullStartY;
-      if (pullDistance > 100) {
-        isPulling = false;
-        e.preventDefault();
-      }
-    };
-
-    const handleTouchEnd = () => {
-      isPulling = false;
+      if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key === 'r')) e.preventDefault();
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [isScrolled]);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const isLoading = isAuthLoading || isLoadingMissions || isLoadingHomes;
 
