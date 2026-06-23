@@ -43,9 +43,9 @@ describe('isProduction', () => {
     process.env.DATABASE_URL = 'postgresql://postgres:xxx@db.wztgngibrkdqelsdphjt.supabase.co:6543/postgres';
 
     const { isProduction } = await import('@/app/actions/environment');
-    const result = await isProduction();
-
-    expect(result).toBe(false);
+    await expect(isProduction()).rejects.toThrow(
+      'DATABASE_URL or PROD_SUPABASE_PROJECT_ID environment variable is not set. Please add it to your .env.local file.',
+    );
   });
 
   it('returns false when DATABASE_URL is not set', async () => {
@@ -55,7 +55,7 @@ describe('isProduction', () => {
     const { isProduction } = await import('@/app/actions/environment');
 
     await expect(isProduction()).rejects.toThrow(
-      'DATABASE_URL environment variable is not set. Please add it to your .env.local file.',
+      'DATABASE_URL or PROD_SUPABASE_PROJECT_ID environment variable is not set. Please add it to your .env.local file.',
     );
   });
 });

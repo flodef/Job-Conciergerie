@@ -11,9 +11,12 @@
 export async function isProduction(): Promise<boolean> {
   const prodProjectId = process.env.PROD_SUPABASE_PROJECT_ID;
   const dbURL = process.env.DATABASE_URL;
-  if (!dbURL) throw new Error('DATABASE_URL environment variable is not set. Please add it to your .env.local file.');
+  if (!dbURL || !prodProjectId)
+    throw new Error(
+      'DATABASE_URL or PROD_SUPABASE_PROJECT_ID environment variable is not set. Please add it to your .env.local file.',
+    );
 
-  return prodProjectId ? dbURL.includes(prodProjectId) : false;
+  return dbURL.includes(prodProjectId);
 }
 
 /**
