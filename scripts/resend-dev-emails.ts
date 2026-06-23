@@ -20,6 +20,7 @@ import { sql } from '@/app/db/db';
 import type { SendMailOptions } from 'nodemailer';
 import nodemailer from 'nodemailer';
 import { config } from 'dotenv';
+import { isProduction } from '@/app/actions/environment';
 
 // Load environment variables
 config({ path: '.env.local' });
@@ -115,6 +116,14 @@ interface EmailGroup {
 }
 
 async function main() {
+  // Check if running in production
+  const prod = await isProduction();
+  if (!prod) {
+    console.error('❌ ERROR: This script can only be run in production environment.');
+    console.error('Current environment is not production. Aborting.');
+    process.exit(1);
+  }
+
   // Check for dry run flag
   const dryRun = process.argv.includes('--dry-run') || process.argv.includes('-d');
   if (dryRun) {
