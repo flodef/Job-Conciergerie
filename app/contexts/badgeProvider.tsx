@@ -94,12 +94,13 @@ export function BadgeProvider({ children }: { children: ReactNode }) {
     const countTodayMissions = () => {
       if (!missions.length || !isEmployee) return;
 
-      // Find missions that are scheduled for today
+      // Find missions that are scheduled for today and not completed
       const today = new Date();
       const todayMissions = missions.filter(mission => {
         // Check if mission is scheduled for today (mission day matches today)
         return (
           mission.employeeId === employeeName &&
+          mission.status !== 'completed' &&
           mission.startDateTime.getDate() === today.getDate() &&
           mission.startDateTime.getMonth() === today.getMonth() &&
           mission.startDateTime.getFullYear() === today.getFullYear()
