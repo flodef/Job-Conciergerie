@@ -2,6 +2,7 @@
 
 import packageJson from '@/package.json';
 import { useEffect, useRef } from 'react';
+import { milliToMin } from '../utils/date';
 
 const SW_CLEANUP_KEY = 'sw_cleanup_version';
 
@@ -55,14 +56,9 @@ export function ServiceWorkerRegister() {
     }
 
     // Periodically check for service worker updates (every 5 minutes)
-    const intervalId = setInterval(
-      () => {
-        if (registrationRef.current) {
-          registrationRef.current.update();
-        }
-      },
-      5 * 60 * 1000,
-    );
+    const intervalId = setInterval(() => {
+      if (registrationRef.current) registrationRef.current.update();
+    }, 5 * milliToMin);
 
     return () => clearInterval(intervalId);
   }, []);

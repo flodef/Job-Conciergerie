@@ -1,3 +1,8 @@
+# 2.331
+
+- **Amélioration : Missions mises à jour en temps réel** : les missions sont maintenant mises à jour en temps réel pour tous les prestataires et ils n'ont plus besoin de raffraîchir la page.
+- **Nouveau : Calendrier et heures par défaut** : les nouvelles missions créees ont 10:15 et 16:00 comme temps imparti par défaut, et la sélection utilise le nouveau calendrier personnalisé.
+
 # 2.261
 
 - **Nouveau : Notes de maison** : ajout d'une fonctionnalité permettant de rajouter des notes pour chaque maison.

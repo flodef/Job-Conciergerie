@@ -4,7 +4,7 @@ import { isProduction } from '@/app/actions/environment';
 import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { insertFailedEmail } from '@/app/db/failedEmailsDb';
 import type { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
-import { formatDateTime } from '@/app/utils/date';
+import { formatDateTime, milliToDay } from '@/app/utils/date';
 import { getStorageImageUrl } from '@/app/utils/storage';
 import { formatHours, getMissionHoursPerProvider } from '@/app/utils/task';
 import type { UserData } from '@/app/utils/user';
@@ -326,7 +326,7 @@ function composeLateCompletionEmail(
   }[mission.status || 'accepted'];
 
   const now = new Date();
-  const daysLate = Math.floor((now.getTime() - mission.endDateTime.getTime()) / (1000 * 60 * 60 * 24));
+  const daysLate = Math.floor((now.getTime() - mission.endDateTime.getTime()) / milliToDay);
   const daysLateText = daysLate === 0 ? "aujourd'hui" : daysLate === 1 ? 'hier' : `il y a ${daysLate} jours`;
 
   return {

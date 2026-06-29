@@ -1,3 +1,7 @@
+# 2.331
+
+- **Amélioration : Missions mises à jour en temps réel** : les missions sont maintenant mises à jour en temps réel et vous n'avez plus besoin de raffraîchir la page.
+
 # 2.216
 
 - **Amélioration de l'interface** : navigation plus fluide lors de l'ouverture des fenêtres et amélioration de la navigation au clavier pour les ordinateurs

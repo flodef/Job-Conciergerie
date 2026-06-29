@@ -61,9 +61,13 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
     const [isFocused, setIsFocused] = useState(false);
     const [focusedSegment, setFocusedSegment] = useState<'day' | 'month' | 'year' | 'hour' | 'minute' | null>(null);
     const [typedDigits, setTypedDigits] = useState('');
-    const [currentDate, setCurrentDate] = useState<Date>(value ? new Date(value) : new Date());
-    const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
-    const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
+    const [currentDate, setCurrentDate] = useState<Date>(value.trim() ? new Date(value) : new Date());
+    const [selectedYear, setSelectedYear] = useState(
+      value.trim() ? new Date(value).getFullYear() : new Date().getFullYear(),
+    );
+    const [selectedMonth, setSelectedMonth] = useState(
+      value.trim() ? new Date(value).getMonth() : new Date().getMonth(),
+    );
     const containerRef = useRef<HTMLDivElement>(null);
     const customInputRef = useRef<HTMLDivElement>(null);
     const calendarButtonRef = useRef<HTMLButtonElement>(null);
@@ -85,7 +89,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
 
     // Update current date when value changes
     useEffect(() => {
-      if (value) {
+      if (value.trim()) {
         const parsed = new Date(value);
         if (!isNaN(parsed.getTime())) {
           setCurrentDate(parsed);
@@ -294,6 +298,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
       setCurrentDate(newDate);
       onChange(toISOString(newDate));
       onError('');
+      setIsOpen(false);
     };
 
     const handleTimeChange = (hours: number, minutes: number) => {
@@ -330,12 +335,41 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
         newMonth = 11;
         newYear--;
       }
+      // Prevent going before min date (check last day of target month)
+      if (min) {
+        const minDate = new Date(min);
+        const lastDayOfTargetMonth = new Date(newYear, newMonth + 1, 0);
+        if (lastDayOfTargetMonth < minDate) return;
+      }
       setSelectedMonth(newMonth);
       setSelectedYear(newYear);
     };
 
     const handleYearChange = (delta: number) => {
-      setSelectedYear(selectedYear + delta);
+      const newYear = selectedYear + delta;
+      // Prevent going before min date (check last day of target year/month)
+      if (min) {
+        const minDate = new Date(min);
+        const lastDayOfTargetMonth = new Date(newYear, selectedMonth + 1, 0);
+        if (lastDayOfTargetMonth < minDate) return;
+      }
+      setSelectedYear(newYear);
+    };
+
+    const canGoBackMonth = () => {
+      if (!min) return true;
+      const minDate = new Date(min);
+      const prevMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
+      const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
+      const lastDayOfPrevMonth = new Date(prevYear, prevMonth + 1, 0);
+      return lastDayOfPrevMonth >= minDate;
+    };
+
+    const canGoBackYear = () => {
+      if (!min) return true;
+      const minDate = new Date(min);
+      const lastDayOfTargetMonth = new Date(selectedYear - 1, selectedMonth + 1, 0);
+      return lastDayOfTargetMonth >= minDate;
     };
 
     // Generate calendar days
@@ -344,24 +378,29 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
       const lastDay = new Date(selectedYear, selectedMonth + 1, 0);
       const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Monday = 0
       const totalDays = lastDay.getDate();
+      const minDate = min ? new Date(min) : null;
 
       const days = [];
       for (let i = 0; i < startDay; i++) {
-        days.push(<div key={`empty-${i}`} className="p-2" />);
+        days.push(<div key={`empty-${i}`} className="p-1" />);
       }
       for (let day = 1; day <= totalDays; day++) {
         const isCurrentDate =
           day === currentDate.getDate() &&
           selectedMonth === currentDate.getMonth() &&
           selectedYear === currentDate.getFullYear();
+        const dayDate = new Date(selectedYear, selectedMonth, day);
+        const isPastDate = minDate && dayDate < minDate ? true : undefined;
         days.push(
           <button
             key={day}
             type="button"
             onClick={() => handleDateClick(day)}
+            disabled={isPastDate}
             className={cn(
-              'p-2 rounded-full hover:bg-secondary/50 transition-all duration-200 min-h-[40px] cursor-pointer',
-              isCurrentDate && 'bg-primary text-white hover:bg-primary/90 shadow-md',
+              'p-1 rounded-full transition-all duration-200 min-h-[32px]',
+              isPastDate ? 'text-foreground/20 cursor-not-allowed' : 'hover:bg-secondary/50 cursor-pointer',
+              isCurrentDate && !isPastDate && 'bg-primary text-white hover:bg-primary/90 shadow-md',
             )}
           >
             {day}
@@ -501,7 +540,11 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
                   <div className="flex flex-col gap-2 mb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1">
-                        <button type="button" onClick={() => handleMonthChange(-1)} className={calendarButtonClassName}>
+                        <button
+                          type="button"
+                          onClick={() => handleMonthChange(-1)}
+                          className={cn(calendarButtonClassName, !canGoBackMonth() && 'invisible')}
+                        >
                           <IconChevronDown size={16} className="rotate-90" />
                         </button>
                         <span className="font-medium text-center text-sm w-9">{monthNamesShort[selectedMonth]}</span>
@@ -524,7 +567,11 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
                         <IconCalendar size={24} />
                       </button>
                       <div className="flex items-center gap-1">
-                        <button type="button" onClick={() => handleYearChange(-1)} className={calendarButtonClassName}>
+                        <button
+                          type="button"
+                          onClick={() => handleYearChange(-1)}
+                          className={cn(calendarButtonClassName, !canGoBackYear() && 'invisible')}
+                        >
                           <IconChevronDown size={16} className="rotate-90" />
                         </button>
                         <span className="font-medium text-center text-sm">{selectedYear}</span>

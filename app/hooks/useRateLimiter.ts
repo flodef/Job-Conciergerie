@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { milliToMin } from '../utils/date';
 
 type RateLimitState = {
   attempts: number;
@@ -25,7 +26,7 @@ export function useRateLimiter(
   cooldownMinutes: number = DEFAULT_COOLDOWN_MINUTES,
 ): RateLimitResult {
   const storageKey = `rate_limit_${key}`;
-  const cooldownMs = cooldownMinutes * 60 * 1000;
+  const cooldownMs = cooldownMinutes * milliToMin;
 
   const getInitialState = (): RateLimitState => {
     if (typeof window === 'undefined') {

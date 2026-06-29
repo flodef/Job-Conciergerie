@@ -1,8 +1,9 @@
 import type { Mission } from '@/app/types/dataTypes';
 import {} from './extensions';
 
-export const minimumMissionTime: number = 1; // minimum mission time in hours
-const oneHour = 3600000; // 1 hour in milliseconds
+export const milliToMin = 60 * 1000;
+export const milliToHour = 60 * milliToMin;
+export const milliToDay = 24 * milliToHour;
 
 // French month names (long format)
 export const monthNames = [
@@ -73,11 +74,24 @@ export const localISOString = (date: Date) => {
  * @returns An object containing the start and end date time
  */
 export const getMissionDateTime = (mission?: Mission): { startDateTime: string; endDateTime: string } => {
-  const start = mission?.startDateTime || new Date();
-  const end = mission?.endDateTime || new Date(start.getTime() + minimumMissionTime * 60 * 60 * 1000);
+  if (mission) {
+    return {
+      startDateTime: localISOString(mission.startDateTime),
+      endDateTime: localISOString(mission.endDateTime),
+    };
+  }
+
+  // Default times: 10:15 to 16:00
+  const now = new Date();
+  const cutoffTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 15);
+  const targetDate = now < cutoffTime ? now : new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  targetDate.setHours(10, 15, 0, 0);
+  const endDate = new Date(targetDate);
+  endDate.setHours(16, 0, 0, 0);
+
   return {
-    startDateTime: localISOString(start),
-    endDateTime: localISOString(end),
+    startDateTime: localISOString(targetDate),
+    endDateTime: localISOString(endDate),
   };
 };
 
@@ -85,11 +99,16 @@ export const getMissionDateTime = (mission?: Mission): { startDateTime: string; 
  * Adjust the start and end date time for a mission
  * @param start The start date time
  * @param end The end date time
+ * @param taskDuration The task duration in hours
  * @returns An object containing the adjusted start and end date time
  */
-export const adjustMissionDateTime = (start: string, end: string): { startDateTime: Date; endDateTime: Date } => {
+export const adjustMissionDateTime = (
+  start: string,
+  end: string,
+  taskDuration: number,
+): { startDateTime: Date; endDateTime: Date } => {
   const now = new Date();
-  const missionTime = minimumMissionTime * 60 * 60 * 1000;
+  const missionTime = taskDuration * milliToHour;
   let s = new Date(start);
   let e = new Date(end);
 
@@ -223,8 +242,8 @@ export const getTimeRemaining = (targetDate: Date) => {
   const diffInMillis = targetDate.getTime() - now.getTime();
 
   // Calculate hours and minutes
-  const hoursLeft = Math.floor(diffInMillis / (1000 * 60 * 60));
-  const minsLeft = Math.floor((diffInMillis % (1000 * 60 * 60)) / (1000 * 60));
+  const hoursLeft = Math.floor(diffInMillis / milliToHour);
+  const minsLeft = Math.floor((diffInMillis % milliToHour) / milliToMin);
 
   if (hoursLeft <= 0 && minsLeft <= 0) return 'maintenant';
   if (hoursLeft <= 0) return `${minsLeft} minute${minsLeft > 1 ? 's' : ''}`;
@@ -239,7 +258,7 @@ export const getTimeRemaining = (targetDate: Date) => {
  */
 export const isElapsedTimeLessThan = (fromDate: Date, minutes: number) => {
   const now = new Date();
-  const diffInMinutes = (now.getTime() - fromDate.getTime()) / (1000 * 60);
+  const diffInMinutes = (now.getTime() - fromDate.getTime()) / milliToMin;
   return diffInMinutes < minutes;
 };
 
@@ -294,7 +313,7 @@ export const getDateRangeDifference = (startDate: Date, endDate: Date, useFullDa
 
   // Calculate the difference in days
   const diffTime = Math.abs(end.getTime() - start.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffDays = Math.ceil(diffTime / milliToDay);
 
   return getTimeDifference(startDate, endDate, diffDays);
 };
@@ -323,7 +342,7 @@ export const getRemainingTime = (startDate: Date, endDate: Date): string | null 
   const diffTime = hasMissionStarted
     ? Math.abs(end.getTime() - now.getTime())
     : Math.abs(end.getTime() - start.getTime());
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); // No need to add 1 as we're calculating from today
+  const diffDays = Math.floor(diffTime / milliToDay); // No need to add 1 as we're calculating from today
 
   // For hours, use the original calculation
   const diffMs = diffTime;
@@ -433,12 +452,14 @@ export const getMinEndDate = (): Date => {
  * @param newStartDate The new start date string
  * @param currentStartDate The current start date string
  * @param currentEndDate The current end date string
+ * @param taskDuration The task duration in hours
  * @returns Object with new start date and optionally adjusted end date
  */
 export const handleMissionStartDateChange = (
   newStartDate: string,
   currentStartDate: string,
   currentEndDate: string,
+  taskDuration: number,
 ): { startDateTime: string; endDateTime: string } => {
   const startDate = new Date(newStartDate);
   const minStart = getMinStartDate();
@@ -450,8 +471,8 @@ export const handleMissionStartDateChange = (
   const isIncreasing = startDate.getTime() > currentStart.getTime();
 
   let finalEnd = currentEndDate;
-  if (isIncreasing && gap <= oneHour) {
-    const newEndDate = new Date(finalStart.getTime() + oneHour);
+  if (isIncreasing && gap <= taskDuration * milliToHour) {
+    const newEndDate = new Date(finalStart.getTime() + taskDuration * milliToHour);
     finalEnd = localISOString(newEndDate);
   }
 
@@ -466,12 +487,14 @@ export const handleMissionStartDateChange = (
  * @param newEndDate The new end date string
  * @param currentStartDate The current start date string
  * @param currentEndDate The current end date string
+ * @param taskDuration The task duration in hours
  * @returns Object with new end date and optionally adjusted start date
  */
 export const handleMissionEndDateChange = (
   newEndDate: string,
   currentStartDate: string,
   currentEndDate: string,
+  taskDuration: number,
 ): { startDateTime: string; endDateTime: string } => {
   const endDate = new Date(newEndDate);
   const minEnd = getMinEndDate();
@@ -483,8 +506,8 @@ export const handleMissionEndDateChange = (
   const isDecreasing = endDate.getTime() < currentEnd.getTime();
 
   let finalStart = currentStartDate;
-  if (isDecreasing && gap <= oneHour) {
-    const newStartDate = new Date(finalEnd.getTime() - oneHour);
+  if (isDecreasing && gap <= taskDuration * milliToHour) {
+    const newStartDate = new Date(finalEnd.getTime() - taskDuration * milliToHour);
     const minStart = getMinStartDate();
     finalStart = localISOString(newStartDate < minStart ? minStart : newStartDate);
   }

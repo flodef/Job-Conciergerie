@@ -2,6 +2,7 @@
 
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { useCallback, useEffect, useState } from 'react';
+import { milliToDay } from '../utils/date';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
@@ -48,7 +49,7 @@ export function usePWAInstall(cooldownDays: number = 7, cooldownKey: string = 'i
     if (lastPrompt) {
       const lastPromptDate = new Date(lastPrompt);
       const now = new Date();
-      const daysSinceLastPrompt = Math.floor((now.getTime() - lastPromptDate.getTime()) / (1000 * 60 * 60 * 24));
+      const daysSinceLastPrompt = Math.floor((now.getTime() - lastPromptDate.getTime()) / milliToDay);
 
       // If we've shown the prompt recently, don't show it again yet
       if (daysSinceLastPrompt < cooldownDays) return;

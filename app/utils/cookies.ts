@@ -1,5 +1,7 @@
 'use client';
 
+import { milliToDay } from './date';
+
 /**
  * Set a cookie in the browser
  * @param name Cookie name
@@ -8,7 +10,7 @@
  */
 export function setCookie(name: string, value: string, days: number = 30) {
   const date = new Date();
-  date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+  date.setTime(date.getTime() + days * milliToDay);
   const expires = `; expires=${date.toUTCString()}`;
   document.cookie = `${name}=${value}${expires}; path=/`;
 }

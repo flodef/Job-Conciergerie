@@ -1,10 +1,10 @@
 'use client';
 
 import Combobox from '@/app/components/combobox';
+import CustomDateTimeInput from '@/app/components/customDateTimeInput';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import MultiSelect from '@/app/components/multiSelect';
-import ResponsiveDateTimeInput from '@/app/components/responsiveDateTimeInput';
 import Select from '@/app/components/select';
 import TaskSelector from '@/app/components/taskSelector';
 import TextArea from '@/app/components/textArea';
@@ -267,7 +267,13 @@ export default function MissionForm({
       }
 
       // Convert string dates to Date objects
-      const { startDateTime: startDate, endDateTime: endDate } = adjustMissionDateTime(startDateTime, endDateTime);
+      const home = filteredHomes.find(h => h.id === homeId);
+      const taskHours = home ? calculateMissionHours(home, tasks) : 1;
+      const duration = home?.allowDuo ? taskHours / 2 : taskHours;
+      const { startDateTime: startDate, endDateTime: endDate } =
+        mode === 'edit'
+          ? adjustMissionDateTime(startDateTime, endDateTime, duration)
+          : { startDateTime: new Date(startDateTime), endDateTime: new Date(endDateTime) };
 
       if (mode === 'add') {
         // Check if a mission with the same criteria already exists
@@ -390,10 +396,14 @@ export default function MissionForm({
 
   // Handle start date change - just update value and end date, no validation
   const handleStartDateChange = (value: string) => {
+    const home = filteredHomes.find(h => h.id === homeId);
+    const taskHours = home ? calculateMissionHours(home, tasks) : 1;
+    const duration = home?.allowDuo ? taskHours / 2 : taskHours;
     const { startDateTime: newStart, endDateTime: newEnd } = handleMissionStartDateChange(
       value,
       startDateTime,
       endDateTime,
+      duration,
     );
     setStartDateTime(newStart);
     setLastCommittedStart(newStart);
@@ -421,10 +431,14 @@ export default function MissionForm({
 
   // Handle end date change with auto-adjustment of start date
   const handleEndDateChange = (newEndDate: string) => {
+    const home = filteredHomes.find(h => h.id === homeId);
+    const taskHours = home ? calculateMissionHours(home, tasks) : 1;
+    const duration = home?.allowDuo ? taskHours / 2 : taskHours;
     const { startDateTime: newStart, endDateTime: newEnd } = handleMissionEndDateChange(
       newEndDate,
       startDateTime,
       endDateTime,
+      duration,
     );
     setEndDateTime(newEnd);
     setLastCommittedEnd(newEnd);
@@ -523,7 +537,7 @@ export default function MissionForm({
           }
         />
 
-        <ResponsiveDateTimeInput
+        <CustomDateTimeInput
           id="start-date"
           label="Début"
           className="w-60"
@@ -543,7 +557,7 @@ export default function MissionForm({
           row
         />
 
-        <ResponsiveDateTimeInput
+        <CustomDateTimeInput
           id="end-date"
           label="Fin"
           className="w-60"

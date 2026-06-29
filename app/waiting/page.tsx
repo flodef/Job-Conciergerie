@@ -9,7 +9,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
-import { getTimeDifference, getTimeRemaining, isElapsedTimeLessThan } from '@/app/utils/date';
+import { getTimeDifference, getTimeRemaining, isElapsedTimeLessThan, milliToMin } from '@/app/utils/date';
 import { EmailSender } from '@/app/utils/emailSender';
 import { formatId } from '@/app/utils/id';
 import {
@@ -68,7 +68,7 @@ function RefreshButtons({
       {isRequestLessThanMinimumWaitingTime() && creationDate ? (
         <Tooltip size="large" icon={IconHelpCircle}>
           Pour éviter le spam, vous pourrez tenter une nouvelle demande dans{' '}
-          {getTimeRemaining(new Date(creationDate.getTime() + minimumWaitingTime * 60 * 1000))}
+          {getTimeRemaining(new Date(creationDate.getTime() + minimumWaitingTime * milliToMin))}
         </Tooltip>
       ) : refreshDisabled ? (
         <Tooltip size="large" icon={IconClock}>
@@ -144,12 +144,9 @@ export default function WaitingPage() {
   // Effect to handle the refresh button enabling after 1 minute
   useEffect(() => {
     // Set a timeout to enable the refresh button after 1 minute
-    const timeout = setTimeout(
-      () => {
-        setRefreshDisabled(false);
-      },
-      REFRESH_BUTTON_DISABLE_TIME * 60 * 1000,
-    ); // 1 minute in milliseconds
+    const timeout = setTimeout(() => {
+      setRefreshDisabled(false);
+    }, REFRESH_BUTTON_DISABLE_TIME * milliToMin); // 1 minute in milliseconds
 
     return () => clearTimeout(timeout);
   }, []); // Empty dependency array means this runs once on component mount

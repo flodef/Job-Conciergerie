@@ -1,7 +1,8 @@
 import packageJson from '@/package.json';
 import { useEffect, useState } from 'react';
+import { milliToMin } from '../utils/date';
 
-const CHECK_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+const CHECK_INTERVAL_MS = 10 * milliToMin; // 10 minutes
 
 export function useUpdateChecker() {
   const [updateAvailable, setUpdateAvailable] = useState(false);

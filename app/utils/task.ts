@@ -1,6 +1,7 @@
 import tasksData from '@/app/data/tasks.json';
 import type { Home, Mission, MissionPoints } from '@/app/types/dataTypes';
 import { Task } from '@/app/types/dataTypes';
+import { milliToDay } from './date';
 
 export const MAX_POINTS_PER_DAY = 100;
 
@@ -47,7 +48,7 @@ const normalizeDate = (date: Date | string): Date => {
  */
 const calculateDaysBetweenDates = (startDate: Date, endDate: Date, inclusiveCount = 1): number => {
   const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + inclusiveCount;
+  return Math.ceil(diffTime / milliToDay) + inclusiveCount;
 };
 
 /**
