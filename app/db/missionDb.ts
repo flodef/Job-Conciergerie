@@ -195,6 +195,7 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
     // Build update parts and corresponding values
     const parts: string[] = [];
     const values: unknown[] = [];
+    const whereConditions: string[] = [];
 
     const addField = (field: string, value: unknown, cast?: string) => {
       values.push(value);
@@ -211,12 +212,23 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
       parts.push('late_notified_at = NULL');
     }
     if (data.employee_id !== undefined) {
-      if (data.employee_id === null) parts.push('employee_id = NULL');
-      else addField('employee_id', data.employee_id, 'text');
+      if (data.employee_id === null) {
+        parts.push('employee_id = NULL');
+      } else {
+        addField('employee_id', data.employee_id, 'text');
+        // Race condition protection: only allow setting employee_id if it's currently NULL
+        // This prevents overwriting an already-assigned employee
+        whereConditions.push('employee_id IS NULL');
+      }
     }
     if (data.employee_id_2 !== undefined) {
-      if (data.employee_id_2 === null) parts.push('employee_id_2 = NULL');
-      else addField('employee_id_2', data.employee_id_2, 'text');
+      if (data.employee_id_2 === null) {
+        parts.push('employee_id_2 = NULL');
+      } else {
+        addField('employee_id_2', data.employee_id_2, 'text');
+        // Race condition protection: only allow setting employee_id_2 if it's currently NULL
+        whereConditions.push('employee_id_2 IS NULL');
+      }
     }
     if (data.conciergerie_name !== undefined) addField('conciergerie_name', data.conciergerie_name, 'text');
     if (data.status !== undefined) {
@@ -240,10 +252,16 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
     // Add id as the last parameter
     values.push(id);
 
+    // Build WHERE clause with race condition protections
+    const whereClause =
+      whereConditions.length > 0
+        ? `WHERE id = $${values.length} AND ${whereConditions.join(' AND ')}`
+        : `WHERE id = $${values.length}`;
+
     const query = `
       UPDATE missions
       SET ${parts.join(', ')}
-      WHERE id = $${values.length}
+      ${whereClause}
       RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours, allow_duo, travellers, conciergerie_comment
     `;
 

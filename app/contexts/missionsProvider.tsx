@@ -489,6 +489,15 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     });
     if (!success) {
       console.error('acceptMission: setMissionData failed');
+      // Check if it failed due to race condition (mission already taken)
+      const currentMission = await fetchAllMissions();
+      const updatedMission = currentMission?.find(m => m.id === id);
+      if (updatedMission?.employeeId && updatedMission.employeeId !== getUserKey(employee)) {
+        setToast({
+          type: ToastType.Error,
+          message: 'Cette mission a déjà été prise par un autre prestataire.',
+        });
+      }
       return { success: false, employeeNotified: false };
     }
 
