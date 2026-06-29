@@ -1,7 +1,6 @@
 'use client';
 
 import { saveMissionReport } from '@/app/actions/missionReport';
-import { updateMissionData } from '@/app/actions/mission';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
@@ -10,6 +9,7 @@ import TextArea from '@/app/components/textArea';
 import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
+import { useMissions } from '@/app/contexts/missionsProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import type { Employee, Mission } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
@@ -27,6 +27,7 @@ type MissionReportModalProps = {
 export default function MissionReportModal({ mission, onClose }: MissionReportModalProps) {
   const { homes } = useHomes();
   const { userData, findConciergerie, isEmployee } = useAuth();
+  const { completeMission } = useMissions();
   const { showToast } = useToast();
   const home = homes.find(h => h.id === mission.homeId);
 
@@ -84,9 +85,9 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
         }).then(report => {
           if (!report) throw new Error('Échec de l’enregistrement du compte rendu');
 
-          // Update mission status to completed
-          return updateMissionData(mission.id, { status: 'completed' }).then(updatedMission => {
-            if (!updatedMission) throw new Error('Échec de la mise à jour du statut de mission');
+          // Update mission status to completed (updates DB and local state so it leaves the calendar)
+          return completeMission(mission.id).then(({ success }) => {
+            if (!success) throw new Error('Échec de la mise à jour du statut de mission');
 
             // Notify the conciergerie by email (best-effort, non-blocking for the user)
             const conciergerie = findConciergerie(mission.conciergerieName);
