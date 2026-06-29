@@ -101,17 +101,10 @@ export function useRealtimeSync() {
   ]);
 
   useEffect(() => {
-    if (isLoading || !userId) {
-      console.log('[Realtime] Not subscribing yet (isLoading:', isLoading, 'userId:', userId, ')');
-      return;
-    }
+    if (isLoading || !userId) return;
 
     const supabase = getBrowserClient();
-    if (!supabase) {
-      console.log('[Realtime] No Supabase browser client (missing env vars?)');
-      return;
-    }
-    console.log('[Realtime] Subscribing to db-changes channel...');
+    if (!supabase) return;
 
     const timers: Record<string, ReturnType<typeof setTimeout>> = {};
     const debounce = (key: string, fn: () => void) => {

@@ -175,8 +175,33 @@ try {
   error('psql restore failed. The dump file may be incompatible.');
 }
 
+// ── Verify tables were restored ───────────────
+info('Verifying tables were restored...');
+try {
+  const tablesCheck = execSync(
+    `psql "${RESTORE_URL}" -t -c "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;"`,
+    { encoding: 'utf-8' },
+  );
+  const tables = tablesCheck
+    .trim()
+    .split('\n')
+    .map(t => t.trim().toLowerCase())
+    .filter(t => t);
+  success(`Found ${tables.length} tables in public schema: ${tables.join(', ')}`);
+
+  const requiredTables = ['employees', 'conciergeries', 'missions', 'homes'];
+  const missingTables = requiredTables.filter(t => !tables.includes(t.toLowerCase()));
+  if (missingTables.length > 0) {
+    error(`Missing required tables: ${missingTables.join(', ')}`);
+  }
+} catch (e) {
+  warn('Could not verify tables (this may be okay if restore succeeded)');
+}
+
 console.log('');
 success('Dev database has been reset successfully.');
+success('You need to enable runtime feature in Supabase for conciergeries, employees, homes and missions tables.');
+success('You also need to restart the dev server and do a hard refresh (Ctrl+F5) to clear any cached data.');
 console.log('');
 
 rl.close();
