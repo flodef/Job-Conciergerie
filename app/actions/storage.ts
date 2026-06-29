@@ -113,7 +113,10 @@ export async function uploadReportImageToSupabase(file: File, fileName: string):
   // Verify user is authenticated (employee or conciergerie)
   const userId = await verifyAuth(cookieStore);
   if (!userId) {
-    console.error('Upload denied: user not authenticated.');
+    console.error('[uploadReportImageToSupabase] Upload denied: user not authenticated.', {
+      hasUserId: !!cookieStore.get('user_id')?.value,
+      hasUserType: !!cookieStore.get('user_type')?.value,
+    });
     return null;
   }
 
@@ -127,19 +130,35 @@ export async function uploadReportImageToSupabase(file: File, fileName: string):
     const arrayBuffer = await file.arrayBuffer();
     const buffer = new Uint8Array(arrayBuffer);
 
+    console.log('[uploadReportImageToSupabase] Uploading to:', filePath, 'size:', buffer.length, 'bytes');
+
     const { data, error } = await supabase.storage.from(BUCKET_NAME).upload(filePath, buffer, {
       contentType: file.type,
       upsert: true,
     });
 
     if (error) {
-      console.error('Report image upload failed:', error.message);
+      // Check for specific bucket-related errors
+      if (error.message.includes('Bucket not found') || error.message.includes('does not exist')) {
+        console.error(
+          `[uploadReportImageToSupabase] CRITICAL: Storage bucket "${BUCKET_NAME}" does not exist in this Supabase project.`,
+          'Please create the bucket in the Supabase Dashboard: Storage → Create a new bucket',
+          'Bucket name should be exactly: "House images"',
+        );
+      } else if (error.message.includes('permission') || error.message.includes('Policy')) {
+        console.error(
+          `[uploadReportImageToSupabase] ERROR: Permission denied. Check RLS policies for bucket "${BUCKET_NAME}".`,
+        );
+      } else {
+        console.error('[uploadReportImageToSupabase] Upload failed:', error.message, 'Details:', error);
+      }
       return null;
     }
 
+    console.log('[uploadReportImageToSupabase] Upload success:', data.path);
     return data.path;
   } catch (error) {
-    console.error('Error in uploadReportImageToSupabase:', error);
+    console.error('[uploadReportImageToSupabase] Unexpected error:', error);
     return null;
   }
 }
