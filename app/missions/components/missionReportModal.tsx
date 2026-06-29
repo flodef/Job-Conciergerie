@@ -1,6 +1,7 @@
 'use client';
 
 import { saveMissionReport } from '@/app/actions/missionReport';
+import { updateMissionData } from '@/app/actions/mission';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
@@ -83,17 +84,22 @@ export default function MissionReportModal({ mission, onClose }: MissionReportMo
         }).then(report => {
           if (!report) throw new Error('Échec de l’enregistrement du compte rendu');
 
-          // Notify the conciergerie by email (best-effort, non-blocking for the user)
-          const conciergerie = findConciergerie(mission.conciergerieName);
-          if (home && conciergerie) {
-            EmailSender.sendMissionReportEmail(mission, home, userData as Employee, conciergerie, {
-              content: report.content,
-              images: report.images,
-            });
-          }
+          // Update mission status to completed
+          return updateMissionData(mission.id, { status: 'completed' }).then(updatedMission => {
+            if (!updatedMission) throw new Error('Échec de la mise à jour du statut de mission');
 
-          showToast({ type: ToastType.Success, message: 'Compte rendu envoyé à la conciergerie !' });
-          onClose();
+            // Notify the conciergerie by email (best-effort, non-blocking for the user)
+            const conciergerie = findConciergerie(mission.conciergerieName);
+            if (home && conciergerie) {
+              EmailSender.sendMissionReportEmail(mission, home, userData as Employee, conciergerie, {
+                content: report.content,
+                images: report.images,
+              });
+            }
+
+            showToast({ type: ToastType.Success, message: 'Compte rendu envoyé à la conciergerie !' });
+            onClose();
+          });
         });
       })
       .catch(error => {
