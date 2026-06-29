@@ -403,7 +403,8 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
 
   const handleStart = () => {
     setIsSubmitting(true);
-    startMission(mission.id).then(isSuccess => {
+    startMission(mission.id).then(result => {
+      const isSuccess = result?.success ?? false;
       showToast({
         type: isSuccess ? ToastType.Success : ToastType.Error,
         message: isSuccess

@@ -218,7 +218,10 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
         addField('employee_id', data.employee_id, 'text');
         // Race condition protection: only allow setting employee_id if it's currently NULL
         // This prevents overwriting an already-assigned employee
-        whereConditions.push('employee_id IS NULL');
+        // Only add this condition if employee_id is the ONLY field being updated (pure assignment)
+        // If other fields are also being updated (like status), the employee is already assigned so no protection needed
+        const isPureAssignment = Object.keys(data).length === 1;
+        if (isPureAssignment) whereConditions.push('employee_id IS NULL');
       }
     }
     if (data.employee_id_2 !== undefined) {
@@ -227,7 +230,9 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
       } else {
         addField('employee_id_2', data.employee_id_2, 'text');
         // Race condition protection: only allow setting employee_id_2 if it's currently NULL
-        whereConditions.push('employee_id_2 IS NULL');
+        // Only add this condition if employee_id_2 is the ONLY field being updated (pure assignment)
+        const isPureAssignment = Object.keys(data).length === 1;
+        if (isPureAssignment) whereConditions.push('employee_id_2 IS NULL');
       }
     }
     if (data.conciergerie_name !== undefined) addField('conciergerie_name', data.conciergerie_name, 'text');
