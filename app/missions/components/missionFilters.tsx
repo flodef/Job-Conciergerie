@@ -195,7 +195,7 @@ export default function MissionFilters({
               ...Object.keys(statusLabels)
                 .filter(
                   status =>
-                    availableMissionStatuses.includes(status) &&
+                    (availableMissionStatuses.includes(status) || selectedMissionStatuses.includes(status)) &&
                     (isConciergerie || (status !== 'started' && status !== 'expired')),
                 )
                 .map(status => ({
