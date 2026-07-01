@@ -112,6 +112,22 @@ export function useRealtimeSync() {
       timers[key] = setTimeout(fn, DEBOUNCE_MS);
     };
 
+    // Full resync from the database. Postgres Changes only delivers events while
+    // the socket is actively subscribed; any event that fires while the client is
+    // disconnected (e.g. a backgrounded/asleep mobile PWA) is NOT replayed on
+    // reconnect. Calling this on (re)subscribe and on tab-visibility recovers the
+    // missed rows so the local state can't stay stale (which previously allowed a
+    // second provider to accept an already-taken mission).
+    const resyncAll = () => {
+      triggerRefreshRef.current([Page.Missions, Page.Calendar, Page.Employees]);
+      fetchDataRef.current('employee');
+      fetchDataRef.current('conciergerie');
+    };
+
+    // Skip the resync on the very first successful subscribe: the initial data
+    // load already handles it. Only resync on subsequent (re)subscriptions.
+    let hasSubscribed = false;
+
     const channel = supabase
       .channel('db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' }, payload => {
@@ -143,10 +159,24 @@ export function useRealtimeSync() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conciergeries' }, () =>
         debounce('conciergeries', () => fetchDataRef.current('conciergerie')),
       )
-      .subscribe(status => console.log('[Realtime] Channel status:', status));
+      .subscribe(status => {
+        console.log('[Realtime] Channel status:', status);
+        if (status === 'SUBSCRIBED') {
+          if (hasSubscribed) debounce('resync', resyncAll);
+          hasSubscribed = true;
+        }
+      });
+
+    // When the tab/app returns to the foreground, resync in case the socket was
+    // suspended (mobile background) and events were missed while it was closed.
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') debounce('resync', resyncAll);
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       Object.values(timers).forEach(clearTimeout);
+      document.removeEventListener('visibilitychange', handleVisibility);
       supabase.removeChannel(channel);
     };
   }, [userId, isLoading]);
