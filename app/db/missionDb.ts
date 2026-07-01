@@ -217,11 +217,10 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
       } else {
         addField('employee_id', data.employee_id, 'text');
         // Race condition protection: only allow setting employee_id if it's currently NULL
-        // This prevents overwriting an already-assigned employee
-        // Only add this condition if employee_id is the ONLY field being updated (pure assignment)
-        // If other fields are also being updated (like status), the employee is already assigned so no protection needed
-        const isPureAssignment = Object.keys(data).length === 1;
-        if (isPureAssignment) whereConditions.push('employee_id IS NULL');
+        // or already equal to the same employee. This prevents two providers from
+        // concurrently accepting the same mission (last-write-wins), while still allowing
+        // the owning conciergerie to edit an already-accepted mission (same employee preserved).
+        whereConditions.push(`(employee_id IS NULL OR employee_id = $${values.length})`);
       }
     }
     if (data.employee_id_2 !== undefined) {
@@ -230,9 +229,8 @@ export const updateMission = async (id: string, data: Partial<Omit<DbMission, 'i
       } else {
         addField('employee_id_2', data.employee_id_2, 'text');
         // Race condition protection: only allow setting employee_id_2 if it's currently NULL
-        // Only add this condition if employee_id_2 is the ONLY field being updated (pure assignment)
-        const isPureAssignment = Object.keys(data).length === 1;
-        if (isPureAssignment) whereConditions.push('employee_id_2 IS NULL');
+        // or already equal to the same provider (prevents concurrent binôme joins overwriting each other).
+        whereConditions.push(`(employee_id_2 IS NULL OR employee_id_2 = $${values.length})`);
       }
     }
     if (data.conciergerie_name !== undefined) addField('conciergerie_name', data.conciergerie_name, 'text');
