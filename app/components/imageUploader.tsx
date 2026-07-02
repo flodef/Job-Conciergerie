@@ -92,11 +92,12 @@ const ImageUploader = React.forwardRef<
     // Expose method to upload all pending images
     React.useImperativeHandle(ref, () => ({
       async uploadAllPendingImages(conciergerieName: string, houseTitle: string) {
-        // Delete removed images from storage (home mode only; report photos are not editable)
-        if (uploadMode === 'home') {
-          imageIdsToRemove.forEach(async img => {
-            await deleteFileFromSupabase(img);
-          });
+        // Delete removed images from storage (home mode only; report photos are not editable).
+        // IMPORTANT: await the deletions BEFORE uploading. Home filenames are unique
+        // (timestamped) so they won't collide, but awaiting also guarantees a stale
+        // delete can never land after — and remove — a freshly uploaded file.
+        if (uploadMode === 'home' && imageIdsToRemove.length > 0) {
+          await Promise.all(imageIdsToRemove.map(img => deleteFileFromSupabase(img)));
         }
 
         if (localImages.length === 0) return imageIds; // No pending images to upload
@@ -125,10 +126,13 @@ const ImageUploader = React.forwardRef<
             const sanitizedFolder = (reportFolder || 'unknown').replace(/[/\\?%*:|"<>]/g, '-').trim();
             fileName = `${sanitizedFolder}/${imageIndex}_${Date.now()}.jpg`;
           } else {
-            // "ConciergerieName/Home Title X.jpg"
+            // "ConciergerieName/Home Title X_<timestamp>.jpg"
+            // The timestamp makes each filename unique so a re-uploaded photo never
+            // collides with (or gets clobbered by the deletion of) a previously removed
+            // photo that shared the same index-based name.
             const sanitizedConciergerie = conciergerieName.replace(/[/\\?%*:|"<>]/g, '-').trim();
             const sanitizedHome = houseTitle.replace(/[/\\?%*:|"<>]/g, '-').trim();
-            fileName = `${sanitizedConciergerie}/${sanitizedHome} ${imageIndex}.jpg`;
+            fileName = `${sanitizedConciergerie}/${sanitizedHome} ${imageIndex}_${Date.now()}.jpg`;
           }
 
           try {
