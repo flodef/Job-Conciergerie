@@ -152,7 +152,11 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     const createdHome = await createNewHome(newHome);
     if (!createdHome) return false;
 
-    setHomes(prev => [...prev, createdHome]);
+    // Guard against a duplicate entry: the realtime INSERT event for this very
+    // home may have already been applied to state before this runs. Appending
+    // unconditionally would then show the SAME home twice, and deleting one of
+    // those cards would delete the single underlying row (data loss).
+    setHomes(prev => (prev.some(h => h.id === createdHome.id) ? prev : [...prev, createdHome]));
     return true;
   };
 

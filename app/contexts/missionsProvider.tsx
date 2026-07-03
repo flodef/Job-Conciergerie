@@ -258,7 +258,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const createdMission = await createNewMission(newMission);
     if (!createdMission) return false;
 
-    setMissions(prev => [...prev, createdMission]);
+    // Guard against a duplicate entry: the realtime INSERT event for this very
+    // mission may have already been applied to state before this runs. Appending
+    // unconditionally would then show the SAME mission twice, and deleting one of
+    // those cards would delete the single underlying row (data loss).
+    setMissions(prev => (prev.some(m => m.id === createdMission.id) ? prev : [...prev, createdMission]));
     return true;
   };
 
