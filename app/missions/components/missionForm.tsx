@@ -365,7 +365,7 @@ export default function MissionForm({
           allowedEmployees: selectedEmployees.length > 0 ? selectedEmployees : null,
           hours: missionHours,
           travellers,
-          conciergerieComment: conciergerieComment || undefined,
+          conciergerieComment: conciergerieComment || null,
         };
 
         // Check if update would create a duplicate
