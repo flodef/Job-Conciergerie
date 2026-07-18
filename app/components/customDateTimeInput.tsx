@@ -87,6 +87,9 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
       return new Date(date.getTime() - offset).toISOString().slice(0, 16);
     };
 
+    const isSameDay = (d1: Date, d2: Date): boolean =>
+      d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
+
     // Update current date when value changes
     useEffect(() => {
       if (value.trim()) {
@@ -277,14 +280,19 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
     };
 
     const handleDateClick = (day: number) => {
-      const newDate = new Date(selectedYear, selectedMonth, day, currentDate.getHours(), currentDate.getMinutes());
+      let newDate = new Date(selectedYear, selectedMonth, day, currentDate.getHours(), currentDate.getMinutes());
 
       // Validate against min and max
       if (min) {
         const minDate = new Date(min);
         if (newDate < minDate) {
-          if (onInvalidDate) onInvalidDate();
-          return;
+          // If the selected day is the minimum day, clamp time to the minimum time
+          if (isSameDay(newDate, minDate)) {
+            newDate = new Date(selectedYear, selectedMonth, day, minDate.getHours(), minDate.getMinutes());
+          } else {
+            if (onInvalidDate) onInvalidDate();
+            return;
+          }
         }
       }
       if (max) {
@@ -302,14 +310,25 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
     };
 
     const handleTimeChange = (hours: number, minutes: number) => {
-      const newDate = new Date(selectedYear, selectedMonth, currentDate.getDate(), hours, minutes);
+      let newDate = new Date(selectedYear, selectedMonth, currentDate.getDate(), hours, minutes);
 
       // Validate against min and max
       if (min) {
         const minDate = new Date(min);
         if (newDate < minDate) {
-          if (onInvalidDate) onInvalidDate();
-          return;
+          // If the selected day is the minimum day, clamp time to the minimum time
+          if (isSameDay(newDate, minDate)) {
+            newDate = new Date(
+              selectedYear,
+              selectedMonth,
+              currentDate.getDate(),
+              minDate.getHours(),
+              minDate.getMinutes(),
+            );
+          } else {
+            if (onInvalidDate) onInvalidDate();
+            return;
+          }
         }
       }
       if (max) {
@@ -612,11 +631,18 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
                         onChange={e => handleTimeChange(parseInt(e.target.value), currentDate.getMinutes())}
                         className="w-full bg-secondary/10 border border-foreground/10 rounded-xl p-2 text-foreground focus:outline-none"
                       >
-                        {Array.from({ length: 24 }, (_, i) => (
-                          <option key={i} value={i}>
-                            {String(i).padStart(2, '0')}
-                          </option>
-                        ))}
+                        {Array.from({ length: 24 }, (_, i) => i)
+                          .filter(i => {
+                            if (!min) return true;
+                            const minDate = new Date(min);
+                            if (!isSameDay(currentDate, minDate)) return true;
+                            return i >= minDate.getHours();
+                          })
+                          .map(i => (
+                            <option key={i} value={i}>
+                              {String(i).padStart(2, '0')}
+                            </option>
+                          ))}
                       </select>
                     </div>
                     <div className="flex-1">
@@ -626,11 +652,19 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
                         onChange={e => handleTimeChange(currentDate.getHours(), parseInt(e.target.value))}
                         className="w-full bg-secondary/10 border border-foreground/10 rounded-xl p-2 text-foreground focus:outline-none"
                       >
-                        {Array.from({ length: 60 }, (_, i) => (
-                          <option key={i} value={i}>
-                            {String(i).padStart(2, '0')}
-                          </option>
-                        ))}
+                        {Array.from({ length: 60 }, (_, i) => i)
+                          .filter(i => {
+                            if (!min) return true;
+                            const minDate = new Date(min);
+                            if (!isSameDay(currentDate, minDate)) return true;
+                            if (currentDate.getHours() !== minDate.getHours()) return true;
+                            return i >= minDate.getMinutes();
+                          })
+                          .map(i => (
+                            <option key={i} value={i}>
+                              {String(i).padStart(2, '0')}
+                            </option>
+                          ))}
                       </select>
                     </div>
                   </div>
