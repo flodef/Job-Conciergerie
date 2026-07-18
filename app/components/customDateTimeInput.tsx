@@ -1,9 +1,16 @@
 'use client';
 
 import Label from '@/app/components/label';
-import { cn, descriptionClassName, errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
+import {
+  cn,
+  descriptionClassName,
+  errorClassName,
+  inputFieldClassName,
+  labelClassName,
+  rowClassName,
+} from '@/app/utils/className';
 import { monthNamesShort } from '@/app/utils/date';
-import { IconCalendar, IconChevronDown, IconClock } from '@tabler/icons-react';
+import { IconCalendar, IconChevronDown } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
@@ -112,6 +119,13 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
       }
     }, [autoFocus]);
 
+    const handleToggle = () => {
+      if (!disabled && !minimal) {
+        setIsOpen(!isOpen);
+        setIsFocused(true);
+      }
+    };
+
     // Close dropdown when clicking outside
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -125,13 +139,6 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [currentDate, onBlur]);
-
-    const handleToggle = () => {
-      if (!disabled && !minimal) {
-        setIsOpen(!isOpen);
-        setIsFocused(true);
-      }
-    };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -554,14 +561,14 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
             {isOpen && !disabled && !minimal && (
               <div
                 className={cn(
-                  'absolute z-50 min-w-[240px] max-w-[320px] bg-background border border-foreground/10 rounded-2xl shadow-2xl p-1',
-                  'max-h-[70vh] overflow-y-auto backdrop-blur-xl bg-background/95 top-full mt-2',
+                  'fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[320px] min-w-[240px]',
+                  'max-h-[70vh] overflow-y-auto border border-foreground/10 rounded-2xl shadow-2xl p-1 backdrop-blur-xl bg-background/95',
                 )}
               >
                 {/* Calendar */}
-                <div className="mb-3">
+                <div>
                   {/* Month/Year selector */}
-                  <div className="flex flex-col gap-2 mb-3">
+                  <div className="flex flex-col gap-2 mb-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1">
                         <button
@@ -571,7 +578,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
                         >
                           <IconChevronDown size={16} className="rotate-90" />
                         </button>
-                        <span className="font-medium text-center text-sm w-9">{monthNamesShort[selectedMonth]}</span>
+                        <span className={cn(labelClassName, 'w-10')}>{monthNamesShort[selectedMonth]}</span>
                         <button type="button" onClick={() => handleMonthChange(1)} className={calendarButtonClassName}>
                           <IconChevronDown size={16} className="-rotate-90" />
                         </button>
@@ -598,7 +605,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
                         >
                           <IconChevronDown size={16} className="rotate-90" />
                         </button>
-                        <span className="font-medium text-center text-sm">{selectedYear}</span>
+                        <span className={labelClassName}>{selectedYear}</span>
                         <button type="button" onClick={() => handleYearChange(1)} className={calendarButtonClassName}>
                           <IconChevronDown size={16} className="-rotate-90" />
                         </button>
@@ -607,9 +614,9 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
                   </div>
 
                   {/* Calendar grid */}
-                  <div className="grid grid-cols-7 gap-1 text-sm">
+                  <div className="grid grid-cols-7 gap-1">
                     {daysOfWeek.map(day => (
-                      <div key={day} className="p-2 text-center text-foreground/40 font-medium text-xs">
+                      <div key={day} className={cn(descriptionClassName, 'px-2 text-xs')}>
                         {day}
                       </div>
                     ))}
@@ -618,55 +625,49 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
                 </div>
 
                 {/* Time picker */}
-                <div className="mb-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <IconClock size={14} className="text-foreground/40" />
-                    <span className={descriptionClassName}>Heure</span>
+                <div className="flex gap-2 m-1">
+                  <div className="flex-1">
+                    <label className={descriptionClassName}>Heures</label>
+                    <select
+                      value={currentDate.getHours()}
+                      onChange={e => handleTimeChange(parseInt(e.target.value), currentDate.getMinutes())}
+                      className="w-full bg-secondary/10 border border-foreground/10 rounded-xl p-2 text-foreground focus:outline-none"
+                    >
+                      {Array.from({ length: 24 }, (_, i) => i)
+                        .filter(i => {
+                          if (!min) return true;
+                          const minDate = new Date(min);
+                          if (!isSameDay(currentDate, minDate)) return true;
+                          return i >= minDate.getHours();
+                        })
+                        .map(i => (
+                          <option key={i} value={i}>
+                            {String(i).padStart(2, '0')}
+                          </option>
+                        ))}
+                    </select>
                   </div>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <label className="text-xs text-foreground/40 mb-1 block">Heures</label>
-                      <select
-                        value={currentDate.getHours()}
-                        onChange={e => handleTimeChange(parseInt(e.target.value), currentDate.getMinutes())}
-                        className="w-full bg-secondary/10 border border-foreground/10 rounded-xl p-2 text-foreground focus:outline-none"
-                      >
-                        {Array.from({ length: 24 }, (_, i) => i)
-                          .filter(i => {
-                            if (!min) return true;
-                            const minDate = new Date(min);
-                            if (!isSameDay(currentDate, minDate)) return true;
-                            return i >= minDate.getHours();
-                          })
-                          .map(i => (
-                            <option key={i} value={i}>
-                              {String(i).padStart(2, '0')}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-xs text-foreground/40 mb-1 block">Minutes</label>
-                      <select
-                        value={currentDate.getMinutes()}
-                        onChange={e => handleTimeChange(currentDate.getHours(), parseInt(e.target.value))}
-                        className="w-full bg-secondary/10 border border-foreground/10 rounded-xl p-2 text-foreground focus:outline-none"
-                      >
-                        {Array.from({ length: 60 }, (_, i) => i)
-                          .filter(i => {
-                            if (!min) return true;
-                            const minDate = new Date(min);
-                            if (!isSameDay(currentDate, minDate)) return true;
-                            if (currentDate.getHours() !== minDate.getHours()) return true;
-                            return i >= minDate.getMinutes();
-                          })
-                          .map(i => (
-                            <option key={i} value={i}>
-                              {String(i).padStart(2, '0')}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
+                  <div className="flex-1">
+                    <label className={descriptionClassName}>Minutes</label>
+                    <select
+                      value={currentDate.getMinutes()}
+                      onChange={e => handleTimeChange(currentDate.getHours(), parseInt(e.target.value))}
+                      className="w-full bg-secondary/10 border border-foreground/10 rounded-xl p-2 text-foreground focus:outline-none"
+                    >
+                      {Array.from({ length: 60 }, (_, i) => i)
+                        .filter(i => {
+                          if (!min) return true;
+                          const minDate = new Date(min);
+                          if (!isSameDay(currentDate, minDate)) return true;
+                          if (currentDate.getHours() !== minDate.getHours()) return true;
+                          return i >= minDate.getMinutes();
+                        })
+                        .map(i => (
+                          <option key={i} value={i}>
+                            {String(i).padStart(2, '0')}
+                          </option>
+                        ))}
+                    </select>
                   </div>
                 </div>
               </div>

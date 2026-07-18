@@ -78,7 +78,13 @@ const MultiSelect = forwardRef(
     // Close the dropdown when clicking outside
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
-        if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
+        const target = event.target as Node;
+        if (
+          selectRef.current &&
+          !selectRef.current.contains(target) &&
+          optionsRef.current &&
+          !optionsRef.current.contains(target)
+        ) {
           setIsOpen(false);
           setIsFocused(false);
         }
@@ -88,7 +94,7 @@ const MultiSelect = forwardRef(
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
-    }, []);
+    }, [optionsRef]);
 
     const toggleOption = (optionValue: string) => {
       if (optionValue === 'all') {
