@@ -390,7 +390,12 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
           selectedMonth === currentDate.getMonth() &&
           selectedYear === currentDate.getFullYear();
         const dayDate = new Date(selectedYear, selectedMonth, day);
-        const isPastDate = minDate && dayDate < minDate ? true : undefined;
+        const isPastDate =
+          minDate &&
+          new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate()) <
+            new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate())
+            ? true
+            : undefined;
         days.push(
           <button
             key={day}
