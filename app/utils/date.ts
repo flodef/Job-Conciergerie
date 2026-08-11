@@ -144,9 +144,10 @@ export const formatDigitDate = (date: Date): string => {
  * @returns The formatted date
  */
 export const formatDate = (date: Date): string => {
-  const day = date.getDate();
-  const month = monthNamesShort[date.getMonth()];
-  const year = date.getFullYear();
+  const d = new Date(date);
+  const day = d.getDate();
+  const month = monthNamesShort[d.getMonth()];
+  const year = d.getFullYear();
   return `${day} ${month} ${year}`;
 };
 

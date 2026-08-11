@@ -821,6 +821,21 @@ Veuillez vérifier manuellement et contacter le prestataire si nécessaire.`;
 }
 
 /**
+ * When payloads are stored in the failed_emails queue and later read back,
+ * Date fields are deserialized as ISO strings. This helper restores them
+ * to proper Date objects so that email composition functions work correctly.
+ */
+function deserializeMission(mission: unknown): Mission {
+  const m = mission as Record<string, unknown>;
+  return {
+    ...(m as unknown as Mission),
+    startDateTime: new Date(m.startDateTime as string),
+    endDateTime: new Date(m.endDateTime as string),
+    modifiedDate: (m.modifiedDate ? new Date(m.modifiedDate as string) : null) as Date,
+  };
+}
+
+/**
  * Internal retry helper used by the /api/retry-emails endpoint.
  * Re-dispatches a queued email by its type and payload, WITHOUT re-queuing on failure.
  */
@@ -842,7 +857,7 @@ export async function retryQueuedEmail(type: FailedEmailType, payload: Record<st
       );
     case 'missionStatus':
       return sendMissionStatusChangeEmail(
-        payload.mission as Mission,
+        deserializeMission(payload.mission),
         payload.home as Home,
         payload.employee as Employee,
         payload.conciergerie as Conciergerie,
@@ -851,7 +866,7 @@ export async function retryQueuedEmail(type: FailedEmailType, payload: Record<st
       );
     case 'lateCompletion':
       return sendLateCompletionEmail(
-        payload.mission as Mission,
+        deserializeMission(payload.mission),
         payload.home as Home,
         payload.employee as Employee,
         payload.conciergerie as Conciergerie,
@@ -859,7 +874,7 @@ export async function retryQueuedEmail(type: FailedEmailType, payload: Record<st
       );
     case 'missionAcceptance':
       return sendMissionAcceptanceToEmployeeEmail(
-        payload.mission as Mission,
+        deserializeMission(payload.mission),
         payload.home as Home,
         payload.employee as Employee,
         payload.conciergerie as Conciergerie,
@@ -867,7 +882,7 @@ export async function retryQueuedEmail(type: FailedEmailType, payload: Record<st
       );
     case 'missionUpdated':
       return sendMissionUpdatedToEmployeeEmail(
-        payload.mission as Mission,
+        deserializeMission(payload.mission),
         payload.home as Home,
         payload.employee as Employee,
         payload.conciergerie as Conciergerie,
@@ -876,7 +891,7 @@ export async function retryQueuedEmail(type: FailedEmailType, payload: Record<st
       );
     case 'missionRemoved':
       return sendMissionRemovedToEmployeeEmail(
-        payload.mission as Mission,
+        deserializeMission(payload.mission),
         payload.home as Home,
         payload.employee as Employee,
         payload.conciergerie as Conciergerie,
@@ -885,7 +900,7 @@ export async function retryQueuedEmail(type: FailedEmailType, payload: Record<st
       );
     case 'missionReport':
       return sendMissionReportEmail(
-        payload.mission as Mission,
+        deserializeMission(payload.mission),
         payload.home as Home,
         payload.employee as Employee,
         payload.conciergerie as Conciergerie,

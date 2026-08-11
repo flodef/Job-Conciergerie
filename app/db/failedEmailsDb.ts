@@ -59,7 +59,12 @@ export const getEmailsToRetry = async (retryIntervalMinutes = 10, maxAttempts = 
       ORDER BY created_at ASC
       LIMIT 50
     `;
-    return result as unknown as FailedEmailRow[];
+    return (
+      result as unknown as Array<Omit<FailedEmailRow, 'payload'> & { payload: string | Record<string, unknown> }>
+    ).map(row => ({
+      ...row,
+      payload: typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload,
+    })) as unknown as FailedEmailRow[];
   } catch (error) {
     console.error('Error fetching emails to retry:', error);
     return [];
@@ -78,7 +83,12 @@ export const getExhaustedEmails = async (maxAttempts = 20): Promise<FailedEmailR
       ORDER BY created_at ASC
       LIMIT 50
     `;
-    return result as unknown as FailedEmailRow[];
+    return (
+      result as unknown as Array<Omit<FailedEmailRow, 'payload'> & { payload: string | Record<string, unknown> }>
+    ).map(row => ({
+      ...row,
+      payload: typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload,
+    })) as unknown as FailedEmailRow[];
   } catch (error) {
     console.error('Error fetching exhausted emails:', error);
     return [];

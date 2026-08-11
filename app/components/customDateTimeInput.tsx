@@ -429,7 +429,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
             onClick={() => handleDateClick(day)}
             disabled={isPastDate}
             className={cn(
-              'p-1 rounded-full transition-all duration-200 min-h-[32px]',
+              'p-1 rounded-full transition-all duration-200 min-h-8',
               isPastDate ? 'text-foreground/20 cursor-not-allowed' : 'hover:bg-secondary/50 cursor-pointer',
               isCurrentDate && !isPastDate && 'bg-primary text-white hover:bg-primary/90 shadow-md',
             )}
@@ -483,7 +483,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
                       inputFieldClassName(error),
                       isFocused && 'border-primary',
                       'flex items-center gap-0 cursor-text',
-                      row && 'min-w-[240px]',
+                      row && 'min-w-60',
                     ),
               )}
             >
@@ -561,7 +561,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
             {isOpen && !disabled && !minimal && (
               <div
                 className={cn(
-                  'fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[320px] min-w-[240px]',
+                  'fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[320px] min-w-60',
                   'max-h-[70vh] overflow-y-auto border border-foreground/10 rounded-2xl shadow-2xl p-1 backdrop-blur-xl bg-background/95',
                 )}
               >
