@@ -1,3 +1,9 @@
+# 2.348
+
+- **Amélioration : Emails de modification de mission** : les modifications anodines (commentaire, voyageurs, etc.) n'affichent plus le message de re-validation, seules les modifications importantes (dates, horaires) demandent une nouvelle acceptation de votre part.
+- **Nouveau : Indicateur "Personnellement sélectionné"** : les missions qui vous sont réservées affichent désormais votre nom sur la carte de mission.
+- **Amélioration : Import de photos dans les comptes rendus** : meilleure gestion des erreurs lors de l'upload, avec possibilité de réessayer en cas d'échec.
+
 # 2.331
 
 - **Amélioration : Missions mises à jour en temps réel** : les missions sont maintenant mises à jour en temps réel et vous n'avez plus besoin de raffraîchir la page.

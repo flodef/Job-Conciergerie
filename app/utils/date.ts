@@ -5,6 +5,11 @@ export const milliToMin = 60 * 1000;
 export const milliToHour = 60 * milliToMin;
 export const milliToDay = 24 * milliToHour;
 
+export const DEFAULT_START_HOUR = 10;
+export const DEFAULT_START_MINUTE = 15;
+export const DEFAULT_END_HOUR = 16;
+export const DEFAULT_END_MINUTE = 0;
+
 // French month names (long format)
 export const monthNames = [
   'Janvier',
@@ -83,11 +88,17 @@ export const getMissionDateTime = (mission?: Mission): { startDateTime: string; 
 
   // Default times: 10:15 to 16:00
   const now = new Date();
-  const cutoffTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 10, 15);
+  const cutoffTime = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    DEFAULT_START_HOUR,
+    DEFAULT_START_MINUTE,
+  );
   const targetDate = now < cutoffTime ? now : new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-  targetDate.setHours(10, 15, 0, 0);
+  targetDate.setHours(DEFAULT_START_HOUR, DEFAULT_START_MINUTE, 0, 0);
   const endDate = new Date(targetDate);
-  endDate.setHours(16, 0, 0, 0);
+  endDate.setHours(DEFAULT_END_HOUR, DEFAULT_END_MINUTE, 0, 0);
 
   return {
     startDateTime: localISOString(targetDate),
@@ -471,7 +482,24 @@ export const handleMissionStartDateChange = (
   const isIncreasing = startDate.getTime() > currentStart.getTime();
 
   let finalEnd = currentEndDate;
-  if (isIncreasing && gap <= taskDuration * milliToHour) {
+  if (startDate.getTime() >= currentEnd.getTime()) {
+    // New start is past the current end: shift end to same day at default end hour (16:00)
+    const standardEnd = new Date(
+      finalStart.getFullYear(),
+      finalStart.getMonth(),
+      finalStart.getDate(),
+      DEFAULT_END_HOUR,
+      DEFAULT_END_MINUTE,
+      0,
+      0,
+    );
+    // If the gap from start to 16:00 is less than taskDuration, use taskDuration instead
+    if (standardEnd.getTime() - finalStart.getTime() >= taskDuration * milliToHour) {
+      finalEnd = localISOString(standardEnd);
+    } else {
+      finalEnd = localISOString(new Date(finalStart.getTime() + taskDuration * milliToHour));
+    }
+  } else if (isIncreasing && gap <= taskDuration * milliToHour) {
     const newEndDate = new Date(finalStart.getTime() + taskDuration * milliToHour);
     finalEnd = localISOString(newEndDate);
   }

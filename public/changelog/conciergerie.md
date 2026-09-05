@@ -1,3 +1,10 @@
+# 2.348
+
+- **Amélioration : Emails de modification de mission** : les modifications anodines (commentaire, voyageurs, etc.) n'affichent plus le message de re-validation, seules les modifications importantes (dates, horaires) demandent une nouvelle acceptation du prestataire.
+- **Nouveau : Indicateur "Personnellement sélectionné"** : les missions réservées à un prestataire spécifique affichent désormais son nom sur la carte de mission.
+- **Amélioration : Saisie des dates au clavier** : lors de la création d'une mission, il est maintenant possible de saisir temporairement une date antérieure (le temps de compléter le mois), la date se réinitialise automatiquement si elle reste dans le passé.
+- **Amélioration : Import de photos dans les comptes rendus** : meilleure gestion des erreurs lors de l'upload, avec possibilité de réessayer en cas d'échec.
+
 # 2.331
 
 - **Amélioration : Missions mises à jour en temps réel** : les missions sont maintenant mises à jour en temps réel pour tous les prestataires et ils n'ont plus besoin de raffraîchir la page.
