@@ -192,7 +192,7 @@ export default function MissionForm({
     const startDateChanged = startDateTime !== initialFormValues.startDateTime;
     const endDateChanged = endDateTime !== initialFormValues.endDateTime;
     const employeesChanged =
-      JSON.stringify(selectedEmployees.sort()) !== JSON.stringify(initialFormValues.selectedEmployees.sort());
+      JSON.stringify([...selectedEmployees].sort()) !== JSON.stringify([...initialFormValues.selectedEmployees].sort());
     const travellersChanged = travellers !== initialFormValues.travellers;
     const conciergerieCommentChanged = conciergerieComment !== initialFormValues.conciergerieComment;
 
@@ -301,7 +301,7 @@ export default function MissionForm({
           status: null,
           allowDuo: selectedHome.allowDuo,
           travellers,
-          conciergerieComment: conciergerieComment || undefined,
+          conciergerieComment: conciergerieComment || null,
         });
         if (!result) throw new Error("Impossible d'ajouter la mission");
 
@@ -320,7 +320,8 @@ export default function MissionForm({
         const startDateChanged = startDateTime !== initialFormValues?.startDateTime;
         const endDateChanged = endDateTime !== initialFormValues?.endDateTime;
         const employeesChanged =
-          JSON.stringify(selectedEmployees.sort()) !== JSON.stringify((mission.allowedEmployees || []).sort());
+          JSON.stringify([...selectedEmployees].sort()) !==
+          JSON.stringify([...(mission.allowedEmployees || [])].sort());
         const travellersChanged = travellers !== mission.travellers;
         const conciergerieCommentChanged = conciergerieComment !== (mission.conciergerieComment || '');
 
@@ -449,6 +450,20 @@ export default function MissionForm({
     if (endDateTimeError) setEndDateTimeError('');
   };
 
+  // Handle end date blur - validate only when leaving the field
+  const handleEndDateBlur = (value: string) => {
+    const selectedDate = new Date(value);
+    const minEnd = getMinEndDate();
+
+    if (selectedDate < minEnd) {
+      const minEndStr = localISOString(minEnd);
+      setEndDateTime(minEndStr);
+      setEndDateTimeError('La date de fin ne peut pas être antérieure à la date actuelle + 1h');
+    } else {
+      setEndDateTimeError('');
+    }
+  };
+
   const footer = (
     <FormActions
       submitText={mode === 'add' ? 'Ajouter' : 'Enregistrer'}
@@ -564,6 +579,7 @@ export default function MissionForm({
           ref={endDateRef}
           value={endDateTime}
           onChange={handleEndDateChange}
+          onBlur={handleEndDateBlur}
           onEscape={() => {
             setStartDateTime(lastCommittedStart);
             setEndDateTime(lastCommittedEnd);

@@ -69,7 +69,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     }
 
     isFetching.current = true;
-    console.warn('Loading homes from database...');
+    console.debug('Loading homes from database...');
     // Only show the spinner on the initial load (no data yet); background
     // refreshes update silently. Use the ref to avoid the stale closure.
     setIsLoading(homesRef.current.length === 0);

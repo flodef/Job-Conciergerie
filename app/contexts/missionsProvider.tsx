@@ -167,7 +167,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     }
 
     isFetching.current = true;
-    console.warn('Loading missions from database...');
+    console.debug('Loading missions from database...');
     // Only show the spinner on the initial load (no data yet); background
     // refreshes update silently. Use the ref to avoid the stale closure.
     setIsLoading(missionsRef.current.length === 0);
@@ -293,8 +293,8 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const endDateChanged =
       new Date(existingMission.endDateTime).getTime() !== new Date(updatedMission.endDateTime).getTime();
     const employeesChanged =
-      JSON.stringify((existingMission.allowedEmployees || []).sort()) !==
-      JSON.stringify((updatedMission.allowedEmployees || []).sort());
+      JSON.stringify([...(existingMission.allowedEmployees || [])].sort()) !==
+      JSON.stringify([...(updatedMission.allowedEmployees || [])].sort());
     const travellersChanged = existingMission.travellers !== updatedMission.travellers;
     const conciergerieCommentChanged =
       (existingMission.conciergerieComment || '') !== (updatedMission.conciergerieComment || '');
@@ -360,7 +360,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const conciergerie = findConciergerie(updatedMission.conciergerieName);
     if (employee && home && changes.length > 0 && conciergerie) {
       if (shouldRemoveEmployee && employee.notificationSettings?.missionsCanceled) {
-        await EmailSender.sendMissionRemovedEmail(existingMission, home, employee, conciergerie, 'canceled');
+        await EmailSender.sendMissionRemovedEmail(existingMission, home, employee, conciergerie, 'modified', changes);
         return { success: true, employeeNotified: true };
       } else if (!shouldRemoveEmployee && employee.notificationSettings?.missionChanged) {
         await EmailSender.sendMissionUpdatedEmail(updatedMission, home, employee, conciergerie, changes);

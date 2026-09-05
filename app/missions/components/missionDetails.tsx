@@ -294,7 +294,7 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
   };
 
   const handleAssignSecondProvider = () => {
-    const providerId = prompt('Entrez l&apos;identifiant du prestataire (nom complet ou email) :');
+    const providerId = prompt("Entrez l'identifiant du prestataire (nom complet ou email) :");
     if (!providerId) return;
     setIsSubmitting(true);
     assignSecondProvider(mission.id, providerId).then(({ success, employeeNotified }) => {
@@ -659,10 +659,10 @@ export default function MissionDetails({ mission: propMission, onClose, isFromCa
                   Dates
                 </h3>
                 <div className="flex flex-col gap-1">
-                  <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
+                  <p className="flex items-center gap-1 flex-wrap pl-1 pr-1.25">
                     Du {formatDateTime(new Date(startDate))}
                   </p>
-                  <p className="flex items-center gap-1 flex-wrap pl-1 pr-[5px]">
+                  <p className="flex items-center gap-1 flex-wrap pl-1 pr-1.25">
                     Au {formatDateTime(new Date(endDate))}
                   </p>
                 </div>

@@ -185,7 +185,7 @@ export const formatDateTime = (date: Date, useDigit = false): string => {
  * @returns The sorted dates
  */
 export const sortDates = (dates: string[]): string[] => {
-  return dates.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  return [...dates].sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 };
 
 /**
@@ -463,8 +463,7 @@ export const handleMissionStartDateChange = (
   taskDuration: number,
 ): { startDateTime: string; endDateTime: string } => {
   const startDate = new Date(newStartDate);
-  const minStart = getMinStartDate();
-  const finalStart = startDate < minStart ? minStart : startDate;
+  const finalStart = startDate;
 
   const currentStart = new Date(currentStartDate);
   const currentEnd = new Date(currentEndDate);
@@ -498,8 +497,7 @@ export const handleMissionEndDateChange = (
   taskDuration: number,
 ): { startDateTime: string; endDateTime: string } => {
   const endDate = new Date(newEndDate);
-  const minEnd = getMinEndDate();
-  const finalEnd = endDate < minEnd ? minEnd : endDate;
+  const finalEnd = endDate;
 
   const currentStart = new Date(currentStartDate);
   const currentEnd = new Date(currentEndDate);

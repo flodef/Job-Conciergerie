@@ -179,11 +179,27 @@ const ImageUploader = React.forwardRef<
     const compressImage = async (file: File): Promise<Blob> => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
+        let img: HTMLImageElement | null = null;
+        let settled = false;
+
+        // Timeout: if the image hasn't loaded in 15s, reject (e.g. unsupported format like HEIC on Chrome)
+        const timeout = setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            console.error('[compressImage] Timeout loading image:', file.name, file.type, file.size);
+            reject(new Error("Le format de l'image n'est pas supporté ou l'image est trop grande"));
+          }
+        }, 15000);
+
         reader.readAsDataURL(file);
         reader.onload = event => {
-          const img = document.createElement('img');
+          img = document.createElement('img');
           img.src = event.target?.result as string;
           img.onload = () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
+
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             if (!context) {
@@ -191,7 +207,7 @@ const ImageUploader = React.forwardRef<
               return reject(new Error('Failed to get canvas context'));
             }
 
-            let { width, height } = img;
+            let { width, height } = img!;
 
             if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
               if (width > height) {
@@ -205,7 +221,7 @@ const ImageUploader = React.forwardRef<
 
             canvas.width = width;
             canvas.height = height;
-            context.drawImage(img, 0, 0, width, height);
+            context.drawImage(img!, 0, 0, width, height);
             canvas.toBlob(
               blob => {
                 if (blob) {
@@ -220,11 +236,17 @@ const ImageUploader = React.forwardRef<
             );
           };
           img.onerror = _e => {
-            console.error('Failed to load image for compression', _e);
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
+            console.error('Failed to load image for compression', _e, 'file:', file.name, file.type);
             reject(new Error('Failed to load image for compression'));
           };
         };
         reader.onerror = error => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeout);
           console.error('File Reader error:', error);
           reject(error);
         };
@@ -314,6 +336,11 @@ const ImageUploader = React.forwardRef<
       }
 
       event.target.value = ''; // Reset file input
+    };
+
+    // Retry upload for a failed local image
+    const handleRetryUpload = (id: string) => {
+      setLocalImages(prev => prev.map(img => (img.id === id ? { ...img, uploadStatus: 'pending' as const } : img)));
     };
 
     // Delete handlers
@@ -433,6 +460,10 @@ const ImageUploader = React.forwardRef<
                 alt={`Prévisualisation ${imageIds.length + index + 1}`}
                 className="object-cover w-full h-full rounded-lg cursor-pointer"
                 onClick={() => !disabled && setFullscreenImageUrl(img.previewUrl)}
+                onError={e => {
+                  console.warn('[ImageUploader] Failed to load preview for:', img.file.name, img.file.type);
+                  (e.target as HTMLImageElement).src = fallbackImage;
+                }}
               />
 
               {/* Progress, Success or Error indicator */}
@@ -440,14 +471,21 @@ const ImageUploader = React.forwardRef<
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-xs rounded-lg">
                   {img.uploadStatus === 'uploading' ? (
                     <M3LoadingSpinner size="large" fullPage={false} color="#ffffff" />
-                  ) : (
-                    <div
-                      className={cn(
-                        'p-1.5 text-white rounded-full',
-                        img.uploadStatus === 'success' ? 'bg-green-500' : 'bg-red-500',
-                      )}
+                  ) : img.uploadStatus === 'error' ? (
+                    <button
+                      type="button"
+                      onClick={() => handleRetryUpload(img.id)}
+                      className="flex flex-col items-center gap-1 text-white cursor-pointer"
+                      title="Réessayer l'envoi"
                     >
-                      {img.uploadStatus === 'success' ? <IconCheck size={32} /> : <IconX size={32} />}
+                      <div className="p-1.5 bg-red-500 rounded-full">
+                        <IconX size={32} />
+                      </div>
+                      <span className="text-xs">Réessayer</span>
+                    </button>
+                  ) : (
+                    <div className="p-1.5 text-white rounded-full bg-green-500">
+                      <IconCheck size={32} />
                     </div>
                   )}
                 </div>

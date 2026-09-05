@@ -451,8 +451,6 @@ function composeMissionUpdatedToEmployeeEmail(
           <p><strong>Tâches:</strong> ${mission.tasks.join(', ')}</p>
           ${mission.conciergerieComment ? `<div style="background-color: #fffbeb; padding: 10px; border-radius: 5px; margin-top: 10px; border-left: 3px solid #f59e0b;"><p style="margin: 0; color: #92400e;"><strong>💡 Commentaire conciergerie :</strong></p><p style="margin: 5px 0 0 0; color: #78350f;">${mission.conciergerieComment}</p></div>` : ''}
         </div>
-        <p><strong>Important :</strong> Suite à ces modifications, votre assignation à cette mission a été annulée.</p>
-        <p>Si vous êtes toujours intéressé(e) par cette mission avec les changements mentionnés ci-dessus, vous devrez l'accepter à nouveau dans l'application.</p>
         <p>Vous pouvez consulter les détails complets de la mission via l'application :</p>
         <p>
           <a href="${baseUrl}/missions" style="display: inline-block; background-color: #d97706; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
@@ -470,7 +468,8 @@ function composeMissionRemovedToEmployeeEmail(
   home: Home,
   employee: Employee,
   conciergerie: Conciergerie,
-  type: 'deleted' | 'canceled',
+  type: 'deleted' | 'canceled' | 'modified',
+  changes?: string[],
 ): SendMailOptions {
   const startDate = formatDateTime(mission.startDateTime);
   const endDate = formatDateTime(mission.endDateTime);
@@ -493,7 +492,33 @@ function composeMissionRemovedToEmployeeEmail(
       action: 'annulée',
       actionNoun: 'annulation',
     },
+    modified: {
+      emoji: '🔄',
+      title: 'Mission modifiée',
+      color: '#d97706',
+      bgColor: '#fffbeb',
+      action: 'modifiée',
+      actionNoun: 'modification',
+    },
   }[type];
+
+  const changesHtml =
+    type === 'modified' && changes?.length
+      ? `<div style="background-color: ${config.bgColor}; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid ${config.color};">
+          <h3 style="margin-top: 0; color: ${config.color};">Modifications apportées</h3>
+          <ul>
+            ${changes.map(change => `<li>${change}</li>`).join('')}
+          </ul>
+        </div>`
+      : '';
+
+  const reacceptHtml =
+    type === 'modified'
+      ? `<div style="background-color: #fffbeb; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 3px solid #d97706;">
+          <p style="margin: 0;"><strong>Important :</strong> Suite à ces modifications, votre assignation à cette mission a été annulée.</p>
+          <p style="margin: 10px 0 0 0;">Si vous êtes toujours intéressé(e) par cette mission avec les changements mentionnés ci-dessus, vous devrez l'accepter à nouveau dans l'application.</p>
+        </div>`
+      : '';
 
   return {
     to: employee.email,
@@ -504,8 +529,9 @@ function composeMissionRemovedToEmployeeEmail(
         <h2 style="color: ${config.color};">${config.title}</h2>
         <p>Bonjour ${employee.firstName},</p>
         <p>Nous vous informons que la mission pour <strong>${home.title}</strong> a été ${config.action} par la conciergerie ${conciergerie.name}${isDuo ? ' (binôme)' : ''}.</p>
-        <div style="background-color: ${config.bgColor}; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid ${config.color};">
-          <h3 style="margin-top: 0; color: ${config.color};">Détails de la mission ${config.action}</h3>
+        ${changesHtml}
+        <div style="background-color: #f9fafb; padding: 15px; border-radius: 5px; margin: 15px 0;">
+          <h3 style="margin-top: 0; color: #4b5563;">Détails de la mission</h3>
           <p><strong>Bien:</strong> ${home.title}</p>
           <p><strong>Conciergerie:</strong> ${conciergerie.name}</p>
           <p><strong>Date de début:</strong> ${startDate}</p>
@@ -514,6 +540,7 @@ function composeMissionRemovedToEmployeeEmail(
           ${mission.travellers ? `<p><strong>Nombre de voyageurs:</strong> ${mission.travellers}</p>` : ''}
           ${isDuo ? `<p><strong>Mode:</strong> Binôme (2 prestataires)</p>` : ''}
         </div>
+        ${reacceptHtml}
         <p>Pour toute question concernant cette ${config.actionNoun}, veuillez contacter directement la conciergerie.</p>
         <p>Vous pouvez consulter vos autres missions via l'application :</p>
         <p>
@@ -711,13 +738,14 @@ export async function sendMissionRemovedToEmployeeEmail(
   home: Home,
   employee: Employee,
   conciergerie: Conciergerie,
-  type: 'deleted' | 'canceled',
+  type: 'deleted' | 'canceled' | 'modified',
   isRetry = false,
+  changes?: string[],
 ): Promise<boolean> {
   return deliver(
-    composeMissionRemovedToEmployeeEmail(mission, home, employee, conciergerie, type),
+    composeMissionRemovedToEmployeeEmail(mission, home, employee, conciergerie, type, changes),
     'missionRemoved',
-    { mission, home, employee, conciergerie, type },
+    { mission, home, employee, conciergerie, type, changes },
     isRetry,
   );
 }
@@ -895,8 +923,9 @@ export async function retryQueuedEmail(type: FailedEmailType, payload: Record<st
         payload.home as Home,
         payload.employee as Employee,
         payload.conciergerie as Conciergerie,
-        payload.type as 'deleted' | 'canceled',
+        payload.type as 'deleted' | 'canceled' | 'modified',
         true,
+        payload.changes as string[] | undefined,
       );
     case 'missionReport':
       return sendMissionReportEmail(

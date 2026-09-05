@@ -200,16 +200,6 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
                 break;
             }
 
-            // Check if new date is before min
-            if (min) {
-              const minDate = new Date(min);
-              if (newDate < minDate) {
-                if (onInvalidDate) onInvalidDate();
-                setTypedDigits('');
-                return;
-              }
-            }
-
             setCurrentDate(newDate);
             onChange(toISOString(newDate));
             setSelectedYear(newDate.getFullYear());

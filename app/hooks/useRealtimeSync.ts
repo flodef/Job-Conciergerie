@@ -131,7 +131,6 @@ export function useRealtimeSync() {
     const channel = supabase
       .channel('db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' }, payload => {
-        console.log('[Realtime] missions event:', payload.eventType, payload);
         if (payload.eventType === 'DELETE') {
           if (payload.old?.id) deleteMissionRef.current(payload.old.id);
         } else if (payload.new?.id) {
@@ -141,7 +140,6 @@ export function useRealtimeSync() {
         }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'homes' }, payload => {
-        console.log('[Realtime] homes event:', payload.eventType, payload);
         if (payload.eventType === 'DELETE') {
           if (payload.old?.id) deleteHomeRef.current(payload.old.id);
         } else if (payload.new?.id) {
@@ -160,7 +158,6 @@ export function useRealtimeSync() {
         debounce('conciergeries', () => fetchDataRef.current('conciergerie')),
       )
       .subscribe(status => {
-        console.log('[Realtime] Channel status:', status);
         if (status === 'SUBSCRIBED') {
           if (hasSubscribed) debounce('resync', resyncAll);
           hasSubscribed = true;

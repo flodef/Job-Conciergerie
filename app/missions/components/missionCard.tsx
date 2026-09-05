@@ -11,7 +11,7 @@ import { formatDateRange } from '@/app/utils/date';
 import { getEmployeeFullName } from '@/app/utils/employee';
 import { formatHours, getMissionProviderCount } from '@/app/utils/task';
 import { getUserKey } from '@/app/utils/user';
-import { IconFileDescription } from '@tabler/icons-react';
+import { IconFileDescription, IconStar } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
 type MissionCardProps = {
@@ -21,7 +21,7 @@ type MissionCardProps = {
 };
 
 export default function MissionCard({ mission, onClick, onEdit }: MissionCardProps) {
-  const { findConciergerie, findEmployee, isConciergerie } = useAuth();
+  const { findConciergerie, findEmployee, isConciergerie, isEmployee, userData } = useAuth();
   const { homes } = useHomes();
   const { getMissionReport } = useMissions();
   const [conciergerie, setConciergerie] = useState<Conciergerie>();
@@ -32,6 +32,13 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
   const employee2 = findEmployee(mission.employeeId2) || findConciergerie(mission.employeeId2);
   const providerCount = getMissionProviderCount(mission);
   const hasReport = !!getMissionReport(mission.id);
+
+  // Check if the current employee is personally selected for this mission
+  const isPersonallySelected =
+    isEmployee &&
+    userData &&
+    !!mission.allowedEmployees?.length &&
+    mission.allowedEmployees.includes(getUserKey(userData));
 
   // Get reserved employees (excluding those who have already accepted the mission)
   const reservedEmployees = mission.allowedEmployees
@@ -107,6 +114,15 @@ export default function MissionCard({ mission, onClick, onEdit }: MissionCardPro
         </div>
       ) : (
         mission.allowDuo && <div className="absolute top-0 left-0 font-bold p-1">{providerCount}/2</div>
+      )}
+
+      {isPersonallySelected && (
+        <div className="flex justify-center mb-1">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+            <IconStar size={12} className="fill-amber-500 text-amber-500" />
+            PERSONNELLEMENT SELECTIONNÉ
+          </span>
+        </div>
       )}
 
       <div className="mx-3 text-center">

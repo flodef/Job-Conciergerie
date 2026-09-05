@@ -63,8 +63,18 @@ export const EmailSender = {
     home: Home,
     employee: Employee,
     conciergerie: Conciergerie,
-    type: 'deleted' | 'canceled',
-  ) => handleEmailSending(sendMissionRemovedToEmployeeEmail, [mission, home, employee, conciergerie, type]),
+    type: 'deleted' | 'canceled' | 'modified',
+    changes?: string[],
+  ) =>
+    handleEmailSending(sendMissionRemovedToEmployeeEmail, [
+      mission,
+      home,
+      employee,
+      conciergerie,
+      type,
+      false,
+      changes,
+    ]),
 
   sendNewDeviceEmail: (employee: Employee, userId: string) =>
     handleEmailSending(sendNewDeviceNotificationEmail, [employee, userId]),
