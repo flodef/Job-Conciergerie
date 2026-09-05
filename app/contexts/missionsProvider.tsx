@@ -413,6 +413,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       endDateTime: newEnd,
       modifiedDate: new Date(),
       employeeId: removeEmployee ? null : existingMission.employeeId,
+      employeeId2: removeEmployee ? null : existingMission.employeeId2,
       status: removeEmployee ? null : existingMission.status,
     };
 
@@ -420,32 +421,54 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     if (!success) return { success: false, employeeNotified: false };
 
     // Nothing to notify if there was no assigned prestataire
-    if (!employee || !home || !conciergerie) return { success: true, employeeNotified: false };
+    if (!home || !conciergerie) return { success: true, employeeNotified: false };
 
-    const employeeNotified = removeEmployee
-      ? !!employee.notificationSettings?.missionsCanceled
-      : !!employee.notificationSettings?.missionChanged;
+    const employee2 = existingMission.employeeId2 ? findEmployee(existingMission.employeeId2) : undefined;
 
+    const changes: string[] = [];
     if (removeEmployee) {
-      // Less time: the prestataire loses the mission and must accept it again
-      if (employeeNotified) {
-        const changes: string[] = [];
-        if (dates.startDateTime) changes.push(`Nouvelle date/heure de début: ${formatDateTime(newStart)}`);
-        if (dates.endDateTime) changes.push(`Nouvelle date/heure de fin: ${formatDateTime(newEnd)}`);
-        await EmailSender.sendMissionRemovedEmail(updatedMission, home, employee, conciergerie, 'modified', changes);
-      }
-    } else {
-      // More time: the prestataire keeps the mission and gains extra time
-      const changes: string[] = [
-        'Bonne nouvelle : vous disposez de plus de temps pour réaliser cette mission, qui reste à votre charge.',
-      ];
       if (dates.startDateTime) changes.push(`Nouvelle date/heure de début: ${formatDateTime(newStart)}`);
       if (dates.endDateTime) changes.push(`Nouvelle date/heure de fin: ${formatDateTime(newEnd)}`);
-      if (employeeNotified)
-        await EmailSender.sendMissionUpdatedEmail(updatedMission, home, employee, conciergerie, changes);
+    } else {
+      changes.push(
+        'Bonne nouvelle : vous disposez de plus de temps pour réaliser cette mission, qui reste à votre charge.',
+      );
+      if (dates.startDateTime) changes.push(`Nouvelle date/heure de début: ${formatDateTime(newStart)}`);
+      if (dates.endDateTime) changes.push(`Nouvelle date/heure de fin: ${formatDateTime(newEnd)}`);
     }
 
-    return { success: true, employeeNotified };
+    let anyEmployeeNotified = false;
+
+    if (employee) {
+      const employeeNotified = removeEmployee
+        ? !!employee.notificationSettings?.missionsCanceled
+        : !!employee.notificationSettings?.missionChanged;
+      if (employeeNotified) {
+        if (removeEmployee) {
+          await EmailSender.sendMissionRemovedEmail(updatedMission, home, employee, conciergerie, 'modified', changes);
+        } else {
+          await EmailSender.sendMissionUpdatedEmail(updatedMission, home, employee, conciergerie, changes);
+        }
+        anyEmployeeNotified = true;
+      }
+    }
+
+    // Notify the second employee (duo missions)
+    if (employee2) {
+      const employee2Notified = removeEmployee
+        ? !!employee2.notificationSettings?.missionsCanceled
+        : !!employee2.notificationSettings?.missionChanged;
+      if (employee2Notified) {
+        if (removeEmployee) {
+          await EmailSender.sendMissionRemovedEmail(updatedMission, home, employee2, conciergerie, 'modified', changes);
+        } else {
+          await EmailSender.sendMissionUpdatedEmail(updatedMission, home, employee2, conciergerie, changes);
+        }
+        anyEmployeeNotified = true;
+      }
+    }
+
+    return { success: true, employeeNotified: anyEmployeeNotified };
   };
 
   const deleteMission = async (id: string) => {
