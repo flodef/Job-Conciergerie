@@ -78,6 +78,10 @@ const ImageUploader = React.forwardRef<
     const [imageIdsToRemove, setImageIdsToRemove] = useState<string[]>([]);
     const [hasChanged, setHasChanged] = useState(false);
 
+    // Track latest localImages for unmount cleanup
+    const localImagesRef = useRef(localImages);
+    localImagesRef.current = localImages;
+
     useEffect(() => {
       if (imagesRef && inputFocusRef.current) {
         imagesRef.current = inputFocusRef.current; // Link the parent's ref to the input
@@ -88,6 +92,13 @@ const ImageUploader = React.forwardRef<
     useEffect(() => {
       onPendingImagesChange(localImages.length > 0);
     }, [localImages.length, onPendingImagesChange]);
+
+    // Revoke all remaining blob URLs on unmount (e.g. closing modal with pending images)
+    useEffect(() => {
+      return () => {
+        localImagesRef.current.forEach(img => URL.revokeObjectURL(img.previewUrl));
+      };
+    }, []);
 
     // Expose method to upload all pending images
     React.useImperativeHandle(ref, () => ({
@@ -116,7 +127,7 @@ const ImageUploader = React.forwardRef<
         let imageIndex = imageIds.length; // Start index after existing images
 
         for (const image of localImages) {
-          // Skip already failed images
+          // Skip images that already succeeded (e.g. from a previous partial upload)
           if (image.uploadStatus === 'success') continue;
 
           // Build the destination file path depending on the upload mode
@@ -166,8 +177,16 @@ const ImageUploader = React.forwardRef<
         const allPaths = [...imageIds, ...newPaths];
         onImageIdsChange(allPaths);
 
-        // Keep only images that failed to upload
-        setLocalImages(prev => prev.filter(img => img.uploadStatus !== 'success'));
+        // Keep only images that failed to upload; revoke blob URLs for successful ones
+        setLocalImages(prev =>
+          prev.filter(img => {
+            if (img.uploadStatus === 'success') {
+              URL.revokeObjectURL(img.previewUrl);
+              return false;
+            }
+            return true;
+          }),
+        );
 
         // Return paths if all succeeded, null if any failed
         if (failedCount > 0) return null;
@@ -304,7 +323,7 @@ const ImageUploader = React.forwardRef<
         if (!file.type.startsWith('image/')) {
           showToast({
             type: ToastType.Warning,
-            message: `Le fichier ${file.name} n&apos;est pas une image.`,
+            message: `Le fichier ${file.name} n'est pas une image.`,
           });
           continue;
         }

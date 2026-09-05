@@ -335,7 +335,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     const home = updatedHome || existingHome;
 
-    // Determine if we need to remove the employee
+    // Determine if we need to remove the employee(s)
     const shouldRemoveEmployee = existingMission.employeeId && !isSafeChange;
 
     // First update the mission
@@ -347,6 +347,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         : updatedMission.employeeId !== undefined
           ? updatedMission.employeeId
           : existingMission.employeeId,
+      employeeId2: shouldRemoveEmployee
+        ? null
+        : updatedMission.employeeId2 !== undefined
+          ? updatedMission.employeeId2
+          : existingMission.employeeId2,
       status: shouldRemoveEmployee
         ? null
         : updatedMission.status !== undefined
@@ -358,17 +363,27 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     // If successful and there's an employee assigned who has notifications enabled, send email
     const conciergerie = findConciergerie(updatedMission.conciergerieName);
+    const employee2 = existingMission.employeeId2 ? findEmployee(existingMission.employeeId2) : undefined;
+
+    let anyEmployeeNotified = false;
+
     if (employee && home && changes.length > 0 && conciergerie) {
       if (shouldRemoveEmployee && employee.notificationSettings?.missionsCanceled) {
-        await EmailSender.sendMissionRemovedEmail(existingMission, home, employee, conciergerie, 'modified', changes);
-        return { success: true, employeeNotified: true };
+        await EmailSender.sendMissionRemovedEmail(updatedMission, home, employee, conciergerie, 'modified', changes);
+        anyEmployeeNotified = true;
       } else if (!shouldRemoveEmployee && employee.notificationSettings?.missionChanged) {
         await EmailSender.sendMissionUpdatedEmail(updatedMission, home, employee, conciergerie, changes);
-        return { success: true, employeeNotified: true };
+        anyEmployeeNotified = true;
       }
     }
 
-    return { success: true, employeeNotified: false };
+    // Notify the second employee (duo missions) if they were also removed
+    if (shouldRemoveEmployee && employee2 && home && conciergerie && employee2.notificationSettings?.missionsCanceled) {
+      await EmailSender.sendMissionRemovedEmail(updatedMission, home, employee2, conciergerie, 'modified', changes);
+      anyEmployeeNotified = true;
+    }
+
+    return { success: true, employeeNotified: anyEmployeeNotified };
   };
 
   // Update only the start and/or end date of a mission.
@@ -413,8 +428,12 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     if (removeEmployee) {
       // Less time: the prestataire loses the mission and must accept it again
-      if (employeeNotified)
-        await EmailSender.sendMissionRemovedEmail(existingMission, home, employee, conciergerie, 'canceled');
+      if (employeeNotified) {
+        const changes: string[] = [];
+        if (dates.startDateTime) changes.push(`Nouvelle date/heure de début: ${formatDateTime(newStart)}`);
+        if (dates.endDateTime) changes.push(`Nouvelle date/heure de fin: ${formatDateTime(newEnd)}`);
+        await EmailSender.sendMissionRemovedEmail(updatedMission, home, employee, conciergerie, 'modified', changes);
+      }
     } else {
       // More time: the prestataire keeps the mission and gains extra time
       const changes: string[] = [
