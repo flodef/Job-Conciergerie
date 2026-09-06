@@ -44,3 +44,10 @@ next-env.d.ts
 # /public/sw.js
 /public/swe-worker-*.js
 /public/workbox-*.js
+
+# landing subdirectory
+/landing/node_modules
+/landing/.next
+/landing/.vercel
+/landing/*.tsbuildinfo
+/landing/next-env.d.ts
