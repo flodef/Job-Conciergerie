@@ -476,7 +476,7 @@ function PhoneMockup() {
       }, 6000);
       return () => clearTimeout(timer);
     }
-  }, [screen, missionStage, autoAdvance, mode]);
+  }, [screen, missionStage, autoAdvance, mode, screenOrder]);
 
   const handleNavClick = (s: MockScreen) => {
     setScreen(s);
@@ -1113,7 +1113,7 @@ function Pricing() {
         'Mode binôme',
         'Corrections de bugs incluses',
         'Notifications email',
-        'Assistance par email',
+        'Assistance par email sous 48h',
       ],
       highlighted: false,
       badge: null,
@@ -1132,7 +1132,7 @@ function Pricing() {
         'Historique & statistiques',
         'Multi-conciergerie',
         'Notifications avancées',
-        'Assistance prioritaire',
+        'Assistance prioritaire sous 24h',
       ],
       highlighted: true,
       badge: 'LE PLUS POPULAIRE',
@@ -1246,6 +1246,8 @@ function Pricing() {
                           >
                             <button
                               type="button"
+                              aria-label={`Plus d'infos : ${f}`}
+                              aria-expanded={openTooltip === f}
                               onClick={e => {
                                 e.stopPropagation();
                                 setOpenTooltip(openTooltip === f ? null : f);
@@ -1316,6 +1318,8 @@ function ContactForm() {
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [subjectOpen, setSubjectOpen] = useState(false);
   const [showBreton, setShowBreton] = useState(false);
+  const [website, setWebsite] = useState(''); // honeypot
+  const [formToken, setFormToken] = useState('');
 
   const subjects = [
     { value: 'forfait-decouverte', label: 'Forfait Découverte' },
@@ -1334,12 +1338,24 @@ function ContactForm() {
     return () => window.removeEventListener('contactSubject', handler);
   }, []);
 
+  useEffect(() => {
+    const subject = new URLSearchParams(window.location.search).get('subject');
+    if (subject && subjects.some(s => s.value === subject)) {
+      setFormState(prev => ({ ...prev, subject }));
+    }
+    import('@/app/actions/contact')
+      .then(m => m.getContactToken())
+      .then(setFormToken)
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('sending');
     try {
       const { sendContactEmail } = await import('@/app/actions/contact');
-      const result = await sendContactEmail(formState);
+      const result = await sendContactEmail({ ...formState, website, token: formToken });
       if (result.success) {
         setStatus('sent');
         setFormState({ name: '', company: '', email: '', phone: '', subject: '', message: '' });
@@ -1378,10 +1394,31 @@ function ContactForm() {
               onSubmit={handleSubmit}
               className="glass glass-hover glow-border rounded-2xl p-8 space-y-4 transition-all focus-within:glow-border"
             >
+              {/* Honeypot — invisible pour les humains, rempli par les bots */}
+              <input
+                type="text"
+                name="website"
+                value={website}
+                onChange={e => setWebsite(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  left: '-9999px',
+                  width: 0,
+                  height: 0,
+                  opacity: 0,
+                  pointerEvents: 'none',
+                }}
+              />
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-slate-400 mb-1.5 block">Nom complet *</label>
+                  <label htmlFor="contact-name" className="text-sm text-slate-400 mb-1.5 block">
+                    Nom complet *
+                  </label>
                   <input
+                    id="contact-name"
                     required
                     type="text"
                     value={formState.name}
@@ -1391,8 +1428,11 @@ function ContactForm() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-slate-400 mb-1.5 block">Entreprise</label>
+                  <label htmlFor="contact-company" className="text-sm text-slate-400 mb-1.5 block">
+                    Entreprise
+                  </label>
                   <input
+                    id="contact-company"
                     type="text"
                     value={formState.company}
                     onChange={e => setFormState({ ...formState, company: e.target.value })}
@@ -1403,8 +1443,11 @@ function ContactForm() {
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-slate-400 mb-1.5 block">Email *</label>
+                  <label htmlFor="contact-email" className="text-sm text-slate-400 mb-1.5 block">
+                    Email *
+                  </label>
                   <input
+                    id="contact-email"
                     required
                     type="email"
                     value={formState.email}
@@ -1414,8 +1457,11 @@ function ContactForm() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-slate-400 mb-1.5 block">Téléphone</label>
+                  <label htmlFor="contact-phone" className="text-sm text-slate-400 mb-1.5 block">
+                    Téléphone
+                  </label>
                   <input
+                    id="contact-phone"
                     type="tel"
                     value={formState.phone}
                     onChange={e => setFormState({ ...formState, phone: e.target.value })}
@@ -1425,11 +1471,16 @@ function ContactForm() {
                 </div>
               </div>
               <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">Sujet</label>
+                <label id="contact-subject-label" className="text-sm text-slate-400 mb-1.5 block">
+                  Sujet
+                </label>
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setSubjectOpen(!subjectOpen)}
+                    aria-haspopup="listbox"
+                    aria-expanded={subjectOpen}
+                    aria-labelledby="contact-subject-label"
                     className={inputClass + ' text-left flex items-center justify-between'}
                     style={{ cursor: 'pointer' }}
                   >
@@ -1447,6 +1498,8 @@ function ContactForm() {
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setSubjectOpen(false)} />
                       <div
+                        role="listbox"
+                        aria-labelledby="contact-subject-label"
                         className="absolute z-50 mt-1 w-full rounded-xl overflow-hidden"
                         style={{
                           backgroundColor: 'var(--bg-base)',
@@ -1457,6 +1510,8 @@ function ContactForm() {
                           <button
                             key={s.value}
                             type="button"
+                            role="option"
+                            aria-selected={formState.subject === s.value}
                             onClick={() => {
                               setFormState({ ...formState, subject: s.value });
                               setSubjectOpen(false);
@@ -1475,8 +1530,11 @@ function ContactForm() {
                 </div>
               </div>
               <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">Votre message *</label>
+                <label htmlFor="contact-message" className="text-sm text-slate-400 mb-1.5 block">
+                  Votre message *
+                </label>
                 <textarea
+                  id="contact-message"
                   required
                   rows={4}
                   value={formState.message}
@@ -1516,10 +1574,12 @@ function ContactForm() {
               </button>
 
               {status === 'sent' && (
-                <p className="text-center text-sm text-emerald-400">Merci ! Nous vous recontactons sous 24h.</p>
+                <p role="status" className="text-center text-sm text-emerald-400">
+                  Merci ! Nous vous recontactons sous 24h.
+                </p>
               )}
               {status === 'error' && (
-                <p className="text-center text-sm text-red-400">
+                <p role="alert" className="text-center text-sm text-red-400">
                   Une erreur est survenue. Réessayez ou écrivez-nous à contact@job-conciergerie.fr
                 </p>
               )}

@@ -1,6 +1,7 @@
 'use server';
 
 import nodemailer from 'nodemailer';
+import { getClientIp, isFormTokenValid, isIpBlocked, isRateLimited, issueFormToken } from './antiSpam';
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -12,6 +13,10 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+export async function getContactToken(): Promise<string> {
+  return issueFormToken();
+}
+
 export async function sendContactEmail(params: {
   name: string;
   company: string;
@@ -19,15 +24,25 @@ export async function sendContactEmail(params: {
   phone: string;
   subject: string;
   message: string;
+  website?: string;
+  token?: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const { name, company, email, phone, subject, message } = params;
+  const { name, company, email, phone, subject, message, website, token } = params;
+
+  // Honeypot: pretend success so bots don't retry, but send nothing.
+  if (website) return { success: true };
+
+  const ip = await getClientIp();
+  if (isIpBlocked(ip) || isRateLimited(ip, 'contact') || !isFormTokenValid(token)) {
+    return { success: false, error: 'rejected' };
+  }
 
   const subjectLabels: Record<string, string> = {
     'forfait-decouverte': 'Forfait Découverte',
     'forfait-pro': 'Forfait Pro',
     'forfait-privilege': 'Forfait Privilège',
     'demande-renseignement': 'Demande de renseignement',
-    'demo': 'Demande de démo',
+    demo: 'Demande de démo',
   };
 
   const subjectLabel = subjectLabels[subject] || subject;

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getClientIp, isIpBlocked, isRateLimited } from '@/app/actions/antiSpam';
 
 const REVOLUT_MODE = process.env.REVOLUT_MODE === 'prod' ? 'prod' : 'sandbox';
