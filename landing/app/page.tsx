@@ -44,7 +44,12 @@ function ThemeToggle({ size = 'sm' }: { size?: 'sm' | 'md' }) {
   const activeMode = ready ? mode : null;
   const iconSize = size === 'sm' ? 16 : 18;
   const padding = size === 'sm' ? 'p-1' : 'p-1.5';
-  const btnClass = `theme-opt rounded-full flex items-center justify-center transition-all hover:text-white ${size === 'sm' ? 'p-1.5' : 'p-2'}`;
+  // Fixed square buttons: the toggle keeps its final size even before CSS or
+  // hydration settles (e.g. all responsive icons briefly visible), so the
+  // navbar never shifts when it "appears".
+  const btnClass = `theme-opt rounded-full flex items-center justify-center transition-all hover:text-white overflow-hidden ${
+    size === 'sm' ? 'w-7 h-7' : 'w-[34px] h-[34px]'
+  }`;
   return (
     <div
       role="radiogroup"
