@@ -16,7 +16,13 @@ type PendingUpdate =
   | { kind: 'employee'; entity: Employee; oldestId: string }
   | { kind: 'conciergerie'; entity: Conciergerie; oldestId: string };
 
-export default function IdPage({ params }: { params: Promise<{ id: string }> }) {
+export default function IdPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ t?: string }>;
+}) {
   const {
     userId,
     isEmployee,
@@ -32,7 +38,9 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
 
   // Use React.use to unwrap the params promise
   const unwrappedParams = use(params);
+  const unwrappedSearchParams = use(searchParams);
   const { id } = unwrappedParams;
+  const token = unwrappedSearchParams.t;
   const [error, setError] = useState('');
   const [pendingUpdate, setPendingUpdate] = useState<PendingUpdate | null>(null);
 
@@ -43,17 +51,19 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
         ? await enrollEmployeeDevice(
             (entity as Employee).firstName,
             (entity as Employee).familyName,
-            false,
             evictOldest,
+            token,
           )
-        : await enrollConciergerieDevice((entity as Conciergerie).name, false, evictOldest);
+        : await enrollConciergerieDevice((entity as Conciergerie).name, evictOldest, token);
       if (!result.ok) {
         if (result.reason === 'max_devices') throw new MaxDevicesError(result.oldestDevice ?? '');
+        if (result.reason === 'unauthorized')
+          throw new Error('Lien de vérification invalide ou expiré. Renvoyez un email de vérification.');
         throw new Error('Erreur lors de la mise à jour dans la base de données');
       }
       updateUserData({ ...entity, id: result.ids });
     },
-    [userId, updateUserData, isEmployee],
+    [userId, updateUserData, isEmployee, token],
   );
 
   const isFetching = useRef(false);

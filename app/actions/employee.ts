@@ -11,7 +11,13 @@ import {
   updateEmployeeSettings,
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
-import { getSessionCredentialIds, getSessionDeviceId, getSessionUser, isValidDeviceIdsUpdate } from '@/app/db/session';
+import {
+  getSessionCredentialIds,
+  getSessionDeviceId,
+  getSessionUser,
+  isValidDeviceIdsUpdate,
+  verifyEnrollmentToken,
+} from '@/app/db/session';
 import type { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
 import { baseId, getDevices, MaxDevicesError } from '@/app/utils/id';
@@ -19,7 +25,7 @@ import type { EmployeeNotificationSettings } from '@/app/utils/notifications';
 
 export type EnrollDeviceResult =
   | { ok: true; ids: string[]; deviceId: string; alreadyMember: boolean }
-  | { ok: false; reason: 'not_found' | 'invalid' | 'max_devices'; oldestDevice?: string };
+  | { ok: false; reason: 'not_found' | 'invalid' | 'unauthorized' | 'max_devices'; oldestDevice?: string };
 
 /**
  * Fetch all employees from the database with caching
@@ -73,7 +79,6 @@ export async function lookupEmployeeByContact(
  * Create a new employee in the database
  */
 export async function createNewEmployee(data: {
-  id: string;
   firstName: string;
   familyName: string;
   tel: string;
@@ -83,9 +88,13 @@ export async function createNewEmployee(data: {
   conciergerieName: string;
   notificationSettings?: EmployeeNotificationSettings;
 }): Promise<Employee | null> {
+  // Always register the caller's own device — never a client-provided id
+  const deviceId = await getSessionDeviceId();
+  if (!deviceId) return null;
+
   // Convert to DB format
   const dbData: Omit<DbEmployee, 'created_at'> = {
-    id: [data.id],
+    id: [deviceId],
     first_name: normalizeFirstName(data.firstName),
     family_name: normalizeFamilyName(data.familyName),
     tel: data.tel,
@@ -110,14 +119,15 @@ export async function updateEmployeeStatusAction(employee: Employee, status: Emp
 
 /**
  * Enroll the session device in an employee's id array.
- * The new array is computed server-side from the current row — the client only
- * expresses intent (mark as pending device / evict the oldest device at the limit).
+ * The new array is computed server-side from the current row. A non-member caller
+ * must present a valid enrollment token (delivered via the verification email) —
+ * a connected member needs none.
  */
 export async function enrollEmployeeDevice(
   firstName: string,
   familyName: string,
-  markPending: boolean,
   evictOldest: boolean,
+  token?: string,
 ): Promise<EnrollDeviceResult> {
   const session = await getSessionUser();
   const deviceId = session?.userId ?? (await getSessionDeviceId());
@@ -127,8 +137,11 @@ export async function enrollEmployeeDevice(
   if (!ids) return { ok: false, reason: 'not_found' };
 
   const alreadyMember = ids.some(i => baseId(i) === deviceId);
+  if (!alreadyMember && !verifyEnrollmentToken('employee', `${firstName}|${familyName}`, deviceId, token))
+    return { ok: false, reason: 'unauthorized' };
+
   try {
-    const newIds = getDevices(ids, deviceId, markPending, evictOldest);
+    const newIds = getDevices(ids, deviceId, false, evictOldest);
     const updated = await updateEmployeeId(firstName, familyName, newIds);
     return updated ? { ok: true, ids: updated, deviceId, alreadyMember } : { ok: false, reason: 'invalid' };
   } catch (error) {

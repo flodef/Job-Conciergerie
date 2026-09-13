@@ -7,7 +7,13 @@ import {
   updateConciergerie,
   updateConciergerieId,
 } from '@/app/db/conciergerieDb';
-import { getSessionCredentialIds, getSessionDeviceId, getSessionUser, isValidDeviceIdsUpdate } from '@/app/db/session';
+import {
+  getSessionCredentialIds,
+  getSessionDeviceId,
+  getSessionUser,
+  isValidDeviceIdsUpdate,
+  verifyEnrollmentToken,
+} from '@/app/db/session';
 import type { EnrollDeviceResult } from '@/app/actions/employee';
 import type { Conciergerie } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
@@ -46,8 +52,8 @@ export async function fetchConciergeries(): Promise<Conciergerie[] | null> {
  */
 export async function enrollConciergerieDevice(
   name: string,
-  markPending: boolean,
   evictOldest: boolean,
+  token?: string,
 ): Promise<EnrollDeviceResult> {
   const session = await getSessionUser();
   const deviceId = session?.userId ?? (await getSessionDeviceId());
@@ -57,8 +63,11 @@ export async function enrollConciergerieDevice(
   if (!ids) return { ok: false, reason: 'not_found' };
 
   const alreadyMember = ids.some(i => baseId(i) === deviceId);
+  if (!alreadyMember && !verifyEnrollmentToken('conciergerie', name, deviceId, token))
+    return { ok: false, reason: 'unauthorized' };
+
   try {
-    const newIds = getDevices(ids, deviceId, markPending, evictOldest);
+    const newIds = getDevices(ids, deviceId, false, evictOldest);
     const updated = await updateConciergerieId(name, newIds);
     return updated ? { ok: true, ids: updated, deviceId, alreadyMember } : { ok: false, reason: 'invalid' };
   } catch (error) {

@@ -27,24 +27,25 @@
 - Enrôlement recalculé côté serveur : `enrollEmployeeDevice`/`enrollConciergerieDevice` (le client ne fabrique plus le tableau — fin de l'overwrite arbitraire = takeover). `updateXWithUserId` réservé aux membres connectés de la ligne.
 - `proxy.ts` : regex d'URL étendue à `v2_[0-9a-f]{32}` ; `/api/auth` utilise `getExistingUserTypeResilient` (fallback rotaté).
 - Reste public par design : `lookupEmployeeByContact`, `createNewEmployee`, `enroll*Device`, emails waiting-page/cron, `environment.ts`.
-- ⚠️ Limite connue : l'enrôlement reste « ouvert » (n'importe qui peut ajouter SON id à une ligne dont il connaît le nom — même confiance que le flux email actuel) → voir **A.5**.
+- Limite d'enrôlement ouvert fermée par **A.5** (token signé dans le lien email).
 - Étape 2 (Phase C) : scoper par `client_id`.
 
 ### A.3 — Signature du webhook Revolut ✅ FAIT
 
 - Vérif `Revolut-Signature` HMAC-SHA256 sur `v1.{timestamp}.{rawBody}`, fenêtre ±5 min, multi-signatures (rotation de secret). Actif dès `REVOLUT_WEBHOOK_SECRET` configuré.
 
-### A.5 — Token d'enrôlement signé (à faire — fermer le trou d'enrôlement)
+### A.5 — Token d'enrôlement signé ✅ FAIT
 
-**Attaque restante** : `enrollEmployeeDevice('Jean', 'Dupont', …)` / `enrollConciergerieDevice('Ma Conciergerie', …)` acceptent tout appelant — connaître `first_name + family_name` (ou le nom d'une conciergerie) suffit à ajouter son propre `user_id` dans le `id[]` de la cible → usurpation complète. L'email de vérification n'est pas une preuve : le lien contient l'id de l'appareil _demandeur_, que l'attaquant connaît déjà — rien ne prouve qu'il a reçu l'email. Phase A a réduit la surface (on ne peut plus écraser le tableau, seulement s'ajouter → la victime garde l'accès et l'appareil intrus est visible dans Paramètres), mais l'ajout non autorisé reste possible.
+**Attaque fermée** : `enroll*Device` acceptait tout appelant — connaître `first_name + family_name` (ou le nom d'une conciergerie) suffisait à ajouter son `user_id` dans le `id[]` de la cible → usurpation. L'email de vérification n'était pas une preuve : le lien contient l'id de l'appareil _demandeur_, que l'attaquant connaît déjà.
 
-**Fix** : le lien email devient un vrai credential.
+**Implémentation** :
 
-- Le serveur génère les liens `/[id]` avec un token : `?t=HMAC-SHA256(rowKey | deviceId | expires, SECRET)` (même clé que `ID_ROTATION_SECRET`, ou dédiée).
-- `enroll*Device` exige `token` pour un appelant **non membre** de la ligne (un membre gère déjà ses appareils via `updateXWithUserId`).
-- Le flux `markPending` (employé qui demande l'accès) peut rester sans token _ou_ exiger le token selon le niveau voulu — décision : le pending ne donne accès à rien de sensible de toute façon (la ligne `id[]` reste protégée, mais un `$id` résout une session → accès aux listes → token recommandé aussi ici).
-- Rétrocompat : garder une fenêtre où `token` optionnel mais requis dès qu'il est présent dans le format de lien (ou versionner le lien `/[id]?v=2&t=…`), puis rendre obligatoire après expiration des anciens emails (~30 jours = durée des cookies).
-- Points d'attention : `employeeForm` (ré-inscription d'un employé existant) passe par `enroll*` sans email → il faut y prouver l'identité autrement (ex. envoi d'un email de confirmation AVANT l'ajout, ou lookup contact + code OTP).
+- `enrollmentToken(kind, rowKey, deviceId)` dans `app/db/session.ts` : `exp.sig` où `sig = HMAC-SHA256(enroll|kind|rowKey|deviceId|exp)` tronqué à 32 hex, clé `hmacSecret()` (= `ID_ROTATION_SECRET ‖ SUPABASE_SERVICE_ROLE_KEY`), TTL **7 jours**. Vérif `timingSafeEqual`, sync.
+- Liens générés côté serveur dans `sendConciergerieVerificationEmail` et `sendNewDeviceNotificationEmail` : `/${deviceId}?t=<token>` — le token est lié au **device de session de l'appelant** et le destinataire est **re-fetché en DB** (l'objet client n'est plus jamais utilisé pour l'adresse → impossible de rediriger le lien vers sa propre boîte).
+- `enroll*Device` exige le token pour un appelant **non membre** ; un membre (match sur `baseId`, `$` inclus) n'en a pas besoin → les anciens appareils continuent de fonctionner, seuls les nouveaux enrôlements passent par l'email.
+- `/[id]` lit `searchParams.t` et le passe à `enroll*Device`.
+- `employeeForm` (ré-inscription d'un employé existant) : n'enrôle plus directement — envoie l'email de vérification puis va sur `Waiting` ; l'enrôlement se fait au clic du lien (preuve de possession de la boîte).
+- Décision : **pas de fenêtre de rétrocompat** — les vieux emails sans `?t=` échouent pour les non-membres ; l'utilisateur renvoie un email depuis la page d'attente. Coût : uniquement les liens envoyés dans les jours précédant le déploiement.
 
 ### A.4 — Durcissements optionnels (à décider)
 

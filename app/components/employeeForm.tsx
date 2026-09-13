@@ -1,6 +1,6 @@
 'use client';
 
-import { createNewEmployee, enrollEmployeeDevice, lookupEmployeeByContact } from '@/app/actions/employee';
+import { createNewEmployee, lookupEmployeeByContact } from '@/app/actions/employee';
 import AppVersion from '@/app/components/appVersion';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
@@ -18,7 +18,6 @@ import { useRateLimiter } from '@/app/hooks/useRateLimiter';
 import type { Employee } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
 import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
-import { formatId, getConnectedDevices, MAX_DEVICES, MaxDevicesError } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -47,7 +46,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [maxDevicesPrompt, setMaxDevicesPrompt] = useState<{ oldestId: string; employee: Employee } | null>(null);
 
   // Contact error handling for phone/email conflict
   const [showContactButton, setShowContactButton] = useState(false);
@@ -208,22 +206,20 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           setIsSubmitting(false);
           return;
         }
-        try {
-          await proceedWithDeviceUpdate(lookup.employee, false);
-        } catch (err) {
-          if (err instanceof MaxDevicesError) {
-            setMaxDevicesPrompt({ oldestId: err.oldestDevice, employee: lookup.employee });
-            setIsSubmitting(false);
-            return;
-          }
-          throw err;
-        }
+
+        // Existing employee: a verification email with an enrollment link is sent
+        // to their registered address — the device is enrolled when they open the
+        // link on this device (proves mailbox ownership).
+        updateUserData(lookup.employee);
+        await EmailSender.sendNewDeviceEmail(lookup.employee, currentUserId);
+        showToast({
+          type: ToastType.Success,
+          message: "Un email de vérification a été envoyé à l'adresse associée à votre compte",
+        });
+        onMenuChange(Page.Waiting);
       } else {
         // Create a new employee in the database (with normalized values)
-        const newEmployee = await createNewEmployee({
-          ...normalizedFormData,
-          id: currentUserId,
-        });
+        const newEmployee = await createNewEmployee(normalizedFormData);
         if (!newEmployee) throw new Error('Prestataire non créé dans la base de données');
 
         updateUserData(newEmployee);
@@ -258,57 +254,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       });
       setIsSubmitting(false);
     }
-  };
-
-  const proceedWithDeviceUpdate = async (employee: Employee, evictOldest: boolean) => {
-    if (!userId) throw new Error("L'identifiant n'est pas défini");
-
-    const result = await enrollEmployeeDevice(employee.firstName, employee.familyName, true, evictOldest);
-    if (!result.ok) {
-      if (result.reason === 'max_devices') throw new MaxDevicesError(result.oldestDevice ?? '');
-      throw new Error('Prestataire non mis à jour dans la base de données');
-    }
-
-    // Update the employee object with the new ID array
-    const updatedEmployee = {
-      ...employee,
-      id: result.ids,
-    };
-
-    // Update local user data and userType so auth context is fully set before navigating
-    updateUserData(updatedEmployee);
-
-    if (result.alreadyMember) {
-      onMenuChange(
-        employee.status === 'accepted' && getConnectedDevices(result.ids).includes(result.deviceId)
-          ? Page.Missions
-          : Page.Waiting,
-      );
-    } else {
-      // Send notification email to employee about the new device
-      await EmailSender.sendNewDeviceEmail(updatedEmployee, result.deviceId);
-      showToast({
-        type: ToastType.Success,
-        message: "L'email de notification de nouvel appareil a été envoyé avec succès",
-      });
-
-      onMenuChange(Page.Waiting);
-    }
-  };
-
-  const handleConfirmEviction = () => {
-    if (!maxDevicesPrompt) return;
-    const { employee } = maxDevicesPrompt;
-    setMaxDevicesPrompt(null);
-    setIsSubmitting(true);
-    proceedWithDeviceUpdate(employee, true).catch(error => {
-      showToast({
-        type: ToastType.Error,
-        message: String(error),
-        error,
-      });
-      setIsSubmitting(false);
-    });
   };
 
   if (!formData || isLoading) return null;
@@ -490,19 +435,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
           confirmText="Quitter sans enregistrer"
           cancelText="Continuer l'édition"
-        />
-
-        <ConfirmationModal
-          isOpen={!!maxDevicesPrompt}
-          onClose={() => setMaxDevicesPrompt(null)}
-          onConfirm={handleConfirmEviction}
-          title="Limite d'appareils atteinte"
-          message={`Vous avez déjà ${MAX_DEVICES} appareils connectés. Si vous continuez, le plus ancien (${
-            maxDevicesPrompt ? formatId(maxDevicesPrompt.oldestId) : ''
-          }) sera déconnecté et un email vous sera envoyé pour valider ce nouvel appareil.`}
-          confirmText="Continuer"
-          cancelText="Annuler"
-          isDangerous
         />
       </form>
 

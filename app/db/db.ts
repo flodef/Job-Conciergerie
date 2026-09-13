@@ -7,10 +7,11 @@ import postgres from 'postgres';
 export { isConnectionPoolError };
 
 /**
- * Secret used to derive rotated ids. Prefers a dedicated env var so the derivation
- * stays stable across credential rotations; falls back to the service role key.
+ * Secret used for HMAC derivations (id rotation, enrollment tokens).
+ * Prefers a dedicated env var so derivations stay stable across credential
+ * rotations; falls back to the service role key.
  */
-const rotationKey = () => process.env.ID_ROTATION_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? null;
+export const hmacSecret = () => process.env.ID_ROTATION_SECRET ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? null;
 
 /**
  * Deterministic rotation of a legacy (Math.random) id to a `v2_` HMAC-derived id.
@@ -20,7 +21,7 @@ const rotationKey = () => process.env.ID_ROTATION_SECRET ?? process.env.SUPABASE
  */
 export function rotateLegacyId(id: string): string {
   if (id.startsWith(V2_ID_PREFIX)) return id;
-  const key = rotationKey();
+  const key = hmacSecret();
   if (!key) return id;
   return V2_ID_PREFIX + createHmac('sha256', key).update(id).digest('hex').slice(0, 32);
 }

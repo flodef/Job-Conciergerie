@@ -72,6 +72,24 @@ export const updateConciergerie = async (name: string | undefined, data: Partial
 };
 
 /**
+ * Fetch a single conciergerie by name
+ */
+export const getConciergerieByName = async (name: string) => {
+  try {
+    const result = await sql`
+      SELECT id, name, email, tel, color_name, notification_settings
+      FROM conciergeries
+      WHERE name = ${name}
+      LIMIT 1
+    `;
+    return result.length > 0 ? formatConciergerie(result[0] as DbConciergerie) : null;
+  } catch (error) {
+    console.error(`Error fetching conciergerie ${name}:`, error);
+    return null;
+  }
+};
+
+/**
  * Fetch a conciergerie's device id array
  */
 export const getConciergerieIds = async (name: string): Promise<string[] | null> => {

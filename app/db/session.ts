@@ -1,6 +1,7 @@
-import { sql, rotateLegacyId } from '@/app/db/db';
+import { hmacSecret, rotateLegacyId, sql } from '@/app/db/db';
 import type { UserType } from '@/app/contexts/authProvider';
 import { baseId, V2_ID_PREFIX } from '@/app/utils/id';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
 
 const USER_ID_COOKIE = 'user_id';
@@ -128,6 +129,55 @@ export async function getSessionCredentialIds(): Promise<Set<string>> {
   const session = await getSessionUser();
   if (session) ids.add(session.userId);
   return ids;
+}
+
+// ------------------------------------------------------------------
+// Enrollment tokens — proof that a non-member caller received the email.
+// Stateless signed token: `${expiresAt}.${hmac}` binding (kind | row | device).
+// ------------------------------------------------------------------
+
+const ENROLL_TOKEN_TTL = 7 * 24 * 60 * 60; // 7 days — emails may sit unread
+
+const enrollmentPayload = (kind: string, rowKey: string, deviceId: string, exp: number) =>
+  `enroll|${kind}|${rowKey}|${deviceId}|${exp}`;
+
+/**
+ * Issue an enrollment token for a device in a verification email link.
+ * Returns '' when no signing secret is configured (enrollment then fails closed).
+ */
+export function enrollmentToken(kind: 'employee' | 'conciergerie', rowKey: string, deviceId: string): string {
+  const key = hmacSecret();
+  if (!key) return '';
+  const exp = Math.floor(Date.now() / 1000) + ENROLL_TOKEN_TTL;
+  const sig = createHmac('sha256', key)
+    .update(enrollmentPayload(kind, rowKey, deviceId, exp))
+    .digest('hex')
+    .slice(0, 32);
+  return `${exp}.${sig}`;
+}
+
+/**
+ * Verify an enrollment token for a non-member enrolling into `rowKey` with `deviceId`.
+ */
+export function verifyEnrollmentToken(
+  kind: 'employee' | 'conciergerie',
+  rowKey: string,
+  deviceId: string,
+  token: string | undefined,
+): boolean {
+  const key = hmacSecret();
+  if (!key || !token) return false;
+
+  const [expStr, sig] = token.split('.');
+  const exp = Number(expStr);
+  if (!exp || !sig || exp < Math.floor(Date.now() / 1000)) return false;
+
+  const expected = createHmac('sha256', key)
+    .update(enrollmentPayload(kind, rowKey, deviceId, exp))
+    .digest('hex')
+    .slice(0, 32);
+  if (sig.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
 }
 
 /**
