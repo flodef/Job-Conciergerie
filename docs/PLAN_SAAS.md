@@ -27,12 +27,24 @@
 - Enrôlement recalculé côté serveur : `enrollEmployeeDevice`/`enrollConciergerieDevice` (le client ne fabrique plus le tableau — fin de l'overwrite arbitraire = takeover). `updateXWithUserId` réservé aux membres connectés de la ligne.
 - `proxy.ts` : regex d'URL étendue à `v2_[0-9a-f]{32}` ; `/api/auth` utilise `getExistingUserTypeResilient` (fallback rotaté).
 - Reste public par design : `lookupEmployeeByContact`, `createNewEmployee`, `enroll*Device`, emails waiting-page/cron, `environment.ts`.
-- ⚠️ Limite connue : l'enrôlement reste « ouvert » (n'importe qui peut ajouter SON id à une ligne dont il connaît le nom — même confiance que le flux email actuel). Fermer = token d'enrôlement signé dans les liens (durcissement futur).
+- ⚠️ Limite connue : l'enrôlement reste « ouvert » (n'importe qui peut ajouter SON id à une ligne dont il connaît le nom — même confiance que le flux email actuel) → voir **A.5**.
 - Étape 2 (Phase C) : scoper par `client_id`.
 
 ### A.3 — Signature du webhook Revolut ✅ FAIT
 
 - Vérif `Revolut-Signature` HMAC-SHA256 sur `v1.{timestamp}.{rawBody}`, fenêtre ±5 min, multi-signatures (rotation de secret). Actif dès `REVOLUT_WEBHOOK_SECRET` configuré.
+
+### A.5 — Token d'enrôlement signé (à faire — fermer le trou d'enrôlement)
+
+**Attaque restante** : `enrollEmployeeDevice('Jean', 'Dupont', …)` / `enrollConciergerieDevice('Ma Conciergerie', …)` acceptent tout appelant — connaître `first_name + family_name` (ou le nom d'une conciergerie) suffit à ajouter son propre `user_id` dans le `id[]` de la cible → usurpation complète. L'email de vérification n'est pas une preuve : le lien contient l'id de l'appareil _demandeur_, que l'attaquant connaît déjà — rien ne prouve qu'il a reçu l'email. Phase A a réduit la surface (on ne peut plus écraser le tableau, seulement s'ajouter → la victime garde l'accès et l'appareil intrus est visible dans Paramètres), mais l'ajout non autorisé reste possible.
+
+**Fix** : le lien email devient un vrai credential.
+
+- Le serveur génère les liens `/[id]` avec un token : `?t=HMAC-SHA256(rowKey | deviceId | expires, SECRET)` (même clé que `ID_ROTATION_SECRET`, ou dédiée).
+- `enroll*Device` exige `token` pour un appelant **non membre** de la ligne (un membre gère déjà ses appareils via `updateXWithUserId`).
+- Le flux `markPending` (employé qui demande l'accès) peut rester sans token _ou_ exiger le token selon le niveau voulu — décision : le pending ne donne accès à rien de sensible de toute façon (la ligne `id[]` reste protégée, mais un `$id` résout une session → accès aux listes → token recommandé aussi ici).
+- Rétrocompat : garder une fenêtre où `token` optionnel mais requis dès qu'il est présent dans le format de lien (ou versionner le lien `/[id]?v=2&t=…`), puis rendre obligatoire après expiration des anciens emails (~30 jours = durée des cookies).
+- Points d'attention : `employeeForm` (ré-inscription d'un employé existant) passe par `enroll*` sans email → il faut y prouver l'identité autrement (ex. envoi d'un email de confirmation AVANT l'ajout, ou lookup contact + code OTP).
 
 ### A.4 — Durcissements optionnels (à décider)
 
