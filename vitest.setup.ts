@@ -6,7 +6,6 @@ const result = config({ path: '.env.local' });
 if (result.error) {
   console.error('Error loading .env.local:', result.error);
 }
-console.log('vitest.setup.ts loaded, DATABASE_URL:', process.env.DATABASE_URL?.substring(0, 60));
 
 // Set fallback mock values if not present in .env.local
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {

@@ -15,8 +15,6 @@ describe.skipIf(!process.env.DATABASE_URL)('Mission Actions - conciergerieCommen
   // let createNewMission: any, updateMissionData: any, createHome: any, deleteMission: any, sql: any;
 
   beforeAll(async () => {
-    console.log('DATABASE_URL in test:', process.env.DATABASE_URL?.substring(0, 60));
-
     // Create a test home (required FK for missions)
     await createHome({
       id: TEST_HOME_ID,
