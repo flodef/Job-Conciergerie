@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 
 export type ThemeMode = 'dark' | 'light' | 'system';
 
@@ -49,8 +49,15 @@ export function useTheme() {
   );
   const resolved = mode === 'system' ? (systemLight ? 'light' : 'dark') : mode;
 
-  // Re-apply on mode change and on OS theme change while in 'system' mode
+  // Re-apply on mode change and on OS theme change while in 'system' mode.
+  // Skip the first run: `mode` still holds the server snapshot ('system') and
+  // applying it would clobber the theme the init script restored from storage.
+  const mounted = useRef(false);
   useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
     applyTheme(mode);
   }, [mode, resolved]);
 
