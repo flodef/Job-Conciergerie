@@ -5,7 +5,17 @@ import reactHooks from 'eslint-plugin-react-hooks';
 
 const eslintConfig = [
   {
-    ignores: ['node_modules/**', '.next/**', 'dist/**', 'build/**', '*.config.*', 'public/**', 'scripts/**', 'sw.js'],
+    ignores: [
+      'node_modules/**',
+      '**/.next/**',
+      'dist/**',
+      'build/**',
+      '*.config.*',
+      'public/**',
+      '**/public/**',
+      'scripts/**',
+      'sw.js',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -15,7 +25,10 @@ const eslintConfig = [
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      '@typescript-eslint/no-unused-vars': ['error', { vars: 'all', args: 'after-used', ignoreRestSiblings: true }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { vars: 'all', args: 'after-used', argsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
       '@typescript-eslint/no-unused-expressions': 'error',
       '@typescript-eslint/consistent-type-imports': [
         'error',
