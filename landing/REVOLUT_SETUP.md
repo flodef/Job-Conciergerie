@@ -111,12 +111,12 @@ function verifyWebhookSignature(rawBody: string, signature: string, secret: stri
 
 Utiliser ces cartes pour tester en mode sandbox :
 
-| Scénario | Numéro de carte | Résultat |
-|----------|----------------|----------|
-| Paiement réussi | `4111 1111 1111 1111` | Succès |
-| Paiement refusé | `4111 1111 1111 1112` | Refusé |
-| 3DS requis | `4111 1111 1111 1113` | Authentification 3DS |
-| Fonds insuffisants | `4111 1111 1111 1114` | Insufficient funds |
+| Scénario           | Numéro de carte       | Résultat             |
+| ------------------ | --------------------- | -------------------- |
+| Paiement réussi    | `4111 1111 1111 1111` | Succès               |
+| Paiement refusé    | `4111 1111 1111 1112` | Refusé               |
+| 3DS requis         | `4111 1111 1111 1113` | Authentification 3DS |
+| Fonds insuffisants | `4111 1111 1111 1114` | Insufficient funds   |
 
 - **Date d'expiration** : n'importe quelle date future (ex: `12/30`)
 - **CVV** : n'importe quel code à 3 chiffres (ex: `123`)
@@ -150,15 +150,8 @@ Revolut ne peut pas atteindre `localhost`. Solutions :
    - `.env.local` (local)
    - Variables d'environnement Vercel (production)
 
-2. Dans `app/checkout/page.tsx`, ligne ~81 :
-   ```ts
-   // Avant (sandbox)
-   const instance = await RevolutCheckout(orderToken, 'sandbox');
-
-   // Après (prod) — utiliser la variable d'env
-   const mode = process.env.NEXT_PUBLIC_REVOLUT_MODE || 'sandbox';
-   const instance = await RevolutCheckout(orderToken, mode as 'prod' | 'sandbox');
-   ```
+2. Le widget checkout suit automatiquement `REVOLUT_MODE` : `/api/create-order` renvoie
+   le mode (`sandbox` ou `prod`) et `CheckoutContent` l'utilise pour initialiser le widget.
 
 3. Mettre à jour l'URL du webhook dans le dashboard Revolut avec l'URL de production
 
@@ -172,8 +165,9 @@ Revolut ne peut pas atteindre `localhost`. Solutions :
 
 - **Méthode** : `POST`
 - **Body** : `{ planName: string, amount: number, currency: string, customerEmail?: string }`
-- **Réponse** : `{ token: string, orderId: string, checkoutUrl: string }`
-- **Sécurité** : utilise `REVOLUT_SECRET_KEY` côté serveur uniquement
+- **Réponse** : `{ token: string, orderId: string, checkoutUrl: string, mode: 'sandbox' | 'prod' }`
+- **Sécurité** : utilise `REVOLUT_SECRET_KEY` côté serveur uniquement — si la clé est absente,
+  l'endpoint renvoie `503` et la page `/checkout` redirige vers le formulaire de contact (`/#contact`)
 
 L'`amount` est multiplié par 100 (conversion en centimes) car l'API Revolut attend le montant dans la plus petite dénomination (cents pour EUR).
 
@@ -195,11 +189,11 @@ L'`amount` est multiplié par 100 (conversion en centimes) car l'API Revolut att
 
 ### Plans tarifés
 
-| Plan | Prix mensuel | Prix annuel | ID |
-|------|-------------|-------------|-----|
-| Découverte | 30€ | 300€ | `decouverte` |
-| Pro | 50€ | 500€ | `pro` |
-| Privilège | 100€ | 1000€ | `privilege` |
+| Plan       | Prix mensuel | Prix annuel | ID           |
+| ---------- | ------------ | ----------- | ------------ |
+| Découverte | 30€          | 300€        | `decouverte` |
+| Pro        | 50€          | 500€        | `pro`        |
+| Privilège  | 100€         | 1000€       | `privilege`  |
 
 ---
 

@@ -5,7 +5,7 @@
     "": {
       "name": "job-conciergerie-landing",
       "dependencies": {
-        "@revolut/checkout": "^1.1.25",
+        "@revolut/checkout": "latest",
         "@tabler/icons-react": "^3.34.0",
         "framer-motion": "^12.12.1",
         "next": "16.3.0",
