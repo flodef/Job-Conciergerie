@@ -32,7 +32,7 @@ import {
   IconUsers,
   IconX,
 } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTheme } from '@/app/theme';
 
 /* ───────────────────────────── Theme Toggle ───────────────────────────── */
@@ -443,10 +443,13 @@ function PhoneMockup() {
   const [missionStage, setMissionStage] = useState(0);
   const [autoAdvance, setAutoAdvance] = useState(true);
 
-  const screenOrder: MockScreen[] =
-    mode === 'employee'
-      ? ['missions', 'calendar', 'history', 'settings']
-      : ['missions', 'calendar-conciergerie', 'biens', 'prestataires', 'settings'];
+  const screenOrder: MockScreen[] = useMemo(
+    () =>
+      mode === 'employee'
+        ? ['missions', 'calendar', 'history', 'settings']
+        : ['missions', 'calendar-conciergerie', 'biens', 'prestataires', 'settings'],
+    [mode],
+  );
 
   // Reset screen and stage when mode changes
   useEffect(() => {

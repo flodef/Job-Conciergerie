@@ -84,24 +84,18 @@ Le webhook permet à Revolut de notifier ton serveur quand un paiement est confi
    - `ORDER_AUTHORISED` — paiement autorisé (non capturé)
    - `ORDER_CANCELLED` — paiement annulé
 
-### Sécurité du webhook (à implémenter)
+### Sécurité du webhook
 
-Actuellement le webhook ne vérifie pas la signature. Pour la production, il faut :
+La vérification de signature est implémentée dans `app/api/revolut-webhook/route.ts` :
 
-1. Récupérer le header `Revolut-Signature` de la requête
-2. Le comparer avec la signature calculée (HMAC SHA-256 du body avec la secret key)
-3. Rejeter si la signature ne correspond pas
-
-Exemple d'implémentation à ajouter dans `app/api/revolut-webhook/route.ts` :
-
-```ts
-import crypto from 'crypto';
-
-function verifyWebhookSignature(rawBody: string, signature: string, secret: string): boolean {
-  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
-}
-```
+- `payload_to_sign = v1.{Revolut-Request-Timestamp}.{raw body}` signé en HMAC-SHA256
+  avec le **signing secret** du webhook (`wsk_...`, récupérable dans les détails du webhook
+  via l'API Merchant)
+- Le header `Revolut-Signature` peut contenir plusieurs signatures `v1=...` séparées par
+  des virgules (rotation de secret) — une seule doit matcher
+- Timestamp rejeté au-delà de ±5 min (anti-rejeu)
+- **Configurer `REVOLUT_WEBHOOK_SECRET`** dans l'env : tant qu'elle est absente, les
+  requêtes sont acceptées avec un warning en log (transition) — en prod elle est requise
 
 ---
 

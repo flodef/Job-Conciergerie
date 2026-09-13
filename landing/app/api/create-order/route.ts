@@ -8,6 +8,13 @@ const REVOLUT_API_URL =
     ? 'https://merchant.revolut.com/api/orders'
     : 'https://sandbox-merchant.revolut.com/api/orders';
 
+// Prix définis côté serveur — le client envoie le plan, jamais le montant.
+const PLANS: Record<string, { name: string; monthly: number; annual: number }> = {
+  decouverte: { name: 'Découverte', monthly: 30, annual: 300 },
+  pro: { name: 'Pro', monthly: 50, annual: 500 },
+  privilege: { name: 'Privilège', monthly: 100, annual: 1000 },
+};
+
 export async function POST(request: NextRequest) {
   try {
     if (!process.env.REVOLUT_SECRET_KEY) {
@@ -19,11 +26,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
-    const { planName, amount, currency, customerEmail } = await request.json();
+    const { plan, billing, customerEmail } = await request.json();
 
-    if (!planName || !amount) {
-      return NextResponse.json({ error: 'Missing planName or amount' }, { status: 400 });
+    const planData = PLANS[plan];
+    if (!planData || (billing !== 'monthly' && billing !== 'annual')) {
+      return NextResponse.json({ error: 'Invalid plan or billing' }, { status: 400 });
     }
+    const amount = billing === 'annual' ? planData.annual : planData.monthly;
+    const planName = planData.name;
 
     const response = await fetch(REVOLUT_API_URL, {
       method: 'POST',
@@ -33,7 +43,7 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify({
         amount: Math.round(amount * 100),
-        currency: currency || 'EUR',
+        currency: 'EUR',
         description: `Abonnement Job Conciergerie — ${planName}`,
         redirect_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/checkout?status=success`,
         customer: customerEmail ? { email: customerEmail } : undefined,

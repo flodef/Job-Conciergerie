@@ -3,7 +3,8 @@ import { createHmac, timingSafeEqual, randomBytes } from 'crypto';
 
 // Dedicated secret recommended (CONTACT_FORM_SECRET); falls back to a
 // per-process random secret so tokens can't be forged across restarts.
-const SECRET = process.env.CONTACT_FORM_SECRET ?? randomBytes(32).toString('hex');
+// `||` (not `??`): an empty env var must also fall back.
+const SECRET = process.env.CONTACT_FORM_SECRET || randomBytes(32).toString('hex');
 
 const MIN_FILL_MS = 3_000; // a human can't fill the form faster than this
 const MAX_TOKEN_AGE_MS = 2 * 60 * 60 * 1000;
@@ -40,7 +41,10 @@ export async function getClientIp(): Promise<string> {
   if (real) return real.trim();
   const xff = h.get('x-forwarded-for');
   if (xff) {
-    const parts = xff.split(',').map(s => s.trim()).filter(Boolean);
+    const parts = xff
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean);
     if (parts.length) return parts[parts.length - 1];
   }
   return 'unknown';
