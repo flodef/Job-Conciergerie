@@ -1,6 +1,6 @@
 {
   "name": "job-conciergerie",
-  "version": "2.355",
+  "version": "2.357",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -51,7 +51,7 @@
     "jsdom": "latest",
     "postcss": "latest",
     "tailwindcss": "latest",
-    "typescript": "latest",
+    "typescript": "^5",
     "typescript-eslint": "latest",
     "vitest": "latest"
   },

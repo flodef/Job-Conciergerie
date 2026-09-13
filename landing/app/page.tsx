@@ -33,56 +33,18 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-
-/* ───────────────────────────── Theme ───────────────────────────── */
-type ThemeMode = 'dark' | 'light' | 'system';
-
-function useTheme() {
-  const [mode, setMode] = useState<ThemeMode>('system');
-  const [resolved, setResolved] = useState<'dark' | 'light'>('dark');
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem('theme') as ThemeMode | null;
-    setMode(stored || 'system');
-    setReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (mode === 'system') {
-      const mq = window.matchMedia('(prefers-color-scheme: light)');
-      const apply = () => setResolved(mq.matches ? 'light' : 'dark');
-      apply();
-      mq.addEventListener('change', apply);
-      return () => mq.removeEventListener('change', apply);
-    } else {
-      setResolved(mode);
-    }
-  }, [mode]);
-
-  useEffect(() => {
-    if (!ready) return;
-    const root = document.documentElement;
-    if (resolved === 'light') root.classList.add('light');
-    else root.classList.remove('light');
-    if (mode === 'system') localStorage.removeItem('theme');
-    else localStorage.setItem('theme', mode);
-  }, [resolved, mode, ready]);
-
-  const set = (m: ThemeMode) => setMode(m);
-  return { mode, resolved, set };
-}
+import { useTheme } from '@/app/theme';
 
 /* ───────────────────────────── Theme Toggle ───────────────────────────── */
-function ThemeToggle({ mode, set, size = 'sm' }: { mode: ThemeMode; set: (m: ThemeMode) => void; size?: 'sm' | 'md' }) {
+function ThemeToggle({ size = 'sm' }: { size?: 'sm' | 'md' }) {
+  const { mode, set } = useTheme();
   const iconSize = size === 'sm' ? 16 : 18;
   const padding = size === 'sm' ? 'p-1' : 'p-1.5';
-  const options: { value: ThemeMode; icon: typeof IconSun; label: string }[] = [
-    { value: 'light', icon: IconSun, label: 'Clair' },
-    { value: 'dark', icon: IconMoon, label: 'Sombre' },
-  ];
+  const btnClass = `theme-opt rounded-full flex items-center justify-center transition-all hover:text-white ${size === 'sm' ? 'p-1.5' : 'p-2'}`;
   return (
     <div
+      role="radiogroup"
+      aria-label="Thème"
       className={`inline-grid grid-cols-3 gap-0.5 rounded-full ${padding} text-slate-400 shrink-0`}
       style={{ backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
     >
@@ -93,14 +55,20 @@ function ThemeToggle({ mode, set, size = 'sm' }: { mode: ThemeMode; set: (m: The
         aria-label="Système"
         aria-checked={mode === 'system'}
         role="radio"
+        data-theme-opt="system"
         style={{ cursor: 'pointer' }}
-        className={`rounded-full flex items-center justify-center transition-all ${size === 'sm' ? 'p-1.5' : 'p-2'} ${mode === 'system' ? 'bg-linear-to-r from-brand-500 to-accent-500 text-white shadow-sm' : 'hover:text-white'}`}
+        className={btnClass}
       >
         <IconDeviceDesktop size={iconSize} className="hidden md:block" />
         <IconDeviceTablet size={iconSize} className="hidden sm:block md:hidden" />
         <IconDeviceMobile size={iconSize} className="sm:hidden" />
       </button>
-      {options.map(opt => (
+      {(
+        [
+          { value: 'light', icon: IconSun, label: 'Clair' },
+          { value: 'dark', icon: IconMoon, label: 'Sombre' },
+        ] as const
+      ).map(opt => (
         <button
           key={opt.value}
           type="button"
@@ -109,8 +77,9 @@ function ThemeToggle({ mode, set, size = 'sm' }: { mode: ThemeMode; set: (m: The
           aria-label={opt.label}
           aria-checked={mode === opt.value}
           role="radio"
+          data-theme-opt={opt.value}
           style={{ cursor: 'pointer' }}
-          className={`rounded-full flex items-center justify-center transition-all ${size === 'sm' ? 'p-1.5' : 'p-2'} ${mode === opt.value ? 'bg-linear-to-r from-brand-500 to-accent-500 text-white shadow-sm' : 'hover:text-white'}`}
+          className={btnClass}
         >
           <opt.icon size={iconSize} />
         </button>
@@ -123,7 +92,6 @@ function ThemeToggle({ mode, set, size = 'sm' }: { mode: ThemeMode; set: (m: The
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { mode, resolved, set } = useTheme();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -184,13 +152,16 @@ function Navbar() {
           >
             Demander une démo
           </a>
-          <ThemeToggle mode={mode} set={set} size="sm" />
+          <ThemeToggle size="sm" />
         </div>
         <div className="flex items-center gap-3">
           <button
             type="button"
             className="lg:hidden text-slate-300 relative z-50"
             onClick={() => setMenuOpen(!menuOpen)}
+            aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
             style={{ cursor: 'pointer' }}
           >
             {menuOpen ? <IconX size={24} /> : <IconMenu2 size={24} />}
@@ -199,6 +170,7 @@ function Navbar() {
       </div>
       {menuOpen && (
         <div
+          id="mobile-menu"
           className="lg:hidden mt-3 mx-4 rounded-2xl p-6 flex flex-col gap-4"
           style={{ backgroundColor: 'var(--nav-bg)', border: '1px solid var(--glass-border)' }}
         >
@@ -208,7 +180,7 @@ function Navbar() {
               href={l.href}
               onClick={() => {
                 setMenuOpen(false);
-                l.subject && window.dispatchEvent(new CustomEvent('contactSubject', { detail: l.subject }));
+                if (l.subject) window.dispatchEvent(new CustomEvent('contactSubject', { detail: l.subject }));
               }}
               className="text-slate-300 hover:text-white transition-colors"
             >
@@ -226,7 +198,7 @@ function Navbar() {
             >
               Demander une démo
             </a>
-            <ThemeToggle mode={mode} set={set} size="md" />
+            <ThemeToggle size="md" />
           </div>
         </div>
       )}

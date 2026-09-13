@@ -309,3 +309,12 @@ body {
 :root.light .text-red-400 {
   color: #dc2626;
 }
+
+/* ── Theme toggle active state (set pre-hydration via data-theme, no flash) ── */
+:root[data-theme='light'] .theme-opt[data-theme-opt='light'],
+:root[data-theme='dark'] .theme-opt[data-theme-opt='dark'],
+:root[data-theme='system'] .theme-opt[data-theme-opt='system'] {
+  background-image: linear-gradient(to right, #3b82f6, #14b8a6);
+  color: #fff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}

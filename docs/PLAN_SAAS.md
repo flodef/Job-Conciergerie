@@ -1,0 +1,139 @@
+# Plan SaaS — Job Conciergerie
+
+> Exécution **manuelle et incrémentale** : des clients utilisent l'app en prod.
+> Règles d'or pour toutes les phases :
+> - Migrations **additives uniquement** (colonnes nullable, nouvelles tables) — jamais de rename/drop.
+> - Chaque étape doit être déployable et réversible indépendamment.
+> - Backup DB (`pg_dump` / snapshot Supabase) avant chaque migration.
+> - Travailler sur une branche dédiée, tester sur une preview/deploy de staging avant merge.
+
+---
+
+## Phase A — Sécurité (ex-"point 6")
+
+**Objectif** : fermer les trous sans changer le comportement visible pour les utilisateurs actuels.
+
+### A.1 — IDs cryptographiquement sûrs
+- `app/utils/id.ts` : `generateSimpleId()` utilise `Math.random()` → PRNG prévisible.
+- Ajouter `generateSecureId()` basé sur `crypto.getRandomValues()` (≥128 bits) et l'utiliser pour tous les **nouveaux** ids.
+- Les ids existants restent valides (pas de rotation forcée dans un premier temps).
+- Risque : nul. Les anciens ids continuent de fonctionner.
+
+### A.2 — Vérification côté serveur (le vrai trou)
+Aujourd'hui **toutes** les server actions retournent les données à n'importe qui (`fetchEmployees()`, `fetchConciergeries()` → `getAllX()` sans filtre). La DB est publique en lecture.
+
+- Créer `app/db/auth.ts` : `getSessionUser()` qui lit le cookie `user_id` (déjà posé par `authProvider`) + `user_type`, vérifie via `getExistingUserType()` que l'id existe en DB, retourne `{ user, type }` ou `null`.
+- Ajouter le guard en tête de chaque action dans `app/actions/` :
+  - Étape 1 (non cassante) : exiger un `user_id` **valide** (existant en DB). Le contenu retourné reste le même qu'aujourd'hui — single-tenant, pas de risque de casser l'UI.
+  - Étape 2 (Phase C) : scoper par `client_id`.
+- Routes à traiter : `employee.ts`, `conciergerie.ts`, `home.ts`, `mission.ts`, `missionReport.ts`, `email.ts`, `storage.ts`, `ipfs.ts`, `environment.ts`.
+- Attention aux appels **anonymes légitimes** : la route `/[id]` (lien magique) et `waiting` doivent rester accessibles sans session — lister les actions qu'elles appellent et leur garder un accès contrôlé (lookup par id uniquement, jamais de liste complète).
+- Vérification : appel `fetchEmployees()` sans cookie → doit échouer ; avec cookie valide → OK.
+
+### A.3 — Signature du webhook Revolut
+- `landing/app/api/revolut-webhook` accepte tout POST. Ajouter la vérif HMAC (`Revolut-Signature` + `REVOLUT_WEBHOOK_SECRET` du dashboard Revolut). Rejeter 401 si invalide.
+
+### A.4 — Durcissements optionnels (à décider)
+- Hasher les device-ids en DB (sha256) : une fuite DB ≠ fuite de credentials. **Coût** : la route `/[id]` et `ANY(id)` doivent comparer des hashes — migration des ids existants (hash en place, réversible non, donc feature-flag + rollback = dump).
+- Expiration/rotation des ids.
+- Rate limiting sur les actions sensibles (pattern déjà posé dans `landing/app/actions/antiSpam.ts`).
+
+**Livrable** : app identique pour les utilisateurs, DB plus lisible anonymement, webhook authentifié.
+
+---
+
+## Phase B — Merger `landing/` dans `app/` (pattern Tradiz)
+
+**Objectif** : un seul déploiement Next qui sert la vitrine ET l'app, dispatch par host dans `proxy.ts`.
+
+### B.1 — Route groups + double root layout
+- Supprimer `app/layout.tsx` partagé, créer :
+  - `app/(app)/layout.tsx` → reprend le layout actuel (html, fonts Geist, providers, `MaintenanceCheck`, `ServiceWorkerRegister`, `h-dvh`…)
+  - `app/(site)/layout.tsx` → html/body + `landing-globals.css` + script d'init du thème (déjà écrit dans `landing/app/layout.tsx`)
+- Déplacer toutes les routes existantes dans `app/(app)/` — **URLs inchangées** (les groupes ne comptent pas dans le path). L'alias `@/` ne bouge pas.
+- `not-found.tsx` / `global-error.tsx` : sans root layout il faut `global-not-found.tsx`/`global-error.tsx` autonomes (avec leur propre `<html>`) — point délicat, à tester en build local.
+- Risque : moyen (gros `git mv`). Mitigation : tout bouger en un commit, vérifier `bun run build` + smoke test des pages.
+
+### B.2 — Porter la landing
+- `landing/app/page.tsx` → `app/(site)/landing/page.tsx` (path `/landing`)
+- `landing/app/checkout/` → `app/(site)/checkout/` (path `/checkout`)
+- `landing/app/theme.ts`, `components/Logo`, `actions/contact.ts`+`antiSpam.ts`, `api/create-order`, `api/revolut-webhook` → sous `app/(site)/` et `app/api/`
+- `landing/app/globals.css` → `app/(site)/landing.css` importé par `(site)/layout.tsx` — le CSS est scopé par route, pas de conflit avec `app/globals.css`.
+- `landing/public/breton-flag.svg` → `public/`
+- Cleanup navigation : quitter la landing doit retirer `.light`/`data-theme`/`color-scheme` de `<html>` (effet de démontage dans `(site)/layout.tsx` ou dans `useTheme`) — sinon le style fuite sur l'app en navigation client-side.
+
+### B.3 — `proxy.ts` : hosts + paths publics
+- Ajouter aux paths sans auth : `/landing`, `/checkout`, `/api/create-order`, `/api/revolut-webhook`, `/breton-flag.svg`.
+- Host logic (copie du pattern `handleLandingHost` de Tradiz) :
+  - `job-conciergerie.fr`, `www.job-conciergerie.fr` → rewrite `/` → `/landing` ; `/checkout` passe tel quel.
+  - `app.job-conciergerie.fr` → app normale.
+  - Prévoir le hook `demo.` pour la Phase E (header `x-demo: 1` ou rewrite).
+- `RESERVED_PATHS` += `landing`, `checkout`.
+
+### B.4 — Env & déploiement
+- `REVOLUT_*`, `SMTP_*`, `CONTACT_*` → `.env.local` racine + variables du hébergeur.
+- Un seul site Netlify/Vercel sert les 2 (puis 3) hosts.
+- Supprimer `landing/` une fois validé (garder `landing/proxy.ts` stub tant que le sous-projet existe — il répare le build local).
+
+**Livrable** : un repo = un build = apex vitrine + app.
+
+---
+
+## Phase C — Multi-tenant (ex-"point 1")
+
+**Pré-requis : Phase A.2 faite** (sinon le scoping n'a aucun sens).
+
+### C.1 — Schéma (migration additive)
+- Nouvelle table `clients` : `id uuid pk`, `name`, `email`, `plan` (`decouverte|pro|privilege`), `status`, `created_at`.
+- `client_id uuid null` sur : `conciergeries`, `employees`, `homes`, `missions`, `mission_reports`, `email_logs` (partout où c'est directement scopable — plus simple que de joindre via conciergerie).
+- Backfill : créer le client "legacy", `UPDATE … SET client_id = <legacy>` sur toutes les lignes existantes → zero downtime, comportement identique.
+
+### C.2 — Modèle
+- `employees.client_id` (un employé appartient au client, pas à une conciergerie → le multi-conciergerie partage les employés ; `conciergerie_name` reste pour l'assignation).
+- Garder les jointures par `conciergerie_name` pour l'instant (renommer en ids = chantier à part, risqué).
+- Toi = super-admin : flag `is_admin` sur `clients` ou table `admins`, pour voir tous les tenants.
+
+### C.3 — Scoping serveur
+- `getSessionUser()` étendu → `{ user, type, clientId }`.
+- Chaque query : `WHERE client_id = ${clientId}` (sauf super-admin).
+- Les listes `fetchEmployees`/`fetchConciergeries` ne renvoient plus que le tenant du caller — **c'est le moment où le contenu change**, à tester en preview avec un 2e client seedé.
+
+---
+
+## Phase D — Domaines (ex-"point 2")
+
+- DNS : `job-conciergerie.fr` + `www.` → le déploiement unique ; `app.job-conciergerie.fr` → idem.
+- Mettre à jour : `NEXT_PUBLIC_APP_URL` (= `https://app.job-conciergerie.fr`), les liens magiques `/<id>` dans les emails (**critique** — doivent pointer `app.`), `redirect_url` Revolut, URL du webhook dans le dashboard, redirect URLs Supabase.
+- Décider du sort des anciens liens `/<id>` déjà envoyés (redirect apex → app, ou rewrite).
+
+## Phase E — Démo (ex-"points 3/4/5")
+
+- `demo.job-conciergerie.fr` → `proxy.ts` pose `x-demo` (pas de branche séparée à maintenir).
+- DB dédiée : `DEMO_DATABASE_URL` (projet Supabase séparé) — jamais de write démo en prod. `db.ts` choisit l'URL selon le header/env.
+- `scripts/seed-demo.ts` : 1 client, 2-3 conciergeries, ~6 employés, ~10 biens, missions couvrant tous les statuts/dates.
+- Entrée démo : boutons « Essayer en tant que concierge / employé » sur la vitrine → posent le `user_id` seedé → redirect app. (Trivial avec l'auth par id.)
+- Reset : serverless ≠ "démarrage d'instance" → route `/api/demo/reset` appelée par cron (Netlify scheduled) + lazy check `seeded_at > 12h` → reseed.
+- Garde-fous démo : bandeau "Démo", emails réels désactivés (logs only), pas de paiement.
+
+## Phase F — Tests scénarios démo (ex-"point 4")
+
+Checklist manuelle (concierge **et** employé) : créer un bien, créer une mission (dont binôme), employé accepte, compte rendu photo, historique, notifications. + quelques tests vitest sur les actions critiques.
+
+## Phase G — Revolut prod (ex-"point 7")
+
+- Clés prod + `REVOLUT_MODE=prod` + webhook prod signé (A.3).
+- `ORDER_COMPLETED` → provisionner le `client` (Phase C) + email avec lien magique `/<id>`.
+- Test sandbox end-to-end avant bascule.
+
+---
+
+## Ordre & dépendances
+
+```
+A (sécu) ──► B (merge landing) ──► C (multi-tenant) ──► D (domaines) ──► E (démo) ──► F (tests) ──► G (revolut prod)
+```
+
+- **A avant C** : scoper par tenant sur des actions non authentifiées ne protège rien.
+- **B avant D/E** : le dispatch par host suppose un seul déploiement.
+- **C avant E** : le seed démo utilise le modèle `clients` (sinon refaire le seed après).
+- D et C peuvent s'intervertir si les domaines sont urgents.
