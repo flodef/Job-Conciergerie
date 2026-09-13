@@ -13,6 +13,13 @@ export interface SessionUser {
   userType: UserType;
   /** True when the session id was rotated from a legacy id during this call. */
   rotated: boolean;
+  /**
+   * True when the device is only a pending (`$`-prefixed) member awaiting approval
+   * from a connected device or an emailed enrollment token. Pending sessions may
+   * read the redacted lists (waiting-page status) but must not mutate data or read
+   * protected resources — use `requireConnectedSession` for those.
+   */
+  pending: boolean;
 }
 
 /**
@@ -29,26 +36,32 @@ export async function getSessionDeviceId(): Promise<string | null> {
 }
 
 /**
- * Resolve which user type a credential id belongs to.
- * Matches `containsId` semantics: the '$' pending-device marker is ignored.
+ * Resolve which user type a credential id belongs to, and whether the match is
+ * only through a pending (`$`-prefixed) device entry. A pending device resolves
+ * (so the waiting page works) but carries `pending: true` — no privileges.
  */
-async function resolveUserType(id: string): Promise<UserType | null> {
+async function resolveMembership(id: string): Promise<{ userType: UserType; pending: boolean } | null> {
   try {
+    const pendingId = '$' + id;
     const result = await sql`
-      SELECT CASE
-        WHEN EXISTS (
-          SELECT 1 FROM conciergeries c
-          WHERE EXISTS (SELECT 1 FROM unnest(c.id) d WHERE replace(d, '$', '') = ${id})
-        ) THEN 'conciergerie'
-        WHEN EXISTS (
-          SELECT 1 FROM employees e
-          WHERE EXISTS (SELECT 1 FROM unnest(e.id) d WHERE replace(d, '$', '') = ${id})
-        ) THEN 'employee'
-        ELSE NULL
-      END AS user_type
+      SELECT
+        CASE
+          WHEN EXISTS (
+            SELECT 1 FROM conciergeries WHERE ${id} = ANY(id) OR ${pendingId} = ANY(id)
+          ) THEN 'conciergerie'
+          WHEN EXISTS (
+            SELECT 1 FROM employees WHERE ${id} = ANY(id) OR ${pendingId} = ANY(id)
+          ) THEN 'employee'
+          ELSE NULL
+        END AS user_type,
+        NOT (
+          EXISTS (SELECT 1 FROM conciergeries WHERE ${id} = ANY(id))
+          OR EXISTS (SELECT 1 FROM employees WHERE ${id} = ANY(id))
+        ) AS pending
     `;
 
-    return (result[0]?.user_type as UserType) ?? null;
+    const row = result[0];
+    return row?.user_type ? { userType: row.user_type as UserType, pending: !!row.pending } : null;
   } catch (error) {
     console.error('Error resolving session user:', error);
     return null;
@@ -68,15 +81,16 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   const id = await getSessionDeviceId();
   if (!id) return null;
 
-  let userType = await resolveUserType(id);
+  let membership = await resolveMembership(id);
   let canonicalId = id;
 
   // Stale-cookie fallback: the row may already hold the rotated id
-  if (!userType && !id.startsWith(V2_ID_PREFIX)) {
+  if (!membership && !id.startsWith(V2_ID_PREFIX)) {
     const rotated = rotateLegacyId(id);
-    if (rotated !== id && (userType = await resolveUserType(rotated))) canonicalId = rotated;
+    if (rotated !== id && (membership = await resolveMembership(rotated))) canonicalId = rotated;
   }
-  if (!userType) return null;
+  if (!membership) return null;
+  const { userType, pending } = membership;
 
   // Lazy rotation: rewrite the legacy id in place (idempotent — v2 is deterministic)
   if (!canonicalId.startsWith(V2_ID_PREFIX)) {
@@ -95,7 +109,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
         `;
       } catch (error) {
         console.error('Error rotating legacy user id:', error);
-        return { userId: canonicalId, userType, rotated: false };
+        return { userId: canonicalId, userType, rotated: false, pending };
       }
 
       try {
@@ -107,11 +121,21 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       } catch {
         // Read-only context — the client syncs through the syncSession response
       }
-      return { userId: rotated, userType, rotated: true };
+      return { userId: rotated, userType, rotated: true, pending };
     }
   }
 
-  return { userId: canonicalId, userType, rotated: false };
+  return { userId: canonicalId, userType, rotated: false, pending };
+}
+
+/**
+ * Session guard for privileged actions: rejects unauthenticated callers AND
+ * pending (`$`) devices awaiting approval. Use `getSessionUser` only for the
+ * enrollment/list paths that pending devices legitimately need.
+ */
+export async function requireConnectedSession(): Promise<SessionUser | null> {
+  const session = await getSessionUser();
+  return session && !session.pending ? session : null;
 }
 
 /**

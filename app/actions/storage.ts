@@ -1,6 +1,6 @@
 'use server';
 
-import { getSessionUser } from '@/app/db/session';
+import { requireConnectedSession } from '@/app/db/session';
 import { createAdminClient } from '@/app/utils/supabase/server';
 
 // Constants
@@ -14,7 +14,7 @@ const REPORTS_FOLDER = 'Reports';
  * Returns the canonical session id if authorized, null otherwise.
  */
 async function verifyConciergerieAuth(): Promise<string | null> {
-  const session = await getSessionUser();
+  const session = await requireConnectedSession();
   if (!session) {
     console.warn('Storage action: No valid session found');
     return null;
@@ -27,7 +27,7 @@ async function verifyConciergerieAuth(): Promise<string | null> {
  * Returns the canonical session id if authorized, null otherwise.
  */
 async function verifyAuth(): Promise<string | null> {
-  const session = await getSessionUser();
+  const session = await requireConnectedSession();
   if (!session) console.warn('Storage action: No valid session found');
   return session?.userId ?? null;
 }

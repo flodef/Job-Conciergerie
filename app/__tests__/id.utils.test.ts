@@ -123,6 +123,32 @@ describe('ID Utilities', () => {
       const result = getDevices(['d1', 'd2'], 'd1');
       expect(result).toEqual(['d2', 'd1']);
     });
+
+    it('should preserve other pending requests when adding a device', () => {
+      const result = getDevices(['d1', '$pending1'], 'd2');
+      expect(result).toEqual(['$pending1', 'd1', 'd2']);
+    });
+
+    it('should not throw MaxDevicesError for a pending request at the limit', () => {
+      const existingDevices = ['d1', 'd2', 'd3', 'd4', 'd5'];
+      const result = getDevices(existingDevices, 'newDevice', true);
+      expect(result).toEqual(['d1', 'd2', 'd3', 'd4', 'd5', '$newDevice']);
+    });
+
+    it('should upgrade a pending device to connected without duplicating it', () => {
+      const result = getDevices(['d1', '$newDevice'], 'newDevice');
+      expect(result).toEqual(['d1', 'newDevice']);
+    });
+
+    it('should keep a pending device pending on a repeated request', () => {
+      const result = getDevices(['d1', '$newDevice'], 'newDevice', true);
+      expect(result).toEqual(['d1', '$newDevice']);
+    });
+
+    it('should not demote a connected device to pending', () => {
+      const result = getDevices(['d1', 'd2'], 'd1', true);
+      expect(result).toEqual(['d2', 'd1']);
+    });
   });
 
   describe('MaxDevicesError', () => {

@@ -23,10 +23,10 @@ vi.mock('@/app/utils/supabase/server', () => ({
 
 // Mock the session resolver — storage tests only care about the resolved userType
 vi.mock('@/app/db/session', () => ({
-  getSessionUser: vi.fn(),
+  requireConnectedSession: vi.fn(),
 }));
 
-import { getSessionUser } from '@/app/db/session';
+import { requireConnectedSession } from '@/app/db/session';
 
 describe('Supabase Storage', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -68,10 +68,11 @@ describe('Supabase Storage', () => {
 
     // Default: authenticated conciergerie session
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (getSessionUser as any).mockResolvedValue({
+    (requireConnectedSession as any).mockResolvedValue({
       userId: 'test-conciergerie-id',
       userType: 'conciergerie',
       rotated: false,
+      pending: false,
     });
   });
 
@@ -152,7 +153,7 @@ describe('Supabase Storage', () => {
 
       // Simulate employee user (not conciergerie)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (getSessionUser as any).mockResolvedValue({ userId: 'test-employee-id', userType: 'employee', rotated: false });
+      (requireConnectedSession as any).mockResolvedValue({ userId: 'test-employee-id', userType: 'employee', rotated: false });
 
       const result = await uploadFileToSupabase(mockFile, 'test.jpg');
 
@@ -200,7 +201,7 @@ describe('Supabase Storage', () => {
     it('should return false when user is not authenticated as conciergerie', async () => {
       // Simulate employee user (not conciergerie)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (getSessionUser as any).mockResolvedValue({ userId: 'test-employee-id', userType: 'employee', rotated: false });
+      (requireConnectedSession as any).mockResolvedValue({ userId: 'test-employee-id', userType: 'employee', rotated: false });
 
       const result = await deleteFileFromSupabase('test-file.jpg');
 
@@ -245,7 +246,7 @@ describe('Supabase Storage', () => {
     it('should return empty array when user is not authenticated as conciergerie', async () => {
       // Simulate employee user (not conciergerie)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (getSessionUser as any).mockResolvedValue({ userId: 'test-employee-id', userType: 'employee', rotated: false });
+      (requireConnectedSession as any).mockResolvedValue({ userId: 'test-employee-id', userType: 'employee', rotated: false });
 
       const result = await listStorageFiles();
 

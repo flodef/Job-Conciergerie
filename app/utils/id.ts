@@ -90,13 +90,20 @@ export class MaxDevicesError extends Error {
  * @returns List of devices
  */
 export function getDevices(ids: string[], userId: string, isNewDevice = false, evictOldest = false) {
-  let connectedDevices = getConnectedDevices(ids);
-  if (connectedDevices.length >= MAX_DEVICES) {
+  const alreadyConnected = getConnectedDevices(ids).includes(userId);
+  const newId = isNewDevice && !alreadyConnected ? NEW_ID_CHAR + userId : userId;
+
+  // Other devices' pending requests survive the update (the caller's own stale
+  // pending entry is replaced). Capped to bound request spam.
+  const pending = ids.filter(i => i.startsWith(NEW_ID_CHAR) && baseId(i) !== userId).slice(0, MAX_DEVICES - 1);
+  let connectedDevices = getConnectedDevices(ids).filter(id => id !== userId);
+
+  // The device limit only applies to connected devices — a pending request
+  // doesn't consume a slot
+  if (newId === userId && connectedDevices.length >= MAX_DEVICES) {
     if (!evictOldest) throw new MaxDevicesError(connectedDevices[0]);
     connectedDevices = connectedDevices.slice(1); // remove the oldest (first stored)
   }
 
-  const newId = isNewDevice && !ids.includes(userId) ? NEW_ID_CHAR + userId : userId;
-
-  return connectedDevices.length ? [...connectedDevices.filter(id => id !== userId), newId] : [userId];
+  return [...pending, ...connectedDevices, newId];
 }

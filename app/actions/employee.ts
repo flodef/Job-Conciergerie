@@ -16,16 +16,17 @@ import {
   getSessionDeviceId,
   getSessionUser,
   isValidDeviceIdsUpdate,
+  requireConnectedSession,
   verifyEnrollmentToken,
 } from '@/app/db/session';
 import type { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
-import { baseId, getDevices, MaxDevicesError } from '@/app/utils/id';
+import { baseId, getDevices, isNewDevice, MaxDevicesError } from '@/app/utils/id';
 import type { EmployeeNotificationSettings } from '@/app/utils/notifications';
 
 export type EnrollDeviceResult =
-  | { ok: true; ids: string[]; deviceId: string; alreadyMember: boolean }
-  | { ok: false; reason: 'not_found' | 'invalid' | 'unauthorized' | 'max_devices'; oldestDevice?: string };
+  | { ok: true; ids: string[]; deviceId: string; alreadyMember: boolean; pending: boolean }
+  | { ok: false; reason: 'not_found' | 'invalid' | 'max_devices'; oldestDevice?: string };
 
 /**
  * Fetch all employees from the database with caching
@@ -37,7 +38,13 @@ export async function fetchEmployees(): Promise<Employee[] | null> {
   if (!session) return null;
 
   const employees = await getAllEmployees();
-  return employees?.map(e => ({ ...e, id: e.id.some(i => baseId(i) === session.userId) ? e.id : [] })) ?? null;
+  return (
+    employees?.map(e => {
+      if (!e.id.some(i => baseId(i) === session.userId)) return { ...e, id: [] };
+      // A pending device sees only its own pending marker — never the real credentials
+      return { ...e, id: session.pending ? [`$${session.userId}`] : e.id };
+    }) ?? null
+  );
 }
 
 /**
@@ -113,15 +120,18 @@ export async function createNewEmployee(data: {
  * Update an employee's status in the database
  */
 export async function updateEmployeeStatusAction(employee: Employee, status: EmployeeStatus): Promise<Employee | null> {
-  if (!(await getSessionUser())) return null;
+  if (!(await requireConnectedSession())) return null;
   return await updateEmployeeStatus(employee.firstName, employee.familyName, status);
 }
 
 /**
  * Enroll the session device in an employee's id array.
- * The new array is computed server-side from the current row. A non-member caller
- * must present a valid enrollment token (delivered via the verification email) —
- * a connected member needs none.
+ * The new array is computed server-side from the current row:
+ * - connected member → re-enrolls freely (no proof needed);
+ * - valid email token → connects the device immediately;
+ * - anything else → the device is added as a pending (`$`) access request that a
+ *   connected member can approve from Settings — pending devices have no session
+ *   privileges until approved.
  */
 export async function enrollEmployeeDevice(
   firstName: string,
@@ -136,14 +146,16 @@ export async function enrollEmployeeDevice(
   const ids = await getEmployeeIds(firstName, familyName);
   if (!ids) return { ok: false, reason: 'not_found' };
 
-  const alreadyMember = ids.some(i => baseId(i) === deviceId);
-  if (!alreadyMember && !verifyEnrollmentToken('employee', `${firstName}|${familyName}`, deviceId, token))
-    return { ok: false, reason: 'unauthorized' };
+  const alreadyMember = ids.some(i => !isNewDevice(i) && baseId(i) === deviceId);
+  const hasToken = verifyEnrollmentToken('employee', `${firstName}|${familyName}`, deviceId, token);
+  const markPending = !alreadyMember && !hasToken;
 
   try {
-    const newIds = getDevices(ids, deviceId, false, evictOldest);
+    const newIds = getDevices(ids, deviceId, markPending, evictOldest);
     const updated = await updateEmployeeId(firstName, familyName, newIds);
-    return updated ? { ok: true, ids: updated, deviceId, alreadyMember } : { ok: false, reason: 'invalid' };
+    if (!updated) return { ok: false, reason: 'invalid' };
+    // A pending device gets back only its own marker — never the row's real credentials
+    return { ok: true, ids: markPending ? [`$${deviceId}`] : updated, deviceId, alreadyMember, pending: markPending };
   } catch (error) {
     if (error instanceof MaxDevicesError) return { ok: false, reason: 'max_devices', oldestDevice: error.oldestDevice };
     throw error;
@@ -184,7 +196,7 @@ export async function updateEmployeeData(
     notificationSettings?: EmployeeNotificationSettings;
   },
 ): Promise<Employee | null> {
-  if (!(await getSessionUser()) || !employee) return null;
+  if (!(await requireConnectedSession()) || !employee) return null;
 
   // Convert to DB format
   const dbData: Partial<DbEmployee> = {
@@ -203,6 +215,6 @@ export async function updateEmployeeData(
  * Delete an employee
  */
 export async function deleteEmployeeData(employee: Employee): Promise<boolean> {
-  if (!(await getSessionUser())) return false;
+  if (!(await requireConnectedSession())) return false;
   return await deleteEmployee(employee.firstName, employee.familyName);
 }

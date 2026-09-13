@@ -1,6 +1,6 @@
 'use client';
 
-import { createNewEmployee, lookupEmployeeByContact } from '@/app/actions/employee';
+import { createNewEmployee, enrollEmployeeDevice, lookupEmployeeByContact } from '@/app/actions/employee';
 import AppVersion from '@/app/components/appVersion';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
@@ -207,10 +207,13 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           return;
         }
 
-        // Existing employee: a verification email with an enrollment link is sent
-        // to their registered address — the device is enrolled when they open the
-        // link on this device (proves mailbox ownership).
-        updateUserData(lookup.employee);
+        // Existing employee: request access as a pending ($) device — visible in
+        // the owner's Settings > Appareils for approval — then also send the
+        // verification email as the alternative enrollment path.
+        const enroll = await enrollEmployeeDevice(lookup.employee.firstName, lookup.employee.familyName, false);
+        if (!enroll.ok) throw new Error("La demande d'accès n'a pas pu être enregistrée");
+
+        updateUserData({ ...lookup.employee, id: enroll.ids });
         await EmailSender.sendNewDeviceEmail(lookup.employee, currentUserId);
         showToast({
           type: ToastType.Success,

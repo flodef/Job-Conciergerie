@@ -6,7 +6,7 @@ import {
   getMissionReportByMissionId,
   getMissionReportsByMissionIds,
 } from '@/app/db/missionReportDb';
-import { getSessionUser } from '@/app/db/session';
+import { requireConnectedSession } from '@/app/db/session';
 import type { MissionReport } from '@/app/types/dataTypes';
 import { generateSecureId } from '@/app/utils/id';
 
@@ -19,7 +19,7 @@ export async function saveMissionReport(data: {
   content: string;
   images: string[];
 }): Promise<MissionReport | null> {
-  if (!(await getSessionUser())) return null;
+  if (!(await requireConnectedSession())) return null;
 
   const dbData: Omit<DbMissionReport, 'created_at'> = {
     id: generateSecureId(),
@@ -36,7 +36,7 @@ export async function saveMissionReport(data: {
  * Fetch the report for a single mission.
  */
 export async function fetchMissionReport(missionId: string): Promise<MissionReport | null> {
-  if (!(await getSessionUser())) return null;
+  if (!(await requireConnectedSession())) return null;
   return await getMissionReportByMissionId(missionId);
 }
 
@@ -44,6 +44,6 @@ export async function fetchMissionReport(missionId: string): Promise<MissionRepo
  * Fetch reports for multiple missions at once.
  */
 export async function fetchMissionReports(missionIds: string[]): Promise<MissionReport[]> {
-  if (!(await getSessionUser())) return [];
+  if (!(await requireConnectedSession())) return [];
   return await getMissionReportsByMissionIds(missionIds);
 }

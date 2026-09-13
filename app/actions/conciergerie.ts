@@ -12,12 +12,13 @@ import {
   getSessionDeviceId,
   getSessionUser,
   isValidDeviceIdsUpdate,
+  requireConnectedSession,
   verifyEnrollmentToken,
 } from '@/app/db/session';
 import type { EnrollDeviceResult } from '@/app/actions/employee';
 import type { Conciergerie } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
-import { baseId, getDevices, MaxDevicesError } from '@/app/utils/id';
+import { baseId, getDevices, isNewDevice, MaxDevicesError } from '@/app/utils/id';
 
 /**
  * Fetch all conciergeries from the database with caching
@@ -34,7 +35,13 @@ export async function fetchConciergeries(): Promise<Conciergerie[] | null> {
     conciergeries
       ?.sort((a, b) => a.name.localeCompare(b.name))
       .map(c => ({
-        id: session && c.id.some(i => baseId(i) === session.userId) ? c.id : [],
+        // Connected member → real ids; pending member → only its own marker; else []
+        id:
+          session && c.id.some(i => baseId(i) === session.userId)
+            ? session.pending
+              ? [`$${session.userId}`]
+              : c.id
+            : [],
         name: c.name,
         email: c.email,
         tel: c.tel,
@@ -47,8 +54,12 @@ export async function fetchConciergeries(): Promise<Conciergerie[] | null> {
 
 /**
  * Enroll the session device in a conciergerie's id array.
- * The new array is computed server-side from the current row — the client only
- * expresses intent (mark as pending device / evict the oldest device at the limit).
+ * The new array is computed server-side from the current row:
+ * - connected member → re-enrolls freely (no proof needed);
+ * - valid email token → connects the device immediately;
+ * - anything else → the device is added as a pending (`$`) access request that a
+ *   connected member can approve from Settings — pending devices have no session
+ *   privileges until approved.
  */
 export async function enrollConciergerieDevice(
   name: string,
@@ -62,14 +73,16 @@ export async function enrollConciergerieDevice(
   const ids = await getConciergerieIds(name);
   if (!ids) return { ok: false, reason: 'not_found' };
 
-  const alreadyMember = ids.some(i => baseId(i) === deviceId);
-  if (!alreadyMember && !verifyEnrollmentToken('conciergerie', name, deviceId, token))
-    return { ok: false, reason: 'unauthorized' };
+  const alreadyMember = ids.some(i => !isNewDevice(i) && baseId(i) === deviceId);
+  const hasToken = verifyEnrollmentToken('conciergerie', name, deviceId, token);
+  const markPending = !alreadyMember && !hasToken;
 
   try {
-    const newIds = getDevices(ids, deviceId, false, evictOldest);
+    const newIds = getDevices(ids, deviceId, markPending, evictOldest);
     const updated = await updateConciergerieId(name, newIds);
-    return updated ? { ok: true, ids: updated, deviceId, alreadyMember } : { ok: false, reason: 'invalid' };
+    if (!updated) return { ok: false, reason: 'invalid' };
+    // A pending device gets back only its own marker — never the row's real credentials
+    return { ok: true, ids: markPending ? [`$${deviceId}`] : updated, deviceId, alreadyMember, pending: markPending };
   } catch (error) {
     if (error instanceof MaxDevicesError) return { ok: false, reason: 'max_devices', oldestDevice: error.oldestDevice };
     throw error;
@@ -101,7 +114,7 @@ export async function updateConciergerieData(
   conciergerie: Conciergerie | undefined,
   data: Partial<Conciergerie>,
 ): Promise<Conciergerie | null> {
-  if (!(await getSessionUser()) || !conciergerie) return null;
+  if (!(await requireConnectedSession()) || !conciergerie) return null;
 
   // Convert to DB format
   const dbData: Partial<DbConciergerie> = {

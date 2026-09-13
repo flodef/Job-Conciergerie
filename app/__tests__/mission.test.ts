@@ -9,7 +9,12 @@ import { sql } from '@/app/db/db';
 
 // These tests exercise the actions against the real DB — mock the session guard
 vi.mock('@/app/db/session', () => ({
-  getSessionUser: vi.fn(() => Promise.resolve({ userId: 'test-user-id', userType: 'conciergerie', rotated: false })),
+  getSessionUser: vi.fn(() =>
+    Promise.resolve({ userId: 'test-user-id', userType: 'conciergerie', rotated: false, pending: false }),
+  ),
+  requireConnectedSession: vi.fn(() =>
+    Promise.resolve({ userId: 'test-user-id', userType: 'conciergerie', rotated: false, pending: false }),
+  ),
   getSessionDeviceId: vi.fn(() => Promise.resolve('test-user-id')),
   getSessionCredentialIds: vi.fn(() => Promise.resolve(new Set(['test-user-id']))),
   isValidDeviceIdsUpdate: vi.fn(() => true),

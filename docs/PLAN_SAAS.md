@@ -47,6 +47,20 @@
 - `employeeForm` (ré-inscription d'un employé existant) : n'enrôle plus directement — envoie l'email de vérification puis va sur `Waiting` ; l'enrôlement se fait au clic du lien (preuve de possession de la boîte).
 - Décision : **pas de fenêtre de rétrocompat** — les vieux emails sans `?t=` échouent pour les non-membres ; l'utilisateur renvoie un email depuis la page d'attente. Coût : uniquement les liens envoyés dans les jours précédant le déploiement.
 
+### A.6 — Demandes d'accès `$` sécurisées ✅ FAIT (approbation depuis un appareil connecté)
+
+Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restauré, **sans rouvrir le trou** : un appareil `$` obtient désormais une **session pending sans privilèges**.
+
+- `resolveMembership` (session.ts) distingue match exact (connecté) vs match `$` (pending) → `SessionUser.pending`.
+- `requireConnectedSession()` remplace `getSessionUser()` dans tous les guards sensibles (home, mission, missionReport, storage, ipfs, mutations employee/conciergerie, emails métier) → un `$` ne peut rien lire/écrire de protégé.
+- `enroll*Device` : non-membre **sans token** → ajoute `$id` (demande d'accès visible dans Appareils) ; token valide → connexion directe ; membre connecté → libre. `alreadyMember` ne compte que les ids **connectés** → un `$` ne peut pas s'auto-approuver.
+- Listes : membre connecté → `id[]` réel ; membre pending → `['$'+sonId]` (suffit pour `containsId`, ne fuite pas les vrais credentials — sinon un pending volerait les ids de la victime).
+- `getDevices` préserve les `$` des autres appareils (avant : tout ajout les écrasait) + cap `MAX_DEVICES-1` anti-spam ; la limite `MAX_DEVICES` ne s'applique qu'aux appareils **connectés** (une demande ne consomme pas de slot).
+- `employeeForm` ré-enrôle en `$` (sans token) puis envoie l'email → les deux chemins d'approbation coexistent comme avant.
+- `/[id]` : `result.pending` → `Waiting` au lieu de `Missions`.
+- `api/auth`/`proxy` : inchangés — `getExistingUserType` fait déjà un match exact (`$` non résolu → `/waiting` autorisé, routes protégées → `/error`), conforme à l'ancien comportement.
+- Bonus : la page d'attente survit au F5 (la session pending résout `userType`/`userData`, alors qu'un appareil sans session perdait son état).
+
 ### A.4 — Durcissements optionnels (à décider)
 
 - Hasher les device-ids en DB (sha256) : une fuite DB ≠ fuite de credentials. **Coût** : la route `/[id]` et `ANY(id)` doivent comparer des hashes — migration des ids existants (hash en place, réversible non, donc feature-flag + rollback = dump).
