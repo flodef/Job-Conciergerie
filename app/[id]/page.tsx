@@ -1,7 +1,7 @@
 'use client';
 
-import { updateConciergerieWithUserId } from '@/app/actions/conciergerie';
-import { updateEmployeeWithUserId } from '@/app/actions/employee';
+import { enrollConciergerieDevice } from '@/app/actions/conciergerie';
+import { enrollEmployeeDevice } from '@/app/actions/employee';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import ErrorPage from '@/app/components/error';
 import { useAuth } from '@/app/contexts/authProvider';
@@ -10,7 +10,7 @@ import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { Page } from '@/app/utils/navigation';
 import AppVersion from '@/app/components/appVersion';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
-import { formatId, getDevices, MAX_DEVICES, MaxDevicesError } from '../utils/id';
+import { formatId, MAX_DEVICES, MaxDevicesError } from '../utils/id';
 
 type PendingUpdate =
   | { kind: 'employee'; entity: Employee; oldestId: string }
@@ -39,12 +39,19 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
   const applyUpdate = useCallback(
     async (entity: Employee | Conciergerie, evictOldest: boolean) => {
       if (!userId) throw new Error('Identifiant non trouvé');
-      const newIds = getDevices(entity.id, userId, false, evictOldest);
       const result = isEmployee
-        ? await updateEmployeeWithUserId(entity as Employee, newIds)
-        : await updateConciergerieWithUserId(entity as Conciergerie, newIds);
-      if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
-      updateUserData({ ...entity, id: result });
+        ? await enrollEmployeeDevice(
+            (entity as Employee).firstName,
+            (entity as Employee).familyName,
+            false,
+            evictOldest,
+          )
+        : await enrollConciergerieDevice((entity as Conciergerie).name, false, evictOldest);
+      if (!result.ok) {
+        if (result.reason === 'max_devices') throw new MaxDevicesError(result.oldestDevice ?? '');
+        throw new Error('Erreur lors de la mise à jour dans la base de données');
+      }
+      updateUserData({ ...entity, id: result.ids });
     },
     [userId, updateUserData, isEmployee],
   );

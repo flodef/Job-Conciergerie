@@ -6,20 +6,32 @@ import {
   deleteEmployee,
   findEmployeeByContact,
   getAllEmployees,
+  getEmployeeIds,
   updateEmployeeId,
   updateEmployeeSettings,
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
+import { getSessionCredentialIds, getSessionDeviceId, getSessionUser, isValidDeviceIdsUpdate } from '@/app/db/session';
 import type { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
+import { baseId, getDevices, MaxDevicesError } from '@/app/utils/id';
 import type { EmployeeNotificationSettings } from '@/app/utils/notifications';
+
+export type EnrollDeviceResult =
+  | { ok: true; ids: string[]; deviceId: string; alreadyMember: boolean }
+  | { ok: false; reason: 'not_found' | 'invalid' | 'max_devices'; oldestDevice?: string };
 
 /**
  * Fetch all employees from the database with caching
- * Cache is refreshed every hour or when explicitly revalidated
+ * Cache is refreshed every hour or when explicitly revalidated.
+ * Requires a session; device ids are only exposed on the caller's own row (they are credentials).
  */
 export async function fetchEmployees(): Promise<Employee[] | null> {
-  return await getAllEmployees();
+  const session = await getSessionUser();
+  if (!session) return null;
+
+  const employees = await getAllEmployees();
+  return employees?.map(e => ({ ...e, id: e.id.some(i => baseId(i) === session.userId) ? e.id : [] })) ?? null;
 }
 
 /**
@@ -40,7 +52,8 @@ export async function lookupEmployeeByContact(
   const { employee: row, nameMatches } = result;
   return {
     employee: {
-      id: row.id,
+      // Device ids are credentials — never exposed through a public lookup
+      id: [],
       firstName: row.first_name,
       familyName: row.family_name,
       tel: row.tel,
@@ -91,13 +104,43 @@ export async function createNewEmployee(data: {
  * Update an employee's status in the database
  */
 export async function updateEmployeeStatusAction(employee: Employee, status: EmployeeStatus): Promise<Employee | null> {
+  if (!(await getSessionUser())) return null;
   return await updateEmployeeStatus(employee.firstName, employee.familyName, status);
 }
 
 /**
- * Update an employee's list of associated user IDs
- * If the userId already exists in the employee's id array, do nothing
- * Otherwise add it to the array
+ * Enroll the session device in an employee's id array.
+ * The new array is computed server-side from the current row — the client only
+ * expresses intent (mark as pending device / evict the oldest device at the limit).
+ */
+export async function enrollEmployeeDevice(
+  firstName: string,
+  familyName: string,
+  markPending: boolean,
+  evictOldest: boolean,
+): Promise<EnrollDeviceResult> {
+  const session = await getSessionUser();
+  const deviceId = session?.userId ?? (await getSessionDeviceId());
+  if (!deviceId || !firstName || !familyName) return { ok: false, reason: 'invalid' };
+
+  const ids = await getEmployeeIds(firstName, familyName);
+  if (!ids) return { ok: false, reason: 'not_found' };
+
+  const alreadyMember = ids.some(i => baseId(i) === deviceId);
+  try {
+    const newIds = getDevices(ids, deviceId, markPending, evictOldest);
+    const updated = await updateEmployeeId(firstName, familyName, newIds);
+    return updated ? { ok: true, ids: updated, deviceId, alreadyMember } : { ok: false, reason: 'invalid' };
+  } catch (error) {
+    if (error instanceof MaxDevicesError) return { ok: false, reason: 'max_devices', oldestDevice: error.oldestDevice };
+    throw error;
+  }
+}
+
+/**
+ * Update an employee's list of associated user IDs.
+ * Restricted to connected devices of the row managing their own device list —
+ * new-device enrollment goes through `enrollEmployeeDevice`.
  */
 export async function updateEmployeeWithUserId(
   employee: Employee | undefined,
@@ -105,7 +148,12 @@ export async function updateEmployeeWithUserId(
 ): Promise<string[] | null> {
   if (!employee?.firstName || !employee?.familyName) return null;
 
-  // Update the employee's ID in the database
+  const sessionIds = await getSessionCredentialIds();
+  if (!sessionIds.size) return null;
+
+  const currentIds = await getEmployeeIds(employee.firstName, employee.familyName);
+  if (!currentIds || !isValidDeviceIdsUpdate(currentIds, employeeIds, sessionIds)) return null;
+
   return await updateEmployeeId(employee.firstName, employee.familyName, employeeIds);
 }
 
@@ -123,7 +171,7 @@ export async function updateEmployeeData(
     notificationSettings?: EmployeeNotificationSettings;
   },
 ): Promise<Employee | null> {
-  if (!employee) return null;
+  if (!(await getSessionUser()) || !employee) return null;
 
   // Convert to DB format
   const dbData: Partial<DbEmployee> = {
@@ -142,5 +190,6 @@ export async function updateEmployeeData(
  * Delete an employee
  */
 export async function deleteEmployeeData(employee: Employee): Promise<boolean> {
+  if (!(await getSessionUser())) return false;
   return await deleteEmployee(employee.firstName, employee.familyName);
 }

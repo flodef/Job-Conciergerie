@@ -81,8 +81,11 @@ export async function proxy(request: NextRequest) {
     } else {
       // Not authenticated, redirect to error or waiting page
       if (navigationRoutes.includes(path)) return NextResponse.redirect(new URL('/error', request.url));
-      // Skip if path matches a user ID pattern (20-22 characters alphanumeric string)
-      else if ((path === '/' || path === '/error' || !/^\/?[0-9a-z]{2,26}$/.test(path)) && path !== '/waiting')
+      // Skip if path matches a user ID pattern (legacy base36 or rotated v2_<hex32>)
+      else if (
+        (path === '/' || path === '/error' || !/^\/?(?:[0-9a-z]{2,26}|v2_[0-9a-f]{32})$/.test(path)) &&
+        path !== '/waiting'
+      )
         return NextResponse.redirect(new URL('/waiting', request.url));
 
       return supabaseResponse;

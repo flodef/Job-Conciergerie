@@ -1,6 +1,6 @@
 'use client';
 
-import { createNewEmployee, lookupEmployeeByContact, updateEmployeeWithUserId } from '@/app/actions/employee';
+import { createNewEmployee, enrollEmployeeDevice, lookupEmployeeByContact } from '@/app/actions/employee';
 import AppVersion from '@/app/components/appVersion';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
@@ -18,7 +18,7 @@ import { useRateLimiter } from '@/app/hooks/useRateLimiter';
 import type { Employee } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
 import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
-import { formatId, getConnectedDevices, getDevices, MAX_DEVICES, MaxDevicesError } from '@/app/utils/id';
+import { formatId, getConnectedDevices, MAX_DEVICES, MaxDevicesError } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -263,34 +263,36 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const proceedWithDeviceUpdate = async (employee: Employee, evictOldest: boolean) => {
     if (!userId) throw new Error("L'identifiant n'est pas défini");
 
-    const newIds = getDevices(employee.id, userId, true, evictOldest);
-    if (JSON.stringify(newIds) !== JSON.stringify(employee.id)) {
-      const updatedIds = await updateEmployeeWithUserId(employee, newIds);
+    const result = await enrollEmployeeDevice(employee.firstName, employee.familyName, true, evictOldest);
+    if (!result.ok) {
+      if (result.reason === 'max_devices') throw new MaxDevicesError(result.oldestDevice ?? '');
+      throw new Error('Prestataire non mis à jour dans la base de données');
+    }
 
-      if (!updatedIds) throw new Error('Prestataire non mis à jour dans la base de données');
+    // Update the employee object with the new ID array
+    const updatedEmployee = {
+      ...employee,
+      id: result.ids,
+    };
 
-      // Update the employee object with the new ID array
-      const updatedEmployee = {
-        ...employee,
-        id: updatedIds,
-      };
+    // Update local user data and userType so auth context is fully set before navigating
+    updateUserData(updatedEmployee);
 
-      // Update local user data and userType so auth context is fully set before navigating
-      updateUserData(updatedEmployee);
-
+    if (result.alreadyMember) {
+      onMenuChange(
+        employee.status === 'accepted' && getConnectedDevices(result.ids).includes(result.deviceId)
+          ? Page.Missions
+          : Page.Waiting,
+      );
+    } else {
       // Send notification email to employee about the new device
-      await EmailSender.sendNewDeviceEmail(updatedEmployee, userId);
+      await EmailSender.sendNewDeviceEmail(updatedEmployee, result.deviceId);
       showToast({
         type: ToastType.Success,
         message: "L'email de notification de nouvel appareil a été envoyé avec succès",
       });
 
       onMenuChange(Page.Waiting);
-    } else {
-      updateUserData(employee);
-      onMenuChange(
-        employee.status === 'accepted' && getConnectedDevices(newIds).includes(userId) ? Page.Missions : Page.Waiting,
-      );
     }
   };
 

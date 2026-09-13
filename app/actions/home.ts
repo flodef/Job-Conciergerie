@@ -2,12 +2,14 @@
 
 import type { DbHome } from '@/app/db/homeDb';
 import { createHome, deleteHome, getAllHomes, updateHome } from '@/app/db/homeDb';
+import { getSessionUser } from '@/app/db/session';
 import type { Home } from '@/app/types/dataTypes';
 
 /**
  * Fetch all homes
  */
 export async function fetchAllHomes(): Promise<Home[] | null> {
+  if (!(await getSessionUser())) return null;
   return await getAllHomes();
 }
 
@@ -28,6 +30,8 @@ export async function createNewHome(data: {
   maxTravellers?: number;
   notes?: string;
 }): Promise<Home | null> {
+  if (!(await getSessionUser())) return null;
+
   // Convert to DB format
   const dbData: Omit<DbHome, 'modified_date'> = {
     id: data.id,
@@ -66,6 +70,8 @@ export async function updateHomeData(
     notes?: string;
   }>,
 ): Promise<Home | null> {
+  if (!(await getSessionUser())) return null;
+
   // Convert to DB format
   const dbData: Partial<Omit<DbHome, 'id'>> = {
     title: data.title,
@@ -88,6 +94,7 @@ export async function updateHomeData(
  * Update only the notes field of a home
  */
 export async function updateHomeNotes(id: string, notes: string | undefined): Promise<Home | null> {
+  if (!(await getSessionUser())) return null;
   return await updateHome(id, { notes });
 }
 
@@ -95,5 +102,6 @@ export async function updateHomeNotes(id: string, notes: string | undefined): Pr
  * Delete a home from the database
  */
 export async function deleteHomeData(id: string): Promise<boolean> {
+  if (!(await getSessionUser())) return false;
   return await deleteHome(id);
 }

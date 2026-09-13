@@ -10,12 +10,14 @@ import {
   updateMission,
   updateMissionStatus,
 } from '@/app/db/missionDb';
+import { getSessionUser } from '@/app/db/session';
 import type { Mission, MissionStatus } from '@/app/types/dataTypes';
 
 /**
  * Fetch all missions from the database
  */
 export async function fetchAllMissions(): Promise<Mission[] | null> {
+  if (!(await getSessionUser())) return null;
   return await getAllMissions();
 }
 
@@ -23,6 +25,8 @@ export async function fetchAllMissions(): Promise<Mission[] | null> {
  * Create a new mission in the database
  */
 export async function createNewMission(data: Mission): Promise<Mission | null> {
+  if (!(await getSessionUser())) return null;
+
   // Convert to DB format
   const dbData: Omit<DbMission, 'modified_date'> = {
     id: data.id,
@@ -48,6 +52,8 @@ export async function createNewMission(data: Mission): Promise<Mission | null> {
  * Update a mission in the database
  */
 export async function updateMissionData(id: string, data: Partial<Mission>): Promise<Mission | null> {
+  if (!(await getSessionUser())) return null;
+
   // Convert to DB format
   const dbData: Partial<Omit<DbMission, 'id' | 'modified_date'>> = {};
 
@@ -72,6 +78,7 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
  * Update mission status
  */
 export async function updateMissionStatusAction(id: string, status: MissionStatus): Promise<Mission | null> {
+  if (!(await getSessionUser())) return null;
   return await updateMissionStatus(id, status);
 }
 
@@ -79,6 +86,7 @@ export async function updateMissionStatusAction(id: string, status: MissionStatu
  * Assign employee to mission
  */
 export async function assignEmployeeToMissionAction(missionId: string, employeeId: string): Promise<Mission | null> {
+  if (!(await getSessionUser())) return null;
   return await assignEmployeeToMission(missionId, employeeId);
 }
 
@@ -86,6 +94,7 @@ export async function assignEmployeeToMissionAction(missionId: string, employeeI
  * Delete a mission from the database
  */
 export async function deleteMissionData(id: string): Promise<boolean> {
+  if (!(await getSessionUser())) return false;
   return await deleteMission(id);
 }
 
@@ -95,5 +104,6 @@ export async function deleteMissionData(id: string): Promise<boolean> {
  * any subsequent call returns false. Use this to guarantee the email is sent at most once.
  */
 export async function claimLateNotificationForMission(missionId: string): Promise<boolean> {
+  if (!(await getSessionUser())) return false;
   return await claimLateNotification(missionId);
 }

@@ -1,5 +1,6 @@
 'use server';
 
+import { getSessionUser } from '@/app/db/session';
 import { extractID } from '@/app/utils/ipfs';
 
 // Constants
@@ -14,6 +15,8 @@ const PUBLIC_URL = process.env.NEXT_PUBLIC_IPFS_PUBLIC_URL;
  * @returns Promise<string> CID and file ID joined with a slash
  */
 export async function uploadFileToIPFS(file: File): Promise<string | null> {
+  if (!(await getSessionUser())) return null;
+
   if (!IPFS_JWT || !IPFS_API_URL) {
     console.error('IPFS environment variables not configured');
     throw new Error('IPFS environment variables not configured');
@@ -59,6 +62,8 @@ export async function uploadFileToIPFS(file: File): Promise<string | null> {
  * @param fileId The ID of the file to delete
  */
 export async function deleteFileFromIPFS(fileId: string): Promise<boolean> {
+  if (!(await getSessionUser())) return false;
+
   if (!IPFS_JWT || !PUBLIC_URL) {
     console.error('IPFS environment variables not configured');
     return false;

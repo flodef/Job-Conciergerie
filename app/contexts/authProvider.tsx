@@ -2,13 +2,14 @@
 
 import { fetchConciergeries } from '@/app/actions/conciergerie';
 import { deleteEmployeeData, fetchEmployees } from '@/app/actions/employee';
+import { syncSession } from '@/app/actions/session';
 import type { Toast } from '@/app/components/toastMessage';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
 import { isConnectionPoolError } from '@/app/utils/dbErrors';
-import { containsId, generateSimpleId } from '@/app/utils/id';
+import { containsId, generateSecureId } from '@/app/utils/id';
 import { getLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes } from '@/app/utils/navigation';
 import { getUserKey, type UserData } from '@/app/utils/user';
@@ -107,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const generateId = useCallback(() => {
-    const id = userId || getLocalStorageItem<string>('user_id') || generateSimpleId();
+    const id = userId || getLocalStorageItem<string>('user_id') || generateSecureId();
     updateUserId(id);
     return id;
   }, [userId, updateUserId]);
@@ -121,6 +122,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Function to fetch data from the database and store it in the context
   const fetchDataFromDatabase = useCallback(
     async (fetchType?: UserType) => {
+      // Sync the session first: rotates legacy credentials server-side and returns the canonical id
+      const session = await syncSession();
+      if (session?.userId) {
+        if (session.userId !== getLocalStorageItem<string>('user_id')) updateUserId(session.userId);
+        if (session.userType) updateUserType(session.userType);
+      }
+
       const id = generateId();
       // Read directly from localStorage to avoid stale closure values from SSR hydration
       const currentUserType = getLocalStorageItem<UserType>('user_type');
@@ -198,6 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [
       generateId,
+      updateUserId,
       updateUserType,
       refreshData,
       setConciergerieName,

@@ -3,6 +3,7 @@
 import { isProduction } from '@/app/actions/environment';
 import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { insertFailedEmail } from '@/app/db/failedEmailsDb';
+import { getSessionUser } from '@/app/db/session';
 import type { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime, milliToDay } from '@/app/utils/date';
 import { getStorageImageUrl } from '@/app/utils/storage';
@@ -663,6 +664,7 @@ export async function sendEmployeeAcceptanceEmail(
   isAccepted: boolean,
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry && !(await getSessionUser())) return false;
   return deliver(
     composeEmployeeAcceptanceEmail(employee, conciergerie, missionsCount, isAccepted),
     'acceptance',
@@ -679,6 +681,7 @@ export async function sendMissionStatusChangeEmail(
   status: MissionStatus,
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry && !(await getSessionUser())) return false;
   return deliver(
     composeMissionStatusChangeEmail(mission, home, employee, conciergerie, status),
     'missionStatus',
@@ -709,6 +712,7 @@ export async function sendMissionAcceptanceToEmployeeEmail(
   conciergerie: Conciergerie,
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry && !(await getSessionUser())) return false;
   return deliver(
     composeMissionAcceptanceToEmployeeEmail(mission, home, employee, conciergerie),
     'missionAcceptance',
@@ -725,6 +729,7 @@ export async function sendMissionUpdatedToEmployeeEmail(
   changes: string[],
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry && !(await getSessionUser())) return false;
   return deliver(
     composeMissionUpdatedToEmployeeEmail(mission, home, employee, conciergerie, changes),
     'missionUpdated',
@@ -742,6 +747,7 @@ export async function sendMissionRemovedToEmployeeEmail(
   isRetry = false,
   changes?: string[],
 ): Promise<boolean> {
+  if (!isRetry && !(await getSessionUser())) return false;
   return deliver(
     composeMissionRemovedToEmployeeEmail(mission, home, employee, conciergerie, type, changes),
     'missionRemoved',
@@ -758,6 +764,7 @@ export async function sendMissionReportEmail(
   report: { content: string; images: string[] },
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry && !(await getSessionUser())) return false;
   return deliver(
     composeMissionReportEmail(mission, home, employee, conciergerie, report),
     'missionReport',

@@ -1,6 +1,6 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { getSessionUser } from '@/app/db/session';
 import { createAdminClient } from '@/app/utils/supabase/server';
 
 // Constants
@@ -10,46 +10,26 @@ const BUCKET_NAME = 'House images';
 const REPORTS_FOLDER = 'Reports';
 
 /**
- * Verifies if the current user is an authenticated Conciergerie
- * Returns the conciergerie ID if authorized, null otherwise
+ * Verifies if the current user is an authenticated Conciergerie.
+ * Returns the canonical session id if authorized, null otherwise.
  */
-async function verifyConciergerieAuth(cookieStore: Awaited<ReturnType<typeof cookies>>): Promise<string | null> {
-  try {
-    // Get user_id and user_type from cookies (custom auth system)
-    const userId = cookieStore.get('user_id')?.value;
-    const userType = cookieStore.get('user_type')?.value;
-
-    if (!userId) {
-      console.warn('Storage action: No user_id cookie found');
-      return null;
-    }
-
-    // Check if user is a conciergerie
-    if (userType !== 'conciergerie') return null;
-
-    return userId;
-  } catch (error) {
-    console.error('Error verifying conciergerie auth:', error);
+async function verifyConciergerieAuth(): Promise<string | null> {
+  const session = await getSessionUser();
+  if (!session) {
+    console.warn('Storage action: No valid session found');
     return null;
   }
+  return session.userType === 'conciergerie' ? session.userId : null;
 }
 
 /**
  * Verifies that the current user is authenticated (conciergerie or employee).
- * Returns the user ID if authorized, null otherwise.
+ * Returns the canonical session id if authorized, null otherwise.
  */
-async function verifyAuth(cookieStore: Awaited<ReturnType<typeof cookies>>): Promise<string | null> {
-  try {
-    const userId = cookieStore.get('user_id')?.value;
-    if (!userId) {
-      console.warn('Storage action: No user_id cookie found');
-      return null;
-    }
-    return userId;
-  } catch (error) {
-    console.error('Error verifying auth:', error);
-    return null;
-  }
+async function verifyAuth(): Promise<string | null> {
+  const session = await getSessionUser();
+  if (!session) console.warn('Storage action: No valid session found');
+  return session?.userId ?? null;
 }
 
 /**
@@ -59,10 +39,8 @@ async function verifyAuth(cookieStore: Awaited<ReturnType<typeof cookies>>): Pro
  * @returns Promise<string> The file path in the bucket, or null if upload failed
  */
 export async function uploadFileToSupabase(file: File, fileName?: string): Promise<string | null> {
-  const cookieStore = await cookies();
-
   // Verify user is a conciergerie
-  const conciergerieId = await verifyConciergerieAuth(cookieStore);
+  const conciergerieId = await verifyConciergerieAuth();
   if (!conciergerieId) {
     console.error(
       'Upload denied: Only conciergeries can upload images. User may not be logged in or not a conciergerie.',
@@ -108,15 +86,10 @@ export async function uploadFileToSupabase(file: File, fileName?: string): Promi
  * @returns Promise<string> The file path in the bucket, or null if upload failed
  */
 export async function uploadReportImageToSupabase(file: File, fileName: string): Promise<string | null> {
-  const cookieStore = await cookies();
-
   // Verify user is authenticated (employee or conciergerie)
-  const userId = await verifyAuth(cookieStore);
+  const userId = await verifyAuth();
   if (!userId) {
-    console.error('[uploadReportImageToSupabase] Upload denied: user not authenticated.', {
-      hasUserId: !!cookieStore.get('user_id')?.value,
-      hasUserType: !!cookieStore.get('user_type')?.value,
-    });
+    console.error('[uploadReportImageToSupabase] Upload denied: user not authenticated.');
     return null;
   }
 
@@ -169,10 +142,8 @@ export async function uploadReportImageToSupabase(file: File, fileName: string):
  * @returns Promise<boolean> True if deletion was successful
  */
 export async function deleteFileFromSupabase(filePath: string): Promise<boolean> {
-  const cookieStore = await cookies();
-
   // Verify user is a conciergerie
-  const conciergerieId = await verifyConciergerieAuth(cookieStore);
+  const conciergerieId = await verifyConciergerieAuth();
   if (!conciergerieId) return false;
 
   // Use admin client to bypass RLS policies
@@ -217,10 +188,8 @@ export async function getSupabaseImageUrl(filePath: string): Promise<string> {
  * @returns Promise<string[]> Array of file paths, or empty array if error
  */
 export async function listStorageFiles(): Promise<string[]> {
-  const cookieStore = await cookies();
-
   // Verify user is a conciergerie
-  const conciergerieId = await verifyConciergerieAuth(cookieStore);
+  const conciergerieId = await verifyConciergerieAuth();
   if (!conciergerieId) return [];
 
   // Use admin client to bypass RLS policies

@@ -2,6 +2,7 @@
 
 import Logo from '@/app/components/Logo';
 import {
+  IconAlertCircle,
   IconBell,
   IconBolt,
   IconCalendar,
@@ -1365,11 +1366,9 @@ function ContactForm() {
         setTimeout(() => setStatus('idle'), 5000);
       } else {
         setStatus('error');
-        setTimeout(() => setStatus('idle'), 5000);
       }
     } catch {
       setStatus('error');
-      setTimeout(() => setStatus('idle'), 5000);
     }
   };
 
@@ -1568,23 +1567,39 @@ function ContactForm() {
                     Message envoyé !
                   </>
                 )}
-                {status === 'idle' && (
+                {(status === 'idle' || status === 'error') && (
                   <>
                     <IconSend size={20} />
-                    Envoyer ma demande
+                    {status === 'error' ? 'Réessayer' : 'Envoyer ma demande'}
                   </>
                 )}
               </button>
 
               {status === 'sent' && (
-                <p role="status" className="text-center text-sm text-emerald-400">
-                  Merci ! Nous vous recontactons sous 24h.
-                </p>
+                <div
+                  role="status"
+                  className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300"
+                >
+                  <IconCircleCheck size={20} className="shrink-0" />
+                  <span>Message envoyé ! Merci — nous vous recontactons sous 24h.</span>
+                </div>
               )}
               {status === 'error' && (
-                <p role="alert" className="text-center text-sm text-red-400">
-                  Une erreur est survenue. Réessayez ou écrivez-nous à contact@job-conciergerie.fr
-                </p>
+                <div
+                  role="alert"
+                  className="flex items-start gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+                >
+                  <IconAlertCircle size={20} className="shrink-0 mt-0.5" />
+                  <span>
+                    Une erreur est survenue. Réessayez ou écrivez-nous à{' '}
+                    <a
+                      href="mailto:contact@job-conciergerie.fr"
+                      className="underline underline-offset-2 hover:text-red-200"
+                    >
+                      contact@job-conciergerie.fr
+                    </a>
+                  </span>
+                </div>
               )}
             </form>
           </div>

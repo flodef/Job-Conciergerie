@@ -1,7 +1,7 @@
 import {
   containsId,
   formatId,
-  generateSimpleId,
+  generateSecureId,
   getConnectedDevices,
   getDevices,
   isNewDevice,
@@ -17,17 +17,17 @@ describe('ID Utilities', () => {
     });
   });
 
-  describe('generateSimpleId', () => {
+  describe('generateSecureId', () => {
     it('should generate a non-empty string', () => {
-      const id = generateSimpleId();
+      const id = generateSecureId();
       expect(id).toBeTruthy();
       expect(typeof id).toBe('string');
-      expect(id.length).toBeGreaterThan(0);
+      expect(id).toMatch(/^v2_[0-9a-f]{32}$/);
     });
 
     it('should generate unique IDs', () => {
-      const id1 = generateSimpleId();
-      const id2 = generateSimpleId();
+      const id1 = generateSecureId();
+      const id2 = generateSecureId();
       expect(id1).not.toBe(id2);
     });
   });

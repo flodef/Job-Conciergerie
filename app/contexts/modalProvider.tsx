@@ -1,6 +1,6 @@
 'use client';
 
-import { generateSimpleId } from '@/app/utils/id';
+import { generateSecureId } from '@/app/utils/id';
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useState } from 'react';
 
@@ -41,13 +41,13 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const [stack, setStack] = useState<ModalEntry[]>([]);
 
   const openModal = useCallback((render: ModalRender) => {
-    const id = generateSimpleId();
+    const id = generateSecureId();
     setStack(prev => [...prev, { id, render }]);
     return id;
   }, []);
 
   const replaceModal = useCallback((render: ModalRender) => {
-    const id = generateSimpleId();
+    const id = generateSecureId();
     setStack(prev => [...prev.slice(0, -1), { id, render }]);
     return id;
   }, []);

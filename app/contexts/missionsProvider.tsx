@@ -16,7 +16,7 @@ import { useFetchTime } from '@/app/hooks/useFetchTime';
 import type { Employee, Home, Mission, MissionReport, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime } from '@/app/utils/date';
 import { EmailSender } from '@/app/utils/emailSender';
-import { generateSimpleId } from '@/app/utils/id';
+import { generateSecureId } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes, Page } from '@/app/utils/navigation';
 import { getUserKey, isOwner } from '@/app/utils/user';
@@ -248,7 +248,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     const newMission: Mission = {
       ...missionData,
-      id: generateSimpleId(),
+      id: generateSecureId(),
       employeeId: null,
       status: null,
       conciergerieName,

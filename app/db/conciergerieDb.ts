@@ -72,6 +72,21 @@ export const updateConciergerie = async (name: string | undefined, data: Partial
 };
 
 /**
+ * Fetch a conciergerie's device id array
+ */
+export const getConciergerieIds = async (name: string): Promise<string[] | null> => {
+  try {
+    const result = await sql`
+      SELECT id FROM conciergeries WHERE name = ${name}
+    `;
+    return result.length > 0 ? (result[0].id as string[]) : null;
+  } catch (error) {
+    console.error(`Error fetching conciergerie ids for ${name}:`, error);
+    return null;
+  }
+};
+
+/**
  * Update a conciergerie's ID
  * @param conciergerieIds - Current array of conciergerie IDs
  * @param name - Current conciergerie name
