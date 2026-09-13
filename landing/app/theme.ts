@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 export type ThemeMode = 'dark' | 'light' | 'system';
 
@@ -61,5 +61,10 @@ export function useTheme() {
     applyTheme(mode);
   }, [mode, resolved]);
 
-  return { mode, resolved, set: setTheme };
+  // `ready` is false until mounted — before that `mode` still holds the
+  // 'system' server snapshot rather than the stored theme.
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
+
+  return { mode, resolved, set: setTheme, ready };
 }

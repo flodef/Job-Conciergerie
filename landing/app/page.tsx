@@ -38,7 +38,10 @@ import { useTheme } from '@/app/theme';
 
 /* ───────────────────────────── Theme Toggle ───────────────────────────── */
 function ThemeToggle({ size = 'sm' }: { size?: 'sm' | 'md' }) {
-  const { mode, set } = useTheme();
+  const { mode, set, ready } = useTheme();
+  // While the theme loads, don't report any option as checked — `mode` still
+  // holds the 'system' server snapshot, not the stored selection.
+  const activeMode = ready ? mode : null;
   const iconSize = size === 'sm' ? 16 : 18;
   const padding = size === 'sm' ? 'p-1' : 'p-1.5';
   const btnClass = `theme-opt rounded-full flex items-center justify-center transition-all hover:text-white ${size === 'sm' ? 'p-1.5' : 'p-2'}`;
@@ -54,7 +57,8 @@ function ThemeToggle({ size = 'sm' }: { size?: 'sm' | 'md' }) {
         onClick={() => set('system')}
         title="Système"
         aria-label="Système"
-        aria-checked={mode === 'system'}
+        aria-checked={activeMode === 'system'}
+        aria-disabled={!ready}
         role="radio"
         data-theme-opt="system"
         style={{ cursor: 'pointer' }}
@@ -76,7 +80,8 @@ function ThemeToggle({ size = 'sm' }: { size?: 'sm' | 'md' }) {
           onClick={() => set(opt.value)}
           title={opt.label}
           aria-label={opt.label}
-          aria-checked={mode === opt.value}
+          aria-checked={activeMode === opt.value}
+          aria-disabled={!ready}
           role="radio"
           data-theme-opt={opt.value}
           style={{ cursor: 'pointer' }}
