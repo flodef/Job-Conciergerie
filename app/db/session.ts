@@ -1,4 +1,4 @@
-import { hmacSecret, rotateLegacyId, sql } from '@/app/db/db';
+import { hashId, hmacSecret, rotateLegacyId, sql } from '@/app/db/db';
 import type { UserType } from '@/app/contexts/authProvider';
 import { baseId, isNewDevice, V2_ID_PREFIX } from '@/app/utils/id';
 import { createHmac, timingSafeEqual } from 'crypto';
@@ -48,26 +48,33 @@ export async function getSessionDeviceId(): Promise<string | null> {
  */
 async function resolveMembership(id: string): Promise<{ userType: UserType; pending: boolean; rowKey: string } | null> {
   try {
+    // Ids are hashed at rest — dual-match (raw OR sha256) keeps pre-migration
+    // rows resolving during the transition.
+    const hid = hashId(id);
     const pendingId = '$' + id;
+    const pendingHid = '$' + hid;
     const result = await sql`
       SELECT
         CASE
           WHEN EXISTS (
-            SELECT 1 FROM conciergeries WHERE ${id} = ANY(id) OR ${pendingId} = ANY(id)
+            SELECT 1 FROM conciergeries
+            WHERE ${id} = ANY(id) OR ${hid} = ANY(id) OR ${pendingId} = ANY(id) OR ${pendingHid} = ANY(id)
           ) THEN 'conciergerie'
           WHEN EXISTS (
-            SELECT 1 FROM employees WHERE ${id} = ANY(id) OR ${pendingId} = ANY(id)
+            SELECT 1 FROM employees
+            WHERE ${id} = ANY(id) OR ${hid} = ANY(id) OR ${pendingId} = ANY(id) OR ${pendingHid} = ANY(id)
           ) THEN 'employee'
           ELSE NULL
         END AS user_type,
         NOT (
-          EXISTS (SELECT 1 FROM conciergeries WHERE ${id} = ANY(id))
-          OR EXISTS (SELECT 1 FROM employees WHERE ${id} = ANY(id))
+          EXISTS (SELECT 1 FROM conciergeries WHERE ${id} = ANY(id) OR ${hid} = ANY(id))
+          OR EXISTS (SELECT 1 FROM employees WHERE ${id} = ANY(id) OR ${hid} = ANY(id))
         ) AS pending,
         COALESCE(
-          (SELECT name FROM conciergeries WHERE ${id} = ANY(id) OR ${pendingId} = ANY(id) LIMIT 1),
+          (SELECT name FROM conciergeries
+           WHERE ${id} = ANY(id) OR ${hid} = ANY(id) OR ${pendingId} = ANY(id) OR ${pendingHid} = ANY(id) LIMIT 1),
           (SELECT first_name || ' ' || family_name FROM employees
-           WHERE ${id} = ANY(id) OR ${pendingId} = ANY(id) LIMIT 1)
+           WHERE ${id} = ANY(id) OR ${hid} = ANY(id) OR ${pendingId} = ANY(id) OR ${pendingHid} = ANY(id) LIMIT 1)
         ) AS row_key
     `;
 
@@ -110,16 +117,23 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     const rotated = rotateLegacyId(canonicalId);
     if (rotated !== canonicalId) {
       try {
-        await sql`
-          UPDATE conciergeries
-          SET id = array_replace(array_replace(id, ${canonicalId}, ${rotated}), ${'$' + canonicalId}, ${'$' + rotated})
-          WHERE ${canonicalId} = ANY(id) OR ${'$' + canonicalId} = ANY(id)
+        // Rewrite both forms (raw during transition, hash after migration),
+        // preserving the pending marker — result is always hashId(rotated).
+        const hCanonical = hashId(canonicalId);
+        const hRotated = hashId(rotated);
+        const rewrite = sql`
+          SET id = (
+            SELECT array_agg(CASE
+              WHEN i IN (${canonicalId}, ${hCanonical}) THEN ${hRotated}
+              WHEN i IN (${'$' + canonicalId}, ${'$' + hCanonical}) THEN ${'$' + hRotated}
+              ELSE i END)
+            FROM unnest(id) i
+          )
+          WHERE ${canonicalId} = ANY(id) OR ${hCanonical} = ANY(id)
+             OR ${'$' + canonicalId} = ANY(id) OR ${'$' + hCanonical} = ANY(id)
         `;
-        await sql`
-          UPDATE employees
-          SET id = array_replace(array_replace(id, ${canonicalId}, ${rotated}), ${'$' + canonicalId}, ${'$' + rotated})
-          WHERE ${canonicalId} = ANY(id) OR ${'$' + canonicalId} = ANY(id)
-        `;
+        await sql`UPDATE conciergeries ${rewrite}`;
+        await sql`UPDATE employees ${rewrite}`;
       } catch (error) {
         console.error('Error rotating legacy user id:', error);
         return { userId: canonicalId, userType, rotated: false, pending, rowKey };
@@ -162,7 +176,10 @@ export async function requireConciergerieSession(): Promise<SessionUser | null> 
  * (its canonical device id is a connected entry of the array).
  */
 export function isRowMember(session: SessionUser, ids: string[]): boolean {
-  return !session.pending && ids.some(i => !isNewDevice(i) && baseId(i) === session.userId);
+  if (session.pending) return false;
+  // Stored ids are hashed at rest — match either domain (transition-safe).
+  const creds = new Set([session.userId, hashId(session.userId)]);
+  return ids.some(i => !isNewDevice(i) && creds.has(baseId(i)));
 }
 
 /**
@@ -176,9 +193,14 @@ export async function getSessionCredentialIds(): Promise<Set<string>> {
   if (deviceId) {
     ids.add(deviceId);
     ids.add(rotateLegacyId(deviceId));
+    ids.add(hashId(deviceId));
+    ids.add(hashId(rotateLegacyId(deviceId)));
   }
   const session = await getSessionUser();
-  if (session) ids.add(session.userId);
+  if (session) {
+    ids.add(session.userId);
+    ids.add(hashId(session.userId));
+  }
   return ids;
 }
 

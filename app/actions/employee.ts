@@ -11,6 +11,7 @@ import {
   updateEmployeeSettings,
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
+import { hashId } from '@/app/db/db';
 import { checkRateLimit, RATE_LIMITED, type RateLimited } from '@/app/db/rateLimit';
 import {
   getSessionCredentialIds,
@@ -44,9 +45,11 @@ export async function fetchEmployees(): Promise<Employee[] | null> {
   return (
     employees
       ?.map(e => {
-        if (!e.id.some(i => baseId(i) === session.userId)) return { ...e, id: [] };
+        // Stored ids are hashed at rest — match either domain (transition-safe)
+        const creds = new Set([session.userId, hashId(session.userId)]);
+        if (!e.id.some(i => creds.has(baseId(i)))) return { ...e, id: [] };
         // A pending device sees only its own pending marker — never the real credentials
-        return { ...e, id: session.pending ? [`$${session.userId}`] : e.id };
+        return { ...e, id: session.pending ? [`$${hashId(session.userId)}`] : e.id };
       })
       // A pending device only needs its own row (waiting-page status) — don't
       // leak the whole staff directory (names, emails, phones) to it.
@@ -110,9 +113,9 @@ export async function createNewEmployee(data: {
   const deviceId = await getSessionDeviceId();
   if (!deviceId) return null;
 
-  // Convert to DB format
+  // Convert to DB format (device ids are hashed at rest)
   const dbData: Omit<DbEmployee, 'created_at'> = {
-    id: [deviceId],
+    id: [hashId(deviceId)],
     first_name: normalizeFirstName(data.firstName),
     family_name: normalizeFamilyName(data.familyName),
     tel: data.tel,
@@ -164,16 +167,20 @@ export async function enrollEmployeeDevice(
   const ids = await getEmployeeIds(firstName, familyName);
   if (!ids) return { ok: false, reason: 'not_found' };
 
-  const alreadyMember = ids.some(i => !isNewDevice(i) && baseId(i) === deviceId);
+  // Stored ids are hashed — normalize this device's own raw entries first so
+  // the membership check and getDevices both work in the hash domain.
+  const hid = hashId(deviceId);
+  const normalized = ids.map(i => (baseId(i) === deviceId ? (isNewDevice(i) ? `$${hid}` : hid) : i));
+  const alreadyMember = normalized.some(i => !isNewDevice(i) && baseId(i) === hid);
   const hasToken = verifyEnrollmentToken('employee', `${firstName}|${familyName}`, deviceId, token);
   const markPending = !alreadyMember && !hasToken;
 
   try {
-    const newIds = getDevices(ids, deviceId, markPending, evictOldest);
+    const newIds = getDevices(normalized, hid, markPending, evictOldest);
     const updated = await updateEmployeeId(firstName, familyName, newIds);
     if (!updated) return { ok: false, reason: 'invalid' };
     // A pending device gets back only its own marker — never the row's real credentials
-    return { ok: true, ids: markPending ? [`$${deviceId}`] : updated, deviceId, alreadyMember, pending: markPending };
+    return { ok: true, ids: markPending ? [`$${hid}`] : updated, deviceId, alreadyMember, pending: markPending };
   } catch (error) {
     if (error instanceof MaxDevicesError) return { ok: false, reason: 'max_devices', oldestDevice: error.oldestDevice };
     throw error;

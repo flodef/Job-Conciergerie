@@ -25,6 +25,7 @@ export default function IdPage({
 }) {
   const {
     userId,
+    userIdHash,
     isEmployee,
     isConciergerie,
     employeeName,
@@ -85,7 +86,8 @@ export default function IdPage({
           if (!employee) throw new Error('Prestataire non trouvée. Veuillez vous reconnecter.');
 
           // If the ID fetched is not the one in the localStorage, update it in the database
-          if (!employee.id.includes(userId)) {
+          // (stored ids are hashed at rest — match raw or hash, transition-safe)
+          if (!employee.id.includes(userId) && !(userIdHash && employee.id.includes(userIdHash))) {
             try {
               pending = (await applyUpdate(employee, false)) ?? false;
             } catch (err) {
@@ -101,7 +103,7 @@ export default function IdPage({
           if (!conciergerie) throw new Error('Conciergerie non trouvée. Veuillez vous reconnecter.');
 
           // If the ID fetched is not the one in the localStorage, update it in the database
-          if (!conciergerie.id.includes(userId)) {
+          if (!conciergerie.id.includes(userId) && !(userIdHash && conciergerie.id.includes(userIdHash))) {
             try {
               pending = (await applyUpdate(conciergerie, false)) ?? false;
             } catch (err) {
@@ -130,6 +132,7 @@ export default function IdPage({
   }, [
     id,
     userId,
+    userIdHash,
     isEmployee,
     isConciergerie,
     employeeName,

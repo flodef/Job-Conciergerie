@@ -9,7 +9,7 @@ import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
 import { isConnectionPoolError } from '@/app/utils/dbErrors';
-import { containsId, generateSecureId } from '@/app/utils/id';
+import { containsId, generateSecureId, hashIdAsync } from '@/app/utils/id';
 import { getLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes } from '@/app/utils/navigation';
 import { getUserKey, type UserData } from '@/app/utils/user';
@@ -21,6 +21,8 @@ export type UserType = 'conciergerie' | 'employee';
 
 interface AuthContextType {
   userId: string | undefined;
+  /** sha256 of userId — device ids are hashed at rest, so own-row entries compare against this */
+  userIdHash: string | undefined;
   userType: UserType | undefined;
   userData: UserData | undefined;
   isEmployee: boolean;
@@ -46,6 +48,7 @@ interface AuthContextType {
 // Create the auth context
 const AuthContext = createContext<AuthContextType>({
   userId: undefined,
+  userIdHash: undefined,
   userType: undefined,
   userData: undefined,
   isEmployee: false,
@@ -71,6 +74,7 @@ const AuthContext = createContext<AuthContextType>({
 // Auth provider component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userId, setUserId] = useLocalStorage<string>('user_id');
+  const [userIdHash, setUserIdHash] = useState<string>();
   const [userType, setUserType] = useLocalStorage<UserType>('user_type');
   const [conciergerieName, setConciergerieName] = useLocalStorage<string>('conciergerie_name');
   const [conciergeries, setConciergeries] = useState<Conciergerie[]>([]);
@@ -95,6 +99,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     [setUserId],
   );
+  // Keep the sha256 of the raw device id in sync — the rows' `id` arrays are
+  // hashed at rest, so all own-row comparisons happen in the hash domain.
+  useEffect(() => {
+    let cancelled = false;
+    if (userId)
+      hashIdAsync(userId)
+        .then(h => !cancelled && setUserIdHash(h))
+        .catch(() => {});
+    // crypto.subtle unavailable (non-secure context) — raw compare still works pre-migration
+    else setUserIdHash(undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
   const updateUserType = useCallback(
     (userType: UserType | undefined) => {
       setUserType(userType);
@@ -163,8 +182,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const effectiveConciergeries = fetchedConciergeries ?? conciergeries;
       const effectiveEmployees = fetchedEmployees ?? employees;
 
-      const findUserById = <T extends UserData>(users: T[] | null, id: string) =>
-        users?.find(user => containsId(user.id, id));
+      // Own-row ids are hashed at rest — compare in both domains (pre-migration
+      // rows still hold raw ids)
+      const idHash = await hashIdAsync(id).catch(() => undefined);
+      const findUserById = <T extends UserData>(users: T[] | null, deviceId: string) =>
+        users?.find(user => containsId(user.id, deviceId) || (!!idHash && containsId(user.id, idHash)));
 
       const foundEmployee = findUserById(effectiveEmployees, id);
       const newUserData = foundEmployee || findUserById(effectiveConciergeries, id);
@@ -303,6 +325,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         userId,
+        userIdHash,
         userType,
         userData,
         isEmployee,

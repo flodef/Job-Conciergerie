@@ -30,7 +30,21 @@ type Device = {
 };
 
 const ConnectedDevicesSettings: React.FC = () => {
-  const { disconnect, nuke, userData, userId: currentUserId, updateUserData, isEmployee } = useAuth();
+  const {
+    disconnect,
+    nuke,
+    userData,
+    userId: currentUserId,
+    userIdHash: currentUserIdHash,
+    updateUserData,
+    isEmployee,
+  } = useAuth();
+
+  // Device ids are hashed at rest — own entries match either the raw id
+  // (pre-migration rows) or its sha256.
+  const isOwnId = (id: string) =>
+    (!!currentUserId && containsId([id], currentUserId)) ||
+    (!!currentUserIdHash && containsId([id], currentUserIdHash));
 
   const [storedLabels, setStoredLabels] = useLocalStorage<Device[]>('device_labels', []);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -81,15 +95,15 @@ const ConnectedDevicesSettings: React.FC = () => {
         }}
         title="Confirmation"
         message={
-          id === currentUserId
+          isOwnId(id)
             ? "Êtes-vous sûr de vouloir réinitialiser vos données ? Cette action supprimera votre accès à l'application."
             : 'Êtes-vous sûr de vouloir supprimer cet appareil ? Cette action révoquera son accès à ce compte.'
         }
-        confirmText={id === currentUserId ? 'Réinitialiser' : 'Supprimer'}
+        confirmText={isOwnId(id) ? 'Réinitialiser' : 'Supprimer'}
         cancelText="Annuler"
         isDangerous
       >
-        {id === currentUserId && (
+        {isOwnId(id) && (
           <div className="mt-4 flex items-center justify-center w-full">
             <label className="flex items-center cursor-pointer select-none w-full justify-center gap-2">
               <span className={cn('text-light', deleteSettings ? 'font-bold' : '')}>
@@ -197,7 +211,7 @@ const ConnectedDevicesSettings: React.FC = () => {
     if (!confirmTargetId || !currentUserId) return;
 
     const updatedIds = await updateDeviceIds(ids => ids.filter(id => id !== confirmTargetId), 'supprimé');
-    if (updatedIds && confirmTargetId === currentUserId) {
+    if (updatedIds && isOwnId(confirmTargetId)) {
       if (deleteSettings) nuke();
       else disconnect();
     }
@@ -239,7 +253,7 @@ const ConnectedDevicesSettings: React.FC = () => {
             <div key={item.id} className="py-4 h-15 flex items-center justify-between">
               <div className="flex flex-col">
                 <p className={labelClassName}>
-                  {currentUserId && containsId([item.id], currentUserId) ? (
+                  {isOwnId(item.id) ? (
                     <>
                       <span className="font-bold">Cet appareil</span>
                       {deviceType === 'mobile' ? (
@@ -266,7 +280,7 @@ const ConnectedDevicesSettings: React.FC = () => {
                 <button onClick={() => copyToClipboard(item.id)} className={iconButtonClassName()} title="Copier l'ID">
                   <IconCopy size={24} stroke={1.5} />
                 </button>
-                {(!currentUserId || !containsId([item.id], currentUserId)) && (
+                {!isOwnId(item.id) && (
                   <>
                     <button
                       onClick={() => handleEditDevice(item.id)}

@@ -16,6 +16,7 @@ import {
   requireConnectedSession,
   verifyEnrollmentToken,
 } from '@/app/db/session';
+import { hashId } from '@/app/db/db';
 import { checkRateLimit } from '@/app/db/rateLimit';
 import type { EnrollDeviceResult } from '@/app/actions/employee';
 import type { Conciergerie } from '@/app/types/dataTypes';
@@ -39,9 +40,10 @@ export async function fetchConciergeries(): Promise<Conciergerie[] | null> {
       .map(c => ({
         // Connected member → real ids; pending member → only its own marker; else []
         id:
-          session && c.id.some(i => baseId(i) === session.userId)
+          // Stored ids are hashed at rest — match either domain (transition-safe)
+          session && c.id.some(i => new Set([session.userId, hashId(session.userId)]).has(baseId(i)))
             ? session.pending
-              ? [`$${session.userId}`]
+              ? [`$${hashId(session.userId)}`]
               : c.id
             : [],
         name: c.name,
@@ -79,16 +81,19 @@ export async function enrollConciergerieDevice(
   const ids = await getConciergerieIds(name);
   if (!ids) return { ok: false, reason: 'not_found' };
 
-  const alreadyMember = ids.some(i => !isNewDevice(i) && baseId(i) === deviceId);
+  // Stored ids are hashed — normalize this device's own raw entries first
+  const hid = hashId(deviceId);
+  const normalized = ids.map(i => (baseId(i) === deviceId ? (isNewDevice(i) ? `$${hid}` : hid) : i));
+  const alreadyMember = normalized.some(i => !isNewDevice(i) && baseId(i) === hid);
   const hasToken = verifyEnrollmentToken('conciergerie', name, deviceId, token);
   const markPending = !alreadyMember && !hasToken;
 
   try {
-    const newIds = getDevices(ids, deviceId, markPending, evictOldest);
+    const newIds = getDevices(normalized, hid, markPending, evictOldest);
     const updated = await updateConciergerieId(name, newIds);
     if (!updated) return { ok: false, reason: 'invalid' };
     // A pending device gets back only its own marker — never the row's real credentials
-    return { ok: true, ids: markPending ? [`$${deviceId}`] : updated, deviceId, alreadyMember, pending: markPending };
+    return { ok: true, ids: markPending ? [`$${hid}`] : updated, deviceId, alreadyMember, pending: markPending };
   } catch (error) {
     if (error instanceof MaxDevicesError) return { ok: false, reason: 'max_devices', oldestDevice: error.oldestDevice };
     throw error;
