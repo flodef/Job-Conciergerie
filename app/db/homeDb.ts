@@ -57,6 +57,24 @@ export const getAllHomes = async () => {
 };
 
 /**
+ * Fetch a single home by id
+ */
+export const getHomeById = async (id: string) => {
+  try {
+    const result = await sql`
+      SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers, notes
+      FROM homes
+      WHERE id = ${id}
+      LIMIT 1
+    `;
+    return result.length > 0 ? formatHome(result[0] as DbHome) : null;
+  } catch (error) {
+    console.error(`Error fetching home ${id}:`, error);
+    return null;
+  }
+};
+
+/**
  * Create a new home
  */
 export const createHome = async (data: DbHome) => {

@@ -101,9 +101,10 @@ async function handleCheckLateMissions(request: NextRequest) {
         continue;
       }
 
-      // Send the email
+      // Send the email — internal trusted call (no user session in a route
+      // handler; the objects above already come straight from the DB)
       try {
-        await sendLateCompletionEmail(mission, home, employee, conciergerie);
+        await sendLateCompletionEmail(mission, home, employee, conciergerie, true);
         sent++;
       } catch {
         skipped++;

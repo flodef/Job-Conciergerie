@@ -250,6 +250,39 @@ export const deleteEmployee = async (firstName: string, familyName: string) => {
 };
 
 /**
+ * Fetch a single employee by name
+ */
+export const getEmployeeByName = async (firstName: string, familyName: string) => {
+  try {
+    const result = await sql`
+      SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
+      FROM employees
+      WHERE first_name = ${firstName} AND family_name = ${familyName}
+      LIMIT 1
+    `;
+    return result.length > 0 ? formatEmployee(result[0] as DbEmployee) : null;
+  } catch (error) {
+    console.error(`Error fetching employee ${firstName} ${familyName}:`, error);
+    return null;
+  }
+};
+
+/**
+ * Fetch an employee's device id array
+ */
+export const getEmployeeIds = async (firstName: string, familyName: string): Promise<string[] | null> => {
+  try {
+    const result = await sql`
+      SELECT id FROM employees WHERE first_name = ${firstName} AND family_name = ${familyName}
+    `;
+    return result.length > 0 ? (result[0].id as string[]) : null;
+  } catch (error) {
+    console.error(`Error fetching employee ids for ${firstName} ${familyName}:`, error);
+    return null;
+  }
+};
+
+/**
  * Update an employee's ID array
  * @param employeeIds - Current array of employee IDs
  * @param firstName - Current employee first name

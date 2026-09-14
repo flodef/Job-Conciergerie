@@ -236,7 +236,7 @@ const ConnectedDevicesSettings: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div key={item.id} className="py-4 h-[60px] flex items-center justify-between">
+            <div key={item.id} className="py-4 h-15 flex items-center justify-between">
               <div className="flex flex-col">
                 <p className={labelClassName}>
                   {currentUserId && containsId([item.id], currentUserId) ? (

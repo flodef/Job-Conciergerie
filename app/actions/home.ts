@@ -1,13 +1,15 @@
 'use server';
 
 import type { DbHome } from '@/app/db/homeDb';
-import { createHome, deleteHome, getAllHomes, updateHome } from '@/app/db/homeDb';
+import { createHome, deleteHome, getAllHomes, getHomeById, updateHome } from '@/app/db/homeDb';
+import { requireConciergerieSession, requireConnectedSession } from '@/app/db/session';
 import type { Home } from '@/app/types/dataTypes';
 
 /**
  * Fetch all homes
  */
 export async function fetchAllHomes(): Promise<Home[] | null> {
+  if (!(await requireConnectedSession())) return null;
   return await getAllHomes();
 }
 
@@ -28,6 +30,11 @@ export async function createNewHome(data: {
   maxTravellers?: number;
   notes?: string;
 }): Promise<Home | null> {
+  // Homes belong to the conciergerie's catalog — employees must not create them,
+  // and a conciergerie only writes in its own tenant
+  const session = await requireConciergerieSession();
+  if (!session || data.conciergerieName !== session.rowKey) return null;
+
   // Convert to DB format
   const dbData: Omit<DbHome, 'modified_date'> = {
     id: data.id,
@@ -66,6 +73,12 @@ export async function updateHomeData(
     notes?: string;
   }>,
 ): Promise<Home | null> {
+  // Catalog management is conciergerie-only (notes go through updateHomeNotes)
+  const session = await requireConciergerieSession();
+  if (!session) return null;
+  const home = await getHomeById(id);
+  if (!home || home.conciergerieName !== session.rowKey) return null;
+
   // Convert to DB format
   const dbData: Partial<Omit<DbHome, 'id'>> = {
     title: data.title,
@@ -88,6 +101,7 @@ export async function updateHomeData(
  * Update only the notes field of a home
  */
 export async function updateHomeNotes(id: string, notes: string | undefined): Promise<Home | null> {
+  if (!(await requireConnectedSession())) return null;
   return await updateHome(id, { notes });
 }
 
@@ -95,5 +109,9 @@ export async function updateHomeNotes(id: string, notes: string | undefined): Pr
  * Delete a home from the database
  */
 export async function deleteHomeData(id: string): Promise<boolean> {
+  const session = await requireConciergerieSession();
+  if (!session) return false;
+  const home = await getHomeById(id);
+  if (!home || home.conciergerieName !== session.rowKey) return false;
   return await deleteHome(id);
 }

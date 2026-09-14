@@ -2,6 +2,7 @@
 
 > Exécution **manuelle et incrémentale** : des clients utilisent l'app en prod.
 > Règles d'or pour toutes les phases :
+>
 > - Migrations **additives uniquement** (colonnes nullable, nouvelles tables) — jamais de rename/drop.
 > - Chaque étape doit être déployable et réversible indépendamment.
 > - Backup DB (`pg_dump` / snapshot Supabase) avant chaque migration.
@@ -13,27 +14,55 @@
 
 **Objectif** : fermer les trous sans changer le comportement visible pour les utilisateurs actuels.
 
-### A.1 — IDs cryptographiquement sûrs
-- `app/utils/id.ts` : `generateSimpleId()` utilise `Math.random()` → PRNG prévisible.
-- Ajouter `generateSecureId()` basé sur `crypto.getRandomValues()` (≥128 bits) et l'utiliser pour tous les **nouveaux** ids.
-- Les ids existants restent valides (pas de rotation forcée dans un premier temps).
-- Risque : nul. Les anciens ids continuent de fonctionner.
+### A.1 — IDs cryptographiquement sûrs ✅ FAIT
 
-### A.2 — Vérification côté serveur (le vrai trou)
-Aujourd'hui **toutes** les server actions retournent les données à n'importe qui (`fetchEmployees()`, `fetchConciergeries()` → `getAllX()` sans filtre). La DB est publique en lecture.
+- `generateSecureId()` (`v2_` + 128 bits via `crypto.getRandomValues`) remplace `generateSimpleId` partout.
+- **Rotation transparente** : `v2 = v2_ + HMAC-SHA256(id, ID_ROTATION_SECRET ‖ SUPABASE_SERVICE_ROLE_KEY)` — déterministe → idempotent, sans race, cookie périmé auto-réparé. `getSessionUser()` réécrit l'ancien id en place (`array_replace`, gère aussi les `$` pending) et met à jour le cookie — migration invisible pour l'utilisateur.
 
-- Créer `app/db/auth.ts` : `getSessionUser()` qui lit le cookie `user_id` (déjà posé par `authProvider`) + `user_type`, vérifie via `getExistingUserType()` que l'id existe en DB, retourne `{ user, type }` ou `null`.
-- Ajouter le guard en tête de chaque action dans `app/actions/` :
-  - Étape 1 (non cassante) : exiger un `user_id` **valide** (existant en DB). Le contenu retourné reste le même qu'aujourd'hui — single-tenant, pas de risque de casser l'UI.
-  - Étape 2 (Phase C) : scoper par `client_id`.
-- Routes à traiter : `employee.ts`, `conciergerie.ts`, `home.ts`, `mission.ts`, `missionReport.ts`, `email.ts`, `storage.ts`, `ipfs.ts`, `environment.ts`.
-- Attention aux appels **anonymes légitimes** : la route `/[id]` (lien magique) et `waiting` doivent rester accessibles sans session — lister les actions qu'elles appellent et leur garder un accès contrôlé (lookup par id uniquement, jamais de liste complète).
-- Vérification : appel `fetchEmployees()` sans cookie → doit échouer ; avec cookie valide → OK.
+### A.2 — Vérification côté serveur ✅ FAIT (étape 1)
 
-### A.3 — Signature du webhook Revolut
-- `landing/app/api/revolut-webhook` accepte tout POST. Ajouter la vérif HMAC (`Revolut-Signature` + `REVOLUT_WEBHOOK_SECRET` du dashboard Revolut). Rejeter 401 si invalide.
+- `app/db/session.ts` : `getSessionUser()` (cookie `user_id` → résolution DB avec sémantique `$` → rotation lazy), `getSessionDeviceId()`, `getSessionCredentialIds()`, `isValidDeviceIdsUpdate()`.
+- Guards `getSessionUser()` sur : fetchEmployees/fetchConciergeries, mutations employee/conciergerie/home/mission/missionReport, storage (`verifyAuth`/`verifyConciergerieAuth` réécrits — ils ne faisaient que lire des cookies forgables), ipfs, emails de contexte authentifié (`!isRetry` — les retries cron passent).
+- **Les `id[]` ne sont plus exposés** : les listes ne retournent le tableau d'ids que sur la ligne de l'appelant (`id: []` ailleurs). `lookupEmployeeByContact` (public, inscription) retourne `id: []`.
+- Enrôlement recalculé côté serveur : `enrollEmployeeDevice`/`enrollConciergerieDevice` (le client ne fabrique plus le tableau — fin de l'overwrite arbitraire = takeover). `updateXWithUserId` réservé aux membres connectés de la ligne.
+- `proxy.ts` : regex d'URL étendue à `v2_[0-9a-f]{32}` ; `/api/auth` utilise `getExistingUserTypeResilient` (fallback rotaté).
+- Reste public par design : `lookupEmployeeByContact`, `createNewEmployee`, `enroll*Device`, emails waiting-page/cron, `environment.ts`.
+- Limite d'enrôlement ouvert fermée par **A.5** (token signé dans le lien email).
+- Étape 2 (Phase C) : scoper par `client_id`.
+
+### A.3 — Signature du webhook Revolut ✅ FAIT
+
+- Vérif `Revolut-Signature` HMAC-SHA256 sur `v1.{timestamp}.{rawBody}`, fenêtre ±5 min, multi-signatures (rotation de secret). Actif dès `REVOLUT_WEBHOOK_SECRET` configuré.
+
+### A.5 — Token d'enrôlement signé ✅ FAIT
+
+**Attaque fermée** : `enroll*Device` acceptait tout appelant — connaître `first_name + family_name` (ou le nom d'une conciergerie) suffisait à ajouter son `user_id` dans le `id[]` de la cible → usurpation. L'email de vérification n'était pas une preuve : le lien contient l'id de l'appareil _demandeur_, que l'attaquant connaît déjà.
+
+**Implémentation** :
+
+- `enrollmentToken(kind, rowKey, deviceId)` dans `app/db/session.ts` : `exp.sig` où `sig = HMAC-SHA256(enroll|kind|rowKey|deviceId|exp)` tronqué à 32 hex, clé `hmacSecret()` (= `ID_ROTATION_SECRET ‖ SUPABASE_SERVICE_ROLE_KEY`), TTL **7 jours**. Vérif `timingSafeEqual`, sync.
+- Liens générés côté serveur dans `sendConciergerieVerificationEmail` et `sendNewDeviceNotificationEmail` : `/${deviceId}?t=<token>` — le token est lié au **device de session de l'appelant** et le destinataire est **re-fetché en DB** (l'objet client n'est plus jamais utilisé pour l'adresse → impossible de rediriger le lien vers sa propre boîte).
+- `enroll*Device` exige le token pour un appelant **non membre** ; un membre (match sur `baseId`, `$` inclus) n'en a pas besoin → les anciens appareils continuent de fonctionner, seuls les nouveaux enrôlements passent par l'email.
+- `/[id]` lit `searchParams.t` et le passe à `enroll*Device`.
+- `employeeForm` (ré-inscription d'un employé existant) : n'enrôle plus directement — envoie l'email de vérification puis va sur `Waiting` ; l'enrôlement se fait au clic du lien (preuve de possession de la boîte).
+- Décision : **pas de fenêtre de rétrocompat** — les vieux emails sans `?t=` échouent pour les non-membres ; l'utilisateur renvoie un email depuis la page d'attente. Coût : uniquement les liens envoyés dans les jours précédant le déploiement.
+
+### A.6 — Demandes d'accès `$` sécurisées ✅ FAIT (approbation depuis un appareil connecté)
+
+Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restauré, **sans rouvrir le trou** : un appareil `$` obtient désormais une **session pending sans privilèges**.
+
+- `resolveMembership` (session.ts) distingue match exact (connecté) vs match `$` (pending) → `SessionUser.pending`.
+- `requireConnectedSession()` remplace `getSessionUser()` dans tous les guards sensibles (home, mission, missionReport, storage, ipfs, mutations employee/conciergerie, emails métier) → un `$` ne peut rien lire/écrire de protégé.
+- `enroll*Device` : non-membre **sans token** → ajoute `$id` (demande d'accès visible dans Appareils) ; token valide → connexion directe ; membre connecté → libre. `alreadyMember` ne compte que les ids **connectés** → un `$` ne peut pas s'auto-approuver.
+- Listes : membre connecté → `id[]` réel ; membre pending → `['$'+sonId]` (suffit pour `containsId`, ne fuite pas les vrais credentials — sinon un pending volerait les ids de la victime).
+- `getDevices` préserve les `$` des autres appareils (avant : tout ajout les écrasait) + cap `MAX_DEVICES-1` anti-spam ; la limite `MAX_DEVICES` ne s'applique qu'aux appareils **connectés** (une demande ne consomme pas de slot).
+- `employeeForm` ré-enrôle en `$` (sans token) puis envoie l'email → les deux chemins d'approbation coexistent comme avant.
+- `/[id]` : `result.pending` → `Waiting` au lieu de `Missions`.
+- `api/auth`/`proxy` : inchangés — `getExistingUserType` fait déjà un match exact (`$` non résolu → `/waiting` autorisé, routes protégées → `/error`), conforme à l'ancien comportement.
+- Bonus : la page d'attente survit au F5 (la session pending résout `userType`/`userData`, alors qu'un appareil sans session perdait son état).
 
 ### A.4 — Durcissements optionnels (à décider)
+
 - Hasher les device-ids en DB (sha256) : une fuite DB ≠ fuite de credentials. **Coût** : la route `/[id]` et `ANY(id)` doivent comparer des hashes — migration des ids existants (hash en place, réversible non, donc feature-flag + rollback = dump).
 - Expiration/rotation des ids.
 - Rate limiting sur les actions sensibles (pattern déjà posé dans `landing/app/actions/antiSpam.ts`).
@@ -47,6 +76,7 @@ Aujourd'hui **toutes** les server actions retournent les données à n'importe q
 **Objectif** : un seul déploiement Next qui sert la vitrine ET l'app, dispatch par host dans `proxy.ts`.
 
 ### B.1 — Route groups + double root layout
+
 - Supprimer `app/layout.tsx` partagé, créer :
   - `app/(app)/layout.tsx` → reprend le layout actuel (html, fonts Geist, providers, `MaintenanceCheck`, `ServiceWorkerRegister`, `h-dvh`…)
   - `app/(site)/layout.tsx` → html/body + `landing-globals.css` + script d'init du thème (déjà écrit dans `landing/app/layout.tsx`)
@@ -55,6 +85,7 @@ Aujourd'hui **toutes** les server actions retournent les données à n'importe q
 - Risque : moyen (gros `git mv`). Mitigation : tout bouger en un commit, vérifier `bun run build` + smoke test des pages.
 
 ### B.2 — Porter la landing
+
 - `landing/app/page.tsx` → `app/(site)/landing/page.tsx` (path `/landing`)
 - `landing/app/checkout/` → `app/(site)/checkout/` (path `/checkout`)
 - `landing/app/theme.ts`, `components/Logo`, `actions/contact.ts`+`antiSpam.ts`, `api/create-order`, `api/revolut-webhook` → sous `app/(site)/` et `app/api/`
@@ -63,6 +94,7 @@ Aujourd'hui **toutes** les server actions retournent les données à n'importe q
 - Cleanup navigation : quitter la landing doit retirer `.light`/`data-theme`/`color-scheme` de `<html>` (effet de démontage dans `(site)/layout.tsx` ou dans `useTheme`) — sinon le style fuite sur l'app en navigation client-side.
 
 ### B.3 — `proxy.ts` : hosts + paths publics
+
 - Ajouter aux paths sans auth : `/landing`, `/checkout`, `/api/create-order`, `/api/revolut-webhook`, `/breton-flag.svg`.
 - Host logic (copie du pattern `handleLandingHost` de Tradiz) :
   - `job-conciergerie.fr`, `www.job-conciergerie.fr` → rewrite `/` → `/landing` ; `/checkout` passe tel quel.
@@ -71,6 +103,7 @@ Aujourd'hui **toutes** les server actions retournent les données à n'importe q
 - `RESERVED_PATHS` += `landing`, `checkout`.
 
 ### B.4 — Env & déploiement
+
 - `REVOLUT_*`, `SMTP_*`, `CONTACT_*` → `.env.local` racine + variables du hébergeur.
 - Un seul site Netlify/Vercel sert les 2 (puis 3) hosts.
 - Supprimer `landing/` une fois validé (garder `landing/proxy.ts` stub tant que le sous-projet existe — il répare le build local).
@@ -84,16 +117,19 @@ Aujourd'hui **toutes** les server actions retournent les données à n'importe q
 **Pré-requis : Phase A.2 faite** (sinon le scoping n'a aucun sens).
 
 ### C.1 — Schéma (migration additive)
+
 - Nouvelle table `clients` : `id uuid pk`, `name`, `email`, `plan` (`decouverte|pro|privilege`), `status`, `created_at`.
 - `client_id uuid null` sur : `conciergeries`, `employees`, `homes`, `missions`, `mission_reports`, `email_logs` (partout où c'est directement scopable — plus simple que de joindre via conciergerie).
 - Backfill : créer le client "legacy", `UPDATE … SET client_id = <legacy>` sur toutes les lignes existantes → zero downtime, comportement identique.
 
 ### C.2 — Modèle
+
 - `employees.client_id` (un employé appartient au client, pas à une conciergerie → le multi-conciergerie partage les employés ; `conciergerie_name` reste pour l'assignation).
 - Garder les jointures par `conciergerie_name` pour l'instant (renommer en ids = chantier à part, risqué).
 - Toi = super-admin : flag `is_admin` sur `clients` ou table `admins`, pour voir tous les tenants.
 
 ### C.3 — Scoping serveur
+
 - `getSessionUser()` étendu → `{ user, type, clientId }`.
 - Chaque query : `WHERE client_id = ${clientId}` (sauf super-admin).
 - Les listes `fetchEmployees`/`fetchConciergeries` ne renvoient plus que le tenant du caller — **c'est le moment où le contenu change**, à tester en preview avec un 2e client seedé.

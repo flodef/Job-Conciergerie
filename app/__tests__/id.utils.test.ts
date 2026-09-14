@@ -1,7 +1,7 @@
 import {
   containsId,
   formatId,
-  generateSimpleId,
+  generateSecureId,
   getConnectedDevices,
   getDevices,
   isNewDevice,
@@ -17,17 +17,17 @@ describe('ID Utilities', () => {
     });
   });
 
-  describe('generateSimpleId', () => {
+  describe('generateSecureId', () => {
     it('should generate a non-empty string', () => {
-      const id = generateSimpleId();
+      const id = generateSecureId();
       expect(id).toBeTruthy();
       expect(typeof id).toBe('string');
-      expect(id.length).toBeGreaterThan(0);
+      expect(id).toMatch(/^v2_[0-9a-f]{32}$/);
     });
 
     it('should generate unique IDs', () => {
-      const id1 = generateSimpleId();
-      const id2 = generateSimpleId();
+      const id1 = generateSecureId();
+      const id2 = generateSecureId();
       expect(id1).not.toBe(id2);
     });
   });
@@ -121,6 +121,32 @@ describe('ID Utilities', () => {
 
     it('should remove duplicate before adding', () => {
       const result = getDevices(['d1', 'd2'], 'd1');
+      expect(result).toEqual(['d2', 'd1']);
+    });
+
+    it('should preserve other pending requests when adding a device', () => {
+      const result = getDevices(['d1', '$pending1'], 'd2');
+      expect(result).toEqual(['$pending1', 'd1', 'd2']);
+    });
+
+    it('should not throw MaxDevicesError for a pending request at the limit', () => {
+      const existingDevices = ['d1', 'd2', 'd3', 'd4', 'd5'];
+      const result = getDevices(existingDevices, 'newDevice', true);
+      expect(result).toEqual(['d1', 'd2', 'd3', 'd4', 'd5', '$newDevice']);
+    });
+
+    it('should upgrade a pending device to connected without duplicating it', () => {
+      const result = getDevices(['d1', '$newDevice'], 'newDevice');
+      expect(result).toEqual(['d1', 'newDevice']);
+    });
+
+    it('should keep a pending device pending on a repeated request', () => {
+      const result = getDevices(['d1', '$newDevice'], 'newDevice', true);
+      expect(result).toEqual(['d1', '$newDevice']);
+    });
+
+    it('should not demote a connected device to pending', () => {
+      const result = getDevices(['d1', 'd2'], 'd1', true);
       expect(result).toEqual(['d2', 'd1']);
     });
   });

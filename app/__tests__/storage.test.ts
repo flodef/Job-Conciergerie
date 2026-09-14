@@ -21,6 +21,15 @@ vi.mock('@/app/utils/supabase/server', () => ({
   createAdminClient: vi.fn(),
 }));
 
+// Mock the session resolver — storage tests only care about the resolved userType
+vi.mock('@/app/db/session', () => ({
+  requireConnectedSession: vi.fn(),
+  requireConciergerieSession: vi.fn(),
+  isRowMember: vi.fn(() => true),
+}));
+
+import { requireConnectedSession } from '@/app/db/session';
+
 describe('Supabase Storage', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockStorageFrom: any;
@@ -59,17 +68,13 @@ describe('Supabase Storage', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Mock cookies for conciergerie auth
-    const { cookies } = await import('next/headers');
+    // Default: authenticated conciergerie session
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (cookies as any).mockResolvedValue({
-      get: vi.fn((name: string) => {
-        if (name === 'user_id') return { value: 'test-conciergerie-id' };
-        if (name === 'user_type') return { value: 'conciergerie' };
-        return undefined;
-      }),
-      getAll: vi.fn(() => []),
-      set: vi.fn(),
+    (requireConnectedSession as any).mockResolvedValue({
+      userId: 'test-conciergerie-id',
+      userType: 'conciergerie',
+      rotated: false,
+      pending: false,
     });
   });
 
@@ -149,16 +154,11 @@ describe('Supabase Storage', () => {
       const mockFile = new File(['test content'], 'test.jpg', { type: 'image/jpeg' });
 
       // Simulate employee user (not conciergerie)
-      const { cookies } = await import('next/headers');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (cookies as any).mockResolvedValue({
-        get: vi.fn((name: string) => {
-          if (name === 'user_id') return { value: 'test-employee-id' };
-          if (name === 'user_type') return { value: 'employee' }; // Not conciergerie
-          return undefined;
-        }),
-        getAll: vi.fn(() => []),
-        set: vi.fn(),
+      (requireConnectedSession as any).mockResolvedValue({
+        userId: 'test-employee-id',
+        userType: 'employee',
+        rotated: false,
       });
 
       const result = await uploadFileToSupabase(mockFile, 'test.jpg');
@@ -206,16 +206,11 @@ describe('Supabase Storage', () => {
 
     it('should return false when user is not authenticated as conciergerie', async () => {
       // Simulate employee user (not conciergerie)
-      const { cookies } = await import('next/headers');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (cookies as any).mockResolvedValue({
-        get: vi.fn((name: string) => {
-          if (name === 'user_id') return { value: 'test-employee-id' };
-          if (name === 'user_type') return { value: 'employee' }; // Not conciergerie
-          return undefined;
-        }),
-        getAll: vi.fn(() => []),
-        set: vi.fn(),
+      (requireConnectedSession as any).mockResolvedValue({
+        userId: 'test-employee-id',
+        userType: 'employee',
+        rotated: false,
       });
 
       const result = await deleteFileFromSupabase('test-file.jpg');
@@ -260,16 +255,11 @@ describe('Supabase Storage', () => {
 
     it('should return empty array when user is not authenticated as conciergerie', async () => {
       // Simulate employee user (not conciergerie)
-      const { cookies } = await import('next/headers');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (cookies as any).mockResolvedValue({
-        get: vi.fn((name: string) => {
-          if (name === 'user_id') return { value: 'test-employee-id' };
-          if (name === 'user_type') return { value: 'employee' }; // Not conciergerie
-          return undefined;
-        }),
-        getAll: vi.fn(() => []),
-        set: vi.fn(),
+      (requireConnectedSession as any).mockResolvedValue({
+        userId: 'test-employee-id',
+        userType: 'employee',
+        rotated: false,
       });
 
       const result = await listStorageFiles();

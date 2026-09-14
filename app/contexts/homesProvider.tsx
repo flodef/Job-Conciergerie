@@ -8,7 +8,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import { preloadImages } from '@/app/hooks/useImageCache';
 import type { Home } from '@/app/types/dataTypes';
-import { generateSimpleId } from '@/app/utils/id';
+import { generateSecureId } from '@/app/utils/id';
 import { navigationRoutes, Page } from '@/app/utils/navigation';
 import { getStorageImageUrl } from '@/app/utils/storage';
 import { usePathname } from 'next/navigation';
@@ -145,7 +145,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
     const newHome: Home = {
       ...homeData,
-      id: generateSimpleId(),
+      id: generateSecureId(),
       conciergerieName,
     };
 

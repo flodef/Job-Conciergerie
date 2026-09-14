@@ -1,8 +1,16 @@
 'use server';
 
 import { isProduction } from '@/app/actions/environment';
+import { getConciergerieByName } from '@/app/db/conciergerieDb';
 import { insertEmailLog } from '@/app/db/emailLogsDb';
+import { getEmployeeByName } from '@/app/db/employeeDb';
 import { insertFailedEmail } from '@/app/db/failedEmailsDb';
+import {
+  enrollmentToken,
+  getSessionDeviceId,
+  requireConciergerieSession,
+  requireConnectedSession,
+} from '@/app/db/session';
 import type { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime, milliToDay } from '@/app/utils/date';
 import { getStorageImageUrl } from '@/app/utils/storage';
@@ -102,7 +110,7 @@ type FailedEmailType =
 // ------------------------------------------------------------------
 
 function composeConciergerieVerificationEmail(conciergerie: Conciergerie, userId: string): SendMailOptions {
-  const verificationUrl = baseUrl + `/${userId}`;
+  const verificationUrl = `${baseUrl}/${userId}?t=${enrollmentToken('conciergerie', conciergerie.name, userId)}`;
   return {
     to: conciergerie.email,
     subject: '🔐 Vérification de votre compte conciergerie',
@@ -166,7 +174,7 @@ function composeNewDeviceNotificationEmail(employee: Employee, userId: string): 
           <p>Un nouvel appareil vient d&apos;être connecté à votre compte Job Conciergerie :</p>
           <div style="background-color: #fff8f8; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #d32f2f;">
             <p>Si vous êtes l&apos;auteur de cette connexion, veuillez cliquer sur le bouton ci-dessous :</p>
-            <a href="${baseUrl}/${userId}" style="display: inline-block; background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            <a href="${baseUrl}/${userId}?t=${enrollmentToken('employee', `${employee.firstName}|${employee.familyName}`, userId)}" style="display: inline-block; background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
               Valider cet appareil
             </a>
             <p>Si ce n&apos;est pas le cas, vous pouvez ignorer cet email.</p>
@@ -627,6 +635,19 @@ export async function sendConciergerieVerificationEmail(
   userId: string,
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry) {
+    // The client-passed object cannot be trusted: re-fetch the recipient and bind
+    // the enrollment link to the caller's own device id.
+    const deviceId = await getSessionDeviceId();
+    const real = await getConciergerieByName(conciergerie.name);
+    if (!deviceId || !real) return false;
+    return deliver(
+      composeConciergerieVerificationEmail(real, deviceId),
+      'verification',
+      { conciergerie: real, userId: deviceId },
+      isRetry,
+    );
+  }
   return deliver(
     composeConciergerieVerificationEmail(conciergerie, userId),
     'verification',
@@ -640,6 +661,17 @@ export async function sendEmployeeRegistrationEmail(
   employee: Employee,
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry) {
+    // Re-fetch the notification recipient — the client-passed email is untrusted
+    const real = await getConciergerieByName(conciergerie.name);
+    if (!real) return false;
+    return deliver(
+      composeEmployeeRegistrationEmail(real, employee),
+      'registration',
+      { conciergerie: real, employee },
+      isRetry,
+    );
+  }
   return deliver(
     composeEmployeeRegistrationEmail(conciergerie, employee),
     'registration',
@@ -653,6 +685,18 @@ export async function sendNewDeviceNotificationEmail(
   userId: string,
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry) {
+    // Re-fetch the recipient and bind the enrollment link to the caller's own device
+    const deviceId = await getSessionDeviceId();
+    const real = await getEmployeeByName(employee.firstName, employee.familyName);
+    if (!deviceId || !real) return false;
+    return deliver(
+      composeNewDeviceNotificationEmail(real, deviceId),
+      'newDevice',
+      { employee: real, userId: deviceId },
+      isRetry,
+    );
+  }
   return deliver(composeNewDeviceNotificationEmail(employee, userId), 'newDevice', { employee, userId }, isRetry);
 }
 
@@ -663,6 +707,19 @@ export async function sendEmployeeAcceptanceEmail(
   isAccepted: boolean,
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry) {
+    // Acceptance/rejection emails are the conciergerie's prerogative, and the
+    // recipient is re-fetched server-side — a client object must not control `to`.
+    if (!(await requireConciergerieSession())) return false;
+    const real = await getEmployeeByName(employee.firstName, employee.familyName);
+    if (!real) return false;
+    return deliver(
+      composeEmployeeAcceptanceEmail(real, conciergerie, missionsCount, isAccepted),
+      'acceptance',
+      { employee: real, conciergerie, missionsCount, isAccepted },
+      isRetry,
+    );
+  }
   return deliver(
     composeEmployeeAcceptanceEmail(employee, conciergerie, missionsCount, isAccepted),
     'acceptance',
@@ -679,6 +736,18 @@ export async function sendMissionStatusChangeEmail(
   status: MissionStatus,
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry) {
+    if (!(await requireConnectedSession())) return false;
+    // Recipient re-fetched server-side — the client object must not control `to`
+    const real = await getConciergerieByName(conciergerie.name);
+    if (!real) return false;
+    return deliver(
+      composeMissionStatusChangeEmail(mission, home, employee, real, status),
+      'missionStatus',
+      { mission, home, employee, conciergerie: real, status },
+      isRetry,
+    );
+  }
   return deliver(
     composeMissionStatusChangeEmail(mission, home, employee, conciergerie, status),
     'missionStatus',
@@ -694,6 +763,17 @@ export async function sendLateCompletionEmail(
   conciergerie: Conciergerie,
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry) {
+    if (!(await requireConnectedSession())) return false;
+    const real = await getConciergerieByName(conciergerie.name);
+    if (!real) return false;
+    return deliver(
+      composeLateCompletionEmail(mission, home, employee, real),
+      'lateCompletion',
+      { mission, home, employee, conciergerie: real },
+      isRetry,
+    );
+  }
   return deliver(
     composeLateCompletionEmail(mission, home, employee, conciergerie),
     'lateCompletion',
@@ -709,6 +789,18 @@ export async function sendMissionAcceptanceToEmployeeEmail(
   conciergerie: Conciergerie,
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry) {
+    if (!(await requireConnectedSession())) return false;
+    const emp = employee as Employee;
+    const real = await getEmployeeByName(emp.firstName, emp.familyName);
+    if (!real) return false;
+    return deliver(
+      composeMissionAcceptanceToEmployeeEmail(mission, home, real, conciergerie),
+      'missionAcceptance',
+      { mission, home, employee: real, conciergerie },
+      isRetry,
+    );
+  }
   return deliver(
     composeMissionAcceptanceToEmployeeEmail(mission, home, employee, conciergerie),
     'missionAcceptance',
@@ -725,6 +817,17 @@ export async function sendMissionUpdatedToEmployeeEmail(
   changes: string[],
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry) {
+    if (!(await requireConnectedSession())) return false;
+    const real = await getEmployeeByName(employee.firstName, employee.familyName);
+    if (!real) return false;
+    return deliver(
+      composeMissionUpdatedToEmployeeEmail(mission, home, real, conciergerie, changes),
+      'missionUpdated',
+      { mission, home, employee: real, conciergerie, changes },
+      isRetry,
+    );
+  }
   return deliver(
     composeMissionUpdatedToEmployeeEmail(mission, home, employee, conciergerie, changes),
     'missionUpdated',
@@ -742,6 +845,17 @@ export async function sendMissionRemovedToEmployeeEmail(
   isRetry = false,
   changes?: string[],
 ): Promise<boolean> {
+  if (!isRetry) {
+    if (!(await requireConnectedSession())) return false;
+    const real = await getEmployeeByName(employee.firstName, employee.familyName);
+    if (!real) return false;
+    return deliver(
+      composeMissionRemovedToEmployeeEmail(mission, home, real, conciergerie, type, changes),
+      'missionRemoved',
+      { mission, home, employee: real, conciergerie, type, changes },
+      isRetry,
+    );
+  }
   return deliver(
     composeMissionRemovedToEmployeeEmail(mission, home, employee, conciergerie, type, changes),
     'missionRemoved',
@@ -758,6 +872,17 @@ export async function sendMissionReportEmail(
   report: { content: string; images: string[] },
   isRetry = false,
 ): Promise<boolean> {
+  if (!isRetry) {
+    if (!(await requireConnectedSession())) return false;
+    const real = await getConciergerieByName(conciergerie.name);
+    if (!real) return false;
+    return deliver(
+      composeMissionReportEmail(mission, home, employee, real, report),
+      'missionReport',
+      { mission, home, employee, conciergerie: real, report },
+      isRetry,
+    );
+  }
   return deliver(
     composeMissionReportEmail(mission, home, employee, conciergerie, report),
     'missionReport',
@@ -819,11 +944,12 @@ type ConflictReportData = {
  * Send an employee conflict report email to conciergerie.
  * Used when phone/email exists but name doesn't match.
  */
-export async function sendEmployeeConflictReport(
-  conciergerieEmail: string,
-  data: ConflictReportData,
-  isRetry = false,
-): Promise<boolean> {
+export async function sendEmployeeConflictReport(data: ConflictReportData, isRetry = false): Promise<boolean> {
+  // The recipient is derived from the conciergerie name server-side — the
+  // client must not choose the destination address (spam relay otherwise).
+  const conciergerie = await getConciergerieByName(data.conciergerieName);
+  if (!conciergerie) return false;
+
   const reportMessage = `Conflit d'inscription prestataire :
 
 Informations saisies :
@@ -845,7 +971,7 @@ Le prestataire indique que ce numéro/email lui appartient mais le nom ne corres
 
 Veuillez vérifier manuellement et contacter le prestataire si nécessaire.`;
 
-  return sendContactEmail(conciergerieEmail, 'Conflit inscription prestataire', reportMessage, isRetry);
+  return sendContactEmail(conciergerie.email, 'Conflit inscription prestataire', reportMessage, isRetry);
 }
 
 /**

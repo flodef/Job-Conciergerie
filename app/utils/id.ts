@@ -2,42 +2,35 @@ const NEW_ID_CHAR = '$';
 export const MAX_DEVICES = parseInt(process.env.NEXT_PUBLIC_MAX_DEVICES || '5');
 
 /**
- * Generate a unique ID using ECDSA
+ * Prefix marking credentials generated with a cryptographically secure RNG.
+ * Legacy ids (Math.random base36) have no prefix — they are rotated to this format server-side.
+ */
+export const V2_ID_PREFIX = 'v2_';
+
+/**
+ * Generate a cryptographically secure ID
+ * @returns A `v2_`-prefixed ID with 128 bits of entropy
+ */
+export const generateSecureId = () => {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return V2_ID_PREFIX + Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+};
+
+/**
+ * Generate a unique ID
  * @returns A unique ID
  */
 export async function generateUniqueId(): Promise<string> {
-  try {
-    // Generate new ECDSA key pair
-    const keyPair = await crypto.subtle.generateKey(
-      {
-        name: 'ECDSA',
-        namedCurve: 'P-256',
-      },
-      true,
-      ['sign', 'verify'],
-    );
-
-    // Export public key as hex string
-    const exported = await crypto.subtle.exportKey('spki', keyPair.publicKey);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', exported);
-    const hashArray = new Uint8Array(hashBuffer);
-    const hashHex = Array.from(hashArray)
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    return hashHex;
-  } catch (error) {
-    console.error('Error generating unique ID:', error);
-    return '';
-  }
+  return generateSecureId();
 }
 
 /**
- * Generate a simple ID
- * @returns A simple ID
+ * Strip the new-device marker from an ID
+ * @param id ID to normalize
+ * @returns The base ID without the '$' marker
  */
-export const generateSimpleId = () =>
-  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+export const baseId = (id: string) => id.replace(NEW_ID_CHAR, '');
 
 /**
  * Format an ID
@@ -97,13 +90,20 @@ export class MaxDevicesError extends Error {
  * @returns List of devices
  */
 export function getDevices(ids: string[], userId: string, isNewDevice = false, evictOldest = false) {
-  let connectedDevices = getConnectedDevices(ids);
-  if (connectedDevices.length >= MAX_DEVICES) {
+  const alreadyConnected = getConnectedDevices(ids).includes(userId);
+  const newId = isNewDevice && !alreadyConnected ? NEW_ID_CHAR + userId : userId;
+
+  // Other devices' pending requests survive the update (the caller's own stale
+  // pending entry is replaced). Capped to bound request spam.
+  const pending = ids.filter(i => i.startsWith(NEW_ID_CHAR) && baseId(i) !== userId).slice(0, MAX_DEVICES - 1);
+  let connectedDevices = getConnectedDevices(ids).filter(id => id !== userId);
+
+  // The device limit only applies to connected devices — a pending request
+  // doesn't consume a slot
+  if (newId === userId && connectedDevices.length >= MAX_DEVICES) {
     if (!evictOldest) throw new MaxDevicesError(connectedDevices[0]);
     connectedDevices = connectedDevices.slice(1); // remove the oldest (first stored)
   }
 
-  const newId = isNewDevice && !ids.includes(userId) ? NEW_ID_CHAR + userId : userId;
-
-  return connectedDevices.length ? [...connectedDevices.filter(id => id !== userId), newId] : [userId];
+  return [...pending, ...connectedDevices, newId];
 }

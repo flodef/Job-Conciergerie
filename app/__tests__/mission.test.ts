@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeAll, afterAll } from 'vitest';
+import { describe, expect, test, beforeAll, afterAll, vi } from 'vitest';
 import type { Mission } from '@/app/types/dataTypes';
 import { Task } from '@/app/types/dataTypes';
 import { getMissionHoursPerProvider, getMissionProviderCount } from '@/app/utils/task';
@@ -6,6 +6,24 @@ import { updateMissionData, createNewMission } from '@/app/actions/mission';
 import { createHome } from '@/app/db/homeDb';
 import { deleteMission } from '@/app/db/missionDb';
 import { sql } from '@/app/db/db';
+
+// These tests exercise the actions against the real DB — mock the session guard
+const TEST_SESSION = {
+  userId: 'test-user-id',
+  userType: 'conciergerie',
+  rotated: false,
+  pending: false,
+  rowKey: 'MENTHEREGLISSE', // matches TEST_CONCIERGERIE — the tenant check passes
+};
+vi.mock('@/app/db/session', () => ({
+  getSessionUser: vi.fn(() => Promise.resolve(TEST_SESSION)),
+  requireConnectedSession: vi.fn(() => Promise.resolve(TEST_SESSION)),
+  requireConciergerieSession: vi.fn(() => Promise.resolve(TEST_SESSION)),
+  isRowMember: vi.fn(() => true),
+  getSessionDeviceId: vi.fn(() => Promise.resolve('test-user-id')),
+  getSessionCredentialIds: vi.fn(() => Promise.resolve(new Set(['test-user-id']))),
+  isValidDeviceIdsUpdate: vi.fn(() => true),
+}));
 
 const TEST_HOME_ID = 'test-home-hours-fix';
 const TEST_MISSION_ID = 'test-mission-hours-fix';

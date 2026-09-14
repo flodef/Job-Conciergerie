@@ -6,20 +6,51 @@ import {
   deleteEmployee,
   findEmployeeByContact,
   getAllEmployees,
+  getEmployeeIds,
   updateEmployeeId,
   updateEmployeeSettings,
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
+import {
+  getSessionCredentialIds,
+  getSessionDeviceId,
+  getSessionUser,
+  isRowMember,
+  isValidDeviceIdsUpdate,
+  requireConciergerieSession,
+  requireConnectedSession,
+  verifyEnrollmentToken,
+} from '@/app/db/session';
 import type { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
+import { baseId, getDevices, isNewDevice, MaxDevicesError } from '@/app/utils/id';
 import type { EmployeeNotificationSettings } from '@/app/utils/notifications';
+
+export type EnrollDeviceResult =
+  | { ok: true; ids: string[]; deviceId: string; alreadyMember: boolean; pending: boolean }
+  | { ok: false; reason: 'not_found' | 'invalid' | 'max_devices'; oldestDevice?: string };
 
 /**
  * Fetch all employees from the database with caching
- * Cache is refreshed every hour or when explicitly revalidated
+ * Cache is refreshed every hour or when explicitly revalidated.
+ * Requires a session; device ids are only exposed on the caller's own row (they are credentials).
  */
 export async function fetchEmployees(): Promise<Employee[] | null> {
-  return await getAllEmployees();
+  const session = await getSessionUser();
+  if (!session) return null;
+
+  const employees = await getAllEmployees();
+  return (
+    employees
+      ?.map(e => {
+        if (!e.id.some(i => baseId(i) === session.userId)) return { ...e, id: [] };
+        // A pending device sees only its own pending marker — never the real credentials
+        return { ...e, id: session.pending ? [`$${session.userId}`] : e.id };
+      })
+      // A pending device only needs its own row (waiting-page status) — don't
+      // leak the whole staff directory (names, emails, phones) to it.
+      .filter(e => !session.pending || e.id.length > 0) ?? null
+  );
 }
 
 /**
@@ -40,7 +71,8 @@ export async function lookupEmployeeByContact(
   const { employee: row, nameMatches } = result;
   return {
     employee: {
-      id: row.id,
+      // Device ids are credentials — never exposed through a public lookup
+      id: [],
       firstName: row.first_name,
       familyName: row.family_name,
       tel: row.tel,
@@ -60,7 +92,6 @@ export async function lookupEmployeeByContact(
  * Create a new employee in the database
  */
 export async function createNewEmployee(data: {
-  id: string;
   firstName: string;
   familyName: string;
   tel: string;
@@ -70,9 +101,13 @@ export async function createNewEmployee(data: {
   conciergerieName: string;
   notificationSettings?: EmployeeNotificationSettings;
 }): Promise<Employee | null> {
+  // Always register the caller's own device — never a client-provided id
+  const deviceId = await getSessionDeviceId();
+  if (!deviceId) return null;
+
   // Convert to DB format
   const dbData: Omit<DbEmployee, 'created_at'> = {
-    id: [data.id],
+    id: [deviceId],
     first_name: normalizeFirstName(data.firstName),
     family_name: normalizeFamilyName(data.familyName),
     tel: data.tel,
@@ -91,13 +126,54 @@ export async function createNewEmployee(data: {
  * Update an employee's status in the database
  */
 export async function updateEmployeeStatusAction(employee: Employee, status: EmployeeStatus): Promise<Employee | null> {
+  // Status changes (accept/reject/delete) are the conciergerie's vetting
+  // prerogative — an employee must not be able to self-accept or alter others.
+  if (!(await requireConciergerieSession())) return null;
   return await updateEmployeeStatus(employee.firstName, employee.familyName, status);
 }
 
 /**
- * Update an employee's list of associated user IDs
- * If the userId already exists in the employee's id array, do nothing
- * Otherwise add it to the array
+ * Enroll the session device in an employee's id array.
+ * The new array is computed server-side from the current row:
+ * - connected member → re-enrolls freely (no proof needed);
+ * - valid email token → connects the device immediately;
+ * - anything else → the device is added as a pending (`$`) access request that a
+ *   connected member can approve from Settings — pending devices have no session
+ *   privileges until approved.
+ */
+export async function enrollEmployeeDevice(
+  firstName: string,
+  familyName: string,
+  evictOldest: boolean,
+  token?: string,
+): Promise<EnrollDeviceResult> {
+  const session = await getSessionUser();
+  const deviceId = session?.userId ?? (await getSessionDeviceId());
+  if (!deviceId || !firstName || !familyName) return { ok: false, reason: 'invalid' };
+
+  const ids = await getEmployeeIds(firstName, familyName);
+  if (!ids) return { ok: false, reason: 'not_found' };
+
+  const alreadyMember = ids.some(i => !isNewDevice(i) && baseId(i) === deviceId);
+  const hasToken = verifyEnrollmentToken('employee', `${firstName}|${familyName}`, deviceId, token);
+  const markPending = !alreadyMember && !hasToken;
+
+  try {
+    const newIds = getDevices(ids, deviceId, markPending, evictOldest);
+    const updated = await updateEmployeeId(firstName, familyName, newIds);
+    if (!updated) return { ok: false, reason: 'invalid' };
+    // A pending device gets back only its own marker — never the row's real credentials
+    return { ok: true, ids: markPending ? [`$${deviceId}`] : updated, deviceId, alreadyMember, pending: markPending };
+  } catch (error) {
+    if (error instanceof MaxDevicesError) return { ok: false, reason: 'max_devices', oldestDevice: error.oldestDevice };
+    throw error;
+  }
+}
+
+/**
+ * Update an employee's list of associated user IDs.
+ * Restricted to connected devices of the row managing their own device list —
+ * new-device enrollment goes through `enrollEmployeeDevice`.
  */
 export async function updateEmployeeWithUserId(
   employee: Employee | undefined,
@@ -105,7 +181,12 @@ export async function updateEmployeeWithUserId(
 ): Promise<string[] | null> {
   if (!employee?.firstName || !employee?.familyName) return null;
 
-  // Update the employee's ID in the database
+  const sessionIds = await getSessionCredentialIds();
+  if (!sessionIds.size) return null;
+
+  const currentIds = await getEmployeeIds(employee.firstName, employee.familyName);
+  if (!currentIds || !isValidDeviceIdsUpdate(currentIds, employeeIds, sessionIds)) return null;
+
   return await updateEmployeeId(employee.firstName, employee.familyName, employeeIds);
 }
 
@@ -123,7 +204,13 @@ export async function updateEmployeeData(
     notificationSettings?: EmployeeNotificationSettings;
   },
 ): Promise<Employee | null> {
-  if (!employee) return null;
+  const session = await requireConnectedSession();
+  if (!session || !employee) return null;
+
+  // Only a connected member of the row may edit it — otherwise any employee
+  // could rewrite another employee's profile.
+  const ids = await getEmployeeIds(employee.firstName, employee.familyName);
+  if (!ids || !isRowMember(session, ids)) return null;
 
   // Convert to DB format
   const dbData: Partial<DbEmployee> = {
@@ -142,5 +229,14 @@ export async function updateEmployeeData(
  * Delete an employee
  */
 export async function deleteEmployeeData(employee: Employee): Promise<boolean> {
+  const session = await requireConnectedSession();
+  if (!session) return false;
+
+  // A conciergerie manages its staff; otherwise only a member of the row may
+  // delete it (self-removal). Employees must not delete arbitrary coworkers.
+  if (session.userType !== 'conciergerie') {
+    const ids = await getEmployeeIds(employee.firstName, employee.familyName);
+    if (!ids || !isRowMember(session, ids)) return false;
+  }
   return await deleteEmployee(employee.firstName, employee.familyName);
 }

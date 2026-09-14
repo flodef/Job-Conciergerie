@@ -1,6 +1,6 @@
 'use client';
 
-import { createNewEmployee, lookupEmployeeByContact, updateEmployeeWithUserId } from '@/app/actions/employee';
+import { createNewEmployee, enrollEmployeeDevice, lookupEmployeeByContact } from '@/app/actions/employee';
 import AppVersion from '@/app/components/appVersion';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
@@ -18,7 +18,6 @@ import { useRateLimiter } from '@/app/hooks/useRateLimiter';
 import type { Employee } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
 import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
-import { formatId, getConnectedDevices, getDevices, MAX_DEVICES, MaxDevicesError } from '@/app/utils/id';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -47,7 +46,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   const { showToast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [maxDevicesPrompt, setMaxDevicesPrompt] = useState<{ oldestId: string; employee: Employee } | null>(null);
 
   // Contact error handling for phone/email conflict
   const [showContactButton, setShowContactButton] = useState(false);
@@ -83,15 +81,14 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       return;
     }
 
-    const selectedConciergerie = findConciergerie(formData.conciergerieName ?? null);
-    if (!selectedConciergerie?.email) {
-      showToast({ type: ToastType.Error, message: 'Email de la conciergerie non disponible' });
+    if (!formData.conciergerieName) {
+      showToast({ type: ToastType.Error, message: 'Conciergerie non sélectionnée' });
       return;
     }
 
     const { sendEmployeeConflictReport } = await import('@/app/actions/email');
 
-    sendEmployeeConflictReport(selectedConciergerie.email, {
+    sendEmployeeConflictReport({
       firstName: formData.firstName,
       familyName: formData.familyName,
       tel: formData.tel,
@@ -208,22 +205,23 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           setIsSubmitting(false);
           return;
         }
-        try {
-          await proceedWithDeviceUpdate(lookup.employee, false);
-        } catch (err) {
-          if (err instanceof MaxDevicesError) {
-            setMaxDevicesPrompt({ oldestId: err.oldestDevice, employee: lookup.employee });
-            setIsSubmitting(false);
-            return;
-          }
-          throw err;
-        }
+
+        // Existing employee: request access as a pending ($) device — visible in
+        // the owner's Settings > Appareils for approval — then also send the
+        // verification email as the alternative enrollment path.
+        const enroll = await enrollEmployeeDevice(lookup.employee.firstName, lookup.employee.familyName, false);
+        if (!enroll.ok) throw new Error("La demande d'accès n'a pas pu être enregistrée");
+
+        updateUserData({ ...lookup.employee, id: enroll.ids });
+        await EmailSender.sendNewDeviceEmail(lookup.employee, currentUserId);
+        showToast({
+          type: ToastType.Success,
+          message: "Un email de vérification a été envoyé à l'adresse associée à votre compte",
+        });
+        onMenuChange(Page.Waiting);
       } else {
         // Create a new employee in the database (with normalized values)
-        const newEmployee = await createNewEmployee({
-          ...normalizedFormData,
-          id: currentUserId,
-        });
+        const newEmployee = await createNewEmployee(normalizedFormData);
         if (!newEmployee) throw new Error('Prestataire non créé dans la base de données');
 
         updateUserData(newEmployee);
@@ -258,55 +256,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       });
       setIsSubmitting(false);
     }
-  };
-
-  const proceedWithDeviceUpdate = async (employee: Employee, evictOldest: boolean) => {
-    if (!userId) throw new Error("L'identifiant n'est pas défini");
-
-    const newIds = getDevices(employee.id, userId, true, evictOldest);
-    if (JSON.stringify(newIds) !== JSON.stringify(employee.id)) {
-      const updatedIds = await updateEmployeeWithUserId(employee, newIds);
-
-      if (!updatedIds) throw new Error('Prestataire non mis à jour dans la base de données');
-
-      // Update the employee object with the new ID array
-      const updatedEmployee = {
-        ...employee,
-        id: updatedIds,
-      };
-
-      // Update local user data and userType so auth context is fully set before navigating
-      updateUserData(updatedEmployee);
-
-      // Send notification email to employee about the new device
-      await EmailSender.sendNewDeviceEmail(updatedEmployee, userId);
-      showToast({
-        type: ToastType.Success,
-        message: "L'email de notification de nouvel appareil a été envoyé avec succès",
-      });
-
-      onMenuChange(Page.Waiting);
-    } else {
-      updateUserData(employee);
-      onMenuChange(
-        employee.status === 'accepted' && getConnectedDevices(newIds).includes(userId) ? Page.Missions : Page.Waiting,
-      );
-    }
-  };
-
-  const handleConfirmEviction = () => {
-    if (!maxDevicesPrompt) return;
-    const { employee } = maxDevicesPrompt;
-    setMaxDevicesPrompt(null);
-    setIsSubmitting(true);
-    proceedWithDeviceUpdate(employee, true).catch(error => {
-      showToast({
-        type: ToastType.Error,
-        message: String(error),
-        error,
-      });
-      setIsSubmitting(false);
-    });
   };
 
   if (!formData || isLoading) return null;
@@ -488,19 +437,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           message="Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?"
           confirmText="Quitter sans enregistrer"
           cancelText="Continuer l'édition"
-        />
-
-        <ConfirmationModal
-          isOpen={!!maxDevicesPrompt}
-          onClose={() => setMaxDevicesPrompt(null)}
-          onConfirm={handleConfirmEviction}
-          title="Limite d'appareils atteinte"
-          message={`Vous avez déjà ${MAX_DEVICES} appareils connectés. Si vous continuez, le plus ancien (${
-            maxDevicesPrompt ? formatId(maxDevicesPrompt.oldestId) : ''
-          }) sera déconnecté et un email vous sera envoyé pour valider ce nouvel appareil.`}
-          confirmText="Continuer"
-          cancelText="Annuler"
-          isDangerous
         />
       </form>
 

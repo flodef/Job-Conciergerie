@@ -51,3 +51,4 @@ next-env.d.ts
 /landing/.vercel
 /landing/*.tsbuildinfo
 /landing/next-env.d.ts
+.env*

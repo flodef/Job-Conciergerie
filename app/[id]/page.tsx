@@ -1,7 +1,7 @@
 'use client';
 
-import { updateConciergerieWithUserId } from '@/app/actions/conciergerie';
-import { updateEmployeeWithUserId } from '@/app/actions/employee';
+import { enrollConciergerieDevice } from '@/app/actions/conciergerie';
+import { enrollEmployeeDevice } from '@/app/actions/employee';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import ErrorPage from '@/app/components/error';
 import { useAuth } from '@/app/contexts/authProvider';
@@ -10,13 +10,19 @@ import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { Page } from '@/app/utils/navigation';
 import AppVersion from '@/app/components/appVersion';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
-import { formatId, getDevices, MAX_DEVICES, MaxDevicesError } from '../utils/id';
+import { formatId, MAX_DEVICES, MaxDevicesError } from '../utils/id';
 
 type PendingUpdate =
   | { kind: 'employee'; entity: Employee; oldestId: string }
   | { kind: 'conciergerie'; entity: Conciergerie; oldestId: string };
 
-export default function IdPage({ params }: { params: Promise<{ id: string }> }) {
+export default function IdPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ t?: string }>;
+}) {
   const {
     userId,
     isEmployee,
@@ -32,21 +38,31 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
 
   // Use React.use to unwrap the params promise
   const unwrappedParams = use(params);
+  const unwrappedSearchParams = use(searchParams);
   const { id } = unwrappedParams;
+  const token = unwrappedSearchParams.t;
   const [error, setError] = useState('');
   const [pendingUpdate, setPendingUpdate] = useState<PendingUpdate | null>(null);
 
   const applyUpdate = useCallback(
     async (entity: Employee | Conciergerie, evictOldest: boolean) => {
       if (!userId) throw new Error('Identifiant non trouvé');
-      const newIds = getDevices(entity.id, userId, false, evictOldest);
       const result = isEmployee
-        ? await updateEmployeeWithUserId(entity as Employee, newIds)
-        : await updateConciergerieWithUserId(entity as Conciergerie, newIds);
-      if (!result) throw new Error('Erreur lors de la mise à jour dans la base de données');
-      updateUserData({ ...entity, id: result });
+        ? await enrollEmployeeDevice(
+            (entity as Employee).firstName,
+            (entity as Employee).familyName,
+            evictOldest,
+            token,
+          )
+        : await enrollConciergerieDevice((entity as Conciergerie).name, evictOldest, token);
+      if (!result.ok) {
+        if (result.reason === 'max_devices') throw new MaxDevicesError(result.oldestDevice ?? '');
+        throw new Error('Erreur lors de la mise à jour dans la base de données');
+      }
+      updateUserData({ ...entity, id: result.ids });
+      return result.pending;
     },
-    [userId, updateUserData, isEmployee],
+    [userId, updateUserData, isEmployee, token],
   );
 
   const isFetching = useRef(false);
@@ -59,6 +75,8 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
         if (!userId || userId !== id)
           throw new Error('Identifiant non trouvée ou incorrect. Veuillez vous reconnecter.');
 
+        let pending = false;
+
         // Check if the conciergerie or employee whose name is stored in localStorage exists in the database
         if (isEmployee) {
           const employee = findEmployee(employeeName);
@@ -67,7 +85,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
           // If the ID fetched is not the one in the localStorage, update it in the database
           if (!employee.id.includes(userId)) {
             try {
-              await applyUpdate(employee, false);
+              pending = (await applyUpdate(employee, false)) ?? false;
             } catch (err) {
               if (err instanceof MaxDevicesError) {
                 setPendingUpdate({ kind: 'employee', entity: employee, oldestId: err.oldestDevice });
@@ -83,7 +101,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
           // If the ID fetched is not the one in the localStorage, update it in the database
           if (!conciergerie.id.includes(userId)) {
             try {
-              await applyUpdate(conciergerie, false);
+              pending = (await applyUpdate(conciergerie, false)) ?? false;
             } catch (err) {
               if (err instanceof MaxDevicesError) {
                 setPendingUpdate({ kind: 'conciergerie', entity: conciergerie, oldestId: err.oldestDevice });
@@ -96,7 +114,8 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
           throw new Error("Type d'utilisateur non reconnu");
         }
 
-        onMenuChange(Page.Missions);
+        // A pending device waits for approval; a connected one goes to the app
+        onMenuChange(pending ? Page.Waiting : Page.Missions);
       } catch (error) {
         console.error('Error validating conciergerie:', error);
         setError(
@@ -126,7 +145,7 @@ export default function IdPage({ params }: { params: Promise<{ id: string }> }) 
     setPendingUpdate(null);
     const promise = applyUpdate(update.entity, true);
     promise
-      .then(() => onMenuChange(Page.Missions))
+      .then(pending => onMenuChange(pending ? Page.Waiting : Page.Missions))
       .catch(err => setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour'));
   };
 

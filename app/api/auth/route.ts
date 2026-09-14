@@ -1,5 +1,5 @@
-import { getExistingUserType } from '@/app/db/db';
-import type { NextRequest} from 'next/server';
+import { getExistingUserTypeResilient } from '@/app/db/db';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
 
     if (!userId) return NextResponse.json({ userType: null }, { status: 200 });
 
-    const userType = await getExistingUserType(userId);
+    const userType = await getExistingUserTypeResilient(userId);
 
     return NextResponse.json({ userType }, { status: 200 });
   } catch (error) {
