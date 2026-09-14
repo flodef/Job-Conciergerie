@@ -75,8 +75,11 @@ export function useRateLimiter(
     return () => clearInterval(interval);
   }, [state.cooldownEnd]);
 
-  const canAttempt = state.attempts < maxAttempts && remainingCooldown === 0;
-  const attemptsRemaining = Math.max(0, maxAttempts - state.attempts);
+  // An expired cooldown means the counter restarts — without this the button
+  // stayed dead forever after maxAttempts until the next page reload.
+  const cooldownExpired = state.cooldownEnd > 0 && remainingCooldown === 0;
+  const canAttempt = remainingCooldown === 0 && (state.attempts < maxAttempts || cooldownExpired);
+  const attemptsRemaining = cooldownExpired ? maxAttempts : Math.max(0, maxAttempts - state.attempts);
 
   const attempt = useCallback((): boolean => {
     const now = Date.now();
@@ -86,11 +89,14 @@ export function useRateLimiter(
       return false;
     }
 
+    // Cooldown over → the counter starts fresh
+    const attempts = state.cooldownEnd ? 0 : state.attempts;
+
     // Check if max attempts reached
-    if (state.attempts >= maxAttempts - 1) {
+    if (attempts >= maxAttempts - 1) {
       // This is the last attempt - set cooldown
       setState({
-        attempts: state.attempts + 1,
+        attempts: attempts + 1,
         lastAttempt: now,
         cooldownEnd: now + cooldownMs,
       });
@@ -99,7 +105,7 @@ export function useRateLimiter(
 
     // Normal attempt
     setState({
-      attempts: state.attempts + 1,
+      attempts: attempts + 1,
       lastAttempt: now,
       cooldownEnd: 0,
     });

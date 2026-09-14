@@ -108,3 +108,8 @@ await sql.end();"
 - « Erreur lors du chargement des missions » juste après un enrôlement : toast
   transitoire possible (pool Supabase `max: 2` sous le burst de fetchs) — non
   bloquant, disparaît au refresh.
+- Appareil **expiré** (> `DEVICE_TTL_DAYS`, défaut 90 j) : session dégradée en
+  pending (aucune donnée protégée) ; l'entrée est balayée du tableau dès qu'un
+  autre appareil de la ligne agit ; récupération = formulaire (ré-enrôlement →
+  `$` → approbation, horloge réinitialisée) ou lien email tokenisé tant que
+  l'entrée n'est pas encore balayée.

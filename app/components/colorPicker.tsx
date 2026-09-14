@@ -40,14 +40,16 @@ const ColorPickerComponent: ForwardRefRenderFunction<HTMLDivElement, ColorPicker
   },
   ref,
 ) => {
-  const { userId, conciergeries } = useAuth();
+  const { userId, userIdHash, conciergeries } = useAuth();
 
   // Check if a color is already used by another conciergerie
   const isColorUsed = (colorName: string) => {
     if (!userId) return false;
 
-    // Find conciergeries that are not the current one
-    const otherConciergeries = conciergeries.filter(c => !c.id.includes(userId));
+    // Find conciergeries that are not the current one (ids hashed at rest — match both domains)
+    const otherConciergeries = conciergeries.filter(
+      c => !c.id.includes(userId) && !(userIdHash && c.id.includes(userIdHash)),
+    );
 
     // Check if any other conciergerie uses this color
     return otherConciergeries.some(c => c.colorName === colorName);

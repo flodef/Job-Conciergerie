@@ -1,6 +1,6 @@
 import { sql } from '@/app/db/db';
 import type { EmployeeStatus } from '@/app/types/dataTypes';
-import { MAX_DEVICES } from '@/app/utils/id';
+import { boundDeviceIds } from '@/app/utils/id';
 import { defaultEmployeeSettings } from '@/app/utils/notifications';
 
 // Type definition for database employee
@@ -299,7 +299,7 @@ export const updateEmployeeId = async (
 
     const result = await sql`
       UPDATE employees
-      SET id = ${employeeIds.slice(0, MAX_DEVICES)}::text[]
+      SET id = ${boundDeviceIds(employeeIds)}::text[]
       WHERE first_name = ${firstName} AND family_name = ${familyName}
       RETURNING id
     `;

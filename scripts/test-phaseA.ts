@@ -10,7 +10,8 @@
  *   E = appareil avec id legacy → rotation transparente vers v2_
  */
 import { chromium, type BrowserContext, type Page } from 'playwright';
-import { sql } from '../app/db/db';
+import { hashId, sql } from '../app/db/db';
+import { generateSecureId } from '../app/utils/id';
 import packageJson from '../package.json';
 
 const BASE = 'http://localhost:3000';
@@ -36,6 +37,11 @@ const getIds = async (): Promise<string[]> => {
   const [r] = await sql`SELECT id FROM employees WHERE first_name=${EMP.firstName} AND family_name=${EMP.familyName}`;
   return (r?.id as string[]) ?? [];
 };
+
+// Stored ids are hashed post-migration — dual-match (raw OR sha256) keeps the
+// script valid before, during and after the transition.
+const hasDevice = (ids: string[], raw: string) => ids.includes(raw) || ids.includes(hashId(raw));
+const hasPending = (ids: string[], raw: string) => ids.includes(`$${raw}`) || ids.includes(`$${hashId(raw)}`);
 
 const latestEmailLink = async (): Promise<string | null> => {
   const [r] =
@@ -74,7 +80,10 @@ const getDeviceId = async (page: Page): Promise<string> =>
   JSON.parse((await page.evaluate(() => localStorage.getItem('user_id'))) ?? '""');
 
 const fillEmployeeForm = async (page: Page) => {
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  // domcontentloaded : les sessions dégradées/pending déclenchent une retry-loop
+  // qui empêche networkidle de se déclencher
+  await page.goto(BASE, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(2500);
   await page.locator('button:has-text("Prestataire")').first().click();
   await page.locator('#firstName').fill(EMP.firstName);
   await page.locator('#familyName').fill(EMP.familyName);
@@ -93,10 +102,17 @@ const browser = await chromium.launch();
 const originalIds = await getIds();
 console.log(`Employé test : ${EMP.firstName} ${EMP.familyName} — devices: ${originalIds.join(', ')}`);
 
+// A = device frais ajouté en DB (hashé — post-migration les ids stockés ne sont
+// plus des credentials utilisables ; le seed pioche un vrai id brut v2_).
+const createdIds: string[] = [];
+const idA = generateSecureId();
+createdIds.push(idA);
+await sql`UPDATE employees SET id = array_append(id, ${hashId(idA)}) WHERE first_name=${EMP.firstName} AND family_name=${EMP.familyName}`;
+
 try {
   // ── Phase A : appareil connecté existant ──────────────────────────
   step('A. Appareil connecté (A) accède à /missions');
-  const ctxA = await seedContext(browser, originalIds[0]);
+  const ctxA = await seedContext(browser, idA);
   const pageA = await ctxA.newPage();
   await pageA.goto(`${BASE}/missions`, { waitUntil: 'networkidle' });
   ok(pageA.url().startsWith(`${BASE}/missions`), 'A reste sur /missions');
@@ -110,11 +126,12 @@ try {
   await fillEmployeeForm(pageB);
   await pageB.waitForURL(`${BASE}/waiting`, { timeout: 30000 });
   const idB = await getDeviceId(pageB);
+  createdIds.push(idB);
   console.log(`  device B = ${idB}`);
   ok(idB.startsWith('v2_'), 'id B au format v2_');
   let ids = await getIds();
-  ok(ids.includes(`$${idB}`), `DB contient $${idB} (pending)`);
-  ok(!ids.includes(idB), 'B pas encore connecté');
+  ok(hasPending(ids, idB), `DB contient $${idB} (pending)`);
+  ok(!hasDevice(ids, idB), 'B pas encore connecté');
   const link = await latestEmailLink();
   ok(!!link?.includes(idB), `email_logs contient le lien tokenisé pour B`);
   console.log(`  lien : ${link}`);
@@ -126,21 +143,22 @@ try {
   await fillEmployeeForm(pageC);
   await pageC.waitForURL(`${BASE}/waiting`, { timeout: 30000 });
   const idC = await getDeviceId(pageC);
+  createdIds.push(idC);
   console.log(`  device C = ${idC}`);
   ids = await getIds();
-  ok(ids.includes(`$${idC}`), `DB contient $${idC} (pending)`);
+  ok(hasPending(ids, idC), `DB contient $${idC} (pending)`);
 
   // C1 : token forgé → refusé, reste pending
   await pageC.goto(`${BASE}/${idC}?t=9999999999.deadbeef`, { waitUntil: 'networkidle' });
   ids = await getIds();
-  ok(ids.includes(`$${idC}`) && !ids.includes(idC), 'token forgé → C reste pending');
+  ok(hasPending(ids, idC) && !hasDevice(ids, idC), 'token forgé → C reste pending');
   // token forgé = traité comme « pas de token » → /waiting (pas d'accès), jamais /missions
   ok(!pageC.url().includes('/missions'), `token forgé → pas d'accès (url=${pageC.url()})`);
 
   // C2 : pas de token → reste pending (waiting)
   await pageC.goto(`${BASE}/${idC}`, { waitUntil: 'networkidle' });
   ids = await getIds();
-  ok(ids.includes(`$${idC}`) && !ids.includes(idC), 'sans token → C reste pending');
+  ok(hasPending(ids, idC) && !hasDevice(ids, idC), 'sans token → C reste pending');
 
   // C3 : pending ne charge pas les données protégées
   await pageC.goto(`${BASE}/missions`, { waitUntil: 'networkidle' });
@@ -156,7 +174,7 @@ try {
   await pageB.goto(link!, { waitUntil: 'networkidle' });
   await pageB.waitForTimeout(2000);
   ids = await getIds();
-  ok(ids.includes(idB) && !ids.includes(`$${idB}`), 'B connecté (plus de `$`)');
+  ok(hasDevice(ids, idB) && !hasPending(ids, idB), 'B connecté (plus de `$`)');
   ok(pageB.url().includes('/missions'), `B redirigé vers /missions (url=${pageB.url()})`);
 
   // ── Phase E : A approuve C via Settings ───────────────────────────
@@ -169,7 +187,7 @@ try {
   await valider.first().click();
   await pageA.waitForTimeout(2000);
   ids = await getIds();
-  ok(ids.includes(idC) && !ids.includes(`$${idC}`), 'C approuvé → connecté dans la DB');
+  ok(hasDevice(ids, idC) && !hasPending(ids, idC), 'C approuvé → connecté dans la DB');
 
   // C après approbation : reload waiting → accès
   await pageC.goto(`${BASE}/waiting`, { waitUntil: 'networkidle' });
@@ -183,27 +201,28 @@ try {
   );
 
   // ── Phase F : rotation transparente d'un id legacy ────────────────
+  // Post-migration il n'y a plus d'ids legacy en DB — on en seede un faux sur
+  // l'employé de test (le cleanup restaure le tableau d'origine).
   step('F. Id legacy → rotation transparente v2_');
-  const [legacyRow] = await sql`
-    SELECT id, first_name, family_name FROM employees
-    WHERE EXISTS (SELECT 1 FROM unnest(id) i WHERE i NOT LIKE 'v2\_%' AND i NOT LIKE '$%')
-    LIMIT 1`;
-  const legacyId = (legacyRow.id as string[]).find(i => !i.startsWith('v2_') && !i.startsWith('$'))!;
-  console.log(`  legacy ${legacyId} (${legacyRow.first_name} ${legacyRow.family_name})`);
+  const legacyId = 'legacy_seed_' + Math.random().toString(36).slice(2, 10);
+  await sql`UPDATE employees SET id = array_append(id, ${legacyId}) WHERE first_name=${EMP.firstName} AND family_name=${EMP.familyName}`;
+  const legacyRow = { first_name: EMP.firstName, family_name: EMP.familyName };
+  console.log(`  legacy seedé : ${legacyId}`);
   const ctxE = await seedContext(browser, legacyId);
   const pageE = await ctxE.newPage();
   await pageE.goto(`${BASE}/missions`, { waitUntil: 'networkidle' });
   await pageE.waitForTimeout(3000);
   const cookies = await ctxE.cookies(BASE);
   const newCookie = cookies.find(c => c.name === 'user_id')?.value ?? '';
+  createdIds.push(newCookie, legacyId);
   ok(newCookie.startsWith('v2_'), `cookie user_id rotaté → ${newCookie}`);
   const [after] =
     await sql`SELECT id FROM employees WHERE first_name=${legacyRow.first_name} AND family_name=${legacyRow.family_name}`;
   const afterIds = after.id as string[];
-  ok(afterIds.includes(newCookie) && !afterIds.includes(legacyId), 'DB : legacy remplacé par v2_');
+  ok(hasDevice(afterIds, newCookie) && !hasDevice(afterIds, legacyId), 'DB : legacy remplacé par v2_ (hashé)');
   ok(pageE.url().includes('/missions'), 'rotation sans déconnexion');
-  // rollback pour pouvoir rejouer le test
-  await sql`UPDATE employees SET id=${afterIds.map(i => (i === newCookie ? legacyId : i))} WHERE first_name=${legacyRow.first_name} AND family_name=${legacyRow.family_name}`;
+  // rollback pour pouvoir rejouer le test (le v2_ stocké peut être hashé)
+  await sql`UPDATE employees SET id=${afterIds.map(i => (hasDevice([i], newCookie) ? legacyId : i))} WHERE first_name=${legacyRow.first_name} AND family_name=${legacyRow.family_name}`;
 
   // ── Phase G : lien token sur un AUTRE appareil → refusé ───────────
   step('G. Lien de B ouvert dans un contexte tiers → refusé');
@@ -214,9 +233,63 @@ try {
   await pageG.goto(link!, { waitUntil: 'networkidle' });
   ok(!pageG.url().includes('/missions'), `lien lié à B refusé sur autre appareil (url=${pageG.url()})`);
   await ctxG.close();
+
+  // ── Phase H : appareil expiré (fenêtre glissante) ─────────────────
+  step('H. Appareil expiré (>90j) → session dégradée → ré-enrôlement → reconnexion');
+  const idX = generateSecureId();
+  createdIds.push(idX);
+  const hX = hashId(idX);
+  await sql`UPDATE employees SET id = array_append(id, ${hX}) WHERE first_name=${EMP.firstName} AND family_name=${EMP.familyName}`;
+  await sql`INSERT INTO device_seen (device_hash, last_seen) VALUES (${hX}, now() - interval '200 days')
+            ON CONFLICT (device_hash) DO UPDATE SET last_seen = now() - interval '200 days'`;
+  const ctxX = await seedContext(browser, idX);
+  const pageX = await ctxX.newPage();
+  // domcontentloaded : une session dégradée déclenche une retry-loop client qui
+  // empêche networkidle de se déclencher
+  await pageX.goto(`${BASE}/missions`, { waitUntil: 'domcontentloaded' });
+  await pageX.waitForTimeout(4000);
+  const bodyX = await pageX.locator('body').innerText();
+  ok(
+    /Erreur lors du chargement|Aucune mission/i.test(bodyX) || !pageX.url().includes('/missions'),
+    'X expiré → pas de données protégées (session dégradée)',
+  );
+  // L'entrée périmée est balayée dès qu'un autre appareil de la ligne agit —
+  // on force le sweep en rechargeant la page de A, puis on attend la DB.
+  await pageA.reload({ waitUntil: 'domcontentloaded' });
+  await pageA.waitForTimeout(3000);
+  for (let i = 0; i < 10 && hasDevice(await getIds(), idX); i++) await pageA.reload({ waitUntil: 'domcontentloaded' });
+  ids = await getIds();
+  ok(!hasDevice(ids, idX), 'X expiré → entrée balayée après activité d’un autre appareil');
+  // X redevient inconnu → la landing affiche le formulaire (cookies nettoyés =
+  // déconnexion ; localStorage garde user_id → ré-enrôlement du même device)
+  await ctxX.clearCookies();
+  await fillEmployeeForm(pageX);
+  await pageX.waitForURL(`${BASE}/waiting`, { timeout: 30000 });
+  ids = await getIds();
+  ok(hasPending(ids, idX) && !hasDevice(ids, idX), 'X expiré → re-demande pending `$`');
+  // A approuve X → X reconnecté (clock reset par l'approbation)
+  await pageA.goto(`${BASE}/settings`, { waitUntil: 'networkidle' });
+  await pageA.locator('text=Appareils connectés').first().click();
+  await pageA.waitForTimeout(1000);
+  const validerX = pageA.locator('button[title="Valider"]');
+  if ((await validerX.count()) > 0) {
+    await validerX.first().click();
+    await pageA.waitForTimeout(2000);
+  }
+  ids = await getIds();
+  ok(hasDevice(ids, idX) && !hasPending(ids, idX), 'X approuvé → reconnecté dans la DB');
+  await pageX.goto(`${BASE}/missions`, { waitUntil: 'domcontentloaded' });
+  await pageX.waitForTimeout(3000);
+  const bodyX2 = await pageX.locator('body').innerText();
+  ok(
+    pageX.url().includes('/missions') && !/Erreur lors du chargement/i.test(bodyX2),
+    'X ré-enrôlé → /missions accessible (clock reset)',
+  );
+  await ctxX.close();
 } finally {
-  // Cleanup : restaurer le tableau d'ids d'origine
+  // Cleanup : restaurer le tableau d'ids d'origine + purger les clocks de test
   await sql`UPDATE employees SET id=${originalIds} WHERE first_name=${EMP.firstName} AND family_name=${EMP.familyName}`;
+  await sql`DELETE FROM device_seen WHERE device_hash = ANY(${createdIds.map(hashId)}::text[])`.catch(() => {});
   await browser.close();
   await sql.end();
 }

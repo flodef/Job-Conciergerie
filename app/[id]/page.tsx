@@ -25,6 +25,7 @@ export default function IdPage({
 }) {
   const {
     userId,
+    userIdHash,
     isEmployee,
     isConciergerie,
     employeeName,
@@ -57,6 +58,8 @@ export default function IdPage({
         : await enrollConciergerieDevice((entity as Conciergerie).name, evictOldest, token);
       if (!result.ok) {
         if (result.reason === 'max_devices') throw new MaxDevicesError(result.oldestDevice ?? '');
+        if (result.reason === 'rate_limited')
+          throw new Error('Trop de tentatives. Veuillez réessayer dans quelques minutes.');
         throw new Error('Erreur lors de la mise à jour dans la base de données');
       }
       updateUserData({ ...entity, id: result.ids });
@@ -75,6 +78,15 @@ export default function IdPage({
         if (!userId || userId !== id)
           throw new Error('Identifiant non trouvée ou incorrect. Veuillez vous reconnecter.');
 
+        // Wait for the async sha256 of userId to resolve — comparing before
+        // would spuriously trigger applyUpdate (double enroll per mount, and
+        // each call consumes the per-device enrollment rate limit). '' means
+        // "hash unavailable (non-secure context)" — proceed on raw compare.
+        if (userIdHash === undefined) {
+          isFetching.current = false;
+          return;
+        }
+
         let pending = false;
 
         // Check if the conciergerie or employee whose name is stored in localStorage exists in the database
@@ -83,7 +95,8 @@ export default function IdPage({
           if (!employee) throw new Error('Prestataire non trouvée. Veuillez vous reconnecter.');
 
           // If the ID fetched is not the one in the localStorage, update it in the database
-          if (!employee.id.includes(userId)) {
+          // (stored ids are hashed at rest — match raw or hash, transition-safe)
+          if (!employee.id.includes(userId) && !(userIdHash && employee.id.includes(userIdHash))) {
             try {
               pending = (await applyUpdate(employee, false)) ?? false;
             } catch (err) {
@@ -99,7 +112,7 @@ export default function IdPage({
           if (!conciergerie) throw new Error('Conciergerie non trouvée. Veuillez vous reconnecter.');
 
           // If the ID fetched is not the one in the localStorage, update it in the database
-          if (!conciergerie.id.includes(userId)) {
+          if (!conciergerie.id.includes(userId) && !(userIdHash && conciergerie.id.includes(userIdHash))) {
             try {
               pending = (await applyUpdate(conciergerie, false)) ?? false;
             } catch (err) {
@@ -128,6 +141,7 @@ export default function IdPage({
   }, [
     id,
     userId,
+    userIdHash,
     isEmployee,
     isConciergerie,
     employeeName,

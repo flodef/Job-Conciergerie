@@ -4,6 +4,14 @@
  */
 
 /**
+ * Sentinel returned by rate-limited server actions — kept here so client
+ * components can compare without importing the server-only rateLimit module
+ * (which pulls postgres + next/headers).
+ */
+export const RATE_LIMITED = 'rate_limited' as const;
+export type RateLimited = typeof RATE_LIMITED;
+
+/**
  * Check if an error is a connection pool exhaustion error
  * Can be safely used in both server and client components
  */

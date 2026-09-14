@@ -16,6 +16,9 @@ import {
   requireConnectedSession,
   verifyEnrollmentToken,
 } from '@/app/db/session';
+import { hashId } from '@/app/db/db';
+import { DEVICE_TTL_MS, getDeviceSeenAt, seenKey, touchDeviceKeys, touchDevices } from '@/app/db/deviceSeen';
+import { checkRateLimit } from '@/app/db/rateLimit';
 import type { EnrollDeviceResult } from '@/app/actions/employee';
 import type { Conciergerie } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
@@ -38,9 +41,10 @@ export async function fetchConciergeries(): Promise<Conciergerie[] | null> {
       .map(c => ({
         // Connected member → real ids; pending member → only its own marker; else []
         id:
-          session && c.id.some(i => baseId(i) === session.userId)
+          // Stored ids are hashed at rest — match either domain (transition-safe)
+          session && c.id.some(i => new Set([session.userId, hashId(session.userId)]).has(baseId(i)))
             ? session.pending
-              ? [`$${session.userId}`]
+              ? [`$${hashId(session.userId)}`]
               : c.id
             : [],
         name: c.name,
@@ -71,19 +75,33 @@ export async function enrollConciergerieDevice(
   const deviceId = session?.userId ?? (await getSessionDeviceId());
   if (!deviceId || !name) return { ok: false, reason: 'invalid' };
 
+  // Same bounds as employee enrollment: per IP and per device
+  if (!(await checkRateLimit('enroll', 10, 600))) return { ok: false, reason: 'rate_limited' };
+  if (!(await checkRateLimit('enroll', 5, 3600, deviceId))) return { ok: false, reason: 'rate_limited' };
+
   const ids = await getConciergerieIds(name);
   if (!ids) return { ok: false, reason: 'not_found' };
 
-  const alreadyMember = ids.some(i => !isNewDevice(i) && baseId(i) === deviceId);
+  // Stored ids are hashed — normalize this device's own raw entries first
+  const hid = hashId(deviceId);
+  let normalized = ids.map(i => (baseId(i) === deviceId ? (isNewDevice(i) ? `$${hid}` : hid) : i));
+  // An expired entry must not count as membership — drop it so the device goes
+  // back through the token/pending flow (which resets its clock below).
+  const ownSeenAt = await getDeviceSeenAt(hid);
+  if (ownSeenAt !== undefined && Date.now() - ownSeenAt > DEVICE_TTL_MS)
+    normalized = normalized.filter(i => baseId(i) !== hid);
+  const alreadyMember = normalized.some(i => !isNewDevice(i) && baseId(i) === hid);
   const hasToken = verifyEnrollmentToken('conciergerie', name, deviceId, token);
   const markPending = !alreadyMember && !hasToken;
 
   try {
-    const newIds = getDevices(ids, deviceId, markPending, evictOldest);
+    const newIds = getDevices(normalized, hid, markPending, evictOldest);
     const updated = await updateConciergerieId(name, newIds);
     if (!updated) return { ok: false, reason: 'invalid' };
+    // Enrollment is fresh proof (email token or member approval) — reset the clock
+    await touchDevices([deviceId]);
     // A pending device gets back only its own marker — never the row's real credentials
-    return { ok: true, ids: markPending ? [`$${deviceId}`] : updated, deviceId, alreadyMember, pending: markPending };
+    return { ok: true, ids: markPending ? [`$${hid}`] : updated, deviceId, alreadyMember, pending: markPending };
   } catch (error) {
     if (error instanceof MaxDevicesError) return { ok: false, reason: 'max_devices', oldestDevice: error.oldestDevice };
     throw error;
@@ -108,7 +126,13 @@ export async function updateConciergerieWithUserId(
   if (!currentIds || !isValidDeviceIdsUpdate(currentIds, conciergerieIds, sessionIds)) return null;
 
   // Update the conciergerie's ID in the database
-  return await updateConciergerieId(conciergerie.name, conciergerieIds);
+  const updated = await updateConciergerieId(conciergerie.name, conciergerieIds);
+  // Entries whose stored form changed (e.g. `$h` approved → `h`) get a fresh clock
+  if (updated) {
+    const changed = conciergerieIds.filter(i => !currentIds.includes(i));
+    if (changed.length) await touchDeviceKeys(changed.map(seenKey));
+  }
+  return updated;
 }
 
 export async function updateConciergerieData(

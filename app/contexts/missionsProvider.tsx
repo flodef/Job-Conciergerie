@@ -155,9 +155,20 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
   // Core fetch logic shared between auto-fetch and manual refresh
   const isFetching = useRef(false);
+  // Exponential backoff on failure: a permanently-failing session (pending,
+  // expired, revoked) must not hammer the DB in a tight retry loop.
+  const failuresRef = useRef(0);
+  const lastFailureRef = useRef(0);
 
   const fetchMissionsCore = useCallback(async () => {
     if (isFetching.current) return Promise.resolve(false);
+
+    const backoffMs = Math.min(5000 * 2 ** failuresRef.current, 5 * 60 * 1000);
+    if (failuresRef.current > 0 && Date.now() - lastFailureRef.current < backoffMs) return Promise.resolve(false);
+    const markFailure = () => {
+      failuresRef.current++;
+      lastFailureRef.current = Date.now();
+    };
 
     // Skip fetching if offline - preserve existing data but reset needsRefresh
     if (!navigator.onLine) {
@@ -174,6 +185,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
 
     return fetchHomes().then(homesSuccess => {
       if (!homesSuccess) {
+        markFailure();
         setIsLoading(false);
         isFetching.current = false;
         // Reset needsRefresh to prevent infinite retry loops when offline
@@ -185,6 +197,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       return fetchAllMissions()
         .then(fetchedMissions => {
           if (fetchedMissions) {
+            failuresRef.current = 0;
             setMissions(fetchedMissions);
             checkForLateMissions(fetchedMissions);
             // Fetch reports for all completed missions
@@ -200,10 +213,12 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           }
           setIsLoading(false);
           isFetching.current = false;
+          if (!fetchedMissions) markFailure();
           return !!fetchedMissions;
         })
         .catch(error => {
           console.warn('Failed to fetch missions:', error);
+          markFailure();
           setIsLoading(false);
           isFetching.current = false;
           const errorMsg = error?.message?.toLowerCase() || '';

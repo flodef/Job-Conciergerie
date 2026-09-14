@@ -52,3 +52,4 @@ next-env.d.ts
 /landing/*.tsbuildinfo
 /landing/next-env.d.ts
 .env*
+backups/

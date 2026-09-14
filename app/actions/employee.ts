@@ -11,6 +11,9 @@ import {
   updateEmployeeSettings,
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
+import { hashId } from '@/app/db/db';
+import { DEVICE_TTL_MS, getDeviceSeenAt, seenKey, touchDeviceKeys, touchDevices } from '@/app/db/deviceSeen';
+import { checkRateLimit, RATE_LIMITED, type RateLimited } from '@/app/db/rateLimit';
 import {
   getSessionCredentialIds,
   getSessionDeviceId,
@@ -28,7 +31,7 @@ import type { EmployeeNotificationSettings } from '@/app/utils/notifications';
 
 export type EnrollDeviceResult =
   | { ok: true; ids: string[]; deviceId: string; alreadyMember: boolean; pending: boolean }
-  | { ok: false; reason: 'not_found' | 'invalid' | 'max_devices'; oldestDevice?: string };
+  | { ok: false; reason: 'not_found' | 'invalid' | 'max_devices' | 'rate_limited'; oldestDevice?: string };
 
 /**
  * Fetch all employees from the database with caching
@@ -43,9 +46,11 @@ export async function fetchEmployees(): Promise<Employee[] | null> {
   return (
     employees
       ?.map(e => {
-        if (!e.id.some(i => baseId(i) === session.userId)) return { ...e, id: [] };
+        // Stored ids are hashed at rest — match either domain (transition-safe)
+        const creds = new Set([session.userId, hashId(session.userId)]);
+        if (!e.id.some(i => creds.has(baseId(i)))) return { ...e, id: [] };
         // A pending device sees only its own pending marker — never the real credentials
-        return { ...e, id: session.pending ? [`$${session.userId}`] : e.id };
+        return { ...e, id: session.pending ? [`$${hashId(session.userId)}`] : e.id };
       })
       // A pending device only needs its own row (waiting-page status) — don't
       // leak the whole staff directory (names, emails, phones) to it.
@@ -65,7 +70,9 @@ export async function lookupEmployeeByContact(
   familyName: string,
   tel: string,
   email: string,
-): Promise<{ employee: Employee; nameMatches: boolean } | null> {
+): Promise<{ employee: Employee; nameMatches: boolean } | RateLimited | null> {
+  // Public enumeration vector — bounded per client IP
+  if (!(await checkRateLimit('lookupEmployee', 10, 600))) return RATE_LIMITED;
   const result = await findEmployeeByContact(firstName, familyName, tel, email);
   if (!result) return null;
   const { employee: row, nameMatches } = result;
@@ -100,14 +107,16 @@ export async function createNewEmployee(data: {
   message?: string;
   conciergerieName: string;
   notificationSettings?: EmployeeNotificationSettings;
-}): Promise<Employee | null> {
+}): Promise<Employee | RateLimited | null> {
+  // Public account creation — bounded per client IP
+  if (!(await checkRateLimit('createEmployee', 5, 600))) return RATE_LIMITED;
   // Always register the caller's own device — never a client-provided id
   const deviceId = await getSessionDeviceId();
   if (!deviceId) return null;
 
-  // Convert to DB format
+  // Convert to DB format (device ids are hashed at rest)
   const dbData: Omit<DbEmployee, 'created_at'> = {
-    id: [deviceId],
+    id: [hashId(deviceId)],
     first_name: normalizeFirstName(data.firstName),
     family_name: normalizeFamilyName(data.familyName),
     tel: data.tel,
@@ -151,19 +160,35 @@ export async function enrollEmployeeDevice(
   const deviceId = session?.userId ?? (await getSessionDeviceId());
   if (!deviceId || !firstName || !familyName) return { ok: false, reason: 'invalid' };
 
+  // Enrollment spam is bounded per IP, and a single device cannot fan out
+  // across many accounts either (per-device scope).
+  if (!(await checkRateLimit('enroll', 10, 600))) return { ok: false, reason: 'rate_limited' };
+  if (!(await checkRateLimit('enroll', 5, 3600, deviceId))) return { ok: false, reason: 'rate_limited' };
+
   const ids = await getEmployeeIds(firstName, familyName);
   if (!ids) return { ok: false, reason: 'not_found' };
 
-  const alreadyMember = ids.some(i => !isNewDevice(i) && baseId(i) === deviceId);
+  // Stored ids are hashed — normalize this device's own raw entries first so
+  // the membership check and getDevices both work in the hash domain.
+  const hid = hashId(deviceId);
+  let normalized = ids.map(i => (baseId(i) === deviceId ? (isNewDevice(i) ? `$${hid}` : hid) : i));
+  // An expired entry must not count as membership — drop it so the device goes
+  // back through the token/pending flow (which resets its clock below).
+  const ownSeenAt = await getDeviceSeenAt(hid);
+  if (ownSeenAt !== undefined && Date.now() - ownSeenAt > DEVICE_TTL_MS)
+    normalized = normalized.filter(i => baseId(i) !== hid);
+  const alreadyMember = normalized.some(i => !isNewDevice(i) && baseId(i) === hid);
   const hasToken = verifyEnrollmentToken('employee', `${firstName}|${familyName}`, deviceId, token);
   const markPending = !alreadyMember && !hasToken;
 
   try {
-    const newIds = getDevices(ids, deviceId, markPending, evictOldest);
+    const newIds = getDevices(normalized, hid, markPending, evictOldest);
     const updated = await updateEmployeeId(firstName, familyName, newIds);
     if (!updated) return { ok: false, reason: 'invalid' };
+    // Enrollment is fresh proof (email token or member approval) — reset the clock
+    await touchDevices([deviceId]);
     // A pending device gets back only its own marker — never the row's real credentials
-    return { ok: true, ids: markPending ? [`$${deviceId}`] : updated, deviceId, alreadyMember, pending: markPending };
+    return { ok: true, ids: markPending ? [`$${hid}`] : updated, deviceId, alreadyMember, pending: markPending };
   } catch (error) {
     if (error instanceof MaxDevicesError) return { ok: false, reason: 'max_devices', oldestDevice: error.oldestDevice };
     throw error;
@@ -187,7 +212,15 @@ export async function updateEmployeeWithUserId(
   const currentIds = await getEmployeeIds(employee.firstName, employee.familyName);
   if (!currentIds || !isValidDeviceIdsUpdate(currentIds, employeeIds, sessionIds)) return null;
 
-  return await updateEmployeeId(employee.firstName, employee.familyName, employeeIds);
+  const updated = await updateEmployeeId(employee.firstName, employee.familyName, employeeIds);
+  // Entries whose stored form changed (e.g. `$h` approved → `h`) get a fresh
+  // clock — approval is explicit member action, and an expired pending entry
+  // must not stay dead right after being approved.
+  if (updated) {
+    const changed = employeeIds.filter(i => !currentIds.includes(i));
+    if (changed.length) await touchDeviceKeys(changed.map(seenKey));
+  }
+  return updated;
 }
 
 /**

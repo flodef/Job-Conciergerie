@@ -57,9 +57,20 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
   // Core fetch logic shared between auto-fetch and manual refresh
   const isFetching = useRef(false);
+  // Exponential backoff on failure: a permanently-failing session (pending,
+  // expired, revoked) must not hammer the DB in a tight retry loop.
+  const failuresRef = useRef(0);
+  const lastFailureRef = useRef(0);
 
   const fetchHomesCore = useCallback(async () => {
     if (isFetching.current) return Promise.resolve(false);
+
+    const backoffMs = Math.min(5000 * 2 ** failuresRef.current, 5 * 60 * 1000);
+    if (failuresRef.current > 0 && Date.now() - lastFailureRef.current < backoffMs) return Promise.resolve(false);
+    const markFailure = () => {
+      failuresRef.current++;
+      lastFailureRef.current = Date.now();
+    };
 
     // Skip fetching if offline - preserve existing data but reset needsRefresh
     if (!navigator.onLine) {
@@ -77,6 +88,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     return fetchAllHomes()
       .then(fetchedHomes => {
         if (fetchedHomes) {
+          failuresRef.current = 0;
           setHomes(fetchedHomes);
           updateFetchTime(Page.Homes);
 
@@ -87,11 +99,12 @@ export function HomesProvider({ children }: { children: ReactNode }) {
             );
             preloadImages(allImageUrls);
           }
-        }
+        } else markFailure();
         return !!fetchedHomes;
       })
       .catch(error => {
         console.warn('Failed to fetch homes:', error);
+        markFailure();
         const errorMsg = error?.message?.toLowerCase() || '';
         const isMaxClientsError = errorMsg.includes('max clients') || errorMsg.includes('emaxconnsession');
         const is503Error =

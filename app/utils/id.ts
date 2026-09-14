@@ -59,6 +59,17 @@ export const containsId = (ids: string[], id: string) =>
 export const isNewDevice = (id: string) => id.startsWith(NEW_ID_CHAR);
 
 /**
+ * sha256 of a raw device id — mirrors `hashId` in db.ts but async
+ * (WebCrypto is the only option in the browser). Device ids are stored
+ * hashed at rest; the client computes this once to compare itself
+ * against the hashed `id` arrays returned by the fetch actions.
+ */
+export const hashIdAsync = async (id: string): Promise<string> => {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(id));
+  return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, '0')).join('');
+};
+
+/**
  * Get the list of connected devices for a user
  * @param ids List of device IDs
  * @returns List of connected devices
@@ -80,6 +91,18 @@ export class MaxDevicesError extends Error {
     this.oldestDevice = oldestDevice;
   }
 }
+
+/**
+ * Bound a device-ids array to the invariant getDevices produces: at most
+ * MAX_DEVICES-1 pending (`$`) entries and MAX_DEVICES connected entries,
+ * relative order preserved within each class (pending first — same convention).
+ * A plain slice(0, MAX_DEVICES) would silently drop pending entries appended
+ * after a full set of connected devices.
+ */
+export const boundDeviceIds = (ids: string[]): string[] => [
+  ...ids.filter(isNewDevice).slice(0, MAX_DEVICES - 1),
+  ...ids.filter(i => !isNewDevice(i)).slice(0, MAX_DEVICES),
+];
 
 /**
  * Get the list of devices for a user

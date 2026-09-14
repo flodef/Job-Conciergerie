@@ -1,7 +1,7 @@
 import { isConnectionPoolError } from '@/app/utils/dbErrors';
 import type { UserType } from '@/app/contexts/authProvider';
 import { V2_ID_PREFIX } from '@/app/utils/id';
-import { createHmac } from 'crypto';
+import { createHash, createHmac } from 'crypto';
 import postgres from 'postgres';
 
 export { isConnectionPoolError };
@@ -27,6 +27,16 @@ export function rotateLegacyId(id: string): string {
 }
 
 /**
+ * sha256 of a raw device id — the form stored in the `id` arrays at rest
+ * (a DB leak must not equal a credential leak). Cookies, localStorage and
+ * email links keep carrying the RAW id; every DB comparison hashes first.
+ * Reads dual-match (raw OR hash) so pre-migration rows keep resolving.
+ */
+export function hashId(id: string): string {
+  return createHash('sha256').update(id).digest('hex');
+}
+
+/**
  * SQL template literal for database queries
  * Works with any Postgres (Neon, Supabase, etc.) by just changing DATABASE_URL
  */
@@ -45,10 +55,11 @@ export const sql = postgres(databaseUrl, {
  */
 export async function getExistingUserType(userId: string): Promise<UserType | null> {
   try {
+    const hashed = hashId(userId);
     const result = await sql`
       SELECT CASE
-        WHEN EXISTS (SELECT 1 FROM conciergeries WHERE ${userId} = ANY(id)) THEN 'conciergerie'
-        WHEN EXISTS (SELECT 1 FROM employees WHERE ${userId} = ANY(id) AND status = 'accepted') THEN 'employee'
+        WHEN EXISTS (SELECT 1 FROM conciergeries WHERE ${userId} = ANY(id) OR ${hashed} = ANY(id)) THEN 'conciergerie'
+        WHEN EXISTS (SELECT 1 FROM employees WHERE (${userId} = ANY(id) OR ${hashed} = ANY(id)) AND status = 'accepted') THEN 'employee'
         ELSE NULL
       END AS result
     `;
