@@ -151,13 +151,15 @@ export async function getSessionUser(): Promise<SessionUser | null> {
         // preserving the pending marker — result is always hashId(rotated).
         const hCanonical = hashId(canonicalId);
         const hRotated = hashId(newId);
+        // WITH ORDINALITY keeps the array order stable — element order is the
+        // eviction order (oldest device first) and array_agg doesn't guarantee it.
         const rewrite = sql`
           SET id = (
             SELECT array_agg(CASE
               WHEN i IN (${canonicalId}, ${hCanonical}) THEN ${hRotated}
               WHEN i IN (${'$' + canonicalId}, ${'$' + hCanonical}) THEN ${'$' + hRotated}
-              ELSE i END)
-            FROM unnest(id) i
+              ELSE i END ORDER BY ord)
+            FROM unnest(id) WITH ORDINALITY AS u(i, ord)
           )
           WHERE ${canonicalId} = ANY(id) OR ${hCanonical} = ANY(id)
              OR ${'$' + canonicalId} = ANY(id) OR ${'$' + hCanonical} = ANY(id)
@@ -166,6 +168,17 @@ export async function getSessionUser(): Promise<SessionUser | null> {
         await sql`UPDATE employees ${rewrite}`;
         sessionId = newId;
         rotated = true;
+
+        // Carry the activity clock across the rewrite: the stored entry moves
+        // from hashId(canonical) to hashId(rotated) — a different device_seen
+        // key. Without this an expired legacy credential would resurrect as
+        // "never seen = fresh" on its very next request.
+        const carried = membership.seen.get(hCanonical);
+        if (carried !== undefined)
+          await sql`
+            INSERT INTO device_seen (device_hash, last_seen)
+            VALUES (${hRotated}, to_timestamp(${carried} / 1000.0))
+            ON CONFLICT (device_hash) DO NOTHING`;
       } catch (error) {
         console.error('Error rotating legacy user id:', error);
       }

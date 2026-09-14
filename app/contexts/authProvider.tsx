@@ -106,8 +106,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (userId)
       hashIdAsync(userId)
         .then(h => !cancelled && setUserIdHash(h))
-        .catch(() => {});
-    // crypto.subtle unavailable (non-secure context) — raw compare still works pre-migration
+        // crypto.subtle unavailable (non-secure context) — '' = "resolved but
+        // unavailable"; raw compare still works pre-migration. Keeping
+        // undefined would mean "still computing" forever (see [id]/page gate).
+        .catch(() => !cancelled && setUserIdHash(''));
     else setUserIdHash(undefined);
     return () => {
       cancelled = true;

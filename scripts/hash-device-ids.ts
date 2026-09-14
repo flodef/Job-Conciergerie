@@ -34,6 +34,16 @@ const migrateIds = (ids: string[]): { next: string[]; changed: boolean } => {
 };
 
 async function migrate(table: 'employees' | 'conciergeries', keyCols: [string, string] | [string]) {
+  // The UPDATEs match on the name key — duplicate key rows would all be
+  // overwritten with the LAST processed row's ids. Refuse to run instead.
+  const dupes =
+    keyCols.length === 2
+      ? await sql`SELECT first_name, family_name, count(*) c FROM employees
+          GROUP BY 1,2 HAVING count(*) > 1`
+      : await sql`SELECT name, count(*) c FROM conciergeries GROUP BY 1 HAVING count(*) > 1`;
+  if (dupes.length)
+    throw new Error(`${dupes.length} clé(s) dupliquée(s) dans ${table} (UPDATE par nom ambigu) — dédupliquer d'abord`);
+
   const rows = await sql`SELECT * FROM ${sql(table)}`;
   let touched = 0;
   for (const row of rows) {

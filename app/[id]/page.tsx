@@ -78,6 +78,15 @@ export default function IdPage({
         if (!userId || userId !== id)
           throw new Error('Identifiant non trouvée ou incorrect. Veuillez vous reconnecter.');
 
+        // Wait for the async sha256 of userId to resolve — comparing before
+        // would spuriously trigger applyUpdate (double enroll per mount, and
+        // each call consumes the per-device enrollment rate limit). '' means
+        // "hash unavailable (non-secure context)" — proceed on raw compare.
+        if (userIdHash === undefined) {
+          isFetching.current = false;
+          return;
+        }
+
         let pending = false;
 
         // Check if the conciergerie or employee whose name is stored in localStorage exists in the database
