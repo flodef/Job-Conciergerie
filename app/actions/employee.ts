@@ -15,7 +15,9 @@ import {
   getSessionCredentialIds,
   getSessionDeviceId,
   getSessionUser,
+  isRowMember,
   isValidDeviceIdsUpdate,
+  requireConciergerieSession,
   requireConnectedSession,
   verifyEnrollmentToken,
 } from '@/app/db/session';
@@ -39,11 +41,15 @@ export async function fetchEmployees(): Promise<Employee[] | null> {
 
   const employees = await getAllEmployees();
   return (
-    employees?.map(e => {
-      if (!e.id.some(i => baseId(i) === session.userId)) return { ...e, id: [] };
-      // A pending device sees only its own pending marker — never the real credentials
-      return { ...e, id: session.pending ? [`$${session.userId}`] : e.id };
-    }) ?? null
+    employees
+      ?.map(e => {
+        if (!e.id.some(i => baseId(i) === session.userId)) return { ...e, id: [] };
+        // A pending device sees only its own pending marker — never the real credentials
+        return { ...e, id: session.pending ? [`$${session.userId}`] : e.id };
+      })
+      // A pending device only needs its own row (waiting-page status) — don't
+      // leak the whole staff directory (names, emails, phones) to it.
+      .filter(e => !session.pending || e.id.length > 0) ?? null
   );
 }
 
@@ -120,7 +126,9 @@ export async function createNewEmployee(data: {
  * Update an employee's status in the database
  */
 export async function updateEmployeeStatusAction(employee: Employee, status: EmployeeStatus): Promise<Employee | null> {
-  if (!(await requireConnectedSession())) return null;
+  // Status changes (accept/reject/delete) are the conciergerie's vetting
+  // prerogative — an employee must not be able to self-accept or alter others.
+  if (!(await requireConciergerieSession())) return null;
   return await updateEmployeeStatus(employee.firstName, employee.familyName, status);
 }
 
@@ -196,7 +204,13 @@ export async function updateEmployeeData(
     notificationSettings?: EmployeeNotificationSettings;
   },
 ): Promise<Employee | null> {
-  if (!(await requireConnectedSession()) || !employee) return null;
+  const session = await requireConnectedSession();
+  if (!session || !employee) return null;
+
+  // Only a connected member of the row may edit it — otherwise any employee
+  // could rewrite another employee's profile.
+  const ids = await getEmployeeIds(employee.firstName, employee.familyName);
+  if (!ids || !isRowMember(session, ids)) return null;
 
   // Convert to DB format
   const dbData: Partial<DbEmployee> = {
@@ -215,6 +229,14 @@ export async function updateEmployeeData(
  * Delete an employee
  */
 export async function deleteEmployeeData(employee: Employee): Promise<boolean> {
-  if (!(await requireConnectedSession())) return false;
+  const session = await requireConnectedSession();
+  if (!session) return false;
+
+  // A conciergerie manages its staff; otherwise only a member of the row may
+  // delete it (self-removal). Employees must not delete arbitrary coworkers.
+  if (session.userType !== 'conciergerie') {
+    const ids = await getEmployeeIds(employee.firstName, employee.familyName);
+    if (!ids || !isRowMember(session, ids)) return false;
+  }
   return await deleteEmployee(employee.firstName, employee.familyName);
 }

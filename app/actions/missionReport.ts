@@ -6,12 +6,15 @@ import {
   getMissionReportByMissionId,
   getMissionReportsByMissionIds,
 } from '@/app/db/missionReportDb';
+import { getMissionById } from '@/app/db/missionDb';
 import { requireConnectedSession } from '@/app/db/session';
 import type { MissionReport } from '@/app/types/dataTypes';
 import { generateSecureId } from '@/app/utils/id';
 
 /**
  * Save a mission report (free text + image paths) for a completed mission.
+ * Only the assigned employee(s) may report on a mission, and the author is
+ * taken from the session — never from the client-passed employeeId.
  */
 export async function saveMissionReport(data: {
   missionId: string;
@@ -19,12 +22,16 @@ export async function saveMissionReport(data: {
   content: string;
   images: string[];
 }): Promise<MissionReport | null> {
-  if (!(await requireConnectedSession())) return null;
+  const session = await requireConnectedSession();
+  if (!session) return null;
+
+  const mission = await getMissionById(data.missionId);
+  if (!mission || (mission.employeeId !== session.rowKey && mission.employeeId2 !== session.rowKey)) return null;
 
   const dbData: Omit<DbMissionReport, 'created_at'> = {
     id: generateSecureId(),
     mission_id: data.missionId,
-    employee_id: data.employeeId,
+    employee_id: session.rowKey,
     content: data.content,
     images: data.images,
   };

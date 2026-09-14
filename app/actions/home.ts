@@ -1,8 +1,8 @@
 'use server';
 
 import type { DbHome } from '@/app/db/homeDb';
-import { createHome, deleteHome, getAllHomes, updateHome } from '@/app/db/homeDb';
-import { requireConnectedSession } from '@/app/db/session';
+import { createHome, deleteHome, getAllHomes, getHomeById, updateHome } from '@/app/db/homeDb';
+import { requireConciergerieSession, requireConnectedSession } from '@/app/db/session';
 import type { Home } from '@/app/types/dataTypes';
 
 /**
@@ -30,7 +30,10 @@ export async function createNewHome(data: {
   maxTravellers?: number;
   notes?: string;
 }): Promise<Home | null> {
-  if (!(await requireConnectedSession())) return null;
+  // Homes belong to the conciergerie's catalog — employees must not create them,
+  // and a conciergerie only writes in its own tenant
+  const session = await requireConciergerieSession();
+  if (!session || data.conciergerieName !== session.rowKey) return null;
 
   // Convert to DB format
   const dbData: Omit<DbHome, 'modified_date'> = {
@@ -70,7 +73,11 @@ export async function updateHomeData(
     notes?: string;
   }>,
 ): Promise<Home | null> {
-  if (!(await requireConnectedSession())) return null;
+  // Catalog management is conciergerie-only (notes go through updateHomeNotes)
+  const session = await requireConciergerieSession();
+  if (!session) return null;
+  const home = await getHomeById(id);
+  if (!home || home.conciergerieName !== session.rowKey) return null;
 
   // Convert to DB format
   const dbData: Partial<Omit<DbHome, 'id'>> = {
@@ -102,6 +109,9 @@ export async function updateHomeNotes(id: string, notes: string | undefined): Pr
  * Delete a home from the database
  */
 export async function deleteHomeData(id: string): Promise<boolean> {
-  if (!(await requireConnectedSession())) return false;
+  const session = await requireConciergerieSession();
+  if (!session) return false;
+  const home = await getHomeById(id);
+  if (!home || home.conciergerieName !== session.rowKey) return false;
   return await deleteHome(id);
 }

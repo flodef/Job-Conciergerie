@@ -7,11 +7,22 @@ import {
   createMission,
   deleteMission,
   getAllMissions,
+  getMissionById,
   updateMission,
   updateMissionStatus,
 } from '@/app/db/missionDb';
-import { requireConnectedSession } from '@/app/db/session';
+import { requireConciergerieSession, requireConnectedSession, type SessionUser } from '@/app/db/session';
 import type { Mission, MissionStatus } from '@/app/types/dataTypes';
+
+/**
+ * Per-mission authorization:
+ * - a conciergerie only manages missions of its own tenant (`conciergerie_name`);
+ * - an employee only touches missions they are assigned to (first or second binôme).
+ */
+const canAccessMission = (session: SessionUser, mission: Mission): boolean =>
+  session.userType === 'conciergerie'
+    ? !mission.conciergerieName || mission.conciergerieName === session.rowKey
+    : mission.employeeId === session.rowKey || mission.employeeId2 === session.rowKey;
 
 /**
  * Fetch all missions from the database
@@ -25,7 +36,9 @@ export async function fetchAllMissions(): Promise<Mission[] | null> {
  * Create a new mission in the database
  */
 export async function createNewMission(data: Mission): Promise<Mission | null> {
-  if (!(await requireConnectedSession())) return null;
+  const session = await requireConciergerieSession();
+  // A conciergerie only creates missions in its own tenant
+  if (!session || data.conciergerieName !== session.rowKey) return null;
 
   // Convert to DB format
   const dbData: Omit<DbMission, 'modified_date'> = {
@@ -49,10 +62,17 @@ export async function createNewMission(data: Mission): Promise<Mission | null> {
 }
 
 /**
- * Update a mission in the database
+ * Update a mission in the database.
+ * Conciergeries edit their own missions freely; employees only update the
+ * assignment/status fields of missions they are assigned to (or claim an open
+ * mission / join an open duo as themselves).
  */
 export async function updateMissionData(id: string, data: Partial<Mission>): Promise<Mission | null> {
-  if (!(await requireConnectedSession())) return null;
+  const session = await requireConnectedSession();
+  if (!session) return null;
+
+  const mission = await getMissionById(id);
+  if (!mission) return null;
 
   // Convert to DB format
   const dbData: Partial<Omit<DbMission, 'id' | 'modified_date'>> = {};
@@ -71,14 +91,45 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
   if (data.travellers !== undefined) dbData.travellers = data.travellers;
   if (data.conciergerieComment !== undefined) dbData.conciergerie_comment = data.conciergerieComment;
 
-  return await updateMission(id, dbData);
+  if (session.userType === 'conciergerie') {
+    if (!canAccessMission(session, mission)) return null;
+    return await updateMission(id, dbData);
+  }
+
+  const mine = canAccessMission(session, mission);
+  const claiming = !mission.employeeId && data.employeeId === session.rowKey;
+  const joiningDuo = !!mission.employeeId && !mission.employeeId2 && data.employeeId2 === session.rowKey;
+  if (!mine && !claiming && !joiningDuo) return null;
+
+  // Restricted missions can only be claimed by allowed employees
+  if (
+    (claiming || joiningDuo) &&
+    mission.allowedEmployees?.length &&
+    !mission.allowedEmployees.includes(session.rowKey)
+  )
+    return null;
+
+  // An employee can only (un)assign themselves — never another person
+  if (data.employeeId != null && data.employeeId !== session.rowKey) return null;
+  if (data.employeeId2 != null && data.employeeId2 !== session.rowKey) return null;
+
+  const filtered: Partial<Omit<DbMission, 'id' | 'modified_date'>> = {};
+  if (dbData.employee_id !== undefined) filtered.employee_id = dbData.employee_id;
+  if (dbData.employee_id_2 !== undefined) filtered.employee_id_2 = dbData.employee_id_2;
+  if (dbData.status !== undefined) filtered.status = dbData.status;
+  if (Object.keys(filtered).length === 0) return null;
+
+  return await updateMission(id, filtered);
 }
 
 /**
  * Update mission status
  */
 export async function updateMissionStatusAction(id: string, status: MissionStatus): Promise<Mission | null> {
-  if (!(await requireConnectedSession())) return null;
+  const session = await requireConnectedSession();
+  if (!session) return null;
+  const mission = await getMissionById(id);
+  if (!mission || !canAccessMission(session, mission)) return null;
   return await updateMissionStatus(id, status);
 }
 
@@ -86,7 +137,10 @@ export async function updateMissionStatusAction(id: string, status: MissionStatu
  * Assign employee to mission
  */
 export async function assignEmployeeToMissionAction(missionId: string, employeeId: string): Promise<Mission | null> {
-  if (!(await requireConnectedSession())) return null;
+  const session = await requireConciergerieSession();
+  if (!session) return null;
+  const mission = await getMissionById(missionId);
+  if (!mission || !canAccessMission(session, mission)) return null;
   return await assignEmployeeToMission(missionId, employeeId);
 }
 
@@ -94,7 +148,10 @@ export async function assignEmployeeToMissionAction(missionId: string, employeeI
  * Delete a mission from the database
  */
 export async function deleteMissionData(id: string): Promise<boolean> {
-  if (!(await requireConnectedSession())) return false;
+  const session = await requireConciergerieSession();
+  if (!session) return false;
+  const mission = await getMissionById(id);
+  if (!mission || !canAccessMission(session, mission)) return false;
   return await deleteMission(id);
 }
 
@@ -104,6 +161,9 @@ export async function deleteMissionData(id: string): Promise<boolean> {
  * any subsequent call returns false. Use this to guarantee the email is sent at most once.
  */
 export async function claimLateNotificationForMission(missionId: string): Promise<boolean> {
-  if (!(await requireConnectedSession())) return false;
+  const session = await requireConnectedSession();
+  if (!session) return false;
+  const mission = await getMissionById(missionId);
+  if (!mission || !canAccessMission(session, mission)) return false;
   return await claimLateNotification(missionId);
 }

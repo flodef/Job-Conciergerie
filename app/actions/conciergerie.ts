@@ -11,6 +11,7 @@ import {
   getSessionCredentialIds,
   getSessionDeviceId,
   getSessionUser,
+  isRowMember,
   isValidDeviceIdsUpdate,
   requireConnectedSession,
   verifyEnrollmentToken,
@@ -114,7 +115,13 @@ export async function updateConciergerieData(
   conciergerie: Conciergerie | undefined,
   data: Partial<Conciergerie>,
 ): Promise<Conciergerie | null> {
-  if (!(await requireConnectedSession()) || !conciergerie) return null;
+  const session = await requireConnectedSession();
+  if (!session || !conciergerie) return null;
+
+  // Only a connected member of the row may edit it — otherwise any user could
+  // rewrite a conciergerie's contact details.
+  const ids = await getConciergerieIds(conciergerie.name);
+  if (!ids || !isRowMember(session, ids)) return null;
 
   // Convert to DB format
   const dbData: Partial<DbConciergerie> = {

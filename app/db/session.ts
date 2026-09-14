@@ -1,6 +1,6 @@
 import { hmacSecret, rotateLegacyId, sql } from '@/app/db/db';
 import type { UserType } from '@/app/contexts/authProvider';
-import { baseId, V2_ID_PREFIX } from '@/app/utils/id';
+import { baseId, isNewDevice, V2_ID_PREFIX } from '@/app/utils/id';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
 
@@ -20,6 +20,12 @@ export interface SessionUser {
    * protected resources — use `requireConnectedSession` for those.
    */
   pending: boolean;
+  /**
+   * The session row's business key: conciergerie `name`, or employee
+   * `firstName + ' ' + familyName` — the same format stored in `missions.employee_id`.
+   * Used to authorize per-resource access (e.g. employees only touch their own missions).
+   */
+  rowKey: string;
 }
 
 /**
@@ -40,7 +46,7 @@ export async function getSessionDeviceId(): Promise<string | null> {
  * only through a pending (`$`-prefixed) device entry. A pending device resolves
  * (so the waiting page works) but carries `pending: true` — no privileges.
  */
-async function resolveMembership(id: string): Promise<{ userType: UserType; pending: boolean } | null> {
+async function resolveMembership(id: string): Promise<{ userType: UserType; pending: boolean; rowKey: string } | null> {
   try {
     const pendingId = '$' + id;
     const result = await sql`
@@ -57,11 +63,18 @@ async function resolveMembership(id: string): Promise<{ userType: UserType; pend
         NOT (
           EXISTS (SELECT 1 FROM conciergeries WHERE ${id} = ANY(id))
           OR EXISTS (SELECT 1 FROM employees WHERE ${id} = ANY(id))
-        ) AS pending
+        ) AS pending,
+        COALESCE(
+          (SELECT name FROM conciergeries WHERE ${id} = ANY(id) OR ${pendingId} = ANY(id) LIMIT 1),
+          (SELECT first_name || ' ' || family_name FROM employees
+           WHERE ${id} = ANY(id) OR ${pendingId} = ANY(id) LIMIT 1)
+        ) AS row_key
     `;
 
     const row = result[0];
-    return row?.user_type ? { userType: row.user_type as UserType, pending: !!row.pending } : null;
+    return row?.user_type && row.row_key
+      ? { userType: row.user_type as UserType, pending: !!row.pending, rowKey: row.row_key as string }
+      : null;
   } catch (error) {
     console.error('Error resolving session user:', error);
     return null;
@@ -90,7 +103,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     if (rotated !== id && (membership = await resolveMembership(rotated))) canonicalId = rotated;
   }
   if (!membership) return null;
-  const { userType, pending } = membership;
+  const { userType, pending, rowKey } = membership;
 
   // Lazy rotation: rewrite the legacy id in place (idempotent — v2 is deterministic)
   if (!canonicalId.startsWith(V2_ID_PREFIX)) {
@@ -109,7 +122,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
         `;
       } catch (error) {
         console.error('Error rotating legacy user id:', error);
-        return { userId: canonicalId, userType, rotated: false, pending };
+        return { userId: canonicalId, userType, rotated: false, pending, rowKey };
       }
 
       try {
@@ -121,11 +134,11 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       } catch {
         // Read-only context — the client syncs through the syncSession response
       }
-      return { userId: rotated, userType, rotated: true, pending };
+      return { userId: rotated, userType, rotated: true, pending, rowKey };
     }
   }
 
-  return { userId: canonicalId, userType, rotated: false, pending };
+  return { userId: canonicalId, userType, rotated: false, pending, rowKey };
 }
 
 /**
@@ -136,6 +149,20 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 export async function requireConnectedSession(): Promise<SessionUser | null> {
   const session = await getSessionUser();
   return session && !session.pending ? session : null;
+}
+
+/** Session guard for actions only a conciergerie may perform. */
+export async function requireConciergerieSession(): Promise<SessionUser | null> {
+  const session = await requireConnectedSession();
+  return session?.userType === 'conciergerie' ? session : null;
+}
+
+/**
+ * True when the session is a connected member of the row owning `ids`
+ * (its canonical device id is a connected entry of the array).
+ */
+export function isRowMember(session: SessionUser, ids: string[]): boolean {
+  return !session.pending && ids.some(i => !isNewDevice(i) && baseId(i) === session.userId);
 }
 
 /**
