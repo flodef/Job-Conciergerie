@@ -12,6 +12,7 @@ import {
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
 import { hashId } from '@/app/db/db';
+import { DEVICE_TTL_MS, getDeviceSeenAt, seenKey, touchDeviceKeys, touchDevices } from '@/app/db/deviceSeen';
 import { checkRateLimit, RATE_LIMITED, type RateLimited } from '@/app/db/rateLimit';
 import {
   getSessionCredentialIds,
@@ -170,7 +171,12 @@ export async function enrollEmployeeDevice(
   // Stored ids are hashed — normalize this device's own raw entries first so
   // the membership check and getDevices both work in the hash domain.
   const hid = hashId(deviceId);
-  const normalized = ids.map(i => (baseId(i) === deviceId ? (isNewDevice(i) ? `$${hid}` : hid) : i));
+  let normalized = ids.map(i => (baseId(i) === deviceId ? (isNewDevice(i) ? `$${hid}` : hid) : i));
+  // An expired entry must not count as membership — drop it so the device goes
+  // back through the token/pending flow (which resets its clock below).
+  const ownSeenAt = await getDeviceSeenAt(hid);
+  if (ownSeenAt !== undefined && Date.now() - ownSeenAt > DEVICE_TTL_MS)
+    normalized = normalized.filter(i => baseId(i) !== hid);
   const alreadyMember = normalized.some(i => !isNewDevice(i) && baseId(i) === hid);
   const hasToken = verifyEnrollmentToken('employee', `${firstName}|${familyName}`, deviceId, token);
   const markPending = !alreadyMember && !hasToken;
@@ -179,6 +185,8 @@ export async function enrollEmployeeDevice(
     const newIds = getDevices(normalized, hid, markPending, evictOldest);
     const updated = await updateEmployeeId(firstName, familyName, newIds);
     if (!updated) return { ok: false, reason: 'invalid' };
+    // Enrollment is fresh proof (email token or member approval) — reset the clock
+    await touchDevices([deviceId]);
     // A pending device gets back only its own marker — never the row's real credentials
     return { ok: true, ids: markPending ? [`$${hid}`] : updated, deviceId, alreadyMember, pending: markPending };
   } catch (error) {
@@ -204,7 +212,15 @@ export async function updateEmployeeWithUserId(
   const currentIds = await getEmployeeIds(employee.firstName, employee.familyName);
   if (!currentIds || !isValidDeviceIdsUpdate(currentIds, employeeIds, sessionIds)) return null;
 
-  return await updateEmployeeId(employee.firstName, employee.familyName, employeeIds);
+  const updated = await updateEmployeeId(employee.firstName, employee.familyName, employeeIds);
+  // Entries whose stored form changed (e.g. `$h` approved → `h`) get a fresh
+  // clock — approval is explicit member action, and an expired pending entry
+  // must not stay dead right after being approved.
+  if (updated) {
+    const changed = employeeIds.filter(i => !currentIds.includes(i));
+    if (changed.length) await touchDeviceKeys(changed.map(seenKey));
+  }
+  return updated;
 }
 
 /**

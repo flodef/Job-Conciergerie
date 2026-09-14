@@ -17,6 +17,7 @@ import {
   verifyEnrollmentToken,
 } from '@/app/db/session';
 import { hashId } from '@/app/db/db';
+import { DEVICE_TTL_MS, getDeviceSeenAt, seenKey, touchDeviceKeys, touchDevices } from '@/app/db/deviceSeen';
 import { checkRateLimit } from '@/app/db/rateLimit';
 import type { EnrollDeviceResult } from '@/app/actions/employee';
 import type { Conciergerie } from '@/app/types/dataTypes';
@@ -83,7 +84,12 @@ export async function enrollConciergerieDevice(
 
   // Stored ids are hashed — normalize this device's own raw entries first
   const hid = hashId(deviceId);
-  const normalized = ids.map(i => (baseId(i) === deviceId ? (isNewDevice(i) ? `$${hid}` : hid) : i));
+  let normalized = ids.map(i => (baseId(i) === deviceId ? (isNewDevice(i) ? `$${hid}` : hid) : i));
+  // An expired entry must not count as membership — drop it so the device goes
+  // back through the token/pending flow (which resets its clock below).
+  const ownSeenAt = await getDeviceSeenAt(hid);
+  if (ownSeenAt !== undefined && Date.now() - ownSeenAt > DEVICE_TTL_MS)
+    normalized = normalized.filter(i => baseId(i) !== hid);
   const alreadyMember = normalized.some(i => !isNewDevice(i) && baseId(i) === hid);
   const hasToken = verifyEnrollmentToken('conciergerie', name, deviceId, token);
   const markPending = !alreadyMember && !hasToken;
@@ -92,6 +98,8 @@ export async function enrollConciergerieDevice(
     const newIds = getDevices(normalized, hid, markPending, evictOldest);
     const updated = await updateConciergerieId(name, newIds);
     if (!updated) return { ok: false, reason: 'invalid' };
+    // Enrollment is fresh proof (email token or member approval) — reset the clock
+    await touchDevices([deviceId]);
     // A pending device gets back only its own marker — never the row's real credentials
     return { ok: true, ids: markPending ? [`$${hid}`] : updated, deviceId, alreadyMember, pending: markPending };
   } catch (error) {
@@ -118,7 +126,13 @@ export async function updateConciergerieWithUserId(
   if (!currentIds || !isValidDeviceIdsUpdate(currentIds, conciergerieIds, sessionIds)) return null;
 
   // Update the conciergerie's ID in the database
-  return await updateConciergerieId(conciergerie.name, conciergerieIds);
+  const updated = await updateConciergerieId(conciergerie.name, conciergerieIds);
+  // Entries whose stored form changed (e.g. `$h` approved → `h`) get a fresh clock
+  if (updated) {
+    const changed = conciergerieIds.filter(i => !currentIds.includes(i));
+    if (changed.length) await touchDeviceKeys(changed.map(seenKey));
+  }
+  return updated;
 }
 
 export async function updateConciergerieData(
