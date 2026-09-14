@@ -16,6 +16,7 @@ import {
   requireConnectedSession,
   verifyEnrollmentToken,
 } from '@/app/db/session';
+import { checkRateLimit } from '@/app/db/rateLimit';
 import type { EnrollDeviceResult } from '@/app/actions/employee';
 import type { Conciergerie } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
@@ -70,6 +71,10 @@ export async function enrollConciergerieDevice(
   const session = await getSessionUser();
   const deviceId = session?.userId ?? (await getSessionDeviceId());
   if (!deviceId || !name) return { ok: false, reason: 'invalid' };
+
+  // Same bounds as employee enrollment: per IP and per device
+  if (!(await checkRateLimit('enroll', 10, 600))) return { ok: false, reason: 'rate_limited' };
+  if (!(await checkRateLimit('enroll', 5, 3600, deviceId))) return { ok: false, reason: 'rate_limited' };
 
   const ids = await getConciergerieIds(name);
   if (!ids) return { ok: false, reason: 'not_found' };

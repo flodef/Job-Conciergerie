@@ -70,8 +70,13 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       if (!selectedConciergerie) throw new Error('Conciergerie non trouvée');
       if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
-      EmailSender.sendVerificationEmail(selectedConciergerie, currentUserId).then(() => {
-        showToast({ type: ToastType.Success, message: "L'email de vérification a été envoyé avec succès" });
+      EmailSender.sendVerificationEmail(selectedConciergerie, currentUserId).then(ok => {
+        showToast({
+          type: ok ? ToastType.Success : ToastType.Error,
+          message: ok
+            ? "L'email de vérification a été envoyé avec succès"
+            : "L'email n'a pas pu être envoyé. Veuillez réessayer dans quelques minutes.",
+        });
       });
 
       onMenuChange(Page.Waiting);

@@ -11,6 +11,7 @@ import {
   updateEmployeeSettings,
   updateEmployeeStatus,
 } from '@/app/db/employeeDb';
+import { checkRateLimit, RATE_LIMITED, type RateLimited } from '@/app/db/rateLimit';
 import {
   getSessionCredentialIds,
   getSessionDeviceId,
@@ -28,7 +29,7 @@ import type { EmployeeNotificationSettings } from '@/app/utils/notifications';
 
 export type EnrollDeviceResult =
   | { ok: true; ids: string[]; deviceId: string; alreadyMember: boolean; pending: boolean }
-  | { ok: false; reason: 'not_found' | 'invalid' | 'max_devices'; oldestDevice?: string };
+  | { ok: false; reason: 'not_found' | 'invalid' | 'max_devices' | 'rate_limited'; oldestDevice?: string };
 
 /**
  * Fetch all employees from the database with caching
@@ -65,7 +66,9 @@ export async function lookupEmployeeByContact(
   familyName: string,
   tel: string,
   email: string,
-): Promise<{ employee: Employee; nameMatches: boolean } | null> {
+): Promise<{ employee: Employee; nameMatches: boolean } | RateLimited | null> {
+  // Public enumeration vector — bounded per client IP
+  if (!(await checkRateLimit('lookupEmployee', 10, 600))) return RATE_LIMITED;
   const result = await findEmployeeByContact(firstName, familyName, tel, email);
   if (!result) return null;
   const { employee: row, nameMatches } = result;
@@ -100,7 +103,9 @@ export async function createNewEmployee(data: {
   message?: string;
   conciergerieName: string;
   notificationSettings?: EmployeeNotificationSettings;
-}): Promise<Employee | null> {
+}): Promise<Employee | RateLimited | null> {
+  // Public account creation — bounded per client IP
+  if (!(await checkRateLimit('createEmployee', 5, 600))) return RATE_LIMITED;
   // Always register the caller's own device — never a client-provided id
   const deviceId = await getSessionDeviceId();
   if (!deviceId) return null;
@@ -150,6 +155,11 @@ export async function enrollEmployeeDevice(
   const session = await getSessionUser();
   const deviceId = session?.userId ?? (await getSessionDeviceId());
   if (!deviceId || !firstName || !familyName) return { ok: false, reason: 'invalid' };
+
+  // Enrollment spam is bounded per IP, and a single device cannot fan out
+  // across many accounts either (per-device scope).
+  if (!(await checkRateLimit('enroll', 10, 600))) return { ok: false, reason: 'rate_limited' };
+  if (!(await checkRateLimit('enroll', 5, 3600, deviceId))) return { ok: false, reason: 'rate_limited' };
 
   const ids = await getEmployeeIds(firstName, familyName);
   if (!ids) return { ok: false, reason: 'not_found' };

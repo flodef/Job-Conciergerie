@@ -5,6 +5,7 @@ import { getConciergerieByName } from '@/app/db/conciergerieDb';
 import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { getEmployeeByName } from '@/app/db/employeeDb';
 import { insertFailedEmail } from '@/app/db/failedEmailsDb';
+import { checkRateLimit } from '@/app/db/rateLimit';
 import {
   enrollmentToken,
   getSessionDeviceId,
@@ -636,6 +637,8 @@ export async function sendConciergerieVerificationEmail(
   isRetry = false,
 ): Promise<boolean> {
   if (!isRetry) {
+    // Public action that sends email — bounded per client IP
+    if (!(await checkRateLimit('email_verification', 5, 600))) return false;
     // The client-passed object cannot be trusted: re-fetch the recipient and bind
     // the enrollment link to the caller's own device id.
     const deviceId = await getSessionDeviceId();
@@ -662,6 +665,8 @@ export async function sendEmployeeRegistrationEmail(
   isRetry = false,
 ): Promise<boolean> {
   if (!isRetry) {
+    // Public action that sends email — bounded per client IP
+    if (!(await checkRateLimit('email_registration', 5, 600))) return false;
     // Re-fetch the notification recipient — the client-passed email is untrusted
     const real = await getConciergerieByName(conciergerie.name);
     if (!real) return false;
@@ -686,6 +691,8 @@ export async function sendNewDeviceNotificationEmail(
   isRetry = false,
 ): Promise<boolean> {
   if (!isRetry) {
+    // Public action that sends email — bounded per client IP
+    if (!(await checkRateLimit('email_newDevice', 5, 600))) return false;
     // Re-fetch the recipient and bind the enrollment link to the caller's own device
     const deviceId = await getSessionDeviceId();
     const real = await getEmployeeByName(employee.firstName, employee.familyName);
@@ -945,6 +952,8 @@ type ConflictReportData = {
  * Used when phone/email exists but name doesn't match.
  */
 export async function sendEmployeeConflictReport(data: ConflictReportData, isRetry = false): Promise<boolean> {
+  // Public action that sends email — bounded per client IP
+  if (!isRetry && !(await checkRateLimit('email_conflict', 5, 600))) return false;
   // The recipient is derived from the conciergerie name server-side — the
   // client must not choose the destination address (spam relay otherwise).
   const conciergerie = await getConciergerieByName(data.conciergerieName);

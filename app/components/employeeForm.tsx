@@ -1,6 +1,7 @@
 'use client';
 
 import { createNewEmployee, enrollEmployeeDevice, lookupEmployeeByContact } from '@/app/actions/employee';
+import { RATE_LIMITED } from '@/app/utils/dbErrors';
 import AppVersion from '@/app/components/appVersion';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
@@ -198,6 +199,8 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         normalizedFormData.email,
       );
 
+      if (lookup === RATE_LIMITED) throw new Error('Trop de tentatives. Veuillez réessayer dans quelques minutes.');
+
       if (lookup) {
         if (!lookup.nameMatches) {
           setConflictEmployee({ firstName: lookup.employee.firstName, familyName: lookup.employee.familyName });
@@ -210,19 +213,31 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         // the owner's Settings > Appareils for approval — then also send the
         // verification email as the alternative enrollment path.
         const enroll = await enrollEmployeeDevice(lookup.employee.firstName, lookup.employee.familyName, false);
-        if (!enroll.ok) throw new Error("La demande d'accès n'a pas pu être enregistrée");
+        if (!enroll.ok)
+          throw new Error(
+            enroll.reason === 'rate_limited'
+              ? 'Trop de tentatives. Veuillez réessayer dans quelques minutes.'
+              : "La demande d'accès n'a pas pu être enregistrée",
+          );
 
         updateUserData({ ...lookup.employee, id: enroll.ids });
-        await EmailSender.sendNewDeviceEmail(lookup.employee, currentUserId);
+        const emailSent = await EmailSender.sendNewDeviceEmail(lookup.employee, currentUserId);
         showToast({
-          type: ToastType.Success,
-          message: "Un email de vérification a été envoyé à l'adresse associée à votre compte",
+          type: emailSent ? ToastType.Success : ToastType.Error,
+          message: emailSent
+            ? "Un email de vérification a été envoyé à l'adresse associée à votre compte"
+            : "L'email de vérification n'a pas pu être envoyé. Réessayez depuis la page d'attente.",
         });
         onMenuChange(Page.Waiting);
       } else {
         // Create a new employee in the database (with normalized values)
         const newEmployee = await createNewEmployee(normalizedFormData);
-        if (!newEmployee) throw new Error('Prestataire non créé dans la base de données');
+        if (!newEmployee || newEmployee === RATE_LIMITED)
+          throw new Error(
+            newEmployee === RATE_LIMITED
+              ? 'Trop de tentatives. Veuillez réessayer dans quelques minutes.'
+              : 'Prestataire non créé dans la base de données',
+          );
 
         updateUserData(newEmployee);
 
@@ -243,8 +258,13 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
         if (!selectedConciergerie.email) throw new Error('Email de la conciergerie non trouvé');
 
         // Use EmailSender for consistent retry mechanism
-        await EmailSender.sendRegistrationEmail(selectedConciergerie, newEmployee);
-        showToast({ type: ToastType.Success, message: "L'email de notification a été envoyé avec succès" });
+        const emailSent = await EmailSender.sendRegistrationEmail(selectedConciergerie, newEmployee);
+        showToast({
+          type: emailSent ? ToastType.Success : ToastType.Error,
+          message: emailSent
+            ? "L'email de notification a été envoyé avec succès"
+            : "L'email de notification n'a pas pu être envoyé. Réessayez depuis la page d'attente.",
+        });
 
         onMenuChange(Page.Waiting);
       }

@@ -186,7 +186,8 @@ try {
   step('F. Id legacy → rotation transparente v2_');
   const [legacyRow] = await sql`
     SELECT id, first_name, family_name FROM employees
-    WHERE EXISTS (SELECT 1 FROM unnest(id) i WHERE i NOT LIKE 'v2\_%' AND i NOT LIKE '$%')
+    WHERE status = 'accepted'
+      AND EXISTS (SELECT 1 FROM unnest(id) i WHERE i NOT LIKE 'v2\_%' AND i NOT LIKE '$%')
     LIMIT 1`;
   const legacyId = (legacyRow.id as string[]).find(i => !i.startsWith('v2_') && !i.startsWith('$'))!;
   console.log(`  legacy ${legacyId} (${legacyRow.first_name} ${legacyRow.family_name})`);

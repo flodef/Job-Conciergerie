@@ -57,6 +57,8 @@ export default function IdPage({
         : await enrollConciergerieDevice((entity as Conciergerie).name, evictOldest, token);
       if (!result.ok) {
         if (result.reason === 'max_devices') throw new MaxDevicesError(result.oldestDevice ?? '');
+        if (result.reason === 'rate_limited')
+          throw new Error('Trop de tentatives. Veuillez réessayer dans quelques minutes.');
         throw new Error('Erreur lors de la mise à jour dans la base de données');
       }
       updateUserData({ ...entity, id: result.ids });

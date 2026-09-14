@@ -61,11 +61,11 @@ Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restau
 - `api/auth`/`proxy` : inchangés — `getExistingUserType` fait déjà un match exact (`$` non résolu → `/waiting` autorisé, routes protégées → `/error`), conforme à l'ancien comportement.
 - Bonus : la page d'attente survit au F5 (la session pending résout `userType`/`userData`, alors qu'un appareil sans session perdait son état).
 
-### A.4 — Durcissements optionnels (à décider)
+### A.4 — Durcissements optionnels
 
+- ✅ **Rate limiting sur les actions sensibles** : `app/db/rateLimit.ts` — fenêtre fixe persistée en Postgres (`rate_limits`, clés hashées sha256 — pas d'IP en clair), partagée entre instances serverless. Protégés : `lookupEmployeeByContact` (10/10 min), `createNewEmployee` (5/10 min), `enroll*Device` (10/10 min par IP **+** 5/h par appareil), `sendConciergerieVerificationEmail`/`sendEmployeeRegistrationEmail`/`sendNewDeviceNotificationEmail`/`sendEmployeeConflictReport` (5/10 min). Failles `null`/`false` existantes réutilisées ; les callers affichent un toast d'erreur quand l'envoi échoue.
 - Hasher les device-ids en DB (sha256) : une fuite DB ≠ fuite de credentials. **Coût** : la route `/[id]` et `ANY(id)` doivent comparer des hashes — migration des ids existants (hash en place, réversible non, donc feature-flag + rollback = dump).
 - Expiration/rotation des ids.
-- Rate limiting sur les actions sensibles (pattern déjà posé dans `landing/app/actions/antiSpam.ts`).
 
 **Livrable** : app identique pour les utilisateurs, DB plus lisible anonymement, webhook authentifié.
 

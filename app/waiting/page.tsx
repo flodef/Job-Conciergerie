@@ -173,25 +173,28 @@ export default function WaitingPage() {
   };
 
   const handleRefreshWithEmail = useCallback(() => {
-    if (conciergerie && userId)
-      return EmailSender.sendVerificationEmail(conciergerie, userId).then(() => {
-        showToast({ type: ToastType.Success, message: "L'email de vérification a été envoyé avec succès" });
+    const emailToast = (ok: boolean, successMessage: string) =>
+      showToast({
+        type: ok ? ToastType.Success : ToastType.Error,
+        message: ok ? successMessage : "L'email n'a pas pu être envoyé. Veuillez réessayer dans quelques minutes.",
       });
+
+    if (conciergerie && userId)
+      return EmailSender.sendVerificationEmail(conciergerie, userId).then(ok =>
+        emailToast(ok, "L'email de vérification a été envoyé avec succès"),
+      );
 
     if (employee && userId) {
       if (employee.status === 'pending') {
         const selectedConciergerie = findConciergerie(employee.conciergerieName ?? null);
         if (selectedConciergerie)
-          return EmailSender.sendRegistrationEmail(selectedConciergerie, employee).then(() => {
-            showToast({ type: ToastType.Success, message: "L'email de notification a été envoyé avec succès" });
-          });
+          return EmailSender.sendRegistrationEmail(selectedConciergerie, employee).then(ok =>
+            emailToast(ok, "L'email de notification a été envoyé avec succès"),
+          );
       } else if (employee.status === 'accepted') {
-        return EmailSender.sendNewDeviceEmail(employee, userId).then(() => {
-          showToast({
-            type: ToastType.Success,
-            message: "L'email de notification de nouvel appareil a été envoyé avec succès",
-          });
-        });
+        return EmailSender.sendNewDeviceEmail(employee, userId).then(ok =>
+          emailToast(ok, "L'email de notification de nouvel appareil a été envoyé avec succès"),
+        );
       }
     }
   }, [conciergerie, employee, userId, findConciergerie, showToast]);
