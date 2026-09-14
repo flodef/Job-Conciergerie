@@ -13,7 +13,7 @@ import { containsId, generateSecureId, hashIdAsync } from '@/app/utils/id';
 import { getLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes } from '@/app/utils/navigation';
 import { getUserKey, type UserData } from '@/app/utils/user';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { validateSupabaseConfig } from '../actions/environment';
 
 // Define the type for the auth context
@@ -258,17 +258,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch(() => setIsLoading(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Retry connection after toast is dismissed
+  // Retry connection after toast is dismissed — but only for transient pool
+  // exhaustion, and at most once per 30s: for permanent failures (pending,
+  // expired, revoked session) an unconditional retry-on-close creates an
+  // infinite toast→retry→toast loop hammering the DB.
+  const lastAutoRetryRef = useRef(0);
   const handleToastClose = useCallback(() => {
+    const failedToast = toast;
     setToast(undefined);
-    // Retry connection after a short delay
+    if (!failedToast?.error || !isConnectionPoolError(failedToast.error)) return;
+    if (Date.now() - lastAutoRetryRef.current < 30_000) return;
+    lastAutoRetryRef.current = Date.now();
     setTimeout(() => {
       setIsLoading(true);
       fetchDataFromDatabase()
         .then(() => setIsLoading(false))
         .catch(() => setIsLoading(false));
     }, 1000);
-  }, [fetchDataFromDatabase]);
+  }, [fetchDataFromDatabase, toast]);
 
   const updateUserData = <T extends UserData>(updatedData: T, updateType = userType) => {
     // Update user data if we are updating the current user, or if there is no current user yet (new registration)
