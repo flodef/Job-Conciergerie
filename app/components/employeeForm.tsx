@@ -81,15 +81,14 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       return;
     }
 
-    const selectedConciergerie = findConciergerie(formData.conciergerieName ?? null);
-    if (!selectedConciergerie?.email) {
-      showToast({ type: ToastType.Error, message: 'Email de la conciergerie non disponible' });
+    if (!formData.conciergerieName) {
+      showToast({ type: ToastType.Error, message: 'Conciergerie non sélectionnée' });
       return;
     }
 
     const { sendEmployeeConflictReport } = await import('@/app/actions/email');
 
-    sendEmployeeConflictReport(selectedConciergerie.email, {
+    sendEmployeeConflictReport({
       firstName: formData.firstName,
       familyName: formData.familyName,
       tel: formData.tel,
