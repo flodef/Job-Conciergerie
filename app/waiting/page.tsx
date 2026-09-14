@@ -12,6 +12,7 @@ import { setPrimaryColor } from '@/app/utils/color';
 import { getTimeDifference, getTimeRemaining, isElapsedTimeLessThan, milliToMin } from '@/app/utils/date';
 import { EmailSender } from '@/app/utils/emailSender';
 import { formatId } from '@/app/utils/id';
+import { getLocalStorageItem, setLocalStorageItem } from '@/app/utils/localStorage';
 import {
   IconAlertCircle,
   IconCheck,
@@ -29,6 +30,7 @@ import { getUserKey } from '../utils/user';
 const EMPLOYEE_MINIMUM_WAITING_TIME = 60; // minimum waiting time in minutes
 const CONCIERGERIE_MINIMUM_WAITING_TIME = 5; // minimum waiting time in minutes
 const REFRESH_BUTTON_DISABLE_TIME = 1; // time in minutes
+const LAST_EMAIL_SENT_KEY = 'waiting_last_email_sent';
 
 function DeviceId({ userId, copyToClipboard }: { userId: string | undefined; copyToClipboard: (id: string) => void }) {
   if (!userId) return null;
@@ -141,15 +143,23 @@ export default function WaitingPage() {
     return () => clearInterval(interval);
   }, [creationDate]);
 
-  // Effect to handle the refresh button enabling after 1 minute
-  useEffect(() => {
-    // Set a timeout to enable the refresh button after 1 minute
-    const timeout = setTimeout(() => {
-      setRefreshDisabled(false);
-    }, REFRESH_BUTTON_DISABLE_TIME * milliToMin); // 1 minute in milliseconds
+  // Resend cooldown — persisted in localStorage so a reload can't reset it,
+  // and re-armed after every send (the server-side rate limit stays the real
+  // protection; this only prevents accidental spam clicks).
+  const armRefreshCooldown = useCallback(() => {
+    setLocalStorageItem(LAST_EMAIL_SENT_KEY, Date.now());
+    setRefreshDisabled(true);
+    setTimeout(() => setRefreshDisabled(false), REFRESH_BUTTON_DISABLE_TIME * milliToMin);
+  }, []);
 
+  useEffect(() => {
+    const last = getLocalStorageItem<number>(LAST_EMAIL_SENT_KEY) ?? 0;
+    const remaining = REFRESH_BUTTON_DISABLE_TIME * milliToMin - (Date.now() - last);
+    setRefreshDisabled(remaining > 0);
+    if (remaining <= 0) return;
+    const timeout = setTimeout(() => setRefreshDisabled(false), remaining);
     return () => clearTimeout(timeout);
-  }, []); // Empty dependency array means this runs once on component mount
+  }, []);
 
   // Helper function to check if request is less than minimum waiting time
   const isRequestLessThanMinimumWaitingTime = () => isElapsedTimeLessThan(creationDate, minimumWaitingTime);
@@ -173,6 +183,9 @@ export default function WaitingPage() {
   };
 
   const handleRefreshWithEmail = useCallback(() => {
+    if (refreshDisabled) return;
+    armRefreshCooldown();
+
     const emailToast = (ok: boolean, successMessage: string) =>
       showToast({
         type: ok ? ToastType.Success : ToastType.Error,
@@ -197,7 +210,7 @@ export default function WaitingPage() {
         );
       }
     }
-  }, [conciergerie, employee, userId, findConciergerie, showToast]);
+  }, [conciergerie, employee, userId, findConciergerie, showToast, refreshDisabled, armRefreshCooldown]);
 
   if (authLoading || isLoading) return <M3LoadingSpinner className="h-full" />;
 
