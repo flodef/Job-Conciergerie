@@ -75,6 +75,16 @@ export async function proxy(request: NextRequest) {
   const host = (request.headers.get('host') ?? '').split(':')[0];
   const isLandingHost = LANDING_HOSTS.has(host);
   if (isLandingHost && path === '/') {
+    // Existing users (installed PWA, bookmarks) open '/' on the site host —
+    // send them to the app instead of showing them the marketing page.
+    // Prospects have no user_id cookie and get the landing.
+    if (request.cookies.get('user_id')?.value) {
+      const url = request.nextUrl.clone();
+      url.hostname = APP_HOST;
+      url.protocol = 'https:';
+      url.port = '';
+      return migrateCookies(request, NextResponse.redirect(url, 307));
+    }
     const url = request.nextUrl.clone();
     url.pathname = '/landing';
     return NextResponse.rewrite(url);

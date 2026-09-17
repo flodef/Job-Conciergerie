@@ -37,12 +37,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { getLandingStats, getPublicTestimonials, type LandingStats, type PublicTestimonial } from '../_actions/stats';
 import { useTheme } from '../_lib/theme';
 
-// App entry point: app.<domain> in prod, same origin in dev (localhost serves
-// both route groups). Returns a path-only href outside the real domain.
-const appHref = (path: string) =>
-  typeof window !== 'undefined' && /(^|\.)job-conciergerie\.fr$/.test(window.location.hostname)
-    ? `https://app.job-conciergerie.fr${path}`
-    : path;
+// App entry point — absolute URL so the SSR'd href is already correct:
+// relying on hydration to swap a relative path meant a pre-hydration click
+// reloaded the landing ("nothing happens").
+const appHref = (path: string) => `https://app.job-conciergerie.fr${path}`;
 
 /* ───────────────────────────── Theme Toggle ───────────────────────────── */
 function ThemeToggle({ size = 'sm' }: { size?: 'sm' | 'md' }) {
