@@ -34,7 +34,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { DEMO_URL } from '@/app/utils/demo';
+import { DEMO_ENTER_URL } from '@/app/utils/demo';
 import { getLandingStats, getPublicTestimonials, type LandingStats, type PublicTestimonial } from '../_actions/stats';
 import { useTheme } from '../_lib/theme';
 
@@ -290,7 +290,7 @@ function Hero() {
             Je suis prestataire
           </a>
           <span className="mx-2 text-slate-600">·</span>
-          <a href={DEMO_URL} className="text-accent-400 hover:text-white transition-colors">
+          <a href={DEMO_ENTER_URL} className="text-accent-400 hover:text-white transition-colors">
             Essayer la démo
           </a>
         </p>

@@ -203,14 +203,16 @@ Script admin d'abord (testable immédiatement en prod : 2 liens magiques), imper
 - `redirect_url` Revolut : basée sur le `Host` de la requête (`/checkout` vit sur le site, pas sur `app.`).
 - Reste : URL du webhook dans le dashboard Revolut + redirect URLs Supabase (Phase G, quand les clés prod seront là). Redéploy nécessaire — `NEXT_PUBLIC_*` est inliné au build.
 
-## Phase E — Démo (ex-"points 3/4/5") ✅ CODE FAIT (reste : DNS + deploy)
+## Phase E — Démo (ex-"points 3/4/5") ✅ FAIT (release `2.404`)
 
 - `demo.job-conciergerie.fr` → `proxy.ts` pose `x-demo` sur les requêtes page ; pour les routes `/api` (hors middleware), `db.ts` détecte aussi le header `Host` `demo.*` directement.
 - DB dédiée : `DEMO_DATABASE_URL` — pointe actuellement vers une **base `demo` sur l'instance Supabase de dev** (tier gratuit = 2 projets max, déjà utilisés par dev+prod ; swap d'une env var si un projet dédié est créé plus tard). `db.ts` choisit le pool par requête : `x-demo` ou host `demo.*` → demo, sinon prod. Fail-closed : pas de `DEMO_DATABASE_URL` → erreur, jamais de write démo en prod.
 - `app/db/demoSeed.ts` + `scripts/seed-demo.ts` : reset complet (`DROP SCHEMA public CASCADE` + `migrations/schema.sql`) puis seed — client admin + conciergerie « Admin » (credential démo public `v2_de01…`, hashé), client « Démo », 2 conciergeries, 6 employés, 10 logements (images réutilisées du bucket prod partagé), 18 missions (passées/du jour/à venir/disponibles, dont binômes), 3 comptes rendus, 2 avis. **Garde prod** : refuse toute URL contenant `PROD_SUPABASE_PROJECT_ID`.
 - Entrée démo : la session démo est **admin** sur la DB démo → « Vue en tant que » (C.5) permet de se mettre dans la peau de n'importe quelle conciergerie/employé seedé. Lien public `https://demo.job-conciergerie.fr/v2_de01…` posé sur la landing (« Essayer la démo » dans le hero). Le fix proxy `/[id]` sans cookies (bug prod : les liens magiques étaient 307 vers `/` sur un navigateur vierge) rend ce flux possible.
-- Reset : `GET/POST /api/demo/reset` — auth `Bearer $CRON_SECRET` (Vercel cron `vercel.json`, toutes les 6h) ou `?key=$DEMO_RESET_KEY` ; lazy : ne reseede que si `seeded_at > 12h`, `?force=1` pour forcer.
-- Garde-fous : bandeau violet « Mode démo — données réinitialisées régulièrement » (empilé avec les autres bannières), emails log-only (`deliver()` court-circuité en démo), checkout hors portée (host site-only).
+- Reset à la demande : `GET /api/demo/enter` (public) — le lien « Essayer la démo » de la landing y mène : wipe + reseed puis redirect 303 vers `/<demo_id>`. Cadence min 15 min (un 2ᵉ clic ne peut pas effacer un testeur qui vient de commencer) + `pg_advisory_lock` contre les resets concurrents. Accès direct à `demo.*` → pas de reset. Reset admin : `GET/POST /api/demo/reset` (`Bearer $CRON_SECRET` ou `?key=$DEMO_RESET_KEY`, lazy >12h sauf `?force=1`) et `bun scripts/seed-demo.ts`.
+- Keep-alive : pas de cron dédié — `/api/retry-emails` (déjà appelé ~10 min par cron-job.org) ping la DB démo à chaque run → l'instance Supabase dev reste éveillée, et reseede si `seeded_at > 12h`.
+- Garde-fous : bandeau violet « Mode démo — données peuvent être réinitialisées à tout moment » (empilé avec les autres bannières), emails log-only (`deliver()` court-circuité en démo), checkout hors portée (host site-only).
+- Le proxy propage `x-demo` au fetch interne `/api/auth` — en dev `request.url` est normalisé vers le bind host, sans ça l'auth taperait la prod DB pour une requête `demo.localhost`.
 
 ## Phase F — Tests scénarios démo (ex-"point 4")
 
@@ -244,8 +246,8 @@ A (sécu) ──► B (merge landing) ──► C (multi-tenant) ──► D (do
 ### Pour activer la démo (Phase E)
 
 - [x] **DNS** : `CNAME demo → 6a671e6a0f621fd7.vercel-dns-017.com.` résout ✅ ; domaine déjà assigné au projet Vercel (TLS s'active au prochain déploiement prod)
-- [ ] Merger `dev` → `main` (déploie le routage demo, la bannière, le bouton landing, `/api/demo/reset`)
-- [ ] Optionnel : projet Supabase dédié pour la démo → remplacer `DEMO_DATABASE_URL` (prod) par la nouvelle URL, puis `bun scripts/seed-demo.ts --db-url <url>`
+- [x] Merger `dev` → `main` — release `2.404` ✅ (routage demo, bannière, bouton landing, `/api/demo/reset` en prod ; smoke-testé : `demo./v2_de01…` → 200)
+- [ ] Optionnel : projet Supabase dédié pour la démo → remplacer `DEMO_DATABASE_URL` (prod) par la nouvelle URL, puis `bun scripts/seed-demo.ts --db-url <url>` — nécessite un passage par le dashboard Supabase (tier gratuit = 2 projets max, déjà pris par dev+prod ; alternative gratuite : Neon autorise plusieurs projets).
 
 ### Phase F — checklist manuelle démo
 

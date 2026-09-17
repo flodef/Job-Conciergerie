@@ -8,6 +8,14 @@ export const MAX_DEVICES = parseInt(process.env.NEXT_PUBLIC_MAX_DEVICES || '5');
 export const V2_ID_PREFIX = 'v2_';
 
 /**
+ * Bearer-credential links (magic/enrollment/admin/demo): `/<id>` reaches the
+ * [id] page which adopts the credential itself. The loose legacy-id pattern
+ * also matches app routes (missions, homes…) — callers that gate navigation
+ * must exclude `navigationRoutes` themselves.
+ */
+export const ID_PATH = /^\/(?:[0-9a-z]{2,26}|v2_[0-9a-f]{32})$/;
+
+/**
  * Generate a cryptographically secure ID
  * @returns A `v2_`-prefixed ID with 128 bits of entropy
  */

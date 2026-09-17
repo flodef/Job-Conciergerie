@@ -265,6 +265,10 @@ export async function seedDemoDatabase(url: string): Promise<SeedSummary> {
 
   const sql = postgres(url, { prepare: false, max: 1, connect_timeout: 10 });
   try {
+    // Serialize resets: a landing click, the cron and the CLI must never
+    // interleave their DROP/INSERT batches (session lock auto-releases if
+    // the connection dies mid-seed).
+    await sql.unsafe('SELECT pg_advisory_lock(72756)');
     // Full wipe — the demo schema is recreated from the committed dump.
     await sql.unsafe('DROP SCHEMA public CASCADE; CREATE SCHEMA public;');
     const schema = readFileSync(join(process.cwd(), 'migrations', 'schema.sql'), 'utf8');
@@ -344,6 +348,7 @@ export async function seedDemoDatabase(url: string): Promise<SeedSummary> {
       reviews: 2,
     };
   } finally {
+    await sql.unsafe('SELECT pg_advisory_unlock(72756)').catch(() => undefined);
     await sql.end();
   }
 }
