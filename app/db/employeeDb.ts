@@ -142,29 +142,29 @@ const updateMissionsForEmployeeRemoval = async (firstName: string, familyName: s
       SET status = NULL
       WHERE status IN ('accepted', 'started')
       AND allow_duo = false
-      AND (employee_id = ANY(${employeeId}) OR employee_id2 = ANY(${employeeId}))
+      AND (employee_id = ${employeeId} OR employee_id_2 = ${employeeId})
       ${scope}
     `;
 
     // For duo missions: set status to NULL only if the other employee is also NULL
-    // If employee_id is being removed, check if employee_id2 is NULL
+    // If employee_id is being removed, check if employee_id_2 is NULL
     await sql`
       UPDATE missions
       SET status = NULL
       WHERE status IN ('accepted', 'started')
       AND allow_duo = true
-      AND employee_id = ANY(${employeeId})
-      AND employee_id2 IS NULL
+      AND employee_id = ${employeeId}
+      AND employee_id_2 IS NULL
       ${scope}
     `;
 
-    // If employee_id2 is being removed, check if employee_id is NULL
+    // If employee_id_2 is being removed, check if employee_id is NULL
     await sql`
       UPDATE missions
       SET status = NULL
       WHERE status IN ('accepted', 'started')
       AND allow_duo = true
-      AND employee_id2 = ANY(${employeeId})
+      AND employee_id_2 = ${employeeId}
       AND employee_id IS NULL
       ${scope}
     `;

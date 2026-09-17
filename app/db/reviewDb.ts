@@ -27,18 +27,23 @@ export interface Review {
 
 let tableReady: Promise<unknown> | null = null;
 export const ensureReviewsTable = () =>
-  (tableReady ??= sql`
-    CREATE TABLE IF NOT EXISTS reviews (
-      user_type text NOT NULL CHECK (user_type IN ('conciergerie', 'employee')),
-      row_key text NOT NULL,
-      rating smallint NOT NULL CHECK (rating BETWEEN 0 AND 5),
-      comment text NOT NULL DEFAULT '',
-      is_public boolean NOT NULL DEFAULT true,
-      created_at timestamptz NOT NULL DEFAULT now(),
-      updated_at timestamptz NOT NULL DEFAULT now(),
-      PRIMARY KEY (user_type, row_key)
-    )
-  `);
+  (tableReady ??= (async () => {
+    await sql`
+      CREATE TABLE IF NOT EXISTS reviews (
+        user_type text NOT NULL CHECK (user_type IN ('conciergerie', 'employee')),
+        row_key text NOT NULL,
+        rating smallint NOT NULL CHECK (rating BETWEEN 0 AND 5),
+        comment text NOT NULL DEFAULT '',
+        is_public boolean NOT NULL DEFAULT true,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (user_type, row_key)
+      )
+    `;
+    // Tables created before is_public existed need the additive migration —
+    // CREATE IF NOT EXISTS doesn't evolve existing tables.
+    await sql`ALTER TABLE reviews ADD COLUMN IF NOT EXISTS is_public boolean NOT NULL DEFAULT true`;
+  })());
 
 const formatReview = (row: DbReview): Review => ({
   rating: row.rating,
