@@ -1,6 +1,6 @@
 {
   "name": "job-conciergerie",
-  "version": "2.424",
+  "version": "2.425",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -30,7 +30,8 @@
     "react-markdown": "latest",
     "recharts": "latest",
     "serwist": "latest",
-    "tailwind-merge": "latest"
+    "tailwind-merge": "latest",
+    "web-push": "latest"
   },
   "devDependencies": {
     "@eslint/js": "latest",
@@ -41,6 +42,7 @@
     "@types/nodemailer": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "@types/web-push": "latest",
     "@vitest/coverage-v8": "latest",
     "dotenv": "latest",
     "eslint": "latest",
@@ -53,7 +55,7 @@
     "playwright": "latest",
     "postcss": "latest",
     "tailwindcss": "latest",
-    "typescript": "latest",
+    "typescript": "5.9.3",
     "typescript-eslint": "latest",
     "vitest": "latest"
   },

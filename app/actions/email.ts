@@ -6,6 +6,7 @@ import { getConciergerieByName } from '@/app/db/conciergerieDb';
 import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { getEmployeeByName } from '@/app/db/employeeDb';
 import { insertFailedEmail } from '@/app/db/failedEmailsDb';
+import { sendPushToUser, type PushPayload } from '@/app/db/pushDb';
 import { checkRateLimit } from '@/app/db/rateLimit';
 import {
   enrollmentToken,
@@ -15,6 +16,8 @@ import {
 } from '@/app/db/session';
 import type { Conciergerie, Employee, Home, Mission, MissionStatus } from '@/app/types/dataTypes';
 import { formatDateTime, milliToDay } from '@/app/utils/date';
+import { wantsEmail } from '@/app/utils/notifications';
+import type { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
 import { getStorageImageUrl } from '@/app/utils/storage';
 import { formatHours, getMissionHoursPerProvider } from '@/app/utils/task';
 import type { UserData } from '@/app/utils/user';
@@ -22,6 +25,22 @@ import packageJson from '@/package.json';
 import type { SendMailOptions } from 'nodemailer';
 import nodemailer from 'nodemailer';
 import { getEmployeeFullName } from '../utils/employee';
+
+type NotificationSettings = ConciergerieNotificationSettings | EmployeeNotificationSettings | undefined;
+
+// Web push — fire-and-forget alongside the email path: never blocks, never
+// fails the caller, never queued for retry (email remains the reliable channel).
+// `key` is the per-alert toggle that gates this notification.
+const notifyByPush = (
+  settings: NotificationSettings,
+  key: keyof ConciergerieNotificationSettings | keyof EmployeeNotificationSettings,
+  userType: 'conciergerie' | 'employee',
+  rowKey: string,
+  payload: PushPayload,
+) => {
+  if (!settings?.push || settings[key as keyof typeof settings] !== true) return;
+  void sendPushToUser(userType, rowKey, payload).catch(e => console.error('[push] send failed:', e));
+};
 
 // Configure nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -759,6 +778,16 @@ export async function sendMissionStatusChangeEmail(
     // Recipient re-fetched server-side — the client object must not control `to`
     const real = await getConciergerieByName(conciergerie.name);
     if (!real) return false;
+    const statusKey = (
+      { accepted: 'acceptedMissions', started: 'startedMissions', completed: 'completedMissions' } as const
+    )[status];
+    const statusLabel = { accepted: 'acceptée', started: 'démarrée', completed: 'terminée' }[status];
+    notifyByPush(real.notificationSettings, statusKey, 'conciergerie', real.name, {
+      title: `Mission ${statusLabel}`,
+      body: home.title,
+      url: '/missions',
+    });
+    if (!wantsEmail(real.notificationSettings)) return true;
     return deliver(
       composeMissionStatusChangeEmail(mission, home, employee, real, status),
       'missionStatus',
@@ -785,6 +814,12 @@ export async function sendLateCompletionEmail(
     if (!(await requireConnectedSession())) return false;
     const real = await getConciergerieByName(conciergerie.name);
     if (!real) return false;
+    notifyByPush(real.notificationSettings, 'missionsEndedWithoutCompletion', 'conciergerie', real.name, {
+      title: 'Mission non terminée à temps',
+      body: home.title,
+      url: '/missions',
+    });
+    if (!wantsEmail(real.notificationSettings)) return true;
     return deliver(
       composeLateCompletionEmail(mission, home, employee, real),
       'lateCompletion',
@@ -812,6 +847,12 @@ export async function sendMissionAcceptanceToEmployeeEmail(
     const emp = employee as Employee;
     const real = await getEmployeeByName(emp.firstName, emp.familyName);
     if (!real) return false;
+    notifyByPush(real.notificationSettings, 'acceptedMissions', 'employee', `${real.firstName} ${real.familyName}`, {
+      title: 'Mission confirmée',
+      body: home.title,
+      url: '/missions',
+    });
+    if (!wantsEmail(real.notificationSettings)) return true;
     return deliver(
       composeMissionAcceptanceToEmployeeEmail(mission, home, real, conciergerie),
       'missionAcceptance',
@@ -839,6 +880,12 @@ export async function sendMissionUpdatedToEmployeeEmail(
     if (!(await requireConnectedSession())) return false;
     const real = await getEmployeeByName(employee.firstName, employee.familyName);
     if (!real) return false;
+    notifyByPush(real.notificationSettings, 'missionChanged', 'employee', `${real.firstName} ${real.familyName}`, {
+      title: 'Mission modifiée',
+      body: `${home.title}${changes?.length ? ` — ${changes.join(', ')}` : ''}`,
+      url: '/missions',
+    });
+    if (!wantsEmail(real.notificationSettings)) return true;
     return deliver(
       composeMissionUpdatedToEmployeeEmail(mission, home, real, conciergerie, changes),
       'missionUpdated',
@@ -867,6 +914,18 @@ export async function sendMissionRemovedToEmployeeEmail(
     if (!(await requireConnectedSession())) return false;
     const real = await getEmployeeByName(employee.firstName, employee.familyName);
     if (!real) return false;
+    const removedKey = (
+      { deleted: 'missionDeleted', canceled: 'missionsCanceled', modified: 'missionChanged' } as const
+    )[type];
+    const removedLabel = { deleted: 'Mission supprimée', canceled: 'Mission annulée', modified: 'Mission modifiée' }[
+      type
+    ];
+    notifyByPush(real.notificationSettings, removedKey, 'employee', `${real.firstName} ${real.familyName}`, {
+      title: removedLabel,
+      body: home.title,
+      url: '/missions',
+    });
+    if (!wantsEmail(real.notificationSettings)) return true;
     return deliver(
       composeMissionRemovedToEmployeeEmail(mission, home, real, conciergerie, type, changes),
       'missionRemoved',
@@ -894,6 +953,12 @@ export async function sendMissionReportEmail(
     if (!(await requireConnectedSession())) return false;
     const real = await getConciergerieByName(conciergerie.name);
     if (!real) return false;
+    notifyByPush(real.notificationSettings, 'completedMissions', 'conciergerie', real.name, {
+      title: 'Compte rendu reçu',
+      body: home.title,
+      url: '/missions',
+    });
+    if (!wantsEmail(real.notificationSettings)) return true;
     return deliver(
       composeMissionReportEmail(mission, home, employee, real, report),
       'missionReport',

@@ -2,8 +2,10 @@ import { getAllConciergeries } from '@/app/db/conciergerieDb';
 import { getAllEmployees } from '@/app/db/employeeDb';
 import { getAllHomes } from '@/app/db/homeDb';
 import { claimLateNotification, getLateMissionsForCron } from '@/app/db/missionDb';
+import { sendPushToUser } from '@/app/db/pushDb';
 import { sendLateCompletionEmail } from '@/app/actions/email';
 import type { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
+import { wantsEmail } from '@/app/utils/notifications';
 import { getUserKey } from '@/app/utils/user';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -101,10 +103,20 @@ async function handleCheckLateMissions(request: NextRequest) {
         continue;
       }
 
-      // Send the email — internal trusted call (no user session in a route
-      // handler; the objects above already come straight from the DB)
+      // Notify on each enabled channel — internal trusted call (no user
+      // session in a route handler; objects above come straight from the DB).
+      // isRetry=true on the email call skips its session/push/settings block.
       try {
-        await sendLateCompletionEmail(mission, home, employee, conciergerie, true);
+        if (conciergerie.notificationSettings?.push) {
+          await sendPushToUser('conciergerie', conciergerie.name, {
+            title: 'Mission non terminée à temps',
+            body: `${home.title} — ${employee.firstName} ${employee.familyName}`,
+            url: '/missions',
+          });
+        }
+        if (wantsEmail(conciergerie.notificationSettings)) {
+          await sendLateCompletionEmail(mission, home, employee, conciergerie, true);
+        }
         sent++;
       } catch {
         skipped++;
