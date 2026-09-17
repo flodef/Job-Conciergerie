@@ -2,15 +2,16 @@
 
 import type { DbHome } from '@/app/db/homeDb';
 import { createHome, deleteHome, getAllHomes, getHomeById, updateHome } from '@/app/db/homeDb';
-import { requireConciergerieSession, requireConnectedSession } from '@/app/db/session';
+import { requireConciergerieSession, requireConnectedSession, tenantScope } from '@/app/db/session';
 import type { Home } from '@/app/types/dataTypes';
 
 /**
  * Fetch all homes
  */
 export async function fetchAllHomes(): Promise<Home[] | null> {
-  if (!(await requireConnectedSession())) return null;
-  return await getAllHomes();
+  const session = await requireConnectedSession();
+  if (!session) return null;
+  return await getAllHomes(tenantScope(session));
 }
 
 /**
@@ -49,6 +50,7 @@ export async function createNewHome(data: {
     allow_duo: data.allowDuo ?? false,
     max_travellers: data.maxTravellers ?? 1,
     notes: data.notes,
+    client_id: session.clientId,
   };
 
   return await createHome(dbData);
@@ -76,7 +78,8 @@ export async function updateHomeData(
   // Catalog management is conciergerie-only (notes go through updateHomeNotes)
   const session = await requireConciergerieSession();
   if (!session) return null;
-  const home = await getHomeById(id);
+  const scope = tenantScope(session);
+  const home = await getHomeById(id, scope);
   if (!home || home.conciergerieName !== session.rowKey) return null;
 
   // Convert to DB format
@@ -94,15 +97,16 @@ export async function updateHomeData(
     notes: data.notes,
   };
 
-  return await updateHome(id, dbData);
+  return await updateHome(id, dbData, scope);
 }
 
 /**
  * Update only the notes field of a home
  */
 export async function updateHomeNotes(id: string, notes: string | undefined): Promise<Home | null> {
-  if (!(await requireConnectedSession())) return null;
-  return await updateHome(id, { notes });
+  const session = await requireConnectedSession();
+  if (!session) return null;
+  return await updateHome(id, { notes }, tenantScope(session));
 }
 
 /**
@@ -111,7 +115,8 @@ export async function updateHomeNotes(id: string, notes: string | undefined): Pr
 export async function deleteHomeData(id: string): Promise<boolean> {
   const session = await requireConciergerieSession();
   if (!session) return false;
-  const home = await getHomeById(id);
+  const scope = tenantScope(session);
+  const home = await getHomeById(id, scope);
   if (!home || home.conciergerieName !== session.rowKey) return false;
-  return await deleteHome(id);
+  return await deleteHome(id, scope);
 }

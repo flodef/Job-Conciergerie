@@ -7,7 +7,7 @@ import {
   getMissionReportsByMissionIds,
 } from '@/app/db/missionReportDb';
 import { getMissionById } from '@/app/db/missionDb';
-import { requireConnectedSession } from '@/app/db/session';
+import { requireConnectedSession, tenantScope } from '@/app/db/session';
 import type { MissionReport } from '@/app/types/dataTypes';
 import { generateSecureId } from '@/app/utils/id';
 
@@ -25,7 +25,8 @@ export async function saveMissionReport(data: {
   const session = await requireConnectedSession();
   if (!session) return null;
 
-  const mission = await getMissionById(data.missionId);
+  const scope = tenantScope(session);
+  const mission = await getMissionById(data.missionId, scope);
   if (!mission || (mission.employeeId !== session.rowKey && mission.employeeId2 !== session.rowKey)) return null;
 
   const dbData: Omit<DbMissionReport, 'created_at'> = {
@@ -34,6 +35,7 @@ export async function saveMissionReport(data: {
     employee_id: session.rowKey,
     content: data.content,
     images: data.images,
+    client_id: session.clientId,
   };
 
   return await createMissionReport(dbData);
@@ -43,14 +45,16 @@ export async function saveMissionReport(data: {
  * Fetch the report for a single mission.
  */
 export async function fetchMissionReport(missionId: string): Promise<MissionReport | null> {
-  if (!(await requireConnectedSession())) return null;
-  return await getMissionReportByMissionId(missionId);
+  const session = await requireConnectedSession();
+  if (!session) return null;
+  return await getMissionReportByMissionId(missionId, tenantScope(session));
 }
 
 /**
  * Fetch reports for multiple missions at once.
  */
 export async function fetchMissionReports(missionIds: string[]): Promise<MissionReport[]> {
-  if (!(await requireConnectedSession())) return [];
-  return await getMissionReportsByMissionIds(missionIds);
+  const session = await requireConnectedSession();
+  if (!session) return [];
+  return await getMissionReportsByMissionIds(missionIds, tenantScope(session));
 }

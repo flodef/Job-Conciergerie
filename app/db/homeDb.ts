@@ -17,6 +17,7 @@ export interface DbHome {
   allow_duo: boolean;
   max_travellers: number;
   notes?: string;
+  client_id?: string | null;
 }
 
 /**
@@ -42,11 +43,12 @@ function formatHome(dbHome: DbHome): Home {
 /**
  * Fetch all homes
  */
-export const getAllHomes = async () => {
+export const getAllHomes = async (clientId?: string) => {
   try {
     const result = await sql`
       SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers, notes
       FROM homes
+      ${clientId ? sql`WHERE client_id = ${clientId}::uuid` : sql``}
     `;
 
     return result.map(row => formatHome(row as DbHome));
@@ -59,12 +61,13 @@ export const getAllHomes = async () => {
 /**
  * Fetch a single home by id
  */
-export const getHomeById = async (id: string) => {
+export const getHomeById = async (id: string, clientId?: string) => {
   try {
     const result = await sql`
       SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers, notes
       FROM homes
       WHERE id = ${id}
+      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
       LIMIT 1
     `;
     return result.length > 0 ? formatHome(result[0] as DbHome) : null;
@@ -81,10 +84,10 @@ export const createHome = async (data: DbHome) => {
   try {
     const result = await sql`
       INSERT INTO homes (
-        id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers, notes
+        id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers, notes, client_id
       ) VALUES (
         ${data.id}, ${data.title}, ${data.description}, ${data.objectives}, ${data.images}, 
-        ${data.geographic_zone}, ${data.hours_of_cleaning}, ${data.hours_of_gardening}, ${data.conciergerie_name}, ${data.allow_duo ?? false}, ${data.max_travellers ?? 1}, ${data.notes ?? null}
+        ${data.geographic_zone}, ${data.hours_of_cleaning}, ${data.hours_of_gardening}, ${data.conciergerie_name}, ${data.allow_duo ?? false}, ${data.max_travellers ?? 1}, ${data.notes ?? null}, ${data.client_id ?? null}
       )
       RETURNING id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers, notes
     `;
@@ -99,7 +102,7 @@ export const createHome = async (data: DbHome) => {
 /**
  * Update a home
  */
-export const updateHome = async (id: string, data: Partial<Omit<DbHome, 'id'>>) => {
+export const updateHome = async (id: string, data: Partial<Omit<DbHome, 'id'>>, clientId?: string) => {
   try {
     // Prepare update fields
     const fields = [];
@@ -156,13 +159,18 @@ export const updateHome = async (id: string, data: Partial<Omit<DbHome, 'id'>>) 
     if (fields.length === 0) return null; // Nothing to update
 
     // Build and execute query
+    values.push(id);
+    let where = `WHERE id = $${values.length}`;
+    if (clientId) {
+      values.push(clientId);
+      where += ` AND client_id = $${values.length}::uuid`;
+    }
     const query = `
       UPDATE homes
       SET ${fields.join(', ')}
-      WHERE id = $${values.length + 1}
+      ${where}
       RETURNING id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers, notes
     `;
-    values.push(id);
 
     const result = await sql.unsafe(query, values as postgres.ParameterOrJSON<never>[]);
 
@@ -176,11 +184,12 @@ export const updateHome = async (id: string, data: Partial<Omit<DbHome, 'id'>>) 
 /**
  * Delete a home
  */
-export const deleteHome = async (id: string) => {
+export const deleteHome = async (id: string, clientId?: string) => {
   try {
     const result = await sql`
       DELETE FROM homes
       WHERE id = ${id}
+      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
       RETURNING id
     `;
 

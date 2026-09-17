@@ -14,11 +14,14 @@ const TEST_SESSION = {
   rotated: false,
   pending: false,
   rowKey: 'MENTHEREGLISSE', // matches TEST_CONCIERGERIE — the tenant check passes
+  clientId: null,
+  isAdmin: true, // unscoped — test rows carry no client_id
 };
 vi.mock('@/app/db/session', () => ({
   getSessionUser: vi.fn(() => Promise.resolve(TEST_SESSION)),
   requireConnectedSession: vi.fn(() => Promise.resolve(TEST_SESSION)),
   requireConciergerieSession: vi.fn(() => Promise.resolve(TEST_SESSION)),
+  tenantScope: vi.fn(() => undefined),
   isRowMember: vi.fn(() => true),
   getSessionDeviceId: vi.fn(() => Promise.resolve('test-user-id')),
   getSessionCredentialIds: vi.fn(() => Promise.resolve(new Set(['test-user-id']))),

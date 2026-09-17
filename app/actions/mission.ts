@@ -11,7 +11,7 @@ import {
   updateMission,
   updateMissionStatus,
 } from '@/app/db/missionDb';
-import { requireConciergerieSession, requireConnectedSession, type SessionUser } from '@/app/db/session';
+import { requireConciergerieSession, requireConnectedSession, tenantScope, type SessionUser } from '@/app/db/session';
 import type { Mission, MissionStatus } from '@/app/types/dataTypes';
 
 /**
@@ -28,8 +28,9 @@ const canAccessMission = (session: SessionUser, mission: Mission): boolean =>
  * Fetch all missions from the database
  */
 export async function fetchAllMissions(): Promise<Mission[] | null> {
-  if (!(await requireConnectedSession())) return null;
-  return await getAllMissions();
+  const session = await requireConnectedSession();
+  if (!session) return null;
+  return await getAllMissions(tenantScope(session));
 }
 
 /**
@@ -56,6 +57,7 @@ export async function createNewMission(data: Mission): Promise<Mission | null> {
     allow_duo: data.allowDuo ?? false,
     travellers: data.travellers ?? 1,
     conciergerie_comment: data.conciergerieComment,
+    client_id: session.clientId,
   };
 
   return await createMission(dbData);
@@ -71,7 +73,8 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
   const session = await requireConnectedSession();
   if (!session) return null;
 
-  const mission = await getMissionById(id);
+  const scope = tenantScope(session);
+  const mission = await getMissionById(id, scope);
   if (!mission) return null;
 
   // Convert to DB format
@@ -93,7 +96,7 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
 
   if (session.userType === 'conciergerie') {
     if (!canAccessMission(session, mission)) return null;
-    return await updateMission(id, dbData);
+    return await updateMission(id, dbData, scope);
   }
 
   const mine = canAccessMission(session, mission);
@@ -119,7 +122,7 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
   if (dbData.status !== undefined) filtered.status = dbData.status;
   if (Object.keys(filtered).length === 0) return null;
 
-  return await updateMission(id, filtered);
+  return await updateMission(id, filtered, scope);
 }
 
 /**
@@ -128,9 +131,10 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
 export async function updateMissionStatusAction(id: string, status: MissionStatus): Promise<Mission | null> {
   const session = await requireConnectedSession();
   if (!session) return null;
-  const mission = await getMissionById(id);
+  const scope = tenantScope(session);
+  const mission = await getMissionById(id, scope);
   if (!mission || !canAccessMission(session, mission)) return null;
-  return await updateMissionStatus(id, status);
+  return await updateMissionStatus(id, status, scope);
 }
 
 /**
@@ -139,9 +143,10 @@ export async function updateMissionStatusAction(id: string, status: MissionStatu
 export async function assignEmployeeToMissionAction(missionId: string, employeeId: string): Promise<Mission | null> {
   const session = await requireConciergerieSession();
   if (!session) return null;
-  const mission = await getMissionById(missionId);
+  const scope = tenantScope(session);
+  const mission = await getMissionById(missionId, scope);
   if (!mission || !canAccessMission(session, mission)) return null;
-  return await assignEmployeeToMission(missionId, employeeId);
+  return await assignEmployeeToMission(missionId, employeeId, scope);
 }
 
 /**
@@ -150,9 +155,10 @@ export async function assignEmployeeToMissionAction(missionId: string, employeeI
 export async function deleteMissionData(id: string): Promise<boolean> {
   const session = await requireConciergerieSession();
   if (!session) return false;
-  const mission = await getMissionById(id);
+  const scope = tenantScope(session);
+  const mission = await getMissionById(id, scope);
   if (!mission || !canAccessMission(session, mission)) return false;
-  return await deleteMission(id);
+  return await deleteMission(id, scope);
 }
 
 /**
@@ -163,7 +169,8 @@ export async function deleteMissionData(id: string): Promise<boolean> {
 export async function claimLateNotificationForMission(missionId: string): Promise<boolean> {
   const session = await requireConnectedSession();
   if (!session) return false;
-  const mission = await getMissionById(missionId);
+  const scope = tenantScope(session);
+  const mission = await getMissionById(missionId, scope);
   if (!mission || !canAccessMission(session, mission)) return false;
-  return await claimLateNotification(missionId);
+  return await claimLateNotification(missionId, scope);
 }

@@ -9,6 +9,7 @@ export interface DbMissionReport {
   content: string;
   images: string[];
   created_at: Date;
+  client_id?: string | null;
 }
 
 /**
@@ -28,13 +29,11 @@ function formatMissionReport(dbReport: DbMissionReport): MissionReport {
 /**
  * Create a new mission report
  */
-export const createMissionReport = async (
-  data: Omit<DbMissionReport, 'created_at'>,
-): Promise<MissionReport | null> => {
+export const createMissionReport = async (data: Omit<DbMissionReport, 'created_at'>): Promise<MissionReport | null> => {
   try {
     const result = await sql`
-      INSERT INTO mission_reports (id, mission_id, employee_id, content, images)
-      VALUES (${data.id}, ${data.mission_id}, ${data.employee_id}, ${data.content}, ${data.images})
+      INSERT INTO mission_reports (id, mission_id, employee_id, content, images, client_id)
+      VALUES (${data.id}, ${data.mission_id}, ${data.employee_id}, ${data.content}, ${data.images}, ${data.client_id ?? null})
       RETURNING id, mission_id, employee_id, content, images, created_at
     `;
 
@@ -48,12 +47,16 @@ export const createMissionReport = async (
 /**
  * Get the report for a given mission (most recent first)
  */
-export const getMissionReportByMissionId = async (missionId: string): Promise<MissionReport | null> => {
+export const getMissionReportByMissionId = async (
+  missionId: string,
+  clientId?: string,
+): Promise<MissionReport | null> => {
   try {
     const result = await sql`
       SELECT id, mission_id, employee_id, content, images, created_at
       FROM mission_reports
       WHERE mission_id = ${missionId}
+      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
       ORDER BY created_at DESC
       LIMIT 1
     `;
@@ -68,13 +71,17 @@ export const getMissionReportByMissionId = async (missionId: string): Promise<Mi
 /**
  * Get all mission reports for a list of mission IDs
  */
-export const getMissionReportsByMissionIds = async (missionIds: string[]): Promise<MissionReport[]> => {
+export const getMissionReportsByMissionIds = async (
+  missionIds: string[],
+  clientId?: string,
+): Promise<MissionReport[]> => {
   if (missionIds.length === 0) return [];
   try {
     const result = await sql`
       SELECT id, mission_id, employee_id, content, images, created_at
       FROM mission_reports
       WHERE mission_id = ANY(${missionIds})
+      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
       ORDER BY created_at DESC
     `;
 
