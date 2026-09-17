@@ -1700,35 +1700,6 @@ function ContactForm() {
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={status === 'sending' || status === 'sent'}
-                className={`w-full py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 transition-all ${
-                  status === 'sent'
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-linear-to-r from-brand-500 to-accent-500 text-white hover:scale-[1.02]'
-                }`}
-              >
-                {status === 'sending' && (
-                  <>
-                    <IconRefresh size={20} className="animate-spin" />
-                    Envoi en cours...
-                  </>
-                )}
-                {status === 'sent' && (
-                  <>
-                    <IconCircleCheck size={20} />
-                    Message envoyé !
-                  </>
-                )}
-                {(status === 'idle' || status === 'error') && (
-                  <>
-                    <IconSend size={20} />
-                    {status === 'error' ? 'Réessayer' : 'Envoyer ma demande'}
-                  </>
-                )}
-              </button>
-
               {status === 'sent' && (
                 <div
                   role="status"
@@ -1759,6 +1730,35 @@ function ContactForm() {
                   </span>
                 </div>
               )}
+
+              <button
+                type="submit"
+                disabled={status === 'sending' || status === 'sent'}
+                className={`w-full py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-2 transition-all ${
+                  status === 'sent'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-linear-to-r from-brand-500 to-accent-500 text-white hover:scale-[1.02]'
+                }`}
+              >
+                {status === 'sending' && (
+                  <>
+                    <IconRefresh size={20} className="animate-spin" />
+                    Envoi en cours...
+                  </>
+                )}
+                {status === 'sent' && (
+                  <>
+                    <IconCircleCheck size={20} />
+                    Message envoyé !
+                  </>
+                )}
+                {(status === 'idle' || status === 'error') && (
+                  <>
+                    <IconSend size={20} />
+                    {status === 'error' ? 'Réessayer' : 'Envoyer ma demande'}
+                  </>
+                )}
+              </button>
             </form>
           </div>
 
