@@ -203,7 +203,7 @@ Script admin d'abord (testable immédiatement en prod : 2 liens magiques), imper
 - `redirect_url` Revolut : basée sur le `Host` de la requête (`/checkout` vit sur le site, pas sur `app.`).
 - Reste : URL du webhook dans le dashboard Revolut + redirect URLs Supabase (Phase G, quand les clés prod seront là). Redéploy nécessaire — `NEXT_PUBLIC_*` est inliné au build.
 
-## Phase E — Démo (ex-"points 3/4/5") ✅ CODE FAIT (reste : DNS + deploy)
+## Phase E — Démo (ex-"points 3/4/5") ✅ FAIT (release `2.404`)
 
 - `demo.job-conciergerie.fr` → `proxy.ts` pose `x-demo` sur les requêtes page ; pour les routes `/api` (hors middleware), `db.ts` détecte aussi le header `Host` `demo.*` directement.
 - DB dédiée : `DEMO_DATABASE_URL` — pointe actuellement vers une **base `demo` sur l'instance Supabase de dev** (tier gratuit = 2 projets max, déjà utilisés par dev+prod ; swap d'une env var si un projet dédié est créé plus tard). `db.ts` choisit le pool par requête : `x-demo` ou host `demo.*` → demo, sinon prod. Fail-closed : pas de `DEMO_DATABASE_URL` → erreur, jamais de write démo en prod.
@@ -244,8 +244,8 @@ A (sécu) ──► B (merge landing) ──► C (multi-tenant) ──► D (do
 ### Pour activer la démo (Phase E)
 
 - [x] **DNS** : `CNAME demo → 6a671e6a0f621fd7.vercel-dns-017.com.` résout ✅ ; domaine déjà assigné au projet Vercel (TLS s'active au prochain déploiement prod)
-- [ ] Merger `dev` → `main` (déploie le routage demo, la bannière, le bouton landing, `/api/demo/reset`)
-- [ ] Optionnel : projet Supabase dédié pour la démo → remplacer `DEMO_DATABASE_URL` (prod) par la nouvelle URL, puis `bun scripts/seed-demo.ts --db-url <url>`
+- [x] Merger `dev` → `main` — release `2.404` ✅ (routage demo, bannière, bouton landing, `/api/demo/reset` en prod ; smoke-testé : `demo./v2_de01…` → 200)
+- [ ] Optionnel : projet Supabase dédié pour la démo → remplacer `DEMO_DATABASE_URL` (prod) par la nouvelle URL, puis `bun scripts/seed-demo.ts --db-url <url>` — nécessite un passage par le dashboard Supabase (tier gratuit = 2 projets max, déjà pris par dev+prod ; alternative gratuite : Neon autorise plusieurs projets). Bonus du setup actuel : le cron quotidien maintient l'instance dev éveillée (pas de pause free-tier).
 
 ### Phase F — checklist manuelle démo
 
