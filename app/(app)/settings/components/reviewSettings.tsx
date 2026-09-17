@@ -1,5 +1,6 @@
 import { deleteMyReview, getMyReview, saveMyReview } from '@/app/actions/review';
 import { Button } from '@/app/components/button';
+import Switch from '@/app/components/switch';
 import TextArea from '@/app/components/textArea';
 import { ToastType } from '@/app/components/toastMessage';
 import { useToast } from '@/app/contexts/toastProvider';
@@ -13,6 +14,7 @@ const MAX_STARS = 5;
 const ReviewSettings: React.FC = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
   const [commentError, setCommentError] = useState('');
   const [savedReview, setSavedReview] = useState<Review | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +28,7 @@ const ReviewSettings: React.FC = () => {
         if (review) {
           setRating(review.rating);
           setComment(review.comment);
+          setIsPublic(review.isPublic);
           setSavedReview(review);
         }
       })
@@ -39,13 +42,13 @@ const ReviewSettings: React.FC = () => {
 
   const hasChanges = () => {
     if (!savedReview) return rating > 0 || !!comment.trim();
-    return rating !== savedReview.rating || comment.trim() !== savedReview.comment;
+    return rating !== savedReview.rating || comment.trim() !== savedReview.comment || isPublic !== savedReview.isPublic;
   };
 
   const handleSave = async () => {
     try {
       setIsSaving(true);
-      const review = await saveMyReview(rating, comment);
+      const review = await saveMyReview(rating, comment, isPublic);
       if (!review) throw new Error('Avis non enregistré dans la base de données');
 
       setSavedReview(review);
@@ -66,6 +69,7 @@ const ReviewSettings: React.FC = () => {
       setSavedReview(null);
       setRating(0);
       setComment('');
+      setIsPublic(true);
       showToast({ type: ToastType.Success, message: 'Avis supprimé' });
     } catch (error) {
       showToast({ type: ToastType.Error, message: String(error), error });
@@ -108,6 +112,14 @@ const ReviewSettings: React.FC = () => {
         regex={messageLengthRegex}
       />
 
+      <Switch
+        id="review-public"
+        label="Publier mon commentaire sur le site"
+        enabled={isPublic}
+        onToggle={setIsPublic}
+        tooltip="Vos étoiles comptent dans tous les cas ; seul le commentaire est publié si activé"
+      />
+
       <div className="flex justify-center gap-2 pt-2">
         {savedReview && (
           <Button
@@ -129,7 +141,7 @@ const ReviewSettings: React.FC = () => {
           loading={isSaving}
           loadingText="Enregistrement..."
         >
-          {savedReview ? "Modifier mon avis" : 'Publier mon avis'}
+          {savedReview ? 'Modifier mon avis' : 'Publier mon avis'}
         </Button>
       </div>
     </div>

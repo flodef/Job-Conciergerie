@@ -9,7 +9,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict JyOsHkEa2004RkIKAG2gEiEoKtTMQn300GaiyyVnyWRKldm9U5OWcw9gCOUFdT5
+\restrict ySvOXnQm6NtEPiapfckdXjIRH6r6XwfLt56QSt6fjKg29ux6TYkzD8PDywvGZk5
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1)
@@ -30,14 +30,7 @@ SET row_security = off;
 -- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE SCHEMA public;
-
-
---
--- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
---
-
-COMMENT ON SCHEMA public IS 'standard public schema';
+CREATE SCHEMA IF NOT EXISTS public;
 
 
 --
@@ -334,6 +327,7 @@ CREATE TABLE public.reviews (
     comment text DEFAULT ''::text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    is_public boolean DEFAULT true NOT NULL,
     CONSTRAINT reviews_rating_check CHECK (((rating >= 0) AND (rating <= 5))),
     CONSTRAINT reviews_user_type_check CHECK ((user_type = ANY (ARRAY['conciergerie'::text, 'employee'::text])))
 );
@@ -513,5 +507,5 @@ ALTER TABLE ONLY public.mission_reports
 -- PostgreSQL database dump complete
 --
 
-\unrestrict JyOsHkEa2004RkIKAG2gEiEoKtTMQn300GaiyyVnyWRKldm9U5OWcw9gCOUFdT5
+\unrestrict ySvOXnQm6NtEPiapfckdXjIRH6r6XwfLt56QSt6fjKg29ux6TYkzD8PDywvGZk5
 
