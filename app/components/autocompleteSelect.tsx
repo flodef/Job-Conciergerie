@@ -9,7 +9,7 @@ import {
   optionsClassName,
   selectClassName,
 } from '@/app/utils/className';
-import { shouldOpenUpward } from '@/app/utils/select';
+import { longestOptionLabel, shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconCheck, IconChevronDown, IconX } from '@tabler/icons-react';
 import type { ForwardedRef, ReactNode } from 'react';
@@ -90,6 +90,9 @@ const AutocompleteSelect = forwardRef(
 
     // Get selected option label
     const selectedLabel = value ? options.find(opt => opt.value === value)?.label || value : null;
+
+    // The field is sized to the longest option label, not the selected value
+    const sizerText = longestOptionLabel(options, placeholder, selectedLabel, searchQuery);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -232,124 +235,134 @@ const AutocompleteSelect = forwardRef(
         <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
-        <div className={cn('relative flex-1 min-w-0', className)} ref={selectRef}>
-          {/* Display/Input field */}
-          <div
-            id={id}
-            tabIndex={-1}
-            className={selectClassName(error, isReadonly || disabled, isFocused, isOpen)}
-            onClick={isReadonly ? undefined : handleOpen}
-            onFocus={() => !isReadonly && setIsFocused(true)}
-            onBlur={e => {
-              if (!isReadonly && (!e.relatedTarget || !selectRef.current?.contains(e.relatedTarget as Node))) {
-                setIsFocused(false);
-                setIsOpen(false);
-              }
-              onError(
-                required && !value ? `Veuillez sélectionner ${label?.toString().toLowerCase() || 'une option'}` : '',
-              );
-            }}
-            role={isReadonly ? undefined : 'combobox'}
-            aria-expanded={isReadonly ? undefined : isOpen}
-            aria-haspopup={isReadonly ? undefined : 'listbox'}
-            aria-controls={isReadonly ? undefined : `${id}-options`}
-          >
-            {isOpen ? (
-              <input
-                ref={inputRef}
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="flex-1 bg-transparent outline-none text-foreground min-w-0"
-                placeholder={placeholder}
-                onClick={e => e.stopPropagation()}
-              />
-            ) : (
-              <span className={cn('flex-1 truncate', !value && 'text-foreground/50')}>
-                {selectedLabel || placeholder}
+        <div className={cn('min-w-0', row ? 'flex-1' : 'w-full')}>
+          <div className={cn('relative w-fit max-w-full', className)} ref={selectRef}>
+            {/* Display/Input field */}
+            <div
+              id={id}
+              tabIndex={-1}
+              className={selectClassName(error, isReadonly || disabled, isFocused, isOpen)}
+              onClick={isReadonly ? undefined : handleOpen}
+              onFocus={() => !isReadonly && setIsFocused(true)}
+              onBlur={e => {
+                if (!isReadonly && (!e.relatedTarget || !selectRef.current?.contains(e.relatedTarget as Node))) {
+                  setIsFocused(false);
+                  setIsOpen(false);
+                }
+                onError(
+                  required && !value ? `Veuillez sélectionner ${label?.toString().toLowerCase() || 'une option'}` : '',
+                );
+              }}
+              role={isReadonly ? undefined : 'combobox'}
+              aria-expanded={isReadonly ? undefined : isOpen}
+              aria-haspopup={isReadonly ? undefined : 'listbox'}
+              aria-controls={isReadonly ? undefined : `${id}-options`}
+            >
+              <span className="relative block flex-1 w-fit max-w-full min-w-0">
+                <span aria-hidden="true" className="invisible block w-fit max-w-full whitespace-pre overflow-hidden">
+                  {sizerText || ' '}
+                </span>
+                {isOpen ? (
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="absolute inset-0 w-full bg-transparent outline-none text-foreground"
+                    placeholder={placeholder}
+                    onClick={e => e.stopPropagation()}
+                  />
+                ) : (
+                  <span className={cn('absolute inset-0 truncate', !value && 'text-foreground/50')}>
+                    {selectedLabel || placeholder}
+                  </span>
+                )}
               </span>
-            )}
-            <div className="flex items-center gap-1 shrink-0">
-              {clearable && value && (isReadonly || !isOpen) && (
-                <button
-                  onClick={handleClear}
-                  className="p-0.5 hover:bg-secondary/50 rounded transition-colors cursor-pointer"
-                  aria-label="Clear selection"
-                >
-                  <IconX size={16} className="text-light" />
-                </button>
-              )}
-              {!isReadonly && (
-                <IconChevronDown
-                  size={18}
-                  className={cn('cursor-pointer transition-transform duration-200', isOpen && 'transform rotate-180')}
-                  onClick={handleChevronClick}
-                />
-              )}
+              <div className="flex items-center gap-1 shrink-0">
+                {clearable && value && (isReadonly || !isOpen) && (
+                  <button
+                    onClick={handleClear}
+                    className="p-0.5 hover:bg-secondary/50 rounded transition-colors cursor-pointer"
+                    aria-label="Clear selection"
+                  >
+                    <IconX size={16} className="text-light" />
+                  </button>
+                )}
+                {!isReadonly && (
+                  <IconChevronDown
+                    size={18}
+                    className={cn('cursor-pointer transition-transform duration-200', isOpen && 'transform rotate-180')}
+                    onClick={handleChevronClick}
+                  />
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Dropdown */}
-          {isOpen &&
-            !disabled &&
-            dropdownPosition &&
-            createPortal(
-              <div
-                className="fixed z-50"
-                style={{
-                  top: openUpward ? dropdownPosition.top - 4 : dropdownPosition.top + 4,
-                  left: dropdownPosition.left,
-                  width: dropdownPosition.width,
-                }}
-              >
+            {/* Dropdown */}
+            {isOpen &&
+              !disabled &&
+              dropdownPosition &&
+              createPortal(
                 <div
-                  id={`${id}-options`}
-                  ref={optionsRef}
-                  className={optionsClassName}
-                  style={getDropdownMaxHeight(maxItems)}
-                  role="listbox"
+                  className="fixed z-50"
+                  style={{
+                    top: openUpward ? dropdownPosition.top - 4 : dropdownPosition.top + 4,
+                    left: dropdownPosition.left,
+                    width: dropdownPosition.width,
+                  }}
                 >
-                  {filteredOptions.length === 0 ? (
-                    <div className="p-2 text-foreground/50 text-center">Aucune option trouvée</div>
-                  ) : (
-                    filteredOptions.map((option, i) => {
-                      const isSelected = option.value === value;
-                      const isHighlighted = i === highlightedIndex;
-                      return (
-                        <div
-                          key={option.value}
-                          className={cn(optionClassName(isSelected), isHighlighted && !isSelected && 'bg-secondary/30')}
-                          onMouseDown={() => handleSelect(option.value)}
-                          role="option"
-                          aria-selected={isSelected}
-                        >
-                          <span className={cn(isSelected && 'font-medium text-primary')}>{option.label}</span>
-                          {isSelected && <IconCheck size={18} className="text-primary" />}
-                        </div>
-                      );
-                    })
+                  <div
+                    id={`${id}-options`}
+                    ref={optionsRef}
+                    className={optionsClassName}
+                    style={getDropdownMaxHeight(maxItems)}
+                    role="listbox"
+                  >
+                    {filteredOptions.length === 0 ? (
+                      <div className="p-2 text-foreground/50 text-center">Aucune option trouvée</div>
+                    ) : (
+                      filteredOptions.map((option, i) => {
+                        const isSelected = option.value === value;
+                        const isHighlighted = i === highlightedIndex;
+                        return (
+                          <div
+                            key={option.value}
+                            className={cn(
+                              optionClassName(isSelected),
+                              isHighlighted && !isSelected && 'bg-secondary/30',
+                            )}
+                            onMouseDown={() => handleSelect(option.value)}
+                            role="option"
+                            aria-selected={isSelected}
+                          >
+                            <span className={cn(isSelected && 'font-medium text-primary')}>{option.label}</span>
+                            {isSelected && <IconCheck size={18} className="text-primary" />}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                  {canScrollUp && (
+                    <div
+                      className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
+                      style={{ zIndex: 51 }}
+                    >
+                      <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
+                    </div>
                   )}
-                </div>
-                {canScrollUp && (
-                  <div
-                    className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
-                    style={{ zIndex: 51 }}
-                  >
-                    <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
-                  </div>
-                )}
-                {canScrollDown && (
-                  <div
-                    className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
-                    style={{ zIndex: 51 }}
-                  >
-                    <IconChevronDown size={18} className="text-foreground/60" />
-                  </div>
-                )}
-              </div>,
-              document.body,
-            )}
+                  {canScrollDown && (
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
+                      style={{ zIndex: 51 }}
+                    >
+                      <IconChevronDown size={18} className="text-foreground/60" />
+                    </div>
+                  )}
+                </div>,
+                document.body,
+              )}
+          </div>
           {error && <p className={errorClassName}>{error}</p>}
         </div>
       </div>

@@ -11,7 +11,7 @@ import {
   rowClassName,
   selectClassName,
 } from '@/app/utils/className';
-import { shouldOpenUpward } from '@/app/utils/select';
+import { longestOptionLabel, shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
 import type { ForwardedRef, ReactNode } from 'react';
@@ -196,125 +196,135 @@ const Combobox = forwardRef(
       if (!isOpen) setDropdownPosition(null);
     }, [isOpen]);
 
+    // The field is sized to the longest option label, not the selected value
+    const sizerText = longestOptionLabel(options, displayValue, placeholder, searchTerm);
+
     return (
       <div className={row ? rowClassName : ''}>
         <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
-        <div className={cn('relative w-full', className)} ref={comboboxRef}>
-          <div className={selectClassName(error, disabled, isFocused, isOpen)}>
-            <IconSearch size={18} className="text-foreground/50 mr-2" />
-            <input
-              id={id}
-              ref={inputRef}
-              type="text"
-              className={`grow w-full bg-transparent outline-none ${!value ? 'text-light/80' : 'text-foreground'}`}
-              placeholder={displayValue?.toString().trim() || placeholder}
-              value={isOpen ? searchTerm : displayValue}
-              onChange={handleInputChange}
-              onKeyDown={handleInputKeyDown}
-              onClick={() => {
-                if (!disabled) {
-                  checkPosition();
-                  setIsOpen(!isOpen);
-                  setIsFocused(true);
-                }
-              }}
-              onFocus={() => setIsFocused(true)}
-              onBlur={e => {
-                if (!e.relatedTarget || !comboboxRef.current?.contains(e.relatedTarget as Node)) {
-                  setIsFocused(false);
-                  setIsOpen(false);
-                  onError(
-                    required && !value
-                      ? `Veuillez sélectionner ${label?.toString().toLowerCase() || 'une option'}`
-                      : '',
-                  );
-                }
-              }}
-              autoComplete="off"
-              disabled={disabled}
-              required={required}
-              role="combobox"
-              aria-expanded={isOpen}
-              aria-haspopup="listbox"
-              aria-controls={`${id}-options`}
-            />
-            <button
-              type="button"
-              onClick={() => !disabled && setIsOpen(!isOpen)}
-              className="focus:outline-none cursor-pointer"
-              tabIndex={-1}
-            >
-              <IconChevronDown
-                size={18}
-                className={cn('transition-transform duration-200', isOpen && 'transform rotate-180')}
-              />
-            </button>
-          </div>
-
-          {isOpen &&
-            !disabled &&
-            dropdownPosition &&
-            createPortal(
-              <div
-                className="fixed z-50"
-                style={{
-                  top: openUpward ? dropdownPosition.top - 4 : dropdownPosition.top + 4,
-                  left: dropdownPosition.left,
-                  width: dropdownPosition.width,
-                }}
-              >
-                <div
-                  ref={el => {
-                    optionsRef.current = el;
-                    scrollRef.current = el;
+        <div className={cn('min-w-0', row ? 'flex-1' : 'w-full')}>
+          <div className={cn('relative w-fit max-w-full', className)} ref={comboboxRef}>
+            <div className={selectClassName(error, disabled, isFocused, isOpen)}>
+              <IconSearch size={18} className="text-foreground/50 shrink-0" />
+              <span className="relative block flex-1 w-fit max-w-full min-w-0">
+                <span aria-hidden="true" className="invisible block w-fit max-w-full whitespace-pre overflow-hidden">
+                  {sizerText || ' '}
+                </span>
+                <input
+                  id={id}
+                  ref={inputRef}
+                  type="text"
+                  className={`absolute inset-0 w-full bg-transparent outline-none ${!value ? 'text-light/80' : 'text-foreground'}`}
+                  placeholder={displayValue?.toString().trim() || placeholder}
+                  value={isOpen ? searchTerm : displayValue}
+                  onChange={handleInputChange}
+                  onKeyDown={handleInputKeyDown}
+                  onClick={() => {
+                    if (!disabled) {
+                      checkPosition();
+                      setIsOpen(!isOpen);
+                      setIsFocused(true);
+                    }
                   }}
-                  className={optionsClassName}
-                  style={getDropdownMaxHeight(maxItems)}
-                  role="listbox"
-                >
-                  {filteredOptions.length === 0 ? (
-                    <div className="p-2 text-foreground/50 text-center">Aucun résultat</div>
-                  ) : (
-                    filteredOptions.map((option, index) => {
-                      const optionValue = typeof option === 'object' ? option.value : option;
-                      const optionLabel = typeof option === 'object' ? option.label : option;
-
-                      return (
-                        <div
-                          key={optionValue}
-                          className={optionClassName(index === highlightedIndex, optionValue === value)}
-                          onMouseDown={() => handleSelect(optionValue)}
-                          onMouseEnter={() => setHighlightedIndex(index)}
-                          role="option"
-                          aria-selected={optionValue === value}
-                        >
-                          {optionLabel}
-                        </div>
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={e => {
+                    if (!e.relatedTarget || !comboboxRef.current?.contains(e.relatedTarget as Node)) {
+                      setIsFocused(false);
+                      setIsOpen(false);
+                      onError(
+                        required && !value
+                          ? `Veuillez sélectionner ${label?.toString().toLowerCase() || 'une option'}`
+                          : '',
                       );
-                    })
+                    }
+                  }}
+                  autoComplete="off"
+                  disabled={disabled}
+                  required={required}
+                  role="combobox"
+                  aria-expanded={isOpen}
+                  aria-haspopup="listbox"
+                  aria-controls={`${id}-options`}
+                />
+              </span>
+              <button
+                type="button"
+                onClick={() => !disabled && setIsOpen(!isOpen)}
+                className="focus:outline-none cursor-pointer shrink-0"
+                tabIndex={-1}
+              >
+                <IconChevronDown
+                  size={18}
+                  className={cn('transition-transform duration-200', isOpen && 'transform rotate-180')}
+                />
+              </button>
+            </div>
+
+            {isOpen &&
+              !disabled &&
+              dropdownPosition &&
+              createPortal(
+                <div
+                  className="fixed z-50"
+                  style={{
+                    top: openUpward ? dropdownPosition.top - 4 : dropdownPosition.top + 4,
+                    left: dropdownPosition.left,
+                    width: dropdownPosition.width,
+                  }}
+                >
+                  <div
+                    ref={el => {
+                      optionsRef.current = el;
+                      scrollRef.current = el;
+                    }}
+                    className={optionsClassName}
+                    style={getDropdownMaxHeight(maxItems)}
+                    role="listbox"
+                  >
+                    {filteredOptions.length === 0 ? (
+                      <div className="p-2 text-foreground/50 text-center">Aucun résultat</div>
+                    ) : (
+                      filteredOptions.map((option, index) => {
+                        const optionValue = typeof option === 'object' ? option.value : option;
+                        const optionLabel = typeof option === 'object' ? option.label : option;
+
+                        return (
+                          <div
+                            key={optionValue}
+                            className={optionClassName(index === highlightedIndex, optionValue === value)}
+                            onMouseDown={() => handleSelect(optionValue)}
+                            onMouseEnter={() => setHighlightedIndex(index)}
+                            role="option"
+                            aria-selected={optionValue === value}
+                          >
+                            {optionLabel}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                  {canScrollUp && (
+                    <div
+                      className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
+                      style={{ zIndex: 51 }}
+                    >
+                      <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
+                    </div>
                   )}
-                </div>
-                {canScrollUp && (
-                  <div
-                    className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
-                    style={{ zIndex: 51 }}
-                  >
-                    <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
-                  </div>
-                )}
-                {canScrollDown && (
-                  <div
-                    className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
-                    style={{ zIndex: 51 }}
-                  >
-                    <IconChevronDown size={18} className="text-foreground/60" />
-                  </div>
-                )}
-              </div>,
-              document.body,
-            )}
+                  {canScrollDown && (
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
+                      style={{ zIndex: 51 }}
+                    >
+                      <IconChevronDown size={18} className="text-foreground/60" />
+                    </div>
+                  )}
+                </div>,
+                document.body,
+              )}
+          </div>
           {error && <p className={errorClassName}>{error}</p>}
         </div>
       </div>

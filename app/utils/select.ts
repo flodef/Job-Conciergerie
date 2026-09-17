@@ -29,6 +29,24 @@ export function range(start: number, end: number, step = 1): number[] {
  * @param params Configuration object for dropdown position check
  * @returns True if the dropdown should open upward, false otherwise
  */
+/**
+ * Return the longest label among select options plus extra candidate strings.
+ * Used to size selects to their widest option rather than the selected value.
+ */
+export function longestOptionLabel(
+  options: ReadonlyArray<string | number | { label: string }>,
+  ...extras: ReadonlyArray<string | number | null | undefined>
+): string {
+  let longest = '';
+  const consider = (v: string | number | { label: string } | null | undefined) => {
+    const s = (typeof v === 'object' && v !== null ? v.label : v?.toString()) || '';
+    if (s.length > longest.length) longest = s;
+  };
+  options.forEach(consider);
+  extras.forEach(consider);
+  return longest;
+}
+
 export function shouldOpenUpward({
   elementRef,
   itemCount,
