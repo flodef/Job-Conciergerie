@@ -1,5 +1,6 @@
 import { cn } from '@/app/utils/className';
-import type { ReactNode} from 'react';
+import { IconX } from '@tabler/icons-react';
+import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 
 export enum ToastType {
@@ -20,9 +21,11 @@ interface ToastMessageProps {
   timeout?: number;
   onClick?: () => void;
   onClose?: () => void;
+  /** Show a close button on the right (the toast's own onClick still fires elsewhere). */
+  closable?: boolean;
 }
 
-export const ToastMessage = ({ toast, timeout = 3000, onClick, onClose }: ToastMessageProps) => {
+export const ToastMessage = ({ toast, timeout = 3000, onClick, onClose, closable }: ToastMessageProps) => {
   const typeStyles: Record<ToastType, string> = {
     [ToastType.Success]: 'bg-green-500 animate-fade-in-up',
     [ToastType.Error]: 'bg-[#fb8c8c] animate-shake',
@@ -59,11 +62,28 @@ export const ToastMessage = ({ toast, timeout = 3000, onClick, onClose }: ToastM
   return (
     toast && (
       <div
-        className={cn('fixed z-100 top-4 inset-x-2 text-black text-center py-2 rounded-lg', typeStyles[toast.type])}
+        className={cn(
+          'fixed z-100 top-4 inset-x-2 text-black text-center py-2 rounded-lg',
+          typeStyles[toast.type],
+          closable && 'pr-10',
+        )}
         onClick={onClick}
       >
         {typeIcon[toast.type]}
         {toast.message}
+        {closable && onClose && (
+          <button
+            type="button"
+            aria-label="Fermer"
+            className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
+            onClick={e => {
+              e.stopPropagation();
+              onClose();
+            }}
+          >
+            <IconX size={18} />
+          </button>
+        )}
       </div>
     )
   );

@@ -171,6 +171,8 @@ function Navbar() {
           </a>
           <a
             href={DEMO_ENTER_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-4 py-2 rounded-full bg-linear-to-r from-brand-500 to-accent-500 text-white text-sm font-semibold hover:opacity-90 transition-opacity whitespace-nowrap"
           >
             Essayer la démo
@@ -220,6 +222,8 @@ function Navbar() {
           <div className="flex items-center justify-between gap-4 pt-2">
             <a
               href={DEMO_ENTER_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={() => setMenuOpen(false)}
               className="px-5 py-2 rounded-full bg-linear-to-r from-brand-500 to-accent-500 text-white text-sm font-semibold text-center flex-1"
             >
@@ -263,6 +267,8 @@ function Hero() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
           <a
             href={DEMO_ENTER_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-8 py-4 rounded-full bg-linear-to-r from-brand-500 to-accent-500 text-white font-semibold text-lg hover:scale-105 transition-transform shadow-lg shadow-brand-500/25"
           >
             Essayer la démo gratuite
@@ -1451,6 +1457,7 @@ function ContactForm() {
   const [showBreton, setShowBreton] = useState(false);
   const [website, setWebsite] = useState(''); // honeypot
   const [formToken, setFormToken] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const subjects = [
     { value: 'forfait-decouverte', label: 'Forfait Découverte' },
@@ -1482,6 +1489,19 @@ function ContactForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // noValidate on the form — validation is handled here so errors render in
+    // the same styled alert as send failures, not the browser's native bubble.
+    if (!formState.name.trim() || !formState.email.trim() || !formState.message.trim()) {
+      setErrorMsg('Veuillez remplir tous les champs obligatoires.');
+      setStatus('error');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email.trim())) {
+      setErrorMsg('Veuillez saisir une adresse email valide.');
+      setStatus('error');
+      return;
+    }
+    setErrorMsg('');
     setStatus('sending');
     try {
       const { sendContactEmail } = await import('../_actions/contact');
@@ -1491,9 +1511,15 @@ function ContactForm() {
         setFormState({ name: '', company: '', email: '', phone: '', subject: '', message: '' });
         setTimeout(() => setStatus('idle'), 5000);
       } else {
+        setErrorMsg(
+          result.error === 'rejected'
+            ? 'Vous avez envoyé plusieurs messages récemment — réessayez dans un moment.'
+            : '',
+        );
         setStatus('error');
       }
     } catch {
+      setErrorMsg('');
       setStatus('error');
     }
   };
@@ -1520,6 +1546,7 @@ function ContactForm() {
           <div className="md:col-span-3 md:order-1">
             <form
               onSubmit={handleSubmit}
+              noValidate
               className="glass glass-hover glow-border rounded-2xl p-8 space-y-4 transition-all focus-within:glow-border"
             >
               {/* Honeypot — invisible pour les humains, rempli par les bots */}
@@ -1717,13 +1744,17 @@ function ContactForm() {
                 >
                   <IconAlertCircle size={20} className="shrink-0 mt-0.5" />
                   <span>
-                    Une erreur est survenue. Réessayez ou écrivez-nous à{' '}
-                    <a
-                      href="mailto:contact@job-conciergerie.fr"
-                      className="underline underline-offset-2 hover:text-red-200"
-                    >
-                      contact@job-conciergerie.fr
-                    </a>
+                    {errorMsg || (
+                      <>
+                        Une erreur est survenue. Réessayez ou écrivez-nous à{' '}
+                        <a
+                          href="mailto:contact@job-conciergerie.fr"
+                          className="underline underline-offset-2 hover:text-red-200"
+                        >
+                          contact@job-conciergerie.fr
+                        </a>
+                      </>
+                    )}
                   </span>
                 </div>
               )}
