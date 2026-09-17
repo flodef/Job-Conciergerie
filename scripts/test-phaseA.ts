@@ -224,14 +224,17 @@ try {
   // rollback pour pouvoir rejouer le test (le v2_ stocké peut être hashé)
   await sql`UPDATE employees SET id=${afterIds.map(i => (hasDevice([i], newCookie) ? legacyId : i))} WHERE first_name=${legacyRow.first_name} AND family_name=${legacyRow.family_name}`;
 
-  // ── Phase G : lien token sur un AUTRE appareil → refusé ───────────
-  step('G. Lien de B ouvert dans un contexte tiers → refusé');
+  // ── Phase G : lien bearer sur un AUTRE appareil → adoption (C.5) ──
+  // Un lien /<id> EST le credential : un appareil neuf l'adopte (bootstrap
+  // admin, transfert d'appareil). Un appareil déjà enrôlé, lui, le refuse.
+  step('G. Lien de B ouvert dans un contexte tiers → adopte le credential');
   const ctxG = await freshContext(browser);
   const pageG = await ctxG.newPage();
   await pageG.goto(BASE, { waitUntil: 'domcontentloaded' }); // génère un user_id frais
   await pageG.waitForTimeout(1500);
   await pageG.goto(link!, { waitUntil: 'networkidle' });
-  ok(!pageG.url().includes('/missions'), `lien lié à B refusé sur autre appareil (url=${pageG.url()})`);
+  await pageG.waitForTimeout(2000); // adoption → reload → résolution session
+  ok(pageG.url().includes('/missions'), `lien bearer adopté → connecté comme B (url=${pageG.url()})`);
   await ctxG.close();
 
   // ── Phase H : appareil expiré (fenêtre glissante) ─────────────────

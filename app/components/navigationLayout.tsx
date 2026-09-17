@@ -25,6 +25,7 @@ import {
   IconHome,
   IconRefresh,
   IconSettings,
+  IconSparkles,
   IconUser,
   IconX,
 } from '@tabler/icons-react';
@@ -193,11 +194,19 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     onMenuChange(page);
   };
 
-  // Banner stack: impersonation first, then the update banner — header and
+  // Demo host (demo.<domain>) — post-mount only, so SSR stays banner-free and
+  // hydration stays consistent.
+  const [isDemoHost, setIsDemoHost] = useState(false);
+  useEffect(() => setIsDemoHost(window.location.hostname.startsWith('demo.')), []);
+
+  // Banner stack: demo, impersonation, then the update banner — header and
   // content shift down by the total count (2.5rem each).
-  const bannerCount = (impersonating ? 1 : 0) + (updateAvailable ? 1 : 0);
-  const headerTopClass = bannerCount === 2 ? 'top-20' : bannerCount === 1 ? 'top-10' : 'top-0';
-  const mainPtClass = bannerCount === 2 ? 'pt-36' : bannerCount === 1 ? 'pt-26' : 'pt-16';
+  const bannerCount = (isDemoHost ? 1 : 0) + (impersonating ? 1 : 0) + (updateAvailable ? 1 : 0);
+  const topClasses = ['top-0', 'top-10', 'top-20', 'top-[7.5rem]'];
+  const ptClasses = ['pt-16', 'pt-26', 'pt-36', 'pt-[11.5rem]'];
+  const bannerTop = (i: number) => topClasses[i];
+  const headerTopClass = topClasses[bannerCount];
+  const mainPtClass = ptClasses[bannerCount];
 
   const handleStopImpersonation = async () => {
     await stopImpersonation();
@@ -206,9 +215,22 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
 
   return (
     <div className="h-dvh flex flex-col">
+      {/* Demo banner - the demo.<domain> host runs on disposable seeded data */}
+      {isDemoHost && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 bg-violet-500 px-4 py-2 text-white text-sm">
+          <IconSparkles size={14} />
+          <span>Mode démo — les données sont réinitialisées régulièrement</span>
+        </div>
+      )}
+
       {/* Impersonation banner - admin viewing the app as another row */}
       {impersonating && (
-        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 text-white text-sm">
+        <div
+          className={cn(
+            'fixed left-0 right-0 z-50 flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 text-white text-sm',
+            bannerTop(isDemoHost ? 1 : 0),
+          )}
+        >
           <IconEye size={14} />
           <span>
             Vue en tant que <strong>{impersonatedName}</strong>
@@ -228,7 +250,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
         <div
           className={cn(
             'fixed left-0 right-0 z-50 flex items-center justify-center gap-2 bg-primary px-4 py-2 text-white text-sm',
-            impersonating ? 'top-10' : 'top-0',
+            bannerTop((isDemoHost ? 1 : 0) + (impersonating ? 1 : 0)),
           )}
         >
           <span>Une nouvelle version est disponible</span>

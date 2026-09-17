@@ -79,7 +79,7 @@ export const getAllEmployees = async (clientId?: string) => {
         SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
         FROM employees
         WHERE status != 'deleted'
-        ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+        AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
         ORDER BY created_at DESC
       `;
 
@@ -133,8 +133,6 @@ export const createEmployee = async (data: Omit<DbEmployee, 'created_at'>) => {
 const updateMissionsForEmployeeRemoval = async (firstName: string, familyName: string, clientId?: string) => {
   try {
     const employeeId = `${firstName} ${familyName}`;
-    const scope = clientId ? sql`AND client_id = ${clientId}::uuid` : sql``;
-
     // Update missions where this employee is assigned
     // For single employee missions (allow_duo = false): set status to NULL
     await sql`
@@ -143,7 +141,7 @@ const updateMissionsForEmployeeRemoval = async (firstName: string, familyName: s
       WHERE status IN ('accepted', 'started')
       AND allow_duo = false
       AND (employee_id = ${employeeId} OR employee_id_2 = ${employeeId})
-      ${scope}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
     `;
 
     // For duo missions: set status to NULL only if the other employee is also NULL
@@ -155,7 +153,7 @@ const updateMissionsForEmployeeRemoval = async (firstName: string, familyName: s
       AND allow_duo = true
       AND employee_id = ${employeeId}
       AND employee_id_2 IS NULL
-      ${scope}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
     `;
 
     // If employee_id_2 is being removed, check if employee_id is NULL
@@ -166,7 +164,7 @@ const updateMissionsForEmployeeRemoval = async (firstName: string, familyName: s
       AND allow_duo = true
       AND employee_id_2 = ${employeeId}
       AND employee_id IS NULL
-      ${scope}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
     `;
   } catch (error) {
     console.error(`Error updating missions for employee removal ${firstName} ${familyName}:`, error);
@@ -193,7 +191,7 @@ export const updateEmployeeStatus = async (
       UPDATE employees
       SET status = ${status}
       WHERE first_name = ${firstName} AND family_name = ${familyName}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
 
@@ -226,7 +224,7 @@ export const updateEmployeeSettings = async (
         conciergerie_name = COALESCE(${data.conciergerie_name ?? null}, conciergerie_name),
         notification_settings = COALESCE(${data.notification_settings ?? null}::jsonb, notification_settings)
       WHERE first_name = ${firstName} AND family_name = ${familyName}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
     `;
 
@@ -253,7 +251,7 @@ export const deleteEmployee = async (firstName: string, familyName: string, clie
     const result = await sql`
       DELETE FROM employees
       WHERE first_name = ${firstName} AND family_name = ${familyName}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       RETURNING id
     `;
 

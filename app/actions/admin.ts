@@ -35,6 +35,7 @@ export async function startImpersonation(userType: UserType, rowKey: string): Pr
     maxAge: impersonateCookieMaxAge,
     sameSite: 'lax',
     httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
   });
   console.warn(`[admin] ${session.rowKey} started impersonating ${userType} "${rowKey}"`);
   return true;
@@ -47,7 +48,12 @@ export async function stopImpersonation(): Promise<boolean> {
   const session = await requireConnectedSession();
   if (!session) return false;
   (await cookies()).delete(impersonateCookieName);
-  console.warn(`[admin] ${session.rowKey} stopped impersonating`);
+  // While impersonating, session.rowKey is the TARGET's — log it as such.
+  console.warn(
+    session.impersonating
+      ? `[admin] stopped impersonating ${session.userType} "${session.rowKey}"`
+      : `[admin] ${session.rowKey} stopped impersonating`,
+  );
   return true;
 }
 

@@ -56,7 +56,7 @@ export const getMissionReportByMissionId = async (
       SELECT id, mission_id, employee_id, content, images, created_at
       FROM mission_reports
       WHERE mission_id = ${missionId}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       ORDER BY created_at DESC
       LIMIT 1
     `;
@@ -81,7 +81,7 @@ export const getMissionReportsByMissionIds = async (
       SELECT id, mission_id, employee_id, content, images, created_at
       FROM mission_reports
       WHERE mission_id = ANY(${missionIds})
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       ORDER BY created_at DESC
     `;
 

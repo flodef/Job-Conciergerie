@@ -6,6 +6,8 @@ import { getReviewStats, getTopReviews } from '@/app/db/reviewDb';
 export interface LandingStats {
   missionCount: number;
   homeCount: number;
+  /** Employees with status 'accepted' — shown when no review exists yet. */
+  employeeCount: number;
   /** Average of all submitted reviews (0–5), or null when none exist yet. */
   averageRating: number | null;
 }
@@ -16,12 +18,16 @@ export interface LandingStats {
  * doesn't take the whole bar down.
  */
 export async function getLandingStats(): Promise<LandingStats> {
-  const [missions, homes, reviews] = await Promise.all([
+  const [missions, homes, employees, reviews] = await Promise.all([
     sql`SELECT COUNT(*)::int AS count FROM missions`.then(
       r => r[0].count as number,
       () => 0,
     ),
     sql`SELECT COUNT(*)::int AS count FROM homes`.then(
+      r => r[0].count as number,
+      () => 0,
+    ),
+    sql`SELECT COUNT(*)::int AS count FROM employees WHERE status = 'accepted'`.then(
       r => r[0].count as number,
       () => 0,
     ),
@@ -31,6 +37,7 @@ export async function getLandingStats(): Promise<LandingStats> {
   return {
     missionCount: missions,
     homeCount: homes,
+    employeeCount: employees,
     averageRating: reviews?.average ?? null,
   };
 }

@@ -28,10 +28,13 @@ export default function Home() {
 
   // Initialize form state once after auth finishes loading. A ?type=employee|
   // conciergerie param (from the landing's signup CTAs) pre-selects the form.
+  // Nothing to restore → don't touch the state: a click made while auth was
+  // still loading must not be stomped by the effect firing afterwards.
   useEffect(() => {
     if (authLoading) return;
     const param = new URLSearchParams(window.location.search).get('type');
-    handleUserTypeSelect(param === 'employee' || param === 'conciergerie' ? param : userType);
+    const type = param === 'employee' || param === 'conciergerie' ? param : userType;
+    if (type) handleUserTypeSelect(type);
   }, [authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCloseForm = () => {

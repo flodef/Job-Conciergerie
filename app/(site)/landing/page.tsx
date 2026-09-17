@@ -34,6 +34,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { DEMO_URL } from '@/app/utils/demo';
 import { getLandingStats, getPublicTestimonials, type LandingStats, type PublicTestimonial } from '../_actions/stats';
 import { useTheme } from '../_lib/theme';
 
@@ -288,6 +289,10 @@ function Hero() {
           <a href={appHref('/?type=employee')} className="text-accent-400 hover:text-white transition-colors">
             Je suis prestataire
           </a>
+          <span className="mx-2 text-slate-600">·</span>
+          <a href={DEMO_URL} className="text-accent-400 hover:text-white transition-colors">
+            Essayer la démo
+          </a>
         </p>
 
         <div className="flex flex-wrap justify-center gap-8 text-slate-500 text-sm">
@@ -375,11 +380,14 @@ function StatsBar() {
     { target: stats ? roundToMagnitude(stats.missionCount) : null, format: formatCount, label: 'Missions gérées' },
     { target: stats ? roundToMagnitude(stats.homeCount) : null, format: formatCount, label: 'Logements actifs' },
     { target: 99.9, format: formatPercent, label: 'Disponibilité' },
-    {
-      target: stats?.averageRating ?? null,
-      format: formatRating,
-      label: 'Satisfaction',
-    },
+    // No reviews yet → swap the rating for the active-provider count.
+    stats?.averageRating != null
+      ? { target: stats.averageRating, format: formatRating, label: 'Satisfaction' }
+      : {
+          target: stats ? roundToMagnitude(stats.employeeCount) : null,
+          format: formatCount,
+          label: 'Prestataires actifs',
+        },
   ];
 
   return (

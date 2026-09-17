@@ -203,18 +203,20 @@ Script admin d'abord (testable immédiatement en prod : 2 liens magiques), imper
 - `redirect_url` Revolut : basée sur le `Host` de la requête (`/checkout` vit sur le site, pas sur `app.`).
 - Reste : URL du webhook dans le dashboard Revolut + redirect URLs Supabase (Phase G, quand les clés prod seront là). Redéploy nécessaire — `NEXT_PUBLIC_*` est inliné au build.
 
-## Phase E — Démo (ex-"points 3/4/5")
+## Phase E — Démo (ex-"points 3/4/5") ✅ CODE FAIT (reste : DNS + deploy)
 
-- `demo.job-conciergerie.fr` → `proxy.ts` pose `x-demo` (pas de branche séparée à maintenir).
-- DB dédiée : `DEMO_DATABASE_URL` (projet Supabase séparé) — jamais de write démo en prod. `db.ts` choisit l'URL selon le header/env.
-- `scripts/seed-demo.ts` : 1 client, 2-3 conciergeries, ~6 employés, ~10 biens, missions couvrant tous les statuts/dates.
-- Entrée démo : boutons « Essayer en tant que concierge / employé » sur la vitrine → posent le `user_id` seedé → redirect app. (Trivial avec l'auth par id.)
-- Reset : serverless ≠ "démarrage d'instance" → route `/api/demo/reset` appelée par cron (Netlify scheduled) + lazy check `seeded_at > 12h` → reseed.
-- Garde-fous démo : bandeau "Démo", emails réels désactivés (logs only), pas de paiement.
+- `demo.job-conciergerie.fr` → `proxy.ts` pose `x-demo` sur les requêtes page ; pour les routes `/api` (hors middleware), `db.ts` détecte aussi le header `Host` `demo.*` directement.
+- DB dédiée : `DEMO_DATABASE_URL` — pointe actuellement vers une **base `demo` sur l'instance Supabase de dev** (tier gratuit = 2 projets max, déjà utilisés par dev+prod ; swap d'une env var si un projet dédié est créé plus tard). `db.ts` choisit le pool par requête : `x-demo` ou host `demo.*` → demo, sinon prod. Fail-closed : pas de `DEMO_DATABASE_URL` → erreur, jamais de write démo en prod.
+- `app/db/demoSeed.ts` + `scripts/seed-demo.ts` : reset complet (`DROP SCHEMA public CASCADE` + `migrations/schema.sql`) puis seed — client admin + conciergerie « Admin » (credential démo public `v2_de01…`, hashé), client « Démo », 2 conciergeries, 6 employés, 10 logements (images réutilisées du bucket prod partagé), 18 missions (passées/du jour/à venir/disponibles, dont binômes), 3 comptes rendus, 2 avis. **Garde prod** : refuse toute URL contenant `PROD_SUPABASE_PROJECT_ID`.
+- Entrée démo : la session démo est **admin** sur la DB démo → « Vue en tant que » (C.5) permet de se mettre dans la peau de n'importe quelle conciergerie/employé seedé. Lien public `https://demo.job-conciergerie.fr/v2_de01…` posé sur la landing (« Essayer la démo » dans le hero). Le fix proxy `/[id]` sans cookies (bug prod : les liens magiques étaient 307 vers `/` sur un navigateur vierge) rend ce flux possible.
+- Reset : `GET/POST /api/demo/reset` — auth `Bearer $CRON_SECRET` (Vercel cron `vercel.json`, toutes les 6h) ou `?key=$DEMO_RESET_KEY` ; lazy : ne reseede que si `seeded_at > 12h`, `?force=1` pour forcer.
+- Garde-fous : bandeau violet « Mode démo — données réinitialisées régulièrement » (empilé avec les autres bannières), emails log-only (`deliver()` court-circuité en démo), checkout hors portée (host site-only).
 
 ## Phase F — Tests scénarios démo (ex-"point 4")
 
-Checklist manuelle (concierge **et** employé) : créer un bien, créer une mission (dont binôme), employé accepte, compte rendu photo, historique, notifications. + quelques tests vitest sur les actions critiques.
+Checklist manuelle (concierge **et** employé, via impersonation) : créer un bien, créer une mission (dont binôme), employé accepte, compte rendu photo, historique, notifications. + quelques tests vitest sur les actions critiques.
+
+Déjà couvert en tests : token d'impersonation (roundtrip, falsification, expiration), `isDemoRequest` (host `demo.*`, marker `x-demo`, autres hosts, hors contexte).
 
 ## Phase G — Revolut prod (ex-"point 7")
 
@@ -234,3 +236,33 @@ A (sécu) ──► B (merge landing) ──► C (multi-tenant) ──► D (do
 - **B avant D/E** : le dispatch par host suppose un seul déploiement.
 - **C avant E** : le seed démo utilise le modèle `clients` (sinon refaire le seed après).
 - D et C peuvent s'intervertir si les domaines sont urgents.
+
+---
+
+## Reste à faire — synthèse
+
+### Pour activer la démo (Phase E)
+
+- [x] **DNS** : `CNAME demo → 6a671e6a0f621fd7.vercel-dns-017.com.` résout ✅ ; domaine déjà assigné au projet Vercel (TLS s'active au prochain déploiement prod)
+- [ ] Merger `dev` → `main` (déploie le routage demo, la bannière, le bouton landing, `/api/demo/reset`)
+- [ ] Optionnel : projet Supabase dédié pour la démo → remplacer `DEMO_DATABASE_URL` (prod) par la nouvelle URL, puis `bun scripts/seed-demo.ts --db-url <url>`
+
+### Phase F — checklist manuelle démo
+
+- [ ] Sur `demo.job-conciergerie.fr` : vérifier le login admin via le lien landing, « Vue en tant que » sur une conciergerie et un employé, bannière démo + impersonation empilées
+- [ ] Créer un bien, créer une mission (dont binôme), accepter en tant qu'employé, compte rendu photo, historique, notifications
+- [ ] Vérifier le reseed lazy (`/api/demo/reset?key=$DEMO_RESET_KEY` → `skipped` si <12h, `force=1` reseede)
+- [ ] Vérifier qu'aucun email réel ne part en démo (`email_logs` → `demo: not sent`)
+
+### Phase C.4 — Abonnements (reporté)
+
+- [ ] Migrer `plan` de `conciergeries` vers `clients` au moment du backfill, supprimer `conciergeries.plan` ensuite
+- [ ] Rendre le forfait éditable une fois la facturation décidée (upgrade/downgrade, paiement Revolut)
+- [ ] Enforcer les limites côté serveur : Découverte = **20 logements max**, quotas missions/prestataires à définir, blocage + message d'upgrade
+
+### Phase G — Revolut prod
+
+- [ ] Clés prod + `REVOLUT_MODE=prod` + webhook prod signé
+- [ ] `ORDER_COMPLETED` → provisionner le `client` + email lien magique
+- [ ] Test sandbox end-to-end avant bascule
+- [ ] Redirect URLs Supabase quand les clés prod seront là

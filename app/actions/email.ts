@@ -1,6 +1,7 @@
 'use server';
 
 import { isProduction } from '@/app/actions/environment';
+import { isDemoRequest } from '@/app/db/db';
 import { getConciergerieByName } from '@/app/db/conciergerieDb';
 import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { getEmployeeByName } from '@/app/db/employeeDb';
@@ -75,10 +76,20 @@ async function deliver(
 ): Promise<boolean> {
   const to = Array.isArray(email.to) ? email.to.join(', ') : (email.to as string);
   const isProd = await isProduction();
+  // Demo requests (demo.<domain>) never send real email — the demo database
+  // holds fake addresses anyway. Logged as sent, like the dev path.
+  const isDemo = await isDemoRequest();
 
-  if (!isProd) {
-    console.log(`[DEV] Email skipped (not prod) — type: ${type}, to: ${to}, subject: ${email.subject}`);
-    await insertEmailLog(type, to, (email.subject as string) ?? null, true, 'dev: not sent', email.html as string);
+  if (!isProd || isDemo) {
+    console.log(`[${isDemo ? 'DEMO' : 'DEV'}] Email skipped — type: ${type}, to: ${to}, subject: ${email.subject}`);
+    await insertEmailLog(
+      type,
+      to,
+      (email.subject as string) ?? null,
+      true,
+      `${isDemo ? 'demo' : 'dev'}: not sent`,
+      email.html as string,
+    );
     return true;
   }
 

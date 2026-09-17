@@ -48,7 +48,7 @@ export const getAllHomes = async (clientId?: string) => {
     const result = await sql`
       SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers, notes
       FROM homes
-      ${clientId ? sql`WHERE client_id = ${clientId}::uuid` : sql``}
+      WHERE (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
     `;
 
     return result.map(row => formatHome(row as DbHome));
@@ -67,7 +67,7 @@ export const getHomeById = async (id: string, clientId?: string) => {
       SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers, notes
       FROM homes
       WHERE id = ${id}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       LIMIT 1
     `;
     return result.length > 0 ? formatHome(result[0] as DbHome) : null;
@@ -189,7 +189,7 @@ export const deleteHome = async (id: string, clientId?: string) => {
     const result = await sql`
       DELETE FROM homes
       WHERE id = ${id}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       RETURNING id
     `;
 

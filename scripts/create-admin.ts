@@ -22,7 +22,7 @@
  * Flags:
  *   --db-url <url>     target database (or PROD_DATABASE_URL / DATABASE_URL env)
  *   --add-device       append one device to the existing Admin row + print its link
- *   --base-url <url>   magic-link base (default https://www.job-conciergerie.fr)
+ *   --base-url <url>   magic-link base (default https://app.job-conciergerie.fr)
  *   -h, --help         this help
  */
 
@@ -31,7 +31,9 @@ import postgres from 'postgres';
 
 const CLIENT_NAME = 'Job Conciergerie — admin';
 const ADMIN_ROW_NAME = 'Admin';
-const DEFAULT_BASE_URL = 'https://www.job-conciergerie.fr';
+// Phase D: the app entry point is app.<domain> — magic links point there,
+// same as the enrollment emails (NEXT_PUBLIC_APP_URL).
+const DEFAULT_BASE_URL = 'https://app.job-conciergerie.fr';
 const V2_ID_PREFIX = 'v2_';
 
 // ── Output ───────────────────────────────────
