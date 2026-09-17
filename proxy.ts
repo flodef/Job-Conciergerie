@@ -15,6 +15,13 @@ const APP_HOST = `app.${BASE_DOMAIN}`;
 const LANDING_HOSTS = new Set([BASE_DOMAIN, `www.${BASE_DOMAIN}`]);
 // Site routes reachable without a session, on every host
 const SITE_PUBLIC_PATHS = new Set(['/landing', '/checkout']);
+// Bearer-credential links (magic/enrollment/admin/demo): `/<id>` must reach the
+// [id] page even with no cookies — it adopts the credential itself.
+// The loose legacy-id pattern also matches app routes (missions, homes…) —
+// exclude them so they keep going through the auth check.
+const ID_PATH = /^\/(?:[0-9a-z]{2,26}|v2_[0-9a-f]{32})$/;
+const isIdPath = (path: string) =>
+  ID_PATH.test(path) && !navigationRoutes.includes(path) && path !== '/waiting' && path !== '/error';
 
 // One-time credential migration: the device-id cookies were issued host-only
 // on www — re-issue them domain-wide on the redirect response so the browser
@@ -30,10 +37,20 @@ const migrateCookies = (request: NextRequest, response: NextResponse) => {
 
 // This function can be marked `async` if using `await` inside
 export async function proxy(request: NextRequest) {
+  // The host HEADER (not nextUrl.hostname — dev normalizes it to the bind
+  // address) is what the platform reports.
+  const host = (request.headers.get('host') ?? '').split(':')[0];
+
+  // demo.<domain> serves the same app against the dedicated demo database —
+  // mark the request so server code (db.ts) picks DEMO_DATABASE_URL. API
+  // routes skip middleware entirely, so db.ts also checks the host itself.
+  const requestHeaders = new Headers(request.headers);
+  if (host.startsWith('demo.')) requestHeaders.set('x-demo', '1');
+
   // Create supabaseResponse that we'll modify with refreshed cookies
   let supabaseResponse = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: requestHeaders,
     },
   });
 
@@ -46,7 +63,8 @@ export async function proxy(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request });
+          // Keep the demo marker — rebuilding from `request` alone would drop it.
+          supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
           cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
         },
       },
@@ -70,9 +88,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
 
   // Apex / www → '/' serves the landing (URL stays '/', renders (site)/landing).
-  // The host HEADER (not nextUrl.hostname — dev normalizes it to the bind
-  // address) is what the platform reports.
-  const host = (request.headers.get('host') ?? '').split(':')[0];
   const isLandingHost = LANDING_HOSTS.has(host);
   if (isLandingHost && path === '/') {
     // Existing users (installed PWA, bookmarks) open '/' on the site host —
@@ -104,13 +119,19 @@ export async function proxy(request: NextRequest) {
     return migrateCookies(request, NextResponse.redirect(url, 307));
   }
 
+  // Device-credential links /<id> must reach the enrollment page even without
+  // cookies — a fresh device has none yet (admin bootstrap links).
+  if (isIdPath(path)) return supabaseResponse;
+
   // Get the user ID and user type from cookies
   const userId = request.cookies.get('user_id')?.value;
   const userType = request.cookies.get('user_type')?.value;
 
-  // If no user ID or user type, redirect to home page
+  // If no user ID or user type, redirect to home page — except bearer-credential
+  // links (/<id>): the [id] page adopts the credential on unenrolled devices,
+  // which is precisely the fresh-browser case (magic/enrollment/admin/demo links).
   if (!userId || !userType) {
-    if (path !== '/') return NextResponse.redirect(new URL('/', request.url));
+    if (path !== '/' && !isIdPath(path)) return NextResponse.redirect(new URL('/', request.url));
 
     return supabaseResponse;
   }

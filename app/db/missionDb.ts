@@ -53,7 +53,7 @@ export const getAllMissions = async (clientId?: string) => {
     const result = await sql`
       SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours, allow_duo, travellers, conciergerie_comment
       FROM missions
-      ${clientId ? sql`WHERE client_id = ${clientId}::uuid` : sql``}
+      WHERE (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       ORDER BY start_date_time ASC
     `;
 
@@ -73,7 +73,7 @@ export const getMissionById = async (id: string, clientId?: string) => {
       SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours, allow_duo, travellers, conciergerie_comment
       FROM missions
       WHERE id = ${id}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
     `;
 
     return result.length > 0 ? formatMission(result[0] as DbMission) : null;
@@ -92,7 +92,7 @@ export const getMissionsByHomeId = async (homeId: string, clientId?: string) => 
       SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours, allow_duo, travellers, conciergerie_comment
       FROM missions
       WHERE home_id = ${homeId}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       ORDER BY start_date_time ASC
     `;
 
@@ -112,7 +112,7 @@ export const getMissionsByConciergerieName = async (conciergerieName: string, cl
       SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours, allow_duo, travellers, conciergerie_comment
       FROM missions
       WHERE conciergerie_name = ${conciergerieName}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       ORDER BY start_date_time ASC
     `;
 
@@ -132,7 +132,7 @@ export const getMissionsByEmployeeId = async (employeeId: string, clientId?: str
       SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours, allow_duo, travellers, conciergerie_comment
       FROM missions
       WHERE employee_id = ${employeeId}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       ORDER BY start_date_time ASC
     `;
 
@@ -159,7 +159,7 @@ export const getAvailableMissionsForEmployee = async (employeeId: string, client
           OR allowed_employees = '[]'
           OR allowed_employees @> ${[employeeId]}
         )
-        ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+        AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       ORDER BY start_date_time ASC
     `;
 
@@ -302,7 +302,7 @@ export const updateMissionStatus = async (id: string, status: MissionStatus, cli
       UPDATE missions
       SET status = ${status}, modified_date = NOW()
       WHERE id = ${id}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours, allow_duo, travellers, conciergerie_comment
     `;
 
@@ -322,7 +322,7 @@ export const assignEmployeeToMission = async (missionId: string, employeeId: str
       UPDATE missions
       SET employee_id = ${employeeId}, modified_date = NOW()
       WHERE id = ${missionId}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       RETURNING id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours, allow_duo, travellers, conciergerie_comment
     `;
 
@@ -367,7 +367,7 @@ export const claimLateNotification = async (id: string, clientId?: string): Prom
       UPDATE missions
       SET late_notified_at = NOW()
       WHERE id = ${id} AND late_notified_at IS NULL
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       RETURNING id
     `;
     return result.length > 0;
@@ -385,7 +385,7 @@ export const deleteMission = async (id: string, clientId?: string) => {
     const result = await sql`
       DELETE FROM missions
       WHERE id = ${id}
-      ${clientId ? sql`AND client_id = ${clientId}::uuid` : sql``}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       RETURNING id
     `;
 

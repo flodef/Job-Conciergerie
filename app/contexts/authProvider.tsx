@@ -33,6 +33,7 @@ interface AuthContextType {
   impersonating: boolean;
   /** rowKey of the impersonated row (undefined when not impersonating). */
   impersonatedName: string | undefined;
+  updateUserId: (userId: string | undefined) => void;
   updateUserType: (userType: UserType | undefined) => void;
   conciergerieName: string | undefined;
   setConciergerieName: (name: string | undefined) => void;
@@ -62,6 +63,7 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   impersonating: false,
   impersonatedName: undefined,
+  updateUserId: () => {},
   updateUserType: () => {},
   conciergerieName: undefined,
   setConciergerieName: () => {},
@@ -243,9 +245,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setPrimaryColor(newPrimaryColor);
 
       // Special case where the userId cookie or the userId in local storage has been manually deleted
-      // Only redirect if data was actually fetched (not just preserved fallback)
+      // Only redirect if data was actually fetched (not just preserved fallback).
+      // Both lists must have loaded — a failed query can't prove the user is
+      // absent, and reloading on a DB error just loops forever.
       const path = window.location.pathname;
-      if (fetchedConciergeries !== null || fetchedEmployees !== null) {
+      if (fetchedConciergeries !== null && fetchedEmployees !== null) {
         if (
           (newUserData && !navigationRoutes.includes(path) && currentUserType === 'conciergerie') ||
           (!newUserData && navigationRoutes.includes(path))
@@ -369,6 +373,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAdmin,
         impersonating,
         impersonatedName,
+        updateUserId,
         updateUserType,
         conciergerieName,
         setConciergerieName,

@@ -172,19 +172,21 @@ export async function getSessionUser(): Promise<SessionUser | null> {
         const hRotated = hashId(newId);
         // WITH ORDINALITY keeps the array order stable — element order is the
         // eviction order (oldest device first) and array_agg doesn't guarantee it.
-        const rewrite = sql`
-          SET id = (
-            SELECT array_agg(CASE
-              WHEN i IN (${canonicalId}, ${hCanonical}) THEN ${hRotated}
-              WHEN i IN (${'$' + canonicalId}, ${'$' + hCanonical}) THEN ${'$' + hRotated}
-              ELSE i END ORDER BY ord)
-            FROM unnest(id) WITH ORDINALITY AS u(i, ord)
-          )
-          WHERE ${canonicalId} = ANY(id) OR ${hCanonical} = ANY(id)
-             OR ${'$' + canonicalId} = ANY(id) OR ${'$' + hCanonical} = ANY(id)
-        `;
-        await sql`UPDATE conciergeries ${rewrite}`;
-        await sql`UPDATE employees ${rewrite}`;
+        // Duplicated per table: the lazy `sql` wrapper resolves the pool per call,
+        // so nested sql`` fragments can't be composed into a parent template.
+        for (const table of ['conciergeries', 'employees'] as const)
+          await sql.unsafe(
+            `UPDATE ${table}
+             SET id = (
+               SELECT array_agg(CASE
+                 WHEN i IN ($1, $2) THEN $3
+                 WHEN i IN ($4, $5) THEN $6
+                 ELSE i END ORDER BY ord)
+               FROM unnest(id) WITH ORDINALITY AS u(i, ord)
+             )
+             WHERE $1 = ANY(id) OR $2 = ANY(id) OR $4 = ANY(id) OR $5 = ANY(id)`,
+            [canonicalId, hCanonical, hRotated, '$' + canonicalId, '$' + hCanonical, '$' + hRotated],
+          );
         sessionId = newId;
         rotated = true;
 

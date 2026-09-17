@@ -9,7 +9,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict 0Vsq5KtO7WqyFc3l9biX3ByOjAjsh50vmuELhSnSWqwIwh86M4bd8FiKFQ2q1Dv
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1)
@@ -30,7 +29,7 @@ SET row_security = off;
 -- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE SCHEMA public;
+CREATE SCHEMA IF NOT EXISTS public;
 
 
 --
@@ -621,5 +620,4 @@ ALTER TABLE ONLY public.missions
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 0Vsq5KtO7WqyFc3l9biX3ByOjAjsh50vmuELhSnSWqwIwh86M4bd8FiKFQ2q1Dv
 

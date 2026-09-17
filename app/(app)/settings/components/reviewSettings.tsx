@@ -114,10 +114,10 @@ const ReviewSettings: React.FC = () => {
 
       <Switch
         id="review-public"
-        label="Publier mon commentaire sur le site"
+        label="Autoriser publication anonyme"
         enabled={isPublic}
         onToggle={setIsPublic}
-        tooltip="Vos étoiles comptent dans tous les cas ; seul le commentaire est publié si activé"
+        tooltip="Vos étoiles comptent dans tous les cas, seul le commentaire peut être publié si activé"
       />
 
       <div className="flex justify-center gap-2 pt-2">

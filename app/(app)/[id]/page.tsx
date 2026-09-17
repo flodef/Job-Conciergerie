@@ -31,6 +31,8 @@ export default function IdPage({
     employeeName,
     conciergerieName,
     isLoading,
+    userData,
+    updateUserId,
     updateUserData,
     findEmployee,
     findConciergerie,
@@ -75,8 +77,20 @@ export default function IdPage({
         isFetching.current = true;
 
         // Check if the ID in the URL matches the ID in localStorage AND that there is a conciergerie name in localStorage
-        if (!userId || userId !== id)
+        if (!userId) throw new Error('Identifiant non trouvé. Veuillez vous reconnecter.');
+
+        // Bearer-credential link (admin bootstrap, …): the URL id IS the
+        // credential. A device whose local id is enrolled in no row (fresh
+        // device — userData unresolved) adopts it; when the local id IS
+        // enrolled, the link must never clobber it.
+        if (userId !== id) {
+          if (!userData) {
+            updateUserId(id);
+            window.location.reload();
+            return;
+          }
           throw new Error('Identifiant non trouvée ou incorrect. Veuillez vous reconnecter.');
+        }
 
         // Wait for the async sha256 of userId to resolve — comparing before
         // would spuriously trigger applyUpdate (double enroll per mount, and
@@ -147,6 +161,8 @@ export default function IdPage({
     employeeName,
     conciergerieName,
     isLoading,
+    userData,
+    updateUserId,
     onMenuChange,
     findEmployee,
     findConciergerie,

@@ -22,7 +22,7 @@
  * Flags:
  *   --db-url <url>     target database (or PROD_DATABASE_URL / DATABASE_URL env)
  *   --add-device       append one device to the existing Admin row + print its link
- *   --base-url <url>   magic-link base (default https://www.job-conciergerie.fr)
+ *   --base-url <url>   magic-link base (default https://app.job-conciergerie.fr)
  *   -h, --help         this help
  */
 
