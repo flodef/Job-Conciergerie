@@ -6,3 +6,5 @@
 export const DEMO_HOST = 'demo.job-conciergerie.fr';
 export const DEMO_DEVICE_ID = 'v2_de01de01de01de01de01de01de01de01';
 export const DEMO_URL = `https://${DEMO_HOST}/${DEMO_DEVICE_ID}`;
+/** Landing "Essayer la démo" target — resets the demo DB then redirects to DEMO_URL. */
+export const DEMO_ENTER_URL = `https://${DEMO_HOST}/api/demo/enter`;

@@ -1,11 +1,7 @@
 import { retryQueuedEmail, sendAdminAlertEmail } from '@/app/actions/email';
-import {
-  deleteFailedEmail,
-  getEmailsToRetry,
-  getExhaustedEmails,
-  markAttempt,
-} from '@/app/db/failedEmailsDb';
-import type { NextRequest} from 'next/server';
+import { demoSeedAgeMs, DEMO_STALE_AFTER_MS, seedDemoDatabase } from '@/app/db/demoSeed';
+import { deleteFailedEmail, getEmailsToRetry, getExhaustedEmails, markAttempt } from '@/app/db/failedEmailsDb';
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 const RETRY_INTERVAL_MINUTES = 10;
@@ -71,11 +67,34 @@ async function handleRetry(request: NextRequest) {
     }
   }
 
+  // Demo DB keep-alive + lazy reseed: this endpoint is already called every
+  // ~10 min by the external scheduler, and the probe below is a real query on
+  // the demo database — enough activity to keep its Supabase instance awake.
+  // Stale data (>12h) gets reseeded at the same time. Never let a demo issue
+  // fail the email retries.
+  let demo: 'disabled' | 'fresh' | 'reseeded' | 'error' = 'disabled';
+  const demoUrl = process.env.DEMO_DATABASE_URL;
+  if (demoUrl) {
+    try {
+      const age = await demoSeedAgeMs(demoUrl);
+      if (age === null || age > DEMO_STALE_AFTER_MS) {
+        await seedDemoDatabase(demoUrl);
+        demo = 'reseeded';
+      } else {
+        demo = 'fresh';
+      }
+    } catch (err) {
+      console.error('Demo keep-alive/reseed failed:', err);
+      demo = 'error';
+    }
+  }
+
   return NextResponse.json({
     processed: toRetry.length,
     succeeded,
     failed,
     abandoned,
+    demo,
   });
 }
 
