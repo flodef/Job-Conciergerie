@@ -49,7 +49,6 @@ const ConciergerieSettings: React.FC = () => {
   const [originalEmail, setOriginalEmail] = useState('');
   const [originalTel, setOriginalTel] = useState('');
   const [originalColorName, setOriginalColorName] = useState('');
-  const [originalPlan, setOriginalPlan] = useState<ConciergeriePlan>('pro');
 
   // Load user info and set form values
   useEffect(() => {
@@ -67,7 +66,6 @@ const ConciergerieSettings: React.FC = () => {
     setOriginalTel(conciergerie.tel);
     setOriginalColorName(conciergerie.colorName);
     setPlan(conciergerie.plan ?? 'pro');
-    setOriginalPlan(conciergerie.plan ?? 'pro');
 
     // Find matching color from our options
     const matchingColor = colorOptions.find(color => color.name === conciergerie.colorName) || null;
@@ -82,8 +80,7 @@ const ConciergerieSettings: React.FC = () => {
     const emailChanged = email !== originalEmail;
     const telChanged = tel !== originalTel;
     const colorChanged = selectedColor?.name !== originalColorName;
-    const planChanged = plan !== originalPlan;
-    return emailChanged || telChanged || colorChanged || planChanged;
+    return emailChanged || telChanged || colorChanged;
   };
 
   // Handle form submission
@@ -128,7 +125,6 @@ const ConciergerieSettings: React.FC = () => {
         email,
         tel,
         colorName: selectedColor?.name || '',
-        plan,
       });
       if (!updatedConciergerie) throw new Error('Paramètres non mis à jour dans la base de données');
 
@@ -141,7 +137,6 @@ const ConciergerieSettings: React.FC = () => {
       setOriginalEmail(email);
       setOriginalTel(tel);
       if (selectedColor) setOriginalColorName(selectedColor.name);
-      setOriginalPlan(plan);
 
       // Show success toast
       showToast({
@@ -207,9 +202,10 @@ const ConciergerieSettings: React.FC = () => {
         value={plan}
         onChange={value => setPlan(value as ConciergeriePlan)}
         options={PLAN_OPTIONS}
-        disabled={isSaving}
+        disabled
         required
         row
+        tooltip="Contactez-nous pour changer de forfait"
       />
 
       <div className="flex justify-center pt-2">
