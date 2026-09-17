@@ -14,6 +14,7 @@ import {
   isRowMember,
   isValidDeviceIdsUpdate,
   requireConnectedSession,
+  tenantScope,
   verifyEnrollmentToken,
 } from '@/app/db/session';
 import { hashId } from '@/app/db/db';
@@ -32,7 +33,10 @@ import { baseId, getDevices, isNewDevice, MaxDevicesError } from '@/app/utils/id
  */
 export async function fetchConciergeries(): Promise<Conciergerie[] | null> {
   const session = await getSessionUser();
-  const conciergeries = await getAllConciergeries();
+  // Admin-client rows (the super-admin's own conciergerie) are hidden from the
+  // registration picker — only a real (non-impersonating) admin session may
+  // list them; the impersonated view mirrors what the target would see.
+  const conciergeries = await getAllConciergeries((session?.isAdmin && !session?.impersonating) ?? false);
 
   // Convert from DB format to application format
   return (
@@ -53,6 +57,7 @@ export async function fetchConciergeries(): Promise<Conciergerie[] | null> {
         colorName: c.colorName,
         color: getColorValueByName(c.colorName),
         notificationSettings: c.notificationSettings,
+        plan: c.plan,
       })) ?? null
   );
 }
@@ -157,5 +162,5 @@ export async function updateConciergerieData(
     notification_settings: data.notificationSettings ? JSON.stringify(data.notificationSettings) : null,
   };
 
-  return await updateConciergerie(conciergerie.name, dbData);
+  return await updateConciergerie(conciergerie.name, dbData, tenantScope(session));
 }

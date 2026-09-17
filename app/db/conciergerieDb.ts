@@ -36,11 +36,13 @@ export function formatConciergerie(dbConciergerie: DbConciergerie) {
  * Fetch all conciergeries with caching
  * Cache is invalidated when accessing the settings page
  */
-export const getAllConciergeries = async () => {
+export const getAllConciergeries = async (includeAdminRows = false) => {
   try {
     const result = await sql`
-      SELECT id, name, email, tel, color_name, notification_settings, plan, client_id
-      FROM conciergeries
+      SELECT c.id, c.name, c.email, c.tel, c.color_name, c.notification_settings, c.plan, c.client_id
+      FROM conciergeries c
+      LEFT JOIN clients cl ON cl.id = c.client_id
+      WHERE ${includeAdminRows} OR COALESCE(cl.is_admin, false) = false
     `;
     return result.map(row => formatConciergerie(row as DbConciergerie));
   } catch (error) {
@@ -50,9 +52,14 @@ export const getAllConciergeries = async () => {
 };
 
 /**
- * Update a conciergerie's data
+ * Update a conciergerie's data.
+ * `clientId` scopes the row to its tenant (undefined = unscoped, admin/cron).
  */
-export const updateConciergerie = async (name: string | undefined, data: Partial<DbConciergerie>) => {
+export const updateConciergerie = async (
+  name: string | undefined,
+  data: Partial<DbConciergerie>,
+  clientId?: string,
+) => {
   try {
     if (!name) throw new Error('No name provided');
 
@@ -65,7 +72,7 @@ export const updateConciergerie = async (name: string | undefined, data: Partial
         color_name = COALESCE(${data.color_name ?? null}, color_name),
         notification_settings = COALESCE(${data.notification_settings ?? null}::jsonb, notification_settings),
         plan = COALESCE(${data.plan ?? null}, plan)
-      WHERE name = ${name}
+      WHERE name = ${name} AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       RETURNING id, name, email, tel, color_name, notification_settings, plan, client_id
     `;
 

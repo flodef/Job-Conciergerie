@@ -27,6 +27,12 @@ interface AuthContextType {
   userData: UserData | undefined;
   isEmployee: boolean;
   isConciergerie: boolean;
+  /** Super-admin session (member of an is_admin client) — unscoped tenant view. */
+  isAdmin: boolean;
+  /** Admin currently viewing the app as another row. */
+  impersonating: boolean;
+  /** rowKey of the impersonated row (undefined when not impersonating). */
+  impersonatedName: string | undefined;
   updateUserType: (userType: UserType | undefined) => void;
   conciergerieName: string | undefined;
   setConciergerieName: (name: string | undefined) => void;
@@ -53,6 +59,9 @@ const AuthContext = createContext<AuthContextType>({
   userData: undefined,
   isEmployee: false,
   isConciergerie: false,
+  isAdmin: false,
+  impersonating: false,
+  impersonatedName: undefined,
   updateUserType: () => {},
   conciergerieName: undefined,
   setConciergerieName: () => {},
@@ -82,6 +91,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const [employeeName, setEmployeeName] = useState<string>();
   const [userData, setUserData] = useState<UserData>();
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [impersonating, setImpersonating] = useState<boolean>(false);
+  const [impersonatedName, setImpersonatedName] = useState<string>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [toast, setToast] = useState<Toast>();
 
@@ -149,6 +161,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session.userId !== getLocalStorageItem<string>('user_id')) updateUserId(session.userId);
         if (session.userType) updateUserType(session.userType);
       }
+      const impersonating = session?.impersonating ?? false;
+      setIsAdmin(session?.isAdmin ?? false);
+      setImpersonating(impersonating);
+      setImpersonatedName(impersonating ? session?.rowKey : undefined);
 
       const id = generateId();
       // Read directly from localStorage to avoid stale closure values from SSR hydration
@@ -190,8 +206,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const findUserById = <T extends UserData>(users: T[] | null, deviceId: string) =>
         users?.find(user => containsId(user.id, deviceId) || (!!idHash && containsId(user.id, idHash)));
 
-      const foundEmployee = findUserById(effectiveEmployees, id);
-      const newUserData = foundEmployee || findUserById(effectiveConciergeries, id);
+      // Impersonated sessions resolve the target row by its business key —
+      // the admin's device id only matches the admin row, never the target's.
+      const foundEmployee = impersonating
+        ? session?.userType === 'employee'
+          ? effectiveEmployees?.find(e => getUserKey(e) === session.rowKey)
+          : undefined
+        : findUserById(effectiveEmployees, id);
+      const foundConciergerie = impersonating
+        ? session?.userType === 'conciergerie'
+          ? effectiveConciergeries?.find(c => getUserKey(c) === session.rowKey)
+          : undefined
+        : findUserById(effectiveConciergeries, id);
+      const newUserData = foundEmployee || foundConciergerie;
       const isEmployee = !!newUserData && !!foundEmployee;
       const isConciergerie = (!!newUserData && !isEmployee) || currentUserType === 'conciergerie';
       const newUserType = isEmployee ? 'employee' : isConciergerie ? 'conciergerie' : undefined;
@@ -339,6 +366,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userData,
         isEmployee,
         isConciergerie,
+        isAdmin,
+        impersonating,
+        impersonatedName,
         updateUserType,
         conciergerieName,
         setConciergerieName,

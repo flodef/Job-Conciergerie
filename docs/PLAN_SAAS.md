@@ -149,9 +149,19 @@ Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restau
   - Pro / Privilège : limites éventuelles à préciser
   - À la création, bloquer ou avertir quand la limite est atteinte, avec un message proposant le forfait supérieur.
 
-### C.5 — Compte super-admin & impersonation
+### C.5 — Compte super-admin & impersonation ✅ CODE FAIT (bootstrap à lancer manuellement)
 
 **Objectif** : tester l'app en prod (voir tous les tenants) et se faire passer pour n'importe quelle conciergerie / employé.
+
+**Implémenté** :
+
+- `scripts/create-admin.ts` — bootstrap idempotent : client `is_admin` + conciergerie « Admin » + 2 credentials `v2_` (seuls les sha256 stockés) + 2 liens magiques affichés une fois. `--add-device` remint un lien, `--base-url` pour tester en local. **À lancer avec `PROD_DATABASE_URL`** — jamais exécuté automatiquement.
+- `app/actions/admin.ts` — `startImpersonation(userType, rowKey)` (guard `isAdmin`, cible validée contre `getImpersonationTargets`, cookie `impersonate` httpOnly 4h signé HMAC), `stopImpersonation()`, `getImpersonationTargets()`. Audit : `console.warn` start/stop.
+- `app/db/session.ts` — `impersonationToken`/`verifyImpersonationToken` (`userType|rowKey|exp.sig`, fail-closed) ; `getSessionUser` : session admin connectée + cookie valide → contexte de la cible (`userType`, `rowKey`, `clientId`) + `impersonating: true`, **`isAdmin` conservé** (contrôles admin disponibles) ; `tenantScope` scope au tenant cible pendant l'impersonation ; `isRowMember` → true (la cible agit comme sa propre ligne ; les mutations device-ids restent bloquées car l'appareil admin n'est pas dans le `id[]` cible). Aucun `device_seen` touché pour la cible.
+- `fetchConciergeries` : lignes de clients admin exclues sauf session admin réelle (non impersonnée) — la conciergerie « Admin » n'apparaît pas dans le picker d'inscription.
+- Client : `syncSession` renvoie `isAdmin`/`impersonating`/`rowKey` ; `authProvider` expose `isAdmin`/`impersonating`/`impersonatedName` et résout `userData` par `rowKey` en impersonation ; Settings → section « Administration » (admin-only) avec Select des cibles ; bannière persistante « Vue en tant que X — Quitter » (empilée avec la bannière de mise à jour).
+- Bonus : `updateConciergerie` est maintenant scopée par `tenantScope` (faille multi-tenant pré-existante fermée).
+- Tests : `app/__tests__/impersonation.test.ts` — roundtrip, rowKey contenant `|`, falsification rowKey/userType/signature, expiration, valeurs malformées.
 
 #### Compte admin (bootstrap — zéro code d'auth)
 
