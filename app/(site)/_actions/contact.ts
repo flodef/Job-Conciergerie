@@ -1,6 +1,7 @@
 'use server';
 
 import nodemailer from 'nodemailer';
+import { checkRateLimit } from '@/app/db/rateLimit';
 import { getClientIp, isFormTokenValid, isIpBlocked, isRateLimited, issueFormToken } from './antiSpam';
 
 const transporter = nodemailer.createTransport({
@@ -33,7 +34,16 @@ export async function sendContactEmail(params: {
   if (website) return { success: true };
 
   const ip = await getClientIp();
-  if (isIpBlocked(ip) || isRateLimited(ip, 'contact') || !isFormTokenValid(token)) {
+  // Two layers: the in-memory per-instance limiter is the cheap first line, the
+  // DB-backed one is shared across serverless instances (same 5/h budget).
+  // The token check runs before checkRateLimit — it's free (HMAC only) and
+  // forged submissions shouldn't burn rate-limit quota.
+  if (
+    isIpBlocked(ip) ||
+    isRateLimited(ip, 'contact') ||
+    !isFormTokenValid(token) ||
+    !(await checkRateLimit('contact', 5, 3600))
+  ) {
     return { success: false, error: 'rejected' };
   }
 

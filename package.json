@@ -1,6 +1,6 @@
 {
   "name": "job-conciergerie",
-  "version": "2.411",
+  "version": "2.422",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@alerix/m3-loading-indicator": "latest",
-    "@revolut/checkout": "^1.1.25",
+    "@revolut/checkout": "latest",
     "@serwist/next": "latest",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
@@ -50,10 +50,10 @@
     "happy-dom": "latest",
     "husky": "latest",
     "jsdom": "latest",
-    "playwright": "^1.63.0",
+    "playwright": "latest",
     "postcss": "latest",
     "tailwindcss": "latest",
-    "typescript": "^5",
+    "typescript": "latest",
     "typescript-eslint": "latest",
     "vitest": "latest"
   },

@@ -47,7 +47,7 @@ export const buttonClassName = (type: ButtonStyle) =>
   );
 export const selectClassName = (error: boolean | string, disabled: boolean, isFocused: boolean, isOpen: boolean) =>
   cn(
-    'w-full px-2 py-1 rounded-lg bg-background text-foreground flex justify-between items-center cursor-pointer min-w-0',
+    'w-fit max-w-full px-2 py-1 rounded-lg bg-background text-foreground flex justify-between items-center gap-2 cursor-pointer min-w-0',
     'focus-visible:outline-none focus-within:outline-none border-2',
     error && 'border-red-500',
     disabled && 'opacity-50 cursor-not-allowed',

@@ -89,6 +89,9 @@ export default function MissionForm({
     conciergerieComment: string;
   }>();
 
+  // Home selected in the form (undefined when no home is picked or it was deleted)
+  const selectedHome = useMemo(() => filteredHomes.find(h => h.id === homeId), [filteredHomes, homeId]);
+
   // Get employees with accepted status using useMemo
   // This avoids the infinite loop issue by not using state + useEffect
   const employees = useMemo(() => {
@@ -163,24 +166,17 @@ export default function MissionForm({
 
   // Calculate mission hours when dependencies change
   useEffect(() => {
-    if (homeId && tasks.length > 0) {
-      const selectedHome = filteredHomes.find(h => h.id === homeId);
-      if (selectedHome) {
-        const hours = calculateMissionHours(selectedHome, tasks);
-        setMissionHours(hours);
-      }
+    if (selectedHome && tasks.length > 0) {
+      setMissionHours(calculateMissionHours(selectedHome, tasks));
     } else {
       setMissionHours(0);
     }
-  }, [homeId, tasks, filteredHomes]);
+  }, [selectedHome, tasks]);
 
   // Set travellers to max travellers of selected home when home changes (only in add mode)
   useEffect(() => {
-    if (mode === 'add') {
-      const home = filteredHomes.find(h => h.id === homeId);
-      if (home) setTravellers(home.maxTravellers);
-    }
-  }, [homeId, filteredHomes, mode]);
+    if (mode === 'add' && selectedHome) setTravellers(selectedHome.maxTravellers);
+  }, [selectedHome, mode]);
 
   // Check if form has been modified
   const checkFormChanged = useCallback(() => {
@@ -267,9 +263,8 @@ export default function MissionForm({
       }
 
       // Convert string dates to Date objects
-      const home = filteredHomes.find(h => h.id === homeId);
-      const taskHours = home ? calculateMissionHours(home, tasks) : 1;
-      const duration = home?.allowDuo ? taskHours / 2 : taskHours;
+      const taskHours = selectedHome ? calculateMissionHours(selectedHome, tasks) : 1;
+      const duration = selectedHome?.allowDuo ? taskHours / 2 : taskHours;
       const { startDateTime: startDate, endDateTime: endDate } =
         mode === 'edit'
           ? adjustMissionDateTime(startDateTime, endDateTime, duration)
@@ -287,7 +282,6 @@ export default function MissionForm({
         )
           throw new Error('Une mission identique existe déjà');
 
-        const selectedHome = filteredHomes.find(h => h.id === homeId);
         if (!selectedHome) throw new Error('Bien introuvable');
 
         const result = await addMission({
@@ -310,7 +304,6 @@ export default function MissionForm({
         resetFormToInitialValues();
         onClose();
       } else if (mission) {
-        const selectedHome = filteredHomes.find(h => h.id === homeId);
         if (!selectedHome) throw new Error('Bien introuvable');
 
         // Determine if changes are safe (don't require employee removal)
@@ -397,9 +390,8 @@ export default function MissionForm({
 
   // Handle start date change - just update value and end date, no validation
   const handleStartDateChange = (value: string) => {
-    const home = filteredHomes.find(h => h.id === homeId);
-    const taskHours = home ? calculateMissionHours(home, tasks) : 1;
-    const duration = home?.allowDuo ? taskHours / 2 : taskHours;
+    const taskHours = selectedHome ? calculateMissionHours(selectedHome, tasks) : 1;
+    const duration = selectedHome?.allowDuo ? taskHours / 2 : taskHours;
     const { startDateTime: newStart, endDateTime: newEnd } = handleMissionStartDateChange(
       value,
       startDateTime,
@@ -432,9 +424,8 @@ export default function MissionForm({
 
   // Handle end date change with auto-adjustment of start date
   const handleEndDateChange = (newEndDate: string) => {
-    const home = filteredHomes.find(h => h.id === homeId);
-    const taskHours = home ? calculateMissionHours(home, tasks) : 1;
-    const duration = home?.allowDuo ? taskHours / 2 : taskHours;
+    const taskHours = selectedHome ? calculateMissionHours(selectedHome, tasks) : 1;
+    const duration = selectedHome?.allowDuo ? taskHours / 2 : taskHours;
     const { startDateTime: newStart, endDateTime: newEnd } = handleMissionEndDateChange(
       newEndDate,
       startDateTime,
@@ -507,7 +498,7 @@ export default function MissionForm({
           id="task-select"
           label="Tâches"
           ref={taskRef}
-          availableTasks={getAvailableTasks(filteredHomes.find(h => h.id === homeId) || undefined, Object.values(Task))}
+          availableTasks={selectedHome ? getAvailableTasks(selectedHome) : []}
           selectedTasks={tasks}
           onTasksChange={setTasks}
           error={tasksError}
@@ -524,7 +515,7 @@ export default function MissionForm({
                 {missionHours} heure{missionHours > 1 ? 's' : ''}
               </span>
             </div>
-            {filteredHomes.find(h => h.id === homeId)?.allowDuo && (
+            {selectedHome?.allowDuo && (
               <div className={containerClassName}>
                 <IconUsers size={16} />
                 <span className="font-bold">Binôme</span>
@@ -540,7 +531,7 @@ export default function MissionForm({
           ref={travellersRef}
           value={travellers}
           onChange={value => setTravellers(Number(value))}
-          options={range(0, filteredHomes.find(h => h.id === homeId)?.maxTravellers || MAX_TRAVELLERS)}
+          options={range(0, selectedHome?.maxTravellers || MAX_TRAVELLERS)}
           disabled={isSubmitting}
           placeholder="Nombre de voyageurs"
           required

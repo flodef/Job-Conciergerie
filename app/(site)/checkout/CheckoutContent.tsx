@@ -3,13 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Logo from '../_components/Logo';
+import { PLANS } from '@/app/data/plans';
 import { IconCircleCheck, IconLoader2, IconAlertCircle, IconArrowLeft } from '@tabler/icons-react';
-
-const PLANS = {
-  decouverte: { name: 'Découverte', monthly: 30, annual: 300 },
-  pro: { name: 'Pro', monthly: 50, annual: 500 },
-  privilege: { name: 'Privilège', monthly: 100, annual: 1000 },
-};
 
 export default function CheckoutContent() {
   const searchParams = useSearchParams();

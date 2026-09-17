@@ -48,7 +48,7 @@ const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTim
         <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
-        <div className={row ? 'flex-1' : ''}>
+        <div className={row ? 'flex-1 min-w-0' : ''}>
           <input
             type="datetime-local"
             lang="fr"
@@ -63,8 +63,8 @@ const DateTimeInputComponent: ForwardRefRenderFunction<HTMLInputElement, DateTim
                 ? 'bg-transparent text-foreground outline-none border-none focus:border-2 focus:border-primary cursor-pointer text-base [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:pointer-events-none [&::-webkit-clear-button]:hidden [&::-webkit-clear-button]:appearance-none'
                 : cn(
                     inputFieldClassName(error),
-                    'border-2',
-                    row && 'min-w-[240px]',
+                    'border-2 w-fit max-w-full',
+                    row && 'min-w-60',
                     '[&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert dark:[&::-webkit-calendar-picker-indicator]:brightness-0',
                     '[&::-webkit-clear-button]:hidden [&::-webkit-clear-button]:appearance-none',
                   )

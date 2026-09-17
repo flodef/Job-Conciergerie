@@ -30,6 +30,7 @@ const MAX_PHOTOS = 9;
 type HomeFormProps = {
   onClose: () => void;
   onCancel?: () => void;
+  onSuccess?: () => void;
   home?: Home;
   mode: UpdateMode;
   skipAnimation?: boolean;
@@ -39,6 +40,7 @@ type HomeFormProps = {
 export default function HomeForm({
   onClose,
   onCancel,
+  onSuccess,
   home,
   mode = 'add',
   skipAnimation = false,
@@ -267,6 +269,7 @@ export default function HomeForm({
         if (!result) throw new Error("Impossible d'ajouter le bien");
 
         showToast({ type: ToastType.Success, message: 'Bien ajouté avec succès !' });
+        onSuccess?.();
         resetFormToInitialValues();
         closeAndCancel();
       } else if (home) {
@@ -288,6 +291,7 @@ export default function HomeForm({
         if (!result) throw new Error('Impossible de mettre à jour le bien');
 
         showToast({ type: ToastType.Success, message: 'Bien mis à jour avec succès !' });
+        onSuccess?.();
         resetFormToInitialValues();
         closeAndCancel();
       }

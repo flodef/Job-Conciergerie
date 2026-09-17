@@ -1,19 +1,14 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { getClientIp, isIpBlocked, isRateLimited } from '@/app/(site)/_actions/antiSpam';
+import { PLANS } from '@/app/data/plans';
+import type { ConciergeriePlan } from '@/app/types/dataTypes';
 
 const REVOLUT_MODE = process.env.REVOLUT_MODE === 'prod' ? 'prod' : 'sandbox';
 const REVOLUT_API_URL =
   REVOLUT_MODE === 'prod'
     ? 'https://merchant.revolut.com/api/orders'
     : 'https://sandbox-merchant.revolut.com/api/orders';
-
-// Prix définis côté serveur — le client envoie le plan, jamais le montant.
-const PLANS: Record<string, { name: string; monthly: number; annual: number }> = {
-  decouverte: { name: 'Découverte', monthly: 30, annual: 300 },
-  pro: { name: 'Pro', monthly: 50, annual: 500 },
-  privilege: { name: 'Privilège', monthly: 100, annual: 1000 },
-};
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +23,8 @@ export async function POST(request: NextRequest) {
 
     const { plan, billing, customerEmail } = await request.json();
 
-    const planData = PLANS[plan];
+    // Prix définis côté serveur — le client envoie le plan, jamais le montant.
+    const planData = typeof plan === 'string' && plan in PLANS ? PLANS[plan as ConciergeriePlan] : undefined;
     if (!planData || (billing !== 'monthly' && billing !== 'annual')) {
       return NextResponse.json({ error: 'Invalid plan or billing' }, { status: 400 });
     }

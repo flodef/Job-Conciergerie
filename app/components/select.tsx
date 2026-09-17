@@ -1,5 +1,6 @@
 'use client';
 
+import { AutoSize } from '@/app/components/autoSizeField';
 import Label from '@/app/components/label';
 import type { SelectOption } from '@/app/types/types';
 import {
@@ -11,7 +12,7 @@ import {
   rowClassName,
   selectClassName,
 } from '@/app/utils/className';
-import { shouldOpenUpward } from '@/app/utils/select';
+import { longestOptionLabel, shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconChevronDown } from '@tabler/icons-react';
 import type { ForwardedRef, ReactNode } from 'react';
@@ -159,7 +160,7 @@ const Select = forwardRef(
     // Set highlighted index when opening dropdown
     useEffect(() => {
       if (isOpen) {
-        const selectedIndex = options.findIndex(option => option === value);
+        const selectedIndex = options.findIndex(opt => (typeof opt === 'object' ? opt.value : opt) === value);
         setHighlightedIndex(selectedIndex >= 0 ? selectedIndex : -1);
       }
     }, [isOpen, options, value]);
@@ -193,104 +194,111 @@ const Select = forwardRef(
       return value;
     })();
 
+    // The field is sized to the longest option label, not the selected value
+    const sizerText = longestOptionLabel(options, displayValue, placeholder);
+
     return (
       <div className={row ? rowClassName : 'w-full'}>
         <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
-        <div className={cn('relative w-full', className)} ref={selectRef}>
-          <div
-            id={id}
-            tabIndex={disabled ? -1 : 0}
-            className={selectClassName(error, disabled, isFocused, isOpen)}
-            onClick={() => {
-              if (!disabled) {
-                checkPosition();
-                setIsOpen(!isOpen);
-                setIsFocused(true);
-              }
-            }}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => {
-              setIsFocused(false);
-              setIsOpen(false);
-              onError(
-                required && !displayValue
-                  ? `Veuillez sélectionner ${label?.toString().toLowerCase() || 'une option'}`
-                  : '',
-              );
-            }}
-            role="combobox"
-            aria-expanded={isOpen}
-            aria-haspopup="listbox"
-            aria-controls={`${id}-options`}
-          >
-            <span className={cn(!value && 'text-foreground/50')}>{displayValue}</span>
-            <IconChevronDown
-              size={18}
-              className={cn('transition-transform duration-200', isOpen && 'transform rotate-180')}
-            />
-          </div>
+        <div className={cn('min-w-0', row && 'flex-1')}>
+          <div className={cn('relative w-fit max-w-full', className)} ref={selectRef}>
+            <div
+              id={id}
+              tabIndex={disabled ? -1 : 0}
+              className={selectClassName(error, disabled, isFocused, isOpen)}
+              onClick={() => {
+                if (!disabled) {
+                  checkPosition();
+                  setIsOpen(!isOpen);
+                  setIsFocused(true);
+                }
+              }}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => {
+                setIsFocused(false);
+                setIsOpen(false);
+                onError(
+                  required && !displayValue
+                    ? `Veuillez sélectionner ${label?.toString().toLowerCase() || 'une option'}`
+                    : '',
+                );
+              }}
+              role="combobox"
+              aria-expanded={isOpen}
+              aria-haspopup="listbox"
+              aria-controls={`${id}-options`}
+            >
+              <AutoSize text={sizerText}>
+                <span className={cn('absolute inset-0 truncate', !value && 'text-foreground/50')}>{displayValue}</span>
+              </AutoSize>
+              <IconChevronDown
+                size={18}
+                className={cn('shrink-0 transition-transform duration-200', isOpen && 'transform rotate-180')}
+              />
+            </div>
 
-          {isOpen &&
-            !disabled &&
-            dropdownPosition &&
-            createPortal(
-              <div
-                className="fixed z-50"
-                style={{
-                  top: openUpward ? dropdownPosition.top - 4 : dropdownPosition.top + 4,
-                  left: dropdownPosition.left,
-                  width: dropdownPosition.width,
-                }}
-              >
-                {canScrollUp && (
-                  <div
-                    className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
-                    style={{ zIndex: 51 }}
-                  >
-                    <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
-                  </div>
-                )}
+            {isOpen &&
+              !disabled &&
+              dropdownPosition &&
+              createPortal(
                 <div
-                  id={`${id}-options`}
-                  ref={el => {
-                    optionsRef.current = el;
-                    scrollRef.current = el;
+                  className="fixed z-50"
+                  style={{
+                    top: openUpward ? dropdownPosition.top - 4 : dropdownPosition.top + 4,
+                    left: dropdownPosition.left,
+                    width: dropdownPosition.width,
                   }}
-                  className={optionsClassName}
-                  style={getDropdownMaxHeight(maxItems)}
-                  role="listbox"
                 >
-                  {options.map((option: string | number | SelectOption, index: number) => {
-                    const optionValue = typeof option === 'object' ? option.value : option;
-                    const optionLabel = typeof option === 'object' ? option.label : option;
-
-                    return (
-                      <div
-                        key={optionValue}
-                        className={optionClassName(index === highlightedIndex, optionValue === value)}
-                        onMouseDown={() => handleSelect(optionValue)}
-                        onMouseEnter={() => setHighlightedIndex(index)}
-                        role="option"
-                        aria-selected={optionValue === value}
-                      >
-                        {optionLabel}
-                      </div>
-                    );
-                  })}
-                </div>
-                {canScrollDown && (
+                  {canScrollUp && (
+                    <div
+                      className="absolute top-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-b from-background to-transparent rounded-t-lg"
+                      style={{ zIndex: 51 }}
+                    >
+                      <IconChevronDown size={18} className="text-foreground/60 rotate-180" />
+                    </div>
+                  )}
                   <div
-                    className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
-                    style={{ zIndex: 51 }}
+                    id={`${id}-options`}
+                    ref={el => {
+                      optionsRef.current = el;
+                      scrollRef.current = el;
+                    }}
+                    className={optionsClassName}
+                    style={getDropdownMaxHeight(maxItems)}
+                    role="listbox"
                   >
-                    <IconChevronDown size={18} className="text-foreground/60" />
+                    {options.map((option: string | number | SelectOption, index: number) => {
+                      const optionValue = typeof option === 'object' ? option.value : option;
+                      const optionLabel = typeof option === 'object' ? option.label : option;
+
+                      return (
+                        <div
+                          key={optionValue}
+                          className={optionClassName(index === highlightedIndex, optionValue === value)}
+                          onMouseDown={() => handleSelect(optionValue)}
+                          onMouseEnter={() => setHighlightedIndex(index)}
+                          role="option"
+                          aria-selected={optionValue === value}
+                        >
+                          {optionLabel}
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
-              </div>,
-              document.body,
-            )}
+                  {canScrollDown && (
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-8 flex items-center justify-center pointer-events-none bg-linear-to-t from-background to-transparent rounded-b-lg"
+                      style={{ zIndex: 51 }}
+                    >
+                      <IconChevronDown size={18} className="text-foreground/60" />
+                    </div>
+                  )}
+                </div>,
+                document.body,
+              )}
+          </div>
           {error && <p className={errorClassName}>{error}</p>}
         </div>
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import type { Toast} from '@/app/components/toastMessage';
+import type { Toast } from '@/app/components/toastMessage';
 import { ToastMessage, ToastType } from '@/app/components/toastMessage';
 import { usePWAInstall } from '@/app/hooks/usePWAInstall';
 import { isDevMode } from '@/app/utils/environment';
@@ -47,6 +47,7 @@ export default function InstallToast() {
       timeout={30000} // 30 seconds
       onClose={handleCloseToast}
       onClick={onClickHandler}
+      closable
     />
   );
 }

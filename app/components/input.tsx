@@ -1,5 +1,6 @@
+import { AutoSize } from '@/app/components/autoSizeField';
 import Label from '@/app/components/label';
-import { errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
+import { cn, errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
 import { handleInputBlur, handleChange } from '@/app/utils/form';
 import { emailRegex, frenchPhoneRegex, inputLengthRegex } from '@/app/utils/regex';
 import type { ForwardRefRenderFunction, ReactNode } from 'react';
@@ -45,20 +46,22 @@ const InputComponent: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
       <Label id={id} required={required} tooltip={tooltip}>
         {label}
       </Label>
-      <div className="flex-1">
-        <input
-          type={type}
-          id={id}
-          name={label?.toString() || id}
-          ref={ref}
-          value={value}
-          onChange={e => handleChange(e, onChange, onError, regex)}
-          onBlur={e => handleInputBlur(e, onChange, onError, regex)}
-          className={inputFieldClassName(error)}
-          disabled={disabled}
-          placeholder={placeholder}
-          required={required}
-        />
+      <div className="flex-1 min-w-0">
+        <AutoSize text={value?.toString() || placeholder} sizerClassName={inputFieldClassName('')} className="min-w-32">
+          <input
+            type={type}
+            id={id}
+            name={label?.toString() || id}
+            ref={ref}
+            value={value}
+            onChange={e => handleChange(e, onChange, onError, regex)}
+            onBlur={e => handleInputBlur(e, onChange, onError, regex)}
+            className={cn(inputFieldClassName(error), 'absolute inset-0')}
+            disabled={disabled}
+            placeholder={placeholder}
+            required={required}
+          />
+        </AutoSize>
         {error && <p className={errorClassName}>{error}</p>}
       </div>
     </div>

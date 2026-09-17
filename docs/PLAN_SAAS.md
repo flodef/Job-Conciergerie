@@ -214,7 +214,7 @@ Script admin d'abord (testable immédiatement en prod : 2 liens magiques), imper
 - Garde-fous : bandeau violet « Mode démo — données peuvent être réinitialisées à tout moment » (empilé avec les autres bannières), emails log-only (`deliver()` court-circuité en démo), checkout hors portée (host site-only).
 - Le proxy propage `x-demo` au fetch interne `/api/auth` — en dev `request.url` est normalisé vers le bind host, sans ça l'auth taperait la prod DB pour une requête `demo.localhost`.
 
-## Phase F — Tests scénarios démo (ex-"point 4")
+## Phase F — Tests scénarios démo (ex-"point 4") ✅ FAIT
 
 Checklist manuelle (concierge **et** employé, via impersonation) : créer un bien, créer une mission (dont binôme), employé accepte, compte rendu photo, historique, notifications. + quelques tests vitest sur les actions critiques.
 
@@ -243,18 +243,14 @@ A (sécu) ──► B (merge landing) ──► C (multi-tenant) ──► D (do
 
 ## Reste à faire — synthèse
 
-### Pour activer la démo (Phase E)
+### Séparation stricte www → site / app → application (à faire plus tard)
 
-- [x] **DNS** : `CNAME demo → 6a671e6a0f621fd7.vercel-dns-017.com.` résout ✅ ; domaine déjà assigné au projet Vercel (TLS s'active au prochain déploiement prod)
-- [x] Merger `dev` → `main` — release `2.404` ✅ (routage demo, bannière, bouton landing, `/api/demo/reset` en prod ; smoke-testé : `demo./v2_de01…` → 200)
-- [ ] Optionnel : projet Supabase dédié pour la démo → remplacer `DEMO_DATABASE_URL` (prod) par la nouvelle URL, puis `bun scripts/seed-demo.ts --db-url <url>` — nécessite un passage par le dashboard Supabase (tier gratuit = 2 projets max, déjà pris par dev+prod ; alternative gratuite : Neon autorise plusieurs projets).
+Objectif : `www.`/apex servent **toujours** le site (même avec une session active), `app.` sert l'app. Les utilisateurs égarés repassent par « Connexion » / « Déjà inscrit ? » (cookies déjà en domaine `.job-conciergerie.fr` → 1 clic, pas de re-login).
 
-### Phase F — checklist manuelle démo
-
-- [ ] Sur `demo.job-conciergerie.fr` : vérifier le login admin via le lien landing, « Vue en tant que » sur une conciergerie et un employé, bannière démo + impersonation empilées
-- [ ] Créer un bien, créer une mission (dont binôme), accepter en tant qu'employé, compte rendu photo, historique, notifications
-- [ ] Vérifier le reseed lazy (`/api/demo/reset?key=$DEMO_RESET_KEY` → `skipped` si <12h, `force=1` reseede)
-- [ ] Vérifier qu'aucun email réel ne part en démo (`email_logs` → `demo: not sent`)
+- [ ] `proxy.ts` : supprimer le pont `user_id`-cookie sur `/` (www logué → 307 app) — ~8 lignes dans le bloc `isLandingHost && path === '/'`
+- [ ] **Garder** le 307 catch-all `www/<path>` → `app/<path>` : il rattrape les vieux liens magiques `/v2_…` dans les emails — coût nul
+- [ ] Vigilance PWA : le `start_url` est figé à l'install — une icône pointant sur `www.` ouvrirait la landing à chaque lancement jusqu'à réinstallation (le bounce `/` existe pour ce cas — commit « PWA users landing on the site »)
+- [ ] Avant de flipper : mesurer la couverture via `device_seen` (devices actifs depuis le déploiement `app.` le 17 sept = déjà migrés — 21/47 au 18 sept) + logs Vercel filtrés sur host `www.` (doit tendre vers 0 hits app)
 
 ### Phase C.4 — Abonnements (reporté)
 

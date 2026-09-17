@@ -441,7 +441,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
           <Label id={id} required={required} tooltip={tooltip}>
             {label}
           </Label>
-          <div className={cn('relative', row ? 'flex-1' : 'w-full', minimal && 'flex items-center')}>
+          <div className={cn('relative w-fit max-w-full', minimal && 'flex items-center')}>
             <div
               ref={customInputRef}
               id={id}
@@ -472,7 +472,7 @@ const CustomDateTimeInput = forwardRef<{ focus: () => void }, CustomDateTimeInpu
                   : cn(
                       inputFieldClassName(error),
                       isFocused && 'border-primary',
-                      'flex items-center gap-0 cursor-text',
+                      'flex items-center gap-0 cursor-text w-fit max-w-full',
                       row && 'min-w-60',
                     ),
               )}
