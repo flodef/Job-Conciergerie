@@ -34,7 +34,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getLandingStats, type LandingStats } from '../_actions/stats';
+import { getLandingStats, getPublicTestimonials, type LandingStats, type PublicTestimonial } from '../_actions/stats';
 import { useTheme } from '../_lib/theme';
 
 /* ───────────────────────────── Theme Toggle ───────────────────────────── */
@@ -1098,27 +1098,41 @@ function PhoneMockup() {
 }
 
 /* ───────────────────────────── Testimonials ───────────────────────────── */
+
+// Placeholder testimonials — shown until real reviews exist in the `reviews`
+// table, then used to fill remaining slots (real reviews always come first).
+const placeholderTestimonials = [
+  {
+    name: 'Sophie L.',
+    role: 'Conciergerie · Brest, Finistère',
+    text: "Depuis Job Conciergerie, je gère 40 logements sans stress. Les prestataires sont notifiés automatiquement, je n'ai plus à appeler un par un. Un game-changer.",
+    stars: 5,
+  },
+  {
+    name: 'Karim B.',
+    role: 'Prestataire · Crozon, Finistère',
+    text: "L'app est super simple. Je vois les missions dispo, j'accepte en un clic, et le compte rendu photo à la fin c'est top pour prouver mon travail. Plus besoin d'Excel.",
+    stars: 5,
+  },
+  {
+    name: 'Élodie M.',
+    role: 'Conciergerie · Quimper, Finistère',
+    text: "Le mode binôme est génial pour les grands appartements. Le temps réel m'évite les doublons, et les statistiques mensuelles me servent directement pour ma compta.",
+    stars: 4.5,
+  },
+];
+
 function Testimonials() {
-  const testimonials = [
-    {
-      name: 'Sophie L.',
-      role: 'Conciergerie · Brest, Finistère',
-      text: "Depuis Job Conciergerie, je gère 40 logements sans stress. Les prestataires sont notifiés automatiquement, je n'ai plus à appeler un par un. Un game-changer.",
-      stars: 5,
-    },
-    {
-      name: 'Karim B.',
-      role: 'Prestataire · Crozon, Finistère',
-      text: "L'app est super simple. Je vois les missions dispo, j'accepte en un clic, et le compte rendu photo à la fin c'est top pour prouver mon travail. Plus besoin d'Excel.",
-      stars: 5,
-    },
-    {
-      name: 'Élodie M.',
-      role: 'Conciergerie · Quimper, Finistère',
-      text: "Le mode binôme est génial pour les grands appartements. Le temps réel m'évite les doublons, et les statistiques mensuelles me servent directement pour ma compta.",
-      stars: 4.5,
-    },
-  ];
+  const [real, setReal] = useState<PublicTestimonial[]>([]);
+
+  useEffect(() => {
+    getPublicTestimonials()
+      .then(setReal)
+      .catch(() => {});
+  }, []);
+
+  // Real reviews take priority; placeholders fill up to 3 slots.
+  const testimonials = [...real, ...placeholderTestimonials].slice(0, 3);
 
   return (
     <section id="temoignages" className="relative py-16 md:py-24 px-6 overflow-hidden">

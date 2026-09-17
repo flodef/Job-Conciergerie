@@ -93,6 +93,27 @@ export const deleteReview = async (userType: UserType, rowKey: string): Promise<
 };
 
 /**
+ * Public testimonials for the landing — reviews that have a comment, best
+ * first (highest rating, then most recent). row_key doubles as the public
+ * author name: conciergerie name or employee "firstName familyName".
+ */
+export const getTopReviews = async (limit = 3): Promise<DbReview[]> => {
+  try {
+    await ensureReviewsTable();
+    const result = await sql<DbReview[]>`
+      SELECT user_type, row_key, rating, comment, updated_at FROM reviews
+      WHERE comment <> ''
+      ORDER BY rating DESC, updated_at DESC
+      LIMIT ${limit}
+    `;
+    return result;
+  } catch (error) {
+    console.error('Error fetching top reviews:', error);
+    return [];
+  }
+};
+
+/**
  * Public aggregate — average rating and review count, for the landing stats.
  * Returns null when there is no review yet.
  */
