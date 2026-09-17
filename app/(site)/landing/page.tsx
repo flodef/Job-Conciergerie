@@ -37,6 +37,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { getLandingStats, getPublicTestimonials, type LandingStats, type PublicTestimonial } from '../_actions/stats';
 import { useTheme } from '../_lib/theme';
 
+// App entry point: app.<domain> in prod, same origin in dev (localhost serves
+// both route groups). Returns a path-only href outside the real domain.
+const appHref = (path: string) =>
+  typeof window !== 'undefined' && /(^|\.)job-conciergerie\.fr$/.test(window.location.hostname)
+    ? `https://app.job-conciergerie.fr${path}`
+    : path;
+
 /* ───────────────────────────── Theme Toggle ───────────────────────────── */
 function ThemeToggle({ size = 'sm' }: { size?: 'sm' | 'md' }) {
   const { mode, set, ready } = useTheme();
@@ -158,6 +165,12 @@ function Navbar() {
             </a>
           ))}
           <a
+            href={appHref('/')}
+            className="text-sm text-slate-300 hover:text-white transition-colors whitespace-nowrap"
+          >
+            Connexion
+          </a>
+          <a
             href="#contact"
             onClick={() => window.dispatchEvent(new CustomEvent('contactSubject', { detail: 'demo' }))}
             className="px-4 py-2 rounded-full bg-linear-to-r from-brand-500 to-accent-500 text-white text-sm font-semibold hover:opacity-90 transition-opacity whitespace-nowrap"
@@ -200,6 +213,13 @@ function Navbar() {
             </a>
           ))}
           <div className="flex items-center justify-between gap-4 pt-2">
+            <a
+              href={appHref('/')}
+              className="px-5 py-2 rounded-full text-white text-sm font-semibold text-center flex-1"
+              style={{ backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
+            >
+              Connexion
+            </a>
             <a
               href="#contact"
               onClick={() => {
@@ -260,6 +280,17 @@ function Hero() {
             Découvrir les fonctionnalités
           </a>
         </div>
+
+        <p className="text-sm text-slate-400 mb-16 -mt-10">
+          Déjà inscrit ?&ensp;
+          <a href={appHref('/?type=conciergerie')} className="text-accent-400 hover:text-white transition-colors">
+            Je suis une conciergerie
+          </a>
+          <span className="mx-2 text-slate-600">·</span>
+          <a href={appHref('/?type=employee')} className="text-accent-400 hover:text-white transition-colors">
+            Je suis prestataire
+          </a>
+        </p>
 
         <div className="flex flex-wrap justify-center gap-8 text-slate-500 text-sm">
           <div className="flex items-center gap-2">

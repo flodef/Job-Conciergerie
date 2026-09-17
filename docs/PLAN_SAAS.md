@@ -149,13 +149,49 @@ Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restau
   - Pro / Privilège : limites éventuelles à préciser
   - À la création, bloquer ou avertir quand la limite est atteinte, avec un message proposant le forfait supérieur.
 
+### C.5 — Compte super-admin & impersonation
+
+**Objectif** : tester l'app en prod (voir tous les tenants) et se faire passer pour n'importe quelle conciergerie / employé.
+
+#### Compte admin (bootstrap — zéro code d'auth)
+
+Le modèle actuel suffit : `session.isAdmin` vient de `clients.is_admin` via le `client_id` de la ligne où l'appareil est membre. Il faut donc juste une ligne de membership dont le client est admin.
+
+- `scripts/create-admin.ts` (one-off, lancé en local avec le `DATABASE_URL` de prod) :
+  1. `INSERT INTO clients (name, plan, is_admin) VALUES ('Job Conciergerie — admin', 'privilege', true)`
+  2. `INSERT INTO conciergeries (name, …, client_id, id)` — une conciergerie "Admin" rattachée au client admin (résolution conciergerie en premier → `userType='conciergerie'`, `isAdmin=true` → `tenantScope` unscoped → voit tout)
+  3. Génère **2 ids `v2_`** (`generateSecureId`), stocke `hashId()` de chacun dans `id[]` → un appareil par id
+  4. Affiche les 2 liens magiques `https://www.job-conciergerie.fr/<id>` : un à ouvrir sur l'ordi, l'autre sur le téléphone. Les ids bruts sont des secrets → affichés une fois, jamais stockés.
+- Idempotent (skip si client admin déjà présent).
+- ⚠️ `fetchConciergeries` est volontairement non scopé (picker d'inscription) → la conciergerie "Admin" y apparaîtrait. Filtrer `WHERE client.is_admin IS NOT true` dans ce picker, ou accepter.
+- Alternative pour l'appareil n°2 : enrôlement `$` classique + approbation depuis l'appareil n°1 (utilise l'UX existante, pas de 2e id à générer).
+
+#### Impersonation (« voir en tant que »)
+
+- ❌ **Graffer** l'id admin dans le `id[]` de la cible : résolution ambiguë (les conciergeries gagnent contre les employés), accès résiduel si on oublie de retirer, aucune trace. À éviter.
+- ✅ **Cookie `impersonate` signé** (HMAC, même pattern que les tokens d'enrôlement) :
+  - `startImpersonation(userType, rowKey)` — action serveur, **guard `session.isAdmin` obligatoire** — pose un cookie `impersonate` = HMAC(`userType|rowKey|exp`).
+  - `getSessionUser()` : si session admin + cookie valide → résout la ligne cible et renvoie son contexte (`userType`, `rowKey`, `clientId`) avec `impersonating: true`. Signature invalide/expirée → cookie ignoré (fail-closed).
+  - `stopImpersonation()` supprime le cookie.
+  - Ne pas toucher `device_seen` pour la cible en impersonation (ne pas faire avancer son horloge).
+- UI admin-only : section dans Settings (ou bannière) listant conciergeries + employés — l'admin voit déjà tout grâce au scope unscoped. Bannière persistante « Vue en tant que X — Quitter » pendant l'impersonation.
+- Audit minimal : `console.warn`/`email_logs`-style sur start/stop.
+- Option v2 : mode read-only pendant l'impersonation (refuse les mutations) — pas nécessaire au départ.
+
+#### Ordre
+
+Script admin d'abord (testable immédiatement en prod : 2 liens magiques), impersonation ensuite.
+
 ---
 
-## Phase D — Domaines (ex-"point 2")
+## Phase D — Domaines (ex-"point 2") ✅ FAIT
 
-- DNS : `job-conciergerie.fr` + `www.` → le déploiement unique ; `app.job-conciergerie.fr` → idem.
-- Mettre à jour : `NEXT_PUBLIC_APP_URL` (= `https://app.job-conciergerie.fr`), les liens magiques `/<id>` dans les emails (**critique** — doivent pointer `app.`), `redirect_url` Revolut, URL du webhook dans le dashboard, redirect URLs Supabase.
-- Décider du sort des anciens liens `/<id>` déjà envoyés (redirect apex → app, ou rewrite).
+- DNS : `job-conciergerie.fr` + `www.` → le déploiement unique ; `app.job-conciergerie.fr` → ajouté au projet Vercel, DNS résout déjà.
+- Routage : landing hosts = site-only — `/` → `/landing`, `/landing` + `/checkout` publics, **tout le reste → 307 `app.<domain>`**. Le proxy réémet `user_id`/`user_type` en `Domain=.job-conciergerie.fr` sur la 307 → migration transparente des credentials existants vers `app.` en un hop (localStorage réensemencé via la session).
+- Entrées : nav « Connexion » → `app./` ; hero « Déjà inscrit ? » → `app./?type=conciergerie|employee` → la home app pré-sélectionne le formulaire (le chooser reste le fallback sans param).
+- `NEXT_PUBLIC_APP_URL` = `https://app.job-conciergerie.fr` (prod + preview + development) → les liens magiques `/<id>` pointent `app.`. Les anciens liens `www./<id>` restent fonctionnels via la 307 + cookie domaine.
+- `redirect_url` Revolut : basée sur le `Host` de la requête (`/checkout` vit sur le site, pas sur `app.`).
+- Reste : URL du webhook dans le dashboard Revolut + redirect URLs Supabase (Phase G, quand les clés prod seront là). Redéploy nécessaire — `NEXT_PUBLIC_*` est inliné au build.
 
 ## Phase E — Démo (ex-"points 3/4/5")
 

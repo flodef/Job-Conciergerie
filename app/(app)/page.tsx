@@ -26,10 +26,12 @@ export default function Home() {
     [updateUserType, setShowEmployeeForm, setShowConciergerieForm],
   );
 
-  // Initialize form state once after auth finishes loading
+  // Initialize form state once after auth finishes loading. A ?type=employee|
+  // conciergerie param (from the landing's signup CTAs) pre-selects the form.
   useEffect(() => {
     if (authLoading) return;
-    handleUserTypeSelect(userType);
+    const param = new URLSearchParams(window.location.search).get('type');
+    handleUserTypeSelect(param === 'employee' || param === 'conciergerie' ? param : userType);
   }, [authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCloseForm = () => {

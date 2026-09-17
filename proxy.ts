@@ -11,9 +11,22 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 // prod, localhost in dev). demo.<domain> is reserved for Phase E — it will
 // get an x-demo marker rather than a separate branch.
 const BASE_DOMAIN = 'job-conciergerie.fr';
+const APP_HOST = `app.${BASE_DOMAIN}`;
 const LANDING_HOSTS = new Set([BASE_DOMAIN, `www.${BASE_DOMAIN}`]);
 // Site routes reachable without a session, on every host
 const SITE_PUBLIC_PATHS = new Set(['/landing', '/checkout']);
+
+// One-time credential migration: the device-id cookies were issued host-only
+// on www — re-issue them domain-wide on the redirect response so the browser
+// sends them to app.<domain> on the next request. Device ids stay raw values;
+// localStorage on the new origin is seeded from the session the cookie resolves.
+const migrateCookies = (request: NextRequest, response: NextResponse) => {
+  for (const name of ['user_id', 'user_type']) {
+    const value = request.cookies.get(name)?.value;
+    if (value) response.cookies.set(name, value, { domain: `.${BASE_DOMAIN}`, path: '/' });
+  }
+  return response;
+};
 
 // This function can be marked `async` if using `await` inside
 export async function proxy(request: NextRequest) {
@@ -60,7 +73,8 @@ export async function proxy(request: NextRequest) {
   // The host HEADER (not nextUrl.hostname — dev normalizes it to the bind
   // address) is what the platform reports.
   const host = (request.headers.get('host') ?? '').split(':')[0];
-  if (LANDING_HOSTS.has(host) && path === '/') {
+  const isLandingHost = LANDING_HOSTS.has(host);
+  if (isLandingHost && path === '/') {
     const url = request.nextUrl.clone();
     url.pathname = '/landing';
     return NextResponse.rewrite(url);
@@ -68,6 +82,17 @@ export async function proxy(request: NextRequest) {
 
   // Public site pages — no session required, on every host
   if (SITE_PUBLIC_PATHS.has(path)) return supabaseResponse;
+
+  // Landing hosts are site-only: every other path (app routes, magic /<id>
+  // links, /waiting…) lives on app.<domain>. The 307 carries the credentials
+  // across origins via the domain-wide cookie re-issue.
+  if (isLandingHost) {
+    const url = request.nextUrl.clone();
+    url.hostname = APP_HOST;
+    url.protocol = 'https:';
+    url.port = '';
+    return migrateCookies(request, NextResponse.redirect(url, 307));
+  }
 
   // Get the user ID and user type from cookies
   const userId = request.cookies.get('user_id')?.value;
