@@ -27,6 +27,10 @@ export interface SessionUser {
    * Used to authorize per-resource access (e.g. employees only touch their own missions).
    */
   rowKey: string;
+  /** Tenant of the session row (null for unmigrated/orphan rows). */
+  clientId: string | null;
+  /** Super-admin tenant — sees all rows (client_id scope disabled). */
+  isAdmin: boolean;
 }
 
 /**
@@ -54,6 +58,8 @@ interface Membership {
   seen: Map<string, number>;
   /** Row locator for the sweep's compare-and-swap UPDATE. */
   match: { table: 'employees' | 'conciergeries'; k1: string; k2?: string | null };
+  clientId: string | null;
+  isAdmin: boolean;
 }
 
 /**
@@ -73,11 +79,15 @@ async function resolveMembership(id: string): Promise<Membership | null> {
     const hid = hashId(id);
     const forms = [id, hid, `$${id}`, `$${hid}`];
     const rows = await sql`
-      SELECT 'conciergerie' AS user_type, name AS k1, NULL::text AS k2, id AS ids
-        FROM conciergeries WHERE id && ${forms}::text[]
+      SELECT 'conciergerie' AS user_type, c.name AS k1, NULL::text AS k2, c.id AS ids,
+             c.client_id, COALESCE(cl.is_admin, false) AS is_admin
+        FROM conciergeries c LEFT JOIN clients cl ON cl.id = c.client_id
+        WHERE c.id && ${forms}::text[]
       UNION ALL
-      SELECT 'employee', first_name, family_name, id
-        FROM employees WHERE id && ${forms}::text[]`;
+      SELECT 'employee', e.first_name, e.family_name, e.id, e.client_id,
+             COALESCE(cl.is_admin, false)
+        FROM employees e LEFT JOIN clients cl ON cl.id = e.client_id
+        WHERE e.id && ${forms}::text[]`;
     if (!rows.length) return null;
 
     const seen = await getDeviceSeen([...new Set(rows.flatMap(r => (r.ids as string[]).map(seenKey)))]);
@@ -106,6 +116,8 @@ async function resolveMembership(id: string): Promise<Membership | null> {
           userType === 'conciergerie'
             ? { table: 'conciergeries', k1: row.k1 as string }
             : { table: 'employees', k1: row.k1 as string, k2: row.k2 as string },
+        clientId: (row.client_id as string | null) ?? null,
+        isAdmin: Boolean(row.is_admin),
       };
     }
     return null;
@@ -137,7 +149,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     if (rotated !== id && (membership = await resolveMembership(rotated))) canonicalId = rotated;
   }
   if (!membership) return null;
-  const { userType, pending, rowKey } = membership;
+  const { userType, pending, rowKey, clientId, isAdmin } = membership;
 
   let sessionId = canonicalId;
   let rotated = false;
@@ -209,7 +221,19 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       match: membership.match,
     });
 
-  return { userId: sessionId, userType, rotated, pending, rowKey };
+  return { userId: sessionId, userType, rotated, pending, rowKey, clientId, isAdmin };
+}
+
+/**
+ * Tenant filter for scoped queries: `undefined` means unscoped (admin tenant,
+ * cron, public aggregates); otherwise the caller's `client_id`. A session
+ * without a client fails **closed** — the sentinel matches no row rather than
+ * leaking across tenants.
+ */
+export const NO_CLIENT_ID = '00000000-0000-0000-0000-000000000000';
+export function tenantScope(session: SessionUser): string | undefined {
+  if (session.isAdmin) return undefined;
+  return session.clientId ?? NO_CLIENT_ID;
 }
 
 /**

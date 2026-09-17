@@ -13,6 +13,7 @@ export interface DbConciergerie {
   color_name: string;
   notification_settings: string | null;
   plan: string;
+  client_id?: string | null;
 }
 
 /**
@@ -38,7 +39,7 @@ export function formatConciergerie(dbConciergerie: DbConciergerie) {
 export const getAllConciergeries = async () => {
   try {
     const result = await sql`
-      SELECT id, name, email, tel, color_name, notification_settings, plan
+      SELECT id, name, email, tel, color_name, notification_settings, plan, client_id
       FROM conciergeries
     `;
     return result.map(row => formatConciergerie(row as DbConciergerie));
@@ -65,7 +66,7 @@ export const updateConciergerie = async (name: string | undefined, data: Partial
         notification_settings = COALESCE(${data.notification_settings ?? null}::jsonb, notification_settings),
         plan = COALESCE(${data.plan ?? null}, plan)
       WHERE name = ${name}
-      RETURNING id, name, email, tel, color_name, notification_settings, plan
+      RETURNING id, name, email, tel, color_name, notification_settings, plan, client_id
     `;
 
     return result.length > 0 ? formatConciergerie(result[0] as DbConciergerie) : null;
@@ -81,7 +82,7 @@ export const updateConciergerie = async (name: string | undefined, data: Partial
 export const getConciergerieByName = async (name: string) => {
   try {
     const result = await sql`
-      SELECT id, name, email, tel, color_name, notification_settings, plan
+      SELECT id, name, email, tel, color_name, notification_settings, plan, client_id
       FROM conciergeries
       WHERE name = ${name}
       LIMIT 1
@@ -89,6 +90,22 @@ export const getConciergerieByName = async (name: string) => {
     return result.length > 0 ? formatConciergerie(result[0] as DbConciergerie) : null;
   } catch (error) {
     console.error(`Error fetching conciergerie ${name}:`, error);
+    return null;
+  }
+};
+
+/**
+ * The tenant owning a conciergerie — used to stamp `client_id` on rows created
+ * under it (new employees, etc.). Returns null when unknown/unset.
+ */
+export const getConciergerieClientId = async (name: string): Promise<string | null> => {
+  try {
+    const result = await sql`
+      SELECT client_id FROM conciergeries WHERE name = ${name} LIMIT 1
+    `;
+    return result.length > 0 ? (result[0].client_id as string | null) : null;
+  } catch (error) {
+    console.error(`Error fetching client_id for conciergerie ${name}:`, error);
     return null;
   }
 };

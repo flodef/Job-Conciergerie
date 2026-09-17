@@ -22,8 +22,10 @@ import {
   isValidDeviceIdsUpdate,
   requireConciergerieSession,
   requireConnectedSession,
+  tenantScope,
   verifyEnrollmentToken,
 } from '@/app/db/session';
+import { getConciergerieClientId } from '@/app/db/conciergerieDb';
 import type { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
 import { baseId, getDevices, isNewDevice, MaxDevicesError } from '@/app/utils/id';
@@ -42,7 +44,9 @@ export async function fetchEmployees(): Promise<Employee[] | null> {
   const session = await getSessionUser();
   if (!session) return null;
 
-  const employees = await getAllEmployees();
+  // Pending devices are redacted to their own row anyway — skipping the tenant
+  // filter keeps the waiting page working even on a row missing client_id.
+  const employees = await getAllEmployees(session.pending ? undefined : tenantScope(session));
   return (
     employees
       ?.map(e => {
@@ -126,6 +130,8 @@ export async function createNewEmployee(data: {
     conciergerie_name: data.conciergerieName,
     notification_settings: JSON.stringify(data.notificationSettings),
     status: 'pending',
+    // Employees belong to the tenant of the conciergerie they registered under
+    client_id: await getConciergerieClientId(data.conciergerieName),
   };
 
   return await createEmployee(dbData);
@@ -137,8 +143,9 @@ export async function createNewEmployee(data: {
 export async function updateEmployeeStatusAction(employee: Employee, status: EmployeeStatus): Promise<Employee | null> {
   // Status changes (accept/reject/delete) are the conciergerie's vetting
   // prerogative — an employee must not be able to self-accept or alter others.
-  if (!(await requireConciergerieSession())) return null;
-  return await updateEmployeeStatus(employee.firstName, employee.familyName, status);
+  const session = await requireConciergerieSession();
+  if (!session) return null;
+  return await updateEmployeeStatus(employee.firstName, employee.familyName, status, tenantScope(session));
 }
 
 /**
@@ -255,7 +262,7 @@ export async function updateEmployeeData(
     notification_settings: JSON.stringify(data.notificationSettings),
   };
 
-  return await updateEmployeeSettings(employee.firstName, employee.familyName, dbData);
+  return await updateEmployeeSettings(employee.firstName, employee.familyName, dbData, tenantScope(session));
 }
 
 /**
@@ -271,5 +278,5 @@ export async function deleteEmployeeData(employee: Employee): Promise<boolean> {
     const ids = await getEmployeeIds(employee.firstName, employee.familyName);
     if (!ids || !isRowMember(session, ids)) return false;
   }
-  return await deleteEmployee(employee.firstName, employee.familyName);
+  return await deleteEmployee(employee.firstName, employee.familyName, tenantScope(session));
 }

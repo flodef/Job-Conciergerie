@@ -10,7 +10,7 @@
 
 ---
 
-## Phase A — Sécurité (ex-"point 6")
+## Phase A — Sécurité (ex-"point 6") ✅ FAIT
 
 **Objectif** : fermer les trous sans changer le comportement visible pour les utilisateurs actuels.
 
@@ -77,7 +77,7 @@ Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restau
 
 **Réalisé** : route groups `app/(app)/` (toutes les routes existantes, URLs inchangées) et `app/(site)/` (`/landing`, `/checkout`, code partagé dans `_lib`/`_components`/`_actions`). Routes API Revolut sous `app/api/`. `global-error.tsx` rend désormais son propre `<html>` (obligatoire sans root layout partagé) et `app/global-not-found.tsx` (expérimental `globalNotFound: true` dans `next.config.ts`) couvre les 404 globales. Dispatch host dans `proxy.ts` via le header `Host` (pas `nextUrl.hostname` — normalisé en dev) : apex/www → `/` réécrit `/landing`, `/landing` + `/checkout` publics sur tous les hosts. `landing/` supprimé, `REVOLUT_SETUP.md` → `docs/`. Bonus : la navigation inter-groupes est un full page reload → aucune fuite de thème.
 
-### B.1 — Route groups + double root layout
+### B.1 — Route groups + double root layout ✅ FAIT
 
 - Supprimer `app/layout.tsx` partagé, créer :
   - `app/(app)/layout.tsx` → reprend le layout actuel (html, fonts Geist, providers, `MaintenanceCheck`, `ServiceWorkerRegister`, `h-dvh`…)
@@ -86,7 +86,7 @@ Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restau
 - `not-found.tsx` / `global-error.tsx` : sans root layout il faut `global-not-found.tsx`/`global-error.tsx` autonomes (avec leur propre `<html>`) — point délicat, à tester en build local.
 - Risque : moyen (gros `git mv`). Mitigation : tout bouger en un commit, vérifier `bun run build` + smoke test des pages.
 
-### B.2 — Porter la landing
+### B.2 — Porter la landing ✅ FAIT
 
 - `landing/app/page.tsx` → `app/(site)/landing/page.tsx` (path `/landing`)
 - `landing/app/checkout/` → `app/(site)/checkout/` (path `/checkout`)
@@ -95,7 +95,7 @@ Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restau
 - `landing/public/breton-flag.svg` → `public/`
 - Cleanup navigation : quitter la landing doit retirer `.light`/`data-theme`/`color-scheme` de `<html>` (effet de démontage dans `(site)/layout.tsx` ou dans `useTheme`) — sinon le style fuite sur l'app en navigation client-side.
 
-### B.3 — `proxy.ts` : hosts + paths publics
+### B.3 — `proxy.ts` : hosts + paths publics ✅ FAIT
 
 - Ajouter aux paths sans auth : `/landing`, `/checkout`, `/api/create-order`, `/api/revolut-webhook`, `/breton-flag.svg`.
 - Host logic (copie du pattern `handleLandingHost` de Tradiz) :
@@ -104,7 +104,7 @@ Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restau
   - Prévoir le hook `demo.` pour la Phase E (header `x-demo: 1` ou rewrite).
 - `RESERVED_PATHS` += `landing`, `checkout`.
 
-### B.4 — Env & déploiement
+### B.4 — Env & déploiement ✅ FAIT
 
 - `REVOLUT_*`, `SMTP_*`, `CONTACT_*` → `.env.local` racine + variables du hébergeur.
 - Un seul site Netlify/Vercel sert les 2 (puis 3) hosts.
@@ -118,23 +118,24 @@ Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restau
 
 **Pré-requis : Phase A.2 faite** (sinon le scoping n'a aucun sens).
 
-### C.1 — Schéma (migration additive)
+### C.1 — Schéma (migration additive) ✅ FAIT
 
-- Nouvelle table `clients` : `id uuid pk`, `name`, `email`, `plan` (`decouverte|pro|privilege`), `status`, `created_at`.
-- `client_id uuid null` sur : `conciergeries`, `employees`, `homes`, `missions`, `mission_reports`, `email_logs` (partout où c'est directement scopable — plus simple que de joindre via conciergerie).
-- Backfill : créer le client "legacy", `UPDATE … SET client_id = <legacy>` sur toutes les lignes existantes → zero downtime, comportement identique.
+- `migrations/create_clients.sql` : table `clients` (`id uuid pk`, `name`, `email`, `plan`, `status`, `is_admin`, `created_at`) + `client_id uuid null` (FK) sur `conciergeries`, `employees`, `homes`, `missions`, `mission_reports`, `email_logs` + index.
+- Backfill : un client `legacy` unique absorbe toutes les lignes existantes → zero downtime, comportement identique (CMD, Calluna, Mentheréglisse restent mutuellement visibles, comme avant). **À jouer sur prod AVANT le déploiement du code scopé** (fail-closed : `client_id NULL` → invisible aux lectures scopées).
 
-### C.2 — Modèle
+### C.2 — Modèle ✅ FAIT
 
 - `employees.client_id` (un employé appartient au client, pas à une conciergerie → le multi-conciergerie partage les employés ; `conciergerie_name` reste pour l'assignation).
-- Garder les jointures par `conciergerie_name` pour l'instant (renommer en ids = chantier à part, risqué).
-- Toi = super-admin : flag `is_admin` sur `clients` ou table `admins`, pour voir tous les tenants.
+- Jointures par `conciergerie_name` conservées (renommer en ids = chantier à part, risqué).
+- Super-admin : flag `is_admin` sur `clients` — un membre d'un client admin voit tous les tenants.
 
-### C.3 — Scoping serveur
+### C.3 — Scoping serveur ✅ FAIT
 
-- `getSessionUser()` étendu → `{ user, type, clientId }`.
-- Chaque query : `WHERE client_id = ${clientId}` (sauf super-admin).
-- Les listes `fetchEmployees`/`fetchConciergeries` ne renvoient plus que le tenant du caller — **c'est le moment où le contenu change**, à tester en preview avec un 2e client seedé.
+- `getSessionUser()` étendu → `{ …, clientId, isAdmin }` (join `clients` dans `resolveMembership`).
+- `tenantScope(session)` : `undefined` = unscoped (admin, cron, agrégats publics) ; sinon `client_id = cid` ; `clientId` NULL → sentinel qui ne matche rien (**fail-closed**).
+- Scopé : `getAllEmployees`/`getAllHomes`/`getAllMissions`/`getMissionsBy*`/`getAvailableMissionsForEmployee`/`getMissionById`/`getHomeById`/`getMissionReport(s)*` + mutations (`update*`, `delete*`, `claimLateNotification`). Stamp à l'écriture : `createHome`/`createMission`/`createMissionReport` = `session.clientId`, `createEmployee` = client de la conciergerie choisie (`getConciergerieClientId`).
+- Non scopé par design : `fetchConciergeries` (le picker d'inscription liste toutes les conciergeries), `findEmployeeByContact` (dedup global tel/email), `getExistingUserType` (proxy), cron `check-late-missions`, `email_logs` (colonne posée, non alimentée), stats landing (agrégats publics).
+- Vérifié : tenant 2 seedé → listes filtrées, sentinel → 0 ligne. E2E 26/26.
 
 ### C.4 — Abonnements / Forfaits
 

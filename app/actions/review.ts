@@ -18,7 +18,7 @@ export async function getMyReview(): Promise<Review | null> {
  * Create or update the authenticated user's review (one review per person,
  * enforced by the table's primary key). Returns the saved review.
  */
-export async function saveMyReview(rating: number, comment: string): Promise<Review | null> {
+export async function saveMyReview(rating: number, comment: string, isPublic: boolean): Promise<Review | null> {
   const session = await requireConnectedSession();
   if (!session) return null;
 
@@ -26,7 +26,7 @@ export async function saveMyReview(rating: number, comment: string): Promise<Rev
   const trimmed = comment.trim().slice(0, MAX_COMMENT_LENGTH);
   if (rating === 0 && !trimmed) return null; // nothing worth persisting
 
-  return await upsertReview(session.userType, session.rowKey, rating, trimmed);
+  return await upsertReview(session.userType, session.rowKey, rating, trimmed, isPublic);
 }
 
 /**

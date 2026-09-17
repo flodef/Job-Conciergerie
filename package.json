@@ -1,6 +1,6 @@
 {
   "name": "job-conciergerie",
-  "version": "2.389",
+  "version": "2.395",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "db:reset": "bash scripts/reset-dev-db.sh"
+    "db:reset": "bun scripts/reset-dev-db.ts"
   },
   "dependencies": {
     "@alerix/m3-loading-indicator": "latest",
