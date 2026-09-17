@@ -15,6 +15,7 @@ const baseRow: DbConciergerie = {
   tel: '0600000000',
   color_name: 'blue',
   notification_settings: null,
+  plan: 'pro',
 };
 
 describe('formatConciergerie', () => {

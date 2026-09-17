@@ -154,6 +154,7 @@ export async function updateConciergerieData(
     tel: data.tel,
     color_name: data.colorName,
     notification_settings: data.notificationSettings ? JSON.stringify(data.notificationSettings) : null,
+    plan: data.plan,
   };
 
   return await updateConciergerie(conciergerie.name, dbData);

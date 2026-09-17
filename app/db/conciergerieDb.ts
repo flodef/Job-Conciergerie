@@ -1,4 +1,5 @@
 import { sql } from '@/app/db/db';
+import type { ConciergeriePlan } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { boundDeviceIds } from '@/app/utils/id';
 import { defaultConciergerieSettings } from '@/app/utils/notifications';
@@ -11,6 +12,7 @@ export interface DbConciergerie {
   tel: string;
   color_name: string;
   notification_settings: string | null;
+  plan: string;
 }
 
 /**
@@ -25,6 +27,7 @@ export function formatConciergerie(dbConciergerie: DbConciergerie) {
     colorName: dbConciergerie.color_name,
     color: getColorValueByName(dbConciergerie.color_name),
     notificationSettings: JSON.parse(String(dbConciergerie.notification_settings)) || defaultConciergerieSettings,
+    plan: (dbConciergerie.plan ?? 'pro') as ConciergeriePlan,
   };
 }
 
@@ -35,7 +38,7 @@ export function formatConciergerie(dbConciergerie: DbConciergerie) {
 export const getAllConciergeries = async () => {
   try {
     const result = await sql`
-      SELECT id, name, email, tel, color_name, notification_settings
+      SELECT id, name, email, tel, color_name, notification_settings, plan
       FROM conciergeries
     `;
     return result.map(row => formatConciergerie(row as DbConciergerie));
@@ -59,9 +62,10 @@ export const updateConciergerie = async (name: string | undefined, data: Partial
         email = COALESCE(${data.email ?? null}, email),
         tel = COALESCE(${data.tel ?? null}, tel),
         color_name = COALESCE(${data.color_name ?? null}, color_name),
-        notification_settings = COALESCE(${data.notification_settings ?? null}::jsonb, notification_settings)
+        notification_settings = COALESCE(${data.notification_settings ?? null}::jsonb, notification_settings),
+        plan = COALESCE(${data.plan ?? null}, plan)
       WHERE name = ${name}
-      RETURNING id, name, email, tel, color_name, notification_settings
+      RETURNING id, name, email, tel, color_name, notification_settings, plan
     `;
 
     return result.length > 0 ? formatConciergerie(result[0] as DbConciergerie) : null;
@@ -77,7 +81,7 @@ export const updateConciergerie = async (name: string | undefined, data: Partial
 export const getConciergerieByName = async (name: string) => {
   try {
     const result = await sql`
-      SELECT id, name, email, tel, color_name, notification_settings
+      SELECT id, name, email, tel, color_name, notification_settings, plan
       FROM conciergeries
       WHERE name = ${name}
       LIMIT 1
