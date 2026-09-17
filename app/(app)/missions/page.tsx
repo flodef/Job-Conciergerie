@@ -73,11 +73,9 @@ export default function Missions() {
     const modalId = openModal(() => (
       <HomeForm
         mode="add"
-        onClose={() => {
-          closeModal(modalId);
-          openAddMission();
-        }}
+        onClose={() => closeModal(modalId)}
         onCancel={() => closeModal(modalId)}
+        onSuccess={openAddMission}
       />
     ));
   };
