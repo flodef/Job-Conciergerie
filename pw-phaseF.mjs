@@ -92,6 +92,57 @@ const stopImpersonation = async page => {
   }
 };
 
+// Button inside the TOPMOST fixed overlay (modals stack; hidden ones stay mounted)
+const topButton = (page, name) =>
+  page.locator('div.fixed.inset-0').last().getByRole('button', { name, exact: true }).last();
+
+// Fail fast if the styled 500 page (or a raw render error) is on screen
+const noCrash = async page => {
+  const crashed = await page
+    .getByText(/emmelée les pinceaux|Home is required/)
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (crashed) {
+    bad('500 error page visible!');
+    await page.screenshot({ path: SHOT('crash') });
+    await browser.close();
+    process.exit(1);
+  }
+};
+
+// Home details → Supprimer → confirmation Supprimer
+const deleteHome = async (page, name) => {
+  await clickInActive(page, name);
+  await page.waitForTimeout(1500);
+  await dispatchClick(page, topButton(page, 'Supprimer'));
+  await page.waitForTimeout(800);
+  await dispatchClick(page, topButton(page, 'Supprimer'));
+  await page.waitForTimeout(2000);
+};
+
+// Leftover homes from crashed runs break the zero-home regression — purge them
+const purgeTestHomes = async page => {
+  for (let i = 0; i < 5; i++) {
+    const leftover = page
+      .locator('div[style*="opacity: 1"]')
+      .getByText(/Maison (PW|ER|E2E)/)
+      .first();
+    if (!(await leftover.isVisible({ timeout: 1500 }).catch(() => false))) return;
+    await deleteHome(page, await leftover.innerText());
+  }
+};
+
+// Settings → "Votre avis" accordion — content mounts lazily after getMyReview resolves
+const openReviewSection = async page => {
+  await page
+    .getByText('Votre avis', { exact: true })
+    .first()
+    .evaluate(e => e.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+  await page.waitForSelector('#review-comment', { timeout: 15000 });
+};
+const reviewForm = page => page.locator('div.space-y-2', { has: page.locator('#review-comment') }).first();
+
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 const page = await ctx.newPage();
@@ -114,9 +165,113 @@ const demoBanner = await page
   .first()
   .isVisible({ timeout: 15000 })
   .catch(() => false);
-if (demoBanner) ok('demo banner visible'); else bad('demo banner MISSING');
+if (demoBanner) ok('demo banner visible');
+else bad('demo banner MISSING');
 await page.screenshot({ path: SHOT('01-login') });
 await closeChangelog(page);
+
+// ---------- 1b. Zero-home regression: mission → add-home → Annuler ----------
+// The demo admin has zero homes by seed — the only path to the "Aucun bien
+// disponible" branch. Regression: Annuler used to chain into openAddMission
+// via onClose, and MissionForm crashed with 'Home is required' (500 page).
+console.log('=== 1b. Zero-home: add-mission → add-home → Annuler ===');
+await navTo(page, 'Biens', 'Biens');
+await purgeTestHomes(page);
+await navTo(page, 'Missions', 'ission');
+await closeChangelog(page);
+await clickFab(page);
+await page.waitForTimeout(1200);
+const noHomeModal = await page
+  .getByText('Aucun bien disponible')
+  .first()
+  .isVisible()
+  .catch(() => false);
+if (!noHomeModal) {
+  bad('no-home prompt MISSING (admin should have zero homes)');
+  await browser.close();
+  process.exit(1);
+}
+ok('"Aucun bien disponible" prompt shown');
+await page.screenshot({ path: SHOT('01b-nohome') });
+await dispatchClick(page, topButton(page, 'Ajouter un bien'));
+await page.waitForSelector('#title', { timeout: 8000 });
+ok('HomeForm opened');
+await dispatchClick(page, topButton(page, 'Annuler'));
+await page.waitForTimeout(1500);
+await noCrash(page);
+const missionFormOpened = await page
+  .locator('#home-select')
+  .isVisible()
+  .catch(() => false);
+if (missionFormOpened) bad('MissionForm opened after Annuler (regression)');
+else ok('Annuler closed cleanly — no MissionForm, back on missions');
+await page.screenshot({ path: SHOT('01b-after-cancel') });
+
+// ---------- 1c. Success chain: add home → MissionForm opens preselected ----------
+console.log('=== 1c. Add home → MissionForm chained ===');
+const ADMIN_HOME = `Maison ER ${Date.now() % 100000}`;
+await clickFab(page);
+await page.waitForTimeout(1200);
+await dispatchClick(page, topButton(page, 'Ajouter un bien'));
+await page.waitForSelector('#title', { timeout: 8000 });
+await page.locator('input[type=file]').first().setInputFiles('/tmp/test-photo.png');
+await page.waitForTimeout(800);
+await page.locator('#title').fill(ADMIN_HOME);
+await page.locator('#geographic-zone').click();
+await page.waitForTimeout(400);
+await page.getByRole('option').first().click();
+await page.locator('#description').fill('Bien temporaire créé par le test E2E.');
+await page.locator('#hours-of-cleaning').click();
+await page.getByRole('option', { name: '2' }).first().click();
+await page.locator('textarea[placeholder^="Description"]').first().fill('Objectif E2E');
+await page.waitForTimeout(300);
+await dispatchClick(page, topButton(page, 'Ajouter'));
+await page.waitForTimeout(2500);
+await noCrash(page);
+const chained = await page
+  .locator('#home-select')
+  .isVisible()
+  .catch(() => false);
+if (!chained) {
+  bad('MissionForm did NOT open after home creation');
+  await browser.close();
+  process.exit(1);
+}
+ok('MissionForm opened after home creation');
+const preselected = await page
+  .locator('#home-select')
+  .inputValue()
+  .catch(() => '');
+if (preselected === ADMIN_HOME) ok(`new home preselected ("${preselected}")`);
+else bad(`preselection: "${preselected}"`);
+await dispatchClick(page, topButton(page, 'Annuler'));
+await page.waitForTimeout(800);
+const confirmClose = topButton(page, 'Fermer'); // unsaved-changes modal, if shown
+if (await confirmClose.isVisible().catch(() => false)) await dispatchClick(page, confirmClose);
+await page.waitForTimeout(1000);
+await page.screenshot({ path: SHOT('01c-chained') });
+
+// ---------- 1d. Restore the admin's zero-home seed state ----------
+console.log('=== 1d. Cleanup test home ===');
+await navTo(page, 'Biens', 'Biens');
+await page.waitForTimeout(800);
+if (
+  await page
+    .getByText(ADMIN_HOME)
+    .first()
+    .isVisible()
+    .catch(() => false)
+) {
+  await deleteHome(page, ADMIN_HOME);
+  const stillThere = await page
+    .getByText(ADMIN_HOME)
+    .first()
+    .isVisible()
+    .catch(() => false);
+  if (stillThere) bad('test home still listed');
+  else ok('test home deleted');
+} else bad('test home not found in Biens');
+await page.screenshot({ path: SHOT('01d-deleted') });
 
 // ---------- 2. Impersonate Conciergerie Azur ----------
 console.log('=== 2. Impersonate Conciergerie Azur ===');
@@ -126,7 +281,8 @@ const impBanner = await page
   .first()
   .isVisible()
   .catch(() => false);
-if (impBanner) ok('impersonation banner visible'); else bad('impersonation banner MISSING');
+if (impBanner) ok('impersonation banner visible');
+else bad('impersonation banner MISSING');
 await page.screenshot({ path: SHOT('02-impersonate') });
 
 // ---------- 3. Create a home (duo-enabled) ----------
@@ -170,7 +326,8 @@ const homeVisible = await page
   .first()
   .isVisible()
   .catch(() => false);
-if (homeVisible) ok(`home "${HOME}" created`); else bad('home NOT in list');
+if (homeVisible) ok(`home "${HOME}" created`);
+else bad('home NOT in list');
 await page.screenshot({ path: SHOT('03-home') });
 
 // ---------- 4. Create a mission starting soon, ends +4h ----------
@@ -232,7 +389,8 @@ const missionVisible = await page
   .first()
   .isVisible()
   .catch(() => false);
-if (missionVisible) ok('mission created & listed'); else bad('mission NOT listed');
+if (missionVisible) ok('mission created & listed');
+else bad('mission NOT listed');
 await page.screenshot({ path: SHOT('05-mission-list') });
 
 // ---------- 5. Impersonate employee Léa Morvan → accept ----------
@@ -279,7 +437,9 @@ const openMissionDetails = async page => {
       )
         return true;
       await closeTopModal(page);
-    } catch { /* modal already closed */ }
+    } catch {
+      /* modal already closed */
+    }
   }
   return false;
 };
@@ -353,7 +513,8 @@ const hist = await page
   .first()
   .isVisible()
   .catch(() => false);
-if (hist) ok('mission visible in history'); else bad('mission NOT in history');
+if (hist) ok('mission visible in history');
+else bad('mission NOT in history');
 await page.screenshot({ path: SHOT('11-history') });
 
 // ---------- 8. Back to admin, verify report as conciergerie ----------
@@ -380,7 +541,8 @@ const histC = await active
   .first()
   .isVisible()
   .catch(() => false);
-if (histC) ok('mission in conciergerie completed list'); else bad('mission NOT in conciergerie completed list');
+if (histC) ok('mission in conciergerie completed list');
+else bad('mission NOT in conciergerie completed list');
 if (histC) {
   await clickInActive(page, HOME);
   await page.waitForTimeout(1800);
@@ -389,9 +551,88 @@ if (histC) {
     .first()
     .isVisible()
     .catch(() => false);
-  if (reportText) ok('report visible to conciergerie'); else bad('report NOT visible');
+  if (reportText) ok('report visible to conciergerie');
+  else bad('report NOT visible');
   await page.screenshot({ path: SHOT('13-report-view') });
 }
+
+// ---------- 9. Review settings (still impersonating Conciergerie Azur) ----------
+// Reviews upsert per (userType, rowKey); user_type CHECK excludes 'admin', so
+// this must run on an impersonated conciergerie/employee session.
+console.log('=== 9. Review settings ===');
+await closeTopModal(page); // step 8 leaves the mission details modal open
+await navTo(page, 'Paramètres', 'Votre avis');
+await closeChangelog(page);
+await openReviewSection(page);
+
+// Clean slate first: a leftover review shows "Modifier mon avis" instead of
+// "Publier mon avis" and pre-fills the stars (clicking 5 would toggle back to 0)
+const existingDelete = reviewForm(page).getByRole('button', { name: 'Supprimer', exact: true });
+if (await existingDelete.isVisible().catch(() => false)) {
+  await dispatchClick(page, existingDelete);
+  await reviewForm(page).getByRole('button', { name: 'Publier mon avis', exact: true }).waitFor({ timeout: 10000 });
+  ok('pre-existing review removed (clean slate)');
+}
+
+const COMMENT = `Avis E2E ${Date.now() % 100000} — outil au top, je recommande.`;
+await dispatchClick(page, reviewForm(page).locator('button[aria-label="5 étoiles"]'));
+await reviewForm(page).locator('#review-comment').fill(COMMENT);
+await dispatchClick(page, reviewForm(page).getByRole('button', { name: 'Publier mon avis', exact: true }));
+const editBtn = await reviewForm(page)
+  .getByRole('button', { name: 'Modifier mon avis', exact: true })
+  .waitFor({ timeout: 10000 })
+  .then(() => true)
+  .catch(() => false);
+if (editBtn) ok('review saved → "Modifier mon avis" shown');
+else bad('review save failed');
+await page.screenshot({ path: SHOT('14-review') });
+
+// Persistence: leave settings, come back, reopen the section
+await navTo(page, 'Missions', 'ission');
+await navTo(page, 'Paramètres', 'Votre avis');
+await openReviewSection(page);
+const persisted =
+  (await page
+    .locator('button[aria-label="5 étoiles"][aria-checked="true"]')
+    .isVisible()
+    .catch(() => false)) &&
+  (await reviewForm(page)
+    .locator('#review-comment')
+    .inputValue()
+    .catch(() => '')) === COMMENT;
+if (persisted) ok('review persisted (5 stars + comment)');
+else bad('review NOT persisted');
+
+// Public landing testimonial — soft check: /landing server-action useEffects are
+// flaky on the dev server (verified working in production).
+console.log('  landing check (soft)…');
+await page.goto(`${BASE}/landing`, { waitUntil: 'domcontentloaded' });
+const onLanding = await page
+  .getByText(COMMENT)
+  .first()
+  .waitFor({ state: 'visible', timeout: 20000 })
+  .then(() => true)
+  .catch(() => false);
+if (onLanding) ok('review comment on landing testimonials');
+else console.log('  ~ review NOT on landing (dev hydration lag — non-blocking)');
+await page.screenshot({ path: SHOT('15-landing') });
+
+// Delete the review — restores seed state (no reviews are seeded)
+await page.goto(`${BASE}/missions`, { waitUntil: 'domcontentloaded' });
+await page.waitForSelector('nav.fixed.bottom-0', { timeout: 30000 });
+await page.waitForTimeout(4000); // fresh load: let hydration settle before nav clicks
+await navTo(page, 'Paramètres', 'Votre avis');
+await closeChangelog(page);
+await openReviewSection(page);
+await dispatchClick(page, reviewForm(page).getByRole('button', { name: 'Supprimer', exact: true }));
+const publishBack = await reviewForm(page)
+  .getByRole('button', { name: 'Publier mon avis', exact: true })
+  .waitFor({ timeout: 10000 })
+  .then(() => true)
+  .catch(() => false);
+if (publishBack) ok('review deleted → "Publier mon avis" back');
+else bad('review delete failed');
+await page.screenshot({ path: SHOT('16-review-deleted') });
 
 await browser.close();
 console.log('=== DONE ===');
