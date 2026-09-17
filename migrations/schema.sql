@@ -9,7 +9,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ySvOXnQm6NtEPiapfckdXjIRH6r6XwfLt56QSt6fjKg29ux6TYkzD8PDywvGZk5
+\restrict 0Vsq5KtO7WqyFc3l9biX3ByOjAjsh50vmuELhSnSWqwIwh86M4bd8FiKFQ2q1Dv
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1)
@@ -30,7 +30,14 @@ SET row_security = off;
 -- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE SCHEMA IF NOT EXISTS public;
+CREATE SCHEMA public;
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
@@ -161,6 +168,23 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: clients; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.clients (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    email text,
+    plan text DEFAULT 'decouverte'::text NOT NULL,
+    status text DEFAULT 'active'::text NOT NULL,
+    is_admin boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT clients_plan_check CHECK ((plan = ANY (ARRAY['decouverte'::text, 'pro'::text, 'privilege'::text]))),
+    CONSTRAINT clients_status_check CHECK ((status = ANY (ARRAY['active'::text, 'suspended'::text])))
+);
+
+
+--
 -- Name: conciergeries; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -172,6 +196,7 @@ CREATE TABLE public.conciergeries (
     color_name text NOT NULL,
     notification_settings jsonb,
     plan text DEFAULT 'pro'::text NOT NULL,
+    client_id uuid,
     CONSTRAINT conciergeries_plan_check CHECK ((plan = ANY (ARRAY['decouverte'::text, 'pro'::text, 'privilege'::text]))),
     CONSTRAINT valid_color_name CHECK ((color_name = ANY (ARRAY['Rose'::text, 'Orange'::text, 'Vert'::text, 'Bleu'::text, 'Violet'::text, 'Gris'::text])))
 );
@@ -199,7 +224,8 @@ CREATE TABLE public.email_logs (
     success boolean NOT NULL,
     error text,
     sent_at timestamp with time zone DEFAULT now() NOT NULL,
-    body text
+    body text,
+    client_id uuid
 );
 
 
@@ -220,6 +246,7 @@ CREATE TABLE public.employees (
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     geographic_zone text,
     uuid uuid DEFAULT gen_random_uuid() NOT NULL,
+    client_id uuid,
     CONSTRAINT concierges_status_check CHECK ((status = ANY (ARRAY[('pending'::character varying)::text, ('accepted'::character varying)::text, ('rejected'::character varying)::text])))
 );
 
@@ -256,6 +283,7 @@ CREATE TABLE public.homes (
     allow_duo boolean DEFAULT false NOT NULL,
     max_travellers integer DEFAULT 1,
     notes text,
+    client_id uuid,
     CONSTRAINT homes_images_check CHECK ((array_length(images, 1) >= 1)),
     CONSTRAINT homes_objectives_check CHECK ((array_length(objectives, 1) >= 1))
 );
@@ -273,7 +301,8 @@ CREATE TABLE public.mission_reports (
     employee_id text NOT NULL,
     content text DEFAULT ''::text NOT NULL,
     images text[] DEFAULT '{}'::text[] NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    client_id uuid
 );
 
 
@@ -298,6 +327,7 @@ CREATE TABLE public.missions (
     allow_duo boolean DEFAULT false,
     travellers integer DEFAULT 1,
     conciergerie_comment text,
+    client_id uuid,
     CONSTRAINT check_mission_status CHECK (((status IS NULL) OR (status = ANY (ARRAY['accepted'::text, 'started'::text, 'completed'::text])))),
     CONSTRAINT missions_tasks_check CHECK ((array_length(tasks, 1) >= 1))
 );
@@ -331,6 +361,14 @@ CREATE TABLE public.reviews (
     CONSTRAINT reviews_rating_check CHECK (((rating >= 0) AND (rating <= 5))),
     CONSTRAINT reviews_user_type_check CHECK ((user_type = ANY (ARRAY['conciergerie'::text, 'employee'::text])))
 );
+
+
+--
+-- Name: clients clients_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.clients
+    ADD CONSTRAINT clients_pkey PRIMARY KEY (id);
 
 
 --
@@ -446,6 +484,13 @@ ALTER TABLE ONLY public.employees
 
 
 --
+-- Name: idx_employees_client_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_employees_client_id ON public.employees USING btree (client_id);
+
+
+--
 -- Name: idx_failed_emails_retry; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -453,10 +498,31 @@ CREATE INDEX idx_failed_emails_retry ON public.failed_emails USING btree (last_a
 
 
 --
+-- Name: idx_homes_client_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_homes_client_id ON public.homes USING btree (client_id);
+
+
+--
+-- Name: idx_mission_reports_client_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_mission_reports_client_id ON public.mission_reports USING btree (client_id);
+
+
+--
 -- Name: idx_mission_reports_mission_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_mission_reports_mission_id ON public.mission_reports USING btree (mission_id);
+
+
+--
+-- Name: idx_missions_client_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_missions_client_id ON public.missions USING btree (client_id);
 
 
 --
@@ -488,11 +554,51 @@ CREATE TRIGGER update_mission_modified_date BEFORE UPDATE ON public.missions FOR
 
 
 --
+-- Name: conciergeries conciergeries_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.conciergeries
+    ADD CONSTRAINT conciergeries_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id);
+
+
+--
+-- Name: email_logs email_logs_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.email_logs
+    ADD CONSTRAINT email_logs_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id);
+
+
+--
+-- Name: employees employees_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.employees
+    ADD CONSTRAINT employees_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id);
+
+
+--
 -- Name: missions fk_home; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.missions
     ADD CONSTRAINT fk_home FOREIGN KEY (home_id) REFERENCES public.homes(id) ON DELETE CASCADE;
+
+
+--
+-- Name: homes homes_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.homes
+    ADD CONSTRAINT homes_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id);
+
+
+--
+-- Name: mission_reports mission_reports_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.mission_reports
+    ADD CONSTRAINT mission_reports_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id);
 
 
 --
@@ -504,8 +610,16 @@ ALTER TABLE ONLY public.mission_reports
 
 
 --
+-- Name: missions missions_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.missions
+    ADD CONSTRAINT missions_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ySvOXnQm6NtEPiapfckdXjIRH6r6XwfLt56QSt6fjKg29ux6TYkzD8PDywvGZk5
+\unrestrict 0Vsq5KtO7WqyFc3l9biX3ByOjAjsh50vmuELhSnSWqwIwh86M4bd8FiKFQ2q1Dv
 
