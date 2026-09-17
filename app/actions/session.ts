@@ -7,7 +7,19 @@ import { getSessionUser, type SessionUser } from '@/app/db/session';
  * Called by the auth provider on every data refresh so the client can converge
  * its localStorage/cookie to the canonical (rotated) id.
  */
-export async function syncSession(): Promise<Pick<SessionUser, 'userId' | 'userType' | 'pending'> | null> {
+export async function syncSession(): Promise<Pick<
+  SessionUser,
+  'userId' | 'userType' | 'pending' | 'rowKey' | 'isAdmin' | 'impersonating'
+> | null> {
   const session = await getSessionUser();
-  return session ? { userId: session.userId, userType: session.userType, pending: session.pending } : null;
+  return session
+    ? {
+        userId: session.userId,
+        userType: session.userType,
+        pending: session.pending,
+        rowKey: session.rowKey,
+        isAdmin: session.isAdmin,
+        impersonating: session.impersonating ?? false,
+      }
+    : null;
 }

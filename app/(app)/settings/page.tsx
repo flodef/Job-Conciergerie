@@ -5,6 +5,7 @@ import ChangelogModal from '@/app/components/changelogModal';
 import M3LoadingSpinner from '@/app/components/m3LoadingSpinner';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useModal } from '@/app/contexts/modalProvider';
+import AdminSettings from '@/app/(app)/settings/components/adminSettings';
 import ConciergerieSettings from '@/app/(app)/settings/components/conciergerieSettings';
 import ConnectedDevicesSettings from '@/app/(app)/settings/components/connectedDevicesSettings';
 import EmployeeSettings from '@/app/(app)/settings/components/employeeSettings';
@@ -12,11 +13,11 @@ import NotificationSettings from '@/app/(app)/settings/components/notificationSe
 import ReviewSettings from '@/app/(app)/settings/components/reviewSettings';
 import { MAX_DEVICES } from '@/app/utils/id';
 import packageJson from '@/package.json';
-import { IconBell, IconDevices, IconInfoCircle, IconSettings, IconStar } from '@tabler/icons-react';
+import { IconBell, IconDevices, IconEye, IconInfoCircle, IconSettings, IconStar } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
 export default function Settings() {
-  const { userType, isLoading: authLoading, userData } = useAuth();
+  const { userType, isLoading: authLoading, userData, isAdmin } = useAuth();
   const { openModal, closeModal } = useModal();
 
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -80,6 +81,15 @@ export default function Settings() {
       icon: <IconDevices size={20} />,
       content: <ConnectedDevicesSettings />,
     },
+    ...(isAdmin
+      ? [
+          {
+            title: 'Administration',
+            icon: <IconEye size={20} />,
+            content: <AdminSettings />,
+          },
+        ]
+      : []),
   ];
 
   if (!hasLoadedOnce) return <M3LoadingSpinner />;

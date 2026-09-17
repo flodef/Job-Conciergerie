@@ -6,7 +6,9 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import { cookies } from 'next/headers';
 
 const USER_ID_COOKIE = 'user_id';
+const IMPERSONATE_COOKIE = 'impersonate';
 const COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 days, same as the client-side cookie
+const IMPERSONATE_TTL = 4 * 60 * 60; // 4 hours — a testing session, not a permanent grant
 
 export interface SessionUser {
   /** Canonical credential id (rotated v2 form when a legacy id was migrated). */
@@ -31,6 +33,11 @@ export interface SessionUser {
   clientId: string | null;
   /** Super-admin tenant — sees all rows (client_id scope disabled). */
   isAdmin: boolean;
+  /**
+   * True when an admin session is viewing the app as another row: userType,
+   * rowKey and clientId are the TARGET's, not the admin's.
+   */
+  impersonating?: boolean;
 }
 
 /**
@@ -221,6 +228,28 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       match: membership.match,
     });
 
+  // Impersonation: a connected admin session carrying a valid signed
+  // `impersonate` cookie sees the app as the target row (its userType, rowKey
+  // and clientId — including the tenant scope the target lives under).
+  if (isAdmin && !pending) {
+    const target = await resolveImpersonationTarget();
+    if (target)
+      return {
+        userId: sessionId,
+        userType: target.userType,
+        rotated,
+        pending,
+        rowKey: target.rowKey,
+        clientId: target.clientId,
+        // The REAL identity stays admin — impersonation must not strip the
+        // controls (stop action, admin UI) that depend on it. Data queries
+        // still scope to the target tenant via tenantScope's impersonating
+        // branch.
+        isAdmin: true,
+        impersonating: true,
+      };
+  }
+
   return { userId: sessionId, userType, rotated, pending, rowKey, clientId, isAdmin };
 }
 
@@ -232,7 +261,9 @@ export async function getSessionUser(): Promise<SessionUser | null> {
  */
 export const NO_CLIENT_ID = '00000000-0000-0000-0000-000000000000';
 export function tenantScope(session: SessionUser): string | undefined {
-  if (session.isAdmin) return undefined;
+  // An impersonating admin keeps isAdmin (controls) but sees the target's
+  // tenant — otherwise the "view as" would leak every tenant's rows.
+  if (session.isAdmin && !session.impersonating) return undefined;
   return session.clientId ?? NO_CLIENT_ID;
 }
 
@@ -258,6 +289,8 @@ export async function requireConciergerieSession(): Promise<SessionUser | null> 
  */
 export function isRowMember(session: SessionUser, ids: string[]): boolean {
   if (session.pending) return false;
+  // Impersonating admins act as the row — membership checks pass for the target.
+  if (session.impersonating) return true;
   // Stored ids are hashed at rest — match either domain (transition-safe).
   const creds = new Set([session.userId, hashId(session.userId)]);
   return ids.some(i => !isNewDevice(i) && creds.has(baseId(i)));
@@ -346,4 +379,100 @@ export function isValidDeviceIdsUpdate(oldIds: string[], newIds: string[], sessi
   const oldConnected = oldIds.filter(i => !i.startsWith('$')).map(baseId);
   if (!oldConnected.some(i => sessionIds.has(i))) return false;
   return newIds.map(baseId).every(i => oldBase.includes(i) || sessionIds.has(i));
+}
+
+// ------------------------------------------------------------------
+// Impersonation — a signed `impersonate` cookie lets a connected admin
+// session view the app as another row (Phase C.5).
+// Stateless signed cookie: `${userType}|${rowKey}|${expiresAt}.${hmac}`.
+// ------------------------------------------------------------------
+
+const impersonationPayload = (userType: string, rowKey: string, exp: number) =>
+  `impersonate|${userType}|${rowKey}|${exp}`;
+
+/**
+ * Sign an impersonation cookie value for the actions layer.
+ * Returns '' when no signing secret is configured (impersonation fails closed).
+ */
+export function impersonationToken(userType: UserType, rowKey: string): string {
+  const key = hmacSecret();
+  if (!key) return '';
+  const exp = Math.floor(Date.now() / 1000) + IMPERSONATE_TTL;
+  const sig = createHmac('sha256', key)
+    .update(impersonationPayload(userType, rowKey, exp))
+    .digest('hex')
+    .slice(0, 32);
+  return `${userType}|${rowKey}|${exp}.${sig}`;
+}
+
+export const impersonateCookieName = IMPERSONATE_COOKIE;
+export const impersonateCookieMaxAge = IMPERSONATE_TTL;
+
+/**
+ * Verify a raw `impersonate` cookie value. Returns the bound target on a valid,
+ * unexpired signature — null on anything unexpected (fail-closed).
+ */
+export function verifyImpersonationToken(raw: string | undefined): { userType: UserType; rowKey: string } | null {
+  const key = hmacSecret();
+  if (!raw || !key) return null;
+
+  const dot = raw.lastIndexOf('.');
+  if (dot === -1) return null;
+  const payload = raw.slice(0, dot);
+  const sig = raw.slice(dot + 1);
+  const parts = payload.split('|');
+  const userType = parts[0] as UserType;
+  const exp = Number(parts[parts.length - 1]);
+  const rowKey = parts.slice(1, -1).join('|'); // rowKey may contain '|' — never trust naive split
+  if (!rowKey || (userType !== 'conciergerie' && userType !== 'employee')) return null;
+  if (!exp || exp < Math.floor(Date.now() / 1000)) return null;
+
+  const expected = createHmac('sha256', key)
+    .update(impersonationPayload(userType, rowKey, exp))
+    .digest('hex')
+    .slice(0, 32);
+  if (sig.length !== expected.length || !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+  return { userType, rowKey };
+}
+
+/**
+ * Read and validate the `impersonate` cookie, then resolve the target row's
+ * context. Returns null on anything unexpected — fail-closed, the caller just
+ * sees the real (admin) session instead.
+ */
+async function resolveImpersonationTarget(): Promise<{
+  userType: UserType;
+  rowKey: string;
+  clientId: string | null;
+  isAdmin: boolean;
+} | null> {
+  try {
+    const raw = (await cookies()).get(IMPERSONATE_COOKIE)?.value;
+    const verified = verifyImpersonationToken(raw);
+    if (!verified) return null;
+    const { userType, rowKey } = verified;
+
+    const rows = await sql`
+      SELECT 'conciergerie' AS user_type, c.name AS row_key, c.client_id,
+             COALESCE(cl.is_admin, false) AS is_admin
+        FROM conciergeries c LEFT JOIN clients cl ON cl.id = c.client_id
+        WHERE ${userType} = 'conciergerie' AND c.name = ${rowKey}
+      UNION ALL
+      SELECT 'employee', e.first_name || ' ' || e.family_name, e.client_id,
+             COALESCE(cl.is_admin, false)
+        FROM employees e LEFT JOIN clients cl ON cl.id = e.client_id
+        WHERE ${userType} = 'employee' AND e.first_name || ' ' || e.family_name = ${rowKey}`;
+    const row = rows[0];
+    if (!row) return null;
+
+    return {
+      userType: row.user_type as UserType,
+      rowKey: row.row_key as string,
+      clientId: (row.client_id as string | null) ?? null,
+      isAdmin: Boolean(row.is_admin),
+    };
+  } catch (error) {
+    console.error('Error resolving impersonation target:', error);
+    return null;
+  }
 }

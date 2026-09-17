@@ -1,5 +1,6 @@
 'use client';
 
+import { stopImpersonation } from '@/app/actions/admin';
 import ChangelogModal from '@/app/components/changelogModal';
 import InstallToast from '@/app/components/installToast';
 import { PageManager } from '@/app/components/pageManager';
@@ -20,10 +21,12 @@ import {
   IconBriefcase,
   IconCalendar,
   IconClockHour3,
+  IconEye,
   IconHome,
   IconRefresh,
   IconSettings,
   IconUser,
+  IconX,
 } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import React, { useEffect, useState } from 'react';
@@ -43,7 +46,14 @@ export const pageSettings: Record<Page, { icon: ReactNode; userType: UserType | 
 };
 
 export default function NavigationLayout({ children }: { children: ReactNode }) {
-  const { userType: authUserType, isLoading: isAuthLoading, isEmployee, isConciergerie } = useAuth();
+  const {
+    userType: authUserType,
+    isLoading: isAuthLoading,
+    isEmployee,
+    isConciergerie,
+    impersonating,
+    impersonatedName,
+  } = useAuth();
 
   // Add nice scrollbar styling
   React.useEffect(() => {
@@ -183,11 +193,44 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
     onMenuChange(page);
   };
 
+  // Banner stack: impersonation first, then the update banner — header and
+  // content shift down by the total count (2.5rem each).
+  const bannerCount = (impersonating ? 1 : 0) + (updateAvailable ? 1 : 0);
+  const headerTopClass = bannerCount === 2 ? 'top-20' : bannerCount === 1 ? 'top-10' : 'top-0';
+  const mainPtClass = bannerCount === 2 ? 'pt-36' : bannerCount === 1 ? 'pt-26' : 'pt-16';
+
+  const handleStopImpersonation = async () => {
+    await stopImpersonation();
+    window.location.reload();
+  };
+
   return (
     <div className="h-dvh flex flex-col">
+      {/* Impersonation banner - admin viewing the app as another row */}
+      {impersonating && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 text-white text-sm">
+          <IconEye size={14} />
+          <span>
+            Vue en tant que <strong>{impersonatedName}</strong>
+          </span>
+          <button
+            onClick={handleStopImpersonation}
+            className="flex items-center gap-1 font-semibold underline underline-offset-2 whitespace-nowrap cursor-pointer"
+          >
+            <IconX size={14} />
+            Quitter
+          </button>
+        </div>
+      )}
+
       {/* Update available banner - sits above the header */}
       {updateAvailable && (
-        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 bg-primary px-4 py-2 text-white text-sm">
+        <div
+          className={cn(
+            'fixed left-0 right-0 z-50 flex items-center justify-center gap-2 bg-primary px-4 py-2 text-white text-sm',
+            impersonating ? 'top-10' : 'top-0',
+          )}
+        >
           <span>Une nouvelle version est disponible</span>
           <button
             onClick={() => window.location.reload()}
@@ -204,7 +247,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
         <header
           className={cn(
             'fixed left-0 right-0 mx-auto h-16 flex items-center justify-between px-4 w-full z-40 transition-all duration-200 bg-background',
-            updateAvailable ? 'top-10' : 'top-0',
+            headerTopClass,
             isScrolled ? 'shadow-md' : '',
           )}
         >
@@ -220,12 +263,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {showChangelog && <ChangelogModal onClose={dismissChangelog} />}
 
       {/* Main content */}
-      <main
-        className={cn(
-          'flex-1 relative overflow-hidden',
-          isNavigationPage && !!userType && (updateAvailable ? 'pt-26' : 'pt-16'),
-        )}
-      >
+      <main className={cn('flex-1 relative overflow-hidden', isNavigationPage && !!userType && mainPtClass)}>
         {/* Content wrapper - scrollable when content is long */}
         <div
           className={cn(
