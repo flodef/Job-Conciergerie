@@ -380,11 +380,14 @@ function StatsBar() {
     { target: stats ? roundToMagnitude(stats.missionCount) : null, format: formatCount, label: 'Missions gérées' },
     { target: stats ? roundToMagnitude(stats.homeCount) : null, format: formatCount, label: 'Logements actifs' },
     { target: 99.9, format: formatPercent, label: 'Disponibilité' },
-    {
-      target: stats?.averageRating ?? null,
-      format: formatRating,
-      label: 'Satisfaction',
-    },
+    // No reviews yet → swap the rating for the active-provider count.
+    stats?.averageRating != null
+      ? { target: stats.averageRating, format: formatRating, label: 'Satisfaction' }
+      : {
+          target: stats ? roundToMagnitude(stats.employeeCount) : null,
+          format: formatCount,
+          label: 'Prestataires actifs',
+        },
   ];
 
   return (
