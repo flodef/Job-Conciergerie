@@ -1,10 +1,13 @@
 'use client'; // Error components must be Client Components
 
+// global-error replaces the root layout — with route groups there is no shared
+// one, so it must render its own <html>/<body> and import its own styles.
+import './(app)/globals.css';
 // inspired by https://codepen.io/altreiter/pen/EedZRQ
 import { cn } from '@/app/utils/className';
 import { Open_Sans } from 'next/font/google';
 import Link from 'next/link';
-import type { SyntheticEvent} from 'react';
+import type { SyntheticEvent } from 'react';
 import { useEffect } from 'react';
 
 const email = 'flo@fims.fi';
@@ -41,36 +44,38 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
   const zeroBClassName = zeroClassName.replaceAll('$', 'b') + ' ' + crossClassName;
 
   return (
-    <div className={openSans.className}>
-      <div
-        className={cn(
-          'mt-10 overflow-hidden flex flex-col items-center justify-center font-bold',
-          'uppercase text-[3vmin] text-center text-theme-content dark:text-dark-theme-content',
-        )}
-      >
-        <p className="px-6 z-10">
-          Oups ! L&apos;appli s&apos;est emmelée les pinceaux ... <br />
-          Merci de me le signaler à{' '}
-          <Link target="_blank" href={`mailto:${email}?subject=Erreur innatendue sur ${window.location}`}>
-            {email}
-          </Link>
-        </p>
-        <div className="group z-0">
-          <h1
+    <html lang="fr">
+      <body>
+        <div className={openSans.className}>
+          <div
             className={cn(
-              'text-white text-[50vmin] text-center relative mb-[5vmin] mt-[-10vmin] cursor-pointer group-hover:scale-110',
-              "group-hover:before:animate-flipReverse before:content-['('] before:absolute before:-rotate-90",
-              'before:right-[25vmin] before:bottom-[-30vmin] before:block before:text-[115%] before:animate-flip',
-              'transition-transform duration-300',
+              'mt-10 overflow-hidden flex flex-col items-center justify-center font-bold',
+              'uppercase text-[3vmin] text-center text-theme-content dark:text-dark-theme-content',
             )}
-            style={{ textShadow: '0 1vmin 5vmin rgba(0, 0, 0, 0.5)' }}
-            onClick={retry}
-            onKeyDown={retry}
           >
-            <span className="five">5</span>
-            <span className={zeroAClassName}>0</span>
-            <span className={zeroBClassName}>0</span>
-            {/* <span
+            <p className="px-6 z-10">
+              Oups ! L&apos;appli s&apos;est emmelée les pinceaux ... <br />
+              Merci de me le signaler à{' '}
+              <Link target="_blank" href={`mailto:${email}?subject=Erreur innatendue sur ${window.location}`}>
+                {email}
+              </Link>
+            </p>
+            <div className="group z-0">
+              <h1
+                className={cn(
+                  'text-white text-[50vmin] text-center relative mb-[5vmin] mt-[-10vmin] cursor-pointer group-hover:scale-110',
+                  "group-hover:before:animate-flipReverse before:content-['('] before:absolute before:-rotate-90",
+                  'before:right-[25vmin] before:bottom-[-30vmin] before:block before:text-[115%] before:animate-flip',
+                  'transition-transform duration-300',
+                )}
+                style={{ textShadow: '0 1vmin 5vmin rgba(0, 0, 0, 0.5)' }}
+                onClick={retry}
+                onKeyDown={retry}
+              >
+                <span className="five">5</span>
+                <span className={zeroAClassName}>0</span>
+                <span className={zeroBClassName}>0</span>
+                {/* <span
                             className={
                                 'relative before:rotate-45 before:scale-x-0 before:scale-y-75 before:animate-cross1a ' +
                                 'after:-rotate-45 after:scale-x-0 after:scale-y-75 after:animate-cross2a ' +
@@ -87,7 +92,7 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
                         >
                             0
                         </span> */}
-            {/* <span
+                {/* <span
                             className={
                                 'relative before:rotate-45 before:scale-x-0 before:scale-y-75 before:animate-cross1b ' +
                                 'after:-rotate-45 after:scale-x-0 after:scale-y-75 after:animate-cross2b ' +
@@ -104,12 +109,14 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
                         >
                             0
                         </span> */}
-          </h1>
-          <p className="px-6 cursor-pointer" onClick={reload} onKeyDown={reload}>
-            Recharger la page
-          </p>
+              </h1>
+              <p className="px-6 cursor-pointer" onClick={reload} onKeyDown={reload}>
+                Recharger la page
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </body>
+    </html>
   );
 }

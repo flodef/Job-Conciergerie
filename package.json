@@ -1,6 +1,6 @@
 {
   "name": "job-conciergerie",
-  "version": "2.383",
+  "version": "2.384",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@alerix/m3-loading-indicator": "latest",
+    "@revolut/checkout": "^1.1.25",
     "@serwist/next": "latest",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",

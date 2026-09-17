@@ -71,9 +71,11 @@ Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restau
 
 ---
 
-## Phase B — Merger `landing/` dans `app/` (pattern Tradiz)
+## Phase B — Merger `landing/` dans `app/` (pattern Tradiz) ✅ FAIT
 
 **Objectif** : un seul déploiement Next qui sert la vitrine ET l'app, dispatch par host dans `proxy.ts`.
+
+**Réalisé** : route groups `app/(app)/` (toutes les routes existantes, URLs inchangées) et `app/(site)/` (`/landing`, `/checkout`, code partagé dans `_lib`/`_components`/`_actions`). Routes API Revolut sous `app/api/`. `global-error.tsx` rend désormais son propre `<html>` (obligatoire sans root layout partagé) et `app/global-not-found.tsx` (expérimental `globalNotFound: true` dans `next.config.ts`) couvre les 404 globales. Dispatch host dans `proxy.ts` via le header `Host` (pas `nextUrl.hostname` — normalisé en dev) : apex/www → `/` réécrit `/landing`, `/landing` + `/checkout` publics sur tous les hosts. `landing/` supprimé, `REVOLUT_SETUP.md` → `docs/`. Bonus : la navigation inter-groupes est un full page reload → aucune fuite de thème.
 
 ### B.1 — Route groups + double root layout
 

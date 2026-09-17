@@ -1,7 +1,7 @@
 import { sql } from '@/app/db/db';
 import type { Home } from '@/app/types/dataTypes';
 import type postgres from 'postgres';
-import { MAX_TRAVELLERS } from '../homes/components/homeForm';
+import { MAX_TRAVELLERS } from '@/app/(app)/homes/components/homeForm';
 
 // Type definition for database home
 export interface DbHome {

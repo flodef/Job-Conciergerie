@@ -6,6 +6,15 @@ import { NextResponse } from 'next/server';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
+// Host dispatch (Tradiz pattern): the apex/www host serves the public site
+// (route group (site)); the app keeps working on any host (app.<domain> in
+// prod, localhost in dev). demo.<domain> is reserved for Phase E — it will
+// get an x-demo marker rather than a separate branch.
+const BASE_DOMAIN = 'job-conciergerie.fr';
+const LANDING_HOSTS = new Set([BASE_DOMAIN, `www.${BASE_DOMAIN}`]);
+// Site routes reachable without a session, on every host
+const SITE_PUBLIC_PATHS = new Set(['/landing', '/checkout']);
+
 // This function can be marked `async` if using `await` inside
 export async function proxy(request: NextRequest) {
   // Create supabaseResponse that we'll modify with refreshed cookies
@@ -46,6 +55,19 @@ export async function proxy(request: NextRequest) {
     request.headers.get('Next-Action')
   )
     return NextResponse.next();
+
+  // Apex / www → '/' serves the landing (URL stays '/', renders (site)/landing).
+  // The host HEADER (not nextUrl.hostname — dev normalizes it to the bind
+  // address) is what the platform reports.
+  const host = (request.headers.get('host') ?? '').split(':')[0];
+  if (LANDING_HOSTS.has(host) && path === '/') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/landing';
+    return NextResponse.rewrite(url);
+  }
+
+  // Public site pages — no session required, on every host
+  if (SITE_PUBLIC_PATHS.has(path)) return supabaseResponse;
 
   // Get the user ID and user type from cookies
   const userId = request.cookies.get('user_id')?.value;
