@@ -8,6 +8,7 @@ import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import colorOptions from '@/app/data/colors.json';
+import { PLAN_PRICES } from '@/app/data/plans';
 import type { Conciergerie, ConciergeriePlan } from '@/app/types/dataTypes';
 import type { ErrorField, SelectOption } from '@/app/types/types';
 import { setPrimaryColor } from '@/app/utils/color';
@@ -20,9 +21,9 @@ type ColorOption = {
 };
 
 const PLAN_OPTIONS: SelectOption[] = [
-  { value: 'decouverte', label: 'Découverte' },
-  { value: 'pro', label: 'Pro' },
-  { value: 'privilege', label: 'Privilège' },
+  { value: 'decouverte', label: `Découverte — ${PLAN_PRICES.decouverte.monthly}€/mois` },
+  { value: 'pro', label: `Pro — ${PLAN_PRICES.pro.monthly}€/mois` },
+  { value: 'privilege', label: `Privilège — ${PLAN_PRICES.privilege.monthly}€/mois` },
 ];
 
 const ConciergerieSettings: React.FC = () => {

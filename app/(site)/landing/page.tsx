@@ -34,6 +34,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { PLAN_PRICES } from '@/app/data/plans';
 import { DEMO_ENTER_URL } from '@/app/utils/demo';
 import { getLandingStats, getPublicTestimonials, type LandingStats, type PublicTestimonial } from '../_actions/stats';
 import { useTheme } from '../_lib/theme';
@@ -1240,8 +1241,8 @@ function Pricing() {
     {
       id: 'decouverte',
       name: 'Découverte',
-      monthlyPrice: 30,
-      annualPrice: 300,
+      monthlyPrice: PLAN_PRICES.decouverte.monthly,
+      annualPrice: PLAN_PRICES.decouverte.annual,
       desc: 'Pour les conciergeries qui démarrent',
       features: [
         "Jusqu'à 20 biens",
@@ -1258,8 +1259,8 @@ function Pricing() {
     {
       id: 'pro',
       name: 'Pro',
-      monthlyPrice: 50,
-      annualPrice: 500,
+      monthlyPrice: PLAN_PRICES.pro.monthly,
+      annualPrice: PLAN_PRICES.pro.annual,
       desc: 'Pour les conciergeries en croissance',
       features: [
         'Tout le plan Découverte',
@@ -1277,8 +1278,8 @@ function Pricing() {
     {
       id: 'privilege',
       name: 'Privilège',
-      monthlyPrice: 100,
-      annualPrice: 1000,
+      monthlyPrice: PLAN_PRICES.privilege.monthly,
+      annualPrice: PLAN_PRICES.privilege.annual,
       desc: 'Pour les conciergeries exigeantes',
       features: [
         'Tout le plan Pro',
