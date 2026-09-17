@@ -2,6 +2,13 @@
 
 import nodemailer from 'nodemailer';
 import { checkRateLimit } from '@/app/db/rateLimit';
+import {
+  descriptionLengthRegex,
+  emailRegex,
+  frenchPhoneRegex,
+  getMaxLength,
+  inputLengthRegex,
+} from '@/app/utils/regex';
 import { getClientIp, isFormTokenValid, isIpBlocked, isRateLimited, issueFormToken } from './antiSpam';
 
 const transporter = nodemailer.createTransport({
@@ -32,6 +39,21 @@ export async function sendContactEmail(params: {
 
   // Honeypot: pretend success so bots don't retry, but send nothing.
   if (website) return { success: true };
+
+  // Same field rules as the client — free checks first so forged payloads
+  // never reach the rate-limit budget.
+  const NAME_MAX = getMaxLength(inputLengthRegex);
+  if (
+    !name?.trim() ||
+    name.length > NAME_MAX ||
+    (company?.length ?? 0) > NAME_MAX ||
+    !emailRegex.test(email?.trim() ?? '') ||
+    (phone && !frenchPhoneRegex.test(phone.trim())) ||
+    !message?.trim() ||
+    message.length > getMaxLength(descriptionLengthRegex)
+  ) {
+    return { success: false, error: 'invalid' };
+  }
 
   const ip = await getClientIp();
   // Two layers: the in-memory per-instance limiter is the cheap first line, the

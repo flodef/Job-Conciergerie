@@ -36,6 +36,13 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PLANS } from '@/app/data/plans';
 import { DEMO_ENTER_URL } from '@/app/utils/demo';
+import {
+  descriptionLengthRegex,
+  emailRegex,
+  frenchPhoneRegex,
+  getMaxLength,
+  inputLengthRegex,
+} from '@/app/utils/regex';
 import { getLandingStats, getPublicTestimonials, type LandingStats, type PublicTestimonial } from '../_actions/stats';
 import { useTheme } from '../_lib/theme';
 
@@ -1451,6 +1458,40 @@ function Pricing() {
 }
 
 /* ───────────────────────────── Contact Form ───────────────────────────── */
+const NAME_MAX = getMaxLength(inputLengthRegex); // 32
+const MESSAGE_MIN = 10;
+const MESSAGE_MAX = getMaxLength(descriptionLengthRegex); // 1000
+
+// Validation runs in DOM order: the first offending field gets the message and the focus.
+const CONTACT_FIELDS: {
+  id: string;
+  key: 'name' | 'company' | 'email' | 'phone' | 'message';
+  name: string;
+  required?: boolean;
+  min?: number;
+  regex?: RegExp;
+  invalidMsg?: string;
+}[] = [
+  { id: 'contact-name', key: 'name', name: 'nom', required: true, min: 2 },
+  { id: 'contact-company', key: 'company', name: "nom d'entreprise", min: 2 },
+  {
+    id: 'contact-email',
+    key: 'email',
+    name: 'adresse email',
+    required: true,
+    regex: emailRegex,
+    invalidMsg: 'Veuillez saisir une adresse email valide.',
+  },
+  {
+    id: 'contact-phone',
+    key: 'phone',
+    name: 'numéro de téléphone',
+    regex: frenchPhoneRegex,
+    invalidMsg: 'Veuillez saisir un numéro de téléphone valide.',
+  },
+  { id: 'contact-message', key: 'message', name: 'message', required: true, min: MESSAGE_MIN },
+];
+
 function ContactForm() {
   const [formState, setFormState] = useState({ name: '', company: '', email: '', phone: '', subject: '', message: '' });
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
@@ -1492,15 +1533,17 @@ function ContactForm() {
     e.preventDefault();
     // noValidate on the form — validation is handled here so errors render in
     // the same styled alert as send failures, not the browser's native bubble.
-    if (!formState.name.trim() || !formState.email.trim() || !formState.message.trim()) {
-      setErrorMsg('Veuillez remplir tous les champs obligatoires.');
-      setStatus('error');
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email.trim())) {
-      setErrorMsg('Veuillez saisir une adresse email valide.');
-      setStatus('error');
-      return;
+    // First offending field names itself in the message and receives the focus.
+    for (const f of CONTACT_FIELDS) {
+      const v = formState[f.key].trim();
+      const fail = (msg: string) => {
+        setErrorMsg(msg);
+        setStatus('error');
+        document.getElementById(f.id)?.focus();
+      };
+      if (f.required && !v) return fail(`Veuillez indiquer votre ${f.name}.`);
+      if (v && f.min && v.length < f.min) return fail(`Votre ${f.name} doit contenir au moins ${f.min} caractères.`);
+      if (v && f.regex && !f.regex.test(v)) return fail(f.invalidMsg ?? 'Format invalide.');
     }
     setErrorMsg('');
     setStatus('sending');
@@ -1581,6 +1624,8 @@ function ContactForm() {
                     onChange={e => setFormState({ ...formState, name: e.target.value })}
                     className={inputClass}
                     placeholder="Jean Dupont"
+                    minLength={2}
+                    maxLength={NAME_MAX}
                   />
                 </div>
                 <div>
@@ -1594,6 +1639,8 @@ function ContactForm() {
                     onChange={e => setFormState({ ...formState, company: e.target.value })}
                     className={inputClass}
                     placeholder="Ma Conciergerie"
+                    minLength={2}
+                    maxLength={NAME_MAX}
                   />
                 </div>
               </div>
@@ -1610,6 +1657,8 @@ function ContactForm() {
                     onChange={e => setFormState({ ...formState, email: e.target.value })}
                     className={inputClass}
                     placeholder="jean@conciergerie.fr"
+                    minLength={6}
+                    maxLength={254}
                   />
                 </div>
                 <div>
@@ -1623,6 +1672,8 @@ function ContactForm() {
                     onChange={e => setFormState({ ...formState, phone: e.target.value })}
                     className={inputClass}
                     placeholder="06 00 00 00 00"
+                    minLength={10}
+                    maxLength={20}
                   />
                 </div>
               </div>
@@ -1697,7 +1748,12 @@ function ContactForm() {
                   onChange={e => setFormState({ ...formState, message: e.target.value })}
                   className={inputClass + ' resize-none'}
                   placeholder="Parlez-nous de votre activité, le nombre de biens gérés, vos besoins..."
+                  minLength={MESSAGE_MIN}
+                  maxLength={MESSAGE_MAX}
                 />
+                <p className="text-right text-xs text-slate-500 mt-1">
+                  {MESSAGE_MAX - formState.message.length} caractères restants
+                </p>
               </div>
 
               {status === 'sent' && (
