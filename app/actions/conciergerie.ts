@@ -147,14 +147,14 @@ export async function updateConciergerieData(
   const ids = await getConciergerieIds(conciergerie.name);
   if (!ids || !isRowMember(session, ids)) return null;
 
-  // Convert to DB format
+  // Convert to DB format. `plan` is deliberately excluded — subscription
+  // changes go through admin/SQL (`updateConciergerie`), never client data.
   const dbData: Partial<DbConciergerie> = {
     name: data.name,
     email: data.email,
     tel: data.tel,
     color_name: data.colorName,
     notification_settings: data.notificationSettings ? JSON.stringify(data.notificationSettings) : null,
-    plan: data.plan,
   };
 
   return await updateConciergerie(conciergerie.name, dbData);

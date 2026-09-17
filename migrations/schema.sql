@@ -9,6 +9,7 @@
 -- PostgreSQL database dump
 --
 
+\restrict JyOsHkEa2004RkIKAG2gEiEoKtTMQn300GaiyyVnyWRKldm9U5OWcw9gCOUFdT5
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1)
@@ -29,7 +30,14 @@ SET row_security = off;
 -- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE SCHEMA IF NOT EXISTS public;
+CREATE SCHEMA public;
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS 'standard public schema';
 
 
 --
@@ -170,6 +178,8 @@ CREATE TABLE public.conciergeries (
     tel text NOT NULL,
     color_name text NOT NULL,
     notification_settings jsonb,
+    plan text DEFAULT 'pro'::text NOT NULL,
+    CONSTRAINT conciergeries_plan_check CHECK ((plan = ANY (ARRAY['decouverte'::text, 'pro'::text, 'privilege'::text]))),
     CONSTRAINT valid_color_name CHECK ((color_name = ANY (ARRAY['Rose'::text, 'Orange'::text, 'Vert'::text, 'Bleu'::text, 'Violet'::text, 'Gris'::text])))
 );
 
@@ -314,6 +324,22 @@ CREATE TABLE public.rate_limits (
 
 
 --
+-- Name: reviews; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.reviews (
+    user_type text NOT NULL,
+    row_key text NOT NULL,
+    rating smallint NOT NULL,
+    comment text DEFAULT ''::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT reviews_rating_check CHECK (((rating >= 0) AND (rating <= 5))),
+    CONSTRAINT reviews_user_type_check CHECK ((user_type = ANY (ARRAY['conciergerie'::text, 'employee'::text])))
+);
+
+
+--
 -- Name: conciergeries contacts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -383,6 +409,14 @@ ALTER TABLE ONLY public.missions
 
 ALTER TABLE ONLY public.rate_limits
     ADD CONSTRAINT rate_limits_pkey PRIMARY KEY (key);
+
+
+--
+-- Name: reviews reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reviews
+    ADD CONSTRAINT reviews_pkey PRIMARY KEY (user_type, row_key);
 
 
 --
@@ -479,4 +513,5 @@ ALTER TABLE ONLY public.mission_reports
 -- PostgreSQL database dump complete
 --
 
+\unrestrict JyOsHkEa2004RkIKAG2gEiEoKtTMQn300GaiyyVnyWRKldm9U5OWcw9gCOUFdT5
 
