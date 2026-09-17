@@ -10,12 +10,13 @@ export const dynamic = 'force-dynamic';
  * to the public demo credential (/<id> adopts it on any browser).
  *
  * Public by design — resetting the demo IS the desired outcome (same pattern
- * as Tradiz). Abuse is bounded: a seed younger than MIN_INTERVAL skips the
- * wipe, so the endpoint costs at most one reseed per minute.
+ * as Tradiz). Two bounds: a seed younger than MIN_INTERVAL skips the wipe, so
+ * a second click can't erase a tester who just started, and abuse costs at
+ * most one reseed per interval.
  *
  * Direct visits to demo.<domain> never hit this route — no reset.
  */
-const MIN_INTERVAL_MS = 60_000;
+const MIN_INTERVAL_MS = 15 * 60_000;
 
 export async function GET() {
   const url = process.env.DEMO_DATABASE_URL;
