@@ -114,7 +114,7 @@ const demoBanner = await page
   .first()
   .isVisible({ timeout: 15000 })
   .catch(() => false);
-demoBanner ? ok('demo banner visible') : bad('demo banner MISSING');
+if (demoBanner) ok('demo banner visible'); else bad('demo banner MISSING');
 await page.screenshot({ path: SHOT('01-login') });
 await closeChangelog(page);
 
@@ -126,7 +126,7 @@ const impBanner = await page
   .first()
   .isVisible()
   .catch(() => false);
-impBanner ? ok('impersonation banner visible') : bad('impersonation banner MISSING');
+if (impBanner) ok('impersonation banner visible'); else bad('impersonation banner MISSING');
 await page.screenshot({ path: SHOT('02-impersonate') });
 
 // ---------- 3. Create a home (duo-enabled) ----------
@@ -170,7 +170,7 @@ const homeVisible = await page
   .first()
   .isVisible()
   .catch(() => false);
-homeVisible ? ok(`home "${HOME}" created`) : bad('home NOT in list');
+if (homeVisible) ok(`home "${HOME}" created`); else bad('home NOT in list');
 await page.screenshot({ path: SHOT('03-home') });
 
 // ---------- 4. Create a mission starting soon, ends +4h ----------
@@ -232,7 +232,7 @@ const missionVisible = await page
   .first()
   .isVisible()
   .catch(() => false);
-missionVisible ? ok('mission created & listed') : bad('mission NOT listed');
+if (missionVisible) ok('mission created & listed'); else bad('mission NOT listed');
 await page.screenshot({ path: SHOT('05-mission-list') });
 
 // ---------- 5. Impersonate employee Léa Morvan → accept ----------
@@ -279,7 +279,7 @@ const openMissionDetails = async page => {
       )
         return true;
       await closeTopModal(page);
-    } catch {}
+    } catch { /* modal already closed */ }
   }
   return false;
 };
@@ -353,7 +353,7 @@ const hist = await page
   .first()
   .isVisible()
   .catch(() => false);
-hist ? ok('mission visible in history') : bad('mission NOT in history');
+if (hist) ok('mission visible in history'); else bad('mission NOT in history');
 await page.screenshot({ path: SHOT('11-history') });
 
 // ---------- 8. Back to admin, verify report as conciergerie ----------
@@ -380,7 +380,7 @@ const histC = await active
   .first()
   .isVisible()
   .catch(() => false);
-histC ? ok('mission in conciergerie completed list') : bad('mission NOT in conciergerie completed list');
+if (histC) ok('mission in conciergerie completed list'); else bad('mission NOT in conciergerie completed list');
 if (histC) {
   await clickInActive(page, HOME);
   await page.waitForTimeout(1800);
@@ -389,7 +389,7 @@ if (histC) {
     .first()
     .isVisible()
     .catch(() => false);
-  reportText ? ok('report visible to conciergerie') : bad('report NOT visible');
+  if (reportText) ok('report visible to conciergerie'); else bad('report NOT visible');
   await page.screenshot({ path: SHOT('13-report-view') });
 }
 

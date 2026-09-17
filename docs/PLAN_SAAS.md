@@ -243,26 +243,6 @@ A (sécu) ──► B (merge landing) ──► C (multi-tenant) ──► D (do
 
 ## Reste à faire — synthèse
 
-### Pour activer la démo (Phase E)
-
-- [x] **DNS** : `CNAME demo → 6a671e6a0f621fd7.vercel-dns-017.com.` résout ✅ ; domaine déjà assigné au projet Vercel (TLS s'active au prochain déploiement prod)
-- [x] Merger `dev` → `main` — release `2.404` ✅ (routage demo, bannière, bouton landing, `/api/demo/reset` en prod ; smoke-testé : `demo./v2_de01…` → 200)
-- [ ] Optionnel : projet Supabase dédié pour la démo → remplacer `DEMO_DATABASE_URL` (prod) par la nouvelle URL, puis `bun scripts/seed-demo.ts --db-url <url>` — nécessite un passage par le dashboard Supabase (tier gratuit = 2 projets max, déjà pris par dev+prod ; alternative gratuite : Neon autorise plusieurs projets).
-
-### Phase F — checklist manuelle démo
-
-Validée de bout en bout en automatisé (`pw-phaseF.mjs`, Playwright sur `demo.localhost`) :
-
-- [x] Login admin via le lien démo, bannière « Mode démo », « Vue en tant que » sur conciergerie **et** employé, bannières démo + impersonation empilées
-- [x] Créer un bien (photo, description, objectifs, binôme), créer une mission, accepter en tant qu'employé (avec modale d'avertissement), démarrer/terminer, compte rendu texte+photo, historique employé
-- [x] La conciergerie retrouve la mission terminée via Missions → filtre « Terminée » → le compte rendu (texte + photo) est visible dans les détails
-- [x] Reseed lazy : `/api/demo/reset?key=…` → `{"skipped":true}` si <12h, `force=1` → reseed complet (3 conciergeries, 6 employés, 10 biens, 18 missions, 3 comptes rendus, 2 avis)
-- [x] Aucun email réel en démo : `email_logs` → `success=true, error="demo: not sent"` (ex. « Mission acceptée » → `demo+azur@…`)
-- [x] Isolation : `/api/auth` sur `localhost` ne résout pas l'identifiant démo ; mission créée en impersonation → `conciergerie_name='Conciergerie Azur'`, `client='Démo'`
-- [x] Smoke prod : `demo.job-conciergerie.fr/v2_de01…` → 200, `/api/auth` → `conciergerie`
-
-Bugs trouvés et corrigés pendant Phase F : le proxy ne forwardait ni `x-demo` ni le cookie `impersonate` à `/api/auth` (impersonation d'employé → `/error` → `/waiting`), et `user_type` n'était pas resynchronisé au changement de contexte impersonné.
-
 ### Phase C.4 — Abonnements (reporté)
 
 - [ ] Migrer `plan` de `conciergeries` vers `clients` au moment du backfill, supprimer `conciergeries.plan` ensuite
