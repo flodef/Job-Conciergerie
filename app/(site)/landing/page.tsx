@@ -170,11 +170,10 @@ function Navbar() {
             Connexion
           </a>
           <a
-            href="#contact"
-            onClick={() => window.dispatchEvent(new CustomEvent('contactSubject', { detail: 'demo' }))}
+            href={DEMO_ENTER_URL}
             className="px-4 py-2 rounded-full bg-linear-to-r from-brand-500 to-accent-500 text-white text-sm font-semibold hover:opacity-90 transition-opacity whitespace-nowrap"
           >
-            Demander une démo
+            Essayer la démo
           </a>
           <ThemeToggle size="sm" />
         </div>
@@ -211,23 +210,20 @@ function Navbar() {
               {l.label}
             </a>
           ))}
+          <a
+            href={appHref('/')}
+            onClick={() => setMenuOpen(false)}
+            className="text-slate-300 hover:text-white transition-colors"
+          >
+            Connexion
+          </a>
           <div className="flex items-center justify-between gap-4 pt-2">
             <a
-              href={appHref('/')}
-              className="px-5 py-2 rounded-full text-white text-sm font-semibold text-center flex-1"
-              style={{ backgroundColor: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
-            >
-              Connexion
-            </a>
-            <a
-              href="#contact"
-              onClick={() => {
-                setMenuOpen(false);
-                window.dispatchEvent(new CustomEvent('contactSubject', { detail: 'demo' }));
-              }}
+              href={DEMO_ENTER_URL}
+              onClick={() => setMenuOpen(false)}
               className="px-5 py-2 rounded-full bg-linear-to-r from-brand-500 to-accent-500 text-white text-sm font-semibold text-center flex-1"
             >
-              Demander une démo
+              Essayer la démo
             </a>
             <ThemeToggle size="md" />
           </div>
@@ -266,11 +262,10 @@ function Hero() {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
           <a
-            href="#contact"
-            onClick={() => window.dispatchEvent(new CustomEvent('contactSubject', { detail: 'demo' }))}
+            href={DEMO_ENTER_URL}
             className="px-8 py-4 rounded-full bg-linear-to-r from-brand-500 to-accent-500 text-white font-semibold text-lg hover:scale-105 transition-transform shadow-lg shadow-brand-500/25"
           >
-            Demander une démo gratuite
+            Essayer la démo gratuite
           </a>
           <a
             href="#fonctionnalites"
@@ -290,8 +285,12 @@ function Hero() {
             Je suis prestataire
           </a>
           <span className="mx-2 text-slate-600">·</span>
-          <a href={DEMO_ENTER_URL} className="text-accent-400 hover:text-white transition-colors">
-            Essayer la démo
+          <a
+            href="#contact"
+            onClick={() => window.dispatchEvent(new CustomEvent('contactSubject', { detail: 'demande-renseignement' }))}
+            className="text-accent-400 hover:text-white transition-colors"
+          >
+            Nous contacter
           </a>
         </p>
 
@@ -1458,7 +1457,6 @@ function ContactForm() {
     { value: 'forfait-pro', label: 'Forfait Pro' },
     { value: 'forfait-privilege', label: 'Forfait Privilège' },
     { value: 'demande-renseignement', label: 'Demande de renseignement' },
-    { value: 'demo', label: 'Demande de démo' },
   ];
 
   useEffect(() => {
@@ -1510,7 +1508,7 @@ function ContactForm() {
       <div className="max-w-5xl mx-auto relative z-10">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-black mb-4">
-            Demandons une <span className="gradient-text">démo</span>
+            Une question ? <span className="gradient-text">Contactez-nous</span>
           </h2>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto">
             Voyons ensemble comment Job Conciergerie peut transformer votre activité. Réponse sous 24h, sans engagement.

@@ -37,6 +37,16 @@ export async function startImpersonation(userType: UserType, rowKey: string): Pr
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
   });
+  // The proxy compares the user_type cookie against the session's resolved
+  // type — while impersonating an employee, /api/auth answers 'employee' and a
+  // stale 'conciergerie' cookie would bounce nav pages to /waiting before the
+  // client can update it. Keep the hint in sync (JS-readable, the client owns
+  // it normally; the authoritative check stays server-side).
+  (await cookies()).set('user_type', target.userType, {
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
   console.warn(`[admin] ${session.rowKey} started impersonating ${userType} "${rowKey}"`);
   return true;
 }
@@ -48,6 +58,13 @@ export async function stopImpersonation(): Promise<boolean> {
   const session = await requireConnectedSession();
   if (!session) return false;
   (await cookies()).delete(impersonateCookieName);
+  // Restore the routing hint to the real identity — admin accounts are always
+  // conciergerie rows (see scripts/create-admin.ts).
+  (await cookies()).set('user_type', 'conciergerie', {
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
   // While impersonating, session.rowKey is the TARGET's — log it as such.
   console.warn(
     session.impersonating
