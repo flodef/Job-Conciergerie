@@ -4,6 +4,11 @@ import withSerwist from '@serwist/next';
 const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Route groups ((app) / (site)) have no shared root layout — the global
+    // 404 must be rendered by app/global-not-found.tsx instead.
+    globalNotFound: true,
+  },
   turbopack: {
     root: import.meta.dirname,
   },

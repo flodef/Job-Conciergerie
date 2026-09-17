@@ -1,12 +1,12 @@
 'use client';
 
-import Calendar from '@/app/calendar/page';
-import EmployeesList from '@/app/employees/page';
-import HistoryPage from '@/app/history/page';
-import HomesPage from '@/app/homes/page';
-import MissionsPage from '@/app/missions/page';
-import Settings from '@/app/settings/page';
-import Welcome from '@/app/waiting/page';
+import Calendar from '@/app/(app)/calendar/page';
+import EmployeesList from '@/app/(app)/employees/page';
+import HistoryPage from '@/app/(app)/history/page';
+import HomesPage from '@/app/(app)/homes/page';
+import MissionsPage from '@/app/(app)/missions/page';
+import Settings from '@/app/(app)/settings/page';
+import Welcome from '@/app/(app)/waiting/page';
 import { Page } from '@/app/utils/navigation';
 import { useMenuContext } from '@/app/contexts/menuProvider';
 import { useEffect, useRef } from 'react';

@@ -1,0 +1,148 @@
+'use client';
+
+import M3LoadingSpinner from '@/app/components/m3LoadingSpinner';
+import { useAuth } from '@/app/contexts/authProvider';
+import MissionCard from '@/app/(app)/missions/components/missionCard';
+import type { Mission, MissionSortField } from '@/app/types/dataTypes';
+import { cn, titleClassName } from '@/app/utils/className';
+import {
+  IconBriefcase,
+  IconCalendar,
+  IconChevronDown,
+  IconHome,
+  IconMap2,
+  IconPlus,
+  IconUser,
+} from '@tabler/icons-react';
+import React from 'react';
+
+interface MissionListProps {
+  groupedMissions: Record<string, Mission[]>;
+  collapsedCategories: string[];
+  setCollapsedCategories: React.Dispatch<React.SetStateAction<string[]>>;
+  onSelectMission: (id: string) => void;
+  showFilters: boolean;
+  userType: string | undefined;
+  handleAddMission: () => void;
+  onEditMission: (id: string) => void;
+  sortField: MissionSortField;
+  isLoading?: boolean;
+}
+
+export default function MissionList({
+  groupedMissions,
+  collapsedCategories,
+  setCollapsedCategories,
+  onSelectMission,
+  showFilters,
+  handleAddMission,
+  onEditMission,
+  sortField,
+  isLoading,
+}: MissionListProps) {
+  const { conciergerieName, isConciergerie } = useAuth();
+
+  // Toggle category collapse
+  const toggleCategory = (category: string) => {
+    setCollapsedCategories(prev => (prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]));
+  };
+
+  // Show loading spinner instead of empty state during loading
+  if (isLoading) {
+    return <M3LoadingSpinner fullPage={false} />;
+  }
+
+  return Object.keys(groupedMissions).length === 0 ? (
+    showFilters ? (
+      <div className="bg-background rounded-lg shadow-md px-16 py-2 text-center">
+        <p className="text-foreground/70">Aucune mission ne correspond à vos critères.</p>
+      </div>
+    ) : (
+      <div
+        className={cn(
+          'flex flex-col items-center justify-center h-[calc(100dvh-13rem)] border-2 border-dashed border-secondary rounded-lg p-8',
+          isConciergerie ? 'cursor-pointer' : '',
+        )}
+        onClick={isConciergerie ? handleAddMission : undefined}
+      >
+        <div className="text-center">
+          <h3 className={titleClassName}>Aucune mission</h3>
+          {isConciergerie ? (
+            <>
+              <p className="text-light mb-4">Ajoutez votre première mission</p>
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
+                <IconPlus size={32} />
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-light mb-4">Aucune mission n&apos;est disponible pour le moment</p>
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
+                <IconBriefcase size={32} />
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  ) : (
+    <div className="space-y-4">
+      {Object.entries(groupedMissions).map(([category, missions]) => (
+        <div
+          key={category}
+          className={cn(
+            'bg-background border-0 rounded-lg overflow-hidden',
+            collapsedCategories.includes(category) ? 'drop-shadow-md' : '',
+          )}
+        >
+          <button
+            onClick={() => toggleCategory(category)}
+            className="w-full px-4 py-3 flex items-center justify-between bg-foreground/10 cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              {
+                {
+                  date: <IconCalendar size={18} className="text-foreground" />,
+                  conciergerie: <IconUser size={18} className="text-foreground" />,
+                  homeTitle: <IconHome size={18} className="text-foreground" />,
+                  geographicZone: <IconMap2 size={18} className="text-foreground" />,
+                }[sortField]
+              }
+              <h2 className="font-medium">{category}</h2>
+              <span className="text-sm text-light">({missions.length})</span>
+            </div>
+            <IconChevronDown
+              size={20}
+              className={cn(
+                'transition-transform duration-300',
+                collapsedCategories.includes(category) ? 'rotate-180' : '',
+              )}
+            />
+          </button>
+
+          <div
+            className={cn(
+              'overflow-hidden transition-all duration-300 ease-in-out',
+              collapsedCategories.includes(category) ? 'max-h-0 opacity-0' : 'max-h-none opacity-100',
+            )}
+          >
+            <div className="pt-2 space-y-2">
+              {missions.map(mission => (
+                <div key={mission.id}>
+                  <MissionCard
+                    mission={mission}
+                    onClick={() => onSelectMission(mission.id)}
+                    onEdit={() => {
+                      if (mission.conciergerieName === conciergerieName) onEditMission(mission.id);
+                      else onSelectMission(mission.id);
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
