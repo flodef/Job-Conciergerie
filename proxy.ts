@@ -140,10 +140,15 @@ export async function proxy(request: NextRequest) {
     // Make a fetch request to our own API to check user status.
     // request.url is normalized to the bind host in dev — the demo signal must
     // travel explicitly (x-demo) rather than relying on Host propagation.
+    const impersonate = request.cookies.get('impersonate')?.value;
     const response = await fetch(new URL('/api/auth/', request.url), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // The admin's impersonation cookie must reach /api/auth — otherwise it
+        // reports the real userType and an employee impersonation bounces to
+        // /waiting on every nav-path request.
+        ...(impersonate ? { cookie: `impersonate=${impersonate}` } : {}),
         ...(requestHeaders.has('x-demo') ? { 'x-demo': '1' } : {}),
       },
       body: JSON.stringify({ userId }),

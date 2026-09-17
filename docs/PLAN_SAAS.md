@@ -214,7 +214,7 @@ Script admin d'abord (testable immédiatement en prod : 2 liens magiques), imper
 - Garde-fous : bandeau violet « Mode démo — données peuvent être réinitialisées à tout moment » (empilé avec les autres bannières), emails log-only (`deliver()` court-circuité en démo), checkout hors portée (host site-only).
 - Le proxy propage `x-demo` au fetch interne `/api/auth` — en dev `request.url` est normalisé vers le bind host, sans ça l'auth taperait la prod DB pour une requête `demo.localhost`.
 
-## Phase F — Tests scénarios démo (ex-"point 4")
+## Phase F — Tests scénarios démo (ex-"point 4") ✅ FAIT
 
 Checklist manuelle (concierge **et** employé, via impersonation) : créer un bien, créer une mission (dont binôme), employé accepte, compte rendu photo, historique, notifications. + quelques tests vitest sur les actions critiques.
 
@@ -251,10 +251,17 @@ A (sécu) ──► B (merge landing) ──► C (multi-tenant) ──► D (do
 
 ### Phase F — checklist manuelle démo
 
-- [ ] Sur `demo.job-conciergerie.fr` : vérifier le login admin via le lien landing, « Vue en tant que » sur une conciergerie et un employé, bannière démo + impersonation empilées
-- [ ] Créer un bien, créer une mission (dont binôme), accepter en tant qu'employé, compte rendu photo, historique, notifications
-- [ ] Vérifier le reseed lazy (`/api/demo/reset?key=$DEMO_RESET_KEY` → `skipped` si <12h, `force=1` reseede)
-- [ ] Vérifier qu'aucun email réel ne part en démo (`email_logs` → `demo: not sent`)
+Validée de bout en bout en automatisé (`pw-phaseF.mjs`, Playwright sur `demo.localhost`) :
+
+- [x] Login admin via le lien démo, bannière « Mode démo », « Vue en tant que » sur conciergerie **et** employé, bannières démo + impersonation empilées
+- [x] Créer un bien (photo, description, objectifs, binôme), créer une mission, accepter en tant qu'employé (avec modale d'avertissement), démarrer/terminer, compte rendu texte+photo, historique employé
+- [x] La conciergerie retrouve la mission terminée via Missions → filtre « Terminée » → le compte rendu (texte + photo) est visible dans les détails
+- [x] Reseed lazy : `/api/demo/reset?key=…` → `{"skipped":true}` si <12h, `force=1` → reseed complet (3 conciergeries, 6 employés, 10 biens, 18 missions, 3 comptes rendus, 2 avis)
+- [x] Aucun email réel en démo : `email_logs` → `success=true, error="demo: not sent"` (ex. « Mission acceptée » → `demo+azur@…`)
+- [x] Isolation : `/api/auth` sur `localhost` ne résout pas l'identifiant démo ; mission créée en impersonation → `conciergerie_name='Conciergerie Azur'`, `client='Démo'`
+- [x] Smoke prod : `demo.job-conciergerie.fr/v2_de01…` → 200, `/api/auth` → `conciergerie`
+
+Bugs trouvés et corrigés pendant Phase F : le proxy ne forwardait ni `x-demo` ni le cookie `impersonate` à `/api/auth` (impersonation d'employé → `/error` → `/waiting`), et `user_type` n'était pas resynchronisé au changement de contexte impersonné.
 
 ### Phase C.4 — Abonnements (reporté)
 
