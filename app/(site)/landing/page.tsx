@@ -33,7 +33,8 @@ import {
   IconUsers,
   IconX,
 } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { getLandingStats, getPublicTestimonials, type LandingStats, type PublicTestimonial } from '../_actions/stats';
 import { useTheme } from '../_lib/theme';
 
 /* ───────────────────────────── Theme Toggle ───────────────────────────── */
@@ -280,20 +281,86 @@ function Hero() {
 }
 
 /* ───────────────────────────── Stats Bar ───────────────────────────── */
+
+// Round to the nearest magnitude: 78 → 80 (tens), 1035 → 1000 (thousands), etc.
+function roundToMagnitude(n: number): number {
+  if (n < 10) return n;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(n)));
+  return Math.round(n / magnitude) * magnitude;
+}
+
+const formatCount = (v: number) => `${Math.round(v).toLocaleString('fr-FR')}+`;
+const formatPercent = (v: number) => `${v.toFixed(1)}%`;
+const formatRating = (v: number) => `${v.toFixed(1)}/5`;
+
+// Eased count-up from 0, started once the bar scrolls into view.
+function CountUp({ target, started, format }: { target: number; started: boolean; format: (v: number) => string }) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!started) return;
+    const start = performance.now();
+    const duration = 1600;
+    let raf = 0;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / duration);
+      setValue(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [started, target]);
+
+  return <>{format(value)}</>;
+}
+
 function StatsBar() {
-  const stats = [
-    { value: '1 000+', label: 'Missions gérées' },
-    { value: '80+', label: 'Logements actifs' },
-    { value: '99.9%', label: 'Disponibilité' },
-    { value: '4.8/5', label: 'Satisfaction' },
+  const [stats, setStats] = useState<LandingStats | null>(null);
+  const [visible, setVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    getLandingStats()
+      .then(setStats)
+      .catch(() => setStats(null));
+  }, []);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const started = visible && stats !== null;
+  const items = [
+    { target: stats ? roundToMagnitude(stats.missionCount) : null, format: formatCount, label: 'Missions gérées' },
+    { target: stats ? roundToMagnitude(stats.homeCount) : null, format: formatCount, label: 'Logements actifs' },
+    { target: 99.9, format: formatPercent, label: 'Disponibilité' },
+    {
+      target: stats?.averageRating ?? null,
+      format: formatRating,
+      label: 'Satisfaction',
+    },
   ];
 
   return (
-    <section className="relative py-16 md:py-20 border-y border-white/5">
+    <section ref={sectionRef} className="relative py-16 md:py-20 border-y border-white/5">
       <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
-        {stats.map((s, i) => (
+        {items.map((s, i) => (
           <div key={i} className="text-center">
-            <div className="text-4xl md:text-5xl font-black gradient-text mb-2">{s.value}</div>
+            <div className="text-4xl md:text-5xl font-black gradient-text mb-2">
+              {s.target === null ? '—' : <CountUp target={s.target} started={started} format={s.format} />}
+            </div>
             <div className="text-sm text-slate-500 uppercase tracking-wider">{s.label}</div>
           </div>
         ))}
@@ -1031,27 +1098,41 @@ function PhoneMockup() {
 }
 
 /* ───────────────────────────── Testimonials ───────────────────────────── */
+
+// Placeholder testimonials — shown until real reviews exist in the `reviews`
+// table, then used to fill remaining slots (real reviews always come first).
+const placeholderTestimonials = [
+  {
+    name: 'Sophie L.',
+    role: 'Conciergerie · Brest, Finistère',
+    text: "Depuis Job Conciergerie, je gère 40 logements sans stress. Les prestataires sont notifiés automatiquement, je n'ai plus à appeler un par un. Un game-changer.",
+    stars: 5,
+  },
+  {
+    name: 'Karim B.',
+    role: 'Prestataire · Crozon, Finistère',
+    text: "L'app est super simple. Je vois les missions dispo, j'accepte en un clic, et le compte rendu photo à la fin c'est top pour prouver mon travail. Plus besoin d'Excel.",
+    stars: 5,
+  },
+  {
+    name: 'Élodie M.',
+    role: 'Conciergerie · Quimper, Finistère',
+    text: "Le mode binôme est génial pour les grands appartements. Le temps réel m'évite les doublons, et les statistiques mensuelles me servent directement pour ma compta.",
+    stars: 4.5,
+  },
+];
+
 function Testimonials() {
-  const testimonials = [
-    {
-      name: 'Sophie L.',
-      role: 'Conciergerie · Brest, Finistère',
-      text: "Depuis Job Conciergerie, je gère 40 logements sans stress. Les prestataires sont notifiés automatiquement, je n'ai plus à appeler un par un. Un game-changer.",
-      stars: 5,
-    },
-    {
-      name: 'Karim B.',
-      role: 'Prestataire · Crozon, Finistère',
-      text: "L'app est super simple. Je vois les missions dispo, j'accepte en un clic, et le compte rendu photo à la fin c'est top pour prouver mon travail. Plus besoin d'Excel.",
-      stars: 5,
-    },
-    {
-      name: 'Élodie M.',
-      role: 'Conciergerie · Quimper, Finistère',
-      text: "Le mode binôme est génial pour les grands appartements. Le temps réel m'évite les doublons, et les statistiques mensuelles me servent directement pour ma compta.",
-      stars: 4.5,
-    },
-  ];
+  const [real, setReal] = useState<PublicTestimonial[]>([]);
+
+  useEffect(() => {
+    getPublicTestimonials()
+      .then(setReal)
+      .catch(() => {});
+  }, []);
+
+  // Real reviews take priority; placeholders fill up to 3 slots.
+  const testimonials = [...real, ...placeholderTestimonials].slice(0, 3);
 
   return (
     <section id="temoignages" className="relative py-16 md:py-24 px-6 overflow-hidden">

@@ -1,5 +1,7 @@
 import type { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
 
+export type ConciergeriePlan = 'decouverte' | 'pro' | 'privilege';
+
 export interface Conciergerie {
   id: string[];
   name: string;
@@ -8,6 +10,7 @@ export interface Conciergerie {
   email: string;
   tel: string;
   notificationSettings?: ConciergerieNotificationSettings;
+  plan?: ConciergeriePlan;
 }
 
 export type EmployeeStatus = 'pending' | 'accepted' | 'rejected' | 'deleted';

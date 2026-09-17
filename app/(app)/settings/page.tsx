@@ -9,9 +9,10 @@ import ConciergerieSettings from '@/app/(app)/settings/components/conciergerieSe
 import ConnectedDevicesSettings from '@/app/(app)/settings/components/connectedDevicesSettings';
 import EmployeeSettings from '@/app/(app)/settings/components/employeeSettings';
 import NotificationSettings from '@/app/(app)/settings/components/notificationSettings';
+import ReviewSettings from '@/app/(app)/settings/components/reviewSettings';
 import { MAX_DEVICES } from '@/app/utils/id';
 import packageJson from '@/package.json';
-import { IconBell, IconDevices, IconInfoCircle, IconSettings } from '@tabler/icons-react';
+import { IconBell, IconDevices, IconInfoCircle, IconSettings, IconStar } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 
 export default function Settings() {
@@ -67,6 +68,11 @@ export default function Settings() {
       title: 'Notifications',
       icon: <IconBell size={20} />,
       content: <NotificationSettings />,
+    },
+    {
+      title: 'Votre avis',
+      icon: <IconStar size={20} />,
+      content: <ReviewSettings />,
     },
     {
       title: 'Appareils connectés',

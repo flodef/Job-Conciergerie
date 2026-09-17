@@ -3,12 +3,13 @@ import { Button } from '@/app/components/button';
 import ColorPicker from '@/app/components/colorPicker';
 import Input from '@/app/components/input';
 import Label from '@/app/components/label';
+import Select from '@/app/components/select';
 import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import colorOptions from '@/app/data/colors.json';
-import type { Conciergerie } from '@/app/types/dataTypes';
-import type { ErrorField } from '@/app/types/types';
+import type { Conciergerie, ConciergeriePlan } from '@/app/types/dataTypes';
+import type { ErrorField, SelectOption } from '@/app/types/types';
 import { setPrimaryColor } from '@/app/utils/color';
 import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
@@ -17,6 +18,12 @@ type ColorOption = {
   name: string;
   value: string;
 };
+
+const PLAN_OPTIONS: SelectOption[] = [
+  { value: 'decouverte', label: 'Découverte' },
+  { value: 'pro', label: 'Pro' },
+  { value: 'privilege', label: 'Privilège' },
+];
 
 const ConciergerieSettings: React.FC = () => {
   const { conciergeries, userData, updateUserData } = useAuth();
@@ -34,6 +41,7 @@ const ConciergerieSettings: React.FC = () => {
   const [email, setEmail] = useState('');
   const [tel, setTel] = useState('');
   const [selectedColor, setSelectedColor] = useState<ColorOption | null>(null);
+  const [plan, setPlan] = useState<ConciergeriePlan>('pro');
   const [isSaving, setIsSaving] = useState(false);
   const { showToast } = useToast();
 
@@ -57,6 +65,7 @@ const ConciergerieSettings: React.FC = () => {
     setOriginalEmail(conciergerie.email);
     setOriginalTel(conciergerie.tel);
     setOriginalColorName(conciergerie.colorName);
+    setPlan(conciergerie.plan ?? 'pro');
 
     // Find matching color from our options
     const matchingColor = colorOptions.find(color => color.name === conciergerie.colorName) || null;
@@ -185,6 +194,18 @@ const ConciergerieSettings: React.FC = () => {
         onColorChange={setSelectedColor}
         disabled={isSaving}
         required
+      />
+
+      <Select
+        id="plan"
+        label="Forfait"
+        value={plan}
+        onChange={value => setPlan(value as ConciergeriePlan)}
+        options={PLAN_OPTIONS}
+        disabled
+        required
+        row
+        tooltip="Contactez-nous pour changer de forfait"
       />
 
       <div className="flex justify-center pt-2">

@@ -136,6 +136,18 @@ Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restau
 - Chaque query : `WHERE client_id = ${clientId}` (sauf super-admin).
 - Les listes `fetchEmployees`/`fetchConciergeries` ne renvoient plus que le tenant du caller — **c'est le moment où le contenu change**, à tester en preview avec un 2e client seedé.
 
+### C.4 — Abonnements / Forfaits
+
+État actuel : `conciergeries.plan` (`decouverte|pro|privilege`) existe, affiché **en lecture seule** dans les paramètres conciergerie (`Select` désactivé dans `conciergerieSettings.tsx`, tooltip "Contactez-nous pour changer de forfait"). L'écriture est déjà supportée côté serveur (`updateConciergerie`) — utilisable via SQL/script admin.
+
+- **Migration vers `clients`** : en C.1, `plan` doit vivre sur `clients`, pas `conciergeries` → transférer la colonne au moment du backfill (CMD, Calluna, Mentheréglisse = `pro`), puis supprimer `conciergeries.plan` dans une migration ultérieure.
+- **Rendre le forfait éditable** depuis les paramètres une fois la facturation / les règles de transition décidées (upgrade immédiat ? downgrade en fin de période ? paiement Revolut ?).
+- **Enforcer les conditions par forfait côté serveur** (jamais seulement côté client). Limites à définir et appliquer, par exemple :
+  - Découverte : **20 logements maximum** (`homes`)
+  - Découverte : quotas missions / prestataires à préciser
+  - Pro / Privilège : limites éventuelles à préciser
+  - À la création, bloquer ou avertir quand la limite est atteinte, avec un message proposant le forfait supérieur.
+
 ---
 
 ## Phase D — Domaines (ex-"point 2")
