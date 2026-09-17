@@ -219,7 +219,7 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {isDemoHost && (
         <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 bg-violet-500 px-4 py-2 text-white text-sm">
           <IconSparkles size={14} />
-          <span>Mode démo — les données sont réinitialisées régulièrement</span>
+          <span>Mode démo — les données peuvent être réinitialisées à tout moment</span>
         </div>
       )}
 

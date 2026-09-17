@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { navigationRoutes } from '@/app/utils/navigation';
+import { ID_PATH } from '@/app/utils/id';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -19,7 +20,6 @@ const SITE_PUBLIC_PATHS = new Set(['/landing', '/checkout']);
 // [id] page even with no cookies — it adopts the credential itself.
 // The loose legacy-id pattern also matches app routes (missions, homes…) —
 // exclude them so they keep going through the auth check.
-const ID_PATH = /^\/(?:[0-9a-z]{2,26}|v2_[0-9a-f]{32})$/;
 const isIdPath = (path: string) =>
   ID_PATH.test(path) && !navigationRoutes.includes(path) && path !== '/waiting' && path !== '/error';
 

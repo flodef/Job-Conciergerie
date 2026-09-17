@@ -209,7 +209,7 @@ Script admin d'abord (testable immédiatement en prod : 2 liens magiques), imper
 - DB dédiée : `DEMO_DATABASE_URL` — pointe actuellement vers une **base `demo` sur l'instance Supabase de dev** (tier gratuit = 2 projets max, déjà utilisés par dev+prod ; swap d'une env var si un projet dédié est créé plus tard). `db.ts` choisit le pool par requête : `x-demo` ou host `demo.*` → demo, sinon prod. Fail-closed : pas de `DEMO_DATABASE_URL` → erreur, jamais de write démo en prod.
 - `app/db/demoSeed.ts` + `scripts/seed-demo.ts` : reset complet (`DROP SCHEMA public CASCADE` + `migrations/schema.sql`) puis seed — client admin + conciergerie « Admin » (credential démo public `v2_de01…`, hashé), client « Démo », 2 conciergeries, 6 employés, 10 logements (images réutilisées du bucket prod partagé), 18 missions (passées/du jour/à venir/disponibles, dont binômes), 3 comptes rendus, 2 avis. **Garde prod** : refuse toute URL contenant `PROD_SUPABASE_PROJECT_ID`.
 - Entrée démo : la session démo est **admin** sur la DB démo → « Vue en tant que » (C.5) permet de se mettre dans la peau de n'importe quelle conciergerie/employé seedé. Lien public `https://demo.job-conciergerie.fr/v2_de01…` posé sur la landing (« Essayer la démo » dans le hero). Le fix proxy `/[id]` sans cookies (bug prod : les liens magiques étaient 307 vers `/` sur un navigateur vierge) rend ce flux possible.
-- Reset : `GET/POST /api/demo/reset` — auth `Bearer $CRON_SECRET` (Vercel cron `vercel.json`, toutes les 6h) ou `?key=$DEMO_RESET_KEY` ; lazy : ne reseede que si `seeded_at > 12h`, `?force=1` pour forcer.
+- Reset : `GET/POST /api/demo/reset` — auth `Bearer $CRON_SECRET` ou `?key=$DEMO_RESET_KEY` ; lazy : ne reseede que si `seeded_at > 12h`, `?force=1` pour forcer. Pas de cron — reseed manuel via `bun scripts/seed-demo.ts` ou l'endpoint.
 - Garde-fous : bandeau violet « Mode démo — données réinitialisées régulièrement » (empilé avec les autres bannières), emails log-only (`deliver()` court-circuité en démo), checkout hors portée (host site-only).
 
 ## Phase F — Tests scénarios démo (ex-"point 4")
@@ -245,7 +245,7 @@ A (sécu) ──► B (merge landing) ──► C (multi-tenant) ──► D (do
 
 - [x] **DNS** : `CNAME demo → 6a671e6a0f621fd7.vercel-dns-017.com.` résout ✅ ; domaine déjà assigné au projet Vercel (TLS s'active au prochain déploiement prod)
 - [x] Merger `dev` → `main` — release `2.404` ✅ (routage demo, bannière, bouton landing, `/api/demo/reset` en prod ; smoke-testé : `demo./v2_de01…` → 200)
-- [ ] Optionnel : projet Supabase dédié pour la démo → remplacer `DEMO_DATABASE_URL` (prod) par la nouvelle URL, puis `bun scripts/seed-demo.ts --db-url <url>` — nécessite un passage par le dashboard Supabase (tier gratuit = 2 projets max, déjà pris par dev+prod ; alternative gratuite : Neon autorise plusieurs projets). Bonus du setup actuel : le cron quotidien maintient l'instance dev éveillée (pas de pause free-tier).
+- [ ] Optionnel : projet Supabase dédié pour la démo → remplacer `DEMO_DATABASE_URL` (prod) par la nouvelle URL, puis `bun scripts/seed-demo.ts --db-url <url>` — nécessite un passage par le dashboard Supabase (tier gratuit = 2 projets max, déjà pris par dev+prod ; alternative gratuite : Neon autorise plusieurs projets).
 
 ### Phase F — checklist manuelle démo
 

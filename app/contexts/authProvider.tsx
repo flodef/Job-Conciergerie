@@ -9,7 +9,7 @@ import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { setPrimaryColor } from '@/app/utils/color';
 import { deleteCookie, setCookie } from '@/app/utils/cookies';
 import { isConnectionPoolError } from '@/app/utils/dbErrors';
-import { containsId, generateSecureId, hashIdAsync } from '@/app/utils/id';
+import { containsId, generateSecureId, hashIdAsync, ID_PATH } from '@/app/utils/id';
 import { getLocalStorageItem, useLocalStorage } from '@/app/utils/localStorage';
 import { navigationRoutes } from '@/app/utils/navigation';
 import { getUserKey, type UserData } from '@/app/utils/user';
@@ -249,7 +249,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Both lists must have loaded — a failed query can't prove the user is
       // absent, and reloading on a DB error just loops forever.
       const path = window.location.pathname;
-      if (fetchedConciergeries !== null && fetchedEmployees !== null) {
+      // Credential links (/[id]) drive their own navigation via onMenuChange —
+      // refreshing here races it into a reload loop before the push lands.
+      const onCredentialLink = ID_PATH.test(path) && !navigationRoutes.includes(path);
+      if (fetchedConciergeries !== null && fetchedEmployees !== null && !onCredentialLink) {
         if (
           (newUserData && !navigationRoutes.includes(path) && currentUserType === 'conciergerie') ||
           (!newUserData && navigationRoutes.includes(path))
