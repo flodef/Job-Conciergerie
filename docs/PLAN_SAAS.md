@@ -243,7 +243,7 @@ A (sécu) ──► B (merge landing) ──► C (multi-tenant) ──► D (do
 
 ### Pour activer la démo (Phase E)
 
-- [ ] **DNS** : créer l'enregistrement `CNAME demo → 6a671e6a0f621fd7.vercel-dns-017.com.` chez le registrar de `job-conciergerie.fr` (commande `vercel domains verify demo.job-conciergerie.fr` pour le détail à jour)
+- [x] **DNS** : `CNAME demo → 6a671e6a0f621fd7.vercel-dns-017.com.` résout ✅ ; domaine déjà assigné au projet Vercel (TLS s'active au prochain déploiement prod)
 - [ ] Merger `dev` → `main` (déploie le routage demo, la bannière, le bouton landing, `/api/demo/reset`)
 - [ ] Optionnel : projet Supabase dédié pour la démo → remplacer `DEMO_DATABASE_URL` (prod) par la nouvelle URL, puis `bun scripts/seed-demo.ts --db-url <url>`
 

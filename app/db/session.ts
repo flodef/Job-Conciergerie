@@ -172,8 +172,8 @@ export async function getSessionUser(): Promise<SessionUser | null> {
         const hRotated = hashId(newId);
         // WITH ORDINALITY keeps the array order stable — element order is the
         // eviction order (oldest device first) and array_agg doesn't guarantee it.
-        // Duplicated per table: the lazy `sql` wrapper resolves the pool per call,
-        // so nested sql`` fragments can't be composed into a parent template.
+        // One UPDATE per table via unsafe — a shared sql`` SET fragment would
+        // work too, but the explicit $n form keeps the table name interpolable.
         for (const table of ['conciergeries', 'employees'] as const)
           await sql.unsafe(
             `UPDATE ${table}
