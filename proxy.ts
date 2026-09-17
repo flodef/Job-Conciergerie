@@ -137,11 +137,14 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
-    // Make a fetch request to our own API to check user status
+    // Make a fetch request to our own API to check user status.
+    // request.url is normalized to the bind host in dev — the demo signal must
+    // travel explicitly (x-demo) rather than relying on Host propagation.
     const response = await fetch(new URL('/api/auth/', request.url), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(requestHeaders.has('x-demo') ? { 'x-demo': '1' } : {}),
       },
       body: JSON.stringify({ userId }),
     });

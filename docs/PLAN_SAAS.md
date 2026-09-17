@@ -211,7 +211,8 @@ Script admin d'abord (testable immédiatement en prod : 2 liens magiques), imper
 - Entrée démo : la session démo est **admin** sur la DB démo → « Vue en tant que » (C.5) permet de se mettre dans la peau de n'importe quelle conciergerie/employé seedé. Lien public `https://demo.job-conciergerie.fr/v2_de01…` posé sur la landing (« Essayer la démo » dans le hero). Le fix proxy `/[id]` sans cookies (bug prod : les liens magiques étaient 307 vers `/` sur un navigateur vierge) rend ce flux possible.
 - Reset à la demande : `GET /api/demo/enter` (public) — le lien « Essayer la démo » de la landing y mène : wipe + reseed puis redirect 303 vers `/<demo_id>`. Cadence min 15 min (un 2ᵉ clic ne peut pas effacer un testeur qui vient de commencer) + `pg_advisory_lock` contre les resets concurrents. Accès direct à `demo.*` → pas de reset. Reset admin : `GET/POST /api/demo/reset` (`Bearer $CRON_SECRET` ou `?key=$DEMO_RESET_KEY`, lazy >12h sauf `?force=1`) et `bun scripts/seed-demo.ts`.
 - Keep-alive : pas de cron dédié — `/api/retry-emails` (déjà appelé ~10 min par cron-job.org) ping la DB démo à chaque run → l'instance Supabase dev reste éveillée, et reseede si `seeded_at > 12h`.
-- Garde-fous : bandeau violet « Mode démo — données réinitialisées régulièrement » (empilé avec les autres bannières), emails log-only (`deliver()` court-circuité en démo), checkout hors portée (host site-only).
+- Garde-fous : bandeau violet « Mode démo — données peuvent être réinitialisées à tout moment » (empilé avec les autres bannières), emails log-only (`deliver()` court-circuité en démo), checkout hors portée (host site-only).
+- Le proxy propage `x-demo` au fetch interne `/api/auth` — en dev `request.url` est normalisé vers le bind host, sans ça l'auth taperait la prod DB pour une requête `demo.localhost`.
 
 ## Phase F — Tests scénarios démo (ex-"point 4")
 
