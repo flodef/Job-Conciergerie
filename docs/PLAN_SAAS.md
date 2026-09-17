@@ -184,11 +184,14 @@ Script admin d'abord (testable immédiatement en prod : 2 liens magiques), imper
 
 ---
 
-## Phase D — Domaines (ex-"point 2")
+## Phase D — Domaines (ex-"point 2") ✅ FAIT
 
-- DNS : `job-conciergerie.fr` + `www.` → le déploiement unique ; `app.job-conciergerie.fr` → idem.
-- Mettre à jour : `NEXT_PUBLIC_APP_URL` (= `https://app.job-conciergerie.fr`), les liens magiques `/<id>` dans les emails (**critique** — doivent pointer `app.`), `redirect_url` Revolut, URL du webhook dans le dashboard, redirect URLs Supabase.
-- Décider du sort des anciens liens `/<id>` déjà envoyés (redirect apex → app, ou rewrite).
+- DNS : `job-conciergerie.fr` + `www.` → le déploiement unique ; `app.job-conciergerie.fr` → ajouté au projet Vercel, DNS résout déjà.
+- Routage : landing hosts = site-only — `/` → `/landing`, `/landing` + `/checkout` publics, **tout le reste → 307 `app.<domain>`**. Le proxy réémet `user_id`/`user_type` en `Domain=.job-conciergerie.fr` sur la 307 → migration transparente des credentials existants vers `app.` en un hop (localStorage réensemencé via la session).
+- Entrées : nav « Connexion » → `app./` ; hero « Déjà inscrit ? » → `app./?type=conciergerie|employee` → la home app pré-sélectionne le formulaire (le chooser reste le fallback sans param).
+- `NEXT_PUBLIC_APP_URL` = `https://app.job-conciergerie.fr` (prod + preview + development) → les liens magiques `/<id>` pointent `app.`. Les anciens liens `www./<id>` restent fonctionnels via la 307 + cookie domaine.
+- `redirect_url` Revolut : basée sur le `Host` de la requête (`/checkout` vit sur le site, pas sur `app.`).
+- Reste : URL du webhook dans le dashboard Revolut + redirect URLs Supabase (Phase G, quand les clés prod seront là). Redéploy nécessaire — `NEXT_PUBLIC_*` est inliné au build.
 
 ## Phase E — Démo (ex-"points 3/4/5")
 

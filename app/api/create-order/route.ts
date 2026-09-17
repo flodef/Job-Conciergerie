@@ -45,7 +45,10 @@ export async function POST(request: NextRequest) {
         amount: Math.round(amount * 100),
         currency: 'EUR',
         description: `Abonnement Job Conciergerie — ${planName}`,
-        redirect_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/checkout?status=success`,
+        // The checkout lives on the site host — the order was created from it,
+        // so send the customer back to the same host (not NEXT_PUBLIC_APP_URL,
+        // which now points at app.<domain> for magic links).
+        redirect_url: `https://${request.headers.get('host')}/checkout?status=success`,
         customer: customerEmail ? { email: customerEmail } : undefined,
         merchant_order_data: {
           reference: `JC-${planName}-${Date.now()}`,
