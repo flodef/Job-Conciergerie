@@ -1,5 +1,6 @@
 'use client';
 
+import { AutoSize } from '@/app/components/autoSizeField';
 import Label from '@/app/components/label';
 import type { SelectOption } from '@/app/types/types';
 import {
@@ -208,10 +209,7 @@ const Combobox = forwardRef(
           <div className={cn('relative w-fit max-w-full', className)} ref={comboboxRef}>
             <div className={selectClassName(error, disabled, isFocused, isOpen)}>
               <IconSearch size={18} className="text-foreground/50 shrink-0" />
-              <span className="relative block flex-1 w-fit max-w-full min-w-0">
-                <span aria-hidden="true" className="invisible block w-fit max-w-full whitespace-pre overflow-hidden">
-                  {sizerText || ' '}
-                </span>
+              <AutoSize text={sizerText} className="flex-1">
                 <input
                   id={id}
                   ref={inputRef}
@@ -248,7 +246,7 @@ const Combobox = forwardRef(
                   aria-haspopup="listbox"
                   aria-controls={`${id}-options`}
                 />
-              </span>
+              </AutoSize>
               <button
                 type="button"
                 onClick={() => !disabled && setIsOpen(!isOpen)}

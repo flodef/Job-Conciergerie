@@ -1,5 +1,6 @@
 'use client';
 
+import { AutoSize } from '@/app/components/autoSizeField';
 import Label from '@/app/components/label';
 import {
   cn,
@@ -182,7 +183,7 @@ const MultiSelect = forwardRef(
         const rect = selectRef.current.getBoundingClientRect();
         const shouldOpen = shouldOpenUpward({
           elementRef: selectRef.current,
-          itemCount: processedOptions.length,
+          itemCount: allOptions.length,
         });
         setOpenUpward(shouldOpen);
         const top = shouldOpen ? rect.top : rect.bottom;
@@ -234,14 +235,11 @@ const MultiSelect = forwardRef(
               aria-haspopup="listbox"
               aria-controls={`${id}-options`}
             >
-              <span className="relative block w-fit max-w-full min-w-0">
-                <span aria-hidden="true" className="invisible block w-fit max-w-full whitespace-pre overflow-hidden">
-                  {sizerText || ' '}
-                </span>
+              <AutoSize text={sizerText}>
                 <span className={cn('absolute inset-0 truncate', values.length === 0 && 'text-foreground/50')}>
                   {displayValue()}
                 </span>
-              </span>
+              </AutoSize>
               <IconChevronDown
                 size={18}
                 className={cn('shrink-0 transition-transform duration-200', isOpen && 'transform rotate-180')}

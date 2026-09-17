@@ -1,6 +1,6 @@
 'use client';
 
-import { AutoSizeField } from '@/app/components/autoSizeField';
+import { AutoSize } from '@/app/components/autoSizeField';
 import { inputClassName } from '@/app/utils/className';
 import { IconSearch, IconX } from '@tabler/icons-react';
 import { cn } from '@/app/utils/className';
@@ -20,7 +20,7 @@ export default function SearchInput({
 }: SearchInputProps) {
   return (
     <div className={cn('relative w-fit max-w-full sm:max-w-72', className)}>
-      <AutoSizeField text={value || placeholder} sizerClassName={cn(inputClassName, 'pr-8')}>
+      <AutoSize text={value || placeholder} sizerClassName={cn(inputClassName, 'pr-8')} className="min-w-32">
         <input
           type="text"
           placeholder={placeholder}
@@ -29,7 +29,7 @@ export default function SearchInput({
           className={cn(inputClassName, value && 'pr-8', 'absolute inset-0')}
           maxLength={25}
         />
-      </AutoSizeField>
+      </AutoSize>
       <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-light" size={18} />
       {value && (
         <button

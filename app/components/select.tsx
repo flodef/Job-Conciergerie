@@ -1,5 +1,6 @@
 'use client';
 
+import { AutoSize } from '@/app/components/autoSizeField';
 import Label from '@/app/components/label';
 import type { SelectOption } from '@/app/types/types';
 import {
@@ -159,7 +160,7 @@ const Select = forwardRef(
     // Set highlighted index when opening dropdown
     useEffect(() => {
       if (isOpen) {
-        const selectedIndex = options.findIndex(option => option === value);
+        const selectedIndex = options.findIndex(opt => (typeof opt === 'object' ? opt.value : opt) === value);
         setHighlightedIndex(selectedIndex >= 0 ? selectedIndex : -1);
       }
     }, [isOpen, options, value]);
@@ -229,12 +230,9 @@ const Select = forwardRef(
               aria-haspopup="listbox"
               aria-controls={`${id}-options`}
             >
-              <span className="relative block w-fit max-w-full min-w-0">
-                <span aria-hidden="true" className="invisible block w-fit max-w-full whitespace-pre overflow-hidden">
-                  {sizerText || ' '}
-                </span>
+              <AutoSize text={sizerText}>
                 <span className={cn('absolute inset-0 truncate', !value && 'text-foreground/50')}>{displayValue}</span>
-              </span>
+              </AutoSize>
               <IconChevronDown
                 size={18}
                 className={cn('shrink-0 transition-transform duration-200', isOpen && 'transform rotate-180')}

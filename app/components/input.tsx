@@ -1,4 +1,4 @@
-import { AutoSizeField } from '@/app/components/autoSizeField';
+import { AutoSize } from '@/app/components/autoSizeField';
 import Label from '@/app/components/label';
 import { cn, errorClassName, inputFieldClassName, rowClassName } from '@/app/utils/className';
 import { handleInputBlur, handleChange } from '@/app/utils/form';
@@ -47,7 +47,7 @@ const InputComponent: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
         {label}
       </Label>
       <div className="flex-1 min-w-0">
-        <AutoSizeField text={value?.toString() || placeholder} sizerClassName={inputFieldClassName('')}>
+        <AutoSize text={value?.toString() || placeholder} sizerClassName={inputFieldClassName('')} className="min-w-32">
           <input
             type={type}
             id={id}
@@ -61,7 +61,7 @@ const InputComponent: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
             placeholder={placeholder}
             required={required}
           />
-        </AutoSizeField>
+        </AutoSize>
         {error && <p className={errorClassName}>{error}</p>}
       </div>
     </div>

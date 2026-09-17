@@ -1,5 +1,6 @@
 'use client';
 
+import { AutoSize } from '@/app/components/autoSizeField';
 import Label from '@/app/components/label';
 import {
   cn,
@@ -258,10 +259,7 @@ const AutocompleteSelect = forwardRef(
               aria-haspopup={isReadonly ? undefined : 'listbox'}
               aria-controls={isReadonly ? undefined : `${id}-options`}
             >
-              <span className="relative block flex-1 w-fit max-w-full min-w-0">
-                <span aria-hidden="true" className="invisible block w-fit max-w-full whitespace-pre overflow-hidden">
-                  {sizerText || ' '}
-                </span>
+              <AutoSize text={sizerText} className="flex-1">
                 {isOpen ? (
                   <input
                     ref={inputRef}
@@ -278,7 +276,7 @@ const AutocompleteSelect = forwardRef(
                     {selectedLabel || placeholder}
                   </span>
                 )}
-              </span>
+              </AutoSize>
               <div className="flex items-center gap-1 shrink-0">
                 {clearable && value && (isReadonly || !isOpen) && (
                   <button
