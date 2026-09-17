@@ -1752,7 +1752,7 @@ function ContactForm() {
                   maxLength={MESSAGE_MAX}
                 />
                 <p className="text-right text-xs text-slate-500 mt-1">
-                  {MESSAGE_MAX - formState.message.length} caractères restants
+                  {formState.message.length} / {MESSAGE_MAX}
                 </p>
               </div>
 
