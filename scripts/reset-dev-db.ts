@@ -56,7 +56,7 @@ console.log(`${BOLD}╔═══════════════════
 console.log(`${BOLD}║        Dev DB Reset Utility          ║${RESET}`);
 console.log(`${BOLD}╚══════════════════════════════════════╝${RESET}`);
 console.log('');
-const maskedDevUrl = DEV_DB_URL.replace(/@.*$/, '@***');
+const maskedDevUrl = DEV_DB_URL.replace(/:([^:@/]+)@/, ':***@').replace(/@.*$/, '@***');
 info(`Dev DB: ${maskedDevUrl}`);
 if (DIRECT_URL) info('Using DIRECT_URL (bypasses pooler/RLS)');
 else warn('No DIRECT_URL found - using DATABASE_URL (RLS may block access)');
