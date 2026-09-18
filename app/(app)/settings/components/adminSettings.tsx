@@ -1,17 +1,13 @@
-import {
-  getImpersonationTargets,
-  startImpersonation,
-  stopImpersonation,
-  type ImpersonationTarget,
-} from '@/app/actions/admin';
+import { getImpersonationTargets, startImpersonation, type ImpersonationTarget } from '@/app/actions/admin';
 import { Button } from '@/app/components/button';
+import Label from '@/app/components/label';
 import Select from '@/app/components/select';
 import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import type { UserType } from '@/app/contexts/authProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import type { SelectOption } from '@/app/types/types';
-import { cn } from '@/app/utils/className';
+import { cn, rowClassName } from '@/app/utils/className';
 import { IconBuildingStore, IconUser } from '@tabler/icons-react';
 import React, { useEffect, useState } from 'react';
 
@@ -47,65 +43,46 @@ const AdminSettings: React.FC = () => {
     }
   };
 
-  const handleStop = async () => {
-    try {
-      setIsLoading(true);
-      if (!(await stopImpersonation())) throw new Error("Impossible de quitter la vue d'impersonation");
-      window.location.reload();
-    } catch (error) {
-      showToast({ type: ToastType.Error, message: String(error), error });
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-2">
-      {impersonating && (
-        <div className="flex items-center justify-between gap-2 rounded-lg bg-amber-100 px-3 py-2">
-          <span className="text-sm text-amber-800 truncate">En tant que {impersonatedName}</span>
-          <Button style="secondary" onClick={handleStop} disabled={isLoading}>
-            Quitter
-          </Button>
+      {/* Line 1 — pick the kind of row to impersonate (icon-only toggle) */}
+      <div className={rowClassName}>
+        <Label id="impersonate-type">Voir en tant que</Label>
+        <div className="flex-1 flex justify-end">
+          <div className="flex overflow-hidden rounded-lg border border-secondary">
+            {(
+              [
+                { type: 'conciergerie' as const, label: 'Conciergerie', icon: <IconBuildingStore size={20} /> },
+                { type: 'employee' as const, label: 'Prestataire', icon: <IconUser size={20} /> },
+              ] as const
+            ).map(({ type, label, icon }) => (
+              <button
+                key={type}
+                type="button"
+                title={label}
+                aria-label={label}
+                aria-pressed={targetType === type}
+                className={cn(
+                  'px-3 py-2 cursor-pointer transition-colors',
+                  targetType === type ? 'bg-primary text-white' : 'bg-background text-foreground',
+                )}
+                onClick={() => {
+                  setTargetType(type);
+                  setSelected('');
+                }}
+                disabled={isLoading}
+              >
+                {icon}
+              </button>
+            ))}
+          </div>
         </div>
-      )}
-
-      {/* Type toggle — pick the kind of row first, then the person */}
-      <div className="flex gap-2">
-        <button
-          type="button"
-          className={cn(
-            'flex items-center gap-1 px-3 py-2 rounded cursor-pointer flex-1 justify-center',
-            targetType === 'conciergerie' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
-          )}
-          onClick={() => {
-            setTargetType('conciergerie');
-            setSelected('');
-          }}
-          disabled={isLoading}
-        >
-          <IconBuildingStore size={18} />
-          Conciergerie
-        </button>
-        <button
-          type="button"
-          className={cn(
-            'flex items-center gap-1 px-3 py-2 rounded cursor-pointer flex-1 justify-center',
-            targetType === 'employee' ? 'bg-primary text-white' : 'bg-secondary text-foreground',
-          )}
-          onClick={() => {
-            setTargetType('employee');
-            setSelected('');
-          }}
-          disabled={isLoading}
-        >
-          <IconUser size={18} />
-          Prestataire
-        </button>
       </div>
 
+      {/* Line 2 — pick the person */}
       <Select
         id="impersonate-target"
-        label={targetType === 'conciergerie' ? 'Voir en tant que conciergerie' : 'Voir en tant que prestataire'}
+        label={targetType === 'conciergerie' ? 'Conciergerie' : 'Prestataire'}
         value={selected}
         onChange={setSelected}
         options={options}

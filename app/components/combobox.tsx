@@ -210,7 +210,7 @@ const Combobox = forwardRef(
           <div className={cn('relative w-fit max-w-full', className)} ref={comboboxRef}>
             <div className={selectClassName(error, disabled, isFocused, isOpen)}>
               <IconSearch size={18} className="text-foreground/50 shrink-0" />
-              <AutoSize text={sizerText} className="flex-1">
+              <AutoSize text={sizerText} sizerClassName="pr-3" className="flex-1">
                 <input
                   id={id}
                   ref={inputRef}

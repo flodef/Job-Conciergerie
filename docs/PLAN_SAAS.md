@@ -23,7 +23,7 @@ Objectif : `www.`/apex servent **toujours** le site (même avec une session acti
 
 ### Phase C.4 — Abonnements (cœur fait, reste l'exploitation)
 
-Fait : `plan_changes` (log append-only), `invoices` (facture mensuelle = forfait max utilisé, idempotente), cron `/api/bill-subscriptions`, self-service + popup comparatif dans Settings, limites serveur (caps biens/prestataires, duo, rapports, historique, notifications, multi). Décision actée : `conciergeries.plan` reste la source de vérité (gate par membre, pas par groupe) — **pas de migration vers `clients.plan`**.
+Fait : `plan_changes` (log append-only), `invoices` (facture mensuelle = forfait max utilisé, idempotente), cron `/api/bill-subscriptions`, self-service + popup comparatif dans Settings, limites serveur (caps biens/prestataires, duo, rapports, historique, notifications, multi). Décision actée : `conciergeries.plan` reste la source de vérité (gate par membre, pas par groupe) — **pas de migration vers `clients.plan`**. Migrations vérifiées déployées sur les 3 bases : `create_subscription_billing.sql`, `keep_employee_home_conciergerie.sql` (fallback excluant les clients admin), `scope_color_name_to_client.sql`, `normalize_phone_numbers.sql` (tous les `tel` au format `0XXXXXXXXX`).
 
 - [ ] Planifier l'appel du cron `/api/bill-subscriptions` le 1er de chaque mois (cron-job.org, comme `check-late-missions`)
 - [ ] Encaisser les factures : statut `pending` → lien de paiement (Revolut) dans l'email de facture + maj du statut au règlement
