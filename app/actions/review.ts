@@ -1,6 +1,6 @@
 'use server';
 
-import { deleteReview, getReview, upsertReview, type Review } from '@/app/db/reviewDb';
+import { deleteReview, getAllReviews, getReview, upsertReview, type DbReview, type Review } from '@/app/db/reviewDb';
 import { requireConnectedSession } from '@/app/db/session';
 
 const MAX_COMMENT_LENGTH = 500;
@@ -36,4 +36,15 @@ export async function deleteMyReview(): Promise<boolean> {
   const session = await requireConnectedSession();
   if (!session) return false;
   return await deleteReview(session.userType, session.rowKey);
+}
+
+/**
+ * Admin-only recap: every review (newest first) + the average rating.
+ * A non-impersonating admin has no meaningful "own review" — this is what
+ * their review settings section shows instead.
+ */
+export async function getReviewsAdmin(): Promise<{ average: number; count: number; reviews: DbReview[] } | null> {
+  const session = await requireConnectedSession();
+  if (!session?.isAdmin || session.impersonating) return null;
+  return await getAllReviews();
 }

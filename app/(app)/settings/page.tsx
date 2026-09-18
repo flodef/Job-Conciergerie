@@ -17,7 +17,7 @@ import { IconBell, IconDevices, IconEye, IconInfoCircle, IconSettings, IconStar 
 import { useEffect, useState } from 'react';
 
 export default function Settings() {
-  const { userType, isLoading: authLoading, userData, isAdmin } = useAuth();
+  const { userType, isLoading: authLoading, userData, isAdmin, impersonating } = useAuth();
   const { openModal, closeModal } = useModal();
 
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -71,7 +71,8 @@ export default function Settings() {
       content: <NotificationSettings />,
     },
     {
-      title: 'Votre avis',
+      // A non-impersonating admin can't self-review — they get the recap.
+      title: isAdmin && !impersonating ? 'Avis reçus' : 'Votre avis',
       icon: <IconStar size={20} />,
       content: <ReviewSettings />,
     },

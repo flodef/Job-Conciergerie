@@ -129,6 +129,26 @@ export const getTopReviews = async (limit = 3): Promise<DbReview[]> => {
 };
 
 /**
+ * Admin recap — every review (public or not), newest first, plus the average.
+ * Unscoped by design: only reachable through the session-gated admin action.
+ */
+export const getAllReviews = async (): Promise<{ average: number; count: number; reviews: DbReview[] }> => {
+  try {
+    await ensureReviewsTable();
+    const result = await sql<DbReview[]>`
+      SELECT user_type, row_key, rating, comment, is_public, updated_at FROM reviews
+      ORDER BY updated_at DESC
+    `;
+    const count = result.length;
+    const average = count > 0 ? result.reduce((sum, r) => sum + r.rating, 0) / count : 0;
+    return { average, count, reviews: result };
+  } catch (error) {
+    console.error('Error fetching all reviews:', error);
+    return { average: 0, count: 0, reviews: [] };
+  }
+};
+
+/**
  * Public aggregate — average rating and review count, for the landing stats.
  * Returns null when there is no review yet.
  */
