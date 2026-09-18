@@ -4,6 +4,7 @@ import type { DbConciergerie } from '@/app/db/conciergerieDb';
 import {
   getAllConciergeries,
   getConciergerieIds,
+  getGroupForClient,
   updateConciergerie,
   updateConciergerieId,
 } from '@/app/db/conciergerieDb';
@@ -61,6 +62,20 @@ export async function fetchConciergeries(): Promise<Conciergerie[] | null> {
         plan: c.plan,
       })) ?? null
   );
+}
+
+/**
+ * The multi-conciergerie group the session belongs to (client_id sharing =
+ * group membership). Read-only display for settings — group changes are an
+ * admin operation, never self-service.
+ */
+export async function fetchMyGroup(): Promise<{ name: string | null; members: string[] } | null> {
+  const session = await requireConnectedSession();
+  if (!session) return null;
+  const scope = tenantScope(session);
+  // Unscoped (non-impersonating admin) or client-less session: no group
+  if (!scope) return { name: null, members: [] };
+  return await getGroupForClient(scope);
 }
 
 /**

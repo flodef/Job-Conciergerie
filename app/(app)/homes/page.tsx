@@ -10,6 +10,7 @@ import HomeCard from '@/app/(app)/homes/components/homeCard';
 import HomeDetails from '@/app/(app)/homes/components/homeDetails';
 import HomeForm from '@/app/(app)/homes/components/homeForm';
 import HomeNotesModal from '@/app/(app)/homes/components/homeNotesModal';
+import { planLimits } from '@/app/data/plans';
 import type { Home } from '@/app/types/dataTypes';
 import { cn, titleClassName } from '@/app/utils/className';
 import { useLocalStorage } from '@/app/utils/localStorage';
@@ -20,7 +21,7 @@ import M3LoadingSpinner from '@/app/components/m3LoadingSpinner';
 export default function HomesPage() {
   const { myHomes, isLoading: homesLoading, updateHomeLocal } = useHomes();
   const { currentPage, setHasUnsavedChanges } = useMenuContext();
-  const { isLoading: authLoading, isConciergerie } = useAuth();
+  const { isLoading: authLoading, isConciergerie, conciergerieName, findConciergerie } = useAuth();
   const { openModal, closeModal } = useModal();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -75,6 +76,10 @@ export default function HomesPage() {
 
   const [displayMode, setDisplayMode] = useLocalStorage<'list' | 'grid' | 'thumb'>('homes_display_mode', 'thumb');
 
+  // Over-limit visibility: a downgraded conciergerie keeps every home but sees
+  // the cap it exceeds (e.g. "40/20 biens") instead of a silent block.
+  const maxHomes = planLimits(findConciergerie(conciergerieName)?.plan).maxHomes;
+
   if (!hasLoadedOnce) return <M3LoadingSpinner />;
   if (!isConciergerie) return null;
 
@@ -85,7 +90,18 @@ export default function HomesPage() {
           {myHomes.length > 1 && (
             <SearchInput placeholder="Rechercher un bien..." value={searchTerm} onChange={setSearchTerm} />
           )}
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            {maxHomes !== null && (
+              <span
+                className={cn(
+                  'text-xs font-semibold px-2 py-1 rounded-full',
+                  myHomes.length >= maxHomes ? 'bg-red-100 text-red-700' : 'bg-secondary text-foreground',
+                )}
+                title={`${myHomes.length}/${maxHomes} biens — limite du plan`}
+              >
+                {myHomes.length}/{maxHomes}
+              </span>
+            )}
             <button
               className={cn(
                 'p-2 rounded cursor-pointer',

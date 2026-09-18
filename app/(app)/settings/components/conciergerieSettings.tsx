@@ -1,4 +1,4 @@
-import { updateConciergerieData } from '@/app/actions/conciergerie';
+import { fetchMyGroup, updateConciergerieData } from '@/app/actions/conciergerie';
 import { Button } from '@/app/components/button';
 import ColorPicker from '@/app/components/colorPicker';
 import Input from '@/app/components/input';
@@ -43,6 +43,7 @@ const ConciergerieSettings: React.FC = () => {
   const [tel, setTel] = useState('');
   const [selectedColor, setSelectedColor] = useState<ColorOption | null>(null);
   const [plan, setPlan] = useState<ConciergeriePlan>('pro');
+  const [group, setGroup] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const { showToast } = useToast();
 
@@ -75,6 +76,16 @@ const ConciergerieSettings: React.FC = () => {
     // Apply theme color
     setPrimaryColor(conciergerie.color);
   }, [userData]);
+
+  // Multi-conciergerie group membership — read-only indicator (group changes
+  // are an admin operation). Members share missions & providers when their
+  // plan allows it; a solo member shows "Indépendante".
+  useEffect(() => {
+    fetchMyGroup().then(g => {
+      if (!g) return;
+      setGroup(g.members.length > 1 ? g.members.join(', ') : 'Indépendante');
+    });
+  }, []);
 
   // Check if form has been modified
   const hasChanges = () => {
@@ -207,6 +218,18 @@ const ConciergerieSettings: React.FC = () => {
         required
         row
         tooltip="Contactez-nous pour changer de forfait"
+      />
+
+      <Input
+        id="group"
+        label="Groupe"
+        value={group || '…'}
+        onChange={() => {}}
+        error=""
+        onError={() => {}}
+        disabled
+        row
+        tooltip="Les conciergeries d'un même groupe partagent missions et prestataires (selon leur forfait). Contactez-nous pour modifier votre groupe."
       />
 
       <div className="flex justify-center pt-2">

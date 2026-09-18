@@ -196,6 +196,18 @@ const EmployeeSettings: React.FC = () => {
         row
       />
 
+      <Input
+        id="conciergerie"
+        label="Conciergerie d'inscription"
+        value={(userData as Employee)?.conciergerieName || '—'}
+        onChange={() => {}}
+        error=""
+        onError={() => {}}
+        disabled
+        tooltip="La conciergerie choisie à l'inscription ne peut pas être modifiée"
+        row
+      />
+
       <div className="flex justify-center pt-2">
         <Button onClick={handleSave} disabled={!hasChanges()} loading={isSaving} loadingText="Enregistrement...">
           Enregistrer les modifications

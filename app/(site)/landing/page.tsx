@@ -1249,6 +1249,8 @@ function Pricing() {
       'Vos suggestions de fonctionnalités passent en tête de notre feuille de route',
     'Formation en visio': 'Sessions de formation personnalisées en visioconférence avec notre équipe',
     'Assistance dédiée': 'Un interlocuteur unique dédié à votre compte, joignable directement',
+    'Multi-conciergerie':
+      'Vos missions sont visibles par tous les prestataires acceptés de la plateforme, pas seulement les vôtres',
   };
 
   const plans = [

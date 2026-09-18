@@ -93,6 +93,38 @@ export const getHomesVisibleToEmployee = async (
 };
 
 /**
+ * Same visibility rule as getHomesVisibleToEmployee, for a single home —
+ * used by writes (notes) that must not reach an invisible foreign home.
+ */
+export const isHomeVisibleToEmployee = async (
+  employeeKey: string,
+  homeId: string,
+  visibleNames: string[] | null,
+  clientId?: string,
+): Promise<boolean> => {
+  try {
+    const result = await sql`
+      SELECT 1 FROM homes
+      WHERE id = ${homeId}
+      AND (
+        ${visibleNames}::text[] IS NULL
+        OR conciergerie_name = ANY(${visibleNames ?? []}::text[])
+        OR id IN (
+          SELECT home_id FROM missions
+          WHERE employee_id = ${employeeKey} OR employee_id_2 = ${employeeKey}
+        )
+      )
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
+      LIMIT 1
+    `;
+    return result.length > 0;
+  } catch (error) {
+    console.error(`Error checking home visibility for ${employeeKey}:`, error);
+    return false;
+  }
+};
+
+/**
  * Fetch a single home by id
  */
 export const getHomeById = async (id: string, clientId?: string) => {

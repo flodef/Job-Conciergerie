@@ -44,12 +44,16 @@ export default function EmployeeDetails({
   mission,
   skipAnimation = false,
 }: EmployeeDetailsProps) {
-  const { updateUserData, userData, employees } = useAuth();
+  const { updateUserData, userData, employees, conciergerieName } = useAuth();
   const { missions, removeSecondProvider, updateMission } = useMissions();
   const { openModal, closeModal } = useModal();
   const { showToast } = useToast();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Vetting/deletion stays the home conciergerie's call — under
+  // multi-conciergerie a foreign employee is assignable, not manageable.
+  const canVet = !employee.conciergerieName || employee.conciergerieName === conciergerieName;
 
   const countMissions = (status: MissionStatus) => countEmployeeMissions(employee, missions, status);
 
@@ -191,41 +195,43 @@ export default function EmployeeDetails({
           )}
         </>
       ) : (
-        <>
-          {(employee.status === 'accepted' || employee.status === 'pending') && (
+        canVet && (
+          <>
+            {(employee.status === 'accepted' || employee.status === 'pending') && (
+              <button
+                onClick={() => handleStatusChange('rejected')}
+                className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}
+              >
+                <IconX />
+                Rejeter
+              </button>
+            )}
+            {(employee.status === 'rejected' || employee.status === 'pending') && (
+              <button
+                onClick={() => handleStatusChange('accepted')}
+                className={cn(actionButtonClassName, 'bg-green-100 text-green-700')}
+              >
+                <IconCheck />
+                Accepter
+              </button>
+            )}
             <button
-              onClick={() => handleStatusChange('rejected')}
+              onClick={() =>
+                confirm({
+                  title: 'Supprimer le prestataire',
+                  message: `Êtes-vous sûr de vouloir supprimer ce prestataire de l'application ?\n\n⚠️ ATTENTION ⚠️\nCette action est irréversible !!`,
+                  confirmText: 'Supprimer',
+                  isDangerous: true,
+                  onConfirm: handleDelete,
+                })
+              }
               className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}
             >
-              <IconX />
-              Rejeter
+              <IconTrash />
+              Supprimer
             </button>
-          )}
-          {(employee.status === 'rejected' || employee.status === 'pending') && (
-            <button
-              onClick={() => handleStatusChange('accepted')}
-              className={cn(actionButtonClassName, 'bg-green-100 text-green-700')}
-            >
-              <IconCheck />
-              Accepter
-            </button>
-          )}
-          <button
-            onClick={() =>
-              confirm({
-                title: 'Supprimer le prestataire',
-                message: `Êtes-vous sûr de vouloir supprimer ce prestataire de l'application ?\n\n⚠️ ATTENTION ⚠️\nCette action est irréversible !!`,
-                confirmText: 'Supprimer',
-                isDangerous: true,
-                onConfirm: handleDelete,
-              })
-            }
-            className={cn(actionButtonClassName, 'bg-red-100 text-red-700')}
-          >
-            <IconTrash />
-            Supprimer
-          </button>
-        </>
+          </>
+        )
       )}
     </div>
   );
@@ -290,6 +296,12 @@ export default function EmployeeDetails({
         <div>
           <h4 className={descriptionClassName}>Message :</h4>
           <div className="bg-secondary/10 rounded-md text-foreground">{employee.message}</div>
+        </div>
+      )}
+
+      {employee.conciergerieName && (
+        <div className={containerClassName}>
+          Inscrit via :<span className={labelClassName}>{employee.conciergerieName}</span>
         </div>
       )}
 

@@ -98,15 +98,28 @@ export function getAvailableMissionStatuses(missions: Mission[]): string[] {
  * @param employeeId The name of the employee (if any)
  * @returns The filtered list of missions
  */
-export function filterMissionsByUserType(missions: Mission[], employeeId: string | undefined): Mission[] {
+export function filterMissionsByUserType(
+  missions: Mission[],
+  employeeId: string | undefined,
+  // Multi-conciergerie: names of the conciergeries whose missions this
+  // employee may see (home ∪ multi-enabled). Undefined = legacy open pool.
+  // Rows can also arrive via realtime before a scoped refetch — this filter
+  // must mirror the server rule, not just trust the fetch.
+  visibleConciergeries?: Set<string>,
+): Mission[] {
   return missions.filter(mission => {
     // For employee users, show only missions they have access to
     if (employeeId) {
+      // Missions the employee is already part of (either binôme slot) — an
+      // assignment survives the assigner's downgrade, so it precedes the
+      // visibility check.
+      if (isPartOfMission(mission, employeeId)) return true;
+
+      // Outside the visible pool (non-multi foreign conciergerie): hidden
+      if (visibleConciergeries && !visibleConciergeries.has(mission.conciergerieName)) return false;
+
       // If the mission has prestataires specified, check if the current employee is in the list
       if (mission.allowedEmployees?.length) return mission.allowedEmployees.includes(employeeId);
-
-      // Missions the employee is already part of (either binôme slot)
-      if (isPartOfMission(mission, employeeId)) return true;
 
       // Mission assigned to someone else: only visible if it's duo-open (so they can join as 2nd)
       if (mission.employeeId) return isMissionDuoOpen(mission);

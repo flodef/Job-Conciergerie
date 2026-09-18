@@ -17,7 +17,8 @@ import MissionForm from '@/app/(app)/missions/components/missionForm';
 import MissionList from '@/app/(app)/missions/components/missionList';
 import MissionSortControls from '@/app/(app)/missions/components/missionSortControls';
 import { SORT_LABELS } from '@/app/(app)/missions/components/missionSortBar';
-import type { MissionSortField } from '@/app/types/dataTypes';
+import { planLimits } from '@/app/data/plans';
+import type { Employee, MissionSortField } from '@/app/types/dataTypes';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import React, { useLayoutEffect } from 'react';
 import {
@@ -36,7 +37,16 @@ import type { SortDirection } from '@/app/types/types';
 export default function Missions() {
   const { missions, isLoading: missionsLoading, fetchMissions } = useMissions();
   const { homes } = useHomes();
-  const { userType, isLoading: authLoading, employeeName, conciergerieName, isEmployee, isConciergerie } = useAuth();
+  const {
+    userType,
+    isLoading: authLoading,
+    employeeName,
+    conciergerieName,
+    isEmployee,
+    isConciergerie,
+    userData,
+    conciergeries,
+  } = useAuth();
   const { updateFetchTime, needsRefresh } = useFetchTime();
   const { openModal, closeModal } = useModal();
   const { showToast } = useToast();
@@ -140,11 +150,26 @@ export default function Missions() {
     setSelectedEmployees(savedFilters.employees || []);
   }, [authLoading, savedFilters]);
 
+  // Multi-conciergerie: the conciergeries whose missions this employee may
+  // see — their home conciergerie plus every multi-enabled one. Mirrors the
+  // server-side scoping in fetchAllMissions (realtime rows arrive unscoped).
+  // Undefined for conciergeries and unclaimed legacy employees (full pool).
+  const homeConciergerie = isEmployee ? (userData as Employee | undefined)?.conciergerieName : undefined;
+  const visibleConciergeries = useMemo(() => {
+    if (!isEmployee || !homeConciergerie) return undefined;
+    // Home is unconditional (mirrors the server's [home, ...multi]) — it must
+    // stay visible even before the conciergeries list finishes loading.
+    return new Set([
+      homeConciergerie,
+      ...conciergeries.filter(c => planLimits(c.plan).multiConciergerie).map(c => c.name),
+    ]);
+  }, [isEmployee, homeConciergerie, conciergeries]);
+
   // Basic filtered missions (by user type) - must be declared before any conditional returns
   const basicFilteredMissions = useMemo(() => {
     if (missionsLoading) return [];
-    return filterMissionsByUserType(missions, isEmployee ? employeeName : undefined);
-  }, [missions, isEmployee, missionsLoading, employeeName]);
+    return filterMissionsByUserType(missions, isEmployee ? employeeName : undefined, visibleConciergeries);
+  }, [missions, isEmployee, missionsLoading, employeeName, visibleConciergeries]);
 
   // Apply additional filters (conciergerie, status, zones) - must be declared before any conditional returns
   const filteredMissions = useMemo(() => {

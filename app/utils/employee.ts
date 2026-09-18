@@ -75,12 +75,20 @@ export function filterEmployees(employees: Employee[], searchTerm: string): Empl
  * @param conciergerieName Conciergerie name to filter by
  * @returns Filtered employees
  */
-export function filterEmployeesByConciergerie(employees: Employee[], conciergerieName: string | null): Employee[] {
+export function filterEmployeesByConciergerie(
+  employees: Employee[],
+  conciergerieName: string | null,
+  // Multi-conciergerie: foreign *accepted* employees join the usable pool —
+  // pending/rejected stay the home conciergerie's vetting queue.
+  includeForeignAccepted = false,
+): Employee[] {
   if (!conciergerieName) return [];
 
   return employees.filter(
     employee =>
-      !employee.conciergerieName || employee.conciergerieName?.toLowerCase() === conciergerieName?.toLowerCase(),
+      !employee.conciergerieName ||
+      employee.conciergerieName?.toLowerCase() === conciergerieName?.toLowerCase() ||
+      (includeForeignAccepted && employee.status === 'accepted'),
   );
 }
 

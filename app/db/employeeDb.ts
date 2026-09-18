@@ -201,6 +201,9 @@ export const updateEmployeeStatus = async (
   familyName: string,
   status: EmployeeStatus,
   clientId?: string,
+  // Set when accepting an unclaimed row — claims it for that conciergerie.
+  // COALESCE never overwrites an existing home.
+  claimName?: string,
 ) => {
   try {
     // If rejecting, first update missions before changing status
@@ -208,7 +211,8 @@ export const updateEmployeeStatus = async (
 
     const result = await sql`
       UPDATE employees
-      SET status = ${status}
+      SET status = ${status},
+          conciergerie_name = COALESCE(NULLIF(conciergerie_name, ''), ${claimName ?? null})
       WHERE first_name = ${firstName} AND family_name = ${familyName}
       AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       RETURNING id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
@@ -240,7 +244,9 @@ export const updateEmployeeSettings = async (
         email = COALESCE(${data.email ?? null}, email),
         geographic_zone = COALESCE(${data.geographic_zone ?? null}, geographic_zone),
         message = COALESCE(${data.message ?? null}, message),
-        conciergerie_name = COALESCE(${data.conciergerie_name ?? null}, conciergerie_name),
+        -- Claim-only: fills an empty home, never overwrites one — the home
+        -- conciergerie is immutable after registration.
+        conciergerie_name = COALESCE(NULLIF(conciergerie_name, ''), ${data.conciergerie_name ?? null}),
         notification_settings = COALESCE(${data.notification_settings ?? null}::jsonb, notification_settings)
       WHERE first_name = ${firstName} AND family_name = ${familyName}
       AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
@@ -284,12 +290,13 @@ export const deleteEmployee = async (firstName: string, familyName: string, clie
 /**
  * Fetch a single employee by name
  */
-export const getEmployeeByName = async (firstName: string, familyName: string) => {
+export const getEmployeeByName = async (firstName: string, familyName: string, clientId?: string) => {
   try {
     const result = await sql`
       SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
       FROM employees
       WHERE first_name = ${firstName} AND family_name = ${familyName}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       LIMIT 1
     `;
     return result.length > 0 ? formatEmployee(result[0] as DbEmployee) : null;

@@ -52,6 +52,26 @@ export const getAllConciergeries = async (includeAdminRows = false) => {
 };
 
 /**
+ * The multi-conciergerie group a client belongs to: the client's display name
+ * plus every conciergerie sharing its client_id. A solo conciergerie returns
+ * a single member (itself).
+ */
+export const getGroupForClient = async (
+  clientId: string,
+): Promise<{ name: string | null; members: string[] } | null> => {
+  try {
+    const [client, members] = await Promise.all([
+      sql`SELECT name FROM clients WHERE id = ${clientId}::uuid LIMIT 1`,
+      sql`SELECT name FROM conciergeries WHERE client_id = ${clientId}::uuid ORDER BY name`,
+    ]);
+    return { name: (client[0]?.name as string) ?? null, members: members.map(r => r.name as string) };
+  } catch (error) {
+    console.error(`Error fetching group for client ${clientId}:`, error);
+    return null;
+  }
+};
+
+/**
  * Update a conciergerie's data.
  * `clientId` scopes the row to its tenant (undefined = unscoped, admin/cron).
  */

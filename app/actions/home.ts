@@ -2,8 +2,17 @@
 
 import { PLAN_LIMITS } from '@/app/data/plans';
 import type { DbHome } from '@/app/db/homeDb';
-import { countHomes, createHome, deleteHome, getAllHomes, getHomeById, updateHome } from '@/app/db/homeDb';
-import { getSessionPlan } from '@/app/db/planDb';
+import {
+  countHomes,
+  createHome,
+  deleteHome,
+  getAllHomes,
+  getHomeById,
+  getHomesVisibleToEmployee,
+  isHomeVisibleToEmployee,
+  updateHome,
+} from '@/app/db/homeDb';
+import { getEmployeeConciergerieName, getMultiConciergerieNames, getSessionPlan } from '@/app/db/planDb';
 import { requireConciergerieSession, requireConnectedSession, tenantScope } from '@/app/db/session';
 import type { Home } from '@/app/types/dataTypes';
 
@@ -13,7 +22,17 @@ import type { Home } from '@/app/types/dataTypes';
 export async function fetchAllHomes(): Promise<Home[] | null> {
   const session = await requireConnectedSession();
   if (!session) return null;
-  return await getAllHomes(tenantScope(session));
+  const scope = tenantScope(session);
+
+  // Multi-conciergerie: same visibility rule as missions — an employee only
+  // receives homes they can actually work on (home conciergerie, multi-enabled
+  // conciergeries, plus homes behind their own assignments).
+  if (session.userType === 'employee') {
+    const home = await getEmployeeConciergerieName(session.rowKey, session.clientId ?? undefined);
+    const visible = home ? [home, ...(await getMultiConciergerieNames(scope))] : null;
+    return await getHomesVisibleToEmployee(session.rowKey, visible, scope);
+  }
+  return await getAllHomes(scope);
 }
 
 /**
@@ -90,8 +109,9 @@ export async function updateHomeData(
   if (!home || home.conciergerieName !== session.rowKey) return null;
   if (data.allowDuo && !PLAN_LIMITS[await getSessionPlan(session)].duo) return null;
 
-  // Convert to DB format
-  const dbData: Partial<Omit<DbHome, 'id'>> = {
+  // Convert to DB format — conciergerie_name deliberately excluded: home
+  // ownership must not move across conciergeries through a forged field.
+  const dbData: Partial<Omit<DbHome, 'id' | 'conciergerie_name'>> = {
     title: data.title,
     description: data.description,
     objectives: data.objectives,
@@ -99,7 +119,6 @@ export async function updateHomeData(
     geographic_zone: data.geographicZone,
     hours_of_cleaning: data.hoursOfCleaning,
     hours_of_gardening: data.hoursOfGardening,
-    conciergerie_name: data.conciergerieName,
     allow_duo: data.allowDuo,
     max_travellers: data.maxTravellers,
     notes: data.notes,
@@ -114,7 +133,20 @@ export async function updateHomeData(
 export async function updateHomeNotes(id: string, notes: string | undefined): Promise<Home | null> {
   const session = await requireConnectedSession();
   if (!session) return null;
-  return await updateHome(id, { notes }, tenantScope(session));
+  const scope = tenantScope(session);
+
+  // Employees write notes on homes they work on — the same visibility rule as
+  // fetchAllHomes applies, so a foreign non-multi home can't be annotated.
+  if (session.userType === 'employee') {
+    const home = await getEmployeeConciergerieName(session.rowKey, session.clientId ?? undefined);
+    const visible = home ? [home, ...(await getMultiConciergerieNames(scope))] : null;
+    if (!(await isHomeVisibleToEmployee(session.rowKey, id, visible, scope))) return null;
+  } else {
+    // A conciergerie only annotates its own catalog
+    const target = await getHomeById(id, scope);
+    if (!target || target.conciergerieName !== session.rowKey) return null;
+  }
+  return await updateHome(id, { notes }, scope);
 }
 
 /**

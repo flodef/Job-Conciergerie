@@ -31,11 +31,12 @@ export async function getConciergeriePlan(name: string): Promise<ConciergeriePla
  * NULL/empty stays NULL — legacy rows predate the column and are treated as
  * unclaimed (legacy open-pool visibility) until the backfill/claim assigns them.
  */
-export async function getEmployeeConciergerieName(rowKey: string): Promise<string | null> {
+export async function getEmployeeConciergerieName(rowKey: string, clientId?: string): Promise<string | null> {
   try {
     const result = await sql`
       SELECT conciergerie_name FROM employees
       WHERE first_name || ' ' || family_name = ${rowKey}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       LIMIT 1
     `;
     return (result[0]?.conciergerie_name as string | null) || null;
@@ -45,9 +46,9 @@ export async function getEmployeeConciergerieName(rowKey: string): Promise<strin
   }
 }
 
-export async function getUserPlan(userType: UserType, rowKey: string): Promise<ConciergeriePlan> {
+export async function getUserPlan(userType: UserType, rowKey: string, clientId?: string): Promise<ConciergeriePlan> {
   if (userType === 'conciergerie') return getConciergeriePlan(rowKey);
-  const name = await getEmployeeConciergerieName(rowKey);
+  const name = await getEmployeeConciergerieName(rowKey, clientId);
   return name ? getConciergeriePlan(name) : 'pro';
 }
 
@@ -75,5 +76,7 @@ export async function getMultiConciergerieNames(clientId?: string): Promise<stri
  * the target's plan (rowKey is the target's).
  */
 export async function getSessionPlan(session: SessionUser): Promise<ConciergeriePlan> {
-  return getUserPlan(session.userType, session.rowKey);
+  // Employee lookups are name-based — the tenant scope keeps a homonymous
+  // employee row in another tenant from resolving the wrong home conciergerie.
+  return getUserPlan(session.userType, session.rowKey, session.clientId ?? undefined);
 }

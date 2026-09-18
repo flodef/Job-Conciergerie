@@ -28,7 +28,7 @@ import {
   verifyEnrollmentToken,
 } from '@/app/db/session';
 import { getConciergerieClientId } from '@/app/db/conciergerieDb';
-import { getConciergeriePlan } from '@/app/db/planDb';
+import { getEmployeeConciergerieName, getSessionPlan } from '@/app/db/planDb';
 import type { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 import { normalizeFamilyName, normalizeFirstName, normalizePhone } from '@/app/utils/regex';
 import { baseId, getDevices, isNewDevice, MaxDevicesError } from '@/app/utils/id';
@@ -50,7 +50,7 @@ export async function fetchEmployees(): Promise<Employee[] | null> {
   // Pending devices are redacted to their own row anyway — skipping the tenant
   // filter keeps the waiting page working even on a row missing client_id.
   const employees = await getAllEmployees(session.pending ? undefined : tenantScope(session));
-  return (
+  const redacted =
     employees
       ?.map(e => {
         // Stored ids are hashed at rest — match either domain (transition-safe)
@@ -61,8 +61,19 @@ export async function fetchEmployees(): Promise<Employee[] | null> {
       })
       // A pending device only needs its own row (waiting-page status) — don't
       // leak the whole staff directory (names, emails, phones) to it.
-      .filter(e => !session.pending || e.id.length > 0) ?? null
-  );
+      .filter(e => !session.pending || e.id.length > 0) ?? null;
+
+  // Multi-conciergerie: a conciergerie whose plan lacks the feature only sees
+  // its own registered staff plus unclaimed legacy rows — the rest of the
+  // tenant pool is not theirs to list. Employee sessions keep the directory
+  // (coworker names on duo missions), and a non-impersonating admin keeps the
+  // unscoped view. Vetting rights are enforced separately on writes.
+  if (redacted && session.userType === 'conciergerie' && !(session.isAdmin && !session.impersonating)) {
+    if (!PLAN_LIMITS[await getSessionPlan(session)].multiConciergerie) {
+      return redacted.filter(e => !e.conciergerieName || e.conciergerieName === session.rowKey);
+    }
+  }
+  return redacted;
 }
 
 /**
@@ -121,6 +132,11 @@ export async function createNewEmployee(data: {
   const deviceId = await getSessionDeviceId();
   if (!deviceId) return null;
 
+  // The chosen conciergerie must exist — a forged name would leave the row
+  // homeless and invisible to every vetting queue.
+  const clientId = await getConciergerieClientId(data.conciergerieName);
+  if (!clientId) return null;
+
   // Convert to DB format (device ids are hashed at rest)
   const dbData: Omit<DbEmployee, 'created_at'> = {
     id: [hashId(deviceId)],
@@ -134,7 +150,7 @@ export async function createNewEmployee(data: {
     notification_settings: JSON.stringify(data.notificationSettings),
     status: 'pending',
     // Employees belong to the tenant of the conciergerie they registered under
-    client_id: await getConciergerieClientId(data.conciergerieName),
+    client_id: clientId,
   };
 
   return await createEmployee(dbData);
@@ -149,13 +165,32 @@ export async function updateEmployeeStatusAction(employee: Employee, status: Emp
   const session = await requireConciergerieSession();
   if (!session) return null;
 
-  if (status === 'accepted' && employee.conciergerieName) {
-    const max = PLAN_LIMITS[await getConciergeriePlan(employee.conciergerieName)].maxEmployees;
-    if (max !== null && (await countAcceptedEmployees(employee.conciergerieName, tenantScope(session))) >= max)
-      return null;
+  // Vetting stays the home conciergerie's call — even under multi-conciergerie
+  // a foreign employee is usable, never manageable. Unclaimed legacy rows (no
+  // home) are the exception: accepting one claims it for the acceptor.
+  // The home is resolved server-side — the client payload's conciergerieName
+  // is untrusted and could be forged to bypass this check.
+  const home = await getEmployeeConciergerieName(
+    `${employee.firstName} ${employee.familyName}`,
+    session.clientId ?? undefined,
+  );
+  if (home && home !== session.rowKey) return null;
+
+  if (status === 'accepted') {
+    const max = PLAN_LIMITS[await getSessionPlan(session)].maxEmployees;
+    if (max !== null && (await countAcceptedEmployees(session.rowKey, tenantScope(session))) >= max) return null;
   }
 
-  return await updateEmployeeStatus(employee.firstName, employee.familyName, status, tenantScope(session));
+  const scope = tenantScope(session);
+  const updated = await updateEmployeeStatus(
+    employee.firstName,
+    employee.familyName,
+    status,
+    scope,
+    // Accepting an unclaimed row claims it for this conciergerie.
+    status === 'accepted' && !home ? session.rowKey : undefined,
+  );
+  return updated;
 }
 
 /**
@@ -250,7 +285,6 @@ export async function updateEmployeeData(
     email?: string;
     geographicZone?: string;
     message?: string;
-    conciergerieName?: string;
     notificationSettings?: EmployeeNotificationSettings;
   },
 ): Promise<Employee | null> {
@@ -262,13 +296,13 @@ export async function updateEmployeeData(
   const ids = await getEmployeeIds(employee.firstName, employee.familyName);
   if (!ids || !isRowMember(session, ids)) return null;
 
-  // Convert to DB format
+  // conciergerie_name is deliberately absent: the home conciergerie is fixed
+  // at registration (claim-on-accept is the only later writer).
   const dbData: Partial<DbEmployee> = {
     tel: data.tel === undefined ? undefined : normalizePhone(data.tel),
     email: data.email,
     geographic_zone: data.geographicZone,
     message: data.message,
-    conciergerie_name: data.conciergerieName,
     notification_settings: JSON.stringify(data.notificationSettings),
   };
 
@@ -282,9 +316,18 @@ export async function deleteEmployeeData(employee: Employee): Promise<boolean> {
   const session = await requireConnectedSession();
   if (!session) return false;
 
-  // A conciergerie manages its staff; otherwise only a member of the row may
-  // delete it (self-removal). Employees must not delete arbitrary coworkers.
-  if (session.userType !== 'conciergerie') {
+  // A conciergerie manages only its own staff — even under multi-conciergerie
+  // a foreign employee is usable, never manageable. Unclaimed legacy rows are
+  // the exception (any conciergerie may clean them up). Otherwise only a
+  // member of the row may delete it (self-removal).
+  if (session.userType === 'conciergerie') {
+    // Home resolved server-side — the payload's conciergerieName is untrusted.
+    const home = await getEmployeeConciergerieName(
+      `${employee.firstName} ${employee.familyName}`,
+      session.clientId ?? undefined,
+    );
+    if (home && home !== session.rowKey) return false;
+  } else {
     const ids = await getEmployeeIds(employee.firstName, employee.familyName);
     if (!ids || !isRowMember(session, ids)) return false;
   }

@@ -199,7 +199,12 @@ export function useRealtimeSync() {
         }),
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conciergeries' }, () =>
-        debounce('conciergeries', () => fetchDataRef.current('conciergerie')),
+        debounce('conciergeries', () => {
+          // A plan flip changes employee/mission visibility (multi-conciergerie)
+          // — refetch both so server-side scoping re-applies immediately.
+          fetchDataRef.current('conciergerie');
+          fetchDataRef.current('employee');
+        }),
       )
       .subscribe(status => {
         if (status === 'SUBSCRIBED') {

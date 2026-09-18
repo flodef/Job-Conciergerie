@@ -34,6 +34,19 @@ const canAccessMission = (session: SessionUser, mission: Mission): boolean =>
     : mission.employeeId === session.rowKey || mission.employeeId2 === session.rowKey;
 
 /**
+ * Multi-conciergerie: a conciergerie assigns its own staff (or unclaimed
+ * legacy rows) freely; foreign employees only when the plan is multi and they
+ * are already accepted — vetting stays the home conciergerie's call.
+ */
+const isAssignableTo = async (session: SessionUser, employeeKey: string): Promise<boolean> => {
+  const [firstName, ...rest] = employeeKey.split(' ');
+  const assignee = await getEmployeeByName(firstName, rest.join(' '), session.clientId ?? undefined);
+  if (!assignee) return false;
+  if (!assignee.conciergerieName || assignee.conciergerieName === session.rowKey) return true;
+  return PLAN_LIMITS[await getSessionPlan(session)].multiConciergerie && assignee.status === 'accepted';
+};
+
+/**
  * Fetch all missions from the database
  */
 export async function fetchAllMissions(): Promise<Mission[] | null> {
@@ -46,7 +59,7 @@ export async function fetchAllMissions(): Promise<Mission[] | null> {
   // own assignments. Unclaimed legacy employees (NULL conciergerie_name) keep
   // the full tenant pool until the backfill/claim attaches them.
   if (session.userType === 'employee') {
-    const home = await getEmployeeConciergerieName(session.rowKey);
+    const home = await getEmployeeConciergerieName(session.rowKey, session.clientId ?? undefined);
     const visible = home ? [home, ...(await getMultiConciergerieNames(scope))] : null;
     return await getMissionsVisibleToEmployee(session.rowKey, visible, scope);
   }
@@ -121,6 +134,10 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
     // A second assignee only exists on a duo-enabled mission — assigning one
     // directly must not smuggle duo into a mission that never opted in.
     if (data.employeeId2 != null && !mission.allowDuo && data.allowDuo !== true) return null;
+    // Assignments through updateMissionData get the same multi-conciergerie
+    // gate as assignEmployeeToMissionAction — otherwise this path bypasses it.
+    if (data.employeeId != null && !(await isAssignableTo(session, data.employeeId))) return null;
+    if (data.employeeId2 != null && !(await isAssignableTo(session, data.employeeId2))) return null;
     return await updateMission(id, dbData, scope);
   }
 
@@ -140,6 +157,20 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
     !mission.allowedEmployees.includes(session.rowKey)
   )
     return null;
+
+  // Multi-conciergerie: claiming or joining is only possible on missions of
+  // the employee's home conciergerie or of a multi-enabled one — a non-multi
+  // conciergerie's open missions are not theirs to take. Unclaimed legacy
+  // employees (no home) keep the pre-model open pool.
+  if (claiming || joiningDuo) {
+    const home = await getEmployeeConciergerieName(session.rowKey, session.clientId ?? undefined);
+    if (
+      home &&
+      mission.conciergerieName !== home &&
+      !PLAN_LIMITS[await getConciergeriePlan(mission.conciergerieName)].multiConciergerie
+    )
+      return null;
+  }
 
   // An employee can only (un)assign themselves — never another person
   if (data.employeeId != null && data.employeeId !== session.rowKey) return null;
@@ -175,6 +206,8 @@ export async function assignEmployeeToMissionAction(missionId: string, employeeI
   const scope = tenantScope(session);
   const mission = await getMissionById(missionId, scope);
   if (!mission || !canAccessMission(session, mission)) return null;
+
+  if (!(await isAssignableTo(session, employeeId))) return null;
   return await assignEmployeeToMission(missionId, employeeId, scope);
 }
 
