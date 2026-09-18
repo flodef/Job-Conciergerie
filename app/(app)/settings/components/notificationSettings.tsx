@@ -4,6 +4,7 @@ import {
   clearMyPushSubscriptions,
   removeMyPushSubscription,
   saveMyPushSubscription,
+  sendTestPushNotification,
   type PushSubscriptionInput,
 } from '@/app/actions/push';
 import { Button } from '@/app/components/button';
@@ -87,6 +88,7 @@ const NotificationSettings: React.FC = () => {
   // Whether THIS device holds an active push subscription (null = checking)
   const [deviceSubscribed, setDeviceSubscribed] = useState<boolean | null>(null);
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
     if (isPushSupported()) getDeviceSubscription().then(s => setDeviceSubscribed(!!s));
@@ -184,10 +186,30 @@ const NotificationSettings: React.FC = () => {
               : 'Service worker indisponible — rechargez la page puis réessayez',
           unsupported: 'Les notifications ne sont pas configurées ou supportées ici',
           failed: isBrave()
-            ? 'Brave bloque les notifications push — activez « Utiliser les services Google pour les messages push » dans brave://settings/privacy'
+            ? 'Brave bloque les notifications push — cliquez pour copier le réglage à activer'
             : "Impossible d'activer les notifications sur cet appareil",
         }[result.reason];
-        showToast({ type: ToastType.Error, message, error: result.error });
+        showToast(
+          { type: ToastType.Error, message, error: result.error },
+          result.reason === 'failed' && isBrave()
+            ? {
+                // Stays until closed manually — the user needs time to read and act
+                timeout: 0,
+                onClick: () => {
+                  // Clipboard may reject without permission — the URL is still shown
+                  navigator.clipboard.writeText('brave://settings/privacy').catch(() => {});
+                  showToast(
+                    {
+                      type: ToastType.Info,
+                      message:
+                        'Collez l’URL copiée dans la barre d’adresse, puis activez « Services Google pour les messages push »',
+                    },
+                    { timeout: 0 },
+                  );
+                },
+              }
+            : { timeout: 10000 },
+        );
         return false;
       }
       // One retry on the server save — a cold DB or transient timeout
@@ -221,6 +243,42 @@ const NotificationSettings: React.FC = () => {
     if (await subscribeThisDevice()) handleToggle('push' as keyof AnySettings, true);
   };
 
+  const handleTest = async () => {
+    setIsTesting(true);
+    try {
+      switch (await sendTestPushNotification()) {
+        case 'sent':
+          showToast({
+            type: ToastType.Success,
+            message: 'Notification de test envoyée — elle devrait arriver dans quelques secondes',
+          });
+          break;
+        case 'no-subscription':
+          showToast({
+            type: ToastType.Error,
+            message: 'Aucun appareil abonné — activez les notifications sur cet appareil',
+          });
+          break;
+        case 'failed':
+          showToast({
+            type: ToastType.Error,
+            message: "Échec de l'envoi — réessayez dans un instant",
+          });
+          break;
+        case 'rate-limited':
+          showToast({
+            type: ToastType.Error,
+            message: 'Trop de tests — réessayez dans une heure',
+          });
+          break;
+        default:
+          showToast({ type: ToastType.Error, message: 'Session expirée — reconnectez-vous' });
+      }
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   if (!userType) return null;
 
   const statusText = emailOn
@@ -252,12 +310,17 @@ const NotificationSettings: React.FC = () => {
         </div>
 
         {pushOn && deviceSubscribed !== null && (
-          <div className="pt-1">
+          <div className="pt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
             {deviceSubscribed ? (
-              <p className="flex items-center gap-1.5 text-xs text-foreground/60 px-2">
-                <IconCheck size={14} className="text-green-500" />
-                Activé sur cet appareil
-              </p>
+              <>
+                <p className="flex items-center gap-1.5 text-xs text-foreground/60 px-2">
+                  <IconCheck size={14} className="text-green-500" />
+                  Notifications push activées sur cet appareil
+                </p>
+                <Button style="secondary" onClick={handleTest} loading={isTesting} className="text-xs py-1 px-2">
+                  Tester
+                </Button>
+              </>
             ) : (
               <Button style="secondary" onClick={subscribeThisDevice} loading={isSubscribing}>
                 Activer les notifications sur cet appareil

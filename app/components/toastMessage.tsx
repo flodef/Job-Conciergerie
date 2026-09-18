@@ -18,6 +18,7 @@ export interface Toast {
 
 interface ToastMessageProps {
   toast: Toast | undefined;
+  /** Auto-close delay in ms — <= 0 keeps the toast until closed manually. */
   timeout?: number;
   onClick?: () => void;
   onClose?: () => void;
@@ -25,7 +26,7 @@ interface ToastMessageProps {
   closable?: boolean;
 }
 
-export const ToastMessage = ({ toast, timeout = 3000, onClick, onClose, closable }: ToastMessageProps) => {
+export const ToastMessage = ({ toast, timeout = 5000, onClick, onClose, closable }: ToastMessageProps) => {
   const typeStyles: Record<ToastType, string> = {
     [ToastType.Success]: 'bg-green-500 animate-fade-in-up',
     [ToastType.Error]: 'bg-[#fb8c8c] animate-shake',
@@ -47,9 +48,9 @@ export const ToastMessage = ({ toast, timeout = 3000, onClick, onClose, closable
     }
   }, [toast?.message, toast?.error]);
 
-  // Auto-close after timeout
+  // Auto-close after timeout (<= 0 = stays until closed manually)
   useEffect(() => {
-    if (!toast || !onClose) return;
+    if (!toast || !onClose || timeout <= 0) return;
 
     const timer = setTimeout(() => {
       onClose();
@@ -66,6 +67,7 @@ export const ToastMessage = ({ toast, timeout = 3000, onClick, onClose, closable
           'fixed z-100 top-4 inset-x-2 text-black text-center py-2 rounded-lg',
           typeStyles[toast.type],
           closable && 'pr-10',
+          onClick && 'cursor-pointer',
         )}
         onClick={onClick}
       >
@@ -75,7 +77,7 @@ export const ToastMessage = ({ toast, timeout = 3000, onClick, onClose, closable
           <button
             type="button"
             aria-label="Fermer"
-            className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
+            className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 cursor-pointer"
             onClick={e => {
               e.stopPropagation();
               onClose();

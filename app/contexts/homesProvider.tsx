@@ -261,7 +261,7 @@ export function HomesProvider({ children }: { children: ReactNode }) {
         deleteHomeFromRealtime,
       }}
     >
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} closable />
       {children}
     </HomesContext.Provider>
   );

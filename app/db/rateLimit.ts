@@ -17,15 +17,22 @@ import { sql } from '@/app/db/db';
 export { RATE_LIMITED } from '@/app/utils/dbErrors';
 export type { RateLimited } from '@/app/utils/dbErrors';
 
+// The cached promise must reset on failure — otherwise one transient error
+// poisons the table setup until the instance restarts.
 let tableReady: Promise<unknown> | null = null;
-const ensureTable = () =>
-  (tableReady ??= sql`
+const ensureTable = () => {
+  tableReady ??= sql`
     CREATE TABLE IF NOT EXISTS rate_limits (
       key text PRIMARY KEY,
       count integer NOT NULL,
       window_start timestamptz NOT NULL DEFAULT now()
     )
-  `);
+  `.catch(e => {
+    tableReady = null;
+    throw e;
+  });
+  return tableReady;
+};
 
 /**
  * Client IP — only proxy-provided headers are trusted. On Vercel the platform

@@ -1,3 +1,9 @@
+# 2.437
+
+- **Nouveau : Notification de test** : un bouton « Tester » dans Paramètres → Notifications vous permet de vérifier que les notifications fonctionnent sur votre appareil.
+- **Amélioration : Messages plus lisibles** : les bandeaux d'information restent affichés plus longtemps et peuvent tous être fermés manuellement via une croix.
+- **Amélioration : Aide à l'activation** : des messages plus clairs expliquent quoi faire quand votre navigateur bloque les notifications.
+
 # 2.428
 
 - **Nouveau : Notifications push** : pour chaque type d'alerte, choisissez comment vous êtes notifié — par email, par notification sur votre appareil, les deux, ou rien (Paramètres → Notifications). Sur téléphone, installez l'app sur l'écran d'accueil pour recevoir les notifications même app fermée.

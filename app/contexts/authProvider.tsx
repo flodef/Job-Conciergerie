@@ -395,7 +395,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         generateId,
       }}
     >
-      {toast && <ToastMessage toast={toast} onClose={handleToastClose} />}
+      {toast && <ToastMessage toast={toast} onClose={handleToastClose} closable />}
       {children}
     </AuthContext.Provider>
   );
