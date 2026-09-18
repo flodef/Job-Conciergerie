@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+/* Class-driven dark mode — the theme toggle sets .dark/.light on :root
+   (system mode resolves via prefers-color-scheme in the init script). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-default: oklch(0.704 0.14 182.503);
   --color-primary: var(--color-default);
@@ -64,13 +68,31 @@
   --light: #6a7282;
 }
 
+/* Dark palette — explicit .dark class (manual or system-resolved by the init
+   script), plus a no-JS fallback when no theme class is present yet. */
+:root.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --secondary: #99a1af;
+  --light: #6a7282;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light):not(.dark) {
     --background: #0a0a0a;
     --foreground: #ededed;
     --secondary: #99a1af;
     --light: #6a7282;
   }
+}
+
+/* Theme toggle active state — matches the stored choice before hydration. */
+:root[data-theme='light'] .theme-opt[data-theme-opt='light'],
+:root[data-theme='dark'] .theme-opt[data-theme-opt='dark'],
+:root[data-theme='system'] .theme-opt[data-theme-opt='system'] {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
 }
 
 html,

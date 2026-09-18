@@ -4,6 +4,7 @@ import { stopImpersonation } from '@/app/actions/admin';
 import ChangelogModal from '@/app/components/changelogModal';
 import InstallToast from '@/app/components/installToast';
 import { PageManager } from '@/app/components/pageManager';
+import ThemeToggle from '@/app/components/themeToggle';
 import type { UserType } from '@/app/contexts/authProvider';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useBadge } from '@/app/contexts/badgeProvider';
@@ -280,6 +281,9 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
         >
           {/* Title */}
           <h1 className="w-full text-2xl font-semibold text-foreground text-center">{currentPage}</h1>
+          <div className="absolute right-4">
+            <ThemeToggle />
+          </div>
         </header>
       )}
 
