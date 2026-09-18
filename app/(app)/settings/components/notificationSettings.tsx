@@ -30,7 +30,6 @@ const conciergerieOptions = [
   { label: 'Missions acceptées', key: 'acceptedMissions' as const },
   { label: 'Missions démarrées', key: 'startedMissions' as const },
   { label: 'Missions terminées', key: 'completedMissions' as const },
-  { label: 'Missions non commencées', key: 'missionsEndedWithoutStart' as const },
   { label: 'Missions non terminées à temps', key: 'missionsEndedWithoutCompletion' as const },
 ];
 const employeeOptions = [

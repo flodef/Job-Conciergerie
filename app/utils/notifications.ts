@@ -12,7 +12,8 @@ export interface ConciergerieNotificationSettings extends NotificationChannels {
   acceptedMissions: boolean;
   startedMissions: boolean;
   completedMissions: boolean;
-  missionsEndedWithoutStart: boolean;
+  // Covers missions that ended late OR never started (both are != 'completed'
+  // past end_date_time in the late-mission cron).
   missionsEndedWithoutCompletion: boolean;
 }
 export const defaultConciergerieSettings: ConciergerieNotificationSettings = {
@@ -21,7 +22,6 @@ export const defaultConciergerieSettings: ConciergerieNotificationSettings = {
   acceptedMissions: true,
   startedMissions: true,
   completedMissions: true,
-  missionsEndedWithoutStart: true,
   missionsEndedWithoutCompletion: true,
 };
 
