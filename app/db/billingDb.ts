@@ -27,6 +27,7 @@ export const logPlanChange = async (
 
 export interface DbPlanChange {
   conciergerie_name: string;
+  from_plan: ConciergeriePlan | null;
   to_plan: ConciergeriePlan;
   created_at: string;
 }
@@ -34,7 +35,7 @@ export interface DbPlanChange {
 export const getPlanChanges = async (): Promise<DbPlanChange[]> => {
   try {
     const result = await sql`
-      SELECT conciergerie_name, to_plan, created_at
+      SELECT conciergerie_name, from_plan, to_plan, created_at
       FROM plan_changes
       ORDER BY conciergerie_name, created_at
     `;

@@ -141,14 +141,18 @@ export async function createNewEmployee(data: {
 
   // "first family" is the join key stored in missions — a second person with
   // the same name would be indistinguishable from the first (and would
-  // collide outright on a group merge). Checked globally, before insert.
-  if (await employeeNameExists(data.firstName, data.familyName)) return NAME_TAKEN;
+  // collide outright on a group merge). Checked globally, before insert —
+  // on the NORMALIZED names: stored rows are hyphenated/capitalized, so the
+  // raw input ("jean paul") would miss a stored "Jean-Paul" otherwise.
+  const firstName = normalizeFirstName(data.firstName);
+  const familyName = normalizeFamilyName(data.familyName);
+  if (await employeeNameExists(firstName, familyName)) return NAME_TAKEN;
 
   // Convert to DB format (device ids are hashed at rest)
   const dbData: Omit<DbEmployee, 'created_at'> = {
     id: [hashId(deviceId)],
-    first_name: normalizeFirstName(data.firstName),
-    family_name: normalizeFamilyName(data.familyName),
+    first_name: firstName,
+    family_name: familyName,
     tel: normalizePhone(data.tel),
     email: data.email,
     geographic_zone: data.geographicZone,

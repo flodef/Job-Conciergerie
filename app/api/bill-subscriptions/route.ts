@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createInvoice, getBillableConciergeries, getPlanChanges } from '@/app/db/billingDb';
-import { sendBillingSummaryEmail, sendInvoiceEmail } from '@/app/actions/email';
+import { sendBillingSummaryEmail, sendInvoiceEmail } from '@/app/utils/billingEmails';
 import { computeMonthlyBill, previousMonth, type PlanChange } from '@/app/utils/billing';
 import { PLANS } from '@/app/data/plans';
 
@@ -38,7 +38,7 @@ async function handleBillSubscriptions(request: NextRequest) {
   const changesByName = new Map<string, PlanChange[]>();
   for (const c of changes) {
     const list = changesByName.get(c.conciergerie_name) ?? [];
-    list.push({ to_plan: c.to_plan, created_at: c.created_at });
+    list.push({ from_plan: c.from_plan, to_plan: c.to_plan, created_at: c.created_at });
     changesByName.set(c.conciergerie_name, list);
   }
 
@@ -56,12 +56,12 @@ async function handleBillSubscriptions(request: NextRequest) {
     billed++;
     lines.push(`${c.name} : ${PLANS[bill.plan].name} — ${bill.amount} €`);
 
-    // Internal cron call (isRetry=true) — no user session exists here.
-    await sendInvoiceEmail(c.name, monthName, PLANS[bill.plan].name, bill.amount, true);
+    // On SMTP failure the payload queues in failed_emails for the retry cron.
+    await sendInvoiceEmail(c.name, monthName, PLANS[bill.plan].name, bill.amount);
   }
 
   if (billed > 0) {
-    await sendBillingSummaryEmail(monthName, lines, skipped, true);
+    await sendBillingSummaryEmail(monthName, lines, skipped);
   }
 
   return NextResponse.json({ period: `${year}-${String(month).padStart(2, '0')}`, billed, skipped });

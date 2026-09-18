@@ -195,6 +195,9 @@ export async function updateConciergerieData(
 export async function changeMyPlan(newPlan: ConciergeriePlan): Promise<Conciergerie | null> {
   const session = await requireConciergerieSession();
   if (!session || !(newPlan in PLANS)) return null;
+  // A super-admin's own "plan" is meaningless — they act via impersonation
+  // (logged 'admin'), never on the admin row itself.
+  if (session.isAdmin && !session.impersonating) return null;
 
   const current = await getConciergerieByName(session.rowKey);
   if (!current || current.plan === newPlan) return null;

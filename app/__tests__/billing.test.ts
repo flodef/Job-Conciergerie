@@ -41,6 +41,32 @@ describe('computeMonthlyBill', () => {
     expect(bill.amount).toBe(100);
   });
 
+  it('first-month downgrade bills the higher plan it came from', () => {
+    // Was Privilège, downgraded to Découverte on March 5 — the first logged
+    // event. The from_plan reconstructs the plan held at month start.
+    const bill = computeMonthlyBill(
+      [{ from_plan: 'privilege', to_plan: 'decouverte', created_at: new Date('2026-03-05T12:00:00Z') }],
+      2026,
+      3,
+      'decouverte',
+    );
+    expect(bill.plan).toBe('privilege');
+    expect(bill.amount).toBe(100);
+  });
+
+  it('a post-month event does not leak its new plan into the billed month', () => {
+    // Découverte all March, upgraded April 10 — March bills Découverte even
+    // though the current plan is now Privilège.
+    const bill = computeMonthlyBill(
+      [{ from_plan: 'decouverte', to_plan: 'privilege', created_at: new Date('2026-04-10T12:00:00Z') }],
+      2026,
+      3,
+      'privilege',
+    );
+    expect(bill.plan).toBe('decouverte');
+    expect(bill.amount).toBe(30);
+  });
+
   it('pre-month downgrade carries into the month', () => {
     const bill = computeMonthlyBill([ev('decouverte', '2026-02-20T12:00:00Z')], 2026, 3, 'decouverte');
     expect(bill.plan).toBe('decouverte');

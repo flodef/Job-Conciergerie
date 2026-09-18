@@ -1,11 +1,8 @@
 'use server';
 
-import { isProduction } from '@/app/actions/environment';
-import { isDemoRequest } from '@/app/db/db';
 import { getConciergerieByName } from '@/app/db/conciergerieDb';
-import { insertEmailLog } from '@/app/db/emailLogsDb';
 import { getEmployeeByName } from '@/app/db/employeeDb';
-import { insertFailedEmail } from '@/app/db/failedEmailsDb';
+import type { FailedEmailType } from '@/app/db/failedEmailsDb';
 import { sendPushToUser, type PushPayload } from '@/app/db/pushDb';
 import { checkRateLimit } from '@/app/db/rateLimit';
 import {
@@ -20,10 +17,10 @@ import { wantsEmail } from '@/app/utils/notifications';
 import type { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
 import { getStorageImageUrl } from '@/app/utils/storage';
 import { formatHours, getMissionHoursPerProvider } from '@/app/utils/task';
+import { deliver, sendContactEmail, sendEmail } from '@/app/utils/mailSender';
 import type { UserData } from '@/app/utils/user';
 import packageJson from '@/package.json';
 import type { SendMailOptions } from 'nodemailer';
-import nodemailer from 'nodemailer';
 import { getEmployeeFullName } from '../utils/employee';
 
 type NotificationSettings = ConciergerieNotificationSettings | EmployeeNotificationSettings | undefined;
@@ -42,98 +39,8 @@ const notifyByPush = (
   void sendPushToUser(userType, rowKey, payload).catch(e => console.error('[push] send failed:', e));
 };
 
-// Configure nodemailer transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
-
-// Low-level SMTP send - returns { success, error }
-async function sendEmail(email: SendMailOptions): Promise<{ success: boolean; error?: string }> {
-  try {
-    await transporter.sendMail({
-      ...email,
-      from: `"Job Conciergerie" <${process.env.SMTP_FROM_EMAIL}>`,
-    });
-    return { success: true };
-  } catch (error) {
-    console.error('Error sending email:', error);
-    return { success: false, error: error instanceof Error ? error.message : String(error) };
-  }
-}
-
-/**
- * Send a contact/support email (generic message to a specific recipient).
- */
-async function sendContactEmail(to: string, subject: string, body: string, isRetry = false): Promise<boolean> {
-  return deliver(
-    {
-      to,
-      subject,
-      text: body,
-    },
-    'contact',
-    { to, subject, body },
-    isRetry,
-  );
-}
-
-/**
- * Attempt to send an email. If SMTP fails AND this is not itself a retry call,
- * the payload is persisted in the failed_emails queue so the cron job can retry later.
- */
-async function deliver(
-  email: SendMailOptions,
-  type: FailedEmailType,
-  payload: Record<string, unknown>,
-  isRetry: boolean,
-): Promise<boolean> {
-  const to = Array.isArray(email.to) ? email.to.join(', ') : (email.to as string);
-  const isProd = await isProduction();
-  // Demo requests (demo.<domain>) never send real email — the demo database
-  // holds fake addresses anyway. Logged as sent, like the dev path.
-  const isDemo = await isDemoRequest();
-
-  if (!isProd || isDemo) {
-    console.log(`[${isDemo ? 'DEMO' : 'DEV'}] Email skipped — type: ${type}, to: ${to}, subject: ${email.subject}`);
-    await insertEmailLog(
-      type,
-      to,
-      (email.subject as string) ?? null,
-      true,
-      `${isDemo ? 'demo' : 'dev'}: not sent`,
-      email.html as string,
-    );
-    return true;
-  }
-
-  const { success, error } = await sendEmail(email);
-  await insertEmailLog(type, to, (email.subject as string) ?? null, success, error, email.html as string);
-  if (!success && !isRetry) await insertFailedEmail(type, payload, error);
-
-  return success;
-}
-
 // Base URL for the app
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-type FailedEmailType =
-  | 'verification'
-  | 'registration'
-  | 'acceptance'
-  | 'missionStatus'
-  | 'lateCompletion'
-  | 'missionAcceptance'
-  | 'missionUpdated'
-  | 'missionRemoved'
-  | 'missionReport'
-  | 'newDevice'
-  | 'contact';
 
 // ------------------------------------------------------------------
 // Email composition functions - one per type.
@@ -970,62 +877,6 @@ export async function sendMissionReportEmail(
     composeMissionReportEmail(mission, home, employee, conciergerie, report),
     'missionReport',
     { mission, home, employee, conciergerie, report },
-    isRetry,
-  );
-}
-
-/**
- * Monthly subscription invoice — sent to the conciergerie's own registered
- * address (resolved server-side by name, so this action cannot be abused as
- * an open relay). Fixed template; 'invoice' rows are queued for retry.
- */
-export async function sendInvoiceEmail(
-  conciergerieName: string,
-  monthLabel: string,
-  planName: string,
-  amount: number,
-  isRetry = false,
-): Promise<boolean> {
-  // Internal-only: the billing cron and the failed_emails retry path call
-  // with isRetry=true. No interactive caller may trigger an invoice email.
-  if (!isRetry) return false;
-  const conciergerie = await getConciergerieByName(conciergerieName);
-  if (!conciergerie?.email) return false;
-  return sendContactEmail(
-    conciergerie.email,
-    `Job Conciergerie — facture de ${monthLabel}`,
-    [
-      `Bonjour,`,
-      ``,
-      `Votre abonnement Job Conciergerie pour ${monthLabel} est facturé au forfait le plus élevé utilisé ce mois-ci :`,
-      ``,
-      `  ${planName} — ${amount} €`,
-      ``,
-      `Pour toute question, répondez à cet email.`,
-      ``,
-      `L'équipe Job Conciergerie`,
-    ].join('\n'),
-    isRetry,
-  );
-}
-
-/**
- * Monthly billing recap sent to the admin (env address). Fixed template —
- * only cron calls this; not an open relay.
- */
-export async function sendBillingSummaryEmail(
-  monthLabel: string,
-  lines: string[],
-  skipped: number,
-  isRetry = false,
-): Promise<boolean> {
-  // Internal-only (cron + failed_emails retry) — never callable by a user.
-  if (!isRetry) return false;
-  const adminEmail = process.env.ADMIN_ALERT_EMAIL || 'contact@job-conciergerie.fr';
-  return sendContactEmail(
-    adminEmail,
-    `Facturation ${monthLabel} — ${lines.length} facture${lines.length > 1 ? 's' : ''}`,
-    `Factures générées pour ${monthLabel} :\n\n${lines.join('\n')}\n\n${skipped} déjà facturée(s) (ignorée(s)).`,
     isRetry,
   );
 }

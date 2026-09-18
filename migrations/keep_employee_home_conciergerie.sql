@@ -61,15 +61,23 @@ WHERE e.uuid = r.uuid
 -- Fallback: employees still unclaimed (zero completed missions) get the
 -- first conciergerie of their client; a NULL client_id adopts that
 -- conciergerie's client so the employee lands in a real tenant.
+-- Admin-client conciergeries are excluded everywhere — 'Admin' sorts first
+-- alphabetically and would otherwise claim every tenantless employee.
 WITH fallback AS (
   SELECT e.uuid,
          COALESCE(
            (SELECT c.name FROM conciergeries c
+            LEFT JOIN clients cl ON cl.id = c.client_id
             WHERE c.client_id IS NOT DISTINCT FROM e.client_id
+              AND COALESCE(cl.is_admin, false) = false
             ORDER BY c.name LIMIT 1),
            -- NULL/dangling client_id: no conciergerie in the tenant, take
-           -- the first one globally so the employee still gets a home.
-           (SELECT c.name FROM conciergeries c ORDER BY c.name LIMIT 1)
+           -- the first non-admin one globally so the employee still gets
+           -- a home.
+           (SELECT c.name FROM conciergeries c
+            LEFT JOIN clients cl ON cl.id = c.client_id
+            WHERE COALESCE(cl.is_admin, false) = false
+            ORDER BY c.name LIMIT 1)
          ) AS home_name
   FROM employees e
   WHERE NULLIF(e.conciergerie_name, '') IS NULL

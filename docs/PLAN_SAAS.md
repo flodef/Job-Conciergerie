@@ -21,11 +21,18 @@ Objectif : `www.`/apex servent **toujours** le site (même avec une session acti
 - [ ] Vigilance PWA : le `start_url` est figé à l'install — une icône pointant sur `www.` ouvrirait la landing à chaque lancement jusqu'à réinstallation (le bounce `/` existe pour ce cas — commit « PWA users landing on the site »)
 - [ ] Avant de flipper : mesurer la couverture via `device_seen` (devices actifs depuis le déploiement `app.` le 17 sept = déjà migrés — 21/47 au 18 sept) + logs Vercel filtrés sur host `www.` (doit tendre vers 0 hits app)
 
-### Phase C.4 — Abonnements (reporté)
+### Phase C.4 — Abonnements (cœur fait, reste l'exploitation)
 
-- [ ] Migrer `plan` de `conciergeries` vers `clients` au moment du backfill, supprimer `conciergeries.plan` ensuite
-- [ ] Rendre le forfait éditable une fois la facturation décidée (upgrade/downgrade, paiement Revolut)
-- [ ] Enforcer les limites côté serveur : Découverte = **20 logements max**, quotas missions/prestataires à définir, blocage + message d'upgrade
+Fait : `plan_changes` (log append-only), `invoices` (facture mensuelle = forfait max utilisé, idempotente), cron `/api/bill-subscriptions`, self-service + popup comparatif dans Settings, limites serveur (caps biens/prestataires, duo, rapports, historique, notifications, multi). Décision actée : `conciergeries.plan` reste la source de vérité (gate par membre, pas par groupe) — **pas de migration vers `clients.plan`**.
+
+- [ ] Planifier l'appel du cron `/api/bill-subscriptions` le 1er de chaque mois (cron-job.org, comme `check-late-missions`)
+- [ ] Encaisser les factures : statut `pending` → lien de paiement (Revolut) dans l'email de facture + maj du statut au règlement
+- [ ] Réconcilier le checkout **annuel** de la landing avec la facturation mensuelle (bloquer les switches pendant une année payée ? modèle à définir)
+
+### Multi-conciergerie — transitions de groupe
+
+- [ ] Fonctions SQL prêtes et déployées sur les 3 bases (`move_conciergerie_to_client`, `merge_clients`, `split_conciergerie_to_own_client`) — prévoir une UI admin seulement si les moves deviennent fréquents
+- [ ] Provisioning self-service des nouvelles conciergeries (aujourd'hui : admin/SQL) — dépend de Phase G (`ORDER_COMPLETED` → provisionner le `client`)
 
 ### Phase G — Revolut prod
 
@@ -168,7 +175,7 @@ Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restau
 - **Modèle de facturation** : mensuel, au **forfait le plus élevé utilisé dans le mois** (un test Privilège 1 jour = mois facturé Privilège), facture émise le 1er du mois suivant. Changement de forfait immédiat, self-service depuis Settings.
 - **`plan_changes`** : log append-only de chaque switch (from→to, qui, quand, client_id). `conciergeries.plan` reste la source de vérité du forfait courant (décision validée : gate par membre, pas par groupe).
 - **`invoices`** : une ligne par conciergerie et par mois — `UNIQUE(conciergerie_name, period_year, period_month)` rend le cron idempotent. Statut `pending` (collection manuelle — Revolut est un checkout one-shot, pas de prélèvement auto).
-- **`/api/bill-subscriptions`** : cron CRON_SECRET à appeler le 1er du mois → `computeMonthlyBill()` (utils/billing.ts, testé) par conciergerie → insert invoice + `sendInvoiceEmail` à la conciergerie + `sendBillingSummaryEmail` à l'admin.
+- **`/api/bill-subscriptions`** : cron CRON_SECRET à appeler le 1er du mois → `computeMonthlyBill()` (utils/billing.ts, testé) par conciergerie → insert invoice + `sendInvoiceEmail` à la conciergerie + `sendBillingSummaryEmail` à l'admin (`utils/billingEmails.ts` — helpers internes, hors `actions/` donc non appelables par les clients).
 - **`changeMyPlan()`** (actions/conciergerie) : session conciergerie requise, écrit `plan` + log l'event (`changed_by='admin'` en impersonation). `updateConciergerieData` exclut toujours `plan`.
 - **UI** : `conciergerieSettings` — ligne Forfait + « Comparer les forfaits » → `PlanComparisonModal` (matrice `FEATURE_MATRIX` dans data/plans.ts, miroir de la landing) + bouton « Passer à … » par forfait + `ConfirmationModal` (avertissement downgrade : données conservées, créations bloquées au-delà des caps).
 - **Limites par forfait** déjà enforcées côté serveur : caps biens/prestataires, duo, comptes rendus, historique, notifications avancées, multi-conciergerie — données conservées au downgrade, créations bloquées au-delà des caps.
