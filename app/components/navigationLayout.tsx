@@ -27,7 +27,6 @@ import {
   IconSettings,
   IconSparkles,
   IconUser,
-  IconX,
 } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import React, { useEffect, useState } from 'react';
@@ -227,19 +226,20 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {impersonating && (
         <div
           className={cn(
-            'fixed left-0 right-0 z-50 flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 text-white text-sm',
+            'fixed left-0 right-0 z-50 flex items-center bg-amber-500 py-2 text-white text-sm',
             bannerTop(isDemoHost ? 1 : 0),
           )}
         >
-          <IconEye size={14} />
-          <span>
-            Vue en tant que <strong>{impersonatedName}</strong>
-          </span>
+          <div className="flex w-3/4 items-center justify-center gap-2 px-2">
+            <IconEye size={20} className="shrink-0" />
+            <span className="truncate">
+              Vue en tant que <strong>{impersonatedName}</strong>
+            </span>
+          </div>
           <button
             onClick={handleStopImpersonation}
-            className="flex items-center gap-1 font-semibold underline underline-offset-2 whitespace-nowrap cursor-pointer"
+            className="w-1/4 text-center font-semibold underline underline-offset-2 whitespace-nowrap cursor-pointer"
           >
-            <IconX size={14} />
             Quitter
           </button>
         </div>
