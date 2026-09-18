@@ -395,7 +395,7 @@ const NotificationSettings: React.FC = () => {
         )}
 
         {pushOn && (
-          <div className="pt-1 space-y-2">
+          <div className="pt-1 space-y-3">
             <Switch
               className="text-sm my-0"
               label="Si l’app est fermée"
