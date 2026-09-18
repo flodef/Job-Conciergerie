@@ -318,6 +318,27 @@ export const getEmployeeByName = async (firstName: string, familyName: string, c
 };
 
 /**
+ * Whether ANY employee already uses this first+family name — checked
+ * globally (not per tenant): "first family" is the join key stored in
+ * missions, so a homonym anywhere would collide on a future group merge.
+ * Comparison is on the normalized join key so case/whitespace variants
+ * still match.
+ */
+export const employeeNameExists = async (firstName: string, familyName: string): Promise<boolean> => {
+  try {
+    const result = await sql`
+      SELECT 1 FROM employees
+      WHERE lower(btrim(first_name || ' ' || family_name)) = lower(btrim(${`${firstName} ${familyName}`}))
+      LIMIT 1
+    `;
+    return result.length > 0;
+  } catch (error) {
+    console.error(`Error checking employee name ${firstName} ${familyName}:`, error);
+    return false;
+  }
+};
+
+/**
  * Fetch an employee's device id array
  */
 export const getEmployeeIds = async (firstName: string, familyName: string): Promise<string[] | null> => {

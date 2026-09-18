@@ -6,6 +6,7 @@ import {
   countAcceptedEmployees,
   createEmployee,
   deleteEmployee,
+  employeeNameExists,
   findEmployeeByContact,
   getAllEmployees,
   getEmployeeIds,
@@ -16,6 +17,7 @@ import {
 import { hashId } from '@/app/db/db';
 import { DEVICE_TTL_MS, getDeviceSeenAt, seenKey, touchDeviceKeys, touchDevices } from '@/app/db/deviceSeen';
 import { checkRateLimit, RATE_LIMITED, type RateLimited } from '@/app/db/rateLimit';
+import { NAME_TAKEN, type NameTaken } from '@/app/utils/dbErrors';
 import {
   getSessionCredentialIds,
   getSessionDeviceId,
@@ -125,7 +127,7 @@ export async function createNewEmployee(data: {
   message?: string;
   conciergerieName: string;
   notificationSettings?: EmployeeNotificationSettings;
-}): Promise<Employee | RateLimited | null> {
+}): Promise<Employee | RateLimited | NameTaken | null> {
   // Public account creation — bounded per client IP
   if (!(await checkRateLimit('createEmployee', 5, 600))) return RATE_LIMITED;
   // Always register the caller's own device — never a client-provided id
@@ -136,6 +138,11 @@ export async function createNewEmployee(data: {
   // homeless and invisible to every vetting queue.
   const clientId = await getConciergerieClientId(data.conciergerieName);
   if (!clientId) return null;
+
+  // "first family" is the join key stored in missions — a second person with
+  // the same name would be indistinguishable from the first (and would
+  // collide outright on a group merge). Checked globally, before insert.
+  if (await employeeNameExists(data.firstName, data.familyName)) return NAME_TAKEN;
 
   // Convert to DB format (device ids are hashed at rest)
   const dbData: Omit<DbEmployee, 'created_at'> = {

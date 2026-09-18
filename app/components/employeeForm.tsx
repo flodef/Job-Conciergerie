@@ -1,7 +1,7 @@
 'use client';
 
 import { createNewEmployee, enrollEmployeeDevice, lookupEmployeeByContact } from '@/app/actions/employee';
-import { RATE_LIMITED } from '@/app/utils/dbErrors';
+import { NAME_TAKEN, RATE_LIMITED } from '@/app/utils/dbErrors';
 import AppVersion from '@/app/components/appVersion';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
@@ -232,11 +232,13 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
       } else {
         // Create a new employee in the database (with normalized values)
         const newEmployee = await createNewEmployee(normalizedFormData);
-        if (!newEmployee || newEmployee === RATE_LIMITED)
+        if (!newEmployee || newEmployee === RATE_LIMITED || newEmployee === NAME_TAKEN)
           throw new Error(
             newEmployee === RATE_LIMITED
               ? 'Trop de tentatives. Veuillez réessayer dans quelques minutes.'
-              : 'Prestataire non créé dans la base de données',
+              : newEmployee === NAME_TAKEN
+                ? 'Un prestataire porte déjà ce nom. Si vous êtes cette personne, connectez-vous avec votre téléphone ou email habituel — sinon contactez-nous.'
+                : 'Prestataire non créé dans la base de données',
           );
 
         updateUserData(newEmployee);
