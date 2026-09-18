@@ -40,6 +40,11 @@ export const viewport: Viewport = {
   themeColor: '#a4bcde',
 };
 
+// Restores the stored theme before first paint — sets data-theme (the user's
+// choice: system/light/dark) plus the resolved .dark/.light class, so CSS and
+// the toggle's active state are correct with no flash.
+const themeInitScript = `(function(){try{var m=localStorage.getItem('theme');if(m!=='light'&&m!=='dark')m='system';var r=m==='system'?(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):m;var d=document.documentElement;d.dataset.theme=m;d.classList.toggle('dark',r==='dark');d.classList.toggle('light',r==='light');d.style.colorScheme=r;}catch(e){}})()`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -48,6 +53,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#a4bcde" />
