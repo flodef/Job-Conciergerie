@@ -9,6 +9,8 @@ import { IconCheck, IconX } from '@tabler/icons-react';
 
 interface PlanComparisonModalProps {
   currentPlan: ConciergeriePlan;
+  /** Set while a prepaid annual subscription is running — switches locked. */
+  annualUntil?: Date | null;
   onClose: () => void;
   onSelect: (plan: ConciergeriePlan) => void;
 }
@@ -18,7 +20,7 @@ interface PlanComparisonModalProps {
  * landing pricing section) with the current plan highlighted, plus one
  * button per other plan to switch to it.
  */
-export default function PlanComparisonModal({ currentPlan, onClose, onSelect }: PlanComparisonModalProps) {
+export default function PlanComparisonModal({ currentPlan, annualUntil, onClose, onSelect }: PlanComparisonModalProps) {
   return (
     <FullScreenModal title="Comparer les forfaits" onClose={onClose} disabled={false} footer={null}>
       <table className="w-full table-fixed text-sm border-collapse">
@@ -59,15 +61,16 @@ export default function PlanComparisonModal({ currentPlan, onClose, onSelect }: 
 
       <div className="flex flex-col gap-2 pt-2">
         {PLAN_ORDER.filter(id => id !== currentPlan).map(id => (
-          <Button key={id} style="secondary" onClick={() => onSelect(id)}>
+          <Button key={id} style="secondary" disabled={!!annualUntil} onClick={() => onSelect(id)}>
             Passer à {PLANS[id].name} — {PLANS[id].monthly} €/mois
           </Button>
         ))}
       </div>
 
       <p className="text-xs text-foreground/60 pt-1">
-        Le changement est immédiat. Facturation mensuelle : le forfait le plus élevé utilisé dans le mois est celui
-        facturé le 1er du mois suivant.
+        {annualUntil
+          ? `Forfait annuel en cours jusqu'au ${annualUntil.toLocaleDateString('fr-FR')} — un nouveau forfait pourra être choisi à cette date.`
+          : 'Le changement est immédiat. Facturation mensuelle : le forfait le plus élevé utilisé dans le mois est celui facturé le 1er du mois suivant.'}
       </p>
     </FullScreenModal>
   );

@@ -117,6 +117,53 @@ body {
   }
 }
 
+/* Landing-style ambient background for the entry/error pages: two blurred
+   radial blobs animated like the landing hero glows, tinted by the tenant
+   primary so they stay on-brand. Apply on the page root (needs a positioned
+   ancestor — pair with `relative`, or any already-positioned wrapper). */
+.ambient-bg {
+  isolation: isolate;
+  overflow: clip;
+}
+
+.ambient-bg::before,
+.ambient-bg::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: -1;
+  animation: ambient-glow 6s ease-in-out infinite;
+}
+
+.ambient-bg::before {
+  width: 37.5rem;
+  height: 37.5rem;
+  top: -6rem;
+  left: -6rem;
+  background: color-mix(in oklch, var(--color-primary), transparent 80%);
+}
+
+.ambient-bg::after {
+  width: 30rem;
+  height: 30rem;
+  bottom: -4rem;
+  right: -4rem;
+  background: color-mix(in oklch, var(--color-primary), transparent 85%);
+  animation-delay: 3s;
+}
+
+@keyframes ambient-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* ─── 500 error page (inspired by https://codepen.io/altreiter/pen/EedZRQ) ─── */
 .error-500 {
   text-align: center;

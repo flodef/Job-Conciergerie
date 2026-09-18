@@ -18,9 +18,11 @@ export async function sendInvoiceEmail(
   monthLabel: string,
   planName: string,
   amount: number,
+  fullAmount?: number,
 ): Promise<boolean> {
   const conciergerie = await getConciergerieByName(conciergerieName);
   if (!conciergerie?.email) return false;
+  const discounted = fullAmount !== undefined && fullAmount !== amount;
   return sendContactEmail(
     conciergerie.email,
     `Job Conciergerie — facture de ${monthLabel}`,
@@ -29,7 +31,7 @@ export async function sendInvoiceEmail(
       ``,
       `Votre abonnement Job Conciergerie pour ${monthLabel} est facturé au forfait le plus élevé utilisé ce mois-ci :`,
       ``,
-      `  ${planName} — ${amount} €`,
+      `  ${planName} — ${amount} €${discounted ? ` (tarif ${fullAmount} €, remise appliquée)` : ''}`,
       ``,
       `Pour toute question, répondez à cet email.`,
       ``,

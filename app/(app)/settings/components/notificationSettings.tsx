@@ -408,14 +408,19 @@ const NotificationSettings: React.FC = () => {
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-2">
                   <p className="flex items-center gap-1.5 text-xs text-foreground/60 px-2">
                     <IconCheck size={14} className="text-green-500" />
-                    Notifications push activées sur cet appareil
+                    Notifications push activées
                   </p>
                   <Button style="secondary" onClick={handleTest} loading={isTesting} className="text-xs py-1 px-2">
                     Tester
                   </Button>
                 </div>
               ) : (
-                <Button style="secondary" onClick={subscribeThisDevice} loading={isSubscribing}>
+                <Button
+                  style="secondary"
+                  onClick={subscribeThisDevice}
+                  loading={isSubscribing}
+                  className="text-xs py-1 px-2"
+                >
                   Activer les notifications sur cet appareil
                 </Button>
               ))

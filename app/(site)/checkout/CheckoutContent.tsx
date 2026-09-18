@@ -4,12 +4,15 @@ import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Logo from '../_components/Logo';
 import { PLANS } from '@/app/data/plans';
+import { cn } from '@/app/utils/className';
 import { IconCircleCheck, IconLoader2, IconAlertCircle, IconArrowLeft } from '@tabler/icons-react';
 
 export default function CheckoutContent() {
   const searchParams = useSearchParams();
   const plan = searchParams.get('plan') as keyof typeof PLANS | null;
-  const billing = searchParams.get('billing') as 'monthly' | 'annual' | null;
+  // Default to monthly when the param is absent/unknown — the toggle below
+  // lets the customer switch at payment time anyway.
+  const billing = searchParams.get('billing') === 'annual' ? 'annual' : 'monthly';
   const status = searchParams.get('status');
 
   const [loading, setLoading] = useState(false);
@@ -127,7 +130,7 @@ export default function CheckoutContent() {
     );
   }
 
-  if (!planData || !billing) {
+  if (!planData) {
     return (
       <div
         className="min-h-screen flex items-center justify-center px-6"
@@ -173,6 +176,25 @@ export default function CheckoutContent() {
           <p className="text-slate-400 text-sm mb-6">
             Forfait {planData.name} — {billing === 'annual' ? 'annuel' : 'mensuel'}
           </p>
+
+          <div className="flex rounded-full bg-white/5 p-1 mb-6 text-sm">
+            {(['monthly', 'annual'] as const).map(b => (
+              <button
+                key={b}
+                type="button"
+                disabled={loading}
+                onClick={() => {
+                  if (b !== billing) window.location.href = `/checkout?plan=${plan}&billing=${b}`;
+                }}
+                className={cn(
+                  'flex-1 rounded-full py-1.5 font-semibold transition cursor-pointer disabled:opacity-50',
+                  billing === b ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white',
+                )}
+              >
+                {b === 'monthly' ? 'Mensuel' : 'Annuel · 2 mois offerts'}
+              </button>
+            ))}
+          </div>
 
           <div className="glass rounded-xl p-4 mb-6">
             <div className="flex justify-between items-center mb-2">

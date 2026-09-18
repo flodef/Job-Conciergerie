@@ -197,6 +197,11 @@ CREATE TABLE public.conciergeries (
     notification_settings jsonb,
     plan text DEFAULT 'pro'::text NOT NULL,
     client_id uuid,
+    discount integer DEFAULT 0 NOT NULL,
+    billing_period text DEFAULT 'monthly'::text NOT NULL,
+    plan_until timestamp with time zone,
+    CONSTRAINT conciergeries_billing_period_check CHECK ((billing_period = ANY (ARRAY['monthly'::text, 'annual'::text]))),
+    CONSTRAINT conciergeries_discount_check CHECK (((discount >= 0) AND (discount <= 100))),
     CONSTRAINT conciergeries_plan_check CHECK ((plan = ANY (ARRAY['decouverte'::text, 'pro'::text, 'privilege'::text]))),
     CONSTRAINT valid_color_name CHECK ((color_name = ANY (ARRAY['Rose'::text, 'Orange'::text, 'Vert'::text, 'Bleu'::text, 'Violet'::text, 'Gris'::text])))
 );
@@ -681,6 +686,8 @@ CREATE TABLE public.invoices (
     status text DEFAULT 'pending'::text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     client_id uuid,
+    discount integer DEFAULT 0 NOT NULL,
+    external_ref text,
     CONSTRAINT invoices_period_month_check CHECK (((period_month >= 1) AND (period_month <= 12))),
     CONSTRAINT invoices_plan_check CHECK ((plan = ANY (ARRAY['decouverte'::text, 'pro'::text, 'privilege'::text]))),
     CONSTRAINT invoices_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'sent'::text, 'paid'::text, 'cancelled'::text]))),

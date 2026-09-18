@@ -202,6 +202,12 @@ export async function changeMyPlan(newPlan: ConciergeriePlan): Promise<Concierge
   const current = await getConciergerieByName(session.rowKey);
   if (!current || current.plan === newPlan) return null;
 
+  // An annual subscription runs its full year — paid upfront, it cannot be
+  // switched or downgraded mid-period. A new plan is chosen at expiry.
+  if (current.billingPeriod === 'annual' && current.planUntil && new Date(current.planUntil) > new Date()) {
+    return null;
+  }
+
   const updated = await updateConciergerie(session.rowKey, { plan: newPlan }, tenantScope(session));
   if (updated) {
     await logPlanChange(

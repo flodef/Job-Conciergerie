@@ -215,7 +215,7 @@ export default function WaitingPage() {
   if (authLoading || isLoading) return <M3LoadingSpinner className="h-full" />;
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-background">
+    <div className="flex-1 flex items-center justify-center bg-background ambient-bg relative">
       <div className="w-full max-w-md bg-background overflow-hidden pt-6 px-4 pb-2 flex flex-col gap-4">
         {conciergerie ? (
           // Conciergerie waiting page

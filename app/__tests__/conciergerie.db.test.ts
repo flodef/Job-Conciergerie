@@ -16,6 +16,9 @@ const baseRow: DbConciergerie = {
   color_name: 'blue',
   notification_settings: null,
   plan: 'pro',
+  discount: 0,
+  billing_period: 'monthly',
+  plan_until: null,
 };
 
 describe('formatConciergerie', () => {

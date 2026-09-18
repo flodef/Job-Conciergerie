@@ -284,7 +284,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
   if (!conciergeries?.length)
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-background">
+      <div className="h-full flex flex-col items-center justify-center bg-background ambient-bg relative">
         <h2 className="text-3xl font-black mb-2">
           <span className="text-gradient">Conciergerie</span>
         </h2>
@@ -293,7 +293,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     );
 
   return (
-    <div className="min-h-full w-full flex flex-col items-center justify-start bg-background pt-2">
+    <div className="min-h-full w-full flex flex-col items-center justify-start bg-background ambient-bg relative pt-2">
       <h2 className="text-3xl font-black mb-4">
         Inscription <span className="text-gradient">Prestataire</span>
       </h2>

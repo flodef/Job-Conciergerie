@@ -11,7 +11,7 @@ export default function ErrorPage({
   message?: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center flex-1 p-4">
+    <div className="flex flex-col items-center justify-center flex-1 p-4 ambient-bg relative">
       <div className="text-center max-w-md">
         <h1 className="text-3xl font-black mb-4">
           <span className="text-gradient">{title}</span>
