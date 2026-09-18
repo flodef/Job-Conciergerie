@@ -173,17 +173,29 @@ const NotificationSettings: React.FC = () => {
 
     setIsSubscribing(true);
     try {
-      const sub = await subscribeDeviceToPush();
-      if (!sub) {
-        showToast({ type: ToastType.Error, message: 'Autorisation des notifications refusée' });
+      const result = await subscribeDeviceToPush();
+      if (!result.ok) {
+        const message = {
+          denied: 'Autorisation des notifications refusée',
+          'no-sw':
+            process.env.NODE_ENV === 'development'
+              ? 'Indisponible en dev — le service worker ne tourne qu’en production'
+              : 'Service worker indisponible — rechargez la page puis réessayez',
+          unsupported: 'Les notifications ne sont pas configurées ou supportées ici',
+          failed: "Impossible d'activer les notifications sur cet appareil",
+        }[result.reason];
+        showToast({ type: ToastType.Error, message });
         return false;
       }
-      if (!(await saveMyPushSubscription(sub.toJSON() as PushSubscriptionInput))) {
-        showToast({ type: ToastType.Error, message: "Échec de l'enregistrement de l'abonnement" });
-        return false;
+      // One retry on the server save — a cold DB or transient timeout
+      // shouldn't leave an orphaned browser subscription behind.
+      const json = result.subscription.toJSON() as PushSubscriptionInput;
+      if ((await saveMyPushSubscription(json)) || (await saveMyPushSubscription(json))) {
+        setDeviceSubscribed(true);
+        return true;
       }
-      setDeviceSubscribed(true);
-      return true;
+      showToast({ type: ToastType.Error, message: "Échec de l'enregistrement de l'abonnement — réessayez" });
+      return false;
     } finally {
       setIsSubscribing(false);
     }
