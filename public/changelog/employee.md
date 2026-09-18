@@ -1,3 +1,9 @@
+# 2.454
+
+- **Nouveau : Missions des conciergeries partenaires** : vous pouvez voir et accepter les missions des conciergeries partenaires de votre conciergerie (selon son abonnement), en plus de vos missions habituelles.
+- **Amélioration : Lien de connexion** : si un lien de connexion correspond à un autre compte que celui de cet appareil, l'app vous demande maintenant lequel garder au lieu de changer silencieusement.
+- **Correction** : la connexion par lien fonctionne aussi si votre numéro était enregistré dans un ancien format.
+
 # 2.446
 
 - **Nouveau : Notifications push** : pour chaque type d'alerte, choisissez comment vous êtes notifié — par email, par notification sur votre téléphone, les deux, ou rien (Paramètres → Notifications). Sur iPhone, installez l'app sur l'écran d'accueil pour recevoir les notifications même app fermée.

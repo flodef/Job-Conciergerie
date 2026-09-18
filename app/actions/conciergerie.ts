@@ -4,6 +4,7 @@ import type { DbConciergerie } from '@/app/db/conciergerieDb';
 import {
   getAllConciergeries,
   getConciergerieIds,
+  getGroupForClient,
   updateConciergerie,
   updateConciergerieId,
 } from '@/app/db/conciergerieDb';
@@ -24,6 +25,7 @@ import type { EnrollDeviceResult } from '@/app/actions/employee';
 import type { Conciergerie } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { baseId, getDevices, isNewDevice, MaxDevicesError } from '@/app/utils/id';
+import { normalizePhone } from '@/app/utils/regex';
 
 /**
  * Fetch all conciergeries from the database with caching
@@ -60,6 +62,20 @@ export async function fetchConciergeries(): Promise<Conciergerie[] | null> {
         plan: c.plan,
       })) ?? null
   );
+}
+
+/**
+ * The multi-conciergerie group the session belongs to (client_id sharing =
+ * group membership). Read-only display for settings — group changes are an
+ * admin operation, never self-service.
+ */
+export async function fetchMyGroup(): Promise<{ name: string | null; members: string[] } | null> {
+  const session = await requireConnectedSession();
+  if (!session) return null;
+  const scope = tenantScope(session);
+  // Unscoped (non-impersonating admin) or client-less session: no group
+  if (!scope) return { name: null, members: [] };
+  return await getGroupForClient(scope);
 }
 
 /**
@@ -157,7 +173,7 @@ export async function updateConciergerieData(
   const dbData: Partial<DbConciergerie> = {
     name: data.name,
     email: data.email,
-    tel: data.tel,
+    tel: data.tel === undefined ? undefined : normalizePhone(data.tel),
     color_name: data.colorName,
     notification_settings: data.notificationSettings ? JSON.stringify(data.notificationSettings) : null,
   };

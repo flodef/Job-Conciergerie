@@ -10,6 +10,7 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import EmployeeDetails from '@/app/(app)/employees/components/employeeDetails';
+import { PLANS, planLimits } from '@/app/data/plans';
 import type { Employee } from '@/app/types/dataTypes';
 import {
   filterEmployees,
@@ -35,7 +36,17 @@ import { cn, descriptionClassName, iconButtonClassName, textClassName } from '@/
 import { getUserKey } from '@/app/utils/user';
 
 export default function EmployeesList() {
-  const { userData, conciergerieName, isLoading: authLoading, employees: authEmployees, updateUserData } = useAuth();
+  const {
+    userData,
+    conciergerieName,
+    isLoading: authLoading,
+    employees: authEmployees,
+    conciergeries,
+    updateUserData,
+    findConciergerie,
+    isAdmin,
+    impersonating,
+  } = useAuth();
   const { missions } = useMissions();
   const { openModal, closeModal } = useModal();
   const { showToast } = useToast();
@@ -52,8 +63,12 @@ export default function EmployeesList() {
     // Skip if still loading
     if (authLoading || !conciergerieName) return;
 
-    // Filter employees by conciergerie
-    const filteredEmployees = filterEmployeesByConciergerie(authEmployees, conciergerieName);
+    // Filter employees by conciergerie — a multi-enabled plan also lists
+    // foreign accepted employees (the usable pool); vetting stays home-side.
+    // findConciergerie isn't memoized — read the stable conciergeries array
+    // so this effect only re-runs on real data changes, not every render.
+    const isMulti = planLimits(conciergeries.find(c => getUserKey(c) === conciergerieName)?.plan).multiConciergerie;
+    const filteredEmployees = filterEmployeesByConciergerie(authEmployees, conciergerieName, isMulti);
 
     // Apply name sorting if needed
     let sortedEmployees = sortEmployees(filteredEmployees);
@@ -67,7 +82,7 @@ export default function EmployeesList() {
 
     setEmployees(sortedEmployees);
     setHasLoadedOnce(true);
-  }, [conciergerieName, authLoading, authEmployees, nameSortOrder]);
+  }, [conciergerieName, authLoading, authEmployees, conciergeries, nameSortOrder]);
 
   // Filter employees by status
   const pendingEmployees = employees.filter(
@@ -79,6 +94,15 @@ export default function EmployeesList() {
   const rejectedEmployees = employees.filter(
     emp => emp.status === 'rejected' && (searchTerm ? filterEmployees([emp], searchTerm).length > 0 : true),
   );
+
+  // Over-limit visibility: a downgraded conciergerie keeps its staff but sees
+  // the cap it exceeds (e.g. "Acceptés (25/10)") instead of a silent block.
+  // Only own registered staff counts — foreign pool members belong to their
+  // home conciergerie's plan.
+  const maxEmployees = planLimits(findConciergerie(conciergerieName)?.plan).maxEmployees;
+  const acceptedCount = employees.filter(
+    e => e.status === 'accepted' && e.conciergerieName === conciergerieName,
+  ).length;
 
   const rejectEmployee = (employee: Employee) => {
     updateEmployeeStatus(employee, 'rejected', userData, missions, employees, updateUserData)
@@ -113,6 +137,17 @@ export default function EmployeesList() {
   };
 
   const handleStatusChange = async (employee: Employee, newStatus: 'accepted' | 'rejected') => {
+    if (newStatus === 'accepted') {
+      const plan = findConciergerie(conciergerieName)?.plan;
+      const max = planLimits(plan).maxEmployees;
+      if (max !== null && acceptedCount >= max) {
+        showToast({
+          type: ToastType.Error,
+          message: `Le plan ${PLANS[plan ?? 'pro'].name} est limité à ${max} prestataires — passez à une offre supérieure pour en accepter davantage.`,
+        });
+        return;
+      }
+    }
     const confirmation = getEmployeeStatusChangeConfirmation(employee, newStatus, missions);
     if (confirmation) {
       const id = openModal(() => (
@@ -173,6 +208,14 @@ export default function EmployeesList() {
               <EmployeeRow
                 key={getUserKey(employee)}
                 employee={employee}
+                // Vetting stays the home conciergerie's call — foreign pool
+                // members (multi-conciergerie) are usable, not manageable.
+                // A non-impersonating admin manages every row.
+                canVet={
+                  !employee.conciergerieName ||
+                  employee.conciergerieName === conciergerieName ||
+                  (isAdmin && !impersonating)
+                }
                 onStatusChange={handleStatusChange}
                 onClick={() => handleEmployeeClick(employee)}
               />
@@ -206,7 +249,9 @@ export default function EmployeesList() {
               content: renderEmployeeTable(pendingEmployees, 'en attente'),
             },
             {
-              title: `Acceptés (${acceptedEmployees.length})`,
+              // Count own staff against the cap — foreign pool members
+              // belong to their home conciergerie's plan.
+              title: `Acceptés (${acceptedCount}${maxEmployees !== null ? `/${maxEmployees}` : ''})`,
               icon: <IconUserCheck size={20} />,
               content: renderEmployeeTable(acceptedEmployees, 'accepté'),
             },
@@ -225,10 +270,12 @@ export default function EmployeesList() {
 // Employee row component
 function EmployeeRow({
   employee,
+  canVet,
   onStatusChange,
   onClick,
 }: {
   employee: Employee;
+  canVet: boolean;
   onStatusChange: (employee: Employee, status: 'accepted' | 'rejected') => void;
   onClick: () => void;
 }) {
@@ -243,7 +290,7 @@ function EmployeeRow({
       </td>
       <td>
         <div className="flex space-x-2 justify-center" onClick={e => e.stopPropagation()}>
-          {employee.status !== 'accepted' && (
+          {canVet && employee.status !== 'accepted' && (
             <button
               onClick={() => onStatusChange(employee, 'accepted')}
               className={iconButtonClassName('success')}
@@ -252,7 +299,7 @@ function EmployeeRow({
               <IconCheck size={28} />
             </button>
           )}
-          {employee.status !== 'rejected' && (
+          {canVet && employee.status !== 'rejected' && (
             <button
               onClick={() => onStatusChange(employee, 'rejected')}
               className={iconButtonClassName('dangerous')}

@@ -37,12 +37,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { PLANS } from '@/app/data/plans';
 import { DEMO_ENTER_URL } from '@/app/utils/demo';
 import {
+  createRegexFilter,
   descriptionLengthRegex,
+  emailPartialRegex,
   emailRegex,
+  frenchPhonePartialRegex,
   frenchPhoneRegex,
   getMaxLength,
   inputLengthRegex,
 } from '@/app/utils/regex';
+import { handleKeyDown } from '@/app/utils/form';
 import { getLandingStats, getPublicTestimonials, type LandingStats, type PublicTestimonial } from '../_actions/stats';
 import { useTheme } from '../_lib/theme';
 
@@ -1239,9 +1243,14 @@ function Pricing() {
     'Personnalisation avancée':
       "Adaptation de l'application à vos besoins spécifiques (workflows, champs personnalisés)",
     'Onboarding personnalisé': 'Accompagnement dédié pour la mise en place et la formation de votre équipe',
-    'Mises à jour illimitées': 'Toutes les nouvelles fonctionnalités et améliorations incluses sans surcoût',
+    'Nouvelles fonctionnalités en avant-première':
+      'Recevez chaque nouvelle fonctionnalité en priorité, avant les autres plans',
+    "Vos demandes d'évolution prioritaires":
+      'Vos suggestions de fonctionnalités passent en tête de notre feuille de route',
     'Formation en visio': 'Sessions de formation personnalisées en visioconférence avec notre équipe',
     'Assistance dédiée': 'Un interlocuteur unique dédié à votre compte, joignable directement',
+    'Multi-conciergerie':
+      'Vos missions sont visibles par tous les prestataires acceptés de la plateforme, pas seulement les vôtres',
   };
 
   const plans = [
@@ -1255,7 +1264,6 @@ function Pricing() {
         "Jusqu'à 20 biens",
         "Jusqu'à 10 prestataires",
         'Missions & calendrier',
-        'Mode binôme',
         'Corrections de bugs incluses',
         'Notifications email',
         'Assistance par email sous 48h',
@@ -1273,6 +1281,7 @@ function Pricing() {
         'Tout le plan Découverte',
         'Biens illimités',
         'Prestataires illimités',
+        'Mode binôme',
         'Comptes rendus photo',
         'Historique & statistiques',
         'Multi-conciergerie',
@@ -1290,7 +1299,8 @@ function Pricing() {
       desc: 'Pour les conciergeries exigeantes',
       features: [
         'Tout le plan Pro',
-        'Mises à jour illimitées',
+        'Nouvelles fonctionnalités en avant-première',
+        "Vos demandes d'évolution prioritaires",
         'Formation en visio',
         'API & intégrations',
         'SLA garanti',
@@ -1461,6 +1471,8 @@ function Pricing() {
 const NAME_MAX = getMaxLength(inputLengthRegex); // 32
 const MESSAGE_MIN = 10;
 const MESSAGE_MAX = getMaxLength(descriptionLengthRegex); // 1000
+const phoneFilter = createRegexFilter(frenchPhonePartialRegex);
+const emailFilter = createRegexFilter(emailPartialRegex);
 
 // Validation runs in DOM order: the first offending field gets the message and the focus.
 const CONTACT_FIELDS: {
@@ -1654,7 +1666,12 @@ function ContactForm() {
                     required
                     type="email"
                     value={formState.email}
-                    onChange={e => setFormState({ ...formState, email: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, emailFilter)}
+                    onChange={e => {
+                      const v = emailFilter(e.target.value);
+                      if (v !== e.target.value) e.target.value = v;
+                      setFormState({ ...formState, email: v });
+                    }}
                     className={inputClass}
                     placeholder="jean@conciergerie.fr"
                     minLength={6}
@@ -1669,11 +1686,16 @@ function ContactForm() {
                     id="contact-phone"
                     type="tel"
                     value={formState.phone}
-                    onChange={e => setFormState({ ...formState, phone: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, phoneFilter)}
+                    onChange={e => {
+                      const v = phoneFilter(e.target.value);
+                      if (v !== e.target.value) e.target.value = v;
+                      setFormState({ ...formState, phone: v });
+                    }}
                     className={inputClass}
-                    placeholder="06 00 00 00 00"
+                    placeholder="0600000000"
                     minLength={10}
-                    maxLength={20}
+                    maxLength={10}
                   />
                 </div>
               </div>

@@ -4,7 +4,8 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
-import type { Home, Mission } from '@/app/types/dataTypes';
+import { planLimits } from '@/app/data/plans';
+import type { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
 import { detectMissionAlert, fireForegroundNotification } from '@/app/utils/foregroundNotifications';
 import type { MissionRow } from '@/app/utils/foregroundNotifications';
 import { getBrowserClient } from '@/app/utils/supabase/browser';
@@ -68,7 +69,7 @@ const formatHomeFromRow = (row: any): Home => ({
  */
 export function useRealtimeSync() {
   const { triggerRefresh } = useFetchTime();
-  const { userId, isLoading, fetchDataFromDatabase, userData, userType } = useAuth();
+  const { userId, isLoading, fetchDataFromDatabase, userData, userType, conciergeries } = useAuth();
   const { addMissionFromRealtime, updateMissionFromRealtime, deleteMissionFromRealtime } = useMissions();
   const { homes, addHomeFromRealtime, updateHomeFromRealtime, deleteHomeFromRealtime } = useHomes();
 
@@ -85,6 +86,7 @@ export function useRealtimeSync() {
   const userDataRef = useRef(userData);
   const userTypeRef = useRef(userType);
   const homesRef = useRef(homes);
+  const conciergeriesRef = useRef(conciergeries);
 
   useEffect(() => {
     triggerRefreshRef.current = triggerRefresh;
@@ -98,6 +100,7 @@ export function useRealtimeSync() {
     userDataRef.current = userData;
     userTypeRef.current = userType;
     homesRef.current = homes;
+    conciergeriesRef.current = conciergeries;
   }, [
     triggerRefresh,
     fetchDataFromDatabase,
@@ -110,6 +113,7 @@ export function useRealtimeSync() {
     userData,
     userType,
     homes,
+    conciergeries,
   ]);
 
   useEffect(() => {
@@ -160,7 +164,16 @@ export function useRealtimeSync() {
             myKey: getUserKey(user),
             homeTitle: homesRef.current.find(h => h.id === (newRow?.home_id ?? oldRow?.home_id))?.title,
           });
-          if (alert) void fireForegroundNotification(alert, user.notificationSettings);
+          // conciergerieName from useAuth is undefined for employees — resolve
+          // the plan from userData instead (conciergerie's own row / employee's
+          // employer), same as the history page.
+          const planAllowsPush = planLimits(
+            type === 'conciergerie'
+              ? (user as Conciergerie | undefined)?.plan
+              : conciergeriesRef.current.find(c => getUserKey(c) === (user as Employee | undefined)?.conciergerieName)
+                  ?.plan,
+          ).advancedNotifications;
+          if (alert) void fireForegroundNotification(alert, user.notificationSettings, planAllowsPush);
         }
         if (payload.eventType === 'DELETE') {
           if (payload.old?.id) deleteMissionRef.current(payload.old.id);
@@ -186,7 +199,14 @@ export function useRealtimeSync() {
         }),
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conciergeries' }, () =>
-        debounce('conciergeries', () => fetchDataRef.current('conciergerie')),
+        debounce('conciergeries', () => {
+          // A plan flip changes employee/mission visibility (multi-conciergerie)
+          // — refetch both so server-side scoping re-applies immediately, and
+          // flag the data pages so stale missions/homes get refetched too.
+          fetchDataRef.current('conciergerie');
+          fetchDataRef.current('employee');
+          triggerRefreshRef.current([Page.Missions, Page.Calendar, Page.Homes]);
+        }),
       )
       .subscribe(status => {
         if (status === 'SUBSCRIBED') {

@@ -86,9 +86,10 @@ CREATE FUNCTION public.reset_employee_fields_on_status_change() RETURNS trigger
     AS $$
 BEGIN
     IF OLD.status = 'pending' AND NEW.status != 'pending' THEN
-        RAISE NOTICE 'Resetting message and conciergerie_name for employee %', NEW.id;
+        RAISE NOTICE 'Resetting message for employee %', NEW.id;
         NEW.message := NULL;
-        NEW.conciergerie_name := NULL;
+        -- conciergerie_name is the employee's immutable home conciergerie —
+        -- it must survive vetting (multi-conciergerie model).
     END IF;
     RETURN NEW;
 END;

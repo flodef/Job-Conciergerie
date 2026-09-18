@@ -15,6 +15,7 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import geographicZones from '@/app/data/geographicZone.json';
+import { PLANS, planLimits } from '@/app/data/plans';
 import { useUnsavedChangesConfirmation } from '@/app/hooks/useUnsavedChangesConfirmation';
 import type { Home } from '@/app/types/dataTypes';
 import type { ErrorField, UpdateMode } from '@/app/types/types';
@@ -46,9 +47,11 @@ export default function HomeForm({
   skipAnimation = false,
   forceRecalc = false,
 }: HomeFormProps) {
-  const { addHome, updateHome, homeExists } = useHomes();
-  const { conciergerieName } = useAuth();
+  const { addHome, updateHome, homeExists, myHomes } = useHomes();
+  const { conciergerieName, findConciergerie } = useAuth();
   const { showToast } = useToast();
+  const plan = findConciergerie(conciergerieName)?.plan;
+  const limits = planLimits(plan);
 
   const imageUploaderRef = useRef<{
     uploadAllPendingImages: (conciergerieName: string, houseTitle: string) => Promise<string[] | null>;
@@ -254,6 +257,10 @@ export default function HomeForm({
       if (mode === 'add') {
         // Check for duplicate homes by title before adding
         if (homeExists(title)) throw new Error('Un bien avec ce titre existe déjà');
+        if (limits.maxHomes !== null && myHomes.length >= limits.maxHomes)
+          throw new Error(
+            `Le plan ${PLANS[plan ?? 'pro'].name} est limité à ${limits.maxHomes} biens — passez à une offre supérieure pour en ajouter.`,
+          );
 
         const result = await addHome({
           title,
@@ -430,7 +437,14 @@ export default function HomeForm({
           row
         />
 
-        <Switch id="allow-duo" label="Autoriser binôme" enabled={allowDuo} onToggle={setAllowDuo} />
+        <Switch
+          id="allow-duo"
+          label="Autoriser binôme"
+          enabled={allowDuo}
+          onToggle={limits.duo ? setAllowDuo : () => {}}
+          tooltip={!limits.duo ? 'Réservé aux plans Pro et Privilège' : undefined}
+          className={!limits.duo ? 'opacity-50' : undefined}
+        />
 
         <ObjectiveList
           id="objectives"

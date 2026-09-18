@@ -16,43 +16,6 @@ export const getEmployeeFullName = (employee: Employee, isShort = false) =>
   isShort ? `${employee.firstName[0]}. ${employee.familyName}` : `${employee.firstName} ${employee.familyName}`;
 
 /**
- * Normalize a first name:
- * - Everything lowercase except first letter
- * - Spaces replaced with hyphens
- * - After hyphens, next letter is uppercase
- * @param firstName First name to normalize
- * @returns Normalized first name
- */
-export const normalizeFirstName = function (firstName: string) {
-  return firstName
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .split('-')
-    .filter(Boolean)
-    .map(part => part.toFirstUpperCase())
-    .join('-');
-};
-
-/**
- * Normalize a family name:
- * - Everything lowercase except first letter
- * - Spaces and hyphens are kept
- * - After hyphens or spaces, next letter is uppercase
- * @param familyName Family name to normalize
- * @returns Normalized family name
- */
-export const normalizeFamilyName = function (familyName: string) {
-  return familyName
-    .trim()
-    .toLowerCase()
-    .split(/[ -]/)
-    .filter(Boolean)
-    .map(part => part.toFirstUpperCase())
-    .join(familyName.includes('-') ? '-' : ' ');
-};
-
-/**
  * Sort employees by status (pending first, then accepted, then rejected)
  * and then alphabetically by name
  * @param employees All employees
@@ -112,12 +75,20 @@ export function filterEmployees(employees: Employee[], searchTerm: string): Empl
  * @param conciergerieName Conciergerie name to filter by
  * @returns Filtered employees
  */
-export function filterEmployeesByConciergerie(employees: Employee[], conciergerieName: string | null): Employee[] {
+export function filterEmployeesByConciergerie(
+  employees: Employee[],
+  conciergerieName: string | null,
+  // Multi-conciergerie: foreign *accepted* employees join the usable pool —
+  // pending/rejected stay the home conciergerie's vetting queue.
+  includeForeignAccepted = false,
+): Employee[] {
   if (!conciergerieName) return [];
 
   return employees.filter(
     employee =>
-      !employee.conciergerieName || employee.conciergerieName?.toLowerCase() === conciergerieName?.toLowerCase(),
+      !employee.conciergerieName ||
+      employee.conciergerieName?.toLowerCase() === conciergerieName?.toLowerCase() ||
+      (includeForeignAccepted && employee.status === 'accepted'),
   );
 }
 

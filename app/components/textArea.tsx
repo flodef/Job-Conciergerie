@@ -139,6 +139,7 @@ const TextAreaComponent: ForwardRefRenderFunction<HTMLTextAreaElement, TextAreaP
           required={required}
           placeholder={placeholder}
           rows={rows}
+          maxLength={getMaxLength(regex) || undefined}
           style={{ resize: 'none', overflow: isFixedHeight ? 'auto' : 'hidden' }}
         />
         {error ? (

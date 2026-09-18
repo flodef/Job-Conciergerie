@@ -10,6 +10,8 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
     environment: 'jsdom',
+    // e2e/ holds Playwright specs — they must never run under vitest
+    exclude: ['e2e/**', 'node_modules/**'],
     pool: 'forks', // Use separate processes for better test isolation
     env: {
       DATABASE_URL: process.env.DATABASE_URL,

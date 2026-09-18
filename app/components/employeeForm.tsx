@@ -18,7 +18,7 @@ import geographicZones from '@/app/data/geographicZone.json';
 import { useRateLimiter } from '@/app/hooks/useRateLimiter';
 import type { Employee } from '@/app/types/dataTypes';
 import { EmailSender } from '@/app/utils/emailSender';
-import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
+import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/regex';
 import { useLocalStorage } from '@/app/utils/localStorage';
 import { Page } from '@/app/utils/navigation';
 import { emailRegex, frenchPhoneRegex, messageLengthRegex } from '@/app/utils/regex';
@@ -328,7 +328,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           error={phoneError}
           onError={setPhoneError}
           disabled={isSubmitting}
-          placeholder="06 12 34 56 78"
+          placeholder="0612345678"
           required
         />
 

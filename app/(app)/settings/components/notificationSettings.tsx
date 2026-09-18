@@ -13,6 +13,7 @@ import { ToastType } from '@/app/components/toastMessage';
 import type { UserType } from '@/app/contexts/authProvider';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useToast } from '@/app/contexts/toastProvider';
+import { planLimits } from '@/app/data/plans';
 import type { Conciergerie, Employee } from '@/app/types/dataTypes';
 import { cn, labelClassName } from '@/app/utils/className';
 import type { ConciergerieNotificationSettings, EmployeeNotificationSettings } from '@/app/utils/notifications';
@@ -82,7 +83,7 @@ const ChannelToggle: React.FC<{
 );
 
 const NotificationSettings: React.FC = () => {
-  const { userType, userData, updateUserData, isConciergerie } = useAuth();
+  const { userType, userData, updateUserData, isConciergerie, findConciergerie } = useAuth();
 
   const { showToast } = useToast();
   const [settings, setSettings] = useState<AnySettings>(userData?.notificationSettings || getDefaultSettings(userType));
@@ -90,6 +91,14 @@ const NotificationSettings: React.FC = () => {
 
   const emailOn = settings.email !== false; // legacy rows predate channels → default on
   const pushOn = settings.push === true;
+
+  // Push is an "advanced notification" — Pro+ feature, decided by the
+  // conciergerie's plan (the employee's own plan for a conciergerie user).
+  const advancedNotifs = planLimits(
+    isConciergerie
+      ? (userData as Conciergerie | undefined)?.plan
+      : findConciergerie((userData as Employee | undefined)?.conciergerieName)?.plan,
+  ).advancedNotifications;
 
   // Whether THIS device holds an active push subscription (null = checking)
   const [deviceSubscribed, setDeviceSubscribed] = useState<boolean | null>(null);
@@ -374,19 +383,22 @@ const NotificationSettings: React.FC = () => {
               icon={<IconBell size={20} />}
               label="Notifications push"
               active={pushOn}
-              disabled={isSubscribing}
+              disabled={isSubscribing || !advancedNotifs}
               joined="right"
               onClick={() => handlePushToggle(!pushOn)}
             />
           </div>
           <span className={cn(labelClassName, 'mb-0 whitespace-normal')}>{statusText}</span>
         </div>
+        {!advancedNotifs && (
+          <p className="text-xs text-foreground/60">Notifications push réservées aux plans Pro et Privilège.</p>
+        )}
 
         {pushOn && (
           <div className="pt-1 space-y-2">
             <Switch
               className="text-sm my-0"
-              label="Recevoir les notifications même si l’app est fermée"
+              label="Si l’app est fermée"
               enabled={pushWhenClosedOn}
               onToggle={handlePushWhenClosed}
             />

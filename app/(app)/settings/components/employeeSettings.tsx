@@ -10,7 +10,7 @@ import geographicZones from '@/app/data/geographicZone.json';
 import type { Employee } from '@/app/types/dataTypes';
 import type { ErrorField } from '@/app/types/types';
 import { getEmployeeFullName } from '@/app/utils/employee';
-import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
+import { emailRegex, frenchPhoneRegex, normalizePhone } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
 const EmployeeSettings: React.FC = () => {
@@ -47,12 +47,12 @@ const EmployeeSettings: React.FC = () => {
     // Set employee data for form
     setName(getEmployeeFullName(employee));
     setEmail(employee.email);
-    setTel(employee.tel);
+    setTel(normalizePhone(employee.tel));
     setGeographicZone(employee.geographicZone || '');
 
     // Store original values for comparison
     setOriginalEmail(employee.email);
-    setOriginalTel(employee.tel);
+    setOriginalTel(normalizePhone(employee.tel));
     setOriginalGeographicZone(employee.geographicZone || '');
   }, [userData]);
 
@@ -176,7 +176,7 @@ const EmployeeSettings: React.FC = () => {
         error={phoneError}
         onError={setPhoneError}
         disabled={isSaving}
-        placeholder="06 12 34 56 78"
+        placeholder="0612345678"
         required
         row
       />
@@ -193,6 +193,18 @@ const EmployeeSettings: React.FC = () => {
         error={geographicZoneError}
         onError={setGeographicZoneError}
         required
+        row
+      />
+
+      <Input
+        id="conciergerie"
+        label="Conciergerie d'inscription"
+        value={(userData as Employee)?.conciergerieName || '—'}
+        onChange={() => {}}
+        error=""
+        onError={() => {}}
+        disabled
+        tooltip="La conciergerie choisie à l'inscription ne peut pas être modifiée"
         row
       />
 

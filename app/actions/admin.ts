@@ -77,16 +77,27 @@ export async function stopImpersonation(): Promise<boolean> {
 /**
  * Every impersonable row (all conciergeries + employees, unscoped).
  * Names only — the picker never needs device ids. Admin sessions only.
+ * Admin-client rows are excluded: impersonating the admin's own row is both
+ * meaningless (the unscoped view is already available) and broken — admin
+ * rows are hidden from fetchConciergeries while impersonating, so the target
+ * would never resolve and the app reloads forever. The currently
+ * impersonated target is excluded too (it is not a choice to re-pick).
  */
 export async function getImpersonationTargets(): Promise<ImpersonationTarget[]> {
   const session = await requireConnectedSession();
   if (!session?.isAdmin) return [];
 
   const rows = await sql`
-    SELECT 'conciergerie' AS user_type, name AS row_key FROM conciergeries
+    SELECT 'conciergerie' AS user_type, c.name AS row_key
+    FROM conciergeries c LEFT JOIN clients cl ON cl.id = c.client_id
+    WHERE COALESCE(cl.is_admin, false) = false
     UNION ALL
-    SELECT 'employee', first_name || ' ' || family_name FROM employees
-    WHERE status IS NULL OR status <> 'deleted'
+    SELECT 'employee', e.first_name || ' ' || e.family_name
+    FROM employees e LEFT JOIN clients cl ON cl.id = e.client_id
+    WHERE (e.status IS NULL OR e.status <> 'deleted')
+    AND COALESCE(cl.is_admin, false) = false
     ORDER BY 2`;
-  return rows.map(r => ({ userType: r.user_type as UserType, rowKey: r.row_key as string }));
+  return rows
+    .map(r => ({ userType: r.user_type as UserType, rowKey: r.row_key as string }))
+    .filter(t => !(session.impersonating && t.userType === session.userType && t.rowKey === session.rowKey));
 }

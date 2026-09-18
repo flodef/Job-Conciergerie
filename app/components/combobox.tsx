@@ -12,6 +12,7 @@ import {
   rowClassName,
   selectClassName,
 } from '@/app/utils/className';
+import { getMaxLength, inputLengthRegex } from '@/app/utils/regex';
 import { longestOptionLabel, shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconChevronDown, IconSearch } from '@tabler/icons-react';
@@ -205,7 +206,7 @@ const Combobox = forwardRef(
         <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
-        <div className={cn('min-w-0', row ? 'flex-1' : 'w-full')}>
+        <div className={cn('min-w-0 flex flex-col items-end', row ? 'flex-1' : 'w-full')}>
           <div className={cn('relative w-fit max-w-full', className)} ref={comboboxRef}>
             <div className={selectClassName(error, disabled, isFocused, isOpen)}>
               <IconSearch size={18} className="text-foreground/50 shrink-0" />
@@ -241,6 +242,7 @@ const Combobox = forwardRef(
                   autoComplete="off"
                   disabled={disabled}
                   required={required}
+                  maxLength={getMaxLength(inputLengthRegex)}
                   role="combobox"
                   aria-expanded={isOpen}
                   aria-haspopup="listbox"
@@ -323,7 +325,7 @@ const Combobox = forwardRef(
                 document.body,
               )}
           </div>
-          {error && <p className={errorClassName}>{error}</p>}
+          {error && <p className={cn(errorClassName, 'max-w-full text-right')}>{error}</p>}
         </div>
       </div>
     );

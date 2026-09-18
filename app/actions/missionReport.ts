@@ -6,7 +6,9 @@ import {
   getMissionReportByMissionId,
   getMissionReportsByMissionIds,
 } from '@/app/db/missionReportDb';
+import { PLAN_LIMITS } from '@/app/data/plans';
 import { getMissionById } from '@/app/db/missionDb';
+import { getConciergeriePlan } from '@/app/db/planDb';
 import { requireConnectedSession, tenantScope } from '@/app/db/session';
 import type { MissionReport } from '@/app/types/dataTypes';
 import { generateSecureId } from '@/app/utils/id';
@@ -28,6 +30,7 @@ export async function saveMissionReport(data: {
   const scope = tenantScope(session);
   const mission = await getMissionById(data.missionId, scope);
   if (!mission || (mission.employeeId !== session.rowKey && mission.employeeId2 !== session.rowKey)) return null;
+  if (!PLAN_LIMITS[await getConciergeriePlan(mission.conciergerieName)].missionReports) return null;
 
   const dbData: Omit<DbMissionReport, 'created_at'> = {
     id: generateSecureId(),

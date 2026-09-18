@@ -11,6 +11,7 @@ import { Page } from '@/app/utils/navigation';
 import AppVersion from '@/app/components/appVersion';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { formatId, MAX_DEVICES, MaxDevicesError } from '@/app/utils/id';
+import { getUserKey } from '@/app/utils/user';
 
 type PendingUpdate =
   | { kind: 'employee'; entity: Employee; oldestId: string }
@@ -46,6 +47,9 @@ export default function IdPage({
   const token = unwrappedSearchParams.t;
   const [error, setError] = useState('');
   const [pendingUpdate, setPendingUpdate] = useState<PendingUpdate | null>(null);
+  // The URL id differs from the enrolled local credential — user picks which
+  // identity this device presents instead of hitting a dead-end error.
+  const [idConflict, setIdConflict] = useState(false);
 
   const applyUpdate = useCallback(
     async (entity: Employee | Conciergerie, evictOldest: boolean) => {
@@ -89,7 +93,12 @@ export default function IdPage({
             window.location.reload();
             return;
           }
-          throw new Error('Identifiant non trouvée ou incorrect. Veuillez vous reconnecter.');
+          // The device already presents an enrolled credential that resolves —
+          // adopting the link would swap identity: ask, don't clobber (and
+          // don't fail — the user may simply want to keep the local session).
+          setIdConflict(true);
+          isFetching.current = false;
+          return;
         }
 
         // Wait for the async sha256 of userId to resolve — comparing before
@@ -184,9 +193,30 @@ export default function IdPage({
     setError("Connexion annulée. L'appareil n'a pas été enregistré.");
   };
 
+  // Bearer-link conflict: keep the enrolled identity, or adopt the link's
+  // credential (the URL id IS the credential — presenting it is the switch).
+  const handleAdoptLinkId = () => {
+    updateUserId(id);
+    window.location.reload();
+  };
+
+  const handleKeepLocalSession = () => {
+    setIdConflict(false);
+    onMenuChange(Page.Missions);
+  };
+
   return (
     <div className="min-h-full flex flex-col">
       {error && <ErrorPage message={error} />}
+      <ConfirmationModal
+        isOpen={idConflict}
+        onConfirm={handleAdoptLinkId}
+        onCancel={handleKeepLocalSession}
+        title="Compte différent détecté"
+        message={`Vous êtes actuellement connecté en tant que ${userData ? getUserKey(userData) : 'un autre compte'}. Ce lien correspond à un compte différent — lequel voulez-vous utiliser sur cet appareil ?`}
+        confirmText="Utiliser le compte du lien"
+        cancelText="Rester connecté"
+      />
       <ConfirmationModal
         isOpen={!!pendingUpdate}
         onConfirm={handleConfirmEviction}

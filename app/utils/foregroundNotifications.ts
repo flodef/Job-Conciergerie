@@ -100,11 +100,16 @@ export const detectMissionAlert = (
  * Show `alert` if the user's settings allow it AND this device has no push
  * subscription — when it does, the server push already delivers (including
  * while the app is open), so firing here would double-notify.
+ * `planAllowsPush` mirrors the "Notifications avancées" plan gate: a Découverte
+ * account with a legacy `push: true` in its stored settings must not get
+ * foreground notifications either.
  */
 export const fireForegroundNotification = async (
   alert: ForegroundAlert,
-  settings?: ConciergerieNotificationSettings | EmployeeNotificationSettings,
+  settings: ConciergerieNotificationSettings | EmployeeNotificationSettings | undefined,
+  planAllowsPush: boolean,
 ) => {
+  if (!planAllowsPush) return;
   if (!wantsPush(settings) || (settings as Record<string, unknown> | undefined)?.[alert.key] !== true) return;
   if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
   if (await getDeviceSubscription()) return;
