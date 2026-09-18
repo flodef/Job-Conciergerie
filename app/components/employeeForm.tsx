@@ -306,6 +306,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           disabled={isSubmitting}
           placeholder="Jean"
           required
+          row
         />
 
         <Input
@@ -319,6 +320,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           disabled={isSubmitting}
           placeholder="Dupont"
           required
+          row
         />
 
         <Input
@@ -332,6 +334,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           disabled={isSubmitting}
           placeholder="0612345678"
           required
+          row
         />
 
         <Input
@@ -345,6 +348,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           disabled={isSubmitting}
           placeholder="jean.dupont@example.com"
           required
+          row
         />
 
         <Combobox
@@ -359,6 +363,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           error={geographicZoneError}
           onError={setGeographicZoneError}
           required
+          row
         />
 
         <Select
@@ -380,6 +385,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           error={conciergerieNameError}
           onError={setConciergerieNameError}
           required
+          row
         />
 
         <TextArea
