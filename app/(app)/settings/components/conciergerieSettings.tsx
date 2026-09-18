@@ -13,6 +13,7 @@ import colorOptions from '@/app/data/colors.json';
 import { PLANS, PLAN_ORDER } from '@/app/data/plans';
 import type { Conciergerie, ConciergeriePlan } from '@/app/types/dataTypes';
 import type { ErrorField } from '@/app/types/types';
+import { applyDiscount } from '@/app/utils/billing';
 import { setPrimaryColor } from '@/app/utils/color';
 import { rowCenterClassName, textClassName } from '@/app/utils/className';
 import { emailRegex, frenchPhoneRegex, normalizePhone } from '@/app/utils/regex';
@@ -44,6 +45,15 @@ const ConciergerieSettings: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const { showToast } = useToast();
   const { openModal, closeModal, closeAllModals } = useModal();
+
+  // Billing flags straight from the session row — an annual subscription in
+  // its prepaid year locks plan changes until planUntil.
+  const conciergerie = userData as Conciergerie | null;
+  const discount = conciergerie?.discount ?? 0;
+  const annualUntil =
+    conciergerie?.billingPeriod === 'annual' && conciergerie.planUntil && new Date(conciergerie.planUntil) > new Date()
+      ? new Date(conciergerie.planUntil)
+      : null;
 
   // Track original values for comparison
   const [originalEmail, setOriginalEmail] = useState('');
@@ -90,7 +100,12 @@ const ConciergerieSettings: React.FC = () => {
   // (an inline modal would paint behind the comparison modal).
   const openPlanModal = () => {
     openModal(id => (
-      <PlanComparisonModal currentPlan={plan} onClose={() => closeModal(id)} onSelect={openPlanConfirm} />
+      <PlanComparisonModal
+        currentPlan={plan}
+        annualUntil={annualUntil}
+        onClose={() => closeModal(id)}
+        onSelect={openPlanConfirm}
+      />
     ));
   };
 
@@ -244,7 +259,9 @@ const ConciergerieSettings: React.FC = () => {
         </Label>
         <div className="flex-1 flex items-center justify-end gap-3 mt-1.5">
           <span className={textClassName}>
-            {PLANS[plan].name} — {PLANS[plan].monthly} €/mois
+            {annualUntil
+              ? `${PLANS[plan].name} — annuel jusqu'au ${annualUntil.toLocaleDateString('fr-FR')}`
+              : `${PLANS[plan].name} — ${applyDiscount(PLANS[plan].monthly, discount)} €/mois${discount ? ` (−${discount} %)` : ''}`}
           </span>
           <Button style="secondary" onClick={openPlanModal}>
             Comparer

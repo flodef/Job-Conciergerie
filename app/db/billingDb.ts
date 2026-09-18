@@ -68,11 +68,12 @@ export const createInvoice = async (
   plan: ConciergeriePlan,
   amount: number,
   clientId?: string,
+  discount = 0,
 ): Promise<boolean> => {
   try {
     const result = await sql`
-      INSERT INTO invoices (conciergerie_name, period_year, period_month, plan, amount, client_id)
-      VALUES (${conciergerieName}, ${periodYear}, ${periodMonth}, ${plan}, ${amount}, ${clientId ?? null}::uuid)
+      INSERT INTO invoices (conciergerie_name, period_year, period_month, plan, amount, client_id, discount)
+      VALUES (${conciergerieName}, ${periodYear}, ${periodMonth}, ${plan}, ${amount}, ${clientId ?? null}::uuid, ${discount})
       ON CONFLICT (conciergerie_name, period_year, period_month) DO NOTHING
       RETURNING id
     `;
@@ -84,20 +85,53 @@ export const createInvoice = async (
 };
 
 /**
+ * Record the external invoicing tool (IMS) reference on a local invoice —
+ * lets the accounting side and this app cross-reference each other.
+ */
+export const setInvoiceExternalRef = async (
+  conciergerieName: string,
+  periodYear: number,
+  periodMonth: number,
+  externalRef: string,
+): Promise<void> => {
+  try {
+    await sql`
+      UPDATE invoices SET external_ref = ${externalRef}
+      WHERE conciergerie_name = ${conciergerieName}
+        AND period_year = ${periodYear}
+        AND period_month = ${periodMonth}
+    `;
+  } catch (error) {
+    console.error(`Error setting invoice external ref for ${conciergerieName}:`, error);
+  }
+};
+
+/**
  * Billable conciergeries (admin-client rows excluded) with their current
  * plan and client — the cron iterates these to write monthly invoices.
  */
-export const getBillableConciergeries = async (): Promise<
-  { name: string; email: string; plan: ConciergeriePlan; client_id: string | null }[]
-> => {
+export interface BillableConciergerie {
+  name: string;
+  email: string;
+  plan: ConciergeriePlan;
+  client_id: string | null;
+  discount: number;
+  billing_period: 'monthly' | 'annual';
+  plan_until: string | null;
+}
+
+export const getBillableConciergeries = async (): Promise<BillableConciergerie[]> => {
   try {
     const result = await sql`
-      SELECT c.name, c.email, c.plan, c.client_id
+      SELECT c.name, c.email, c.plan, c.client_id,
+             COALESCE(c.discount, 0) AS discount,
+             COALESCE(c.billing_period, 'monthly') AS billing_period,
+             c.plan_until
       FROM conciergeries c
       LEFT JOIN clients cl ON cl.id = c.client_id
       WHERE COALESCE(cl.is_admin, false) = false
     `;
-    return result.map(row => row as { name: string; email: string; plan: ConciergeriePlan; client_id: string | null });
+    return result.map(row => row as BillableConciergerie);
   } catch (error) {
     console.error('Error fetching billable conciergeries:', error);
     return [];

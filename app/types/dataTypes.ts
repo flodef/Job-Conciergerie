@@ -11,6 +11,12 @@ export interface Conciergerie {
   tel: string;
   notificationSettings?: ConciergerieNotificationSettings;
   plan?: ConciergeriePlan;
+  /** Negotiated reduction on subscription invoices, in % (0-100). */
+  discount?: number;
+  /** 'annual' while a prepaid year is running — monthly billing skips it. */
+  billingPeriod?: 'monthly' | 'annual';
+  /** ISO timestamp — end of the active annual coverage. */
+  planUntil?: string;
 }
 
 export type EmployeeStatus = 'pending' | 'accepted' | 'rejected' | 'deleted';

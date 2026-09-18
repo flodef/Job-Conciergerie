@@ -1,5 +1,5 @@
 import { sql } from '@/app/db/db';
-import type { ConciergeriePlan } from '@/app/types/dataTypes';
+import type { Conciergerie, ConciergeriePlan } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { boundDeviceIds } from '@/app/utils/id';
 import { defaultConciergerieSettings } from '@/app/utils/notifications';
@@ -14,12 +14,15 @@ export interface DbConciergerie {
   notification_settings: string | null;
   plan: string;
   client_id?: string | null;
+  discount: number;
+  billing_period: string;
+  plan_until: string | null;
 }
 
 /**
  * Format a database conciergerie to match the application's expected format
  */
-export function formatConciergerie(dbConciergerie: DbConciergerie) {
+export function formatConciergerie(dbConciergerie: DbConciergerie): Conciergerie {
   return {
     id: dbConciergerie.id,
     name: dbConciergerie.name,
@@ -29,6 +32,9 @@ export function formatConciergerie(dbConciergerie: DbConciergerie) {
     color: getColorValueByName(dbConciergerie.color_name),
     notificationSettings: JSON.parse(String(dbConciergerie.notification_settings)) || defaultConciergerieSettings,
     plan: (dbConciergerie.plan ?? 'pro') as ConciergeriePlan,
+    discount: dbConciergerie.discount ?? 0,
+    billingPeriod: dbConciergerie.billing_period === 'annual' ? 'annual' : 'monthly',
+    planUntil: dbConciergerie.plan_until ?? undefined,
   };
 }
 
@@ -39,7 +45,8 @@ export function formatConciergerie(dbConciergerie: DbConciergerie) {
 export const getAllConciergeries = async (includeAdminRows = false) => {
   try {
     const result = await sql`
-      SELECT c.id, c.name, c.email, c.tel, c.color_name, c.notification_settings, c.plan, c.client_id
+      SELECT c.id, c.name, c.email, c.tel, c.color_name, c.notification_settings, c.plan, c.client_id,
+             c.discount, c.billing_period, c.plan_until
       FROM conciergeries c
       LEFT JOIN clients cl ON cl.id = c.client_id
       WHERE ${includeAdminRows} OR COALESCE(cl.is_admin, false) = false
@@ -93,7 +100,7 @@ export const updateConciergerie = async (
         notification_settings = COALESCE(${data.notification_settings ?? null}::jsonb, notification_settings),
         plan = COALESCE(${data.plan ?? null}, plan)
       WHERE name = ${name} AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
-      RETURNING id, name, email, tel, color_name, notification_settings, plan, client_id
+      RETURNING id, name, email, tel, color_name, notification_settings, plan, client_id, discount, billing_period, plan_until
     `;
 
     return result.length > 0 ? formatConciergerie(result[0] as DbConciergerie) : null;
@@ -109,7 +116,8 @@ export const updateConciergerie = async (
 export const getConciergerieByName = async (name: string) => {
   try {
     const result = await sql`
-      SELECT id, name, email, tel, color_name, notification_settings, plan, client_id
+      SELECT id, name, email, tel, color_name, notification_settings, plan, client_id,
+             discount, billing_period, plan_until
       FROM conciergeries
       WHERE name = ${name}
       LIMIT 1

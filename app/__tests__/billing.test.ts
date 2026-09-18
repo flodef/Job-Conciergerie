@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeMonthlyBill, previousMonth, type PlanChange } from '@/app/utils/billing';
+import { applyDiscount, computeMonthlyBill, previousMonth, type PlanChange } from '@/app/utils/billing';
 
 const ev = (to_plan: PlanChange['to_plan'], date: string): PlanChange => ({
   to_plan,
@@ -96,6 +96,25 @@ describe('computeMonthlyBill', () => {
       'decouverte',
     );
     expect(bill.plan).toBe('pro');
+  });
+});
+
+describe('applyDiscount', () => {
+  it('applies a negotiated percentage (Pro 50 €, −40 % → 30 €)', () => {
+    expect(applyDiscount(50, 40)).toBe(30);
+  });
+
+  it('returns the amount unchanged without discount', () => {
+    expect(applyDiscount(50, 0)).toBe(50);
+  });
+
+  it('clamps out-of-range percentages', () => {
+    expect(applyDiscount(50, -10)).toBe(50);
+    expect(applyDiscount(50, 120)).toBe(0);
+  });
+
+  it('rounds to cents', () => {
+    expect(applyDiscount(30, 15)).toBe(25.5);
   });
 });
 

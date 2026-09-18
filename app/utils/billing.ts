@@ -77,6 +77,16 @@ export function computeMonthlyBill(
   return { year, month, plan: best, amount: PLANS[best].monthly };
 }
 
+/**
+ * Apply a negotiated discount (0-100 %) to a price, rounded to cents.
+ * The discount snapshot is stored on the invoice so historical amounts
+ * stay correct if the conciergerie's discount later changes.
+ */
+export function applyDiscount(amount: number, discount: number): number {
+  const pct = Math.min(100, Math.max(0, discount || 0));
+  return Math.round(amount * (1 - pct / 100) * 100) / 100;
+}
+
 /** Year/month (1-12) of the month before `date` — the period a 1st-of-month cron bills. */
 export function previousMonth(date: Date = new Date()): { year: number; month: number } {
   const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - 1, 1));

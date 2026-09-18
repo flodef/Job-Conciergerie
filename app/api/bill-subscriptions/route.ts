@@ -1,8 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createInvoice, getBillableConciergeries, getPlanChanges } from '@/app/db/billingDb';
+import { createInvoice, getBillableConciergeries, getPlanChanges, setInvoiceExternalRef } from '@/app/db/billingDb';
 import { sendBillingSummaryEmail, sendInvoiceEmail } from '@/app/utils/billingEmails';
-import { computeMonthlyBill, previousMonth, type PlanChange } from '@/app/utils/billing';
+import { applyDiscount, computeMonthlyBill, previousMonth, type PlanChange } from '@/app/utils/billing';
+import { importInvoiceToIms } from '@/app/utils/imsClient';
 import { PLANS } from '@/app/data/plans';
 
 /**
@@ -13,9 +14,10 @@ import { PLANS } from '@/app/data/plans';
  * writes an invoice row. The UNIQUE(conciergerie, year, month) constraint
  * makes re-runs idempotent — already-billed periods are skipped, not doubled.
  *
- * Each billed conciergerie receives its invoice by email; the admin gets a
- * summary. Payment collection itself stays manual for now (no stored payment
- * method — Revolut checkout is one-shot).
+ * Client invoice emails are gated behind BILLING_CLIENT_EMAILS=true — while
+ * unset, invoices are created (and pushed to IMS) but nothing is emailed to
+ * customers; collection stays fully manual via IMS. The admin summary is
+ * always sent.
  *
  * Auth: `Authorization: Bearer <CRON_SECRET>` — same as the other crons.
  * Should be scheduled monthly (cron-job.org, GitHub Actions, Vercel Cron…).
@@ -44,27 +46,59 @@ async function handleBillSubscriptions(request: NextRequest) {
 
   let billed = 0;
   let skipped = 0;
+  let annual = 0;
   const lines: string[] = [];
+  const now = new Date();
 
   for (const c of conciergeries) {
+    // Annual subscriptions are paid once via the landing checkout — they run
+    // their full year outside the monthly model (no invoice, no plan change
+    // until plan_until). They re-enter monthly billing after expiry.
+    if (c.billing_period === 'annual' && c.plan_until && new Date(c.plan_until) > now) {
+      annual++;
+      continue;
+    }
+
     const bill = computeMonthlyBill(changesByName.get(c.name) ?? [], year, month, c.plan ?? 'pro');
-    const created = await createInvoice(c.name, year, month, bill.plan, bill.amount, c.client_id ?? undefined);
+    const amount = applyDiscount(bill.amount, c.discount);
+    const created = await createInvoice(c.name, year, month, bill.plan, amount, c.client_id ?? undefined, c.discount);
     if (!created) {
       skipped++; // already billed this period (idempotent re-run)
       continue;
     }
     billed++;
-    lines.push(`${c.name} : ${PLANS[bill.plan].name} — ${bill.amount} €`);
+    lines.push(`${c.name} : ${PLANS[bill.plan].name} — ${amount} €${c.discount ? ` (−${c.discount}%)` : ''}`);
 
-    // On SMTP failure the payload queues in failed_emails for the retry cron.
-    await sendInvoiceEmail(c.name, monthName, PLANS[bill.plan].name, bill.amount);
+    // Client emails stay OFF until explicitly enabled — collection is manual
+    // via IMS for now. On SMTP failure the payload queues in failed_emails.
+    if (process.env.BILLING_CLIENT_EMAILS === 'true') {
+      await sendInvoiceEmail(c.name, monthName, PLANS[bill.plan].name, amount, bill.amount);
+    }
+
+    // Sync to the accounting tool (IMS). A failure never blocks the billing
+    // run — the local invoice is the source of truth, IMS can be retried.
+    const ref = await importInvoiceToIms({
+      clientName: c.name,
+      clientEmail: c.email,
+      serviceLabel: `Abonnement Job Conciergerie — ${PLANS[bill.plan].name} (${monthName})`,
+      unitPrice: bill.amount,
+      discount: c.discount,
+      period: `${year}-${String(month).padStart(2, '0')}`,
+      invoiceDate: now.toISOString().slice(0, 10),
+    });
+    if (ref) await setInvoiceExternalRef(c.name, year, month, ref);
   }
 
   if (billed > 0) {
     await sendBillingSummaryEmail(monthName, lines, skipped);
   }
 
-  return NextResponse.json({ period: `${year}-${String(month).padStart(2, '0')}`, billed, skipped });
+  return NextResponse.json({
+    period: `${year}-${String(month).padStart(2, '0')}`,
+    billed,
+    skipped,
+    annual,
+  });
 }
 
 export async function GET(request: NextRequest) {
