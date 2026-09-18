@@ -101,7 +101,9 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
 
   return (
     <div className="h-full w-full flex flex-col items-center justify-center bg-background">
-      <h2 className="text-2xl font-bold mb-4">Conciergerie</h2>
+      <h2 className="text-3xl font-black mb-4">
+        <span className="text-gradient">Conciergerie</span>
+      </h2>
 
       <form onSubmit={handleSubmit} className="w-full max-w-sm px-4 space-y-4">
         {conciergeries.length > 6 && (

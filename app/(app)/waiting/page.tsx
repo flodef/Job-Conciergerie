@@ -220,7 +220,9 @@ export default function WaitingPage() {
         {conciergerie ? (
           // Conciergerie waiting page
           <>
-            <h1 className="text-2xl font-bold text-center">Vérification en cours</h1>
+            <h1 className="text-3xl font-black text-center">
+              <span className="text-gradient">Vérification</span> en cours
+            </h1>
 
             <div className="flex items-center justify-center">
               <IconMailForward size={60} className="text-primary" />
@@ -263,12 +265,18 @@ export default function WaitingPage() {
         ) : employee ? (
           // Employee waiting page
           <>
-            <h1 className="text-2xl font-bold text-center">
-              {employee.status === 'pending'
-                ? "Demande en cours d'examen"
-                : employee.status === 'accepted'
-                  ? 'Nouvel appareil connecté'
-                  : 'Demande rejetée'}
+            <h1 className="text-3xl font-black text-center">
+              {employee.status === 'pending' ? (
+                <>
+                  <span className="text-gradient">Demande</span> en cours d&apos;examen
+                </>
+              ) : employee.status === 'accepted' ? (
+                <>
+                  <span className="text-gradient">Nouvel appareil</span> connecté
+                </>
+              ) : (
+                <span className="text-red-500">Demande rejetée</span>
+              )}
             </h1>
 
             <p>

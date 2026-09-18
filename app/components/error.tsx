@@ -13,7 +13,9 @@ export default function ErrorPage({
   return (
     <div className="flex flex-col items-center justify-center flex-1 p-4">
       <div className="text-center max-w-md">
-        <h1 className="text-3xl font-bold mb-4 text-foreground">{title}</h1>
+        <h1 className="text-3xl font-black mb-4">
+          <span className="text-gradient">{title}</span>
+        </h1>
         <p className="text-foreground">{message}</p>
         <div className="flex">
           <RefreshButton />
