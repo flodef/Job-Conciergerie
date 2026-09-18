@@ -52,10 +52,10 @@ invoices keep the % they were generated with.
 
 IMS exposes `POST {IMS_API_URL}/import-invoice` (Bearer `IMS_IMPORT_SECRET`),
 implemented in `convex/importInvoice.ts` + `convex/router.ts` of the IMS repo.
-It finds/creates the client (by name) and the service (by label — the label
-carries the period, e.g. `… Pro (03/2026)`, which makes re-imports
-idempotent), then inserts a `sent` invoice. Secrets live in env vars on both
-sides — never in code.
+It finds/creates the client (by name) and the service (by stable label, e.g.
+`Abonnement Job Conciergerie — Pro`), then inserts a `sent` invoice whose item
+label carries `periodLabel` (`03/2026`) — client + service + period makes
+re-imports idempotent. Secrets live in env vars on both sides — never in code.
 
 ## cron-job.org setup
 

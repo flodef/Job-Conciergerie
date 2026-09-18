@@ -90,7 +90,7 @@ async function handleBillSubscriptions(request: NextRequest) {
     // Sync to the accounting tool (IMS). A failure never blocks the billing
     // run — the local invoice is the source of truth — and a later run heals
     // it: an existing invoice without external_ref is pushed again with its
-    // stored snapshot (IMS dedupes on service label + period → no double
+    // stored snapshot (IMS dedupes on service + period labels → no double
     // import; undefined row/error → skipped this run, retried next).
     const ref = await importInvoiceToIms({
       clientName: c.name,

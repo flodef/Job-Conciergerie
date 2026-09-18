@@ -28,7 +28,7 @@ export default function ThemeToggle({ size = 'sm' }: { size?: 'sm' | 'md' }) {
         title="Système"
         aria-label="Système"
         aria-checked={activeMode === 'system'}
-        aria-disabled={!ready}
+        disabled={!ready}
         role="radio"
         data-theme-opt="system"
         className={`${btnClass} cursor-pointer`}
@@ -50,7 +50,7 @@ export default function ThemeToggle({ size = 'sm' }: { size?: 'sm' | 'md' }) {
           title={opt.label}
           aria-label={opt.label}
           aria-checked={activeMode === opt.value}
-          aria-disabled={!ready}
+          disabled={!ready}
           role="radio"
           data-theme-opt={opt.value}
           className={`${btnClass} cursor-pointer`}
