@@ -194,8 +194,10 @@ const Select = forwardRef(
       return value;
     })();
 
-    // The field is sized to the longest option label, not the selected value
-    const sizerText = longestOptionLabel(options, displayValue, placeholder);
+    // The field is sized to the longest option label, not the selected value.
+    // displayValue already falls back to placeholder when nothing is selected —
+    // passing placeholder again would keep it counting toward the width forever.
+    const sizerText = longestOptionLabel(options, displayValue);
 
     return (
       <div className={row ? rowClassName : 'w-full'}>

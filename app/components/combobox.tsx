@@ -198,8 +198,9 @@ const Combobox = forwardRef(
       if (!isOpen) setDropdownPosition(null);
     }, [isOpen]);
 
-    // The field is sized to the longest option label, not the selected value
-    const sizerText = longestOptionLabel(options, displayValue, placeholder, searchTerm);
+    // The field is sized to the longest option label, not the selected value.
+    // displayValue already falls back to placeholder when nothing is selected.
+    const sizerText = longestOptionLabel(options, displayValue, searchTerm);
 
     return (
       <div className={row ? rowClassName : ''}>

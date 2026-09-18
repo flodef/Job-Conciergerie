@@ -93,8 +93,9 @@ const AutocompleteSelect = forwardRef(
     // Get selected option label
     const selectedLabel = value ? options.find(opt => opt.value === value)?.label || value : null;
 
-    // The field is sized to the longest option label, not the selected value
-    const sizerText = longestOptionLabel(options, placeholder, selectedLabel, searchQuery);
+    // The field is sized to the longest option label, not the selected value.
+    // Placeholder only counts while nothing is selected.
+    const sizerText = longestOptionLabel(options, selectedLabel || placeholder, searchQuery);
 
     // Close dropdown when clicking outside
     useEffect(() => {
