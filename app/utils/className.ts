@@ -8,6 +8,10 @@ export const DEFAULT_DROPDOWN_MAX_HEIGHT = DEFAULT_MAX_ITEMS * DROPDOWN_ITEM_HEI
 export const cn = (...inputs: ClassNameValue[]) => twMerge(inputs);
 
 export const rowClassName = 'flex flex-row justify-between my-2 gap-4 items-start';
+// Read-only label+value rows: items-center so the label vertically centers
+// against the value even when the value wraps to multiple lines. Value side
+// gets mt-1.5 to offset the margin inside Label and keep centers aligned.
+export const rowCenterClassName = 'flex flex-row justify-between my-2 gap-4 items-center';
 export const titleClassName = 'text-lg font-medium';
 export const textClassName = 'text-sm font-medium text-foreground';
 export const textPulseClassName = textClassName + ' italic animate-pulse';
