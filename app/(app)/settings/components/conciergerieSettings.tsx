@@ -1,17 +1,20 @@
-import { fetchMyGroup, updateConciergerieData } from '@/app/actions/conciergerie';
+import { changeMyPlan, fetchMyGroup, updateConciergerieData } from '@/app/actions/conciergerie';
 import { Button } from '@/app/components/button';
 import ColorPicker from '@/app/components/colorPicker';
+import ConfirmationModal from '@/app/components/confirmationModal';
 import Input from '@/app/components/input';
 import Label from '@/app/components/label';
-import Select from '@/app/components/select';
+import PlanComparisonModal from '@/app/(app)/settings/components/planComparisonModal';
 import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
+import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import colorOptions from '@/app/data/colors.json';
-import { PLANS } from '@/app/data/plans';
+import { PLANS, PLAN_ORDER } from '@/app/data/plans';
 import type { Conciergerie, ConciergeriePlan } from '@/app/types/dataTypes';
-import type { ErrorField, SelectOption } from '@/app/types/types';
+import type { ErrorField } from '@/app/types/types';
 import { setPrimaryColor } from '@/app/utils/color';
+import { rowClassName, textClassName } from '@/app/utils/className';
 import { emailRegex, frenchPhoneRegex, normalizePhone } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
@@ -19,12 +22,6 @@ type ColorOption = {
   name: string;
   value: string;
 };
-
-const PLAN_OPTIONS: SelectOption[] = [
-  { value: 'decouverte', label: `${PLANS.decouverte.name} — ${PLANS.decouverte.monthly}€/mois` },
-  { value: 'pro', label: `${PLANS.pro.name} — ${PLANS.pro.monthly}€/mois` },
-  { value: 'privilege', label: `${PLANS.privilege.name} — ${PLANS.privilege.monthly}€/mois` },
-];
 
 const ConciergerieSettings: React.FC = () => {
   const { conciergeries, userData, updateUserData } = useAuth();
@@ -46,6 +43,7 @@ const ConciergerieSettings: React.FC = () => {
   const [group, setGroup] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const { showToast } = useToast();
+  const { openModal, closeModal, closeAllModals } = useModal();
 
   // Track original values for comparison
   const [originalEmail, setOriginalEmail] = useState('');
@@ -86,6 +84,33 @@ const ConciergerieSettings: React.FC = () => {
       setGroup(g.members.length > 1 ? g.members.join(', ') : 'Indépendante');
     });
   }, []);
+
+  // Plan comparison popup — also the plan picker: each other plan gets a
+  // "Passer à" button. The confirmation stacks on top via the modal provider
+  // (an inline modal would paint behind the comparison modal).
+  const openPlanModal = () => {
+    openModal(id => (
+      <PlanComparisonModal currentPlan={plan} onClose={() => closeModal(id)} onSelect={openPlanConfirm} />
+    ));
+  };
+
+  const openPlanConfirm = (chosen: ConciergeriePlan) => {
+    openModal(cid => (
+      <PlanChangeConfirmation
+        plan={chosen}
+        isDowngrade={PLAN_ORDER.indexOf(chosen) < PLAN_ORDER.indexOf(plan)}
+        onCancel={() => closeModal(cid)}
+        onConfirm={async () => {
+          const updated = await changeMyPlan(chosen);
+          if (!updated) throw new Error('Le forfait n’a pas pu être modifié');
+          updateUserData(updated);
+          setPlan(chosen);
+          closeAllModals();
+          showToast({ type: ToastType.Success, message: `Forfait ${PLANS[chosen].name} activé` });
+        }}
+      />
+    ));
+  };
 
   // Check if form has been modified
   const hasChanges = () => {
@@ -208,17 +233,22 @@ const ConciergerieSettings: React.FC = () => {
         required
       />
 
-      <Select
-        id="plan"
-        label="Forfait"
-        value={plan}
-        onChange={value => setPlan(value as ConciergeriePlan)}
-        options={PLAN_OPTIONS}
-        disabled
-        required
-        row
-        tooltip="Contactez-nous pour changer de forfait"
-      />
+      <div className={rowClassName}>
+        <Label
+          id="plan"
+          tooltip="Facturation mensuelle : le forfait le plus élevé utilisé dans le mois est celui facturé le 1er du mois suivant."
+        >
+          Forfait
+        </Label>
+        <div className="flex-1 flex items-center justify-end gap-3">
+          <span className={textClassName}>
+            {PLANS[plan].name} — {PLANS[plan].monthly} €/mois
+          </span>
+          <Button style="secondary" onClick={openPlanModal}>
+            Comparer les forfaits
+          </Button>
+        </div>
+      </div>
 
       <Input
         id="group"
@@ -238,6 +268,50 @@ const ConciergerieSettings: React.FC = () => {
         </Button>
       </div>
     </div>
+  );
+};
+
+/**
+ * Plan-switch confirmation — a real component (not just a render function) so
+ * its busy label re-renders while the server action runs. On cancel the modal
+ * pops and the comparison modal underneath reappears.
+ */
+const PlanChangeConfirmation = ({
+  plan,
+  isDowngrade,
+  onConfirm,
+  onCancel,
+}: {
+  plan: ConciergeriePlan;
+  isDowngrade: boolean;
+  onConfirm: () => Promise<void>;
+  onCancel: () => void;
+}) => {
+  const [busy, setBusy] = useState(false);
+  const { showToast } = useToast();
+
+  return (
+    <ConfirmationModal
+      isOpen
+      title="Changer de forfait"
+      message={`Passer au forfait ${PLANS[plan].name} (${PLANS[plan].monthly} €/mois) ? Le changement est immédiat et le mois en cours est facturé au forfait le plus élevé utilisé.${
+        isDowngrade
+          ? ' Vos données existantes sont conservées, mais les créations au-delà des limites du nouveau forfait seront bloquées.'
+          : ''
+      }`}
+      confirmText={busy ? 'Changement…' : 'Confirmer'}
+      onCancel={onCancel}
+      onConfirm={async () => {
+        if (busy) return;
+        setBusy(true);
+        try {
+          await onConfirm();
+        } catch (error) {
+          setBusy(false);
+          showToast({ type: ToastType.Error, message: String(error), error });
+        }
+      }}
+    />
   );
 };
 

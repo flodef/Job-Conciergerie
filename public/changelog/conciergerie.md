@@ -1,3 +1,8 @@
+# 2.463
+
+- **Nouveau : Changement de forfait en libre-service** : comparez les forfaits et changez directement depuis Paramètres — le mois est facturé au forfait le plus élevé utilisé, la facture part le 1er du mois suivant.
+- **Amélioration : Choix de la conciergerie à l'inscription** : un champ de recherche apparaît quand la liste dépasse 6 conciergeries.
+
 # 2.454
 
 - **Nouveau : Multi-conciergeries** : les conciergeries d'un même groupe peuvent partager leur vivier de prestataires — vous pouvez assigner les prestataires acceptés des conciergeries partenaires, tandis que vos prestataires restent gérés par vous (selon forfait).

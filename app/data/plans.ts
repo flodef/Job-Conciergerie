@@ -55,3 +55,27 @@ export const PLAN_LIMITS: Record<ConciergeriePlan, PlanLimits> = {
 
 // Rows without a plan column fall back to 'pro' — same default as formatConciergerie.
 export const planLimits = (plan: ConciergeriePlan | undefined | null): PlanLimits => PLAN_LIMITS[plan ?? 'pro'];
+
+export const PLAN_ORDER: ConciergeriePlan[] = ['decouverte', 'pro', 'privilege'];
+
+// Comparison table (settings "Comparatif" popup) — mirrors the landing pricing
+// section. Keep in sync with the plan cards in app/(site)/landing/page.tsx.
+export type FeatureValue = boolean | string;
+export const FEATURE_MATRIX: { label: string; values: [FeatureValue, FeatureValue, FeatureValue] }[] = [
+  { label: 'Biens gérés', values: ['20', 'Illimités', 'Illimités'] },
+  { label: 'Prestataires', values: ['10', 'Illimités', 'Illimités'] },
+  { label: 'Missions & calendrier', values: [true, true, true] },
+  { label: 'Notifications email', values: [true, true, true] },
+  { label: 'Mode binôme', values: [false, true, true] },
+  { label: 'Comptes rendus photo', values: [false, true, true] },
+  { label: 'Historique & statistiques', values: [false, true, true] },
+  { label: 'Multi-conciergerie', values: [false, true, true] },
+  { label: 'Notifications avancées', values: [false, true, true] },
+  { label: 'Nouvelles fonctionnalités en avant-première', values: [false, false, true] },
+  { label: "Demandes d'évolution prioritaires", values: [false, false, true] },
+  { label: 'API & intégrations', values: [false, false, true] },
+  { label: 'Formation en visio', values: [false, false, true] },
+  { label: 'Personnalisation avancée', values: [false, false, true] },
+  { label: 'Onboarding personnalisé', values: [false, false, true] },
+  { label: 'Support', values: ['Email (48h)', 'Prioritaire (24h)', 'Dédié + SLA'] },
+];

@@ -1,17 +1,73 @@
-import { deleteMyReview, getMyReview, saveMyReview } from '@/app/actions/review';
+import { deleteMyReview, getMyReview, getReviewsAdmin, saveMyReview } from '@/app/actions/review';
 import { Button } from '@/app/components/button';
 import Switch from '@/app/components/switch';
 import TextArea from '@/app/components/textArea';
 import { ToastType } from '@/app/components/toastMessage';
+import { useAuth } from '@/app/contexts/authProvider';
 import { useToast } from '@/app/contexts/toastProvider';
-import type { Review } from '@/app/db/reviewDb';
+import type { DbReview, Review } from '@/app/db/reviewDb';
 import { messageLengthRegex } from '@/app/utils/regex';
 import { IconStar, IconStarFilled, IconTrash } from '@tabler/icons-react';
 import React, { useEffect, useState } from 'react';
 
 const MAX_STARS = 5;
 
+const Stars = ({ rating, size = 28 }: { rating: number; size?: number }) => (
+  <span className="inline-flex items-center gap-0.5 text-amber-400">
+    {Array.from({ length: MAX_STARS }, (_, i) =>
+      i < Math.round(rating) ? <IconStarFilled key={i} size={size} /> : <IconStar key={i} size={size} />,
+    )}
+  </span>
+);
+
+/** Admin recap: the admin can't review themselves — they get every review,
+ * newest first, with the average instead of the review form. */
+const AdminReviewRecap: React.FC = () => {
+  const [data, setData] = useState<{ average: number; count: number; reviews: DbReview[] } | null>(null);
+
+  useEffect(() => {
+    getReviewsAdmin().then(setData);
+  }, []);
+
+  if (!data) return null;
+  if (data.count === 0) return <p className="text-sm text-foreground/60">Aucun avis pour le moment.</p>;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 py-1">
+        <Stars rating={data.average} size={24} />
+        <span className="text-sm font-semibold">
+          {data.average.toFixed(1)}/5 · {data.count} avis
+        </span>
+      </div>
+
+      <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+        {data.reviews.map(r => (
+          <div key={`${r.user_type}:${r.row_key}`} className="rounded-lg border border-secondary/50 p-3 space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium truncate">
+                {r.row_key}
+                <span className="text-foreground/50 font-normal">
+                  {' '}
+                  · {r.user_type === 'conciergerie' ? 'Conciergerie' : 'Prestataire'}
+                </span>
+              </span>
+              <Stars rating={r.rating} size={16} />
+            </div>
+            {r.comment && <p className="text-sm text-foreground/80 whitespace-pre-wrap">{r.comment}</p>}
+            <div className="flex items-center justify-between text-xs text-foreground/50">
+              <span>{new Date(r.updated_at).toLocaleDateString('fr-FR', { dateStyle: 'long' })}</span>
+              {!r.is_public && <span className="italic">non publié</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const ReviewSettings: React.FC = () => {
+  const { isAdmin, impersonating } = useAuth();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isPublic, setIsPublic] = useState(true);
@@ -79,6 +135,8 @@ const ReviewSettings: React.FC = () => {
   };
 
   if (isLoading) return null;
+  // A non-impersonating admin can't review themselves — show the recap instead.
+  if (isAdmin && !impersonating) return <AdminReviewRecap />;
 
   return (
     <div className="space-y-2">

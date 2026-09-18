@@ -12,6 +12,14 @@ export const RATE_LIMITED = 'rate_limited' as const;
 export type RateLimited = typeof RATE_LIMITED;
 
 /**
+ * Sentinel returned when a signup is rejected because the first+family name
+ * pair is already taken — employee names are the join key used by missions,
+ * so two people may never share one.
+ */
+export const NAME_TAKEN = 'name_taken' as const;
+export type NameTaken = typeof NAME_TAKEN;
+
+/**
  * Check if an error is a connection pool exhaustion error
  * Can be safely used in both server and client components
  */

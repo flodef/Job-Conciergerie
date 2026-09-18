@@ -2,6 +2,7 @@
 
 import ErrorPage from '@/app/components/error';
 import FormActions from '@/app/components/formActions';
+import SearchInput from '@/app/components/searchInput';
 import { ToastType } from '@/app/components/toastMessage';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useMenuContext } from '@/app/contexts/menuProvider';
@@ -32,6 +33,11 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   const errorId = 'conciergerie-error';
 
   const [conciergerieName, setConciergerieName] = useState(conciergeries?.at(0)?.name || '');
+  const [filter, setFilter] = useState('');
+
+  const visibleConciergeries = filter
+    ? conciergeries.filter(c => c.name.toLowerCase().includes(filter.trim().toLowerCase()))
+    : conciergeries;
 
   useEffect(() => {
     if (conciergerieName) return;
@@ -98,8 +104,16 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
       <h2 className="text-2xl font-bold mb-4">Conciergerie</h2>
 
       <form onSubmit={handleSubmit} className="w-full max-w-sm px-4 space-y-4">
+        {conciergeries.length > 6 && (
+          <SearchInput
+            value={filter}
+            onChange={setFilter}
+            placeholder="Rechercher une conciergerie…"
+            className="w-full"
+          />
+        )}
         <div ref={conciergerieNameRef} className="grid grid-cols-2 gap-3" role="group" aria-labelledby={errorId}>
-          {conciergeries.map(c => {
+          {visibleConciergeries.map(c => {
             const color = getColorValueByName(c.colorName);
             const isSelected = conciergerieName === c.name;
             return (
@@ -127,6 +141,9 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
             );
           })}
         </div>
+        {filter && visibleConciergeries.length === 0 && (
+          <p className="text-sm text-foreground/60 text-center">Aucune conciergerie ne correspond à « {filter} »</p>
+        )}
         {conciergerieNameError && (
           <p id={errorId} className="text-sm text-red-500">
             {conciergerieNameError}

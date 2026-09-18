@@ -21,11 +21,18 @@ Objectif : `www.`/apex servent **toujours** le site (même avec une session acti
 - [ ] Vigilance PWA : le `start_url` est figé à l'install — une icône pointant sur `www.` ouvrirait la landing à chaque lancement jusqu'à réinstallation (le bounce `/` existe pour ce cas — commit « PWA users landing on the site »)
 - [ ] Avant de flipper : mesurer la couverture via `device_seen` (devices actifs depuis le déploiement `app.` le 17 sept = déjà migrés — 21/47 au 18 sept) + logs Vercel filtrés sur host `www.` (doit tendre vers 0 hits app)
 
-### Phase C.4 — Abonnements (reporté)
+### Phase C.4 — Abonnements (cœur fait, reste l'exploitation)
 
-- [ ] Migrer `plan` de `conciergeries` vers `clients` au moment du backfill, supprimer `conciergeries.plan` ensuite
-- [ ] Rendre le forfait éditable une fois la facturation décidée (upgrade/downgrade, paiement Revolut)
-- [ ] Enforcer les limites côté serveur : Découverte = **20 logements max**, quotas missions/prestataires à définir, blocage + message d'upgrade
+Fait : `plan_changes` (log append-only), `invoices` (facture mensuelle = forfait max utilisé, idempotente), cron `/api/bill-subscriptions`, self-service + popup comparatif dans Settings, limites serveur (caps biens/prestataires, duo, rapports, historique, notifications, multi). Décision actée : `conciergeries.plan` reste la source de vérité (gate par membre, pas par groupe) — **pas de migration vers `clients.plan`**.
+
+- [ ] Planifier l'appel du cron `/api/bill-subscriptions` le 1er de chaque mois (cron-job.org, comme `check-late-missions`)
+- [ ] Encaisser les factures : statut `pending` → lien de paiement (Revolut) dans l'email de facture + maj du statut au règlement
+- [ ] Réconcilier le checkout **annuel** de la landing avec la facturation mensuelle (bloquer les switches pendant une année payée ? modèle à définir)
+
+### Multi-conciergerie — transitions de groupe
+
+- [ ] Fonctions SQL prêtes et déployées sur les 3 bases (`move_conciergerie_to_client`, `merge_clients`, `split_conciergerie_to_own_client`) — prévoir une UI admin seulement si les moves deviennent fréquents
+- [ ] Provisioning self-service des nouvelles conciergeries (aujourd'hui : admin/SQL) — dépend de Phase G (`ORDER_COMPLETED` → provisionner le `client`)
 
 ### Phase G — Revolut prod
 
@@ -163,17 +170,16 @@ Le flow « approuver le nouvel appareil inconnu depuis Paramètres » est restau
 - Non scopé par design : `fetchConciergeries` (le picker d'inscription liste toutes les conciergeries), `findEmployeeByContact` (dedup global tel/email), `getExistingUserType` (proxy), cron `check-late-missions`, `email_logs` (colonne posée, non alimentée), stats landing (agrégats publics).
 - Vérifié : tenant 2 seedé → listes filtrées, sentinel → 0 ligne. E2E 26/26.
 
-### C.4 — Abonnements / Forfaits
+### C.4 — Abonnements / Forfaits ✅ FAIT
 
-État actuel : `conciergeries.plan` (`decouverte|pro|privilege`) existe, affiché **en lecture seule** dans les paramètres conciergerie (`Select` désactivé dans `conciergerieSettings.tsx`, tooltip "Contactez-nous pour changer de forfait"). L'écriture est déjà supportée côté serveur (`updateConciergerie`) — utilisable via SQL/script admin.
-
-- **Migration vers `clients`** : en C.1, `plan` doit vivre sur `clients`, pas `conciergeries` → transférer la colonne au moment du backfill (CMD, Calluna, Mentheréglisse = `pro`), puis supprimer `conciergeries.plan` dans une migration ultérieure.
-- **Rendre le forfait éditable** depuis les paramètres une fois la facturation / les règles de transition décidées (upgrade immédiat ? downgrade en fin de période ? paiement Revolut ?).
-- **Enforcer les conditions par forfait côté serveur** (jamais seulement côté client). Limites à définir et appliquer, par exemple :
-  - Découverte : **20 logements maximum** (`homes`)
-  - Découverte : quotas missions / prestataires à préciser
-  - Pro / Privilège : limites éventuelles à préciser
-  - À la création, bloquer ou avertir quand la limite est atteinte, avec un message proposant le forfait supérieur.
+- **Modèle de facturation** : mensuel, au **forfait le plus élevé utilisé dans le mois** (un test Privilège 1 jour = mois facturé Privilège), facture émise le 1er du mois suivant. Changement de forfait immédiat, self-service depuis Settings.
+- **`plan_changes`** : log append-only de chaque switch (from→to, qui, quand, client_id). `conciergeries.plan` reste la source de vérité du forfait courant (décision validée : gate par membre, pas par groupe).
+- **`invoices`** : une ligne par conciergerie et par mois — `UNIQUE(conciergerie_name, period_year, period_month)` rend le cron idempotent. Statut `pending` (collection manuelle — Revolut est un checkout one-shot, pas de prélèvement auto).
+- **`/api/bill-subscriptions`** : cron CRON_SECRET à appeler le 1er du mois → `computeMonthlyBill()` (utils/billing.ts, testé) par conciergerie → insert invoice + `sendInvoiceEmail` à la conciergerie + `sendBillingSummaryEmail` à l'admin (`utils/billingEmails.ts` — helpers internes, hors `actions/` donc non appelables par les clients).
+- **`changeMyPlan()`** (actions/conciergerie) : session conciergerie requise, écrit `plan` + log l'event (`changed_by='admin'` en impersonation). `updateConciergerieData` exclut toujours `plan`.
+- **UI** : `conciergerieSettings` — ligne Forfait + « Comparer les forfaits » → `PlanComparisonModal` (matrice `FEATURE_MATRIX` dans data/plans.ts, miroir de la landing) + bouton « Passer à … » par forfait + `ConfirmationModal` (avertissement downgrade : données conservées, créations bloquées au-delà des caps).
+- **Limites par forfait** déjà enforcées côté serveur : caps biens/prestataires, duo, comptes rendus, historique, notifications avancées, multi-conciergerie — données conservées au downgrade, créations bloquées au-delà des caps.
+- **Reste** : paiement annuel (checkout landing existant) hors du modèle mensuel ; collection réelle des factures (lien de paiement, prélèvement) à brancher plus tard.
 
 ### C.5 — Compte super-admin & impersonation ✅ CODE FAIT (bootstrap à lancer manuellement)
 

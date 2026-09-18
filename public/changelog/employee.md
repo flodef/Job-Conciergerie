@@ -1,3 +1,7 @@
+# 2.463
+
+- **Amélioration : Inscription** : un message clair s'affiche si votre nom est déjà utilisé par un autre prestataire — connectez-vous alors avec votre téléphone ou email habituel.
+
 # 2.454
 
 - **Nouveau : Missions des conciergeries partenaires** : vous pouvez voir et accepter les missions des conciergeries partenaires de votre conciergerie (selon son abonnement), en plus de vos missions habituelles.

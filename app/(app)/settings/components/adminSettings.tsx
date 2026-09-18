@@ -29,8 +29,10 @@ const AdminSettings: React.FC = () => {
       .catch(() => {});
   }, []);
 
+  // The currently impersonated row is excluded — impersonating yourself is
+  // meaningless. rowKey IS the displayed name for both user types.
   const options: SelectOption[] = targets
-    .filter(t => t.userType === targetType)
+    .filter(t => t.userType === targetType && (!impersonating || t.rowKey !== impersonatedName))
     .map(t => ({ value: t.rowKey, label: t.rowKey }));
 
   const handleImpersonate = async () => {

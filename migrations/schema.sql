@@ -452,11 +452,11 @@ ALTER TABLE ONLY public.reviews
 
 
 --
--- Name: conciergeries unique_color_name; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: conciergeries unique_color_name_per_client; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.conciergeries
-    ADD CONSTRAINT unique_color_name UNIQUE (color_name);
+    ADD CONSTRAINT unique_color_name_per_client UNIQUE (client_id, color_name);
 
 
 --
@@ -648,6 +648,51 @@ ALTER TABLE ONLY public.push_subscriptions
 --
 
 CREATE INDEX idx_push_subscriptions_user ON public.push_subscriptions USING btree (user_type, row_key);
+
+
+--
+-- Name: plan_changes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.plan_changes (
+    id uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+    conciergerie_name text NOT NULL,
+    from_plan text,
+    to_plan text NOT NULL,
+    changed_by text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    client_id uuid,
+    CONSTRAINT plan_changes_from_plan_check CHECK ((from_plan IS NULL OR (from_plan = ANY (ARRAY['decouverte'::text, 'pro'::text, 'privilege'::text])))),
+    CONSTRAINT plan_changes_to_plan_check CHECK ((to_plan = ANY (ARRAY['decouverte'::text, 'pro'::text, 'privilege'::text])))
+);
+
+
+--
+-- Name: invoices; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.invoices (
+    id uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
+    conciergerie_name text NOT NULL,
+    period_year integer NOT NULL,
+    period_month integer NOT NULL,
+    plan text NOT NULL,
+    amount numeric(10,2) NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    client_id uuid,
+    CONSTRAINT invoices_period_month_check CHECK (((period_month >= 1) AND (period_month <= 12))),
+    CONSTRAINT invoices_plan_check CHECK ((plan = ANY (ARRAY['decouverte'::text, 'pro'::text, 'privilege'::text]))),
+    CONSTRAINT invoices_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'sent'::text, 'paid'::text, 'cancelled'::text]))),
+    CONSTRAINT invoices_unique_period UNIQUE (conciergerie_name, period_year, period_month)
+);
+
+
+--
+-- Name: plan_changes_lookup; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX plan_changes_lookup ON public.plan_changes USING btree (conciergerie_name, created_at);
 
 
 --
