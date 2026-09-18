@@ -12,7 +12,7 @@ import { PLANS } from '@/app/data/plans';
 import type { Conciergerie, ConciergeriePlan } from '@/app/types/dataTypes';
 import type { ErrorField, SelectOption } from '@/app/types/types';
 import { setPrimaryColor } from '@/app/utils/color';
-import { emailRegex, frenchPhoneRegex } from '@/app/utils/regex';
+import { emailRegex, frenchPhoneRegex, normalizePhone } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
 type ColorOption = {
@@ -60,11 +60,11 @@ const ConciergerieSettings: React.FC = () => {
     // Set current form values for conciergerie
     setName(conciergerie.name);
     setEmail(conciergerie.email);
-    setTel(conciergerie.tel);
+    setTel(normalizePhone(conciergerie.tel));
 
     // Store original values for comparison
     setOriginalEmail(conciergerie.email);
-    setOriginalTel(conciergerie.tel);
+    setOriginalTel(normalizePhone(conciergerie.tel));
     setOriginalColorName(conciergerie.colorName);
     setPlan(conciergerie.plan ?? 'pro');
 
@@ -182,7 +182,7 @@ const ConciergerieSettings: React.FC = () => {
         error={phoneError}
         onError={setPhoneError}
         disabled={isSaving}
-        placeholder="06 12 34 56 78"
+        placeholder="0612345678"
         required
         row
       />

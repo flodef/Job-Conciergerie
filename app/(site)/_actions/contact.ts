@@ -8,6 +8,7 @@ import {
   frenchPhoneRegex,
   getMaxLength,
   inputLengthRegex,
+  normalizePhone,
 } from '@/app/utils/regex';
 import { getClientIp, isFormTokenValid, isIpBlocked, isRateLimited, issueFormToken } from './antiSpam';
 
@@ -35,7 +36,8 @@ export async function sendContactEmail(params: {
   website?: string;
   token?: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const { name, company, email, phone, subject, message, website, token } = params;
+  const { name, company, email, subject, message, website, token } = params;
+  const phone = normalizePhone(params.phone);
 
   // Honeypot: pretend success so bots don't retry, but send nothing.
   if (website) return { success: true };

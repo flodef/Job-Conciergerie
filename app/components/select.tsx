@@ -202,7 +202,7 @@ const Select = forwardRef(
         <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
-        <div className={cn('min-w-0', row && 'flex-1')}>
+        <div className={cn('min-w-0 flex flex-col items-end', row && 'flex-1')}>
           <div className={cn('relative w-fit max-w-full', className)} ref={selectRef}>
             <div
               id={id}
@@ -299,7 +299,7 @@ const Select = forwardRef(
                 document.body,
               )}
           </div>
-          {error && <p className={errorClassName}>{error}</p>}
+          {error && <p className={cn(errorClassName, 'max-w-full text-right')}>{error}</p>}
         </div>
       </div>
     );

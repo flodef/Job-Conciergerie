@@ -37,12 +37,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { PLANS } from '@/app/data/plans';
 import { DEMO_ENTER_URL } from '@/app/utils/demo';
 import {
+  createRegexFilter,
   descriptionLengthRegex,
+  emailPartialRegex,
   emailRegex,
+  frenchPhonePartialRegex,
   frenchPhoneRegex,
   getMaxLength,
   inputLengthRegex,
 } from '@/app/utils/regex';
+import { handleKeyDown } from '@/app/utils/form';
 import { getLandingStats, getPublicTestimonials, type LandingStats, type PublicTestimonial } from '../_actions/stats';
 import { useTheme } from '../_lib/theme';
 
@@ -1461,6 +1465,8 @@ function Pricing() {
 const NAME_MAX = getMaxLength(inputLengthRegex); // 32
 const MESSAGE_MIN = 10;
 const MESSAGE_MAX = getMaxLength(descriptionLengthRegex); // 1000
+const phoneFilter = createRegexFilter(frenchPhonePartialRegex);
+const emailFilter = createRegexFilter(emailPartialRegex);
 
 // Validation runs in DOM order: the first offending field gets the message and the focus.
 const CONTACT_FIELDS: {
@@ -1654,7 +1660,12 @@ function ContactForm() {
                     required
                     type="email"
                     value={formState.email}
-                    onChange={e => setFormState({ ...formState, email: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, emailFilter)}
+                    onChange={e => {
+                      const v = emailFilter(e.target.value);
+                      if (v !== e.target.value) e.target.value = v;
+                      setFormState({ ...formState, email: v });
+                    }}
                     className={inputClass}
                     placeholder="jean@conciergerie.fr"
                     minLength={6}
@@ -1669,11 +1680,16 @@ function ContactForm() {
                     id="contact-phone"
                     type="tel"
                     value={formState.phone}
-                    onChange={e => setFormState({ ...formState, phone: e.target.value })}
+                    onKeyDown={e => handleKeyDown(e, phoneFilter)}
+                    onChange={e => {
+                      const v = phoneFilter(e.target.value);
+                      if (v !== e.target.value) e.target.value = v;
+                      setFormState({ ...formState, phone: v });
+                    }}
                     className={inputClass}
-                    placeholder="06 00 00 00 00"
+                    placeholder="0600000000"
                     minLength={10}
-                    maxLength={20}
+                    maxLength={10}
                   />
                 </div>
               </div>

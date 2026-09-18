@@ -27,7 +27,7 @@ import {
 } from '@/app/db/session';
 import { getConciergerieClientId } from '@/app/db/conciergerieDb';
 import type { Employee, EmployeeStatus } from '@/app/types/dataTypes';
-import { normalizeFamilyName, normalizeFirstName } from '@/app/utils/employee';
+import { normalizeFamilyName, normalizeFirstName, normalizePhone } from '@/app/utils/regex';
 import { baseId, getDevices, isNewDevice, MaxDevicesError } from '@/app/utils/id';
 import type { EmployeeNotificationSettings } from '@/app/utils/notifications';
 
@@ -77,7 +77,7 @@ export async function lookupEmployeeByContact(
 ): Promise<{ employee: Employee; nameMatches: boolean } | RateLimited | null> {
   // Public enumeration vector — bounded per client IP
   if (!(await checkRateLimit('lookupEmployee', 10, 600))) return RATE_LIMITED;
-  const result = await findEmployeeByContact(firstName, familyName, tel, email);
+  const result = await findEmployeeByContact(firstName, familyName, normalizePhone(tel), email);
   if (!result) return null;
   const { employee: row, nameMatches } = result;
   return {
@@ -123,7 +123,7 @@ export async function createNewEmployee(data: {
     id: [hashId(deviceId)],
     first_name: normalizeFirstName(data.firstName),
     family_name: normalizeFamilyName(data.familyName),
-    tel: data.tel,
+    tel: normalizePhone(data.tel),
     email: data.email,
     geographic_zone: data.geographicZone,
     message: data.message,
@@ -254,7 +254,7 @@ export async function updateEmployeeData(
 
   // Convert to DB format
   const dbData: Partial<DbEmployee> = {
-    tel: data.tel,
+    tel: data.tel === undefined ? undefined : normalizePhone(data.tel),
     email: data.email,
     geographic_zone: data.geographicZone,
     message: data.message,

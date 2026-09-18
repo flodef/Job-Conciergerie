@@ -24,6 +24,7 @@ import type { EnrollDeviceResult } from '@/app/actions/employee';
 import type { Conciergerie } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { baseId, getDevices, isNewDevice, MaxDevicesError } from '@/app/utils/id';
+import { normalizePhone } from '@/app/utils/regex';
 
 /**
  * Fetch all conciergeries from the database with caching
@@ -157,7 +158,7 @@ export async function updateConciergerieData(
   const dbData: Partial<DbConciergerie> = {
     name: data.name,
     email: data.email,
-    tel: data.tel,
+    tel: data.tel === undefined ? undefined : normalizePhone(data.tel),
     color_name: data.colorName,
     notification_settings: data.notificationSettings ? JSON.stringify(data.notificationSettings) : null,
   };

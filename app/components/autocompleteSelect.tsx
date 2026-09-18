@@ -10,6 +10,7 @@ import {
   optionsClassName,
   selectClassName,
 } from '@/app/utils/className';
+import { getMaxLength, inputLengthRegex } from '@/app/utils/regex';
 import { longestOptionLabel, shouldOpenUpward } from '@/app/utils/select';
 import { useScrollIndicators } from '@/app/utils/useScrollIndicators';
 import { IconCheck, IconChevronDown, IconX } from '@tabler/icons-react';
@@ -236,7 +237,7 @@ const AutocompleteSelect = forwardRef(
         <Label id={id} required={required} tooltip={tooltip}>
           {label}
         </Label>
-        <div className={cn('min-w-0', row ? 'flex-1' : 'w-full')}>
+        <div className={cn('min-w-0 flex flex-col items-end', row ? 'flex-1' : 'w-full')}>
           <div className={cn('relative w-fit max-w-full', className)} ref={selectRef}>
             {/* Display/Input field */}
             <div
@@ -269,6 +270,7 @@ const AutocompleteSelect = forwardRef(
                     onKeyDown={handleKeyDown}
                     className="absolute inset-0 w-full bg-transparent outline-none text-foreground"
                     placeholder={placeholder}
+                    maxLength={getMaxLength(inputLengthRegex)}
                     onClick={e => e.stopPropagation()}
                   />
                 ) : (
@@ -361,7 +363,7 @@ const AutocompleteSelect = forwardRef(
                 document.body,
               )}
           </div>
-          {error && <p className={errorClassName}>{error}</p>}
+          {error && <p className={cn(errorClassName, 'max-w-full text-right')}>{error}</p>}
         </div>
       </div>
     );

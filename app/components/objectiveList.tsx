@@ -214,6 +214,7 @@ const ObjectiveList = forwardRef(
                   }
                 }}
                 placeholder="Description de l'objectif"
+                maxLength={getMaxLength(objectiveLengthRegex)}
                 ref={el => {
                   if (el) inputRefs.current[index] = el;
                 }}
