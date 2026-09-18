@@ -66,7 +66,7 @@ export const ToastMessage = ({ toast, timeout = 5000, onClick, onClose, closable
         className={cn(
           'fixed z-100 top-4 inset-x-2 text-black text-center py-2 rounded-lg',
           typeStyles[toast.type],
-          closable && 'pr-10',
+          closable && 'pr-12',
           onClick && 'cursor-pointer',
         )}
         onClick={onClick}
@@ -77,13 +77,13 @@ export const ToastMessage = ({ toast, timeout = 5000, onClick, onClose, closable
           <button
             type="button"
             aria-label="Fermer"
-            className="absolute right-3 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100 cursor-pointer"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 opacity-70 hover:opacity-100 cursor-pointer"
             onClick={e => {
               e.stopPropagation();
               onClose();
             }}
           >
-            <IconX size={18} />
+            <IconX size={22} stroke={2.5} />
           </button>
         )}
       </div>
