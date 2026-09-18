@@ -1,6 +1,11 @@
 'use server';
 
-import { deletePushSubscription, deletePushSubscriptionsFor, savePushSubscription } from '@/app/db/pushDb';
+import {
+  deletePushSubscription,
+  deletePushSubscriptionsFor,
+  savePushSubscription,
+  sendPushToUser,
+} from '@/app/db/pushDb';
 import { requireConnectedSession } from '@/app/db/session';
 import { headers } from 'next/headers';
 
@@ -48,4 +53,19 @@ export async function clearMyPushSubscriptions(): Promise<boolean> {
   const session = await requireConnectedSession();
   if (!session?.userType || !session.rowKey) return false;
   return deletePushSubscriptionsFor(session.userType, session.rowKey);
+}
+
+/**
+ * Send a test notification to every device subscribed by the connected user —
+ * lets them see the real thing before keeping push enabled.
+ */
+export async function sendTestPushNotification(): Promise<'sent' | 'no-subscription' | 'unauthorized'> {
+  const session = await requireConnectedSession();
+  if (!session?.userType || !session.rowKey) return 'unauthorized';
+  const sent = await sendPushToUser(session.userType, session.rowKey, {
+    title: 'Notification de test',
+    body: 'Les notifications fonctionnent sur cet appareil !',
+    url: '/settings',
+  });
+  return sent > 0 ? 'sent' : 'no-subscription';
 }

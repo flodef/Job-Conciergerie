@@ -1,9 +1,9 @@
 'use client';
 
-import type { Toast} from '@/app/components/toastMessage';
+import type { Toast } from '@/app/components/toastMessage';
 import { ToastMessage } from '@/app/components/toastMessage';
 import type { ReactNode } from 'react';
-import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 
 interface ToastOptions {
   timeout?: number;
@@ -17,37 +17,39 @@ interface ToastContextType {
   hideToast: () => void;
 }
 
+interface CurrentToast {
+  toast: Toast;
+  timeout: number;
+  onClick?: () => void;
+}
+
 const ToastContext = createContext<ToastContextType>({
   showToast: () => {},
   hideToast: () => {},
 });
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toast, setToast] = useState<Toast>();
-  const [timeout, setTimeoutValue] = useState<number>(3000);
-  const onClickRef = useRef<(() => void) | undefined>(undefined);
+  const [current, setCurrent] = useState<CurrentToast>();
 
   const hideToast = useCallback(() => {
-    setToast(undefined);
-    onClickRef.current = undefined;
+    setCurrent(undefined);
   }, []);
 
-  const showToast = useCallback((newToast: Toast, options?: ToastOptions) => {
-    onClickRef.current = options?.onClick;
-    setTimeoutValue(options?.timeout ?? 3000);
+  const showToast = useCallback((toast: Toast, options?: ToastOptions) => {
     // Reset first so re-showing an identical toast restarts the timer/animation
-    setToast(undefined);
-    requestAnimationFrame(() => setToast(newToast));
+    setCurrent(undefined);
+    requestAnimationFrame(() => setCurrent({ toast, timeout: options?.timeout ?? 5000, onClick: options?.onClick }));
   }, []);
 
   return (
     <ToastContext.Provider value={{ showToast, hideToast }}>
       {children}
       <ToastMessage
-        toast={toast}
-        timeout={timeout}
-        onClick={() => onClickRef.current?.()}
+        toast={current?.toast}
+        timeout={current?.timeout}
+        onClick={current?.onClick}
         onClose={hideToast}
+        closable
       />
     </ToastContext.Provider>
   );

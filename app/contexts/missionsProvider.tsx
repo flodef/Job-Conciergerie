@@ -865,7 +865,7 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         deleteMissionFromRealtime,
       }}
     >
-      <ToastMessage toast={toast} onClose={() => setToast(undefined)} />
+      <ToastMessage toast={toast} onClose={() => setToast(undefined)} closable />
       {children}
     </MissionsContext.Provider>
   );

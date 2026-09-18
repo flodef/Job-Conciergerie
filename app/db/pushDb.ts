@@ -138,17 +138,19 @@ const initVapid = async (): Promise<boolean> => {
   return (vapidReady = true);
 };
 
-export const sendPushToUser = async (userType: UserType, rowKey: string, payload: PushPayload): Promise<void> => {
-  if (!(await initVapid())) return;
+export const sendPushToUser = async (userType: UserType, rowKey: string, payload: PushPayload): Promise<number> => {
+  if (!(await initVapid())) return 0;
   const subs = await getPushSubscriptionsFor(userType, rowKey);
-  if (!subs.length) return;
+  if (!subs.length) return 0;
 
   const webpush = (await import('web-push')).default;
   const body = JSON.stringify(payload);
+  let sent = 0;
   await Promise.all(
     subs.map(async sub => {
       try {
         await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, body);
+        sent++;
       } catch (e) {
         const status = (e as { statusCode?: number }).statusCode;
         if (status === 404 || status === 410) {
@@ -160,4 +162,5 @@ export const sendPushToUser = async (userType: UserType, rowKey: string, payload
       }
     }),
   );
+  return sent;
 };
