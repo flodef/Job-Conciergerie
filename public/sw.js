@@ -2,16 +2,18 @@
 
 console.log('[SW] Service Worker script loaded!');
 
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v9';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGES_CACHE = `pages-${CACHE_VERSION}`;
 const RSC_CACHE = `rsc-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
 const IMAGES_CACHE = `images-${CACHE_VERSION}`;
 
-const STATIC_ASSETS = ['/', '/manifest.json', '/icon-192x192.png', '/icon-512x512.png'];
+const STATIC_ASSETS = ['/', '/manifest.json', '/android-chrome-192x192.png', '/android-chrome-512x512.png'];
 
-// Install event - cache static assets
+// Install event - cache static assets. A failed asset must not kill the
+// whole install — offline mode would degrade but push still needs an active
+// worker (a 404 in addAll rejects it and the SW never activates).
 self.addEventListener('install', event => {
   console.log('[SW] INSTALL EVENT - Service Worker installing');
   event.waitUntil(
@@ -20,6 +22,9 @@ self.addEventListener('install', event => {
       .then(cache => {
         console.log('[SW] Caching static assets');
         return cache.addAll(STATIC_ASSETS);
+      })
+      .catch(error => {
+        console.error('[SW] Precache failed — activating anyway:', error);
       })
       .then(() => {
         console.log('[SW] Skip waiting');
@@ -282,3 +287,40 @@ async function handleNonGetRequest(request) {
     return new Response('Cannot perform action while offline', { status: 503, statusText: 'Service Unavailable' });
   }
 }
+
+// Web push — alerts chosen in notification settings arrive as native
+// notifications even when the app is closed. Payload: { title, body, url }.
+self.addEventListener('push', event => {
+  // A malformed payload must not kill the notification entirely
+  let data = {};
+  try {
+    data = event.data?.json() ?? {};
+  } catch {
+    data = { title: 'Job Conciergerie' };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? 'Job Conciergerie', {
+      body: data.body,
+      icon: '/android-chrome-192x192.png',
+      badge: '/favicon-32x32.png',
+      data: { url: data.url ?? '/missions' },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = event.notification.data?.url ?? '/missions';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async list => {
+      // Focus an existing app tab and navigate it, instead of opening a new one
+      const existing = list.find(c => new URL(c.url).origin === self.location.origin);
+      if (existing) {
+        await existing.focus();
+        // navigate() rejects if the tab vanished between matchAll and here
+        return existing.navigate(url).catch(() => self.clients.openWindow(url));
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});

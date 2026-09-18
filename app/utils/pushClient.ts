@@ -19,6 +19,10 @@ export const isStandalone = () =>
   window.matchMedia('(display-mode: standalone)').matches ||
   (navigator as { standalone?: boolean }).standalone === true;
 
+// Brave blocks Google push services by default → pushManager.subscribe always
+// throws. Detected via the navigator.brave API Brave exposes.
+export const isBrave = () => typeof (navigator as { brave?: unknown }).brave !== 'undefined';
+
 // `serviceWorker.ready` never settles when no SW is registered (e.g. dev,
 // where registration is skipped) — race it so callers don't hang forever.
 const readyOrNull = (): Promise<ServiceWorkerRegistration | null> =>
@@ -35,7 +39,8 @@ export const getDeviceSubscription = async (): Promise<PushSubscription | null> 
 };
 
 export type SubscribeResult =
-  { ok: true; subscription: PushSubscription } | { ok: false; reason: 'denied' | 'no-sw' | 'unsupported' | 'failed' };
+  | { ok: true; subscription: PushSubscription }
+  | { ok: false; reason: 'denied' | 'no-sw' | 'unsupported' | 'failed'; error?: unknown };
 
 /**
  * Ask permission (if needed) then subscribe this device. The caller maps the
@@ -55,7 +60,10 @@ export const subscribeDeviceToPush = async (): Promise<SubscribeResult> => {
       applicationServerKey: urlBase64ToUint8Array(vapidKey),
     });
     return { ok: true, subscription };
-  } catch {
-    return { ok: false, reason: 'failed' };
+  } catch (error) {
+    // Keep the real DOMException for diagnostics — e.g. AbortError when the
+    // browser can't reach a push service (Brave, locked-down Firefox/Chrome).
+    console.error('[push] pushManager.subscribe failed:', error);
+    return { ok: false, reason: 'failed', error };
   }
 };

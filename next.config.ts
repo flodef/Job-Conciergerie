@@ -1,7 +1,4 @@
 import type { NextConfig } from 'next';
-import withSerwist from '@serwist/next';
-
-const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {
   // Dev-only: demo.localhost resolves to loopback in browsers AND counts as
@@ -38,11 +35,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Only enable PWA in production to prevent dev memory leaks
-const withPWA = withSerwist({
-  swSrc: 'app/sw.ts',
-  swDest: 'public/sw.js',
-  disable: isDev,
-});
-
-export default withPWA(nextConfig);
+// PWA: public/sw.js is a hand-maintained file served as-is — the Serwist
+// webpack plugin never ran under Turbopack builds, so it was removed.
+export default nextConfig;

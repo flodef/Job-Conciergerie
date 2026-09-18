@@ -18,6 +18,7 @@ import type { ConciergerieNotificationSettings, EmployeeNotificationSettings } f
 import { defaultConciergerieSettings, defaultEmployeeSettings } from '@/app/utils/notifications';
 import {
   getDeviceSubscription,
+  isBrave,
   isIOS,
   isPushSupported,
   isStandalone,
@@ -182,9 +183,11 @@ const NotificationSettings: React.FC = () => {
               ? 'Indisponible en dev — le service worker ne tourne qu’en production'
               : 'Service worker indisponible — rechargez la page puis réessayez',
           unsupported: 'Les notifications ne sont pas configurées ou supportées ici',
-          failed: "Impossible d'activer les notifications sur cet appareil",
+          failed: isBrave()
+            ? 'Brave bloque les notifications push — activez « Utiliser les services Google pour les messages push » dans brave://settings/privacy'
+            : "Impossible d'activer les notifications sur cet appareil",
         }[result.reason];
-        showToast({ type: ToastType.Error, message });
+        showToast({ type: ToastType.Error, message, error: result.error });
         return false;
       }
       // One retry on the server save — a cold DB or transient timeout
