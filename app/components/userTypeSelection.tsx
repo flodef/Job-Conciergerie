@@ -12,7 +12,9 @@ type UserTypeSelectionProps = {
 export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) {
   return (
     <div className="bg-background p-8">
-      <h1 className="text-2xl font-bold text-center mb-8">Bienvenue sur Job Conciergerie</h1>
+      <h1 className="text-3xl font-black text-center mb-8">
+        Bienvenue sur <span className="text-gradient">Job Conciergerie</span>
+      </h1>
 
       <div className="space-y-6">
         <p className="text-center text-foreground/80 mb-4">Je suis un(e)...</p>
@@ -22,11 +24,11 @@ export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) 
           <button
             onClick={() => onSelect('conciergerie')}
             className={cn(
-              'flex flex-col items-center justify-center p-6 gap-4 border-2 rounded-lg transition-all cursor-pointer',
-              'border-secondary hover:border-primary/50 hover:bg-primary/5',
+              'flex flex-col items-center justify-center p-6 gap-4 border-2 rounded-xl transition-all cursor-pointer',
+              'border-secondary hover:border-primary/50 hover:bg-primary/5 hover:scale-[1.03] hover:shadow-md',
             )}
           >
-            <IconBuildingEstate className="w-8 h-8" />
+            <IconBuildingEstate className="w-8 h-8 text-primary" />
             <span className="text-center font-medium">Conciergerie</span>
           </button>
 
@@ -34,11 +36,11 @@ export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) 
           <button
             onClick={() => onSelect('employee')}
             className={cn(
-              'flex flex-col items-center justify-center p-6 gap-4 border-2 rounded-lg transition-all cursor-pointer',
-              'border-secondary hover:border-primary/50 hover:bg-primary/5',
+              'flex flex-col items-center justify-center p-6 gap-4 border-2 rounded-xl transition-all cursor-pointer',
+              'border-secondary hover:border-primary/50 hover:bg-primary/5 hover:scale-[1.03] hover:shadow-md',
             )}
           >
-            <IconUser className="w-8 h-8" />
+            <IconUser className="w-8 h-8 text-primary" />
             <span className="text-center font-medium">Prestataire</span>
           </button>
         </div>

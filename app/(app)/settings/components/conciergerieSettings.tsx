@@ -14,7 +14,7 @@ import { PLANS, PLAN_ORDER } from '@/app/data/plans';
 import type { Conciergerie, ConciergeriePlan } from '@/app/types/dataTypes';
 import type { ErrorField } from '@/app/types/types';
 import { setPrimaryColor } from '@/app/utils/color';
-import { rowClassName, textClassName } from '@/app/utils/className';
+import { rowCenterClassName, textClassName } from '@/app/utils/className';
 import { emailRegex, frenchPhoneRegex, normalizePhone } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
@@ -235,31 +235,31 @@ const ConciergerieSettings: React.FC = () => {
         required
       />
 
-      <div className={rowClassName}>
+      <div className={rowCenterClassName}>
         <Label
           id="plan"
           tooltip="Facturation mensuelle : le forfait le plus élevé utilisé dans le mois est celui facturé le 1er du mois suivant."
         >
           Forfait
         </Label>
-        <div className="flex-1 flex items-center justify-end gap-3">
+        <div className="flex-1 flex items-center justify-end gap-3 mt-1.5">
           <span className={textClassName}>
             {PLANS[plan].name} — {PLANS[plan].monthly} €/mois
           </span>
           <Button style="secondary" onClick={openPlanModal}>
-            Comparer les forfaits
+            Comparer
           </Button>
         </div>
       </div>
 
-      <div className={rowClassName}>
+      <div className={rowCenterClassName}>
         <Label
           id="group"
           tooltip="Les conciergeries d'un même groupe partagent missions et prestataires (selon leur forfait). Contactez-nous pour modifier votre groupe."
         >
           Groupe
         </Label>
-        <div className="flex-1 flex items-center justify-end">
+        <div className="flex-1 flex items-center justify-end mt-1.5">
           <span className={textClassName}>{group || '…'}</span>
         </div>
       </div>

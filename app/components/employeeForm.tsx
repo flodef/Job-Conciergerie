@@ -285,14 +285,18 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
   if (!conciergeries?.length)
     return (
       <div className="h-full flex flex-col items-center justify-center bg-background">
-        <h2 className="text-2xl font-bold mb-2">Conciergerie</h2>
+        <h2 className="text-3xl font-black mb-2">
+          <span className="text-gradient">Conciergerie</span>
+        </h2>
         <p className="text-foreground">Aucune conciergerie trouvée !</p>
       </div>
     );
 
   return (
     <div className="min-h-full w-full flex flex-col items-center justify-start bg-background pt-2">
-      <h2 className="text-2xl font-bold mb-2">Inscription Prestataire</h2>
+      <h2 className="text-3xl font-black mb-4">
+        Inscription <span className="text-gradient">Prestataire</span>
+      </h2>
 
       <form onSubmit={handleSubmit} className="w-full px-4 space-y-2">
         <Input

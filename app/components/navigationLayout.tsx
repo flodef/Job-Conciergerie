@@ -203,6 +203,9 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
   const bannerCount = (isDemoHost ? 1 : 0) + (impersonating ? 1 : 0) + (updateAvailable ? 1 : 0);
   const topClasses = ['top-0', 'top-10', 'top-20', 'top-[7.5rem]'];
   const ptClasses = ['pt-16', 'pt-26', 'pt-36', 'pt-[11.5rem]'];
+  // Non-navigation pages have no fixed header — they still need the banner
+  // heights compensated or the banner overlays the top of the scroll area.
+  const bannerPtClasses = ['pt-0', 'pt-10', 'pt-20', 'pt-[7.5rem]'];
   const bannerTop = (i: number) => topClasses[i];
   const headerTopClass = topClasses[bannerCount];
   const mainPtClass = ptClasses[bannerCount];
@@ -287,7 +290,12 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {showChangelog && <ChangelogModal onClose={dismissChangelog} />}
 
       {/* Main content */}
-      <main className={cn('flex-1 relative overflow-hidden', isNavigationPage && !!userType && mainPtClass)}>
+      <main
+        className={cn(
+          'flex-1 relative overflow-hidden',
+          isNavigationPage && !!userType ? mainPtClass : bannerPtClasses[bannerCount],
+        )}
+      >
         {/* Content wrapper - scrollable when content is long */}
         <div
           className={cn(

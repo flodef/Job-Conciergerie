@@ -29,7 +29,7 @@ export default function Error500({ error, reset }: { error: Error; reset: () => 
     <div className={`${openSans.className} fixed inset-0 z-50 bg-background`}>
       <div className="h-full overflow-hidden flex flex-col items-center justify-center font-bold uppercase text-[3vmin] text-center text-foreground">
         <p className="px-6 z-10">
-          Oups ! L&apos;appli s&apos;est emmelée les pinceaux ... <br />
+          <span className="text-gradient">Oups&nbsp;!</span> L&apos;appli s&apos;est emmelée les pinceaux ... <br />
           Merci de me le signaler à{' '}
           <Link target="_blank" href={`mailto:${email}?subject=Erreur innatendue sur ${pageUrl}`}>
             {email}
