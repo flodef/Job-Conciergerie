@@ -3,6 +3,7 @@
 import type { DbConciergerie } from '@/app/db/conciergerieDb';
 import {
   getAllConciergeries,
+  getConciergerieByName,
   getConciergerieIds,
   getGroupForClient,
   updateConciergerie,
@@ -14,15 +15,18 @@ import {
   getSessionUser,
   isRowMember,
   isValidDeviceIdsUpdate,
+  requireConciergerieSession,
   requireConnectedSession,
   tenantScope,
   verifyEnrollmentToken,
 } from '@/app/db/session';
+import { logPlanChange } from '@/app/db/billingDb';
+import { PLANS } from '@/app/data/plans';
 import { hashId } from '@/app/db/db';
 import { DEVICE_TTL_MS, getDeviceSeenAt, seenKey, touchDeviceKeys, touchDevices } from '@/app/db/deviceSeen';
 import { checkRateLimit } from '@/app/db/rateLimit';
 import type { EnrollDeviceResult } from '@/app/actions/employee';
-import type { Conciergerie } from '@/app/types/dataTypes';
+import type { Conciergerie, ConciergeriePlan } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { baseId, getDevices, isNewDevice, MaxDevicesError } from '@/app/utils/id';
 import { normalizePhone } from '@/app/utils/regex';
@@ -169,7 +173,8 @@ export async function updateConciergerieData(
   if (!ids || !isRowMember(session, ids)) return null;
 
   // Convert to DB format. `plan` is deliberately excluded — subscription
-  // changes go through admin/SQL (`updateConciergerie`), never client data.
+  // changes go through `changeMyPlan` (logged for monthly billing), never
+  // through a generic data write.
   const dbData: Partial<DbConciergerie> = {
     name: data.name,
     email: data.email,
@@ -179,4 +184,30 @@ export async function updateConciergerieData(
   };
 
   return await updateConciergerie(conciergerie.name, dbData, tenantScope(session));
+}
+
+/**
+ * Self-service plan change — effective immediately and logged in
+ * plan_changes so the monthly billing cron can bill the highest plan used.
+ * Only a conciergerie session may change its own plan (admin impersonation
+ * acts on behalf of the target and is marked 'admin' in the log).
+ */
+export async function changeMyPlan(newPlan: ConciergeriePlan): Promise<Conciergerie | null> {
+  const session = await requireConciergerieSession();
+  if (!session || !(newPlan in PLANS)) return null;
+
+  const current = await getConciergerieByName(session.rowKey);
+  if (!current || current.plan === newPlan) return null;
+
+  const updated = await updateConciergerie(session.rowKey, { plan: newPlan }, tenantScope(session));
+  if (updated) {
+    await logPlanChange(
+      session.rowKey,
+      current.plan ?? null,
+      newPlan,
+      session.impersonating ? 'admin' : session.rowKey,
+      session.clientId ?? undefined,
+    );
+  }
+  return updated;
 }

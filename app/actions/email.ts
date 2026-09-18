@@ -975,6 +975,62 @@ export async function sendMissionReportEmail(
 }
 
 /**
+ * Monthly subscription invoice — sent to the conciergerie's own registered
+ * address (resolved server-side by name, so this action cannot be abused as
+ * an open relay). Fixed template; 'invoice' rows are queued for retry.
+ */
+export async function sendInvoiceEmail(
+  conciergerieName: string,
+  monthLabel: string,
+  planName: string,
+  amount: number,
+  isRetry = false,
+): Promise<boolean> {
+  // Internal-only: the billing cron and the failed_emails retry path call
+  // with isRetry=true. No interactive caller may trigger an invoice email.
+  if (!isRetry) return false;
+  const conciergerie = await getConciergerieByName(conciergerieName);
+  if (!conciergerie?.email) return false;
+  return sendContactEmail(
+    conciergerie.email,
+    `Job Conciergerie — facture de ${monthLabel}`,
+    [
+      `Bonjour,`,
+      ``,
+      `Votre abonnement Job Conciergerie pour ${monthLabel} est facturé au forfait le plus élevé utilisé ce mois-ci :`,
+      ``,
+      `  ${planName} — ${amount} €`,
+      ``,
+      `Pour toute question, répondez à cet email.`,
+      ``,
+      `L'équipe Job Conciergerie`,
+    ].join('\n'),
+    isRetry,
+  );
+}
+
+/**
+ * Monthly billing recap sent to the admin (env address). Fixed template —
+ * only cron calls this; not an open relay.
+ */
+export async function sendBillingSummaryEmail(
+  monthLabel: string,
+  lines: string[],
+  skipped: number,
+  isRetry = false,
+): Promise<boolean> {
+  // Internal-only (cron + failed_emails retry) — never callable by a user.
+  if (!isRetry) return false;
+  const adminEmail = process.env.ADMIN_ALERT_EMAIL || 'contact@job-conciergerie.fr';
+  return sendContactEmail(
+    adminEmail,
+    `Facturation ${monthLabel} — ${lines.length} facture${lines.length > 1 ? 's' : ''}`,
+    `Factures générées pour ${monthLabel} :\n\n${lines.join('\n')}\n\n${skipped} déjà facturée(s) (ignorée(s)).`,
+    isRetry,
+  );
+}
+
+/**
  * Admin alert sent when an email is permanently given up on after exhausting all retries.
  * Not queued on failure - if this one fails, we only log.
  */
