@@ -1,3 +1,7 @@
+# 2.443
+
+- **Amélioration : Notifications plus accessibles** : les notifications fonctionnent désormais dans tous les navigateurs quand l'app est ouverte, sans réglage particulier. Un nouveau réglage « Recevoir les notifications même si l'app est fermée » permet en plus d'être notifié en permanence.
+
 # 2.437
 
 - **Nouveau : Notification de test** : un bouton « Tester » dans Paramètres → Notifications vous permet de vérifier que les notifications fonctionnent sur votre appareil.

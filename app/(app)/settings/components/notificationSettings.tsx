@@ -23,6 +23,8 @@ import {
   isIOS,
   isPushSupported,
   isStandalone,
+  requestNotificationPermission,
+  showForegroundNotification,
   subscribeDeviceToPush,
 } from '@/app/utils/pushClient';
 import { IconBell, IconCheck, IconMail } from '@tabler/icons-react';
@@ -93,6 +95,10 @@ const NotificationSettings: React.FC = () => {
   const [deviceSubscribed, setDeviceSubscribed] = useState<boolean | null>(null);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+
+  // A live subscription on this device means closed-app delivery is already on
+  // (settings written before the flag existed).
+  const pushWhenClosedOn = settings.pushWhenClosed === true || deviceSubscribed === true;
 
   useEffect(() => {
     if (isPushSupported()) getDeviceSubscription().then(s => setDeviceSubscribed(!!s));
@@ -235,26 +241,70 @@ const NotificationSettings: React.FC = () => {
     }
   };
 
+  const unsubscribeDevice = async () => {
+    const sub = await getDeviceSubscription();
+    if (sub) {
+      await removeMyPushSubscription(sub.endpoint);
+      await sub.unsubscribe().catch(() => {});
+    }
+    await clearMyPushSubscriptions(); // push is account-level: off = no device receives
+    setDeviceSubscribed(false);
+  };
+
   const handlePushToggle = async (on: boolean) => {
     if (!on) {
-      const sub = await getDeviceSubscription();
-      if (sub) {
-        await removeMyPushSubscription(sub.endpoint);
-        await sub.unsubscribe().catch(() => {});
-      }
-      await clearMyPushSubscriptions(); // push is account-level: off = no device receives
-      setDeviceSubscribed(false);
-      handleToggle('push' as keyof AnySettings, false);
+      await unsubscribeDevice();
+      // push off disables closed-app delivery too
+      const newSettings = { ...settings, push: false, pushWhenClosed: false };
+      setSettings(newSettings);
+      updateSettingsInDatabase(newSettings);
       return;
     }
-    // Enabling push requires this device to subscribe — otherwise the account
-    // flag would be on with zero delivery, silently.
-    if (await subscribeThisDevice()) handleToggle('push' as keyof AnySettings, true);
+    // Foreground notifications (while the app is open) only need the
+    // Notification permission — no push service, so this works on Brave.
+    if (isIOS() && !isStandalone()) {
+      showToast({
+        type: ToastType.Info,
+        message: 'Sur iPhone/iPad, installez d’abord l’app : bouton Partager → « Sur l’écran d’accueil »',
+      });
+      return;
+    }
+    switch (await requestNotificationPermission()) {
+      case 'granted':
+        handleToggle('push' as keyof AnySettings, true);
+        break;
+      case 'denied':
+        showToast({
+          type: ToastType.Error,
+          message: 'Notifications bloquées — réautorisez-les dans les réglages du navigateur pour ce site',
+        });
+        break;
+      default:
+        showToast({ type: ToastType.Error, message: 'Les notifications ne sont pas supportées par ce navigateur' });
+    }
+  };
+
+  // Closed-app delivery needs a real web push subscription on this device
+  // (push service — the part Brave disables by default).
+  const handlePushWhenClosed = async (on: boolean) => {
+    if (!on) {
+      await unsubscribeDevice();
+      handleToggle('pushWhenClosed' as keyof AnySettings, false);
+      return;
+    }
+    if (await subscribeThisDevice()) handleToggle('pushWhenClosed' as keyof AnySettings, true);
   };
 
   const handleTest = async () => {
     setIsTesting(true);
     try {
+      // No subscription → test the foreground path (what this device would
+      // show while the app is open); subscribed → real server push.
+      if (!deviceSubscribed) {
+        await showForegroundNotification('Notification de test', 'Les notifications fonctionnent sur cet appareil !');
+        showToast({ type: ToastType.Success, message: 'Notification de test affichée' });
+        return;
+      }
       switch (await sendTestPushNotification()) {
         case 'sent':
           showToast({
@@ -322,22 +372,38 @@ const NotificationSettings: React.FC = () => {
           <span className={cn(labelClassName, 'mb-0 whitespace-normal')}>{statusText}</span>
         </div>
 
-        {pushOn && deviceSubscribed !== null && (
-          <div className="pt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-            {deviceSubscribed ? (
-              <>
-                <p className="flex items-center gap-1.5 text-xs text-foreground/60 px-2">
-                  <IconCheck size={14} className="text-green-500" />
-                  Notifications push activées sur cet appareil
-                </p>
+        {pushOn && (
+          <div className="pt-1 space-y-2">
+            <Switch
+              className="text-sm my-0"
+              label="Recevoir les notifications même si l’app est fermée"
+              enabled={pushWhenClosedOn}
+              onToggle={handlePushWhenClosed}
+            />
+            {pushWhenClosedOn ? (
+              deviceSubscribed !== null &&
+              (deviceSubscribed ? (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <p className="flex items-center gap-1.5 text-xs text-foreground/60 px-2">
+                    <IconCheck size={14} className="text-green-500" />
+                    Notifications push activées sur cet appareil
+                  </p>
+                  <Button style="secondary" onClick={handleTest} loading={isTesting} className="text-xs py-1 px-2">
+                    Tester
+                  </Button>
+                </div>
+              ) : (
+                <Button style="secondary" onClick={subscribeThisDevice} loading={isSubscribing}>
+                  Activer les notifications sur cet appareil
+                </Button>
+              ))
+            ) : (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <p className="text-xs text-foreground/60 px-2">Notifications affichées quand l’app est ouverte</p>
                 <Button style="secondary" onClick={handleTest} loading={isTesting} className="text-xs py-1 px-2">
                   Tester
                 </Button>
-              </>
-            ) : (
-              <Button style="secondary" onClick={subscribeThisDevice} loading={isSubscribing}>
-                Activer les notifications sur cet appareil
-              </Button>
+              </div>
             )}
           </div>
         )}

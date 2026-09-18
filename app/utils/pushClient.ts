@@ -38,6 +38,43 @@ export const getDeviceSubscription = async (): Promise<PushSubscription | null> 
   }
 };
 
+/**
+ * Ask for the Notifications permission only — no push service involved, so it
+ * works everywhere (incl. Brave). Enough for foreground notifications shown by
+ * the open app; a push subscription is only needed for closed-app delivery.
+ */
+export const requestNotificationPermission = async (): Promise<'granted' | 'denied' | 'unsupported'> => {
+  if (!isPushSupported()) return 'unsupported';
+  if (Notification.permission === 'granted') return 'granted';
+  if (Notification.permission === 'denied') return 'denied';
+  return (await Notification.requestPermission()) === 'granted' ? 'granted' : 'denied';
+};
+
+/**
+ * Show a notification from the open app — no push service needed. Goes through
+ * the service worker when one is registered (required in iOS PWAs, and reuses
+ * the notificationclick focus+navigate handler via `data.url`); falls back to
+ * the Notification constructor otherwise (e.g. dev, where no SW runs).
+ */
+export const showForegroundNotification = async (title: string, body?: string, url = '/missions') => {
+  if (Notification.permission !== 'granted') return;
+  const reg = await readyOrNull();
+  if (reg) {
+    await reg.showNotification(title, {
+      body,
+      icon: '/android-chrome-192x192.png',
+      badge: '/favicon-32x32.png',
+      data: { url },
+    });
+    return;
+  }
+  const notification = new Notification(title, { body, icon: '/android-chrome-192x192.png' });
+  notification.onclick = () => {
+    window.focus();
+    if (url) window.location.href = url;
+  };
+};
+
 export type SubscribeResult =
   | { ok: true; subscription: PushSubscription }
   | { ok: false; reason: 'denied' | 'no-sw' | 'unsupported' | 'failed'; error?: unknown };
