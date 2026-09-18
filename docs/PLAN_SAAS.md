@@ -10,6 +10,32 @@
 
 ---
 
+## Reste à faire — synthèse
+
+### Séparation stricte www → site / app → application (à faire plus tard)
+
+Objectif : `www.`/apex servent **toujours** le site (même avec une session active), `app.` sert l'app. Les utilisateurs égarés repassent par « Connexion » / « Déjà inscrit ? » (cookies déjà en domaine `.job-conciergerie.fr` → 1 clic, pas de re-login).
+
+- [ ] `proxy.ts` : supprimer le pont `user_id`-cookie sur `/` (www logué → 307 app) — ~8 lignes dans le bloc `isLandingHost && path === '/'`
+- [ ] **Garder** le 307 catch-all `www/<path>` → `app/<path>` : il rattrape les vieux liens magiques `/v2_…` dans les emails — coût nul
+- [ ] Vigilance PWA : le `start_url` est figé à l'install — une icône pointant sur `www.` ouvrirait la landing à chaque lancement jusqu'à réinstallation (le bounce `/` existe pour ce cas — commit « PWA users landing on the site »)
+- [ ] Avant de flipper : mesurer la couverture via `device_seen` (devices actifs depuis le déploiement `app.` le 17 sept = déjà migrés — 21/47 au 18 sept) + logs Vercel filtrés sur host `www.` (doit tendre vers 0 hits app)
+
+### Phase C.4 — Abonnements (reporté)
+
+- [ ] Migrer `plan` de `conciergeries` vers `clients` au moment du backfill, supprimer `conciergeries.plan` ensuite
+- [ ] Rendre le forfait éditable une fois la facturation décidée (upgrade/downgrade, paiement Revolut)
+- [ ] Enforcer les limites côté serveur : Découverte = **20 logements max**, quotas missions/prestataires à définir, blocage + message d'upgrade
+
+### Phase G — Revolut prod
+
+- [ ] Clés prod + `REVOLUT_MODE=prod` + webhook prod signé
+- [ ] `ORDER_COMPLETED` → provisionner le `client` + email lien magique
+- [ ] Test sandbox end-to-end avant bascule
+- [ ] Redirect URLs Supabase quand les clés prod seront là
+
+---
+
 ## Phase A — Sécurité (ex-"point 6") ✅ FAIT
 
 **Objectif** : fermer les trous sans changer le comportement visible pour les utilisateurs actuels.
@@ -240,27 +266,3 @@ A (sécu) ──► B (merge landing) ──► C (multi-tenant) ──► D (do
 - D et C peuvent s'intervertir si les domaines sont urgents.
 
 ---
-
-## Reste à faire — synthèse
-
-### Séparation stricte www → site / app → application (à faire plus tard)
-
-Objectif : `www.`/apex servent **toujours** le site (même avec une session active), `app.` sert l'app. Les utilisateurs égarés repassent par « Connexion » / « Déjà inscrit ? » (cookies déjà en domaine `.job-conciergerie.fr` → 1 clic, pas de re-login).
-
-- [ ] `proxy.ts` : supprimer le pont `user_id`-cookie sur `/` (www logué → 307 app) — ~8 lignes dans le bloc `isLandingHost && path === '/'`
-- [ ] **Garder** le 307 catch-all `www/<path>` → `app/<path>` : il rattrape les vieux liens magiques `/v2_…` dans les emails — coût nul
-- [ ] Vigilance PWA : le `start_url` est figé à l'install — une icône pointant sur `www.` ouvrirait la landing à chaque lancement jusqu'à réinstallation (le bounce `/` existe pour ce cas — commit « PWA users landing on the site »)
-- [ ] Avant de flipper : mesurer la couverture via `device_seen` (devices actifs depuis le déploiement `app.` le 17 sept = déjà migrés — 21/47 au 18 sept) + logs Vercel filtrés sur host `www.` (doit tendre vers 0 hits app)
-
-### Phase C.4 — Abonnements (reporté)
-
-- [ ] Migrer `plan` de `conciergeries` vers `clients` au moment du backfill, supprimer `conciergeries.plan` ensuite
-- [ ] Rendre le forfait éditable une fois la facturation décidée (upgrade/downgrade, paiement Revolut)
-- [ ] Enforcer les limites côté serveur : Découverte = **20 logements max**, quotas missions/prestataires à définir, blocage + message d'upgrade
-
-### Phase G — Revolut prod
-
-- [ ] Clés prod + `REVOLUT_MODE=prod` + webhook prod signé
-- [ ] `ORDER_COMPLETED` → provisionner le `client` + email lien magique
-- [ ] Test sandbox end-to-end avant bascule
-- [ ] Redirect URLs Supabase quand les clés prod seront là
