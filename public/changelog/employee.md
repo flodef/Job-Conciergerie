@@ -1,3 +1,10 @@
+# 2.428
+
+- **Nouveau : Notifications push** : pour chaque type d'alerte, choisissez comment vous êtes notifié — par email, par notification sur votre téléphone, les deux, ou rien (Paramètres → Notifications). Sur iPhone, installez l'app sur l'écran d'accueil pour recevoir les notifications même app fermée.
+- **Nouveau : Votre avis** : vous pouvez laisser une note et un commentaire sur l'application (Paramètres → Votre avis).
+- **Nouveau : Nouvelle adresse de l'app** : l'application se trouve désormais sur app.job-conciergerie.fr — votre connexion est conservée automatiquement.
+- **Amélioration : Sécurité des appareils** : vos appareils connectés sont mieux protégés (identifiants chiffrés, expiration automatique après 90 jours d'inactivité).
+
 # 2.348
 
 - **Amélioration : Emails de modification de mission** : les modifications anodines (commentaire, voyageurs, etc.) n'affichent plus le message de re-validation, seules les modifications importantes (dates, horaires) demandent une nouvelle acceptation de votre part.

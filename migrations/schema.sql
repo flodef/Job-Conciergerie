@@ -616,6 +616,39 @@ ALTER TABLE ONLY public.missions
     ADD CONSTRAINT missions_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id);
 
 
+
+--
+-- Name: push_subscriptions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.push_subscriptions (
+    endpoint text NOT NULL,
+    user_type text NOT NULL,
+    row_key text NOT NULL,
+    p256dh text NOT NULL,
+    auth text NOT NULL,
+    client_id uuid,
+    user_agent text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT push_subscriptions_user_type_check CHECK ((user_type = ANY (ARRAY['conciergerie'::text, 'employee'::text])))
+);
+
+
+--
+-- Name: push_subscriptions push_subscriptions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.push_subscriptions
+    ADD CONSTRAINT push_subscriptions_pkey PRIMARY KEY (endpoint);
+
+
+--
+-- Name: idx_push_subscriptions_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_push_subscriptions_user ON public.push_subscriptions USING btree (user_type, row_key);
+
+
 --
 -- PostgreSQL database dump complete
 --
