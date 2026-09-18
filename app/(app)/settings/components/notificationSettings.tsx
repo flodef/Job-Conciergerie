@@ -184,7 +184,7 @@ const NotificationSettings: React.FC = () => {
           unsupported: 'Les notifications ne sont pas configurées ou supportées ici',
           failed: "Impossible d'activer les notifications sur cet appareil",
         }[result.reason];
-        showToast({ type: ToastType.Error, message });
+        showToast({ type: ToastType.Error, message, error: result.error });
         return false;
       }
       // One retry on the server save — a cold DB or transient timeout

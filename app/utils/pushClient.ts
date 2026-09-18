@@ -35,7 +35,8 @@ export const getDeviceSubscription = async (): Promise<PushSubscription | null> 
 };
 
 export type SubscribeResult =
-  { ok: true; subscription: PushSubscription } | { ok: false; reason: 'denied' | 'no-sw' | 'unsupported' | 'failed' };
+  | { ok: true; subscription: PushSubscription }
+  | { ok: false; reason: 'denied' | 'no-sw' | 'unsupported' | 'failed'; error?: unknown };
 
 /**
  * Ask permission (if needed) then subscribe this device. The caller maps the
@@ -55,7 +56,10 @@ export const subscribeDeviceToPush = async (): Promise<SubscribeResult> => {
       applicationServerKey: urlBase64ToUint8Array(vapidKey),
     });
     return { ok: true, subscription };
-  } catch {
-    return { ok: false, reason: 'failed' };
+  } catch (error) {
+    // Keep the real DOMException for diagnostics — e.g. AbortError when the
+    // browser can't reach a push service (Brave, locked-down Firefox/Chrome).
+    console.error('[push] pushManager.subscribe failed:', error);
+    return { ok: false, reason: 'failed', error };
   }
 };

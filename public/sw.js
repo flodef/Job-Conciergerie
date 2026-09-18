@@ -2,7 +2,7 @@
 
 console.log('[SW] Service Worker script loaded!');
 
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGES_CACHE = `pages-${CACHE_VERSION}`;
 const RSC_CACHE = `rsc-${CACHE_VERSION}`;
@@ -282,3 +282,33 @@ async function handleNonGetRequest(request) {
     return new Response('Cannot perform action while offline', { status: 503, statusText: 'Service Unavailable' });
   }
 }
+
+// Web push — alerts chosen in notification settings arrive as native
+// notifications even when the app is closed. Payload: { title, body, url }.
+self.addEventListener('push', event => {
+  const data = event.data?.json() ?? {};
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? 'Job Conciergerie', {
+      body: data.body,
+      icon: '/android-chrome-192x192.png',
+      badge: '/favicon-32x32.png',
+      data: { url: data.url ?? '/missions' },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = event.notification.data?.url ?? '/missions';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async list => {
+      // Focus an existing app tab and navigate it, instead of opening a new one
+      const existing = list.find(c => new URL(c.url).origin === self.location.origin);
+      if (existing) {
+        await existing.focus();
+        return existing.navigate(url);
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});
