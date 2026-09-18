@@ -259,6 +259,18 @@ const NotificationSettings: React.FC = () => {
             message: 'Aucun appareil abonné — activez les notifications sur cet appareil',
           });
           break;
+        case 'failed':
+          showToast({
+            type: ToastType.Error,
+            message: "Échec de l'envoi — réessayez dans un instant",
+          });
+          break;
+        case 'rate-limited':
+          showToast({
+            type: ToastType.Error,
+            message: 'Trop de tests — réessayez dans une heure',
+          });
+          break;
         default:
           showToast({ type: ToastType.Error, message: 'Session expirée — reconnectez-vous' });
       }

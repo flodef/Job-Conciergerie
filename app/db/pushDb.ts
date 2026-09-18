@@ -138,10 +138,14 @@ const initVapid = async (): Promise<boolean> => {
   return (vapidReady = true);
 };
 
-export const sendPushToUser = async (userType: UserType, rowKey: string, payload: PushPayload): Promise<number> => {
-  if (!(await initVapid())) return 0;
+export const sendPushToUser = async (
+  userType: UserType,
+  rowKey: string,
+  payload: PushPayload,
+): Promise<{ sent: number; subscribed: number | null }> => {
+  if (!(await initVapid())) return { sent: 0, subscribed: null };
   const subs = await getPushSubscriptionsFor(userType, rowKey);
-  if (!subs.length) return 0;
+  if (!subs.length) return { sent: 0, subscribed: 0 };
 
   const webpush = (await import('web-push')).default;
   const body = JSON.stringify(payload);
@@ -162,5 +166,5 @@ export const sendPushToUser = async (userType: UserType, rowKey: string, payload
       }
     }),
   );
-  return sent;
+  return { sent, subscribed: subs.length };
 };

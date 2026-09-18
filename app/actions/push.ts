@@ -6,6 +6,7 @@ import {
   savePushSubscription,
   sendPushToUser,
 } from '@/app/db/pushDb';
+import { checkRateLimit } from '@/app/db/rateLimit';
 import { requireConnectedSession } from '@/app/db/session';
 import { headers } from 'next/headers';
 
@@ -57,15 +58,20 @@ export async function clearMyPushSubscriptions(): Promise<boolean> {
 
 /**
  * Send a test notification to every device subscribed by the connected user —
- * lets them see the real thing before keeping push enabled.
+ * lets them see the real thing before keeping push enabled. Rate-limited per
+ * user: each call fans out to every subscribed device.
  */
-export async function sendTestPushNotification(): Promise<'sent' | 'no-subscription' | 'unauthorized'> {
+export async function sendTestPushNotification(): Promise<
+  'sent' | 'no-subscription' | 'failed' | 'rate-limited' | 'unauthorized'
+> {
   const session = await requireConnectedSession();
   if (!session?.userType || !session.rowKey) return 'unauthorized';
-  const sent = await sendPushToUser(session.userType, session.rowKey, {
+  if (!(await checkRateLimit('test-push', 10, 3600, `${session.userType}:${session.rowKey}`))) return 'rate-limited';
+  const { sent, subscribed } = await sendPushToUser(session.userType, session.rowKey, {
     title: 'Notification de test',
     body: 'Les notifications fonctionnent sur cet appareil !',
     url: '/settings',
   });
+  if (subscribed === null || (subscribed > 0 && sent === 0)) return 'failed';
   return sent > 0 ? 'sent' : 'no-subscription';
 }
