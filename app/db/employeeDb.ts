@@ -91,6 +91,25 @@ export const getAllEmployees = async (clientId?: string) => {
 };
 
 /**
+ * Count a conciergerie's accepted employees (plan limit enforcement)
+ */
+export const countAcceptedEmployees = async (conciergerieName: string, clientId?: string) => {
+  try {
+    const result = await sql`
+      SELECT COUNT(*)::int AS n
+      FROM employees
+      WHERE conciergerie_name = ${conciergerieName}
+      AND status = 'accepted'
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
+    `;
+    return (result[0]?.n as number) ?? 0;
+  } catch (error) {
+    console.error(`Error counting employees for ${conciergerieName}:`, error);
+    return 0;
+  }
+};
+
+/**
  * Create a new employee
  * If employee already exists (unique constraint violation), return the existing employee
  */

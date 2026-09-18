@@ -1,5 +1,6 @@
 'use server';
 
+import { PLAN_LIMITS } from '@/app/data/plans';
 import type { DbMission } from '@/app/db/missionDb';
 import {
   assignEmployeeToMission,
@@ -8,9 +9,17 @@ import {
   deleteMission,
   getAllMissions,
   getMissionById,
+  getMissionsVisibleToEmployee,
   updateMission,
   updateMissionStatus,
 } from '@/app/db/missionDb';
+import {
+  getConciergeriePlan,
+  getEmployeeConciergerieName,
+  getMultiConciergerieNames,
+  getSessionPlan,
+} from '@/app/db/planDb';
+import { getEmployeeByName } from '@/app/db/employeeDb';
 import { requireConciergerieSession, requireConnectedSession, tenantScope, type SessionUser } from '@/app/db/session';
 import type { Mission, MissionStatus } from '@/app/types/dataTypes';
 
@@ -30,7 +39,18 @@ const canAccessMission = (session: SessionUser, mission: Mission): boolean =>
 export async function fetchAllMissions(): Promise<Mission[] | null> {
   const session = await requireConnectedSession();
   if (!session) return null;
-  return await getAllMissions(tenantScope(session));
+  const scope = tenantScope(session);
+
+  // Multi-conciergerie: an employee only receives missions they may actually
+  // see — their home conciergerie's, multi-enabled conciergeries', and their
+  // own assignments. Unclaimed legacy employees (NULL conciergerie_name) keep
+  // the full tenant pool until the backfill/claim attaches them.
+  if (session.userType === 'employee') {
+    const home = await getEmployeeConciergerieName(session.rowKey);
+    const visible = home ? [home, ...(await getMultiConciergerieNames(scope))] : null;
+    return await getMissionsVisibleToEmployee(session.rowKey, visible, scope);
+  }
+  return await getAllMissions(scope);
 }
 
 /**
@@ -40,6 +60,7 @@ export async function createNewMission(data: Mission): Promise<Mission | null> {
   const session = await requireConciergerieSession();
   // A conciergerie only creates missions in its own tenant
   if (!session || data.conciergerieName !== session.rowKey) return null;
+  if (data.allowDuo && !PLAN_LIMITS[await getSessionPlan(session)].duo) return null;
 
   // Convert to DB format
   const dbData: Omit<DbMission, 'modified_date'> = {
@@ -96,13 +117,21 @@ export async function updateMissionData(id: string, data: Partial<Mission>): Pro
 
   if (session.userType === 'conciergerie') {
     if (!canAccessMission(session, mission)) return null;
+    if (data.allowDuo && !PLAN_LIMITS[await getSessionPlan(session)].duo) return null;
+    // A second assignee only exists on a duo-enabled mission — assigning one
+    // directly must not smuggle duo into a mission that never opted in.
+    if (data.employeeId2 != null && !mission.allowDuo && data.allowDuo !== true) return null;
     return await updateMission(id, dbData, scope);
   }
 
   const mine = canAccessMission(session, mission);
   const claiming = !mission.employeeId && data.employeeId === session.rowKey;
-  const joiningDuo = !!mission.employeeId && !mission.employeeId2 && data.employeeId2 === session.rowKey;
+  const joiningDuo =
+    !!mission.employeeId && !mission.employeeId2 && mission.allowDuo && data.employeeId2 === session.rowKey;
   if (!mine && !claiming && !joiningDuo) return null;
+
+  // Mode binôme is a Pro+ feature — the joined mission's conciergerie decides
+  if (joiningDuo && !PLAN_LIMITS[await getConciergeriePlan(mission.conciergerieName)].duo) return null;
 
   // Restricted missions can only be claimed by allowed employees
   if (

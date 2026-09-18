@@ -1,5 +1,7 @@
 'use server';
 
+import { PLAN_LIMITS } from '@/app/data/plans';
+import { getSessionPlan } from '@/app/db/planDb';
 import {
   deletePushSubscription,
   deletePushSubscriptionsFor,
@@ -29,6 +31,7 @@ const isValidSubscription = (sub: PushSubscriptionInput) =>
 export async function saveMyPushSubscription(subscription: PushSubscriptionInput): Promise<boolean> {
   const session = await requireConnectedSession();
   if (!session?.userType || !session.rowKey || !isValidSubscription(subscription)) return false;
+  if (!PLAN_LIMITS[await getSessionPlan(session)].advancedNotifications) return false;
 
   const userAgent = (await headers()).get('user-agent');
   return savePushSubscription(

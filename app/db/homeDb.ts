@@ -59,6 +59,40 @@ export const getAllHomes = async (clientId?: string) => {
 };
 
 /**
+ * Homes visible to an employee under the multi-conciergerie model — mirrors
+ * getMissionsVisibleToEmployee: homes of their home conciergerie + of
+ * multi-enabled conciergeries + homes backing missions already assigned to
+ * them (a foreign assignment survives the assigner's downgrade).
+ * `visibleNames` NULL = unclaimed legacy employee → full tenant pool.
+ */
+export const getHomesVisibleToEmployee = async (
+  employeeKey: string,
+  visibleNames: string[] | null,
+  clientId?: string,
+) => {
+  try {
+    const result = await sql`
+      SELECT id, title, description, objectives, images, geographic_zone, hours_of_cleaning, hours_of_gardening, conciergerie_name, allow_duo, max_travellers, notes
+      FROM homes
+      WHERE (
+        ${visibleNames}::text[] IS NULL
+        OR conciergerie_name = ANY(${visibleNames ?? []}::text[])
+        OR id IN (
+          SELECT home_id FROM missions
+          WHERE employee_id = ${employeeKey} OR employee_id_2 = ${employeeKey}
+        )
+      )
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
+    `;
+
+    return result.map(row => formatHome(row as DbHome));
+  } catch (error) {
+    console.error(`Error fetching homes visible to ${employeeKey}:`, error);
+    return null;
+  }
+};
+
+/**
  * Fetch a single home by id
  */
 export const getHomeById = async (id: string, clientId?: string) => {
@@ -74,6 +108,24 @@ export const getHomeById = async (id: string, clientId?: string) => {
   } catch (error) {
     console.error(`Error fetching home ${id}:`, error);
     return null;
+  }
+};
+
+/**
+ * Count a conciergerie's homes (plan limit enforcement)
+ */
+export const countHomes = async (conciergerieName: string, clientId?: string) => {
+  try {
+    const result = await sql`
+      SELECT COUNT(*)::int AS n
+      FROM homes
+      WHERE conciergerie_name = ${conciergerieName}
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
+    `;
+    return (result[0]?.n as number) ?? 0;
+  } catch (error) {
+    console.error(`Error counting homes for ${conciergerieName}:`, error);
+    return 0;
   }
 };
 

@@ -104,6 +104,40 @@ export const getMissionsByHomeId = async (homeId: string, clientId?: string) => 
 };
 
 /**
+ * Missions visible to an employee under the multi-conciergerie model:
+ * their home conciergerie's missions + open missions of multi-enabled
+ * conciergeries + anything already assigned to them (a foreign assignment
+ * survives the assigner's downgrade).
+ * `visibleNames` = home name ∪ multi-conciergerie names; NULL = unclaimed
+ * legacy employee → full tenant pool (pre-backfill transition semantics).
+ */
+export const getMissionsVisibleToEmployee = async (
+  employeeKey: string,
+  visibleNames: string[] | null,
+  clientId?: string,
+) => {
+  try {
+    const result = await sql`
+      SELECT id, home_id, tasks, start_date_time, end_date_time, employee_id, employee_id_2, modified_date, conciergerie_name, status, allowed_employees, hours, allow_duo, travellers, conciergerie_comment
+      FROM missions
+      WHERE (
+        ${visibleNames}::text[] IS NULL
+        OR employee_id = ${employeeKey}
+        OR employee_id_2 = ${employeeKey}
+        OR conciergerie_name = ANY(${visibleNames ?? []}::text[])
+      )
+      AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
+      ORDER BY start_date_time ASC
+    `;
+
+    return result.map(row => formatMission(row as DbMission));
+  } catch (error) {
+    console.error(`Error fetching missions visible to ${employeeKey}:`, error);
+    return null;
+  }
+};
+
+/**
  * Get missions by conciergerie name
  */
 export const getMissionsByConciergerieName = async (conciergerieName: string, clientId?: string) => {

@@ -10,6 +10,7 @@ import { useMissions } from '@/app/contexts/missionsProvider';
 import { useModal } from '@/app/contexts/modalProvider';
 import { useToast } from '@/app/contexts/toastProvider';
 import EmployeeDetails from '@/app/(app)/employees/components/employeeDetails';
+import { PLANS, planLimits } from '@/app/data/plans';
 import type { Employee } from '@/app/types/dataTypes';
 import {
   filterEmployees,
@@ -35,7 +36,14 @@ import { cn, descriptionClassName, iconButtonClassName, textClassName } from '@/
 import { getUserKey } from '@/app/utils/user';
 
 export default function EmployeesList() {
-  const { userData, conciergerieName, isLoading: authLoading, employees: authEmployees, updateUserData } = useAuth();
+  const {
+    userData,
+    conciergerieName,
+    isLoading: authLoading,
+    employees: authEmployees,
+    updateUserData,
+    findConciergerie,
+  } = useAuth();
   const { missions } = useMissions();
   const { openModal, closeModal } = useModal();
   const { showToast } = useToast();
@@ -113,6 +121,17 @@ export default function EmployeesList() {
   };
 
   const handleStatusChange = async (employee: Employee, newStatus: 'accepted' | 'rejected') => {
+    if (newStatus === 'accepted') {
+      const plan = findConciergerie(conciergerieName)?.plan;
+      const max = planLimits(plan).maxEmployees;
+      if (max !== null && employees.filter(e => e.status === 'accepted').length >= max) {
+        showToast({
+          type: ToastType.Error,
+          message: `Le plan ${PLANS[plan ?? 'pro'].name} est limité à ${max} prestataires — passez à une offre supérieure pour en accepter davantage.`,
+        });
+        return;
+      }
+    }
     const confirmation = getEmployeeStatusChangeConfirmation(employee, newStatus, missions);
     if (confirmation) {
       const id = openModal(() => (

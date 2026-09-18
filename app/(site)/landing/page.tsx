@@ -1243,7 +1243,10 @@ function Pricing() {
     'Personnalisation avancée':
       "Adaptation de l'application à vos besoins spécifiques (workflows, champs personnalisés)",
     'Onboarding personnalisé': 'Accompagnement dédié pour la mise en place et la formation de votre équipe',
-    'Mises à jour illimitées': 'Toutes les nouvelles fonctionnalités et améliorations incluses sans surcoût',
+    'Nouvelles fonctionnalités en avant-première':
+      'Recevez chaque nouvelle fonctionnalité en priorité, avant les autres plans',
+    "Vos demandes d'évolution prioritaires":
+      'Vos suggestions de fonctionnalités passent en tête de notre feuille de route',
     'Formation en visio': 'Sessions de formation personnalisées en visioconférence avec notre équipe',
     'Assistance dédiée': 'Un interlocuteur unique dédié à votre compte, joignable directement',
   };
@@ -1259,7 +1262,6 @@ function Pricing() {
         "Jusqu'à 20 biens",
         "Jusqu'à 10 prestataires",
         'Missions & calendrier',
-        'Mode binôme',
         'Corrections de bugs incluses',
         'Notifications email',
         'Assistance par email sous 48h',
@@ -1277,6 +1279,7 @@ function Pricing() {
         'Tout le plan Découverte',
         'Biens illimités',
         'Prestataires illimités',
+        'Mode binôme',
         'Comptes rendus photo',
         'Historique & statistiques',
         'Multi-conciergerie',
@@ -1294,7 +1297,8 @@ function Pricing() {
       desc: 'Pour les conciergeries exigeantes',
       features: [
         'Tout le plan Pro',
-        'Mises à jour illimitées',
+        'Nouvelles fonctionnalités en avant-première',
+        "Vos demandes d'évolution prioritaires",
         'Formation en visio',
         'API & intégrations',
         'SLA garanti',

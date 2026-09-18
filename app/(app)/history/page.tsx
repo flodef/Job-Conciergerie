@@ -5,7 +5,8 @@ import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import HistoryFilters from '@/app/(app)/history/components/historyFilters';
-import type { Home, Mission } from '@/app/types/dataTypes';
+import { planLimits } from '@/app/data/plans';
+import type { Conciergerie, Employee, Home, Mission } from '@/app/types/dataTypes';
 import { getColorValueByName } from '@/app/utils/color';
 import { formatDate, formatDateRange, getMonthYearLabel } from '@/app/utils/date';
 import { formatHours, formatNumber, getMissionHoursPerProvider, isDuoComplete } from '@/app/utils/task';
@@ -305,7 +306,7 @@ function MonthlyHoursChart({
 export default function HistoryPage() {
   const { missions, isLoading: missionsLoading } = useMissions();
   const { homes } = useHomes();
-  const { employeeName, isLoading: authLoading, findConciergerie } = useAuth();
+  const { employeeName, isLoading: authLoading, findConciergerie, userData, isConciergerie } = useAuth();
 
   const [selectedConciergerie, setSelectedConciergerie] = useState<string | null>(null);
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<string | null>(null);
@@ -389,6 +390,25 @@ export default function HistoryPage() {
   }, [filteredMissions]);
 
   if (isLoading) return null;
+
+  // History & stats are Pro+ features — a conciergerie's own plan, or the plan
+  // of the conciergerie an employee belongs to.
+  const canUseHistory = planLimits(
+    isConciergerie
+      ? (userData as Conciergerie | undefined)?.plan
+      : findConciergerie((userData as Employee | undefined)?.conciergerieName)?.plan,
+  ).history;
+
+  if (!canUseHistory)
+    return (
+      <div className="p-4 flex flex-col items-center justify-center text-center h-full gap-2">
+        <p className="text-foreground font-semibold">Historique & statistiques</p>
+        <p className="text-sm text-light max-w-sm">
+          Cette fonctionnalité est incluse dans les plans Pro et Privilège. Votre conciergerie peut changer d&apos;offre
+          pour y accéder.
+        </p>
+      </div>
+    );
 
   return (
     <div className="p-4 space-y-4">

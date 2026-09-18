@@ -6,6 +6,7 @@ import FormActions from '@/app/components/formActions';
 import FullScreenModal from '@/app/components/fullScreenModal';
 import { useAuth } from '@/app/contexts/authProvider';
 import { useHomes } from '@/app/contexts/homesProvider';
+import { planLimits } from '@/app/data/plans';
 import type { Mission } from '@/app/types/dataTypes';
 import { useEffect, useState } from 'react';
 import MissionReportModal from './missionReportModal';
@@ -24,8 +25,9 @@ export default function MissionCompletionModal({
   skipAnimation = false,
 }: MissionCompletionModalProps) {
   const { homes } = useHomes();
-  const { isEmployee } = useAuth();
+  const { isEmployee, findConciergerie } = useAuth();
   const home = homes.find(h => h.id === mission.homeId);
+  const canReport = planLimits(findConciergerie(mission.conciergerieName)?.plan).missionReports;
 
   // Flow steps: validate objectives → optionally ask for a report → fill the report
   const [step, setStep] = useState<'objectives' | 'askReport' | 'report'>('objectives');
@@ -71,9 +73,9 @@ export default function MissionCompletionModal({
   };
 
   const handleConfirm = () => {
-    // Employees can optionally add a mission report before the mission is finalized.
-    // Conciergeries finalize immediately.
-    if (isEmployee) {
+    // Employees can optionally add a mission report before the mission is finalized
+    // (Pro+ feature). Conciergeries finalize immediately.
+    if (isEmployee && canReport) {
       setStep('askReport');
     } else {
       finish();

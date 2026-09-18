@@ -1,7 +1,9 @@
 'use server';
 
 import type { DbEmployee } from '@/app/db/employeeDb';
+import { PLAN_LIMITS } from '@/app/data/plans';
 import {
+  countAcceptedEmployees,
   createEmployee,
   deleteEmployee,
   findEmployeeByContact,
@@ -26,6 +28,7 @@ import {
   verifyEnrollmentToken,
 } from '@/app/db/session';
 import { getConciergerieClientId } from '@/app/db/conciergerieDb';
+import { getConciergeriePlan } from '@/app/db/planDb';
 import type { Employee, EmployeeStatus } from '@/app/types/dataTypes';
 import { normalizeFamilyName, normalizeFirstName, normalizePhone } from '@/app/utils/regex';
 import { baseId, getDevices, isNewDevice, MaxDevicesError } from '@/app/utils/id';
@@ -145,6 +148,13 @@ export async function updateEmployeeStatusAction(employee: Employee, status: Emp
   // prerogative — an employee must not be able to self-accept or alter others.
   const session = await requireConciergerieSession();
   if (!session) return null;
+
+  if (status === 'accepted' && employee.conciergerieName) {
+    const max = PLAN_LIMITS[await getConciergeriePlan(employee.conciergerieName)].maxEmployees;
+    if (max !== null && (await countAcceptedEmployees(employee.conciergerieName, tenantScope(session))) >= max)
+      return null;
+  }
+
   return await updateEmployeeStatus(employee.firstName, employee.familyName, status, tenantScope(session));
 }
 

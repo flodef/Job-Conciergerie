@@ -1,7 +1,9 @@
 'use server';
 
+import { PLAN_LIMITS } from '@/app/data/plans';
 import type { DbHome } from '@/app/db/homeDb';
-import { createHome, deleteHome, getAllHomes, getHomeById, updateHome } from '@/app/db/homeDb';
+import { countHomes, createHome, deleteHome, getAllHomes, getHomeById, updateHome } from '@/app/db/homeDb';
+import { getSessionPlan } from '@/app/db/planDb';
 import { requireConciergerieSession, requireConnectedSession, tenantScope } from '@/app/db/session';
 import type { Home } from '@/app/types/dataTypes';
 
@@ -35,6 +37,11 @@ export async function createNewHome(data: {
   // and a conciergerie only writes in its own tenant
   const session = await requireConciergerieSession();
   if (!session || data.conciergerieName !== session.rowKey) return null;
+
+  const limits = PLAN_LIMITS[await getSessionPlan(session)];
+  if (data.allowDuo && !limits.duo) return null;
+  if (limits.maxHomes !== null && (await countHomes(data.conciergerieName, tenantScope(session))) >= limits.maxHomes)
+    return null;
 
   // Convert to DB format
   const dbData: Omit<DbHome, 'modified_date'> = {
@@ -81,6 +88,7 @@ export async function updateHomeData(
   const scope = tenantScope(session);
   const home = await getHomeById(id, scope);
   if (!home || home.conciergerieName !== session.rowKey) return null;
+  if (data.allowDuo && !PLAN_LIMITS[await getSessionPlan(session)].duo) return null;
 
   // Convert to DB format
   const dbData: Partial<Omit<DbHome, 'id'>> = {
