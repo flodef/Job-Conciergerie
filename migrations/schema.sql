@@ -452,11 +452,11 @@ ALTER TABLE ONLY public.reviews
 
 
 --
--- Name: conciergeries unique_color_name; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: conciergeries unique_color_name_per_client; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.conciergeries
-    ADD CONSTRAINT unique_color_name UNIQUE (color_name);
+    ADD CONSTRAINT unique_color_name_per_client UNIQUE (client_id, color_name);
 
 
 --
