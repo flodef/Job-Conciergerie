@@ -88,6 +88,9 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     // refreshes update silently. Use the ref to avoid the stale closure.
     setIsLoading(homesRef.current.length === 0);
 
+    // Kept for the final check below — the pool-exhausted toast must only
+    // fire when the retry also failed, not on the first attempt.
+    let lastError: unknown;
     const attempt = (): Promise<boolean> =>
       fetchAllHomes()
         .then(fetchedHomes => {
@@ -107,18 +110,11 @@ export function HomesProvider({ children }: { children: ReactNode }) {
         })
         .catch(error => {
           console.warn('Failed to fetch homes:', error);
+          lastError = error;
           const errorMsg = error?.message?.toLowerCase() || '';
           const isMaxClientsError = errorMsg.includes('max clients') || errorMsg.includes('emaxconnsession');
           const is503Error =
             errorMsg.includes('unexpected') || errorMsg.includes('503') || errorMsg.includes('service unavailable');
-          if (isMaxClientsError) {
-            console.error('Database connection pool exhausted:', error);
-            setToast({
-              type: ToastType.Error,
-              message: 'Trop de connexions simultanées. Veuillez réessayer dans quelques instants.',
-              error,
-            });
-          }
           if (!navigator.onLine || is503Error || isMaxClientsError) {
             updateFetchTime(Page.Homes);
           }
@@ -131,8 +127,20 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     const promise = attempt()
       .then(ok => ok || attempt())
       .then(ok => {
-        if (ok) failuresRef.current = 0;
-        else markFailure();
+        if (ok) {
+          failuresRef.current = 0;
+        } else {
+          markFailure();
+          const errorMsg = (lastError as Error)?.message?.toLowerCase() || '';
+          if (errorMsg.includes('max clients') || errorMsg.includes('emaxconnsession')) {
+            console.error('Database connection pool exhausted:', lastError);
+            setToast({
+              type: ToastType.Error,
+              message: 'Trop de connexions simultanées. Veuillez réessayer dans quelques instants.',
+              error: lastError,
+            });
+          }
+        }
         return ok;
       })
       .finally(() => {

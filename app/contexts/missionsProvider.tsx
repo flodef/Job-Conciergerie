@@ -186,6 +186,9 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     // refreshes update silently. Use the ref to avoid the stale closure.
     setIsLoading(missionsRef.current.length === 0);
 
+    // Kept for the final check below — the pool-exhausted toast must only
+    // fire when the retry also failed, not on the first attempt.
+    let lastError: unknown;
     const attempt = (): Promise<boolean> =>
       fetchHomes().then(homesSuccess => {
         if (!homesSuccess) {
@@ -215,18 +218,11 @@ function MissionsProvider({ children }: { children: ReactNode }) {
           })
           .catch(error => {
             console.warn('Failed to fetch missions:', error);
+            lastError = error;
             const errorMsg = error?.message?.toLowerCase() || '';
             const isMaxClientsError = errorMsg.includes('max clients') || errorMsg.includes('emaxconnsession');
             const is503Error =
               errorMsg.includes('unexpected') || errorMsg.includes('503') || errorMsg.includes('service unavailable');
-            if (isMaxClientsError) {
-              console.error('Database connection pool exhausted:', error);
-              setToast({
-                type: ToastType.Error,
-                message: 'Trop de connexions simultanées. Veuillez réessayer dans quelques instants.',
-                error,
-              });
-            }
             if (!navigator.onLine || is503Error || isMaxClientsError) {
               updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
             }
@@ -240,8 +236,20 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const promise = attempt()
       .then(ok => ok || attempt())
       .then(ok => {
-        if (ok) failuresRef.current = 0;
-        else markFailure();
+        if (ok) {
+          failuresRef.current = 0;
+        } else {
+          markFailure();
+          const errorMsg = (lastError as Error)?.message?.toLowerCase() || '';
+          if (errorMsg.includes('max clients') || errorMsg.includes('emaxconnsession')) {
+            console.error('Database connection pool exhausted:', lastError);
+            setToast({
+              type: ToastType.Error,
+              message: 'Trop de connexions simultanées. Veuillez réessayer dans quelques instants.',
+              error: lastError,
+            });
+          }
+        }
         return ok;
       })
       .finally(() => {
