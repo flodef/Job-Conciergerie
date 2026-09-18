@@ -186,14 +186,15 @@ const NotificationSettings: React.FC = () => {
               : 'Service worker indisponible — rechargez la page puis réessayez',
           unsupported: 'Les notifications ne sont pas configurées ou supportées ici',
           failed: isBrave()
-            ? 'Brave bloque les notifications push — cliquez pour copier le réglage à activer'
+            ? 'Brave bloque les notifications push — activez « Services Google pour les messages push » dans brave://settings/privacy — cliquez ici pour copier l’adresse'
             : "Impossible d'activer les notifications sur cet appareil",
         }[result.reason];
         showToast(
           { type: ToastType.Error, message, error: result.error },
           result.reason === 'failed' && isBrave()
             ? {
-                timeout: 20000,
+                // Stays until closed manually — the user needs time to read and act
+                timeout: 0,
                 onClick: () => {
                   // Clipboard may reject without permission — the URL is still shown
                   navigator.clipboard.writeText('brave://settings/privacy').catch(() => {});
@@ -305,7 +306,7 @@ const NotificationSettings: React.FC = () => {
                   Notifications push activées sur cet appareil
                 </p>
                 <Button style="secondary" onClick={handleTest} loading={isTesting} className="text-xs py-1 px-2">
-                  Envoyer une notification de test
+                  Tester
                 </Button>
               </>
             ) : (

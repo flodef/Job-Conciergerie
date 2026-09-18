@@ -18,6 +18,7 @@ export interface Toast {
 
 interface ToastMessageProps {
   toast: Toast | undefined;
+  /** Auto-close delay in ms — <= 0 keeps the toast until closed manually. */
   timeout?: number;
   onClick?: () => void;
   onClose?: () => void;
@@ -47,9 +48,9 @@ export const ToastMessage = ({ toast, timeout = 5000, onClick, onClose, closable
     }
   }, [toast?.message, toast?.error]);
 
-  // Auto-close after timeout
+  // Auto-close after timeout (<= 0 = stays until closed manually)
   useEffect(() => {
-    if (!toast || !onClose) return;
+    if (!toast || !onClose || timeout <= 0) return;
 
     const timer = setTimeout(() => {
       onClose();
