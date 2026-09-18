@@ -19,9 +19,11 @@ export interface PushSubscriptionRow {
   created_at: string;
 }
 
+// The cached promise must reset on failure — otherwise one transient error
+// poisons the table setup until the instance restarts.
 let tableReady: Promise<unknown> | null = null;
-export const ensurePushSubscriptionsTable = () =>
-  (tableReady ??= (async () => {
+export const ensurePushSubscriptionsTable = () => {
+  tableReady ??= (async () => {
     await sql`
       CREATE TABLE IF NOT EXISTS push_subscriptions (
         endpoint text PRIMARY KEY,
@@ -34,7 +36,12 @@ export const ensurePushSubscriptionsTable = () =>
         created_at timestamptz NOT NULL DEFAULT now()
       )`;
     await sql`CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions (user_type, row_key)`;
-  })());
+  })().catch(e => {
+    tableReady = null;
+    throw e;
+  });
+  return tableReady;
+};
 
 export const savePushSubscription = async (
   userType: UserType,
@@ -90,13 +97,16 @@ export const deletePushSubscriptionsFor = async (userType: UserType, rowKey: str
   }
 };
 
-export const getPushSubscriptionsFor = async (userType: UserType, rowKey: string): Promise<PushSubscriptionRow[]> => {
+export const getPushSubscriptionsFor = async (
+  userType: UserType,
+  rowKey: string,
+): Promise<Pick<PushSubscriptionRow, 'endpoint' | 'p256dh' | 'auth'>[]> => {
   try {
     await ensurePushSubscriptionsTable();
     const rows = await sql`
       SELECT endpoint, p256dh, auth FROM push_subscriptions
       WHERE user_type = ${userType} AND row_key = ${rowKey}`;
-    return rows as unknown as PushSubscriptionRow[];
+    return rows as unknown as Pick<PushSubscriptionRow, 'endpoint' | 'p256dh' | 'auth'>[];
   } catch (e) {
     console.error('[push] getPushSubscriptionsFor failed:', e);
     return [];

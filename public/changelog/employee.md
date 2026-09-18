@@ -1,4 +1,4 @@
-# 2.427
+# 2.428
 
 - **Nouveau : Notifications push** : pour chaque type d'alerte, choisissez comment vous êtes notifié — par email, par notification sur votre téléphone, les deux, ou rien (Paramètres → Notifications). Sur iPhone, installez l'app sur l'écran d'accueil pour recevoir les notifications même app fermée.
 - **Nouveau : Votre avis** : vous pouvez laisser une note et un commentaire sur l'application (Paramètres → Votre avis).

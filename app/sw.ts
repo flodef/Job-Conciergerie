@@ -157,7 +157,8 @@ self.addEventListener('notificationclick', event => {
       const existing = list.find(c => new URL(c.url).origin === self.location.origin);
       if (existing) {
         await existing.focus();
-        return existing.navigate(url);
+        // navigate() rejects if the tab vanished between matchAll and here
+        return existing.navigate(url).catch(() => self.clients.openWindow(url));
       }
       return self.clients.openWindow(url);
     }),

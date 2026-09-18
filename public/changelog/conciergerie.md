@@ -1,4 +1,4 @@
-# 2.427
+# 2.428
 
 - **Nouveau : Notifications push** : pour chaque type d'alerte, choisissez comment vous êtes notifié — par email, par notification sur votre appareil, les deux, ou rien (Paramètres → Notifications). Sur téléphone, installez l'app sur l'écran d'accueil pour recevoir les notifications même app fermée.
 - **Nouveau : Votre avis sur le site** : laissez une note et un commentaire affichés publiquement sur job-conciergerie.fr, ou gardez-les privés (Paramètres → Votre avis).
