@@ -235,7 +235,7 @@ const MultiSelect = forwardRef(
               aria-haspopup="listbox"
               aria-controls={`${id}-options`}
             >
-              <AutoSize text={sizerText}>
+              <AutoSize text={sizerText} sizerClassName="pr-3">
                 <span className={cn('absolute inset-0 truncate', values.length === 0 && 'text-foreground/50')}>
                   {displayValue()}
                 </span>

@@ -260,7 +260,7 @@ const AutocompleteSelect = forwardRef(
               aria-haspopup={isReadonly ? undefined : 'listbox'}
               aria-controls={isReadonly ? undefined : `${id}-options`}
             >
-              <AutoSize text={sizerText} className="flex-1">
+              <AutoSize text={sizerText} sizerClassName="pr-3" className="flex-1">
                 {isOpen ? (
                   <input
                     ref={inputRef}
