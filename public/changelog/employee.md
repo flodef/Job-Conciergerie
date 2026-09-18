@@ -1,8 +1,4 @@
-# 2.463
-
-- **Amélioration : Inscription** : un message clair s'affiche si votre nom est déjà utilisé par un autre prestataire — connectez-vous alors avec votre téléphone ou email habituel.
-
-# 2.454
+# 2.464
 
 - **Nouveau : Missions des conciergeries partenaires** : vous pouvez voir et accepter les missions des conciergeries partenaires de votre conciergerie (selon son abonnement), en plus de vos missions habituelles.
 - **Amélioration : Lien de connexion** : si un lien de connexion correspond à un autre compte que celui de cet appareil, l'app vous demande maintenant lequel garder au lieu de changer silencieusement.
