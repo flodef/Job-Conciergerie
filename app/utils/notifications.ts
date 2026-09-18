@@ -3,6 +3,10 @@
 interface NotificationChannels {
   email?: boolean;
   push?: boolean;
+  /** Also receive notifications while the app is closed — requires a per-device
+   * web push subscription (the part Brave disables by default). Off (default) =
+   * foreground notifications only, shown while the app is open via realtime. */
+  pushWhenClosed?: boolean;
 }
 
 export const wantsEmail = (settings?: NotificationChannels) => settings?.email !== false;

@@ -25,8 +25,11 @@ export const isBrave = () => typeof (navigator as { brave?: unknown }).brave !==
 
 // `serviceWorker.ready` never settles when no SW is registered (e.g. dev,
 // where registration is skipped) — race it so callers don't hang forever.
-const readyOrNull = (): Promise<ServiceWorkerRegistration | null> =>
-  Promise.race([navigator.serviceWorker.ready, new Promise<null>(r => setTimeout(() => r(null), 4000))]);
+// Browsers without a SW API resolve to null instead of throwing.
+const readyOrNull = (): Promise<ServiceWorkerRegistration | null> => {
+  if (!('serviceWorker' in navigator)) return Promise.resolve(null);
+  return Promise.race([navigator.serviceWorker.ready, new Promise<null>(r => setTimeout(() => r(null), 4000))]);
+};
 
 /** This device's current push subscription, if any. */
 export const getDeviceSubscription = async (): Promise<PushSubscription | null> => {
@@ -35,6 +38,50 @@ export const getDeviceSubscription = async (): Promise<PushSubscription | null> 
     return (await reg?.pushManager.getSubscription()) ?? null;
   } catch {
     return null;
+  }
+};
+
+/**
+ * Ask for the Notifications permission only — no push service involved, so it
+ * works everywhere (incl. Brave). Enough for foreground notifications shown by
+ * the open app; a push subscription is only needed for closed-app delivery.
+ */
+export const requestNotificationPermission = async (): Promise<'granted' | 'denied' | 'unsupported'> => {
+  // Only the Notification API is required — no PushManager/serviceWorker —
+  // so foreground notifications work on browsers without a push service.
+  if (typeof Notification === 'undefined') return 'unsupported';
+  if (Notification.permission === 'granted') return 'granted';
+  if (Notification.permission === 'denied') return 'denied';
+  return (await Notification.requestPermission()) === 'granted' ? 'granted' : 'denied';
+};
+
+/**
+ * Show a notification from the open app — no push service needed. Goes through
+ * the service worker when one is registered (required in iOS PWAs, and reuses
+ * the notificationclick focus+navigate handler via `data.url`); falls back to
+ * the Notification constructor otherwise (e.g. dev, where no SW runs).
+ */
+export const showForegroundNotification = async (title: string, body?: string, url = '/missions'): Promise<boolean> => {
+  try {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return false;
+    const reg = await readyOrNull();
+    if (reg) {
+      await reg.showNotification(title, {
+        body,
+        icon: '/android-chrome-192x192.png',
+        badge: '/favicon-32x32.png',
+        data: { url },
+      });
+      return true;
+    }
+    const notification = new Notification(title, { body, icon: '/android-chrome-192x192.png' });
+    notification.onclick = () => {
+      window.focus();
+      if (url) window.location.href = url;
+    };
+    return true;
+  } catch {
+    return false;
   }
 };
 

@@ -1,8 +1,6 @@
-# 2.437
+# 2.445
 
-- **Nouveau : Notification de test** : un bouton « Tester » dans Paramètres → Notifications vous permet de vérifier que les notifications fonctionnent sur votre appareil.
-- **Amélioration : Messages plus lisibles** : les bandeaux d'information restent affichés plus longtemps et peuvent tous être fermés manuellement via une croix.
-- **Amélioration : Aide à l'activation** : des messages plus clairs expliquent quoi faire quand votre navigateur bloque les notifications.
+- **Amélioration : Notifications plus accessibles** : les notifications fonctionnent désormais dans tous les navigateurs quand l'app est ouverte, sans réglage particulier. Un nouveau réglage « Recevoir les notifications même si l'app est fermée » permet en plus d'être notifié en permanence.
 
 # 2.428
 

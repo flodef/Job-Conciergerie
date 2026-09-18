@@ -5,8 +5,11 @@ import { useHomes } from '@/app/contexts/homesProvider';
 import { useMissions } from '@/app/contexts/missionsProvider';
 import { useFetchTime } from '@/app/hooks/useFetchTime';
 import type { Home, Mission } from '@/app/types/dataTypes';
+import { detectMissionAlert, fireForegroundNotification } from '@/app/utils/foregroundNotifications';
+import type { MissionRow } from '@/app/utils/foregroundNotifications';
 import { getBrowserClient } from '@/app/utils/supabase/browser';
 import { Page } from '@/app/utils/navigation';
+import { getUserKey } from '@/app/utils/user';
 import { useEffect, useRef } from 'react';
 
 // Small debounce so a burst of row changes (e.g. a bulk update) triggers a
@@ -65,9 +68,9 @@ const formatHomeFromRow = (row: any): Home => ({
  */
 export function useRealtimeSync() {
   const { triggerRefresh } = useFetchTime();
-  const { userId, isLoading, fetchDataFromDatabase } = useAuth();
+  const { userId, isLoading, fetchDataFromDatabase, userData, userType } = useAuth();
   const { addMissionFromRealtime, updateMissionFromRealtime, deleteMissionFromRealtime } = useMissions();
-  const { addHomeFromRealtime, updateHomeFromRealtime, deleteHomeFromRealtime } = useHomes();
+  const { homes, addHomeFromRealtime, updateHomeFromRealtime, deleteHomeFromRealtime } = useHomes();
 
   // Keep the latest callbacks in refs so the subscription effect only depends
   // on userId/isLoading and does not resubscribe on every data change.
@@ -79,6 +82,9 @@ export function useRealtimeSync() {
   const addHomeRef = useRef(addHomeFromRealtime);
   const updateHomeRef = useRef(updateHomeFromRealtime);
   const deleteHomeRef = useRef(deleteHomeFromRealtime);
+  const userDataRef = useRef(userData);
+  const userTypeRef = useRef(userType);
+  const homesRef = useRef(homes);
 
   useEffect(() => {
     triggerRefreshRef.current = triggerRefresh;
@@ -89,6 +95,9 @@ export function useRealtimeSync() {
     addHomeRef.current = addHomeFromRealtime;
     updateHomeRef.current = updateHomeFromRealtime;
     deleteHomeRef.current = deleteHomeFromRealtime;
+    userDataRef.current = userData;
+    userTypeRef.current = userType;
+    homesRef.current = homes;
   }, [
     triggerRefresh,
     fetchDataFromDatabase,
@@ -98,6 +107,9 @@ export function useRealtimeSync() {
     addHomeFromRealtime,
     updateHomeFromRealtime,
     deleteHomeFromRealtime,
+    userData,
+    userType,
+    homes,
   ]);
 
   useEffect(() => {
@@ -131,6 +143,25 @@ export function useRealtimeSync() {
     const channel = supabase
       .channel('db-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'missions' }, payload => {
+        // Foreground notification — gated inside by the user's settings, the
+        // Notification permission and the absence of a push subscription on
+        // this device (subscribed devices get the server push instead).
+        const user = userDataRef.current;
+        const type = userTypeRef.current;
+        if (
+          user &&
+          type &&
+          (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE' || payload.eventType === 'DELETE')
+        ) {
+          const newRow = payload.new as MissionRow | undefined;
+          const oldRow = payload.old as MissionRow | undefined;
+          const alert = detectMissionAlert(payload.eventType, oldRow, newRow, {
+            userType: type,
+            myKey: getUserKey(user),
+            homeTitle: homesRef.current.find(h => h.id === (newRow?.home_id ?? oldRow?.home_id))?.title,
+          });
+          if (alert) void fireForegroundNotification(alert, user.notificationSettings);
+        }
         if (payload.eventType === 'DELETE') {
           if (payload.old?.id) deleteMissionRef.current(payload.old.id);
         } else if (payload.new?.id) {
