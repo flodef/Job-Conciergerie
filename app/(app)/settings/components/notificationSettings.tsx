@@ -186,7 +186,7 @@ const NotificationSettings: React.FC = () => {
               : 'Service worker indisponible — rechargez la page puis réessayez',
           unsupported: 'Les notifications ne sont pas configurées ou supportées ici',
           failed: isBrave()
-            ? 'Brave bloque les notifications push — activez « Services Google pour les messages push » dans brave://settings/privacy — cliquez ici pour copier l’adresse'
+            ? 'Brave bloque les notifications push — cliquez pour copier le réglage à activer'
             : "Impossible d'activer les notifications sur cet appareil",
         }[result.reason];
         showToast(
@@ -202,9 +202,9 @@ const NotificationSettings: React.FC = () => {
                     {
                       type: ToastType.Info,
                       message:
-                        'brave://settings/privacy copié — collez-le dans la barre d’adresse, puis activez « Services Google pour les messages push »',
+                        'Collez l’URL copiée dans la barre d’adresse, puis activez « Services Google pour les messages push »',
                     },
-                    { timeout: 15000 },
+                    { timeout: 0 },
                   );
                 },
               }
