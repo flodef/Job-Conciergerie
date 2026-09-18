@@ -202,9 +202,14 @@ const NotificationSettings: React.FC = () => {
                     {
                       type: ToastType.Info,
                       message:
-                        'Collez l’URL copiée dans la barre d’adresse, puis activez « Services Google pour les messages push »',
+                        'Cliquez pour ouvrir un nouvel onglet, collez l’URL copiée dans la barre d’adresse, puis activez « Services Google pour les messages push »',
                     },
-                    { timeout: 0 },
+                    {
+                      timeout: 0,
+                      // Pages can't navigate to brave:// URLs — open a blank tab
+                      // so the user just has to paste the copied URL into it.
+                      onClick: () => window.open('about:blank', '_blank'),
+                    },
                   );
                 },
               }
