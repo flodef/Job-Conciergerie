@@ -19,6 +19,10 @@ export const isStandalone = () =>
   window.matchMedia('(display-mode: standalone)').matches ||
   (navigator as { standalone?: boolean }).standalone === true;
 
+// Brave blocks Google push services by default → pushManager.subscribe always
+// throws. Detected via the navigator.brave API Brave exposes.
+export const isBrave = () => typeof (navigator as { brave?: unknown }).brave !== 'undefined';
+
 // `serviceWorker.ready` never settles when no SW is registered (e.g. dev,
 // where registration is skipped) — race it so callers don't hang forever.
 const readyOrNull = (): Promise<ServiceWorkerRegistration | null> =>
