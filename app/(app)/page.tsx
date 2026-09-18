@@ -45,8 +45,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-full flex flex-col items-center bg-background">
-      <div className="w-full max-w-md bg-background my-auto">
+    <div className="min-h-full flex flex-col items-center bg-background ambient-bg relative">
+      <div className="w-full max-w-md my-auto">
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
           <div className="flex flex-col gap-6 cursor-pointer">
             <InstallButton />

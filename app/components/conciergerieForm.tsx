@@ -100,7 +100,7 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   if (!conciergeries?.length) return <ErrorPage message="Aucune conciergerie trouvée !" />;
 
   return (
-    <div className="h-full w-full flex flex-col items-center justify-center bg-background">
+    <div className="h-full w-full flex flex-col items-center justify-center bg-background ambient-bg relative">
       <h2 className="text-3xl font-black mb-4">
         <span className="text-gradient">Conciergerie</span>
       </h2>

@@ -26,7 +26,7 @@ export default function Error500({ error, reset }: { error: Error; reset: () => 
   const reload = () => setTimeout(() => window.location.reload(), 2000); // Hard reset by reloading the page
 
   return (
-    <div className={`${openSans.className} fixed inset-0 z-50 bg-background`}>
+    <div className={`${openSans.className} fixed inset-0 z-50 bg-background ambient-bg`}>
       <div className="h-full overflow-hidden flex flex-col items-center justify-center font-bold uppercase text-[3vmin] text-center text-foreground">
         <p className="px-6 z-10">
           <span className="text-gradient">Oups&nbsp;!</span> L&apos;appli s&apos;est emmelée les pinceaux ... <br />
