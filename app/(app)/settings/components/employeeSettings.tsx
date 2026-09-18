@@ -10,6 +10,7 @@ import geographicZones from '@/app/data/geographicZone.json';
 import type { Employee } from '@/app/types/dataTypes';
 import type { ErrorField } from '@/app/types/types';
 import { getEmployeeFullName } from '@/app/utils/employee';
+import { rowClassName, textClassName } from '@/app/utils/className';
 import { emailRegex, frenchPhoneRegex, normalizePhone } from '@/app/utils/regex';
 import React, { useEffect, useState } from 'react';
 
@@ -151,7 +152,9 @@ const EmployeeSettings: React.FC = () => {
 
   return (
     <div className="space-y-2">
-      <Label id="name">{name}</Label>
+      <Label id="name" className="text-lg font-bold">
+        {name}
+      </Label>
 
       <Input
         id="email"
@@ -196,17 +199,14 @@ const EmployeeSettings: React.FC = () => {
         row
       />
 
-      <Input
-        id="conciergerie"
-        label="Conciergerie d'inscription"
-        value={(userData as Employee)?.conciergerieName || '—'}
-        onChange={() => {}}
-        error=""
-        onError={() => {}}
-        disabled
-        tooltip="La conciergerie choisie à l'inscription ne peut pas être modifiée"
-        row
-      />
+      <div className={rowClassName}>
+        <Label id="conciergerie" tooltip="La conciergerie choisie à l'inscription ne peut pas être modifiée">
+          Conciergerie d'inscription
+        </Label>
+        <div className="flex-1 flex items-center justify-end">
+          <span className={textClassName}>{(userData as Employee)?.conciergerieName || '—'}</span>
+        </div>
+      </div>
 
       <div className="flex justify-center pt-2">
         <Button onClick={handleSave} disabled={!hasChanges()} loading={isSaving} loadingText="Enregistrement...">

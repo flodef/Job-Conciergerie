@@ -1,7 +1,7 @@
 'use client';
 
 import Tooltip from '@/app/components/tooltip';
-import { labelClassName } from '@/app/utils/className';
+import { cn, labelClassName } from '@/app/utils/className';
 import type { ReactNode } from 'react';
 
 interface LabelProps {
@@ -9,15 +9,16 @@ interface LabelProps {
   children: ReactNode;
   tooltip?: ReactNode;
   required?: boolean;
+  className?: string;
 }
 
-const Label = ({ id, children, tooltip, required = true }: LabelProps) => {
+const Label = ({ id, children, tooltip, required = true, className }: LabelProps) => {
   return (
     children && (
       <div className="flex items-center mt-1.5">
         <Tooltip
           trigger={
-            <label htmlFor={id} className={labelClassName}>
+            <label htmlFor={id} className={cn(labelClassName, className)}>
               {children} {!required && ' (facultatif)'}
             </label>
           }

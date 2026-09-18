@@ -193,7 +193,9 @@ const ConciergerieSettings: React.FC = () => {
 
   return (
     <div className="space-y-2">
-      <Label id="name">{name}</Label>
+      <Label id="name" className="text-lg font-bold">
+        {name}
+      </Label>
 
       <Input
         id="email"
@@ -250,17 +252,17 @@ const ConciergerieSettings: React.FC = () => {
         </div>
       </div>
 
-      <Input
-        id="group"
-        label="Groupe"
-        value={group || '…'}
-        onChange={() => {}}
-        error=""
-        onError={() => {}}
-        disabled
-        row
-        tooltip="Les conciergeries d'un même groupe partagent missions et prestataires (selon leur forfait). Contactez-nous pour modifier votre groupe."
-      />
+      <div className={rowClassName}>
+        <Label
+          id="group"
+          tooltip="Les conciergeries d'un même groupe partagent missions et prestataires (selon leur forfait). Contactez-nous pour modifier votre groupe."
+        >
+          Groupe
+        </Label>
+        <div className="flex-1 flex items-center justify-end">
+          <span className={textClassName}>{group || '…'}</span>
+        </div>
+      </div>
 
       <div className="flex justify-center pt-2">
         <Button onClick={handleSave} disabled={!hasChanges()} loading={isSaving} loadingText="Enregistrement...">

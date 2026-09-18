@@ -67,7 +67,11 @@ const InputComponent: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
         {label}
       </Label>
       <div className="flex-1 min-w-0 flex flex-col items-end">
-        <AutoSize text={value?.toString() || placeholder} sizerClassName={inputFieldClassName('')} className="min-w-32">
+        <AutoSize
+          text={value?.toString() || placeholder}
+          sizerClassName={inputFieldClassName('')}
+          className={type === 'tel' ? 'min-w-0' : 'min-w-32'}
+        >
           <input
             type={type}
             id={id}

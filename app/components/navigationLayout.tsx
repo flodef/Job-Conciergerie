@@ -226,22 +226,24 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {impersonating && (
         <div
           className={cn(
-            'fixed left-0 right-0 z-50 flex items-center bg-amber-500 py-2 text-white text-sm',
+            'fixed left-0 right-0 z-50 bg-amber-500 py-2 text-white text-sm',
             bannerTop(isDemoHost ? 1 : 0),
           )}
         >
-          <div className="flex w-3/4 items-center justify-center gap-2 px-2">
-            <IconEye size={20} className="shrink-0" />
-            <span className="truncate">
-              Vue en tant que <strong>{impersonatedName}</strong>
-            </span>
+          <div className="mx-auto flex w-full max-w-2xl items-center">
+            <div className="flex w-3/4 items-center justify-center gap-2 px-2">
+              <IconEye size={20} className="shrink-0" />
+              <span className="truncate">
+                Vue en tant que <strong>{impersonatedName}</strong>
+              </span>
+            </div>
+            <button
+              onClick={handleStopImpersonation}
+              className="w-1/4 text-center font-semibold underline underline-offset-2 whitespace-nowrap cursor-pointer"
+            >
+              Quitter
+            </button>
           </div>
-          <button
-            onClick={handleStopImpersonation}
-            className="w-1/4 text-center font-semibold underline underline-offset-2 whitespace-nowrap cursor-pointer"
-          >
-            Quitter
-          </button>
         </div>
       )}
 
