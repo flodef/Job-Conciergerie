@@ -1,3 +1,12 @@
+# 2.427
+
+- **Nouveau : Notifications push** : pour chaque type d'alerte, choisissez comment vous êtes notifié — par email, par notification sur votre appareil, les deux, ou rien (Paramètres → Notifications). Sur téléphone, installez l'app sur l'écran d'accueil pour recevoir les notifications même app fermée.
+- **Nouveau : Votre avis sur le site** : laissez une note et un commentaire affichés publiquement sur job-conciergerie.fr, ou gardez-les privés (Paramètres → Votre avis).
+- **Nouveau : Forfait visible dans les paramètres** : votre type d'abonnement et son prix mensuel sont affichés dans Paramètres.
+- **Nouveau : Nouvelle adresse de l'app** : l'application se trouve désormais sur app.job-conciergerie.fr, et le site job-conciergerie.fr présente le service avec une démo accessible sans inscription. Vos connexions existantes sont conservées automatiquement.
+- **Amélioration : Sécurité des appareils** : les identifiants des appareils connectés sont chiffrés, expirent automatiquement après 90 jours d'inactivité, et un email vous alerte en cas de connexion d'un nouvel appareil.
+- **Corrections** : annuler l'ajout d'un bien depuis « Ajouter une mission » n'ouvre plus le formulaire de mission ; la suppression d'un prestataire nettoie correctement ses missions.
+
 # 2.348
 
 - **Amélioration : Emails de modification de mission** : les modifications anodines (commentaire, voyageurs, etc.) n'affichent plus le message de re-validation, seules les modifications importantes (dates, horaires) demandent une nouvelle acceptation du prestataire.
