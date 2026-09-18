@@ -1,3 +1,7 @@
+# 2.445
+
+- **Amélioration : Notifications plus accessibles** : les notifications fonctionnent désormais dans tous les navigateurs quand l'app est ouverte, sans réglage particulier. Un nouveau réglage « Recevoir les notifications même si l'app est fermée » permet en plus d'être notifié en permanence.
+
 # 2.428
 
 - **Nouveau : Notifications push** : pour chaque type d'alerte, choisissez comment vous êtes notifié — par email, par notification sur votre appareil, les deux, ou rien (Paramètres → Notifications). Sur téléphone, installez l'app sur l'écran d'accueil pour recevoir les notifications même app fermée.

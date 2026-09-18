@@ -301,8 +301,18 @@ const NotificationSettings: React.FC = () => {
       // No subscription → test the foreground path (what this device would
       // show while the app is open); subscribed → real server push.
       if (!deviceSubscribed) {
-        await showForegroundNotification('Notification de test', 'Les notifications fonctionnent sur cet appareil !');
-        showToast({ type: ToastType.Success, message: 'Notification de test affichée' });
+        const shown = await showForegroundNotification(
+          'Notification de test',
+          'Les notifications fonctionnent sur cet appareil !',
+        );
+        showToast(
+          shown
+            ? { type: ToastType.Success, message: 'Notification de test affichée' }
+            : {
+                type: ToastType.Error,
+                message: 'Notifications non autorisées — réautorisez-les dans les réglages du navigateur',
+              },
+        );
         return;
       }
       switch (await sendTestPushNotification()) {
