@@ -34,28 +34,28 @@ export const getDeviceSubscription = async (): Promise<PushSubscription | null> 
   }
 };
 
+export type SubscribeResult =
+  { ok: true; subscription: PushSubscription } | { ok: false; reason: 'denied' | 'no-sw' | 'unsupported' | 'failed' };
+
 /**
- * Ask permission (if needed) then subscribe this device. Returns the
- * PushSubscription to persist server-side, or null — caller shows the reason.
+ * Ask permission (if needed) then subscribe this device. The caller maps the
+ * failure reason to an explanatory message.
  */
-export const subscribeDeviceToPush = async (): Promise<PushSubscription | null> => {
+export const subscribeDeviceToPush = async (): Promise<SubscribeResult> => {
   const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  if (!isPushSupported() || !vapidKey) return null;
-  if (Notification.permission === 'default' && (await Notification.requestPermission()) !== 'granted') return null;
-  if (Notification.permission !== 'granted') return null;
+  if (!isPushSupported() || !vapidKey) return { ok: false, reason: 'unsupported' };
+  if (Notification.permission === 'default' && (await Notification.requestPermission()) !== 'granted')
+    return { ok: false, reason: 'denied' };
+  if (Notification.permission !== 'granted') return { ok: false, reason: 'denied' };
   try {
     const reg = await readyOrNull();
-    if (!reg) return null;
-    return await reg.pushManager.subscribe({
+    if (!reg) return { ok: false, reason: 'no-sw' };
+    const subscription = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidKey),
     });
+    return { ok: true, subscription };
   } catch {
-    return null;
+    return { ok: false, reason: 'failed' };
   }
-};
-
-export const unsubscribeDevice = async (): Promise<void> => {
-  const sub = await getDeviceSubscription();
-  if (sub) await sub.unsubscribe().catch(() => {});
 };
