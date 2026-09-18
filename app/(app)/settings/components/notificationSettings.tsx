@@ -57,7 +57,9 @@ const ChannelToggle: React.FC<{
   active: boolean;
   onClick: () => void;
   disabled?: boolean;
-}> = ({ icon, label, active, onClick, disabled }) => (
+  /** Joined buttons share one border — only the outer corner stays rounded. */
+  joined?: 'left' | 'right';
+}> = ({ icon, label, active, onClick, disabled, joined }) => (
   <button
     type="button"
     role="switch"
@@ -68,6 +70,8 @@ const ChannelToggle: React.FC<{
     onClick={onClick}
     className={cn(
       'p-2.5 rounded-xl border-2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed',
+      joined === 'left' && 'rounded-r-none',
+      joined === 'right' && 'rounded-l-none -ml-0.5',
       active ? 'border-primary bg-primary/15 text-primary' : 'border-secondary/40 text-light hover:text-foreground',
     )}
   >
@@ -298,19 +302,23 @@ const NotificationSettings: React.FC = () => {
     <div className="space-y-4">
       <div className="space-y-1">
         <div className="flex items-center gap-3">
-          <ChannelToggle
-            icon={<IconMail size={20} />}
-            label="Email"
-            active={emailOn}
-            onClick={() => handleToggle('email' as keyof AnySettings, !emailOn)}
-          />
-          <ChannelToggle
-            icon={<IconBell size={20} />}
-            label="Notifications push"
-            active={pushOn}
-            disabled={isSubscribing}
-            onClick={() => handlePushToggle(!pushOn)}
-          />
+          <div className="flex items-center">
+            <ChannelToggle
+              icon={<IconMail size={20} />}
+              label="Email"
+              active={emailOn}
+              joined="left"
+              onClick={() => handleToggle('email' as keyof AnySettings, !emailOn)}
+            />
+            <ChannelToggle
+              icon={<IconBell size={20} />}
+              label="Notifications push"
+              active={pushOn}
+              disabled={isSubscribing}
+              joined="right"
+              onClick={() => handlePushToggle(!pushOn)}
+            />
+          </div>
           <span className={cn(labelClassName, 'mb-0 whitespace-normal')}>{statusText}</span>
         </div>
 
