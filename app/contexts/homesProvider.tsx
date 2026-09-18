@@ -57,13 +57,16 @@ export function HomesProvider({ children }: { children: ReactNode }) {
 
   // Core fetch logic shared between auto-fetch and manual refresh
   const isFetching = useRef(false);
+  // Callers share the in-flight promise so a second call during a fetch gets
+  // the real result instead of a false "failure".
+  const inFlight = useRef<Promise<boolean> | null>(null);
   // Exponential backoff on failure: a permanently-failing session (pending,
   // expired, revoked) must not hammer the DB in a tight retry loop.
   const failuresRef = useRef(0);
   const lastFailureRef = useRef(0);
 
-  const fetchHomesCore = useCallback(async () => {
-    if (isFetching.current) return Promise.resolve(false);
+  const fetchHomesCore = useCallback((): Promise<boolean> => {
+    if (inFlight.current) return inFlight.current;
 
     const backoffMs = Math.min(5000 * 2 ** failuresRef.current, 5 * 60 * 1000);
     if (failuresRef.current > 0 && Date.now() - lastFailureRef.current < backoffMs) return Promise.resolve(false);
@@ -85,47 +88,60 @@ export function HomesProvider({ children }: { children: ReactNode }) {
     // refreshes update silently. Use the ref to avoid the stale closure.
     setIsLoading(homesRef.current.length === 0);
 
-    return fetchAllHomes()
-      .then(fetchedHomes => {
-        if (fetchedHomes) {
-          failuresRef.current = 0;
-          setHomes(fetchedHomes);
-          updateFetchTime(Page.Homes);
+    const attempt = (): Promise<boolean> =>
+      fetchAllHomes()
+        .then(fetchedHomes => {
+          if (fetchedHomes) {
+            setHomes(fetchedHomes);
+            updateFetchTime(Page.Homes);
 
-          // Preload all home images in the background if enabled
-          if (process.env.NEXT_PUBLIC_PRELOAD_IMAGES === 'true') {
-            const allImageUrls = fetchedHomes.flatMap(home =>
-              (home.images || []).map(img => getStorageImageUrl(img, { width: 400, quality: 80 })),
-            );
-            preloadImages(allImageUrls);
+            // Preload all home images in the background if enabled
+            if (process.env.NEXT_PUBLIC_PRELOAD_IMAGES === 'true') {
+              const allImageUrls = fetchedHomes.flatMap(home =>
+                (home.images || []).map(img => getStorageImageUrl(img, { width: 400, quality: 80 })),
+              );
+              preloadImages(allImageUrls);
+            }
           }
-        } else markFailure();
-        return !!fetchedHomes;
-      })
-      .catch(error => {
-        console.warn('Failed to fetch homes:', error);
-        markFailure();
-        const errorMsg = error?.message?.toLowerCase() || '';
-        const isMaxClientsError = errorMsg.includes('max clients') || errorMsg.includes('emaxconnsession');
-        const is503Error =
-          errorMsg.includes('unexpected') || errorMsg.includes('503') || errorMsg.includes('service unavailable');
-        if (isMaxClientsError) {
-          console.error('Database connection pool exhausted:', error);
-          setToast({
-            type: ToastType.Error,
-            message: 'Trop de connexions simultanées. Veuillez réessayer dans quelques instants.',
-            error,
-          });
-        }
-        if (!navigator.onLine || is503Error || isMaxClientsError) {
-          updateFetchTime(Page.Homes);
-        }
-        return false;
+          return !!fetchedHomes;
+        })
+        .catch(error => {
+          console.warn('Failed to fetch homes:', error);
+          const errorMsg = error?.message?.toLowerCase() || '';
+          const isMaxClientsError = errorMsg.includes('max clients') || errorMsg.includes('emaxconnsession');
+          const is503Error =
+            errorMsg.includes('unexpected') || errorMsg.includes('503') || errorMsg.includes('service unavailable');
+          if (isMaxClientsError) {
+            console.error('Database connection pool exhausted:', error);
+            setToast({
+              type: ToastType.Error,
+              message: 'Trop de connexions simultanées. Veuillez réessayer dans quelques instants.',
+              error,
+            });
+          }
+          if (!navigator.onLine || is503Error || isMaxClientsError) {
+            updateFetchTime(Page.Homes);
+          }
+          return false;
+        });
+
+    // One silent retry absorbs transient timeouts (cold DB resume, proxy
+    // hiccup) — the error only surfaces if both attempts fail. Failure is
+    // counted once per call so the retry isn't blocked by the backoff.
+    const promise = attempt()
+      .then(ok => ok || attempt())
+      .then(ok => {
+        if (ok) failuresRef.current = 0;
+        else markFailure();
+        return ok;
       })
       .finally(() => {
-        setIsLoading(false);
         isFetching.current = false;
+        inFlight.current = null;
+        setIsLoading(false);
       });
+    inFlight.current = promise;
+    return promise;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - uses refs and state setters which are stable
 

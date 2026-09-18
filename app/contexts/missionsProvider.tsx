@@ -189,7 +189,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
     const attempt = (): Promise<boolean> =>
       fetchHomes().then(homesSuccess => {
         if (!homesSuccess) {
-          markFailure();
           // Reset needsRefresh to prevent infinite retry loops when offline
           if (!navigator.onLine) {
             updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
@@ -199,7 +198,6 @@ function MissionsProvider({ children }: { children: ReactNode }) {
         return fetchAllMissions()
           .then(fetchedMissions => {
             if (fetchedMissions) {
-              failuresRef.current = 0;
               setMissions(fetchedMissions);
               checkForLateMissions(fetchedMissions);
               // Fetch reports for all completed missions
@@ -213,12 +211,10 @@ function MissionsProvider({ children }: { children: ReactNode }) {
               }
               updateFetchTime([Page.Missions, Page.Calendar, Page.Homes]);
             }
-            if (!fetchedMissions) markFailure();
             return !!fetchedMissions;
           })
           .catch(error => {
             console.warn('Failed to fetch missions:', error);
-            markFailure();
             const errorMsg = error?.message?.toLowerCase() || '';
             const isMaxClientsError = errorMsg.includes('max clients') || errorMsg.includes('emaxconnsession');
             const is503Error =
@@ -239,9 +235,15 @@ function MissionsProvider({ children }: { children: ReactNode }) {
       });
 
     // One silent retry absorbs transient timeouts (cold DB resume, proxy
-    // hiccup) — the error only surfaces if both attempts fail.
+    // hiccup) — the error only surfaces if both attempts fail. Failure is
+    // counted once per call so the retry isn't blocked by the backoff.
     const promise = attempt()
       .then(ok => ok || attempt())
+      .then(ok => {
+        if (ok) failuresRef.current = 0;
+        else markFailure();
+        return ok;
+      })
       .finally(() => {
         isFetching.current = false;
         inFlight.current = null;
