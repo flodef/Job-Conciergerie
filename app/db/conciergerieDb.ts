@@ -16,7 +16,7 @@ export interface DbConciergerie {
   client_id?: string | null;
   discount: number;
   billing_period: string;
-  plan_until: string | null;
+  plan_until: string | Date | null;
 }
 
 /**
@@ -34,7 +34,7 @@ export function formatConciergerie(dbConciergerie: DbConciergerie): Conciergerie
     plan: (dbConciergerie.plan ?? 'pro') as ConciergeriePlan,
     discount: dbConciergerie.discount ?? 0,
     billingPeriod: dbConciergerie.billing_period === 'annual' ? 'annual' : 'monthly',
-    planUntil: dbConciergerie.plan_until ?? undefined,
+    planUntil: dbConciergerie.plan_until ? new Date(dbConciergerie.plan_until).toISOString() : undefined,
   };
 }
 

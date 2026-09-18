@@ -84,6 +84,38 @@ export const createInvoice = async (
   }
 };
 
+export interface InvoiceRow {
+  plan: ConciergeriePlan;
+  amount: number;
+  discount: number;
+  external_ref: string | null;
+}
+
+/**
+ * A stored invoice's billing snapshot — used to retry a failed IMS push with
+ * the values the invoice was generated with (plan/discount may have changed
+ * on the conciergerie since). `undefined` on query error or missing row.
+ */
+export const getInvoice = async (
+  conciergerieName: string,
+  periodYear: number,
+  periodMonth: number,
+): Promise<InvoiceRow | undefined> => {
+  try {
+    const result = await sql`
+      SELECT plan, amount, discount, external_ref FROM invoices
+      WHERE conciergerie_name = ${conciergerieName}
+        AND period_year = ${periodYear}
+        AND period_month = ${periodMonth}
+      LIMIT 1
+    `;
+    return result.length > 0 ? (result[0] as InvoiceRow) : undefined;
+  } catch (error) {
+    console.error(`Error fetching invoice for ${conciergerieName}:`, error);
+    return undefined;
+  }
+};
+
 /**
  * Record the external invoicing tool (IMS) reference on a local invoice —
  * lets the accounting side and this app cross-reference each other.
