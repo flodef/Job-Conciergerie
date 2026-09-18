@@ -11,17 +11,20 @@
 export interface ImsInvoicePayload {
   clientName: string;
   clientEmail?: string;
-  serviceLabel: string;
+  serviceLabel: string; // stable name, e.g. 'Abonnement Job Conciergerie — Pro'
+  periodLabel: string; // e.g. '03/2026' — appended to the invoice item label
   unitPrice: number; // list price before discount
   discount: number; // 0-100 %
-  period: string; // e.g. '2026-03' — idempotency key with clientName
   invoiceDate: string; // ISO date
 }
 
 export async function importInvoiceToIms(payload: ImsInvoicePayload): Promise<string | null> {
   const apiUrl = process.env.IMS_API_URL;
   const secret = process.env.IMS_IMPORT_SECRET;
-  if (!apiUrl || !secret) return null;
+  if (!apiUrl || !secret) {
+    console.warn('IMS_API_URL / IMS_IMPORT_SECRET not configured — skipping invoice import');
+    return null;
+  }
 
   try {
     const response = await fetch(`${apiUrl.replace(/\/$/, '')}/import-invoice`, {

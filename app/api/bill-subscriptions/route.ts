@@ -95,10 +95,10 @@ async function handleBillSubscriptions(request: NextRequest) {
     const ref = await importInvoiceToIms({
       clientName: c.name,
       clientEmail: c.email,
-      serviceLabel: `Abonnement Job Conciergerie — ${PLANS[pushPlan].name} (${monthName})`,
+      serviceLabel: `Abonnement Job Conciergerie — ${PLANS[pushPlan].name}`,
+      periodLabel: monthName,
       unitPrice: PLANS[pushPlan].monthly,
       discount: pushDiscount,
-      period: `${year}-${String(month).padStart(2, '0')}`,
       invoiceDate: now.toISOString().slice(0, 10),
     });
     if (ref) await setInvoiceExternalRef(c.name, year, month, ref);
