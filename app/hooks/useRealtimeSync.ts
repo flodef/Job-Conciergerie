@@ -201,9 +201,11 @@ export function useRealtimeSync() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conciergeries' }, () =>
         debounce('conciergeries', () => {
           // A plan flip changes employee/mission visibility (multi-conciergerie)
-          // — refetch both so server-side scoping re-applies immediately.
+          // — refetch both so server-side scoping re-applies immediately, and
+          // flag the data pages so stale missions/homes get refetched too.
           fetchDataRef.current('conciergerie');
           fetchDataRef.current('employee');
+          triggerRefreshRef.current([Page.Missions, Page.Calendar, Page.Homes]);
         }),
       )
       .subscribe(status => {

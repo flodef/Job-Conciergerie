@@ -50,10 +50,21 @@ export const findEmployeeByContact = async (
   email: string,
 ): Promise<{ employee: DbEmployee; nameMatches: boolean } | null> => {
   try {
+    // The caller supplies a normalized digits-only tel — normalize the stored
+    // side the same way so legacy formats ("06 12 34 56 78", "+33…") still match.
     const result = await sql`
       SELECT id, first_name, family_name, tel, email, geographic_zone, message, conciergerie_name, notification_settings, status, created_at
       FROM employees
-      WHERE tel = ${tel} OR email = ${email}
+      WHERE (
+        CASE
+          WHEN regexp_replace(tel, '[^0-9]', '', 'g') LIKE '0033%'
+            THEN '0' || substring(regexp_replace(tel, '[^0-9]', '', 'g') from 5)
+          WHEN regexp_replace(tel, '[^0-9]', '', 'g') LIKE '33%'
+             AND length(regexp_replace(tel, '[^0-9]', '', 'g')) = 11
+            THEN '0' || substring(regexp_replace(tel, '[^0-9]', '', 'g') from 3)
+          ELSE regexp_replace(tel, '[^0-9]', '', 'g')
+        END
+      ) = ${tel} OR email = ${email}
       LIMIT 1
     `;
     if (result.length === 0) return null;

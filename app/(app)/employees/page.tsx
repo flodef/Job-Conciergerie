@@ -44,6 +44,8 @@ export default function EmployeesList() {
     conciergeries,
     updateUserData,
     findConciergerie,
+    isAdmin,
+    impersonating,
   } = useAuth();
   const { missions } = useMissions();
   const { openModal, closeModal } = useModal();
@@ -208,7 +210,12 @@ export default function EmployeesList() {
                 employee={employee}
                 // Vetting stays the home conciergerie's call — foreign pool
                 // members (multi-conciergerie) are usable, not manageable.
-                canVet={!employee.conciergerieName || employee.conciergerieName === conciergerieName}
+                // A non-impersonating admin manages every row.
+                canVet={
+                  !employee.conciergerieName ||
+                  employee.conciergerieName === conciergerieName ||
+                  (isAdmin && !impersonating)
+                }
                 onStatusChange={handleStatusChange}
                 onClick={() => handleEmployeeClick(employee)}
               />
@@ -242,7 +249,9 @@ export default function EmployeesList() {
               content: renderEmployeeTable(pendingEmployees, 'en attente'),
             },
             {
-              title: `Acceptés (${acceptedEmployees.length}${maxEmployees !== null ? `/${maxEmployees}` : ''})`,
+              // Count own staff against the cap — foreign pool members
+              // belong to their home conciergerie's plan.
+              title: `Acceptés (${acceptedCount}${maxEmployees !== null ? `/${maxEmployees}` : ''})`,
               icon: <IconUserCheck size={20} />,
               content: renderEmployeeTable(acceptedEmployees, 'accepté'),
             },

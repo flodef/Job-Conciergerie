@@ -124,7 +124,23 @@ export const getMissionsVisibleToEmployee = async (
         ${visibleNames}::text[] IS NULL
         OR employee_id = ${employeeKey}
         OR employee_id_2 = ${employeeKey}
-        OR conciergerie_name = ANY(${visibleNames ?? []}::text[])
+        -- Claimable missions of a visible conciergerie — mirrors
+        -- filterMissionsByUserType so the payload carries no more than
+        -- what the employee may actually see (restricted, assigned and
+        -- expired missions of foreign conciergeries stay server-side).
+        OR (
+          conciergerie_name = ANY(${visibleNames ?? []}::text[])
+          AND CASE
+            WHEN allowed_employees IS NOT NULL AND cardinality(allowed_employees) > 0
+              THEN ${employeeKey} = ANY(allowed_employees)
+            WHEN employee_id IS NOT NULL
+              THEN allow_duo
+                AND employee_id_2 IS NULL
+                AND end_date_time >= now()
+                AND status IS DISTINCT FROM 'completed'
+            ELSE end_date_time >= now()
+          END
+        )
       )
       AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
       ORDER BY start_date_time ASC

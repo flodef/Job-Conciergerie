@@ -30,7 +30,7 @@ export async function fetchAllHomes(): Promise<Home[] | null> {
   if (session.userType === 'employee') {
     const home = await getEmployeeConciergerieName(session.rowKey, session.clientId ?? undefined);
     const visible = home ? [home, ...(await getMultiConciergerieNames(scope))] : null;
-    return await getHomesVisibleToEmployee(session.rowKey, visible, scope);
+    return await getHomesVisibleToEmployee(session.rowKey, home, visible, scope);
   }
   return await getAllHomes(scope);
 }
@@ -140,7 +140,7 @@ export async function updateHomeNotes(id: string, notes: string | undefined): Pr
   if (session.userType === 'employee') {
     const home = await getEmployeeConciergerieName(session.rowKey, session.clientId ?? undefined);
     const visible = home ? [home, ...(await getMultiConciergerieNames(scope))] : null;
-    if (!(await isHomeVisibleToEmployee(session.rowKey, id, visible, scope))) return null;
+    if (!(await isHomeVisibleToEmployee(session.rowKey, id, home, visible, scope))) return null;
   } else {
     // A conciergerie only annotates its own catalog
     const target = await getHomeById(id, scope);

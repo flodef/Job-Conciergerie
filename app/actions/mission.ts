@@ -39,6 +39,8 @@ const canAccessMission = (session: SessionUser, mission: Mission): boolean =>
  * are already accepted — vetting stays the home conciergerie's call.
  */
 const isAssignableTo = async (session: SessionUser, employeeKey: string): Promise<boolean> => {
+  // A non-impersonating admin manages every row (their rowKey is no home).
+  if (session.isAdmin && !session.impersonating) return true;
   const [firstName, ...rest] = employeeKey.split(' ');
   const assignee = await getEmployeeByName(firstName, rest.join(' '), session.clientId ?? undefined);
   if (!assignee) return false;
@@ -74,6 +76,14 @@ export async function createNewMission(data: Mission): Promise<Mission | null> {
   // A conciergerie only creates missions in its own tenant
   if (!session || data.conciergerieName !== session.rowKey) return null;
   if (data.allowDuo && !PLAN_LIMITS[await getSessionPlan(session)].duo) return null;
+
+  // A second assignee only exists on a duo mission — passing employeeId2
+  // without allowDuo must not smuggle a duo in (or bypass the duo gate).
+  if (data.employeeId2 != null && !data.allowDuo) return null;
+  // Assignees must be usable by this conciergerie: own staff, foreign staff
+  // under a multi-conciergerie plan, or unclaimed legacy rows.
+  if (data.employeeId != null && !(await isAssignableTo(session, data.employeeId))) return null;
+  if (data.employeeId2 != null && !(await isAssignableTo(session, data.employeeId2))) return null;
 
   // Convert to DB format
   const dbData: Omit<DbMission, 'modified_date'> = {

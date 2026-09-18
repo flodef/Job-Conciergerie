@@ -170,11 +170,13 @@ export async function updateEmployeeStatusAction(employee: Employee, status: Emp
   // home) are the exception: accepting one claims it for the acceptor.
   // The home is resolved server-side — the client payload's conciergerieName
   // is untrusted and could be forged to bypass this check.
+  // A non-impersonating admin manages every row (their rowKey is no home).
+  const isUnscopedAdmin = session.isAdmin && !session.impersonating;
   const home = await getEmployeeConciergerieName(
     `${employee.firstName} ${employee.familyName}`,
     session.clientId ?? undefined,
   );
-  if (home && home !== session.rowKey) return null;
+  if (home && home !== session.rowKey && !isUnscopedAdmin) return null;
 
   if (status === 'accepted') {
     const max = PLAN_LIMITS[await getSessionPlan(session)].maxEmployees;
@@ -187,8 +189,9 @@ export async function updateEmployeeStatusAction(employee: Employee, status: Emp
     employee.familyName,
     status,
     scope,
-    // Accepting an unclaimed row claims it for this conciergerie.
-    status === 'accepted' && !home ? session.rowKey : undefined,
+    // Accepting an unclaimed row claims it for this conciergerie — an admin's
+    // rowKey is not a real home, so their accepts never claim.
+    status === 'accepted' && !home && !isUnscopedAdmin ? session.rowKey : undefined,
   );
   return updated;
 }
@@ -322,11 +325,12 @@ export async function deleteEmployeeData(employee: Employee): Promise<boolean> {
   // member of the row may delete it (self-removal).
   if (session.userType === 'conciergerie') {
     // Home resolved server-side — the payload's conciergerieName is untrusted.
+    // A non-impersonating admin manages every row (their rowKey is no home).
     const home = await getEmployeeConciergerieName(
       `${employee.firstName} ${employee.familyName}`,
       session.clientId ?? undefined,
     );
-    if (home && home !== session.rowKey) return false;
+    if (home && home !== session.rowKey && !(session.isAdmin && !session.impersonating)) return false;
   } else {
     const ids = await getEmployeeIds(employee.firstName, employee.familyName);
     if (!ids || !isRowMember(session, ids)) return false;

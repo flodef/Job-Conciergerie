@@ -67,6 +67,7 @@ export const getAllHomes = async (clientId?: string) => {
  */
 export const getHomesVisibleToEmployee = async (
   employeeKey: string,
+  homeName: string | null,
   visibleNames: string[] | null,
   clientId?: string,
 ) => {
@@ -76,10 +77,28 @@ export const getHomesVisibleToEmployee = async (
       FROM homes
       WHERE (
         ${visibleNames}::text[] IS NULL
-        OR conciergerie_name = ANY(${visibleNames ?? []}::text[])
+        -- The employee's own conciergerie: full home catalog, as before.
+        OR (${homeName ?? null}::text IS NOT NULL AND conciergerie_name = ${homeName ?? null})
+        -- Foreign (multi) conciergeries and own assignments: only homes
+        -- backing missions the employee can see — private notes on
+        -- unrelated foreign homes must not leak.
         OR id IN (
           SELECT home_id FROM missions
-          WHERE employee_id = ${employeeKey} OR employee_id_2 = ${employeeKey}
+          WHERE employee_id = ${employeeKey}
+            OR employee_id_2 = ${employeeKey}
+            OR (
+              conciergerie_name = ANY(${visibleNames ?? []}::text[])
+              AND CASE
+                WHEN allowed_employees IS NOT NULL AND cardinality(allowed_employees) > 0
+                  THEN ${employeeKey} = ANY(allowed_employees)
+                WHEN employee_id IS NOT NULL
+                  THEN allow_duo
+                    AND employee_id_2 IS NULL
+                    AND end_date_time >= now()
+                    AND status IS DISTINCT FROM 'completed'
+                ELSE end_date_time >= now()
+              END
+            )
         )
       )
       AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
@@ -99,6 +118,7 @@ export const getHomesVisibleToEmployee = async (
 export const isHomeVisibleToEmployee = async (
   employeeKey: string,
   homeId: string,
+  homeName: string | null,
   visibleNames: string[] | null,
   clientId?: string,
 ): Promise<boolean> => {
@@ -108,10 +128,24 @@ export const isHomeVisibleToEmployee = async (
       WHERE id = ${homeId}
       AND (
         ${visibleNames}::text[] IS NULL
-        OR conciergerie_name = ANY(${visibleNames ?? []}::text[])
+        OR (${homeName ?? null}::text IS NOT NULL AND conciergerie_name = ${homeName ?? null})
         OR id IN (
           SELECT home_id FROM missions
-          WHERE employee_id = ${employeeKey} OR employee_id_2 = ${employeeKey}
+          WHERE employee_id = ${employeeKey}
+            OR employee_id_2 = ${employeeKey}
+            OR (
+              conciergerie_name = ANY(${visibleNames ?? []}::text[])
+              AND CASE
+                WHEN allowed_employees IS NOT NULL AND cardinality(allowed_employees) > 0
+                  THEN ${employeeKey} = ANY(allowed_employees)
+                WHEN employee_id IS NOT NULL
+                  THEN allow_duo
+                    AND employee_id_2 IS NULL
+                    AND end_date_time >= now()
+                    AND status IS DISTINCT FROM 'completed'
+                ELSE end_date_time >= now()
+              END
+            )
         )
       )
       AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)

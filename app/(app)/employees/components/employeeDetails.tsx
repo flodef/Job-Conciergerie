@@ -44,7 +44,7 @@ export default function EmployeeDetails({
   mission,
   skipAnimation = false,
 }: EmployeeDetailsProps) {
-  const { updateUserData, userData, employees, conciergerieName } = useAuth();
+  const { updateUserData, userData, employees, conciergerieName, isAdmin, impersonating } = useAuth();
   const { missions, removeSecondProvider, updateMission } = useMissions();
   const { openModal, closeModal } = useModal();
   const { showToast } = useToast();
@@ -53,7 +53,9 @@ export default function EmployeeDetails({
 
   // Vetting/deletion stays the home conciergerie's call — under
   // multi-conciergerie a foreign employee is assignable, not manageable.
-  const canVet = !employee.conciergerieName || employee.conciergerieName === conciergerieName;
+  // A non-impersonating admin manages every row.
+  const canVet =
+    !employee.conciergerieName || employee.conciergerieName === conciergerieName || (isAdmin && !impersonating);
 
   const countMissions = (status: MissionStatus) => countEmployeeMissions(employee, missions, status);
 
