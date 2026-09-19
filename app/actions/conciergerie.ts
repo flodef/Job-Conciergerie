@@ -48,23 +48,32 @@ export async function fetchConciergeries(): Promise<Conciergerie[] | null> {
   return (
     conciergeries
       ?.sort((a, b) => a.name.localeCompare(b.name))
-      .map(c => ({
-        // Connected member → real ids; pending member → only its own marker; else []
-        id:
-          // Stored ids are hashed at rest — match either domain (transition-safe)
-          session && c.id.some(i => new Set([session.userId, hashId(session.userId)]).has(baseId(i)))
-            ? session.pending
-              ? [`$${hashId(session.userId)}`]
-              : c.id
-            : [],
-        name: c.name,
-        email: c.email,
-        tel: c.tel,
-        colorName: c.colorName,
-        color: getColorValueByName(c.colorName),
-        notificationSettings: c.notificationSettings,
-        plan: c.plan,
-      })) ?? null
+      .map(c => {
+        // Billing fields (discount, annual coverage) are commercially
+        // sensitive — only the conciergerie's own connected member sees them.
+        const ownRow = session?.userType === 'conciergerie' && session.rowKey === c.name;
+        return {
+          // Connected member → real ids; pending member → only its own marker; else []
+          id:
+            // Stored ids are hashed at rest — match either domain (transition-safe)
+            session && c.id.some(i => new Set([session.userId, hashId(session.userId)]).has(baseId(i)))
+              ? session.pending
+                ? [`$${hashId(session.userId)}`]
+                : c.id
+              : [],
+          name: c.name,
+          email: c.email,
+          tel: c.tel,
+          colorName: c.colorName,
+          color: getColorValueByName(c.colorName),
+          notificationSettings: c.notificationSettings,
+          plan: c.plan,
+          // Product generation drives v3 feature locks — employees resolve
+          // their tenant's version through this field, so it's on every row.
+          version: c.version,
+          ...(ownRow ? { discount: c.discount, billingPeriod: c.billingPeriod, planUntil: c.planUntil } : {}),
+        };
+      }) ?? null
   );
 }
 

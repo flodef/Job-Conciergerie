@@ -8,6 +8,7 @@ import {
   type PushSubscriptionInput,
 } from '@/app/actions/push';
 import { Button } from '@/app/components/button';
+import { V3Badge } from '@/app/components/featureLocked';
 import Switch from '@/app/components/switch';
 import { ToastType } from '@/app/components/toastMessage';
 import type { UserType } from '@/app/contexts/authProvider';
@@ -99,6 +100,13 @@ const NotificationSettings: React.FC = () => {
       ? (userData as Conciergerie | undefined)?.plan
       : findConciergerie((userData as Employee | undefined)?.conciergerieName)?.plan,
   ).advancedNotifications;
+
+  // Push is also a v3 feature — v2 tenants keep the toggle visible but
+  // locked as a teaser (the send-side gate stops delivery anyway).
+  const tenantV3 = isConciergerie
+    ? (userData as Conciergerie | undefined)?.version === 'v3'
+    : findConciergerie((userData as Employee | undefined)?.conciergerieName)?.version === 'v3';
+  const pushAvailable = advancedNotifs && tenantV3;
 
   // Whether THIS device holds an active push subscription (null = checking)
   const [deviceSubscribed, setDeviceSubscribed] = useState<boolean | null>(null);
@@ -383,18 +391,25 @@ const NotificationSettings: React.FC = () => {
               icon={<IconBell size={20} />}
               label="Notifications push"
               active={pushOn}
-              disabled={isSubscribing || !advancedNotifs}
+              disabled={isSubscribing || !pushAvailable}
               joined="right"
               onClick={() => handlePushToggle(!pushOn)}
             />
           </div>
           <span className={cn(labelClassName, 'mb-0 whitespace-normal')}>{statusText}</span>
         </div>
-        {!advancedNotifs && (
-          <p className="text-xs text-foreground/60">Notifications push réservées aux plans Pro et Privilège.</p>
+        {!tenantV3 ? (
+          <p className="text-xs text-foreground/60">
+            <V3Badge className="mr-1.5" />
+            Notifications push : nouveauté de la version 3 — contactez-nous pour y passer.
+          </p>
+        ) : (
+          !advancedNotifs && (
+            <p className="text-xs text-foreground/60">Notifications push réservées aux plans Pro et Privilège.</p>
+          )
         )}
 
-        {pushOn && (
+        {pushOn && pushAvailable && (
           <div className="pt-1 space-y-3">
             <Switch
               className="text-sm my-0"

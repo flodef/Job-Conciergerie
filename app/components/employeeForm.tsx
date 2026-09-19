@@ -2,7 +2,6 @@
 
 import { createNewEmployee, enrollEmployeeDevice, lookupEmployeeByContact } from '@/app/actions/employee';
 import { NAME_TAKEN, RATE_LIMITED } from '@/app/utils/dbErrors';
-import AppVersion from '@/app/components/appVersion';
 import Combobox from '@/app/components/combobox';
 import ConfirmationModal from '@/app/components/confirmationModal';
 import FormActions from '@/app/components/formActions';
@@ -284,7 +283,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
 
   if (!conciergeries?.length)
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-background ambient-bg relative">
+      <div className="h-full flex flex-col items-center justify-center relative">
         <h2 className="text-3xl font-black mb-2">
           <span className="text-gradient">Conciergerie</span>
         </h2>
@@ -293,7 +292,7 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
     );
 
   return (
-    <div className="min-h-full w-full flex flex-col items-center justify-start bg-background ambient-bg relative pt-2">
+    <div className="h-full w-full flex flex-col items-center justify-center relative">
       <h2 className="text-3xl font-black mb-4">
         Inscription <span className="text-gradient">Prestataire</span>
       </h2>
@@ -471,8 +470,6 @@ export default function EmployeeForm({ onClose }: EmployeeFormProps) {
           cancelText="Continuer l'édition"
         />
       </form>
-
-      <AppVersion flow />
     </div>
   );
 }

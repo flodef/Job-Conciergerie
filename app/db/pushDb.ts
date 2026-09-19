@@ -2,6 +2,7 @@ import { sql } from '@/app/db/db';
 import type { UserType } from '@/app/contexts/authProvider';
 import { PLAN_LIMITS } from '@/app/data/plans';
 import { getUserPlan } from '@/app/db/planDb';
+import { getUserVersion } from '@/app/db/versionDb';
 
 /**
  * Web push subscriptions: one row per (device, user) pair. Callers must derive
@@ -146,9 +147,11 @@ export const sendPushToUser = async (
   payload: PushPayload,
 ): Promise<{ sent: number; subscribed: number | null }> => {
   if (!(await initVapid())) return { sent: 0, subscribed: null };
-  // Push delivery is a Pro+ feature — subscriptions can't be created on lower
-  // plans, and legacy rows (pre-gate / post-downgrade) stop receiving here.
-  if (!PLAN_LIMITS[await getUserPlan(userType, rowKey)].advancedNotifications) return { sent: 0, subscribed: 0 };
+  // Push delivery is a v3 feature on Pro+ plans — subscriptions can't be
+  // created on lower plans / v2 tenants, and legacy rows (pre-gate,
+  // post-downgrade) stop receiving here.
+  const [plan, version] = await Promise.all([getUserPlan(userType, rowKey), getUserVersion(userType, rowKey)]);
+  if (!PLAN_LIMITS[plan].advancedNotifications || version !== 'v3') return { sent: 0, subscribed: 0 };
   const subs = await getPushSubscriptionsFor(userType, rowKey);
   if (!subs.length) return { sent: 0, subscribed: 0 };
 

@@ -3,7 +3,6 @@
 import type { UserType } from '@/app/contexts/authProvider';
 import { cn } from '@/app/utils/className';
 import { IconBuildingEstate, IconUser } from '@tabler/icons-react';
-import AppVersion from './appVersion';
 
 type UserTypeSelectionProps = {
   onSelect: (type: UserType) => void;
@@ -11,7 +10,7 @@ type UserTypeSelectionProps = {
 
 export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) {
   return (
-    <div className="bg-background p-8">
+    <div className="p-8">
       <h1 className="text-3xl font-black text-center mb-8">
         Bienvenue sur <span className="text-gradient">Job Conciergerie</span>
       </h1>
@@ -45,7 +44,6 @@ export default function UserTypeSelection({ onSelect }: UserTypeSelectionProps) 
           </button>
         </div>
       </div>
-      <AppVersion />
     </div>
   );
 }

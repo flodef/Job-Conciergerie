@@ -280,7 +280,9 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
           )}
         >
           {/* Title */}
-          <h1 className="w-full text-2xl font-semibold text-foreground text-center">{currentPage}</h1>
+          <h1 className="w-full text-2xl font-black text-foreground text-center">
+            <span className="text-gradient">{currentPage}</span>
+          </h1>
           <div className="absolute right-4">
             <ThemeToggle />
           </div>
@@ -296,14 +298,15 @@ export default function NavigationLayout({ children }: { children: ReactNode }) 
       {/* Main content */}
       <main
         className={cn(
-          'flex-1 relative overflow-hidden',
+          'flex-1 relative overflow-hidden ambient-bg bg-background',
           isNavigationPage && !!userType ? mainPtClass : bannerPtClasses[bannerCount],
         )}
       >
-        {/* Content wrapper - scrollable when content is long */}
+        {/* Content wrapper - scrollable when content is long; stays
+            transparent so main's ambient halos show through */}
         <div
           className={cn(
-            'bg-background relative h-full overflow-y-auto flex flex-col nice-scrollbar',
+            'relative h-full overflow-y-auto flex flex-col nice-scrollbar',
             isNavigationPage && !!userType && 'pb-16',
           )}
         >

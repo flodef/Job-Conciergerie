@@ -2,6 +2,7 @@
 
 import { PLAN_LIMITS } from '@/app/data/plans';
 import { getSessionPlan } from '@/app/db/planDb';
+import { getSessionVersion } from '@/app/db/versionDb';
 import {
   deletePushSubscription,
   deletePushSubscriptionsFor,
@@ -31,7 +32,9 @@ const isValidSubscription = (sub: PushSubscriptionInput) =>
 export async function saveMyPushSubscription(subscription: PushSubscriptionInput): Promise<boolean> {
   const session = await requireConnectedSession();
   if (!session?.userType || !session.rowKey || !isValidSubscription(subscription)) return false;
-  if (!PLAN_LIMITS[await getSessionPlan(session)].advancedNotifications) return false;
+  // Push is a v3 feature on Pro+ plans — both gates apply.
+  const [plan, version] = await Promise.all([getSessionPlan(session), getSessionVersion(session)]);
+  if (!PLAN_LIMITS[plan].advancedNotifications || version !== 'v3') return false;
 
   const userAgent = (await headers()).get('user-agent');
   return savePushSubscription(

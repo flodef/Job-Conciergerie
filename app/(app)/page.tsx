@@ -1,5 +1,6 @@
 'use client';
 
+import AppVersion from '@/app/components/appVersion';
 import ConciergerieForm from '@/app/components/conciergerieForm';
 import EmployeeForm from '@/app/components/employeeForm';
 import InstallButton from '@/app/components/installButton';
@@ -45,7 +46,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-full flex flex-col items-center bg-background ambient-bg relative">
+    <div className="min-h-full flex flex-col items-center relative">
       <div className="w-full max-w-md my-auto">
         {!userType && !showEmployeeForm && !showConciergerieForm ? (
           <div className="flex flex-col gap-6 cursor-pointer">
@@ -58,6 +59,7 @@ export default function Home() {
           <ConciergerieForm onClose={handleCloseForm} />
         ) : null}
       </div>
+      <AppVersion />
     </div>
   );
 }

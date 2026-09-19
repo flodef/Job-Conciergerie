@@ -17,6 +17,7 @@ export interface DbConciergerie {
   discount: number;
   billing_period: string;
   plan_until: string | Date | null;
+  version: string;
 }
 
 /**
@@ -35,6 +36,8 @@ export function formatConciergerie(dbConciergerie: DbConciergerie): Conciergerie
     discount: dbConciergerie.discount ?? 0,
     billingPeriod: dbConciergerie.billing_period === 'annual' ? 'annual' : 'monthly',
     planUntil: dbConciergerie.plan_until ? new Date(dbConciergerie.plan_until).toISOString() : undefined,
+    // Fail-closed: anything but an explicit 'v3' stays on the locked v2 track.
+    version: dbConciergerie.version === 'v3' ? 'v3' : 'v2',
   };
 }
 
@@ -46,7 +49,7 @@ export const getAllConciergeries = async (includeAdminRows = false) => {
   try {
     const result = await sql`
       SELECT c.id, c.name, c.email, c.tel, c.color_name, c.notification_settings, c.plan, c.client_id,
-             c.discount, c.billing_period, c.plan_until
+             c.discount, c.billing_period, c.plan_until, c.version
       FROM conciergeries c
       LEFT JOIN clients cl ON cl.id = c.client_id
       WHERE ${includeAdminRows} OR COALESCE(cl.is_admin, false) = false
@@ -100,7 +103,7 @@ export const updateConciergerie = async (
         notification_settings = COALESCE(${data.notification_settings ?? null}::jsonb, notification_settings),
         plan = COALESCE(${data.plan ?? null}, plan)
       WHERE name = ${name} AND (${clientId ?? null}::uuid IS NULL OR client_id = ${clientId ?? null}::uuid)
-      RETURNING id, name, email, tel, color_name, notification_settings, plan, client_id, discount, billing_period, plan_until
+      RETURNING id, name, email, tel, color_name, notification_settings, plan, client_id, discount, billing_period, plan_until, version
     `;
 
     return result.length > 0 ? formatConciergerie(result[0] as DbConciergerie) : null;
@@ -117,7 +120,7 @@ export const getConciergerieByName = async (name: string) => {
   try {
     const result = await sql`
       SELECT id, name, email, tel, color_name, notification_settings, plan, client_id,
-             discount, billing_period, plan_until
+             discount, billing_period, plan_until, version
       FROM conciergeries
       WHERE name = ${name}
       LIMIT 1

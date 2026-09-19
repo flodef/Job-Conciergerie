@@ -1,12 +1,5 @@
 # 2.464
 
-- **Nouveau : Multi-conciergeries** : les conciergeries d'un même groupe peuvent partager leur vivier de prestataires — vous pouvez assigner les prestataires acceptés des conciergeries partenaires, tandis que vos prestataires restent gérés par vous (selon forfait).
-- **Amélioration : Limites de forfait appliquées** : les limites de votre abonnement (biens, prestataires, binômes, comptes rendus, historique, notifications) sont maintenant vérifiées côté serveur — les données existantes au-delà d'une limite restent visibles.
-- **Amélioration : Saisie guidée dans les formulaires** : les champs limitent les caractères saisis et normalisent automatiquement les numéros de téléphone et les noms.
-- **Corrections** : un administrateur peut à nouveau gérer tous les prestataires ; la connexion par lien fonctionne aussi pour les numéros enregistrés dans un ancien format.
-
-# 2.446
-
 - **Nouveau : Notifications push** : pour chaque type d'alerte, choisissez comment vous êtes notifié — par email, par notification sur votre appareil, les deux, ou rien (Paramètres → Notifications). Sur téléphone, installez l'app sur l'écran d'accueil pour recevoir les notifications même app fermée.
 - **Nouveau : Votre avis sur le site** : laissez une note et un commentaire affichés publiquement sur job-conciergerie.fr, ou gardez-les privés (Paramètres → Votre avis).
 - **Nouveau : Forfait visible dans les paramètres** : votre type d'abonnement et son prix mensuel sont affichés dans Paramètres.

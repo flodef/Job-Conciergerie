@@ -19,6 +19,7 @@ const baseRow: DbConciergerie = {
   discount: 0,
   billing_period: 'monthly',
   plan_until: null,
+  version: 'v2',
 };
 
 describe('formatConciergerie', () => {

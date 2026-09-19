@@ -12,7 +12,6 @@ import { getColorValueByName, setPrimaryColor } from '@/app/utils/color';
 import { EmailSender } from '@/app/utils/emailSender';
 import { Page } from '@/app/utils/navigation';
 import { useEffect, useRef, useState } from 'react';
-import AppVersion from './appVersion';
 
 type ConciergerieFormProps = {
   onClose: () => void;
@@ -97,10 +96,10 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
   };
 
   if (isLoading) return null;
-  if (!conciergeries?.length) return <ErrorPage message="Aucune conciergerie trouvée !" />;
+  if (!conciergeries?.length) return <ErrorPage message="Aucune conciergerie trouvée !" hideVersion />;
 
   return (
-    <div className="h-full w-full flex flex-col items-center justify-center bg-background ambient-bg relative">
+    <div className="h-full w-full flex flex-col items-center justify-center relative">
       <h2 className="text-3xl font-black mb-4">
         <span className="text-gradient">Conciergerie</span>
       </h2>
@@ -154,8 +153,6 @@ export default function ConciergerieForm({ onClose }: ConciergerieFormProps) {
 
         <FormActions onCancel={handleClose} submitText="Valider" isSubmitting={isSubmitting} />
       </form>
-
-      <AppVersion />
     </div>
   );
 }
