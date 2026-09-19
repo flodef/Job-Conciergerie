@@ -50,6 +50,7 @@ const ConciergerieSettings: React.FC = () => {
   // its prepaid year locks plan changes until planUntil.
   const conciergerie = userData as Conciergerie | null;
   const discount = conciergerie?.discount ?? 0;
+  const version = conciergerie?.version ?? 'v2';
   const annualUntil =
     conciergerie?.billingPeriod === 'annual' && conciergerie.planUntil && new Date(conciergerie.planUntil) > new Date()
       ? new Date(conciergerie.planUntil)
@@ -105,6 +106,33 @@ const ConciergerieSettings: React.FC = () => {
         annualUntil={annualUntil}
         onClose={() => closeModal(id)}
         onSelect={openPlanConfirm}
+      />
+    ));
+  };
+
+  // v2 → v3 upgrade: manual for now — the modal explains the pricing change
+  // (full plan price, negotiated discount not carried over) and hands off to
+  // email. In-app payment comes later.
+  const openUpgradeModal = () => {
+    const fullPrice = PLANS[plan].monthly;
+    const currentPrice = applyDiscount(fullPrice, discount);
+    openModal(id => (
+      <ConfirmationModal
+        isOpen
+        title="Passer en version 3"
+        message={
+          `La version 3 débloque les nouvelles fonctionnalités (notifications push, et toutes celles à venir).\n\n` +
+          (discount > 0
+            ? `Le passage s'effectue au tarif plein de votre forfait : ${fullPrice} €/mois au lieu de ${currentPrice} €/mois — la remise de ${discount} % n'est pas conservée.\n\n`
+            : `Votre forfait reste facturé ${fullPrice} €/mois.\n\n`) +
+          'Contactez-nous pour activer la version 3 sur votre conciergerie.'
+        }
+        confirmText="Nous contacter"
+        onCancel={() => closeModal(id)}
+        onConfirm={() => {
+          closeModal(id);
+          window.location.href = `mailto:contact@job-conciergerie.fr?subject=${encodeURIComponent(`Passage en v3 — ${name}`)}`;
+        }}
       />
     ));
   };
@@ -278,6 +306,23 @@ const ConciergerieSettings: React.FC = () => {
         </Label>
         <div className="flex-1 flex items-center justify-end mt-1.5">
           <span className={textClassName}>{group || '…'}</span>
+        </div>
+      </div>
+
+      <div className={rowCenterClassName}>
+        <Label
+          id="version"
+          tooltip="La version 3 ajoute les nouvelles fonctionnalités au fur et à mesure (notifications push, …). La version 2 reste maintenue — corrections de bugs uniquement."
+        >
+          Version
+        </Label>
+        <div className="flex-1 flex items-center justify-end gap-3 mt-1.5">
+          <span className={textClassName}>{version === 'v3' ? 'Version 3' : 'Version 2'}</span>
+          {version !== 'v3' && (
+            <Button style="secondary" onClick={openUpgradeModal}>
+              Passer en v3
+            </Button>
+          )}
         </div>
       </div>
 

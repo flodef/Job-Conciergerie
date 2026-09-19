@@ -165,15 +165,14 @@ export function useRealtimeSync() {
             homeTitle: homesRef.current.find(h => h.id === (newRow?.home_id ?? oldRow?.home_id))?.title,
           });
           // conciergerieName from useAuth is undefined for employees — resolve
-          // the plan from userData instead (conciergerie's own row / employee's
-          // employer), same as the history page.
-          const planAllowsPush = planLimits(
+          // plan & version from userData instead (conciergerie's own row /
+          // employee's employer), same as the history page.
+          const tenant =
             type === 'conciergerie'
-              ? (user as Conciergerie | undefined)?.plan
-              : conciergeriesRef.current.find(c => getUserKey(c) === (user as Employee | undefined)?.conciergerieName)
-                  ?.plan,
-          ).advancedNotifications;
-          if (alert) void fireForegroundNotification(alert, user.notificationSettings, planAllowsPush);
+              ? (user as Conciergerie | undefined)
+              : conciergeriesRef.current.find(c => getUserKey(c) === (user as Employee | undefined)?.conciergerieName);
+          const pushAllowed = planLimits(tenant?.plan).advancedNotifications && tenant?.version === 'v3';
+          if (alert) void fireForegroundNotification(alert, user.notificationSettings, pushAllowed);
         }
         if (payload.eventType === 'DELETE') {
           if (payload.old?.id) deleteMissionRef.current(payload.old.id);

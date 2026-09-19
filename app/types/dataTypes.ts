@@ -2,6 +2,9 @@ import type { ConciergerieNotificationSettings, EmployeeNotificationSettings } f
 
 export type ConciergeriePlan = 'decouverte' | 'pro' | 'privilege';
 
+/** Product generation — 'v2' = current clients (bugfix only), 'v3' = new features. */
+export type ProductVersion = 'v2' | 'v3';
+
 export interface Conciergerie {
   id: string[];
   name: string;
@@ -17,6 +20,8 @@ export interface Conciergerie {
   billingPeriod?: 'monthly' | 'annual';
   /** ISO timestamp — end of the active annual coverage. */
   planUntil?: string;
+  /** Product generation — gates access to v3 features. */
+  version?: ProductVersion;
 }
 
 export type EmployeeStatus = 'pending' | 'accepted' | 'rejected' | 'deleted';

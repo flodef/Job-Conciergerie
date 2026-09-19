@@ -48,6 +48,36 @@ UPDATE conciergeries SET discount = 40 WHERE name = 'CMD Breizh';
 The discount applies to every generated invoice (list price − %). Historical
 invoices keep the % they were generated with.
 
+## Product versions (v2 / v3)
+
+`conciergeries.version` gates access to new-generation features (see
+`PLAN_V3.md` for the full strategy):
+
+- **v2** = existing clients — bugfix maintenance only, they keep their plan
+  and negotiated discount.
+- **v3** = new features. Column default is `'v3'` → every new row (manual
+  provisioning, demo seed) is v3 **without extra action**. The demo
+  database is entirely v3 (it's the public showroom).
+- Employees inherit their conciergerie's version
+  (`app/db/versionDb.ts` — `getUserVersion`/`getSessionVersion`); the
+  resolution is fail-closed (unknown → `'v2'`).
+- To keep a specific new client on v2, pin it explicitly:
+
+```sql
+UPDATE conciergeries SET version = 'v2' WHERE name = '<conciergerie>';
+```
+
+- Upgrade v2 → v3 = full plan price (the negotiated discount does not
+  carry over):
+
+```sql
+UPDATE conciergeries SET version = 'v3', discount = 0 WHERE name = '<conciergerie>';
+```
+
+- Currently gated: **push notifications** (Pro+ plan AND v3 tenant —
+  `sendPushToUser` covers every send path; v2 tenants see the locked
+  toggle as a teaser in Settings).
+
 ## IMS sync (ims.fims.fi)
 
 IMS exposes `POST {IMS_API_URL}/import-invoice` (Bearer `IMS_IMPORT_SECRET`),
