@@ -200,9 +200,11 @@ CREATE TABLE public.conciergeries (
     discount integer DEFAULT 0 NOT NULL,
     billing_period text DEFAULT 'monthly'::text NOT NULL,
     plan_until timestamp with time zone,
+    version text DEFAULT 'v3'::text NOT NULL,
     CONSTRAINT conciergeries_billing_period_check CHECK ((billing_period = ANY (ARRAY['monthly'::text, 'annual'::text]))),
     CONSTRAINT conciergeries_discount_check CHECK (((discount >= 0) AND (discount <= 100))),
     CONSTRAINT conciergeries_plan_check CHECK ((plan = ANY (ARRAY['decouverte'::text, 'pro'::text, 'privilege'::text]))),
+    CONSTRAINT conciergeries_version_check CHECK ((version = ANY (ARRAY['v2'::text, 'v3'::text]))),
     CONSTRAINT valid_color_name CHECK ((color_name = ANY (ARRAY['Rose'::text, 'Orange'::text, 'Vert'::text, 'Bleu'::text, 'Violet'::text, 'Gris'::text])))
 );
 
